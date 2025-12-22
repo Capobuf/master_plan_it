@@ -37,3 +37,7 @@ Approved,Approvato
 Rejected,Respinto
 Line {0}: Period ({1} to {2}) has zero overlap with fiscal year {3}. Cannot save budget line with no temporal overlap.,Riga {0}: Il periodo ({1} - {2}) non si sovrappone con l'anno fiscale {3}. Impossibile salvare la riga di budget senza sovrapposizione temporale.
 Year is required to generate Budget name,Anno obbligatorio per generare il nome del budget
+Total Amount Input,Somma importi inseriti
+Total Net Amount,Somma importi netti
+Total VAT Amount,Somma IVA
+Total Gross Amount,Somma importi lordi

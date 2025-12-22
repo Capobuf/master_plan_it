@@ -7,6 +7,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import getseries
+from frappe.utils import flt
 from master_plan_it import annualization, mpit_user_prefs, tax
 
 
@@ -31,6 +32,7 @@ class MPITBudget(Document):
 	def validate(self):
 		self._compute_lines_vat_split()
 		self._compute_lines_annualization()
+		self._compute_totals()
 	
 	def _compute_lines_vat_split(self):
 		"""Compute net/vat/gross for all Budget Lines with strict VAT validation."""
@@ -128,4 +130,39 @@ class MPITBudget(Document):
 			line.annual_net = annual_net
 			line.annual_vat = annual_vat
 			line.annual_gross = annual_gross
+
+	def _compute_totals(self):
+		total_input = 0.0
+		total_net = 0.0
+		total_vat = 0.0
+		total_gross = 0.0
+
+		for line in (self.lines or []):
+			total_input += flt(getattr(line, "amount", 0) or 0, 2)
+			total_net += flt(getattr(line, "amount_net", 0) or 0, 2)
+			total_vat += flt(getattr(line, "amount_vat", 0) or 0, 2)
+			total_gross += flt(getattr(line, "amount_gross", 0) or 0, 2)
+
+		self.total_amount_input = flt(total_input, 2)
+		self.total_amount_net = flt(total_net, 2)
+		self.total_amount_vat = flt(total_vat, 2)
+		self.total_amount_gross = flt(total_gross, 2)
+
+
+def update_budget_totals(budget_name: str) -> None:
+	"""Recompute and persist totals for an existing budget without client scripts."""
+	if not budget_name:
+		return
+
+	budget = frappe.get_doc("MPIT Budget", budget_name)
+	budget._compute_totals()
+
+	totals = {
+		"total_amount_input": flt(budget.total_amount_input, 2),
+		"total_amount_net": flt(budget.total_amount_net, 2),
+		"total_amount_vat": flt(budget.total_amount_vat, 2),
+		"total_amount_gross": flt(budget.total_amount_gross, 2),
+	}
+
+	frappe.db.set_value("MPIT Budget", budget_name, totals)
 

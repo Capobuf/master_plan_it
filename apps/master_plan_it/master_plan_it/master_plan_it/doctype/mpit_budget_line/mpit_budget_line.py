@@ -1,9 +1,20 @@
 # Copyright (c) 2025, DOT and contributors
 # For license information, please see license.txt
 
-# import frappe
 from frappe.model.document import Document
+from master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget import update_budget_totals
 
 
 class MPITBudgetLine(Document):
-	pass
+	def after_insert(self):
+		self._update_parent_totals()
+
+	def on_update(self):
+		self._update_parent_totals()
+
+	def on_trash(self):
+		self._update_parent_totals()
+
+	def _update_parent_totals(self):
+		if self.parent and getattr(self, "parenttype", None) == "MPIT Budget":
+			update_budget_totals(self.parent)

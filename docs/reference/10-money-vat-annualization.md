@@ -35,6 +35,11 @@ Caso B: input lordo (`includes_vat = 1`)
 Arrotondamento:
 - `frappe.utils.flt(value, 2)` (salvo diversa precisione decisa)
 
+### Totali Budget (form MPIT Budget)
+- Il DocType MPIT Budget espone i campi `total_amount_input`, `total_amount_net`, `total_amount_vat`, `total_amount_gross`.
+- I valori sono calcolati nel controller server-side sommando le righe della tabella `lines` (MPIT Budget Line), senza JavaScript.
+- Ogni somma usa `frappe.utils.flt(..., 2)` per garantire arrotondamento a 2 decimali coerente con split net/vat/gross.
+
 ---
 
 ## 3) Annualizzazione (CHIUSO)

@@ -9,11 +9,18 @@
  "field_order": [
   "year",
   "title",
-  "currency",
   "workflow_state",
+  "column_break_kxzy",
+  "currency",
   "lines_section",
   "lines",
-  "amended_from"
+  "totals_section",
+  "amended_from",
+  "column_break_yocp",
+  "total_amount_input",
+  "total_amount_net",
+  "total_amount_vat",
+  "total_amount_gross"
  ],
  "fields": [
   {
@@ -55,8 +62,38 @@
    "fieldname": "lines",
    "fieldtype": "Table",
    "label": "Lines",
-   "options": "MPIT Budget Line",
-   "search_index": 1
+   "options": "MPIT Budget Line"
+  },
+  {
+   "fieldname": "totals_section",
+   "fieldtype": "Section Break",
+   "label": "Totals"
+  },
+  {
+   "columns": 1,
+   "fieldname": "total_amount_input",
+   "fieldtype": "Currency",
+   "label": "Total Amount Input",
+   "read_only": 1,
+   "width": "1"
+  },
+  {
+   "fieldname": "total_amount_net",
+   "fieldtype": "Currency",
+   "label": "Total Net Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount_vat",
+   "fieldtype": "Currency",
+   "label": "Total VAT Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_amount_gross",
+   "fieldtype": "Currency",
+   "label": "Total Gross Amount",
+   "read_only": 1
   },
   {
    "fieldname": "amended_from",
@@ -67,13 +104,21 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "column_break_kxzy",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "column_break_yocp",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-22 18:40:45.297534",
+ "modified": "2025-12-22 19:58:03.516643",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Budget",
