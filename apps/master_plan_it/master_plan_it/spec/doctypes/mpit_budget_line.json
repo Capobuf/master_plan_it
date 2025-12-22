@@ -45,25 +45,80 @@
     {
       "fieldname": "amount",
       "fieldtype": "Currency",
-      "label": "Amount",
-      "reqd": 1,
-      "in_list_view": 1
+      "label": "Amount (Legacy)",
+      "read_only": 1,
+      "hidden": 1
     },
     {
-      "fieldname": "recurrence",
+      "default": "0",
+      "fieldname": "amount_includes_vat",
+      "fieldtype": "Check",
+      "label": "Amount Includes VAT"
+    },
+    {
+      "fieldname": "vat_rate",
+      "fieldtype": "Percent",
+      "label": "VAT Rate",
+      "precision": "2"
+    },
+    {
+      "fieldname": "amount_net",
+      "fieldtype": "Currency",
+      "label": "Net Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "amount_vat",
+      "fieldtype": "Currency",
+      "label": "VAT Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "amount_gross",
+      "fieldtype": "Currency",
+      "label": "Gross Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "recurrence_rule",
       "fieldtype": "Select",
-      "label": "Recurrence",
-      "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone"
+      "label": "Recurrence Rule",
+      "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone",
+      "default": "None"
     },
     {
-      "fieldname": "start_date",
-      "fieldtype": "Date",
-      "label": "Start Date"
+      "depends_on": "eval:doc.recurrence_rule=='Custom'",
+      "fieldname": "custom_period_months",
+      "fieldtype": "Int",
+      "label": "Custom Period (Months)"
     },
     {
-      "fieldname": "end_date",
+      "fieldname": "period_start_date",
       "fieldtype": "Date",
-      "label": "End Date"
+      "label": "Period Start Date"
+    },
+    {
+      "fieldname": "period_end_date",
+      "fieldtype": "Date",
+      "label": "Period End Date"
+    },
+    {
+      "fieldname": "annual_net",
+      "fieldtype": "Currency",
+      "label": "Annual Net Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "annual_vat",
+      "fieldtype": "Currency",
+      "label": "Annual VAT Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "annual_gross",
+      "fieldtype": "Currency",
+      "label": "Annual Gross Amount",
+      "read_only": 1
     },
     {
       "default": "OPEX",

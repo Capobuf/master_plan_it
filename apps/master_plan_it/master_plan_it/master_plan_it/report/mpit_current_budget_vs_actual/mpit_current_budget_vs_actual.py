@@ -52,7 +52,7 @@ def _get_data(filters) -> list[dict]:
 			b.year AS year,
 			bl.category AS category,
 			bl.vendor AS vendor,
-			SUM(bl.amount) AS baseline_amount
+			SUM(COALESCE(bl.amount_net, bl.amount)) AS baseline_amount
 		FROM `tabMPIT Budget` b
 		JOIN `tabMPIT Budget Line` bl ON bl.parent = b.name
 		WHERE {where}
@@ -69,7 +69,7 @@ def _get_data(filters) -> list[dict]:
 			b.year AS year,
 			al.category AS category,
 			al.vendor AS vendor,
-			SUM(al.delta_amount) AS amendment_delta
+			SUM(COALESCE(al.delta_amount_net, al.delta_amount)) AS amendment_delta
 		FROM `tabMPIT Budget Amendment` ba
 		JOIN `tabMPIT Budget` b ON b.name = ba.budget
 		JOIN `tabMPIT Amendment Line` al ON al.parent = ba.name
@@ -81,7 +81,7 @@ def _get_data(filters) -> list[dict]:
 
 	actual_rows = frappe.db.sql(
 		"""
-		SELECT year, category, SUM(amount) AS actual_amount
+		SELECT year, category, SUM(COALESCE(amount_net, amount)) AS actual_amount
 		FROM `tabMPIT Actual Entry`
 		GROUP BY year, category
 		""",

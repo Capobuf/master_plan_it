@@ -1,7 +1,7 @@
 # Master Plan IT (MPIT) — Documentation
 
-Version: 0.1 (V1 blueprint)  
-Last updated: 2025-12-21
+Version: 0.1 (V1 blueprint + EPIC E01 ✅)  
+Last updated: 2025-12-22
 
 This documentation is written in **Diátaxis** format (Tutorials, How‑to Guides, Reference, Explanation) plus **ADR** (Architecture Decision Records).
 
@@ -22,9 +22,33 @@ Master Plan IT is a **Frappe Desk** application for vCIO budgeting, contracts/re
   - Renewals / expiries window
   - Projects planned vs actual
 
+## Recent Enhancements (EPIC MPIT-E01) ✅
+**Completed:** Dec 22, 2025
+
+### Phase 1-6 Implemented:
+1. **User Preferences** — Per-user VAT defaults, naming series, print options
+2. **Title Field UX** — Human-readable titles in link fields (Budget, Project)
+3. **Naming Automation** — Deterministic naming: `BUD-2025-01`, `PRJ-0001` based on Year
+4. **Strict VAT Normalization** — All Currency fields split into `net/vat/gross` triple with validation
+5. **Annualization** — Temporal calculations for Monthly/Quarterly/Annual/Custom/None recurrence patterns
+6. **Professional Printing** — Jinja print formats for Budget/Project + HTML templates for 4 Query Reports
+
+### Key Features:
+- ✅ VAT calculation with user defaults and strict validation (Phase 4)
+- ✅ Annualization rules with Rule A enforcement (zero overlap blocked) (Phase 5)
+- ✅ Professional print formats (server-side Jinja, no custom frontend) (Phase 6)
+- ✅ Report HTML templates with color-coded variance and status badges (Phase 6)
+- ✅ Dual-mode controller supporting legacy `amount` and new `amount_net` flows
+- ✅ All metadata versionable in git (zero drift)
+- ✅ Full test coverage: verify.run + run-tests passing
+
+See: `docs/how-to/10-epic-e01-money-naming-printing.md` for complete implementation guide.
+
 ## Constraints
 - **Desk only**: clients are **System Users** (no portal / Website Users).
 - **Native Frappe components only** (no custom JS/CSS, no asset build).
+- **ADR 0006:** No custom frontend/scheduler (server-side rendering only)
+- **ADR 0008:** Print formats via Jinja templates (versionable in repo)
 
 ## Quick links
 - Tutorials: `docs/tutorials/`

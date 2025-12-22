@@ -1,6 +1,6 @@
 {
  "charts": [],
- "content": "[{\"id\":\"48YosQYcN_\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Master Plan IT</span>\",\"col\":12}},{\"id\":\"4DtiW45bj1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budgets\",\"col\":3}},{\"id\":\"7B5eEtc6e_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Amendments\",\"col\":3}},{\"id\":\"4VmudUyMmc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Actual Entries\",\"col\":3}},{\"id\":\"FtCChtVwUa\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Contracts\",\"col\":3}},{\"id\":\"KwUNOlABTH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Projects\",\"col\":3}},{\"id\":\"gK90CWLnpY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Baseline Expenses\",\"col\":3}},{\"id\":\"90H-jgR-FE\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Categories\",\"col\":3}},{\"id\":\"iotc2-p6YO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vendors\",\"col\":3}}]",
+ "content": "[{\"id\":\"48YosQYcN_\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Master Plan IT</span>\",\"col\":12}},{\"id\":\"4DtiW45bj1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budgets\",\"col\":3}},{\"id\":\"7B5eEtc6e_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Amendments\",\"col\":3}},{\"id\":\"4VmudUyMmc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Actual Entries\",\"col\":3}},{\"id\":\"FtCChtVwUa\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Contracts\",\"col\":3}},{\"id\":\"KwUNOlABTH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Projects\",\"col\":3}},{\"id\":\"gK90CWLnpY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Baseline Expenses\",\"col\":3}},{\"id\":\"90H-jgR-FE\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Categories\",\"col\":3}},{\"id\":\"iotc2-p6YO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vendors\",\"col\":3}},{\"id\":\"UPmZx7n9aQ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"User Preferences\",\"col\":3}}]",
  "creation": "2025-12-21 18:09:23.286665",
  "custom_blocks": [],
  "docstatus": 0,
@@ -11,7 +11,7 @@
  "is_hidden": 0,
  "label": "Master Plan IT",
  "links": [],
- "modified": "2025-12-21 20:22:36.082084",
+ "modified": "2025-12-22 12:42:17.589769",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "Master Plan IT",
@@ -19,7 +19,20 @@
  "owner": "Administrator",
  "public": 1,
  "quick_lists": [],
- "roles": [],
+ "roles": [
+  {
+   "role": "vCIO Manager"
+  },
+  {
+   "role": "Client Editor"
+  },
+  {
+   "role": "Client Viewer"
+  },
+  {
+   "role": "System Manager"
+  }
+ ],
  "sequence_id": 0.0,
  "shortcuts": [
   {
@@ -68,6 +81,12 @@
    "doc_view": "",
    "label": "Vendors",
    "link_to": "MPIT Vendor",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "User Preferences",
+   "link_to": "MPIT User Preferences",
    "type": "DocType"
   }
  ],

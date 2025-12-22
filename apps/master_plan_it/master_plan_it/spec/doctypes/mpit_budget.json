@@ -1,5 +1,7 @@
 {
   "allow_import": 1,
+  "title_field": "title",
+  "show_title_field_in_link": 1,
   "fields": [
     {
       "fieldname": "year",

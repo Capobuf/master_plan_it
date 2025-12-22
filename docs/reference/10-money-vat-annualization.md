@@ -65,3 +65,111 @@ Per dati storici senza VAT:
 - set `vat_rate=0`, `includes_vat=0`
 - net/gross=amount, vat=0
 Non si “inventa” IVA storica.
+---
+
+## 5) Dual-Mode Controller (Phase 6 Implementation) ✅
+
+**Problema:** Transizione da campo legacy `amount` a nuovo triple `amount_net/vat/gross`.
+
+**Soluzione:** Controller intelligente che supporta entrambi i flussi.
+
+### 5.1 Budget Line VAT Calculation (_compute_vat_split)
+
+```python
+def _compute_vat_split(self):
+    """Compute amount_net/_vat/_gross from input fields using user defaults."""
+    default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
+    default_includes = mpit_user_prefs.get_default_includes_vat(frappe.session.user)
+    
+    for line in self.lines:
+        # Determine source amount: prefer amount_net (new field), fallback to amount (legacy)
+        if line.amount_net:
+            # NEW FLOW: amount_net is source of truth
+            # Apply VAT defaults if not specified
+            if line.vat_rate is None and default_vat is not None:
+                line.vat_rate = default_vat
+            
+            # Compute VAT and gross from net
+            if line.vat_rate:
+                vat_rate_decimal = line.vat_rate / 100.0
+                line.amount_vat = line.amount_net * vat_rate_decimal
+                line.amount_gross = line.amount_net + line.amount_vat
+            else:
+                line.amount_vat = 0.0
+                line.amount_gross = line.amount_net
+                
+        elif line.amount:
+            # LEGACY FLOW: amount is source, split based on includes_vat flag
+            # Apply defaults if field is empty
+            if line.vat_rate is None and default_vat is not None:
+                line.vat_rate = default_vat
+            if not line.amount_includes_vat and default_includes:
+                line.amount_includes_vat = 1
+            
+            # Strict VAT validation
+            final_vat_rate = tax.validate_strict_vat(
+                line.amount,
+                line.vat_rate,
+                default_vat,
+                field_label=f"Line {line.idx} Amount"
+            )
+            
+            # Compute split
+            net, vat, gross = tax.split_net_vat_gross(
+                line.amount,
+                final_vat_rate,
+                bool(line.amount_includes_vat)
+            )
+            
+            line.amount_net = net
+            line.amount_vat = vat
+            line.amount_gross = gross
+```
+
+### 5.2 Campo Legacy Hidden
+
+In spec doctypes (Budget Line, Baseline Expense, Actual Entry, Project Quote):
+```json
+{
+  "fieldname": "amount",
+  "fieldtype": "Currency",
+  "label": "Amount (Legacy)",
+  "read_only": 1,
+  "hidden": 1
+}
+```
+
+**Risultato:**
+- UI mostra solo `amount_net/vat/gross` (campi moderni)
+- Controller accetta entrambi i flussi
+- Dati legacy continuano a funzionare (backfill già applicato)
+- Nuovo codice usa `amount_net` direttamente
+
+### 5.3 Annualization Source Fix
+
+`_compute_lines_annualization()` usa `line.amount_net` dopo VAT split:
+```python
+# Calculate annualized amounts
+annual_net = annualization.annualize(
+    line.amount_net,  # ← Sempre popolato dal dual-mode controller
+    line.recurrence_rule or "None",
+    line.custom_period_months,
+    overlap_months_count
+)
+```
+
+**CRITICAL:** VAT split (`_compute_vat_split()`) DEVE essere chiamato PRIMA di annualization (`_compute_lines_annualization()`) nella sequenza `validate()`.
+
+### 5.4 Report Anti-Regression Pattern
+
+Per compatibilità con dati storici, i report usano COALESCE:
+```sql
+SELECT
+    COALESCE(annual_net, amount) AS budget_net,
+    COALESCE(amount_net, amount) AS actual_net
+FROM ...
+```
+
+Questo garantisce:
+- Record nuovi: usano `annual_net`/`amount_net`
+- Record legacy (pre-Phase 4): usano `amount` come fallback

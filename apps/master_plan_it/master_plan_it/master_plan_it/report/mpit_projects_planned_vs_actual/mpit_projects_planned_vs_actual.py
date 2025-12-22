@@ -42,7 +42,7 @@ def _get_data(filters) -> list[dict]:
 			p.name AS project,
 			p.status AS status,
 			alloc.year AS year,
-			SUM(alloc.planned_amount) AS planned_amount
+			SUM(COALESCE(alloc.planned_amount_net, alloc.planned_amount)) AS planned_amount
 		FROM `tabMPIT Project` p
 		JOIN `tabMPIT Project Allocation` alloc ON alloc.parent = p.name
 		WHERE {where}
@@ -54,7 +54,7 @@ def _get_data(filters) -> list[dict]:
 
 	actuals = frappe.db.sql(
 		"""
-		SELECT project, year, SUM(amount) AS actual_amount
+		SELECT project, year, SUM(COALESCE(amount_net, amount)) AS actual_amount
 		FROM `tabMPIT Actual Entry`
 		WHERE project IS NOT NULL
 		GROUP BY project, year

@@ -1,0 +1,136 @@
+{
+  "actions": [],
+  "allow_import": 0,
+  "autoname": "field:user",
+  "creation": "2025-12-22 12:00:00.000000",
+  "doctype": "DocType",
+  "engine": "InnoDB",
+  "field_order": [
+    "user",
+    "vat_section",
+    "default_vat_rate",
+    "default_amount_includes_vat",
+    "naming_section",
+    "budget_prefix",
+    "budget_sequence_digits",
+    "column_break_naming",
+    "project_prefix",
+    "project_sequence_digits",
+    "print_section",
+    "show_attachments_in_print"
+  ],
+  "title_field": "user",
+  "show_title_field_in_link": 1,
+  "fields": [
+    {
+      "fieldname": "user",
+      "fieldtype": "Link",
+      "label": "User",
+      "options": "User",
+      "reqd": 1,
+      "unique": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "vat_section",
+      "fieldtype": "Section Break",
+      "label": "VAT Defaults"
+    },
+    {
+      "fieldname": "default_vat_rate",
+      "fieldtype": "Percent",
+      "label": "Default VAT Rate",
+      "description": "Default VAT rate for new entries (leave blank for no default, 0 is valid)",
+      "precision": "2"
+    },
+    {
+      "default": "0",
+      "fieldname": "default_amount_includes_vat",
+      "fieldtype": "Check",
+      "label": "Default Amount Includes VAT"
+    },
+    {
+      "fieldname": "naming_section",
+      "fieldtype": "Section Break",
+      "label": "Naming Preferences"
+    },
+    {
+      "default": "BUD-",
+      "fieldname": "budget_prefix",
+      "fieldtype": "Data",
+      "label": "Budget Prefix"
+    },
+    {
+      "default": "2",
+      "fieldname": "budget_sequence_digits",
+      "fieldtype": "Int",
+      "label": "Budget Sequence Digits"
+    },
+    {
+      "fieldname": "column_break_naming",
+      "fieldtype": "Column Break"
+    },
+    {
+      "default": "PRJ-",
+      "fieldname": "project_prefix",
+      "fieldtype": "Data",
+      "label": "Project Prefix"
+    },
+    {
+      "default": "4",
+      "fieldname": "project_sequence_digits",
+      "fieldtype": "Int",
+      "label": "Project Sequence Digits"
+    },
+    {
+      "fieldname": "print_section",
+      "fieldtype": "Section Break",
+      "label": "Print Preferences"
+    },
+    {
+      "default": "0",
+      "fieldname": "show_attachments_in_print",
+      "fieldtype": "Check",
+      "label": "Show Attachments in Print"
+    }
+  ],
+  "links": [],
+  "modified": "2025-12-22 12:00:00.000000",
+  "modified_by": "Administrator",
+  "module": "Master Plan IT",
+  "name": "MPIT User Preferences",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "System Manager",
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "if_owner": 1,
+      "read": 1,
+      "role": "vCIO Manager",
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "if_owner": 1,
+      "read": 1,
+      "role": "Client Editor",
+      "write": 1
+    },
+    {
+      "if_owner": 1,
+      "read": 1,
+      "role": "Client Viewer",
+      "write": 0
+    }
+  ],
+  "promote_to_standard": true,
+  "track_changes": 1
+}

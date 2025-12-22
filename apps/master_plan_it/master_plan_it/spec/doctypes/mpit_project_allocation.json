@@ -14,6 +14,36 @@
       "fieldtype": "Currency",
       "label": "Planned Amount",
       "reqd": 1
+    },
+    {
+      "default": "0",
+      "fieldname": "planned_amount_includes_vat",
+      "fieldtype": "Check",
+      "label": "Planned Amount Includes VAT"
+    },
+    {
+      "fieldname": "vat_rate",
+      "fieldtype": "Percent",
+      "label": "VAT Rate",
+      "precision": "2"
+    },
+    {
+      "fieldname": "planned_amount_net",
+      "fieldtype": "Currency",
+      "label": "Net Planned Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "planned_amount_vat",
+      "fieldtype": "Currency",
+      "label": "VAT Planned Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "planned_amount_gross",
+      "fieldtype": "Currency",
+      "label": "Gross Planned Amount",
+      "read_only": 1
     }
   ],
   "istable": 1,

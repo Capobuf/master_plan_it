@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding: 20px; }
+        .report-header { margin-bottom: 20px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .report-header h2 { margin: 0; color: #333; }
+        .report-filters { background-color: #f8f9fa; padding: 10px; margin-bottom: 15px; border-radius: 4px; font-size: 0.9em; }
+        .report-filters strong { color: #495057; }
+        .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9em; }
+        .table thead { background-color: #e9ecef; }
+        .table th { border: 1px solid #dee2e6; padding: 10px; text-align: left; font-weight: 600; color: #495057; }
+        .table td { border: 1px solid #dee2e6; padding: 8px; }
+        .table tbody tr:nth-child(even) { background-color: #f8f9fa; }
+        .table tbody tr:hover { background-color: #e9ecef; }
+        .text-right { text-align: right; }
+        .text-danger { color: #dc3545; }
+        .text-success { color: #28a745; }
+        .badge { display: inline-block; padding: 3px 8px; border-radius: 3px; font-size: 0.85em; font-weight: 500; }
+        .badge-planning { background-color: #ffc107; color: #000; }
+        .badge-active { background-color: #28a745; color: #fff; }
+        .badge-completed { background-color: #6c757d; color: #fff; }
+        .badge-cancelled { background-color: #dc3545; color: #fff; }
+        .report-footer { margin-top: 20px; padding-top: 10px; border-top: 1px solid #dee2e6; text-align: right; color: #6c757d; font-size: 0.85em; }
+    </style>
+</head>
+<body>
+    <div class="report-header">
+        <h2>Projects: Planned vs Actual</h2>
+    </div>
+
+    <div class="report-filters">
+        <% if (filters.project) { %>
+            <strong>Project:</strong> <%= filters.project %> &nbsp;
+        <% } %>
+        <% if (filters.year) { %>
+            <strong>Year:</strong> <%= filters.year %>
+        <% } %>
+    </div>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Project</th>
+                <th>Status</th>
+                <th>Year</th>
+                <th class="text-right">Planned Amount</th>
+                <th class="text-right">Actual Amount</th>
+                <th class="text-right">Variance</th>
+            </tr>
+        </thead>
+        <tbody>
+            <% if (data && data.length > 0) { %>
+                <% for(var i = 0; i < data.length; i++) { %>
+                    <% var row = data[i]; %>
+                    <% 
+                        var statusClass = "";
+                        if (row.status === "Planning") statusClass = "badge-planning";
+                        else if (row.status === "Active") statusClass = "badge-active";
+                        else if (row.status === "Completed") statusClass = "badge-completed";
+                        else if (row.status === "Cancelled") statusClass = "badge-cancelled";
+                    %>
+                    <tr>
+                        <td><%= row.project %></td>
+                        <td><span class="badge <%= statusClass %>"><%= row.status %></span></td>
+                        <td><%= row.year %></td>
+                        <td class="text-right"><%= format_currency(row.planned_amount) %></td>
+                        <td class="text-right"><%= format_currency(row.actual_amount) %></td>
+                        <td class="text-right <%= row.variance < 0 ? "text-success" : "text-danger" %>">
+                            <%= format_currency(row.variance) %>
+                        </td>
+                    </tr>
+                <% } %>
+            <% } else { %>
+                <tr>
+                    <td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;">No data available</td>
+                </tr>
+            <% } %>
+        </tbody>
+    </table>
+
+    <div class="report-footer">
+        Generated on <%= new Date().toLocaleDateString() %> at <%= new Date().toLocaleTimeString() %>
+    </div>
+</body>
+</html>

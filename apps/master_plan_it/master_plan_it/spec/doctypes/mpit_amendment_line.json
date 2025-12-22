@@ -43,6 +43,36 @@
       "in_list_view": 1
     },
     {
+      "default": "0",
+      "fieldname": "delta_amount_includes_vat",
+      "fieldtype": "Check",
+      "label": "Delta Amount Includes VAT"
+    },
+    {
+      "fieldname": "vat_rate",
+      "fieldtype": "Percent",
+      "label": "VAT Rate",
+      "precision": "2"
+    },
+    {
+      "fieldname": "delta_amount_net",
+      "fieldtype": "Currency",
+      "label": "Net Delta Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "delta_amount_vat",
+      "fieldtype": "Currency",
+      "label": "VAT Delta Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "delta_amount_gross",
+      "fieldtype": "Currency",
+      "label": "Gross Delta Amount",
+      "read_only": 1
+    },
+    {
       "fieldname": "note",
       "fieldtype": "Small Text",
       "label": "Note"

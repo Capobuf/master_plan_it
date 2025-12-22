@@ -13,8 +13,19 @@
   "vendor",
   "description",
   "amount",
+  "amount_includes_vat",
+  "vat_rate",
+  "amount_net",
+  "amount_vat",
+  "amount_gross",
   "expense_kind",
-  "recurrence",
+  "recurrence_rule",
+  "custom_period_months",
+  "period_start_date",
+  "period_end_date",
+  "annual_net",
+  "annual_vat",
+  "annual_gross",
   "contract_start",
   "contract_end",
   "auto_renew",
@@ -59,21 +70,15 @@
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
-   "in_list_view": 1,
-   "label": "Amount",
-   "reqd": 1
+   "hidden": 1,
+   "label": "Amount (Legacy)",
+   "read_only": 1
   },
   {
    "fieldname": "expense_kind",
    "fieldtype": "Select",
    "label": "Expense Kind",
    "options": "One-off\nSubscription\nAnnual Renewal\nContract"
-  },
-  {
-   "fieldname": "recurrence",
-   "fieldtype": "Select",
-   "label": "Recurrence",
-   "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone"
   },
   {
    "fieldname": "contract_start",
@@ -103,12 +108,83 @@
    "in_list_view": 1,
    "label": "Status",
    "options": "In Review\nNeeds Clarification\nValidated\nArchived"
+  },
+  {
+   "default": "0",
+   "fieldname": "amount_includes_vat",
+   "fieldtype": "Check",
+   "label": "Amount Includes VAT"
+  },
+  {
+   "fieldname": "vat_rate",
+   "fieldtype": "Percent",
+   "label": "VAT Rate",
+   "precision": "2"
+  },
+  {
+   "fieldname": "amount_net",
+   "fieldtype": "Currency",
+   "label": "Net Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_vat",
+   "fieldtype": "Currency",
+   "label": "VAT Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_gross",
+   "fieldtype": "Currency",
+   "label": "Gross Amount",
+   "read_only": 1
+  },
+  {
+   "default": "None",
+   "fieldname": "recurrence_rule",
+   "fieldtype": "Select",
+   "label": "Recurrence Rule",
+   "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone"
+  },
+  {
+   "depends_on": "eval:doc.recurrence_rule=='Custom'",
+   "fieldname": "custom_period_months",
+   "fieldtype": "Int",
+   "label": "Custom Period (Months)"
+  },
+  {
+   "fieldname": "period_start_date",
+   "fieldtype": "Date",
+   "label": "Period Start Date"
+  },
+  {
+   "fieldname": "period_end_date",
+   "fieldtype": "Date",
+   "label": "Period End Date"
+  },
+  {
+   "fieldname": "annual_net",
+   "fieldtype": "Currency",
+   "label": "Annual Net Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "annual_vat",
+   "fieldtype": "Currency",
+   "label": "Annual VAT Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "annual_gross",
+   "fieldtype": "Currency",
+   "label": "Annual Gross Amount",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-21 19:27:20.143430",
+ "modified": "2025-12-22 13:52:21.015978",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Baseline Expense",

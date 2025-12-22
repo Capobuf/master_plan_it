@@ -19,6 +19,11 @@
   "notice_days",
   "auto_renew",
   "current_amount",
+  "current_amount_includes_vat",
+  "vat_rate",
+  "current_amount_net",
+  "current_amount_vat",
+  "current_amount_gross",
   "currency",
   "status",
   "owner_user",
@@ -132,12 +137,42 @@
    "fieldname": "attachment",
    "fieldtype": "Attach",
    "label": "Attachment"
+  },
+  {
+   "default": "0",
+   "fieldname": "current_amount_includes_vat",
+   "fieldtype": "Check",
+   "label": "Current Amount Includes VAT"
+  },
+  {
+   "fieldname": "vat_rate",
+   "fieldtype": "Percent",
+   "label": "VAT Rate",
+   "precision": "2"
+  },
+  {
+   "fieldname": "current_amount_net",
+   "fieldtype": "Currency",
+   "label": "Net Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_amount_vat",
+   "fieldtype": "Currency",
+   "label": "VAT Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "current_amount_gross",
+   "fieldtype": "Currency",
+   "label": "Gross Amount",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-21 19:27:20.844397",
+ "modified": "2025-12-22 13:52:21.841802",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Contract",

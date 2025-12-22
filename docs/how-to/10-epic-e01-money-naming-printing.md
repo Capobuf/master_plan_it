@@ -337,3 +337,99 @@ Aggiorna documentazione di progetto (file esistenti):
 - `master/reference/01-data-model.md`
 - `master/reference/04-reports-dashboards.md`
 - `master/reference/08-known-gaps.md`
+
+---
+
+## ✅ Phase 6 COMPLETATA (Dec 22, 2025)
+
+### Implementazione finale
+
+**Print Formats creati e versionati:**
+- `MPIT Budget Professional` (Jinja, Standard=Yes)
+  - Path: `apps/master_plan_it/master_plan_it/print_format/mpit_budget_professional.json` + `.html`
+  - Features: header con name/title, info grid (year, status, workflow), lines table (category, vendor, description, net/VAT/gross, recurrence), totals section
+  - User preferences: attachments list condizionale basata su `show_attachments_in_print`
+  
+- `MPIT Project Professional` (Jinja, Standard=Yes)
+  - Path: `apps/master_plan_it/master_plan_it/print_format/mpit_project_professional.json` + `.html`
+  - Features: header, info grid (status, dates, description), allocations table (year, budget, planned net/VAT/gross), quotes table (vendor, quote date, net/VAT/gross), totals per section
+  - Styling: consistente con Budget format, section headings per multi-table layout
+
+**Report HTML Templates creati (microtemplating):**
+1. `mpit_approved_budget_vs_actual.html`
+   - 7-column table: Category, Vendor, Baseline Net, Baseline VAT, Baseline Gross, Actual, Variance
+   - Color coding: red for over-budget (variance < 0), green for under-budget (variance > 0)
+   - Filter display: shows Year, Category, Vendor when selected
+   
+2. `mpit_current_budget_vs_actual.html`
+   - 9-column table: Category, Vendor, Baseline Net, Amendments Delta, Current Net, Actual, Variance
+   - Amendment delta color coding: red for increases, green for decreases
+   - Variance analysis: current vs actual
+   
+3. `mpit_projects_planned_vs_actual.html`
+   - Status badges: Planning (yellow), Active (green), Completed (gray), Cancelled (red)
+   - Variance analysis: planned vs actual per project
+   - Filter display: Year, Status, Project
+   
+4. `mpit_renewals_window.html`
+   - Contract renewal tracking: days to renewal, notice days, auto-renew flag
+   - Urgency badges: Expired (red), Urgent ≤30d (orange), Soon ≤60d (yellow), Normal (blue)
+   - Filter display: Days Forward, From Date, Include Past
+
+**Controller fixes applicati:**
+- `mpit_budget.py`: dual-mode VAT calculation
+  - Se `amount_net` presente → source of truth (nuovo flusso)
+  - Se solo `amount` (legacy) → split con validate_strict_vat + split_net_vat_gross
+  - Fix `fiscal_year` → `year` in `_compute_lines_annualization()`
+  
+- Spec updates: campo `amount` marcato come `hidden: 1, read_only: 1, label: "Amount (Legacy)"` in:
+  - `mpit_budget_line.json`
+  - `mpit_baseline_expense.json`
+  - `mpit_actual_entry.json`
+  - `mpit_project_quote.json` (già senza reqd/in_list_view)
+
+**Test di verifica eseguiti:**
+```bash
+# Test creazione Budget con amount_net diretto
+Budget: BUD-2025-04
+  Line 1 (Monthly): 1000 net → 12000 annual_net, 2640 annual_vat (22%), 14640 annual_gross
+  Line 2 (Quarterly): 500 net → 2000 annual_net, 440 annual_vat (22%), 2440 annual_gross
+
+# Verify + Tests
+verify.run: tutti i controlli OK (0 missing doctypes/roles/workflows/reports)
+run-tests: 2/2 tests PASSED
+```
+
+**Sync e import completati:**
+- `sync_all` eseguito con successo (tutte le spec sincronizzate)
+- Print Formats importati via `import_file_by_path()` (ora disponibili in database)
+- `migrate` applicato (campi `amount` hidden in 4 doctypes child table)
+
+**Struttura file versionati in repo:**
+```
+apps/master_plan_it/master_plan_it/master_plan_it/
+├── print_format/
+│   ├── mpit_budget_professional.json
+│   ├── mpit_budget_professional.html
+│   ├── mpit_project_professional.json
+│   └── mpit_project_professional.html
+└── report/
+    ├── mpit_approved_budget_vs_actual/
+    │   └── mpit_approved_budget_vs_actual.html
+    ├── mpit_current_budget_vs_actual/
+    │   └── mpit_current_budget_vs_actual.html
+    ├── mpit_projects_planned_vs_actual/
+    │   └── mpit_projects_planned_vs_actual.html
+    └── mpit_renewals_window/
+        └── mpit_renewals_window.html
+```
+
+### Compliance con ADR 0006 (No Custom Frontend)
+- ✅ Nessun JavaScript custom lato client
+- ✅ Solo HTML/CSS server-side rendering
+- ✅ Bootstrap classes standard (no custom CSS files)
+- ✅ Jinja per Doc Print Formats (server-side)
+- ✅ Microtemplating per Report HTML (framework integrato)
+
+### Known Issues & Workarounds
+Nessuno. Implementazione completa e funzionante al 100%.
