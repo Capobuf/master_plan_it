@@ -133,7 +133,7 @@ In spec doctypes (Budget Line, Baseline Expense, Actual Entry, Project Quote):
 {
   "fieldname": "amount",
   "fieldtype": "Currency",
-  "label": "Amount (Legacy)",
+  "label": "Amount",
   "read_only": 1,
   "hidden": 1
 }

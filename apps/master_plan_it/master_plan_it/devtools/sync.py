@@ -481,4 +481,12 @@ def sync_all() -> str:
 
     frappe.db.commit()
     frappe.clear_cache()
+
+    # Compila i messaggi di traduzione IT dopo la sync (Frappe 15)
+    try:
+        frappe.translate.clear_cache()
+        frappe.translate.compile_messages('it')
+    except Exception as e:
+        print(f"[WARN] Errore compilazione messaggi IT: {e}")
+
     return "OK"

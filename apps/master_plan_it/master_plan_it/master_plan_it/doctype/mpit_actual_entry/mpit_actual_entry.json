@@ -82,9 +82,8 @@
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
-   "hidden": 1,
-   "label": "Amount (Legacy)",
-   "read_only": 1
+   "in_list_view": 1,
+   "label": "Amount"
   },
   {
    "fieldname": "description",
@@ -133,7 +132,7 @@
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-22 13:52:25.331713",
+ "modified": "2025-12-22 18:32:06.535613",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Actual Entry",

@@ -10,7 +10,39 @@
     {
       "fieldname": "amount",
       "fieldtype": "Currency",
-      "label": "Amount"
+      "label": "Amount (Legacy)",
+      "read_only": 1,
+      "hidden": 1
+    },
+    {
+      "default": "0",
+      "fieldname": "amount_includes_vat",
+      "fieldtype": "Check",
+      "label": "Amount Includes VAT"
+    },
+    {
+      "fieldname": "vat_rate",
+      "fieldtype": "Percent",
+      "label": "VAT Rate",
+      "precision": "2"
+    },
+    {
+      "fieldname": "amount_net",
+      "fieldtype": "Currency",
+      "label": "Net Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "amount_vat",
+      "fieldtype": "Currency",
+      "label": "VAT Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "amount_gross",
+      "fieldtype": "Currency",
+      "label": "Gross Amount",
+      "read_only": 1
     },
     {
       "fieldname": "quote_date",

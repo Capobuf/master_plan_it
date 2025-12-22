@@ -8,9 +8,12 @@ Breve: MPIT è un'app Frappe Desk multi-tenant (1 sito = 1 cliente). L'obiettivo
 
 ## Dove cercare le sorgenti di verità 📁
 - App: `apps/master_plan_it/`
-- Spec per sync deterministico: `apps/master_plan_it/spec/` (doctypes, workflows, reports, dashboards)
-- Devtools/entrypoint: `apps/master_plan_it/devtools/` (`sync.py`, `bootstrap.py`, `verify.py`)
-- Hooks: `apps/master_plan_it/hooks.py`
+- **Spec per sync deterministico:** `apps/master_plan_it/master_plan_it/spec/` (doctypes, workflows, reports, dashboards)
+  - ⚠️ **IMPORTANTE:** Modifica SEMPRE i file spec qui, NON i file esportati in `doctype/*/mpit_*.json`
+  - Flusso: `spec/` → [sync_all] → DB → [export_to_files] → `doctype/*/mpit_*.json`
+- **Python logic (calcoli/validazioni):** `apps/master_plan_it/master_plan_it/doctype/*/mpit_*.py`
+- Devtools/entrypoint: `apps/master_plan_it/master_plan_it/devtools/` (`sync.py`, `bootstrap.py`, `verify.py`)
+- Hooks: `apps/master_plan_it/master_plan_it/hooks.py`
 - Docs operative: `docs/how-to/09-docker-compose-notes.md`, `docs/how-to/08-user-guide.md`
 
 ## Comandi essenziali (esempi concreti) ✅
@@ -36,16 +39,22 @@ Breve: MPIT è un'app Frappe Desk multi-tenant (1 sito = 1 cliente). L'obiettivo
 
 ## Convezioni di sviluppo e sicurezza ⚠️
 - Non aggiungere custom JS/CSS o pipeline frontend.
-- Cambiamenti di metadata: preferire creare via UI per comodità, poi usare `export_to_files` / `sync_all` per ottenere file versionati.
+- **Cambiamenti di metadata:** 
+  - ✅ Modifica gli spec in `apps/master_plan_it/master_plan_it/spec/`
+  - ❌ NON modificare i file JSON esportati in `doctype/*/mpit_*.json` (saranno sovrascritti)
+  - Dopo le modifiche: `sync_all` → `migrate` → `clear-cache`
+- **Logica di business (Python):** Modifica i file `.py` nei doctype (es: `mpit_budget.py`)
 - Evitare rinomi di oggetti (DocType/Module) dopo averli creati: rompe percorsi/fixture.
 - Fixture: non esportare senza filtri; il progetto mantiene fixtures selettive in `master_plan_it/fixtures/`.
 
 > Nota: leggi `AGENT_INSTRUCTIONS.md` prima di eseguire modifiche automatizzate — lì sono elencati i "Non-negotiables" e la procedura standard.
 
 ## Checklist rapida per ogni modifica a metadata 🧭
-1. Aggiungi/modifica spec o crea via UI e poi esporta (preferibile usare `spec/` files).
-2. Esegui `bench --site <site> execute master_plan_it.devtools.sync.sync_all`.
-3. Esegui `bench --site <site> migrate` e `bench --site <site> clear-cache`.
-4. Esegui `bench --site <site> execute master_plan_it.devtools.verify.run`.
-5. Esegui test: `bench --site <site> run-tests --app master_plan_it`.
+1. **Modifica gli spec** in `apps/master_plan_it/master_plan_it/spec/doctypes/*.json` (o workflows/reports)
+2. **Modifica Python** se necessario in `apps/master_plan_it/master_plan_it/doctype/*/mpit_*.py`
+3. Esegui `bench --site <site> execute master_plan_it.devtools.sync.sync_all`
+4. Esegui `bench --site <site> migrate` e `bench --site <site> clear-cache`
+5. Esegui `bench --site <site> execute master_plan_it.devtools.verify.run`
+6. Esegui test: `bench --site <site> run-tests --app master_plan_it`
+7. Committa sia gli spec che i file esportati in Git
 6. Aggiorna `docs/` o aggiungi ADR se c'è una decisione architettonica.

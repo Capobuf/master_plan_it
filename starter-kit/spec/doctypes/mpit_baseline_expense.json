@@ -20,13 +20,15 @@
       "fieldtype": "Link",
       "label": "Category",
       "options": "MPIT Category",
-      "reqd": 1
+      "reqd": 1,
+      "in_list_view": 1
     },
     {
       "fieldname": "vendor",
       "fieldtype": "Link",
       "label": "Vendor",
-      "options": "MPIT Vendor"
+      "options": "MPIT Vendor",
+      "in_list_view": 1
     },
     {
       "fieldname": "description",
@@ -36,8 +38,39 @@
     {
       "fieldname": "amount",
       "fieldtype": "Currency",
-      "label": "Amount",
-      "reqd": 1
+      "label": "Amount (Legacy)",
+      "read_only": 1,
+      "hidden": 1
+    },
+    {
+      "default": "0",
+      "fieldname": "amount_includes_vat",
+      "fieldtype": "Check",
+      "label": "Amount Includes VAT"
+    },
+    {
+      "fieldname": "vat_rate",
+      "fieldtype": "Percent",
+      "label": "VAT Rate",
+      "precision": "2"
+    },
+    {
+      "fieldname": "amount_net",
+      "fieldtype": "Currency",
+      "label": "Net Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "amount_vat",
+      "fieldtype": "Currency",
+      "label": "VAT Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "amount_gross",
+      "fieldtype": "Currency",
+      "label": "Gross Amount",
+      "read_only": 1
     },
     {
       "fieldname": "expense_kind",
@@ -46,10 +79,45 @@
       "options": "One-off\nSubscription\nAnnual Renewal\nContract"
     },
     {
-      "fieldname": "recurrence",
+      "fieldname": "recurrence_rule",
       "fieldtype": "Select",
-      "label": "Recurrence",
-      "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone"
+      "label": "Recurrence Rule",
+      "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone",
+      "default": "None"
+    },
+    {
+      "depends_on": "eval:doc.recurrence_rule=='Custom'",
+      "fieldname": "custom_period_months",
+      "fieldtype": "Int",
+      "label": "Custom Period (Months)"
+    },
+    {
+      "fieldname": "period_start_date",
+      "fieldtype": "Date",
+      "label": "Period Start Date"
+    },
+    {
+      "fieldname": "period_end_date",
+      "fieldtype": "Date",
+      "label": "Period End Date"
+    },
+    {
+      "fieldname": "annual_net",
+      "fieldtype": "Currency",
+      "label": "Annual Net Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "annual_vat",
+      "fieldtype": "Currency",
+      "label": "Annual VAT Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "annual_gross",
+      "fieldtype": "Currency",
+      "label": "Annual Gross Amount",
+      "read_only": 1
     },
     {
       "fieldname": "contract_start",
@@ -85,14 +153,44 @@
   "name": "MPIT Baseline Expense",
   "permissions": [
     {
-      "amend": 1,
-      "cancel": 1,
+      "amend": 0,
+      "cancel": 0,
       "create": 1,
       "delete": 1,
       "read": 1,
       "role": "System Manager",
-      "submit": 1,
+      "submit": 0,
       "write": 1
+    },
+    {
+      "amend": 0,
+      "cancel": 0,
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "vCIO Manager",
+      "submit": 0,
+      "write": 1
+    },
+    {
+      "amend": 0,
+      "cancel": 0,
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "Client Editor",
+      "submit": 0,
+      "write": 1
+    },
+    {
+      "amend": 0,
+      "cancel": 0,
+      "create": 0,
+      "delete": 0,
+      "read": 1,
+      "role": "Client Viewer",
+      "submit": 0,
+      "write": 0
     }
   ],
   "promote_to_standard": true,

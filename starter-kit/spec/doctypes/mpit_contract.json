@@ -22,7 +22,8 @@
       "fieldtype": "Link",
       "label": "Category",
       "options": "MPIT Category",
-      "reqd": 1
+      "reqd": 1,
+      "in_list_view": 1
     },
     {
       "fieldname": "contract_kind",
@@ -71,6 +72,36 @@
       "label": "Current Amount"
     },
     {
+      "default": "0",
+      "fieldname": "current_amount_includes_vat",
+      "fieldtype": "Check",
+      "label": "Current Amount Includes VAT"
+    },
+    {
+      "fieldname": "vat_rate",
+      "fieldtype": "Percent",
+      "label": "VAT Rate",
+      "precision": "2"
+    },
+    {
+      "fieldname": "current_amount_net",
+      "fieldtype": "Currency",
+      "label": "Net Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "current_amount_vat",
+      "fieldtype": "Currency",
+      "label": "VAT Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "current_amount_gross",
+      "fieldtype": "Currency",
+      "label": "Gross Amount",
+      "read_only": 1
+    },
+    {
       "fieldname": "currency",
       "fieldtype": "Link",
       "label": "Currency",
@@ -81,26 +112,74 @@
       "fieldname": "status",
       "fieldtype": "Select",
       "label": "Status",
-      "options": "Draft\nActive\nPending Renewal\nRenewed\nCancelled\nExpired"
+      "options": "Draft\nActive\nPending Renewal\nRenewed\nCancelled\nExpired",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "owner_user",
+      "fieldtype": "Link",
+      "label": "Owner User",
+      "options": "User"
+    },
+    {
+      "fieldname": "source_baseline_expense",
+      "fieldtype": "Link",
+      "label": "Source Baseline Expense",
+      "options": "MPIT Baseline Expense"
     },
     {
       "fieldname": "notes",
       "fieldtype": "Small Text",
       "label": "Notes"
+    },
+    {
+      "fieldname": "attachment",
+      "fieldtype": "Attach",
+      "label": "Attachment"
     }
   ],
   "module": "Master Plan IT",
   "name": "MPIT Contract",
   "permissions": [
     {
-      "amend": 1,
-      "cancel": 1,
+      "amend": 0,
+      "cancel": 0,
       "create": 1,
       "delete": 1,
       "read": 1,
       "role": "System Manager",
-      "submit": 1,
+      "submit": 0,
       "write": 1
+    },
+    {
+      "amend": 0,
+      "cancel": 0,
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "vCIO Manager",
+      "submit": 0,
+      "write": 1
+    },
+    {
+      "amend": 0,
+      "cancel": 0,
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "Client Editor",
+      "submit": 0,
+      "write": 1
+    },
+    {
+      "amend": 0,
+      "cancel": 0,
+      "create": 0,
+      "delete": 0,
+      "read": 1,
+      "role": "Client Viewer",
+      "submit": 0,
+      "write": 0
     }
   ],
   "promote_to_standard": true,

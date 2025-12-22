@@ -1,0 +1,39 @@
+Source Text,Translated Text
+Amount,Importo
+Amount Includes VAT,Importo IVA inclusa
+Net Amount,Importo netto
+VAT Amount,Importo IVA
+Gross Amount,Importo lordo
+Category,Categoria
+Vendor,Fornitore
+Contract,Contratto
+Project,Progetto
+Baseline Expense,Spesa di base
+Description,Descrizione
+VAT Rate,Aliquota IVA
+Recurrence Rule,Regola di ricorrenza
+Monthly,Mensile
+Quarterly,Trimestrale
+Annual,Annuale
+Custom,Personalizzato
+None,Nessuna
+Custom Period (Months),Periodo personalizzato (mesi)
+Period Start Date,Data inizio periodo
+Period End Date,Data fine periodo
+Annual Net Amount,Importo netto annuale
+Annual VAT Amount,IVA annuale
+Annual Gross Amount,Importo lordo annuale
+Cost Type,Tipo costo
+CAPEX,Investimento (CAPEX)
+OPEX,Spesa operativa (OPEX)
+Is Portfolio Bucket,Bucket di portafoglio
+Is Active,Attivo
+Server upgrade,Aggiornamento server
+License renewal,Rinnovo licenza
+Hardware,Hardware
+Software,Software
+Draft,Bozza
+Approved,Approvato
+Rejected,Respinto
+Line {0}: Period ({1} to {2}) has zero overlap with fiscal year {3}. Cannot save budget line with no temporal overlap.,Riga {0}: Il periodo ({1} - {2}) non si sovrappone con l'anno fiscale {3}. Impossibile salvare la riga di budget senza sovrapposizione temporale.
+Year is required to generate Budget name,Anno obbligatorio per generare il nome del budget

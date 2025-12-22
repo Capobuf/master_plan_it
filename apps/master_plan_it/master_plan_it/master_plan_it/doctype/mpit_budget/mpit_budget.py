@@ -39,47 +39,41 @@ class MPITBudget(Document):
 		default_includes = mpit_user_prefs.get_default_includes_vat(frappe.session.user)
 		
 		for line in self.lines:
-			# Determine source amount: prefer amount_net (new field), fallback to amount (legacy)
-			if line.amount_net:
-				# New flow: amount_net is the source of truth
-				# Apply VAT defaults if not specified
-				if line.vat_rate is None and default_vat is not None:
-					line.vat_rate = default_vat
-				
-				# Compute VAT and gross from net
-				if line.vat_rate:
-					vat_rate_decimal = line.vat_rate / 100.0
-					line.amount_vat = line.amount_net * vat_rate_decimal
-					line.amount_gross = line.amount_net + line.amount_vat
-				else:
-					line.amount_vat = 0.0
-					line.amount_gross = line.amount_net
-			elif line.amount:
-				# Legacy flow: amount is source, split based on includes_vat flag
-				# Apply defaults if field is empty
-				if line.vat_rate is None and default_vat is not None:
-					line.vat_rate = default_vat
-				if not line.amount_includes_vat and default_includes:
-					line.amount_includes_vat = 1
-				
-				# Strict VAT validation
-				final_vat_rate = tax.validate_strict_vat(
-					line.amount,
-					line.vat_rate,
-					default_vat,
-					field_label=f"Line {line.idx} Amount"
-				)
-				
-				# Compute split
-				net, vat, gross = tax.split_net_vat_gross(
-					line.amount,
-					final_vat_rate,
-					bool(line.amount_includes_vat)
-				)
-				
-				line.amount_net = net
-				line.amount_vat = vat
-				line.amount_gross = gross
+			# Skip if no amount is provided
+			if not line.amount:
+				# Clear calculated fields if no amount
+				line.amount_net = 0.0
+				line.amount_vat = 0.0
+				line.amount_gross = 0.0
+				continue
+			
+			# Use 'amount' as source and calculate net/vat/gross
+			# Apply VAT rate default if not specified
+			if line.vat_rate is None and default_vat is not None:
+				line.vat_rate = default_vat
+			
+			# Apply includes_vat default if not specified
+			if line.amount_includes_vat is None and default_includes:
+				line.amount_includes_vat = 1
+			
+			# Strict VAT validation
+			final_vat_rate = tax.validate_strict_vat(
+				line.amount,
+				line.vat_rate,
+				default_vat,
+				field_label=f"Line {line.idx} Amount"
+			)
+			
+			# Compute split
+			net, vat, gross = tax.split_net_vat_gross(
+				line.amount,
+				final_vat_rate,
+				bool(line.amount_includes_vat)
+			)
+			
+			line.amount_net = net
+			line.amount_vat = vat
+			line.amount_gross = gross
 	
 	def _compute_lines_annualization(self):
 		"""Compute annual amounts for all Budget Lines based on recurrence rules."""

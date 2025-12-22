@@ -41,14 +41,44 @@
   "name": "MPIT Vendor",
   "permissions": [
     {
-      "amend": 1,
-      "cancel": 1,
+      "amend": 0,
+      "cancel": 0,
       "create": 1,
       "delete": 1,
       "read": 1,
       "role": "System Manager",
-      "submit": 1,
+      "submit": 0,
       "write": 1
+    },
+    {
+      "amend": 0,
+      "cancel": 0,
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "vCIO Manager",
+      "submit": 0,
+      "write": 1
+    },
+    {
+      "amend": 0,
+      "cancel": 0,
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "Client Editor",
+      "submit": 0,
+      "write": 1
+    },
+    {
+      "amend": 0,
+      "cancel": 0,
+      "create": 0,
+      "delete": 0,
+      "read": 1,
+      "role": "Client Viewer",
+      "submit": 0,
+      "write": 0
     }
   ],
   "promote_to_standard": true,

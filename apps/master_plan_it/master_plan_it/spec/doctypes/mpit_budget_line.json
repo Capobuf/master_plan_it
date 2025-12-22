@@ -45,15 +45,15 @@
     {
       "fieldname": "amount",
       "fieldtype": "Currency",
-      "label": "Amount (Legacy)",
-      "read_only": 1,
-      "hidden": 1
+      "label": "Amount",
+      "in_list_view": 1
     },
     {
       "default": "0",
       "fieldname": "amount_includes_vat",
       "fieldtype": "Check",
-      "label": "Amount Includes VAT"
+      "label": "Amount Includes VAT",
+      "in_list_view": 1
     },
     {
       "fieldname": "vat_rate",

@@ -74,9 +74,8 @@
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
-   "hidden": 1,
-   "label": "Amount (Legacy)",
-   "read_only": 1
+   "in_list_view": 1,
+   "label": "Amount"
   },
   {
    "default": "OPEX",
@@ -101,6 +100,7 @@
    "default": "0",
    "fieldname": "amount_includes_vat",
    "fieldtype": "Check",
+   "in_list_view": 1,
    "label": "Amount Includes VAT"
   },
   {
@@ -173,7 +173,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-22 13:52:24.063282",
+ "modified": "2025-12-22 18:32:05.230699",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Budget Line",

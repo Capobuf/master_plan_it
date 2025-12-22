@@ -55,7 +55,8 @@
    "fieldname": "lines",
    "fieldtype": "Table",
    "label": "Lines",
-   "options": "MPIT Budget Line"
+   "options": "MPIT Budget Line",
+   "search_index": 1
   },
   {
    "fieldname": "amended_from",
@@ -72,7 +73,7 @@
  "index_web_pages_for_search": 1,
  "is_submittable": 1,
  "links": [],
- "modified": "2025-12-22 13:52:24.610704",
+ "modified": "2025-12-22 18:40:45.297534",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Budget",
