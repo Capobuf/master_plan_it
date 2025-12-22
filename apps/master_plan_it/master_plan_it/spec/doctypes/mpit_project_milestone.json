@@ -1,0 +1,43 @@
+{
+  "allow_import": 1,
+  "fields": [
+    {
+      "fieldname": "title",
+      "fieldtype": "Data",
+      "label": "Title",
+      "reqd": 1
+    },
+    {
+      "fieldname": "due_date",
+      "fieldtype": "Date",
+      "label": "Due Date"
+    },
+    {
+      "default": "Planned",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Planned\nDone\nAccepted"
+    },
+    {
+      "fieldname": "acceptance_date",
+      "fieldtype": "Date",
+      "label": "Acceptance Date"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Notes"
+    },
+    {
+      "fieldname": "attachment",
+      "fieldtype": "Attach",
+      "label": "Attachment"
+    }
+  ],
+  "istable": 1,
+  "module": "Master Plan IT",
+  "name": "MPIT Project Milestone",
+  "promote_to_standard": true,
+  "track_changes": 1
+}

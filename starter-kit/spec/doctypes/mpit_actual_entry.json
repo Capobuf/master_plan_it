@@ -1,0 +1,77 @@
+{
+  "allow_import": 1,
+  "fields": [
+    {
+      "fieldname": "posting_date",
+      "fieldtype": "Date",
+      "in_list_view": 1,
+      "label": "Posting Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "year",
+      "fieldtype": "Link",
+      "label": "Year",
+      "options": "MPIT Year"
+    },
+    {
+      "fieldname": "category",
+      "fieldtype": "Link",
+      "label": "Category",
+      "options": "MPIT Category",
+      "reqd": 1
+    },
+    {
+      "fieldname": "vendor",
+      "fieldtype": "Link",
+      "label": "Vendor",
+      "options": "MPIT Vendor"
+    },
+    {
+      "fieldname": "contract",
+      "fieldtype": "Link",
+      "label": "Contract",
+      "options": "MPIT Contract"
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "label": "Project",
+      "options": "MPIT Project"
+    },
+    {
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "label": "Amount",
+      "reqd": 1
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    },
+    {
+      "default": "Recorded",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "label": "Status",
+      "options": "Recorded\nVerified"
+    }
+  ],
+  "module": "Master Plan IT",
+  "name": "MPIT Actual Entry",
+  "permissions": [
+    {
+      "amend": 1,
+      "cancel": 1,
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "System Manager",
+      "submit": 1,
+      "write": 1
+    }
+  ],
+  "promote_to_standard": true,
+  "track_changes": 1
+}

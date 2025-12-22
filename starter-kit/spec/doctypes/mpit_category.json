@@ -1,0 +1,56 @@
+{
+  "allow_import": 1,
+  "autoname": "field:category_name",
+  "fields": [
+    {
+      "fieldname": "category_name",
+      "fieldtype": "Data",
+      "in_list_view": 1,
+      "label": "Category Name",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "parent_category",
+      "fieldtype": "Link",
+      "label": "Parent Category",
+      "options": "MPIT Category"
+    },
+    {
+      "default": 0,
+      "fieldname": "is_group",
+      "fieldtype": "Check",
+      "label": "Is Group"
+    },
+    {
+      "default": 1,
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active"
+    },
+    {
+      "fieldname": "sort_order",
+      "fieldtype": "Int",
+      "label": "Sort Order"
+    }
+  ],
+  "is_tree": 1,
+  "module": "Master Plan IT",
+  "name": "MPIT Category",
+  "nsm_parent_field": "parent_category",
+  "permissions": [
+    {
+      "amend": 1,
+      "cancel": 1,
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "System Manager",
+      "submit": 1,
+      "write": 1
+    }
+  ],
+  "promote_to_standard": true,
+  "title_field": "category_name",
+  "track_changes": 1
+}

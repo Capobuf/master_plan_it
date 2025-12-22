@@ -1,0 +1,49 @@
+/data
+# Environment files
+.env
+.env.local
+.env.*.local
+.envrc
+
+# Python artifacts
+*.pyc
+__pycache__/
+.pytest_cache/
+.mypy_cache/
+.coverage
+coverage/
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+
+# Packaging/build
+dist/
+build/
+*.egg-info/
+pip-wheel-metadata/
+
+# Node/npm
+node_modules/
+npm-debug.log*
+yarn-error.log*
+
+# OS / editors
+.DS_Store
+.vscode/
+.idea/
+.cache/
+
+# Database / data
+*.sqlite3
+*.db
+/data/sites/*/private/
+/data/sites/*/files/
+/data/logs/
+/data/db/
+/data/redis/
+
+# Docker overrides
+docker-compose.override.yml
+docker-compose.override.yml.local

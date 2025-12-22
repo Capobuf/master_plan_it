@@ -1,0 +1,72 @@
+{
+  "allow_import": 1,
+  "fields": [
+    {
+      "fieldname": "category",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Category",
+      "options": "MPIT Category",
+      "reqd": 1
+    },
+    {
+      "fieldname": "vendor",
+      "fieldtype": "Link",
+      "label": "Vendor",
+      "options": "MPIT Vendor"
+    },
+    {
+      "fieldname": "contract",
+      "fieldtype": "Link",
+      "label": "Contract",
+      "options": "MPIT Contract"
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "label": "Project",
+      "options": "MPIT Project"
+    },
+    {
+      "fieldname": "baseline_expense",
+      "fieldtype": "Link",
+      "label": "Baseline Expense",
+      "options": "MPIT Baseline Expense"
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "label": "Amount",
+      "reqd": 1
+    },
+    {
+      "default": "OPEX",
+      "fieldname": "cost_type",
+      "fieldtype": "Select",
+      "label": "Cost Type",
+      "options": "CAPEX\nOPEX"
+    },
+    {
+      "default": 0,
+      "fieldname": "is_portfolio_bucket",
+      "fieldtype": "Check",
+      "label": "Is Portfolio Bucket"
+    },
+    {
+      "default": 1,
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active"
+    }
+  ],
+  "istable": 1,
+  "module": "Master Plan IT",
+  "name": "MPIT Budget Line",
+  "promote_to_standard": true,
+  "track_changes": 1
+}

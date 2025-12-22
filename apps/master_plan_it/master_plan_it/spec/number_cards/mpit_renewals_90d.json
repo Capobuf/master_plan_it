@@ -1,0 +1,13 @@
+{
+  "name": "Renewals 90d",
+  "label": "Renewals 90d",
+  "type": "Report",
+  "report_name": "MPIT Renewals Window",
+  "report_field": "count",
+  "function": "Sum",
+  "filters_json": "{\"days\": 90}",
+  "is_public": 0,
+  "is_standard": 1,
+  "show_percentage_stats": 0,
+  "module": "Master Plan IT"
+}

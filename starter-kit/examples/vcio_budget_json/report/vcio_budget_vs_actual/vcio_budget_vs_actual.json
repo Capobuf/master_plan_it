@@ -1,0 +1,70 @@
+{
+ "add_total_row": 0,
+ "add_translate_data": 0,
+ "columns": [
+  {
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "label": "Category",
+   "options": "VCIO Category",
+   "width": 220
+  },
+  {
+   "fieldname": "budget_amount",
+   "fieldtype": "Currency",
+   "label": "Budget",
+   "width": 140
+  },
+  {
+   "fieldname": "actual_amount",
+   "fieldtype": "Currency",
+   "label": "Actual",
+   "width": 140
+  },
+  {
+   "fieldname": "variance",
+   "fieldtype": "Currency",
+   "label": "Variance",
+   "width": 140
+  }
+ ],
+ "creation": "2025-12-21 12:31:30.517037",
+ "disabled": 0,
+ "docstatus": 0,
+ "doctype": "Report",
+ "filters": [
+  {
+   "fieldname": "period",
+   "fieldtype": "Link",
+   "label": "Period",
+   "mandatory": 0,
+   "options": "VCIO Period",
+   "wildcard_filter": 0
+  }
+ ],
+ "idx": 0,
+ "is_standard": "Yes",
+ "letter_head": null,
+ "modified": "2025-12-21 12:31:30.517037",
+ "modified_by": "Administrator",
+ "module": "Vcio Budget",
+ "name": "VCIO Budget vs Actual",
+ "owner": "Administrator",
+ "prepared_report": 0,
+ "query": "\nSELECT\n  bl.category AS category,\n  SUM(bl.amount) AS budget_amount,\n  IFNULL(a.actual_amount, 0) AS actual_amount,\n  (SUM(bl.amount) - IFNULL(a.actual_amount, 0)) AS variance\nFROM `tabVCIO Budget Line` bl\nJOIN `tabVCIO Budget` b ON b.name = bl.parent\nLEFT JOIN (\n  SELECT category, SUM(amount) AS actual_amount\n  FROM `tabVCIO Actual Entry`\n  WHERE period = %(period)s\n  GROUP BY category\n) a ON a.category = bl.category\nWHERE b.period = %(period)s\n  AND b.status IN (\"Draft\", \"Active\")\nGROUP BY bl.category\nORDER BY bl.category\n",
+ "ref_doctype": "VCIO Budget",
+ "report_name": "VCIO Budget vs Actual",
+ "report_type": "Query Report",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "Client Editor"
+  },
+  {
+   "role": "Client Viewer"
+  }
+ ],
+ "timeout": 0
+}

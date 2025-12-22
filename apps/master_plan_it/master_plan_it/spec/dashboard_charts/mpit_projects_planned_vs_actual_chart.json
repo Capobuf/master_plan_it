@@ -1,0 +1,10 @@
+{
+  "chart_name": "MPIT Projects Planned vs Actual",
+  "chart_type": "Report",
+  "report_name": "MPIT Projects Planned vs Actual",
+  "use_report_chart": 1,
+  "filters_json": "{}",
+  "is_standard": 1,
+  "is_public": 0,
+  "module": "Master Plan IT"
+}

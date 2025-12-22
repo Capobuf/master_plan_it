@@ -1,0 +1,100 @@
+{
+  "allow_import": 1,
+  "fields": [
+    {
+      "fieldname": "year",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Year",
+      "options": "MPIT Year",
+      "reqd": 1
+    },
+    {
+      "fieldname": "posting_date",
+      "fieldtype": "Date",
+      "in_list_view": 1,
+      "label": "Posting Date"
+    },
+    {
+      "fieldname": "category",
+      "fieldtype": "Link",
+      "label": "Category",
+      "options": "MPIT Category",
+      "reqd": 1
+    },
+    {
+      "fieldname": "vendor",
+      "fieldtype": "Link",
+      "label": "Vendor",
+      "options": "MPIT Vendor"
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description"
+    },
+    {
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "label": "Amount",
+      "reqd": 1
+    },
+    {
+      "fieldname": "expense_kind",
+      "fieldtype": "Select",
+      "label": "Expense Kind",
+      "options": "One-off\nSubscription\nAnnual Renewal\nContract"
+    },
+    {
+      "fieldname": "recurrence",
+      "fieldtype": "Select",
+      "label": "Recurrence",
+      "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone"
+    },
+    {
+      "fieldname": "contract_start",
+      "fieldtype": "Date",
+      "label": "Contract Start"
+    },
+    {
+      "fieldname": "contract_end",
+      "fieldtype": "Date",
+      "label": "Contract End"
+    },
+    {
+      "default": 0,
+      "fieldname": "auto_renew",
+      "fieldtype": "Check",
+      "label": "Auto Renew"
+    },
+    {
+      "fieldname": "notice_days",
+      "fieldtype": "Int",
+      "label": "Notice Days"
+    },
+    {
+      "default": "In Review",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "in_list_view": 1,
+      "label": "Status",
+      "options": "In Review\nNeeds Clarification\nValidated\nArchived"
+    }
+  ],
+  "module": "Master Plan IT",
+  "name": "MPIT Baseline Expense",
+  "permissions": [
+    {
+      "amend": 1,
+      "cancel": 1,
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "System Manager",
+      "submit": 1,
+      "write": 1
+    }
+  ],
+  "promote_to_standard": true,
+  "track_changes": 1
+}

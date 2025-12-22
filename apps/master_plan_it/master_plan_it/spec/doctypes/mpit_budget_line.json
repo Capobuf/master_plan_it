@@ -1,0 +1,93 @@
+{
+  "allow_import": 1,
+  "fields": [
+    {
+      "fieldname": "category",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "label": "Category",
+      "options": "MPIT Category",
+      "reqd": 1
+    },
+    {
+      "fieldname": "vendor",
+      "fieldtype": "Link",
+      "label": "Vendor",
+      "options": "MPIT Vendor",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "contract",
+      "fieldtype": "Link",
+      "label": "Contract",
+      "options": "MPIT Contract",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "label": "Project",
+      "options": "MPIT Project",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "baseline_expense",
+      "fieldtype": "Link",
+      "label": "Baseline Expense",
+      "options": "MPIT Baseline Expense"
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "label": "Description",
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "label": "Amount",
+      "reqd": 1,
+      "in_list_view": 1
+    },
+    {
+      "fieldname": "recurrence",
+      "fieldtype": "Select",
+      "label": "Recurrence",
+      "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone"
+    },
+    {
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "label": "Start Date"
+    },
+    {
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "label": "End Date"
+    },
+    {
+      "default": "OPEX",
+      "fieldname": "cost_type",
+      "fieldtype": "Select",
+      "label": "Cost Type",
+      "options": "CAPEX\nOPEX"
+    },
+    {
+      "default": 0,
+      "fieldname": "is_portfolio_bucket",
+      "fieldtype": "Check",
+      "label": "Is Portfolio Bucket"
+    },
+    {
+      "default": 1,
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active"
+    }
+  ],
+  "istable": 1,
+  "module": "Master Plan IT",
+  "name": "MPIT Budget Line",
+  "promote_to_standard": true,
+  "track_changes": 1
+}

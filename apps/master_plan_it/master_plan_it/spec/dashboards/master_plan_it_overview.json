@@ -1,0 +1,18 @@
+{
+  "dashboard_name": "Master Plan IT Overview",
+  "is_standard": 1,
+  "is_default": 0,
+  "module": "Master Plan IT",
+  "charts": [
+    {"chart": "MPIT Budget vs Actual (Approved)", "width": "Half"},
+    {"chart": "MPIT Current Budget vs Actual", "width": "Half"},
+    {"chart": "MPIT Renewals by Month", "width": "Half"},
+    {"chart": "MPIT Projects Planned vs Actual", "width": "Half"}
+  ],
+  "cards": [
+    {"card": "Renewals 30d"},
+    {"card": "Renewals 60d"},
+    {"card": "Renewals 90d"},
+    {"card": "Expired Contracts"}
+  ]
+}

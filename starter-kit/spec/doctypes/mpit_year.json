@@ -1,0 +1,47 @@
+{
+  "allow_import": 1,
+  "autoname": "field:year",
+  "fields": [
+    {
+      "fieldname": "year",
+      "fieldtype": "Int",
+      "in_list_view": 1,
+      "label": "Year",
+      "reqd": 1,
+      "unique": 1
+    },
+    {
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "label": "Start Date"
+    },
+    {
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "label": "End Date"
+    },
+    {
+      "default": 1,
+      "fieldname": "is_active",
+      "fieldtype": "Check",
+      "label": "Is Active"
+    }
+  ],
+  "module": "Master Plan IT",
+  "name": "MPIT Year",
+  "permissions": [
+    {
+      "amend": 1,
+      "cancel": 1,
+      "create": 1,
+      "delete": 1,
+      "read": 1,
+      "role": "System Manager",
+      "submit": 1,
+      "write": 1
+    }
+  ],
+  "promote_to_standard": true,
+  "title_field": "year",
+  "track_changes": 1
+}
