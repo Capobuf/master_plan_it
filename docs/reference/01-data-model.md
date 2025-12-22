@@ -8,6 +8,18 @@ Naming convention: all DocTypes are prefixed `MPIT`.
 - renewal_window_days (Int, default 90)
 - portfolio_warning_threshold_pct (Int, default 100)
 
+### MPIT User Preferences
+- user (Link: User) — primary key/autoname (autoname = field:user)
+- default_vat_rate (Percent, nullable) — **no default**; if missing, strict VAT validation blocks saves when required
+- default_amount_includes_vat (Check, default 0)
+- show_attachments_in_print (Check, default 0)
+- budget_prefix (Data, optional)
+- budget_sequence_digits (Int, default 2)
+- project_prefix (Data, optional)
+- project_sequence_digits (Int, default 4)
+
+> Permissions: owner-only (via if_owner) with `System Manager` allowed global read/write.
+
 ### MPIT Year
 - year (Int, unique)
 - start_date (Date)
