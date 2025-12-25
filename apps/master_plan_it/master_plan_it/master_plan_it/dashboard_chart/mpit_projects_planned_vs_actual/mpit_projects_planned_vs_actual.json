@@ -1,7 +1,7 @@
 {
  "chart_name": "MPIT Projects Planned vs Actual",
  "chart_type": "Report",
- "creation": "2025-12-21 19:25:35.322214",
+ "creation": "2025-12-24 20:00:26.430915",
  "currency": "EUR",
  "docstatus": 0,
  "doctype": "Dashboard Chart",
@@ -10,7 +10,7 @@
  "idx": 0,
  "is_public": 0,
  "is_standard": 1,
- "modified": "2025-12-22 19:13:38.930303",
+ "modified": "2025-12-24 20:00:26.663537",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Projects Planned vs Actual",

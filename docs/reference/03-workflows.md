@@ -43,4 +43,4 @@ Actions:
 V1 can use a simple `status` Select field without a formal workflow.
 If you need strict approval gates, introduce a workflow later (ADR required).
 
-Implementation note: workflows live in `spec/workflows/*.json`, field name `workflow_state`, and are applied by `sync_all`.
+Implementation note: workflows live under `apps/master_plan_it/master_plan_it/master_plan_it/workflow/`, field name `workflow_state`, and are picked up from files via standard Frappe sync/migrate.

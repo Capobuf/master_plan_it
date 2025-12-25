@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export DEV_SERVER=1
 export PYTHONPATH="/home/frappe/frappe-bench/apps:${PYTHONPATH:-}"
 
 cd /home/frappe/frappe-bench

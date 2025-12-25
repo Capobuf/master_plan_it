@@ -2,7 +2,7 @@
 
 Questa guida è pensata per utenti finali (vCIO e utenti cliente) che lavorano in **Frappe Desk**.
 
-> Nota: la Workspace “Master Plan IT”, i ruoli MPIT e i workflow (Budget, Budget Amendment) sono ora provisionati automaticamente via `sync_all`/bootstrap. Le dashboard restano da aggiungere (vedi `docs/reference/08-known-gaps.md`).
+> Nota: la Workspace “Master Plan IT”, i ruoli MPIT e i workflow (Budget, Budget Amendment) sono provisionati tramite i file canonici del modulo e i normali comandi Frappe (`migrate`, `clear-cache`). Le dashboard restano da aggiungere (vedi `docs/reference/08-known-gaps.md`).
 
 ---
 

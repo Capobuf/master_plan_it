@@ -4,6 +4,7 @@
 - `docs/tutorials/00-first-budget-cycle.md`
 
 ## How‑to guides
+- `docs/how-to/00-bootstrap-from-scratch.md`
 - `docs/how-to/01-apply-changes.md`
 - `docs/how-to/02-create-new-tenant.md`
 - `docs/how-to/03-import-baseline-excel.md`
@@ -15,11 +16,14 @@
 - `docs/how-to/09-docker-compose-notes.md`
 
 ## Reference
+- `docs/reference/06-dev-workflow.md` ← authoritative workflow (native file-first; canonical path only)
 - `docs/reference/01-data-model.md`
 - `docs/reference/02-roles-permissions.md`
 - `docs/reference/03-workflows.md`
 - `docs/reference/04-reports-dashboards.md`
 - `docs/reference/05-fixtures-bootstrap.md`
+- `docs/reference/07-testing.md`
+- `docs/reference/08-known-gaps.md`
 
 ## Explanation
 - `docs/explanation/01-architecture.md`
@@ -31,11 +35,3 @@
 - `docs/adr/0004-project-allocations.md`
 - `docs/adr/0005-contracts-first-class.md`
 - `docs/adr/0006-no-frontend-custom-scheduler.md`
-
-
-- docs/reference/06-dev-workflow.md
-- docs/reference/07-testing.md
-
-- docs/reference/08-known-gaps.md
-
-- docs/how-to/00-bootstrap-from-scratch.md

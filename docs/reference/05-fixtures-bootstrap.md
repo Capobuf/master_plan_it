@@ -1,35 +1,14 @@
-# Reference: Fixtures and bootstrap
+# Reference: Fixtures & Bootstrap
 
-## What goes into fixtures (filtered only)
-- Roles: vCIO Manager, Client Editor, Client Viewer (provisionati anche da `sync_all`)
-- Workflows: MPIT Budget workflow, MPIT Budget Amendment workflow (provisionati da `spec/workflows/*.json` + `sync_all`)
-- Workflow State and Workflow Action used by those workflows
-- Dashboard assets: dashboard charts, number cards, and dashboard “Master Plan IT Overview” (via `spec/dashboard_charts`, `spec/number_cards`, `spec/dashboards`)
+Fixtures are standard Frappe exports filtered to Master Plan IT records only. Keep them minimal and deterministic.
 
-Do NOT export standard Roles/Workspaces/Module Defs.
-Always use filters to include only MPIT records.
+## Fixture principles
+- Export only MPIT-specific records; avoid unfiltered exports.
+- Keep filters in fixture definitions so re-exporting stays stable.
+- Do not rely on spec/import pipelines. The source of truth is the exported files under `apps/master_plan_it/master_plan_it/master_plan_it/`.
+- Avoid creating duplicate metadata paths outside the canonical module folder.
 
-## What goes into bootstrap (idempotent)
-Bootstrap creates per-tenant operational defaults:
-- MPIT roles (if missing)
-- MPIT Settings (Single) if missing
-- MPIT Year records (e.g., current year + next year) if missing
-- Workspace “Master Plan IT” non pubblica con ruoli MPIT + System Manager
-- Optional: sample categories (only if explicitly requested)
-
-Bootstrap must be safe to run multiple times.
-
-## Suggested CLI entrypoint
-- `master_plan_it.scripts.bootstrap.run(step="all")`
-Steps:
-- tenant
-- verify
-
-## Verify function (required)
-The verify step should check presence of:
-- core DocTypes
-- workflows
-- roles
-- workspace
-- reports
-and print a concise summary.
+## Applying changes
+- Edit canonical metadata and controllers in `apps/master_plan_it/master_plan_it/master_plan_it/`.
+- Export Customizations for non-owned DocTypes if you modified them in Desk.
+- Apply to a site with standard Frappe commands (`bench --site <site> migrate`, `clear-cache`) as needed.

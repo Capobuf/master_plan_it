@@ -22,6 +22,19 @@ It is written to prevent drift and over-engineering.
 - No custom JS/CSS; no asset build.
 - 1 client = 1 Frappe **site** (tenant). The vCIO operates across sites.
 
+## Forbidden Duplicate Metadata Paths
+
+Canonical metadata lives under `apps/master_plan_it/master_plan_it/master_plan_it/`. If any of these paths exist, it is drift and must be removed:
+- `apps/master_plan_it/master_plan_it/doctype/`
+- `apps/master_plan_it/master_plan_it/report/`
+- `apps/master_plan_it/master_plan_it/workflow/`
+- `apps/master_plan_it/master_plan_it/workspace/`
+- `apps/master_plan_it/master_plan_it/dashboard/`
+- `apps/master_plan_it/master_plan_it/dashboard_chart/`
+- `apps/master_plan_it/master_plan_it/number_card/`
+- `apps/master_plan_it/master_plan_it/master_plan_it_dashboard/`
+- `apps/master_plan_it/master_plan_it/print_format/`
+
 ## Linearity & no-contradictions audit
 
 ### Data separation

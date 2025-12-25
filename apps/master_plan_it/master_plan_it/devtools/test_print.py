@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """Test script for print formats in MPIT Phase 6."""
+from pathlib import Path
+
 import frappe
 from frappe.modules.import_file import import_file_by_path
-import os
 
 def setup_fixtures():
     """Create necessary fixtures."""
@@ -29,18 +30,18 @@ def setup_fixtures():
 
 def import_print_formats():
     """Import print formats from JSON specs."""
-    app_path = "/home/frappe/frappe-bench/apps/master_plan_it/master_plan_it/master_plan_it"
-    budget_pf = os.path.join(app_path, "print_format/mpit_budget_professional.json")
-    project_pf = os.path.join(app_path, "print_format/mpit_project_professional.json")
+    app_path = Path(frappe.get_app_path("master_plan_it")) / "master_plan_it"
+    budget_pf = app_path / "print_format" / "mpit_budget_professional.json"
+    project_pf = app_path / "print_format" / "mpit_project_professional.json"
 
-    if os.path.exists(budget_pf):
-        import_file_by_path(budget_pf)
+    if budget_pf.exists():
+        import_file_by_path(str(budget_pf))
         print(f"✓ Imported Budget print format from {budget_pf}")
     else:
         print(f"✗ Budget PF not found: {budget_pf}")
     
-    if os.path.exists(project_pf):
-        import_file_by_path(project_pf)
+    if project_pf.exists():
+        import_file_by_path(str(project_pf))
         print(f"✓ Imported Project print format from {project_pf}")
     else:
         print(f"✗ Project PF not found: {project_pf}")

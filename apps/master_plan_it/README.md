@@ -1,16 +1,7 @@
-# Master Plan IT (MPIT)
+# Master Plan IT — App Notes
 
-vCIO budgeting, contracts/renewals, amendments, actuals and projects — Frappe Desk app (multi-tenant: one site per client).
-
-## Dev workflow
-- Apply specs (DocTypes) deterministically: `bench --site <site> execute master_plan_it.devtools.sync.sync_all`
-- Apply schema: `bench --site <site> migrate`
-- Clear caches: `bench --site <site> clear-cache`
-- Bootstrap tenant defaults: `bench --site <site> execute master_plan_it.devtools.bootstrap.run --kwargs '{"step":"tenant"}'`
-- Verify required DocTypes: `bench --site <site> execute master_plan_it.devtools.verify.run`
-- Tests: `bench --site <site> run-tests --app master_plan_it`
-
-## Notes
-- Specs live in `master_plan_it/spec/doctypes/*.json` (file-first, no Desk editing).
-- No custom JS/CSS or frontend build; stick to native Desk components.
-- For workflows/dashboards, add filtered fixtures once canonical examples are available.
+- Frappe Desk app (multi-tenant: 1 site = 1 client). No custom JS/CSS or build pipeline.
+- **Source of truth:** exported metadata + controllers under `apps/master_plan_it/master_plan_it/master_plan_it/`.
+- **Apply changes:** edit the canonical files, then run standard Frappe commands (`bench --site <site> migrate`, `clear-cache`) so the site picks up file changes.
+- **Desk policy:** treat Desk as read-only for day-to-day schema/metadata. Use Desk only for initial skeleton creation or to export customizations for non-owned DocTypes.
+- **Docs:** see `docs/reference/06-dev-workflow.md` for the authoritative workflow and `docs/reference/05-fixtures-bootstrap.md` for fixture rules.

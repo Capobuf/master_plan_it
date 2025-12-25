@@ -1,6 +1,19 @@
 {
- "charts": [],
- "content": "[{\"id\":\"48YosQYcN_\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Master Plan IT</span>\",\"col\":12}},{\"id\":\"4DtiW45bj1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budgets\",\"col\":3}},{\"id\":\"7B5eEtc6e_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Budget Amendments\",\"col\":3}},{\"id\":\"4VmudUyMmc\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Actual Entries\",\"col\":3}},{\"id\":\"FtCChtVwUa\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Contracts\",\"col\":3}},{\"id\":\"KwUNOlABTH\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Projects\",\"col\":3}},{\"id\":\"gK90CWLnpY\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Baseline Expenses\",\"col\":3}},{\"id\":\"90H-jgR-FE\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Categories\",\"col\":3}},{\"id\":\"iotc2-p6YO\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Vendors\",\"col\":3}},{\"id\":\"UPmZx7n9aQ\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"User Preferences\",\"col\":3}}]",
+ "charts": [
+  {
+   "chart": "MPIT Current Budget vs Actual"
+  },
+  {
+   "chart": "MPIT Projects Planned vs Actual"
+  },
+  {
+   "chart": "MPIT Budget vs Actual (Approved)"
+  },
+  {
+   "chart": "MPIT Renewals by Month"
+  }
+ ],
+ "content": "[{\"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Master Plan IT</span>\", \"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">Gestione budget, progetti, contratti e fornitori</span>\", \"col\": 12}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Quick Actions\", \"col\": 12}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budgets\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Actual Entries\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budget Amendments\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Projects\", \"col\": 3}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Setup & Planning\", \"col\": 12}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 6}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Planning\", \"col\": 6}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Insights\", \"col\": 12}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Current Budget vs Actual\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Projects Planned vs Actual\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Budget vs Actual (Approved)\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Renewals by Month\", \"col\": 6}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"More\", \"col\": 12}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Contracts\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Vendors\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Categories\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Baseline Expense\", \"col\": 3}}]",
  "creation": "2025-12-21 18:09:23.286665",
  "custom_blocks": [],
  "docstatus": 0,
@@ -10,7 +23,114 @@
  "indicator_color": "green",
  "is_hidden": 0,
  "label": "Master Plan IT",
- "links": [],
+ "links": [
+  {
+   "type": "Card Break",
+   "label": "Setup",
+   "link_type": "DocType",
+   "link_count": 0,
+   "hidden": 0,
+   "is_query_report": 0,
+   "onboard": 0
+  },
+  {
+   "type": "Link",
+   "label": "Categories",
+   "link_type": "DocType",
+   "link_to": "MPIT Category",
+   "link_count": 0,
+   "hidden": 0,
+   "is_query_report": 0,
+   "onboard": 0,
+   "dependencies": ""
+  },
+  {
+   "type": "Link",
+   "label": "Vendors",
+   "link_type": "DocType",
+   "link_to": "MPIT Vendor",
+   "link_count": 0,
+   "hidden": 0,
+   "is_query_report": 0,
+   "onboard": 0,
+   "dependencies": ""
+  },
+  {
+   "type": "Link",
+   "label": "Contracts",
+   "link_type": "DocType",
+   "link_to": "MPIT Contract",
+   "link_count": 0,
+   "hidden": 0,
+   "is_query_report": 0,
+   "onboard": 0,
+   "dependencies": ""
+  },
+  {
+   "type": "Card Break",
+   "label": "Planning",
+   "link_type": "DocType",
+   "link_count": 0,
+   "hidden": 0,
+   "is_query_report": 0,
+   "onboard": 0
+  },
+  {
+   "type": "Link",
+   "label": "Budgets",
+   "link_type": "DocType",
+   "link_to": "MPIT Budget",
+   "link_count": 0,
+   "hidden": 0,
+   "is_query_report": 0,
+   "onboard": 0,
+   "dependencies": ""
+  },
+  {
+   "type": "Link",
+   "label": "Projects",
+   "link_type": "DocType",
+   "link_to": "MPIT Project",
+   "link_count": 0,
+   "hidden": 0,
+   "is_query_report": 0,
+   "onboard": 0,
+   "dependencies": ""
+  },
+  {
+   "type": "Link",
+   "label": "Actual Entries",
+   "link_type": "DocType",
+   "link_to": "MPIT Actual Entry",
+   "link_count": 0,
+   "hidden": 0,
+   "is_query_report": 0,
+   "onboard": 0,
+   "dependencies": ""
+  },
+  {
+   "type": "Link",
+   "label": "Budget Amendments",
+   "link_type": "DocType",
+   "link_to": "MPIT Budget Amendment",
+   "link_count": 0,
+   "hidden": 0,
+   "is_query_report": 0,
+   "onboard": 0,
+   "dependencies": ""
+  },
+  {
+   "type": "Link",
+   "label": "Baseline Expense",
+   "link_type": "DocType",
+   "link_to": "MPIT Baseline Expense",
+   "link_count": 0,
+   "hidden": 0,
+   "is_query_report": 0,
+   "onboard": 0,
+   "dependencies": ""
+  }
+ ],
  "modified": "2025-12-22 12:42:17.589769",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
@@ -43,20 +163,14 @@
   },
   {
    "doc_view": "",
-   "label": "Budget Amendments",
-   "link_to": "MPIT Budget Amendment",
-   "type": "DocType"
-  },
-  {
-   "doc_view": "",
    "label": "Actual Entries",
    "link_to": "MPIT Actual Entry",
    "type": "DocType"
   },
   {
    "doc_view": "",
-   "label": "Contracts",
-   "link_to": "MPIT Contract",
+   "label": "Budget Amendments",
+   "link_to": "MPIT Budget Amendment",
    "type": "DocType"
   },
   {
@@ -67,14 +181,8 @@
   },
   {
    "doc_view": "",
-   "label": "Baseline Expenses",
-   "link_to": "MPIT Baseline Expense",
-   "type": "DocType"
-  },
-  {
-   "doc_view": "",
-   "label": "Categories",
-   "link_to": "MPIT Category",
+   "label": "Contracts",
+   "link_to": "MPIT Contract",
    "type": "DocType"
   },
   {
@@ -85,8 +193,14 @@
   },
   {
    "doc_view": "",
-   "label": "User Preferences",
-   "link_to": "MPIT User Preferences",
+   "label": "Categories",
+   "link_to": "MPIT Category",
+   "type": "DocType"
+  },
+  {
+   "doc_view": "",
+   "label": "Baseline Expense",
+   "link_to": "MPIT Baseline Expense",
    "type": "DocType"
   }
  ],

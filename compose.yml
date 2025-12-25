@@ -44,6 +44,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     environment:
       SITE_NAME: ${SITE_NAME}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
@@ -75,6 +76,7 @@ services:
     image: master_plan_it-frappe:local
     command: ["nginx-entrypoint.sh"]
     container_name: frappe-web
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     environment:
       BACKEND: frappe:8000
       SOCKETIO: frappe:9000

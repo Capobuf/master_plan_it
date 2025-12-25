@@ -41,3 +41,38 @@ Total Amount Input,Somma importi inseriti
 Total Net Amount,Somma importi netti
 Total VAT Amount,Somma IVA
 Total Gross Amount,Somma importi lordi
+Posting Date is required to derive MPIT Year.,La data di registrazione è obbligatoria per ricavare l'anno MPIT.
+No MPIT Year covers posting date {0}. Create year {1} or set start/end dates that include the date.,Nessun Anno MPIT copre la data {0}. Crea l'anno {1} o imposta date di inizio/fine che includano la data.
+Add at least one Allocation (year + planned amount) before moving a project to status {0}.,Aggiungi almeno un'Allocazione (anno + importo previsto) prima di cambiare lo stato del progetto in {0}.
+Next Renewal Date,Prossima data di rinnovo
+Days to Renewal,Giorni al rinnovo
+Notice Days,Giorni di preavviso
+Auto Renew,Rinnovo automatico
+Expired,Scaduto
+Upcoming (<= {0} days),In scadenza (≤ {0} giorni)
+Renewals,Rinnovi
+Expired Count,Numero scaduti
+Count,Conteggio
+Budget,Budget
+Year,Anno
+Budget Amount,Importo budget
+Actual Amount,Importo effettivo
+Variance (Actual - Budget),Scostamento (Effettivo - Budget)
+Planned Amount,Importo previsto
+Variance (Actual - Planned),Scostamento (Effettivo - Previsto)
+Baseline Amount,Importo base
+Amendments Delta,Delta emendamenti
+Current Budget,Budget corrente
+Variance (Actual - Current),Scostamento (Effettivo - Corrente)
+Planned,Previsto
+Actual,Effettivo
+Setup,Impostazioni
+"Setup & Planning",Impostazioni e pianificazione
+Categories,Categorie
+Vendors,Fornitori
+Contracts,Contratti
+"Expired Contracts",Contratti scaduti
+"Quick Actions",Azioni rapide
+"Quick Links",Collegamenti rapidi
+"Your Shortcuts",I tuoi collegamenti
+More,Altro

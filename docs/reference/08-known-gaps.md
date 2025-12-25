@@ -21,4 +21,4 @@ We still need at least one real exported JSON for:
 Create a minimal object in any dev site (even temporary) and then export it:
 - Dashboards: same.
 
-Workflows for Budget and Budget Amendment are defined in `spec/workflows/` and applied via `sync_all`. Dashboards are now provisioned (`Master Plan IT Overview`), but you can add more chart/card examples as needed.
+Workflows for Budget and Budget Amendment live under `apps/master_plan_it/master_plan_it/master_plan_it/workflow/` and are synced via standard Frappe migrate. Dashboards are now provisioned (`Master Plan IT Overview`), but you can add more chart/card examples as needed.

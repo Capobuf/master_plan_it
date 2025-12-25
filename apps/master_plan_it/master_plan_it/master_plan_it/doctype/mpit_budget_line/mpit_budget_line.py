@@ -2,7 +2,7 @@
 # For license information, please see license.txt
 
 from frappe.model.document import Document
-from master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget import update_budget_totals
+from ..mpit_budget.mpit_budget import update_budget_totals
 
 
 class MPITBudgetLine(Document):

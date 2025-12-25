@@ -19,6 +19,7 @@ class TestMPITActualEntry(FrappeTestCase):
 			"posting_date": "2030-05-10",
 			"category": "Test Category",
 			"amount": 123.45,
+			"vat_rate": 0,
 		})
 		doc.insert()
 		self.assertEqual(doc.year, "2030")

@@ -5,7 +5,7 @@ This module validates the JSON specs before any DB mutation.
 It is designed to stop drift and prevent partial imports.
 
 SPEC FORMAT (minimal)
-- spec/doctypes/*.json:
+- canonical metadata: apps/master_plan_it/master_plan_it/master_plan_it/doctype/
     {
       "name": "MPIT Vendor",
       "module": "Master Plan IT",

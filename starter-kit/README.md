@@ -13,7 +13,7 @@ This starter kit contains:
    `BENCH_PATH=/path/to/frappe-bench ./starter-kit/tools/bench/apply_overlay.sh`
 4) Create site + install app
 5) Sync + migrate:
-   `bench --site <site> execute master_plan_it.devtools.sync.sync_all`
+   `bench --site <site> migrate`
    `bench --site <site> migrate`
 
 IMPORTANT: the DocType specs in `starter-kit/spec/doctypes/*.json` are **minimal placeholders**.

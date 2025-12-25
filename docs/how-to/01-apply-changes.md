@@ -1,64 +1,20 @@
-# Apply changes (deterministic, no GUI)
+# How-to: Apply metadata changes (native file-first)
 
-**Goal:** After editing *spec files* or code, apply them so changes appear in the GUI (DocTypes, permissions, workflows, reports/dashboards, workspace).
+This guide describes how to apply changes when the **source of truth** is the exported metadata and controllers under `apps/master_plan_it/master_plan_it/master_plan_it/`.
 
-This project uses a **file-first spec** (JSON) and a **sync command** that:
-1) creates/updates DocTypes + security + workflows (and ensures MPIT roles/workspace) in the database, and
-2) (optionally) promotes DocTypes to *standard* so Frappe writes the usual JSON/Python files for versioning.
+## Before you start
+- Do not edit metadata JSON in Desk for day-to-day work. Use Desk only to create an initial skeleton or to export customizations for non-owned DocTypes.
+- Keep all metadata inside the canonical module folder; do not create duplicate paths elsewhere.
 
-> Why: we want a workflow that is idempotent, deterministic, and does not depend on clicking in Desk.
+## Workflow
+1) Edit metadata JSON and Python controllers under `apps/master_plan_it/master_plan_it/master_plan_it/...`.
+2) If you made UI changes in Desk, run **Export Customizations** immediately to sync them into the canonical folder.
+3) Apply changes to the site with standard Frappe commands:
+   - `bench --site <site> migrate`
+   - `bench --site <site> clear-cache`
+4) Verify: confirm expected DocTypes/Workflows/Reports exist and behave as intended.
+5) Commit the canonical files. No custom import/sync pipeline is used.
 
----
-
-## A) Apply spec changes (recommended during development)
-
-From `frappe-bench`:
-
-1) **Sync MPIT specs into the site**
-```bash
-bench --site <site> execute master_plan_it.devtools.sync.sync_all
-```
-
-2) **Apply schema + rebuild caches**
-```bash
-bench --site <site> migrate
-bench --site <site> clear-cache
-```
-
-3) If you changed JS/CSS (public assets)
-```bash
-bench build
-# or: bench watch (dev)
-```
-
-Open Desk and verify.
-
----
-
-## B) Apply pure code changes (python)
-
-If you only changed Python (controllers, hooks, API) and did not touch DocTypes:
-```bash
-bench --site <site> restart
-bench --site <site> clear-cache
-```
-
----
-
-## C) Targeted reload (advanced)
-
-Use only if you want to reload a single DocType or a single file-based document.
-
-```bash
-bench --site <site> reload-doctype "<DocType Name>"
-bench --site <site> reload-doc <module> <doctype> "<docname>"
-```
-
-Prefer `sync_all` + `migrate` for schema changes.
-
-
-4) (Optional) tenant defaults + verify
-```bash
-bench --site <site> execute master_plan_it.devtools.bootstrap.run --kwargs '{"step":"tenant"}'
-bench --site <site> execute master_plan_it.devtools.verify.run
-```
+## Tips
+- Keep fixture exports filtered to MPIT records only.
+- Avoid renaming DocTypes/modules once created to keep file paths stable.

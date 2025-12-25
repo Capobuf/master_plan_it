@@ -1,86 +1,87 @@
 {
-  "allow_import": 1,
-  "fields": [
-    {
-      "fieldname": "category",
-      "fieldtype": "Link",
-      "label": "Category",
-      "options": "MPIT Category",
-      "reqd": 1
-    },
-    {
-      "fieldname": "vendor",
-      "fieldtype": "Link",
-      "label": "Vendor",
-      "options": "MPIT Vendor",
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "contract",
-      "fieldtype": "Link",
-      "label": "Contract",
-      "options": "MPIT Contract",
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "project",
-      "fieldtype": "Link",
-      "label": "Project",
-      "options": "MPIT Project",
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "description",
-      "fieldtype": "Small Text",
-      "label": "Description",
-      "in_list_view": 1
-    },
-    {
-      "fieldname": "delta_amount",
-      "fieldtype": "Currency",
-      "label": "Delta Amount",
-      "reqd": 1,
-      "in_list_view": 1
-    },
-    {
-      "default": "0",
-      "fieldname": "delta_amount_includes_vat",
-      "fieldtype": "Check",
-      "label": "Delta Amount Includes VAT"
-    },
-    {
-      "fieldname": "vat_rate",
-      "fieldtype": "Percent",
-      "label": "VAT Rate",
-      "precision": "2"
-    },
-    {
-      "fieldname": "delta_amount_net",
-      "fieldtype": "Currency",
-      "label": "Net Delta Amount",
-      "read_only": 1
-    },
-    {
-      "fieldname": "delta_amount_vat",
-      "fieldtype": "Currency",
-      "label": "VAT Delta Amount",
-      "read_only": 1
-    },
-    {
-      "fieldname": "delta_amount_gross",
-      "fieldtype": "Currency",
-      "label": "Gross Delta Amount",
-      "read_only": 1
-    },
-    {
-      "fieldname": "note",
-      "fieldtype": "Small Text",
-      "label": "Note"
-    }
-  ],
-  "istable": 1,
-  "module": "Master Plan IT",
-  "name": "MPIT Amendment Line",
-  "promote_to_standard": true,
-  "track_changes": 1
+ "doctype": "DocType",
+ "allow_import": 1,
+ "fields": [
+  {
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "label": "Category",
+   "options": "MPIT Category",
+   "reqd": 1
+  },
+  {
+   "fieldname": "vendor",
+   "fieldtype": "Link",
+   "label": "Vendor",
+   "options": "MPIT Vendor",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "contract",
+   "fieldtype": "Link",
+   "label": "Contract",
+   "options": "MPIT Contract",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "options": "MPIT Project",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "label": "Description",
+   "in_list_view": 1
+  },
+  {
+   "fieldname": "delta_amount",
+   "fieldtype": "Currency",
+   "label": "Delta Amount",
+   "reqd": 1,
+   "in_list_view": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "delta_amount_includes_vat",
+   "fieldtype": "Check",
+   "label": "Delta Amount Includes VAT"
+  },
+  {
+   "fieldname": "vat_rate",
+   "fieldtype": "Percent",
+   "label": "VAT Rate",
+   "precision": "2"
+  },
+  {
+   "fieldname": "delta_amount_net",
+   "fieldtype": "Currency",
+   "label": "Net Delta Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delta_amount_vat",
+   "fieldtype": "Currency",
+   "label": "VAT Delta Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "delta_amount_gross",
+   "fieldtype": "Currency",
+   "label": "Gross Delta Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "note",
+   "fieldtype": "Small Text",
+   "label": "Note"
+  }
+ ],
+ "istable": 1,
+ "module": "Master Plan IT",
+ "name": "MPIT Amendment Line",
+ "promote_to_standard": true,
+ "track_changes": 1
 }

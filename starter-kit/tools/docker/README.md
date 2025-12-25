@@ -13,6 +13,6 @@ bench new-site mpit.local --admin-password admin --mariadb-root-password admin
 bench --site mpit.local install-app master_plan_it
 
 # sync specs & migrate
-bench --site mpit.local execute master_plan_it.devtools.sync.sync_all
+bench --site mpit.local migrate
 bench --site mpit.local migrate
 ```
