@@ -1,33 +1,42 @@
-// Copyright (c) 2025, DOT and contributors
-// For license information, please see license.txt
+frappe.provide("master_plan_it.baseline_vat");
 
-let mpitBaselineVatDefaults;
-
-const fetchBaselineVatDefaults = () => {
-	if (!mpitBaselineVatDefaults) {
-		mpitBaselineVatDefaults = frappe.call({
-			method: "master_plan_it.mpit_user_prefs.get_vat_defaults",
-		}).then((r) => r.message || {});
-	}
-	return mpitBaselineVatDefaults;
-};
+// Idempotent helpers (avoid duplicate declarations if script reloads)
+if (!master_plan_it.baseline_vat.fetchDefaults) {
+	master_plan_it.baseline_vat.fetchDefaults = () => {
+		if (!master_plan_it.baseline_vat._promise) {
+			master_plan_it.baseline_vat._promise = frappe
+				.call({ method: "master_plan_it.mpit_user_prefs.get_vat_defaults" })
+				.then((r) => r.message || {});
+		}
+		return master_plan_it.baseline_vat._promise;
+	};
+}
 
 const applyVatDefaultsToBaseline = async (frm) => {
-	if (!frm.is_new() || frm.__vat_defaults_applied) {
+	// Apply only for new docs and only once per form load
+	if (!frm.is_new() || frm.doc.__vat_defaults_applied) {
 		return;
 	}
 
-	const defaults = await fetchBaselineVatDefaults();
+	const defaults = await master_plan_it.baseline_vat.fetchDefaults();
 	const updates = {};
 
-	if (defaults.default_includes_vat !== undefined && defaults.default_includes_vat !== null) {
+	const includesUnset =
+		frm.doc.amount_includes_vat === undefined ||
+		frm.doc.amount_includes_vat === null;
+	if (
+		defaults.default_includes_vat !== undefined &&
+		defaults.default_includes_vat !== null &&
+		includesUnset
+	) {
 		updates.amount_includes_vat = defaults.default_includes_vat ? 1 : 0;
 	}
 
-	if (
-		(defaults.default_vat_rate || defaults.default_vat_rate === 0) &&
-		(frm.doc.vat_rate === undefined || frm.doc.vat_rate === null)
-	) {
+	const vatUnset =
+		frm.doc.vat_rate === undefined ||
+		frm.doc.vat_rate === null ||
+		frm.doc.vat_rate === "";
+	if ((defaults.default_vat_rate || defaults.default_vat_rate === 0) && vatUnset) {
 		updates.vat_rate = defaults.default_vat_rate;
 	}
 
@@ -35,11 +44,14 @@ const applyVatDefaultsToBaseline = async (frm) => {
 		await frm.set_value(updates);
 	}
 
-	frm.__vat_defaults_applied = true;
+	frm.doc.__vat_defaults_applied = true;
 };
 
 frappe.ui.form.on("MPIT Baseline Expense", {
 	async onload(frm) {
+		await applyVatDefaultsToBaseline(frm);
+	},
+	async refresh(frm) {
 		await applyVatDefaultsToBaseline(frm);
 	},
 });
