@@ -8,29 +8,45 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "tb_overview",
+  "sb_overview_main",
   "title",
   "vendor",
   "category",
   "contract_kind",
-  "billing_cycle",
-  "start_date",
-  "end_date",
-  "next_renewal_date",
-  "notice_days",
+  "cb_overview_right",
   "auto_renew",
+  "status",
+  "owner_user",
+  "tb_billing",
+  "billing_cycle",
   "current_amount",
   "current_amount_includes_vat",
   "vat_rate",
   "current_amount_net",
   "current_amount_vat",
   "current_amount_gross",
-  "status",
-  "owner_user",
-  "source_baseline_expense",
+  "tb_renewal",
+  "start_date",
+  "end_date",
+  "next_renewal_date",
+  "notice_days",
+  "tb_notes",
   "notes",
-  "attachment"
+  "attachment",
+  "tb_admin",
+  "source_baseline_expense"
  ],
  "fields": [
+  {
+   "fieldname": "tb_overview",
+   "fieldtype": "Tab Break",
+   "label": "Overview"
+  },
+  {
+   "fieldname": "sb_overview_main",
+   "fieldtype": "Section Break"
+  },
   {
    "fieldname": "title",
    "fieldtype": "Data",
@@ -67,37 +83,8 @@
    "reqd": 1
   },
   {
-   "fieldname": "billing_cycle",
-   "fieldtype": "Select",
-   "description": "Choose the billing cycle for this contract.",
-   "label": "Billing Cycle",
-   "options": "Monthly\nQuarterly\nAnnual\nOther"
-  },
-  {
-   "fieldname": "start_date",
-   "fieldtype": "Date",
-   "description": "Date when the contract starts.",
-   "label": "Start Date"
-  },
-  {
-   "fieldname": "end_date",
-   "fieldtype": "Date",
-   "description": "Date when the contract ends.",
-   "label": "End Date"
-  },
-  {
-   "fieldname": "next_renewal_date",
-   "fieldtype": "Date",
-   "description": "Next renewal date for this contract.",
-   "in_list_view": 1,
-   "label": "Next Renewal Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "notice_days",
-   "fieldtype": "Int",
-   "description": "Number of notice days required before renewal.",
-   "label": "Notice Days"
+   "fieldname": "cb_overview_right",
+   "fieldtype": "Column Break"
   },
   {
    "default": "1",
@@ -105,12 +92,6 @@
    "fieldtype": "Check",
    "description": "If enabled, the contract renews automatically.",
    "label": "Auto Renew"
-  },
-  {
-   "fieldname": "current_amount",
-   "fieldtype": "Currency",
-   "description": "Enter the current contract amount; use net or gross per the VAT setting.",
-   "label": "Current Amount"
   },
   {
    "default": "Active",
@@ -129,23 +110,22 @@
    "options": "User"
   },
   {
-   "fieldname": "source_baseline_expense",
-   "fieldtype": "Link",
-   "description": "Link to the baseline expense that created this contract.",
-   "label": "Source Baseline Expense",
-   "options": "MPIT Baseline Expense"
+   "fieldname": "tb_billing",
+   "fieldtype": "Tab Break",
+   "label": "Billing"
   },
   {
-   "fieldname": "notes",
-   "fieldtype": "Small Text",
-   "description": "Add internal notes about the contract.",
-   "label": "Notes"
+   "fieldname": "billing_cycle",
+   "fieldtype": "Select",
+   "description": "Choose the billing cycle for this contract.",
+   "label": "Billing Cycle",
+   "options": "Monthly\nQuarterly\nAnnual\nOther"
   },
   {
-   "fieldname": "attachment",
-   "fieldtype": "Attach",
-   "description": "Upload the contract file.",
-   "label": "Attachment"
+   "fieldname": "current_amount",
+   "fieldtype": "Currency",
+   "description": "Enter the current contract amount; use net or gross per the VAT setting.",
+   "label": "Current Amount"
   },
   {
    "default": "0",
@@ -159,6 +139,7 @@
    "fieldtype": "Percent",
    "description": "VAT rate applied to the current amount.",
    "label": "VAT Rate",
+   "depends_on": "eval:doc.current_amount_includes_vat || doc.current_amount",
    "precision": "2"
   },
   {
@@ -181,6 +162,68 @@
    "description": "Calculated automatically as the gross amount.",
    "label": "Gross Amount",
    "read_only": 1
+  },
+  {
+   "fieldname": "tb_renewal",
+   "fieldtype": "Tab Break",
+   "label": "Renewal & Dates"
+  },
+  {
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "description": "Date when the contract starts.",
+   "label": "Start Date"
+  },
+  {
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "description": "Date when the contract ends.",
+   "label": "End Date"
+  },
+  {
+   "fieldname": "next_renewal_date",
+   "fieldtype": "Date",
+   "description": "Next renewal date for this contract.",
+   "in_list_view": 1,
+   "label": "Next Renewal Date",
+   "depends_on": "eval:doc.auto_renew",
+   "mandatory_depends_on": "eval:doc.auto_renew"
+  },
+  {
+   "fieldname": "notice_days",
+   "fieldtype": "Int",
+   "description": "Number of notice days required before renewal.",
+   "label": "Notice Days",
+   "depends_on": "eval:doc.auto_renew"
+  },
+  {
+   "fieldname": "tb_notes",
+   "fieldtype": "Tab Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "description": "Add internal notes about the contract.",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "attachment",
+   "fieldtype": "Attach",
+   "description": "Upload the contract file.",
+   "label": "Attachment"
+  },
+  {
+   "fieldname": "tb_admin",
+   "fieldtype": "Tab Break",
+   "label": "Admin"
+  },
+  {
+   "fieldname": "source_baseline_expense",
+   "fieldtype": "Link",
+   "description": "Link to the baseline expense that created this contract.",
+   "label": "Source Baseline Expense",
+   "options": "MPIT Baseline Expense"
   }
  ],
  "grid_page_length": 50,

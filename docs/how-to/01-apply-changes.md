@@ -33,6 +33,14 @@ Note: Default child-table columns/ordering come from `in_list_view` flags on the
 
 ---
 
+## Improving form UX (native layout only)
+
+- Use native Tab Break / Section Break / Column Break to organize fields; avoid custom JS/CSS for layout.
+- Drive progressive disclosure with `depends_on`, `mandatory_depends_on`, and `read_only_depends_on` when a field should show or become required based on another field.
+- These are DocType JSON changes: apply with migrate or targeted `reload-doctype`, then `clear-cache` + hard refresh (no extra pipelines).
+
+---
+
 ## Workspace changes (Desk) — Apply + Verify + Debug
 
 ### Apply (standard)
