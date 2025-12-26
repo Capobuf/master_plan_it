@@ -9,7 +9,7 @@
 ## Conventions and rules
 
 - DocField `description` renders as helper text below the field in Frappe.
-- Source strings stay English in DocType JSON; add Italian translations to `apps/master_plan_it/master_plan_it/translations/it.csv` with context `DocType:<Doctype> Field:<fieldname>`.
+- Source strings stay English in DocType JSON; add Italian translations to `apps/master_plan_it/master_plan_it/translations/it.csv` (leave context blank for DocField descriptions because Frappe does not pass context for field metadata).
 - Keep copy short (1 sentence, ≤120 chars), imperative/conditional; note VAT/recurrence/units only when present in schema or controllers.
 - STOP when meaning is unclear; gather wording options instead of guessing.
 - Checklist: edit DocType JSON → add matching `it.csv` line → log changes/evidence in `docs/ux/field-help-text-report.md`.
