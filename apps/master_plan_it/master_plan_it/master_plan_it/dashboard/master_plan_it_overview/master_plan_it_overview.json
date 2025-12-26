@@ -1,9 +1,38 @@
 {
- "cards": [],
+ "cards": [
+  {
+   "card": "Renewals 30d",
+   "width": "Half"
+  },
+  {
+   "card": "Renewals 60d",
+   "width": "Half"
+  },
+  {
+   "card": "Renewals 90d",
+   "width": "Half"
+  },
+  {
+   "card": "Expired Contracts",
+   "width": "Half"
+  }
+ ],
  "charts": [
   {
+   "chart": "MPIT Current Budget vs Actual",
+   "width": "Half"
+  },
+  {
+   "chart": "MPIT Budget vs Actual (Approved)",
+   "width": "Half"
+  },
+  {
    "chart": "MPIT Projects Planned vs Actual",
-   "width": "Full"
+   "width": "Half"
+  },
+  {
+   "chart": "MPIT Renewals by Month",
+   "width": "Half"
   }
  ],
  "creation": "2025-12-24 20:00:26.295380",

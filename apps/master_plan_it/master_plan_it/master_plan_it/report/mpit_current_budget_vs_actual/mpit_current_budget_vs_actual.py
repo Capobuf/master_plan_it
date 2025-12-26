@@ -52,7 +52,7 @@ def _get_data(filters) -> list[dict]:
 			b.year AS year,
 			bl.category AS category,
 			bl.vendor AS vendor,
-			SUM(COALESCE(bl.amount_net, bl.amount)) AS baseline_amount
+			SUM(COALESCE(bl.annual_net, bl.amount_net, bl.amount)) AS baseline_amount
 		FROM `tabMPIT Budget` b
 		JOIN `tabMPIT Budget Line` bl ON bl.parent = b.name
 		WHERE {where}
@@ -62,8 +62,20 @@ def _get_data(filters) -> list[dict]:
 		as_dict=True,
 	)
 
+	amend_conditions = ["ba.docstatus = 1"]
+	if filters.get("budget"):
+		amend_conditions.append("ba.budget = %(budget)s")
+	if filters.get("category"):
+		amend_conditions.append("al.category = %(category)s")
+	if filters.get("vendor"):
+		amend_conditions.append("al.vendor = %(vendor)s")
+	if filters.get("year"):
+		amend_conditions.append("b.year = %(year)s")
+
+	amend_where = " AND ".join(amend_conditions)
+
 	amend_rows = frappe.db.sql(
-		"""
+		f"""
 		SELECT
 			ba.budget AS budget,
 			b.year AS year,
@@ -73,36 +85,50 @@ def _get_data(filters) -> list[dict]:
 		FROM `tabMPIT Budget Amendment` ba
 		JOIN `tabMPIT Budget` b ON b.name = ba.budget
 		JOIN `tabMPIT Amendment Line` al ON al.parent = ba.name
-		WHERE ba.docstatus = 1
+		WHERE {amend_where}
 		GROUP BY ba.budget, b.year, al.category, al.vendor
 		""",
+		params,
 		as_dict=True,
 	)
 
+	actual_conditions = ["1=1"]
+	if filters.get("year"):
+		actual_conditions.append("year = %(year)s")
+	if filters.get("category"):
+		actual_conditions.append("category = %(category)s")
+	if filters.get("vendor"):
+		actual_conditions.append("vendor = %(vendor)s")
+
+	actual_where = " AND ".join(actual_conditions)
+
 	actual_rows = frappe.db.sql(
-		"""
-		SELECT year, category, SUM(COALESCE(amount_net, amount)) AS actual_amount
+		f"""
+		SELECT year, category, vendor, SUM(COALESCE(amount_net, amount)) AS actual_amount
 		FROM `tabMPIT Actual Entry`
-		GROUP BY year, category
+		WHERE {actual_where}
+		GROUP BY year, category, vendor
 		""",
 		as_dict=True,
 	)
 
-	base_map = {(r["budget"], r["category"], r.get("vendor")): r for r in base_rows}
-	amend_map = {(r["budget"], r["category"], r.get("vendor")): r for r in amend_rows}
-	actual_map = {(r["year"], r["category"]): r["actual_amount"] for r in actual_rows}
+	base_map = {(r["budget"], r["year"], r["category"], r.get("vendor")): r for r in base_rows}
+	amend_map = {(r["budget"], r["year"], r["category"], r.get("vendor")): r for r in amend_rows}
+	actual_map = {(r["year"], r["category"], r.get("vendor")): r["actual_amount"] for r in actual_rows}
 
 	keys = set(base_map.keys()) | set(amend_map.keys())
 	result: list[dict] = []
-	for key in sorted(keys):
-		budget, category, vendor = key
+	for key in sorted(
+		keys,
+		key=lambda k: (str(k[1] or ""), str(k[2] or ""), str(k[3] or ""), str(k[0] or "")),
+	):
+		budget, year, category, vendor = key
 		base = base_map.get(key, {})
 		amend = amend_map.get(key, {})
-		year = base.get("year") or amend.get("year")
 		baseline_amount = float(base.get("baseline_amount") or 0)
 		amendment_delta = float(amend.get("amendment_delta") or 0)
 		current_budget = baseline_amount + amendment_delta
-		actual_amount = float(actual_map.get((year, category), 0))
+		actual_amount = float(actual_map.get((year, category, vendor), 0) or 0)
 		variance = actual_amount - current_budget
 		result.append({
 			"budget": budget,

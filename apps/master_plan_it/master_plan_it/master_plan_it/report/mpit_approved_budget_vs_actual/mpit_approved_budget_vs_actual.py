@@ -46,24 +46,24 @@ def _get_data(filters) -> list[dict]:
 	return frappe.db.sql(
 		f"""
 		WITH actuals AS (
-			SELECT category, year, SUM(COALESCE(amount_net, amount)) AS actual_amount
+			SELECT category, year, vendor, SUM(COALESCE(amount_net, amount)) AS actual_amount
 			FROM `tabMPIT Actual Entry`
-			GROUP BY category, year
+			GROUP BY category, year, vendor
 		)
 		SELECT
 			b.name AS budget,
 			b.year AS year,
 			bl.category AS category,
 			bl.vendor AS vendor,
-			SUM(COALESCE(bl.amount_net, bl.amount)) AS budget_amount,
+			SUM(COALESCE(bl.annual_net, bl.amount_net, bl.amount)) AS budget_amount,
 			COALESCE(a.actual_amount, 0) AS actual_amount,
-			COALESCE(a.actual_amount, 0) - SUM(COALESCE(bl.amount_net, bl.amount)) AS variance
+			COALESCE(a.actual_amount, 0) - SUM(COALESCE(bl.annual_net, bl.amount_net, bl.amount)) AS variance
 		FROM `tabMPIT Budget` b
 		JOIN `tabMPIT Budget Line` bl ON bl.parent = b.name
-		LEFT JOIN actuals a ON a.category = bl.category AND a.year = b.year
+		LEFT JOIN actuals a ON a.category = bl.category AND a.year = b.year AND a.vendor <=> bl.vendor
 		WHERE {where}
 		GROUP BY b.name, b.year, bl.category, bl.vendor, a.actual_amount
-		ORDER BY b.year, b.name, bl.category
+		ORDER BY b.year, b.name, bl.category, bl.vendor
 		""",
 		params,
 		as_dict=True,

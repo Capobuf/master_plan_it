@@ -30,6 +30,7 @@ class MPITBudget(Document):
 		self.name = f"{prefix}{middle}{sequence}"
 	
 	def validate(self):
+		self._enforce_status_invariants()
 		self._compute_lines_vat_split()
 		self._compute_lines_annualization()
 		self._compute_totals()
@@ -106,7 +107,7 @@ class MPITBudget(Document):
 				frappe.throw(
 					frappe._(
 						"Line {0}: Period ({1} to {2}) has zero overlap with fiscal year {3}. Cannot save budget line with no temporal overlap."
-					).format(line.idx, line.period_start_date, line.period_end_date, self.fiscal_year)
+					).format(line.idx, line.period_start_date, line.period_end_date, self.year)
 				)
 			
 			# Calculate annualized amounts
@@ -129,6 +130,23 @@ class MPITBudget(Document):
 			line.annual_net = annual_net
 			line.annual_vat = annual_vat
 			line.annual_gross = annual_gross
+
+	def _enforce_status_invariants(self) -> None:
+		"""Keep workflow_state aligned with docstatus now that it is an editable status label."""
+		if not self.workflow_state:
+			self.workflow_state = "Draft"
+
+		if self.docstatus == 0 and self.workflow_state == "Approved":
+			frappe.throw(_("Draft Budget cannot be set to Approved. Submit the document to approve it."))
+
+		if self.docstatus == 1 and self.workflow_state != "Approved":
+			self.workflow_state = "Approved"
+
+	def on_submit(self):
+		# Ensure submitted budgets always reflect Approved status
+		if self.workflow_state != "Approved":
+			self.workflow_state = "Approved"
+			self.db_set("workflow_state", "Approved")
 
 	def _compute_totals(self):
 		total_input = 0.0

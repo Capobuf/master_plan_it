@@ -32,13 +32,10 @@ class MPITProject(Document):
 	def _compute_allocations_vat_split(self):
 		"""Compute net/vat/gross for all Project Allocations with strict VAT validation."""
 		default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
-		default_includes = mpit_user_prefs.get_default_includes_vat(frappe.session.user)
 		
 		for alloc in self.allocations:
 			if alloc.vat_rate is None and default_vat is not None:
 				alloc.vat_rate = default_vat
-			if not alloc.planned_amount_includes_vat and default_includes:
-				alloc.planned_amount_includes_vat = 1
 			
 			final_vat_rate = tax.validate_strict_vat(
 				alloc.planned_amount,
@@ -60,13 +57,10 @@ class MPITProject(Document):
 	def _compute_quotes_vat_split(self):
 		"""Compute net/vat/gross for all Project Quotes with strict VAT validation."""
 		default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
-		default_includes = mpit_user_prefs.get_default_includes_vat(frappe.session.user)
 		
 		for quote in self.quotes:
 			if quote.vat_rate is None and default_vat is not None:
 				quote.vat_rate = default_vat
-			if not quote.amount_includes_vat and default_includes:
-				quote.amount_includes_vat = 1
 			
 			final_vat_rate = tax.validate_strict_vat(
 				quote.amount,

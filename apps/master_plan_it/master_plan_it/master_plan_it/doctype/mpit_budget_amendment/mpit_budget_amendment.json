@@ -42,11 +42,12 @@
    "allow_on_submit": 1,
    "fieldname": "workflow_state",
    "fieldtype": "Select",
-   "description": "Workflow status set by the approval process.",
+   "default": "Draft",
+   "description": "Editable status label for the amendment.",
    "in_list_view": 1,
-   "label": "Workflow State",
+   "label": "Status",
    "options": "Draft\nProposed\nIn Review\nApproved\nRejected",
-   "read_only": 1
+   "read_only": 0
   },
   {
    "fieldname": "lines_section",

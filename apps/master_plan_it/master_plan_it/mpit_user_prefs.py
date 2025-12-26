@@ -127,3 +127,15 @@ def get_show_attachments_in_print(user: str | None = None) -> bool:
 	"""
 	prefs = get_or_create(user)
 	return bool(prefs.show_attachments_in_print)
+
+
+@frappe.whitelist()
+def get_vat_defaults(user: str | None = None) -> dict:
+	"""
+	Return VAT defaults for the given user (falls back to session user).
+	"""
+	prefs = get_or_create(user or frappe.session.user)
+	return {
+		"default_vat_rate": prefs.default_vat_rate,
+		"default_includes_vat": bool(prefs.default_amount_includes_vat),
+	}

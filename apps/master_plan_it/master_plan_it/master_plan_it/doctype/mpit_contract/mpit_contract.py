@@ -16,13 +16,10 @@ class MPITContract(Document):
 		"""Compute net/vat/gross for current_amount field with strict VAT validation."""
 		# Get user default VAT rate
 		default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
-		default_includes = mpit_user_prefs.get_default_includes_vat(frappe.session.user)
 		
 		# Apply default if field is empty
 		if self.vat_rate is None and default_vat is not None:
 			self.vat_rate = default_vat
-		if not self.current_amount_includes_vat and default_includes:
-			self.current_amount_includes_vat = 1
 		
 		# Strict VAT validation
 		final_vat_rate = tax.validate_strict_vat(

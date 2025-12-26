@@ -26,12 +26,9 @@ def test_required_doctypes_exist():
     assert not missing, f"Missing MPIT DocTypes: {missing}. Run migrate / update the site so Frappe syncs app files."
 
 
-def test_roles_and_workflows_exist():
+def test_roles_exist():
     roles = ["vCIO Manager", "Client Editor", "Client Viewer"]
-    workflows = ["MPIT Budget Workflow", "MPIT Budget Amendment Workflow"]
 
     missing_roles = [r for r in roles if not frappe.db.exists("Role", r)]
-    missing_workflows = [w for w in workflows if not frappe.db.exists("Workflow", w)]
 
     assert not missing_roles, f"Missing MPIT Roles: {missing_roles}. Run migrate / update the site so Frappe syncs app files."
-    assert not missing_workflows, f"Missing MPIT Workflows: {missing_workflows}. Run migrate / update the site so Frappe syncs app files."

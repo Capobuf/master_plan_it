@@ -37,15 +37,16 @@ def get_year_bounds(year: int | str) -> tuple[datetime.date, datetime.date]:
 		>>> get_year_bounds(2025)
 		(datetime.date(2025, 1, 1), datetime.date(2025, 12, 31))
 	"""
-	year = int(year)
-	
-	# Default: calendar year (Jan 1 - Dec 31)
-	# Note: MPIT Year doctype doesn't have year_start_date/year_end_date fields,
-	# it only stores the year number. We use calendar year for all calculations.
-	year_start = datetime.date(year, 1, 1)
-	year_end = datetime.date(year, 12, 31)
-	
-	return (year_start, year_end)
+	year_int = int(year)
+	calendar_start = datetime.date(year_int, 1, 1)
+	calendar_end = datetime.date(year_int, 12, 31)
+
+	if frappe.db.exists("MPIT Year", str(year_int)):
+		year_doc = frappe.get_doc("MPIT Year", str(year_int))
+		if year_doc.start_date and year_doc.end_date:
+			return (getdate(year_doc.start_date), getdate(year_doc.end_date))
+
+	return (calendar_start, calendar_end)
 
 
 def overlap_months(

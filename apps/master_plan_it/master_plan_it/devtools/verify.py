@@ -30,7 +30,6 @@ REQUIRED_DOCTYPES = [
     "MPIT Project Milestone",
 ]
 REQUIRED_ROLES = ["vCIO Manager", "Client Editor", "Client Viewer"]
-REQUIRED_WORKFLOWS = ["MPIT Budget Workflow", "MPIT Budget Amendment Workflow"]
 WORKSPACE_NAME = "Master Plan IT"
 REQUIRED_REPORTS = [
     "MPIT Approved Budget vs Actual",
@@ -56,7 +55,6 @@ REQUIRED_NUMBER_CARDS = [
 def run() -> Dict[str, List[str]]:
     missing_doctypes = [dt for dt in REQUIRED_DOCTYPES if not frappe.db.exists("DocType", dt)]
     missing_roles = [r for r in REQUIRED_ROLES if not frappe.db.exists("Role", r)]
-    missing_workflows = [w for w in REQUIRED_WORKFLOWS if not frappe.db.exists("Workflow", w)]
     missing_reports = [r for r in REQUIRED_REPORTS if not frappe.db.exists("Report", r)]
     missing_dashboard_charts = [c for c in REQUIRED_DASHBOARD_CHARTS if not frappe.db.exists("Dashboard Chart", c)]
     missing_number_cards = [c for c in REQUIRED_NUMBER_CARDS if not frappe.db.exists("Number Card", c)]
@@ -77,7 +75,6 @@ def run() -> Dict[str, List[str]]:
     if not any([
         missing_doctypes,
         missing_roles,
-        missing_workflows,
         missing_reports,
         missing_dashboard_charts,
         missing_number_cards,
@@ -91,7 +88,6 @@ def run() -> Dict[str, List[str]]:
     return {
         "missing_doctypes": missing_doctypes,
         "missing_roles": missing_roles,
-        "missing_workflows": missing_workflows,
         "missing_reports": missing_reports,
         "missing_dashboard_charts": missing_dashboard_charts,
         "missing_number_cards": missing_number_cards,
