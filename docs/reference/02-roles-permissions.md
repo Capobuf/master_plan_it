@@ -19,5 +19,5 @@
   - read for all
 
 ## Notes
-Exact DocPerm matrices should be stored as configuration (not hard-coded), and exported as filtered fixtures when needed.
-- Workspace “Master Plan IT” is restricted to: System Manager, vCIO Manager, Client Editor, Client Viewer (set by bootstrap/sync).
+Exact DocPerm matrices stay in DocType JSON (native Frappe). Roles are shipped as filtered fixtures only for: vCIO Manager, Client Editor, Client Viewer.
+- Workspace “Master Plan IT” is restricted to: System Manager, vCIO Manager, Client Editor, Client Viewer (synced from canonical metadata).

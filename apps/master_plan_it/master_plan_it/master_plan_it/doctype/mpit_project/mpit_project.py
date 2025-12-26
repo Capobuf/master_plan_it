@@ -44,7 +44,7 @@ class MPITProject(Document):
 				alloc.planned_amount,
 				alloc.vat_rate,
 				default_vat,
-				field_label=f"Allocation {alloc.idx} Planned Amount"
+				field_label=_("Allocation {0} Planned Amount").format(alloc.idx)
 			)
 			
 			net, vat, gross = tax.split_net_vat_gross(
@@ -72,7 +72,7 @@ class MPITProject(Document):
 				quote.amount,
 				quote.vat_rate,
 				default_vat,
-				field_label=f"Quote {quote.idx} Amount"
+				field_label=_("Quote {0} Amount").format(quote.idx)
 			)
 			
 			net, vat, gross = tax.split_net_vat_gross(

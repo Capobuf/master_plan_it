@@ -25,7 +25,7 @@ class MPITBudgetAmendment(Document):
 				line.delta_amount,
 				line.vat_rate,
 				default_vat,
-				field_label=f"Line {line.idx} Delta Amount"
+				field_label=frappe._("Line {0} Delta Amount").format(line.idx)
 			)
 			
 			net, vat, gross = tax.split_net_vat_gross(
@@ -37,4 +37,3 @@ class MPITBudgetAmendment(Document):
 			line.delta_amount_net = net
 			line.delta_amount_vat = vat
 			line.delta_amount_gross = gross
-

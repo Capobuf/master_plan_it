@@ -35,43 +35,43 @@
 </head>
 <body>
     <div class="header">
-        <h1>Budget {{ doc.name }}</h1>
+        <h1>{{ _("Budget") }} {{ doc.name }}</h1>
         <div class="subtitle">{{ doc.title or "" }}</div>
     </div>
 
     <div class="info-grid">
         <div class="info-row">
-            <div class="info-label">Fiscal Year:</div>
+            <div class="info-label">{{ _("Fiscal Year") }}:</div>
             <div class="info-value">{{ doc.fiscal_year }}</div>
         </div>
         <div class="info-row">
-            <div class="info-label">Status:</div>
+            <div class="info-label">{{ _("Status") }}:</div>
             <div class="info-value">{{ doc.status }}</div>
         </div>
         <div class="info-row">
-            <div class="info-label">Workflow State:</div>
-            <div class="info-value">{{ doc.workflow_state or "N/A" }}</div>
+            <div class="info-label">{{ _("Workflow State") }}:</div>
+            <div class="info-value">{{ doc.workflow_state or _("N/A") }}</div>
         </div>
         {% if doc.approved_date %}
         <div class="info-row">
-            <div class="info-label">Approved Date:</div>
+            <div class="info-label">{{ _("Approved Date") }}:</div>
             <div class="info-value">{{ frappe.format(doc.approved_date, {"fieldtype": "Date"}) }}</div>
         </div>
         {% endif %}
     </div>
 
-    <h3>Budget Lines</h3>
+    <h3>{{ _("Budget Lines") }}</h3>
     <table class="lines-table">
         <thead>
             <tr>
                 <th style="width: 5%;">#</th>
-                <th style="width: 20%;">Category</th>
-                <th style="width: 15%;">Vendor</th>
-                <th style="width: 25%;">Description</th>
-                <th class="amount-col" style="width: 10%;">Net Amount</th>
-                <th class="amount-col" style="width: 8%;">VAT %</th>
-                <th class="amount-col" style="width: 10%;">Gross Amount</th>
-                <th class="amount-col" style="width: 7%;">Recurrence</th>
+                <th style="width: 20%;">{{ _("Category") }}</th>
+                <th style="width: 15%;">{{ _("Vendor") }}</th>
+                <th style="width: 25%;">{{ _("Description") }}</th>
+                <th class="amount-col" style="width: 10%;">{{ _("Net Amount") }}</th>
+                <th class="amount-col" style="width: 8%;">{{ _("VAT %") }}</th>
+                <th class="amount-col" style="width: 10%;">{{ _("Gross Amount") }}</th>
+                <th class="amount-col" style="width: 7%;">{{ _("Recurrence") }}</th>
             </tr>
         </thead>
         <tbody>
@@ -84,7 +84,7 @@
                 <td class="amount-col">{{ frappe.format(line.amount_net, {"fieldtype": "Currency"}) }}</td>
                 <td class="amount-col">{{ frappe.format(line.vat_rate, {"fieldtype": "Percent"}) if line.vat_rate else "0%" }}</td>
                 <td class="amount-col">{{ frappe.format(line.amount_gross, {"fieldtype": "Currency"}) }}</td>
-                <td>{{ line.recurrence_rule or "None" }}</td>
+                <td>{{ line.recurrence_rule or _("None") }}</td>
             </tr>
             {% endfor %}
         </tbody>
@@ -93,15 +93,15 @@
     <div class="totals">
         <table>
             <tr>
-                <td class="total-label">Total Net:</td>
+                <td class="total-label">{{ _("Total Net") }}:</td>
                 <td class="total-amount">{{ frappe.format(doc.lines | sum(attribute='amount_net'), {"fieldtype": "Currency"}) }}</td>
             </tr>
             <tr>
-                <td class="total-label">Total VAT:</td>
+                <td class="total-label">{{ _("Total VAT") }}:</td>
                 <td class="total-amount">{{ frappe.format(doc.lines | sum(attribute='amount_vat'), {"fieldtype": "Currency"}) }}</td>
             </tr>
             <tr class="grand-total">
-                <td class="total-label">Total Gross:</td>
+                <td class="total-label">{{ _("Total Gross") }}:</td>
                 <td class="total-amount">{{ frappe.format(doc.lines | sum(attribute='amount_gross'), {"fieldtype": "Currency"}) }}</td>
             </tr>
         </table>
@@ -111,7 +111,7 @@
     {% set attachments = frappe.get_all("File", filters={"attached_to_doctype": doc.doctype, "attached_to_name": doc.name}, fields=["file_name", "file_url"]) %}
     {% if attachments %}
     <div class="attachments">
-        <h3>Attachments</h3>
+        <h3>{{ _("Attachments") }}</h3>
         <ul>
             {% for attachment in attachments %}
             <li>{{ attachment.file_name }}</li>
@@ -122,7 +122,7 @@
     {% endif %}
 
     <div class="footer">
-        <p>Printed on {{ frappe.utils.now_datetime().strftime("%Y-%m-%d %H:%M") }} by {{ frappe.session.user }}</p>
+        <p>{{ _("Printed on") }} {{ frappe.utils.now_datetime().strftime("%Y-%m-%d %H:%M") }} {{ _("by") }} {{ frappe.session.user }}</p>
     </div>
 </body>
 </html>

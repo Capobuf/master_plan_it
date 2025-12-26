@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 """MPIT DevTools: bootstrap (tenant defaults)
 
+Install hooks already provision MPIT Settings and MPIT Year (current + next). This helper
+remains available if you need to re-apply roles/workspace in an existing site.
+
 ENTRYPOINT
 - bench --site <site> execute master_plan_it.devtools.bootstrap.run --kwargs '{"step":"tenant"}'
 

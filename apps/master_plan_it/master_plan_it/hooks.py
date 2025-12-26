@@ -13,7 +13,9 @@ app_description = "vCIO multi-tenant budgeting & actuals management (MPIT)."
 app_email = "n/a"
 app_license = "MIT"
 
-# Fixtures can be enabled later once DocTypes/workflows stabilize.
-# fixtures = [
-#     {"dt": "Role", "filters": [["name", "in", ["vCIO Manager", "Client Editor", "Client Viewer"]]]},
-# ]
+after_install = "master_plan_it.setup.install.after_install"
+after_sync = "master_plan_it.setup.install.after_sync"
+
+fixtures = [
+    {"dt": "Role", "filters": [["name", "in", ["vCIO Manager", "Client Editor", "Client Viewer"]]]},
+]

@@ -10,6 +10,7 @@ Provides idempotent get_or_create and typed getters for user preferences.
 from __future__ import annotations
 
 import frappe
+from frappe import _
 from frappe.model.document import Document
 
 
@@ -87,7 +88,7 @@ def get_budget_series(user: str | None = None, year: str | None = None) -> tuple
 	digits = prefs.budget_sequence_digits or 2
 	
 	if not year:
-		frappe.throw("Budget naming requires year parameter (Budget.year field)")
+		frappe.throw(_("Budget naming requires year parameter (Budget.year field)"))
 	
 	# Budget must include year in the name: BUD-2025-01
 	middle = f"{year}-"

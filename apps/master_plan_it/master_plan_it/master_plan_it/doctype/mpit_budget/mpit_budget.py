@@ -63,7 +63,7 @@ class MPITBudget(Document):
 				line.amount,
 				line.vat_rate,
 				default_vat,
-				field_label=f"Line {line.idx} Amount"
+				field_label=_("Line {0} Amount").format(line.idx)
 			)
 			
 			# Compute split
@@ -105,8 +105,7 @@ class MPITBudget(Document):
 			if line.period_start_date and line.period_end_date and overlap_months_count == 0:
 				frappe.throw(
 					frappe._(
-						"Line {0}: Period ({1} to {2}) has zero overlap with fiscal year {3}. "
-						"Cannot save budget line with no temporal overlap."
+						"Line {0}: Period ({1} to {2}) has zero overlap with fiscal year {3}. Cannot save budget line with no temporal overlap."
 					).format(line.idx, line.period_start_date, line.period_end_date, self.fiscal_year)
 				)
 			
@@ -165,4 +164,3 @@ def update_budget_totals(budget_name: str) -> None:
 	}
 
 	frappe.db.set_value("MPIT Budget", budget_name, totals)
-

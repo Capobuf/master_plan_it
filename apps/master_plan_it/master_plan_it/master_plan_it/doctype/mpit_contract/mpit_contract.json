@@ -24,7 +24,6 @@
   "current_amount_net",
   "current_amount_vat",
   "current_amount_gross",
-  "currency",
   "status",
   "owner_user",
   "source_baseline_expense",
@@ -101,12 +100,6 @@
    "fieldname": "current_amount",
    "fieldtype": "Currency",
    "label": "Current Amount"
-  },
-  {
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "label": "Currency",
-   "options": "Currency"
   },
   {
    "default": "Active",

@@ -29,32 +29,32 @@
 </head>
 <body>
     <div class="report-header">
-        <h2>Contract Renewals Window</h2>
+        <h2><%= __("Contract Renewals Window") %></h2>
     </div>
 
     <div class="report-filters">
         <% if (filters.days) { %>
-            <strong>Days Forward:</strong> <%= filters.days %> &nbsp;
+            <strong><%= __("Days Forward") %>:</strong> <%= filters.days %> &nbsp;
         <% } %>
         <% if (filters.from_date) { %>
-            <strong>From Date:</strong> <%= frappe.format(filters.from_date, {fieldtype: "Date"}) %> &nbsp;
+            <strong><%= __("From Date") %>:</strong> <%= frappe.format(filters.from_date, {fieldtype: "Date"}) %> &nbsp;
         <% } %>
         <% if (filters.include_past) { %>
-            <strong>Include Past:</strong> Yes
+            <strong><%= __("Include Past") %>:</strong> <%= __("Yes") %>
         <% } %>
     </div>
 
     <table class="table">
         <thead>
             <tr>
-                <th>Contract</th>
-                <th>Vendor</th>
-                <th>Category</th>
-                <th class="text-center">Next Renewal</th>
-                <th class="text-right">Days to Renewal</th>
-                <th class="text-right">Notice Days</th>
-                <th class="text-center">Auto Renew</th>
-                <th>Status</th>
+                <th><%= __("Contract") %></th>
+                <th><%= __("Vendor") %></th>
+                <th><%= __("Category") %></th>
+                <th class="text-center"><%= __("Next Renewal") %></th>
+                <th class="text-right"><%= __("Days to Renewal") %></th>
+                <th class="text-right"><%= __("Notice Days") %></th>
+                <th class="text-center"><%= __("Auto Renew") %></th>
+                <th><%= __("Status") %></th>
             </tr>
         </thead>
         <tbody>
@@ -66,16 +66,16 @@
                         var daysLabel = "";
                         if (row.days_to_renewal < 0) {
                             daysClass = "badge-expired";
-                            daysLabel = "Expired";
+                            daysLabel = __("Expired");
                         } else if (row.days_to_renewal <= 30) {
                             daysClass = "badge-urgent";
-                            daysLabel = "Urgent";
+                            daysLabel = __("Urgent");
                         } else if (row.days_to_renewal <= 60) {
                             daysClass = "badge-soon";
-                            daysLabel = "Soon";
+                            daysLabel = __("Soon");
                         } else {
                             daysClass = "badge-normal";
-                            daysLabel = "Normal";
+                            daysLabel = __("Normal");
                         }
                     %>
                     <tr>
@@ -93,14 +93,14 @@
                 <% } %>
             <% } else { %>
                 <tr>
-                    <td colspan="8" style="text-align: center; padding: 20px; color: #6c757d;">No renewals in this window</td>
+                    <td colspan="8" style="text-align: center; padding: 20px; color: #6c757d;"><%= __("No renewals in this window") %></td>
                 </tr>
             <% } %>
         </tbody>
     </table>
 
     <div class="report-footer">
-        Generated on <%= new Date().toLocaleDateString() %> at <%= new Date().toLocaleTimeString() %>
+        <%= __("Generated on") %> <%= new Date().toLocaleDateString() %> <%= __("at") %> <%= new Date().toLocaleTimeString() %>
     </div>
 </body>
 </html>

@@ -2,7 +2,7 @@
 
 Questa guida è pensata per utenti finali (vCIO e utenti cliente) che lavorano in **Frappe Desk**.
 
-> Nota: la Workspace “Master Plan IT”, i ruoli MPIT e i workflow (Budget, Budget Amendment) sono provisionati tramite i file canonici del modulo e i normali comandi Frappe (`migrate`, `clear-cache`). Le dashboard restano da aggiungere (vedi `docs/reference/08-known-gaps.md`).
+> Nota: la Workspace “Master Plan IT”, i ruoli MPIT e i workflow (Budget, Budget Amendment) sono provisionati tramite i file canonici del modulo + fixtures e i normali comandi Frappe (`migrate`, `clear-cache`). Nessun pipeline custom è richiesto.
 
 ---
 
@@ -42,7 +42,7 @@ Da lì hai scorciatoie ai principali oggetti:
 - Dashboard: **Master Plan IT Overview** (numero card e grafici pronti)
 
 Se la workspace non appare, chiedi all’amministratore di eseguire:
-- `bench --site <site> execute master_plan_it.devtools.bootstrap.run --kwargs "{\"step\":\"tenant\"}"`
+- `bench --site <site> migrate`
 - `bench --site <site> clear-cache`
 
 ### Ruoli richiesti

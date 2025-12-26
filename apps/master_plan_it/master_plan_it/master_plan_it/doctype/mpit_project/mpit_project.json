@@ -13,7 +13,6 @@
   "start_date",
   "end_date",
   "owner_user",
-  "currency",
   "alloc_section",
   "allocations",
   "quotes_section",
@@ -57,12 +56,6 @@
    "fieldtype": "Link",
    "label": "Owner",
    "options": "User"
-  },
-  {
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "label": "Currency",
-   "options": "Currency"
   },
   {
    "fieldname": "alloc_section",

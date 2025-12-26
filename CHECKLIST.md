@@ -6,7 +6,7 @@ Use this list to ensure we remain consistent and debt-free.
 - [ ] New site created per client
 - [ ] App installed
 - [ ] `bench migrate` applied
-- [ ] `bootstrap.run(step="tenant")` applied
+- [ ] MPIT Settings exists + MPIT Year current/next created (install hook handles on migrate)
 - [ ] Workspace visible and restricted by roles
 
 ## DocTypes
@@ -31,4 +31,3 @@ Use this list to ensure we remain consistent and debt-free.
 - [ ] Fixtures are filtered to MPIT records only
 - [ ] No standard Roles/Workspaces exported
 - [ ] Workflows + states/actions are included where needed
-

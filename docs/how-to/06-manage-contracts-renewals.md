@@ -15,9 +15,8 @@ Contracts/subscriptions are managed in `MPIT Contract`.
 - start/end dates (if applicable)
 - next_renewal_date (mandatory)
 - notice_days, auto_renew
-- current_amount, currency
+- current_amount (uses the site currency from MPIT Settings)
 
 ## Optional reminders (V1.1)
 Use `scheduler_events` to create daily reminders (e.g. ToDo or email) for renewals approaching.
 This is backend-only and remains within native Frappe capabilities.
-

@@ -8,6 +8,8 @@ Naming convention: all DocTypes are prefixed `MPIT`.
 - renewal_window_days (Int, default 90)
 - portfolio_warning_threshold_pct (Int, default 100)
 
+All monetary fields use the single currency configured in MPIT Settings; documents do not store their own currency choice.
+
 ### MPIT Year
 - year (Int, unique)
 - start_date (Date)
@@ -59,7 +61,6 @@ Naming convention: all DocTypes are prefixed `MPIT`.
 - notice_days (Int, optional)
 - auto_renew (Check)
 - current_amount (Currency, optional)
-- currency (Link: Currency, optional)
 - status (Select: Draft / Active / Pending Renewal / Renewed / Cancelled / Expired)
 - owner_user (Link: User, optional)
 - source_baseline_expense (Link: MPIT Baseline Expense, optional)
@@ -69,7 +70,6 @@ Naming convention: all DocTypes are prefixed `MPIT`.
 ### MPIT Budget (Submittable)
 - year (Link: MPIT Year) [mandatory]
 - title (Data)
-- currency (Link: Currency)
 - lines (Table: MPIT Budget Line)
 - total_amount_input (Currency, read-only sum of line amounts)
 - total_amount_net (Currency, read-only sum of line net amounts)
@@ -133,7 +133,6 @@ Naming convention: all DocTypes are prefixed `MPIT`.
 - start_date (Date)
 - end_date (Date)
 - owner (Link: User)
-- currency (Link: Currency)
 - allocations (Table: MPIT Project Allocation) [mandatory before approval]
 - quotes (Table: MPIT Project Quote) [optional]
 - milestones (Table: MPIT Project Milestone) [optional]
@@ -156,4 +155,3 @@ Naming convention: all DocTypes are prefixed `MPIT`.
 - acceptance_date (Date)
 - notes (Text)
 - attachment (Attach)
-

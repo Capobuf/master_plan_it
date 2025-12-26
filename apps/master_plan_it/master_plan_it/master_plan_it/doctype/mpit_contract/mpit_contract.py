@@ -29,7 +29,7 @@ class MPITContract(Document):
 			self.current_amount,
 			self.vat_rate,
 			default_vat,
-			field_label="Current Amount"
+			field_label=frappe._("Current Amount")
 		)
 		
 		# Compute split

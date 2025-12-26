@@ -1,5 +1,8 @@
 # Documentation map
 
+## Agent instructions
+- `AGENT_INSTRUCTIONS.md` → Translations (i18n) – Native Frappe Rules + Italian verification/troubleshooting (canonical; single `translations/it.csv`)
+
 ## Tutorials
 - `docs/tutorials/00-first-budget-cycle.md`
 
@@ -23,7 +26,6 @@
 - `docs/reference/04-reports-dashboards.md`
 - `docs/reference/05-fixtures-bootstrap.md`
 - `docs/reference/07-testing.md`
-- `docs/reference/08-known-gaps.md`
 
 ## Explanation
 - `docs/explanation/01-architecture.md`

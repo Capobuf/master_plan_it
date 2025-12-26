@@ -1,208 +1,435 @@
-{
- "charts": [
-  {
-   "chart": "MPIT Current Budget vs Actual"
-  },
-  {
-   "chart": "MPIT Projects Planned vs Actual"
-  },
-  {
-   "chart": "MPIT Budget vs Actual (Approved)"
-  },
-  {
-   "chart": "MPIT Renewals by Month"
-  }
- ],
- "content": "[{\"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Master Plan IT</span>\", \"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">Gestione budget, progetti, contratti e fornitori</span>\", \"col\": 12}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Quick Actions\", \"col\": 12}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budgets\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Actual Entries\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budget Amendments\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Projects\", \"col\": 3}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Setup & Planning\", \"col\": 12}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 6}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Planning\", \"col\": 6}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Insights\", \"col\": 12}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Current Budget vs Actual\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Projects Planned vs Actual\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Budget vs Actual (Approved)\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Renewals by Month\", \"col\": 6}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"More\", \"col\": 12}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Contracts\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Vendors\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Categories\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Baseline Expense\", \"col\": 3}}]",
- "creation": "2025-12-21 18:09:23.286665",
- "custom_blocks": [],
- "docstatus": 0,
- "doctype": "Workspace",
- "hide_custom": 0,
- "idx": 0,
- "indicator_color": "green",
- "is_hidden": 0,
- "label": "Master Plan IT",
- "links": [
-  {
-   "type": "Card Break",
-   "label": "Setup",
-   "link_type": "DocType",
-   "link_count": 0,
-   "hidden": 0,
-   "is_query_report": 0,
-   "onboard": 0
-  },
-  {
-   "type": "Link",
-   "label": "Categories",
-   "link_type": "DocType",
-   "link_to": "MPIT Category",
-   "link_count": 0,
-   "hidden": 0,
-   "is_query_report": 0,
-   "onboard": 0,
-   "dependencies": ""
-  },
-  {
-   "type": "Link",
-   "label": "Vendors",
-   "link_type": "DocType",
-   "link_to": "MPIT Vendor",
-   "link_count": 0,
-   "hidden": 0,
-   "is_query_report": 0,
-   "onboard": 0,
-   "dependencies": ""
-  },
-  {
-   "type": "Link",
-   "label": "Contracts",
-   "link_type": "DocType",
-   "link_to": "MPIT Contract",
-   "link_count": 0,
-   "hidden": 0,
-   "is_query_report": 0,
-   "onboard": 0,
-   "dependencies": ""
-  },
-  {
-   "type": "Card Break",
-   "label": "Planning",
-   "link_type": "DocType",
-   "link_count": 0,
-   "hidden": 0,
-   "is_query_report": 0,
-   "onboard": 0
-  },
-  {
-   "type": "Link",
-   "label": "Budgets",
-   "link_type": "DocType",
-   "link_to": "MPIT Budget",
-   "link_count": 0,
-   "hidden": 0,
-   "is_query_report": 0,
-   "onboard": 0,
-   "dependencies": ""
-  },
-  {
-   "type": "Link",
-   "label": "Projects",
-   "link_type": "DocType",
-   "link_to": "MPIT Project",
-   "link_count": 0,
-   "hidden": 0,
-   "is_query_report": 0,
-   "onboard": 0,
-   "dependencies": ""
-  },
-  {
-   "type": "Link",
-   "label": "Actual Entries",
-   "link_type": "DocType",
-   "link_to": "MPIT Actual Entry",
-   "link_count": 0,
-   "hidden": 0,
-   "is_query_report": 0,
-   "onboard": 0,
-   "dependencies": ""
-  },
-  {
-   "type": "Link",
-   "label": "Budget Amendments",
-   "link_type": "DocType",
-   "link_to": "MPIT Budget Amendment",
-   "link_count": 0,
-   "hidden": 0,
-   "is_query_report": 0,
-   "onboard": 0,
-   "dependencies": ""
-  },
-  {
-   "type": "Link",
-   "label": "Baseline Expense",
-   "link_type": "DocType",
-   "link_to": "MPIT Baseline Expense",
-   "link_count": 0,
-   "hidden": 0,
-   "is_query_report": 0,
-   "onboard": 0,
-   "dependencies": ""
-  }
- ],
- "modified": "2025-12-22 12:42:17.589769",
- "modified_by": "Administrator",
- "module": "Master Plan IT",
- "name": "Master Plan IT",
- "number_cards": [],
- "owner": "Administrator",
- "public": 1,
- "quick_lists": [],
- "roles": [
-  {
-   "role": "vCIO Manager"
-  },
-  {
-   "role": "Client Editor"
-  },
-  {
-   "role": "Client Viewer"
-  },
-  {
-   "role": "System Manager"
-  }
- ],
- "sequence_id": 0.0,
- "shortcuts": [
-  {
-   "doc_view": "",
-   "label": "Budgets",
-   "link_to": "MPIT Budget",
-   "type": "DocType"
-  },
-  {
-   "doc_view": "",
-   "label": "Actual Entries",
-   "link_to": "MPIT Actual Entry",
-   "type": "DocType"
-  },
-  {
-   "doc_view": "",
-   "label": "Budget Amendments",
-   "link_to": "MPIT Budget Amendment",
-   "type": "DocType"
-  },
-  {
-   "doc_view": "",
-   "label": "Projects",
-   "link_to": "MPIT Project",
-   "type": "DocType"
-  },
-  {
-   "doc_view": "",
-   "label": "Contracts",
-   "link_to": "MPIT Contract",
-   "type": "DocType"
-  },
-  {
-   "doc_view": "",
-   "label": "Vendors",
-   "link_to": "MPIT Vendor",
-   "type": "DocType"
-  },
-  {
-   "doc_view": "",
-   "label": "Categories",
-   "link_to": "MPIT Category",
-   "type": "DocType"
-  },
-  {
-   "doc_view": "",
-   "label": "Baseline Expense",
-   "link_to": "MPIT Baseline Expense",
-   "type": "DocType"
-  }
- ],
- "title": "Master Plan IT"
-}
+[
+ {
+  "charts": [
+   {
+    "chart_name": "MPIT Current Budget vs Actual",
+    "label": "MPIT Current Budget vs Actual",
+    "parent": "Master Plan IT",
+    "parentfield": "charts",
+    "parenttype": "Workspace"
+   },
+   {
+    "chart_name": "MPIT Projects Planned vs Actual",
+    "label": "MPIT Projects Planned vs Actual",
+    "parent": "Master Plan IT",
+    "parentfield": "charts",
+    "parenttype": "Workspace"
+   },
+   {
+    "chart_name": "MPIT Budget vs Actual (Approved)",
+    "label": "MPIT Budget vs Actual (Approved)",
+    "parent": "Master Plan IT",
+    "parentfield": "charts",
+    "parenttype": "Workspace"
+   },
+   {
+    "chart_name": "MPIT Renewals by Month",
+    "label": "MPIT Renewals by Month",
+    "parent": "Master Plan IT",
+    "parentfield": "charts",
+    "parenttype": "Workspace"
+   }
+  ],
+  "content": "[{\"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Master Plan IT</span>\", \"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">Gestione budget, progetti, contratti e fornitori</span>\", \"col\": 12}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Quick Actions\", \"col\": 12}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budgets\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Actual Entries\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budget Amendments\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Projects\", \"col\": 3}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Setup & Planning\", \"col\": 12}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 6}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Planning\", \"col\": 6}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Insights\", \"col\": 12}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Current Budget vs Actual\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Projects Planned vs Actual\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Budget vs Actual (Approved)\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Renewals by Month\", \"col\": 6}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"More\", \"col\": 12}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Contracts\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Vendors\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Categories\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Baseline Expense\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"User Preferences\", \"col\": 3}}]",
+  "custom_blocks": [],
+  "docstatus": 0,
+  "doctype": "Workspace",
+  "for_user": null,
+  "hide_custom": 0,
+  "icon": null,
+  "indicator_color": "green",
+  "is_hidden": 0,
+  "label": "Master Plan IT",
+  "links": [
+   {
+    "dependencies": null,
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 0,
+    "label": "Setup",
+    "link_count": 0,
+    "link_to": null,
+    "link_type": "DocType",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Master Plan IT",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Card Break"
+   },
+   {
+    "dependencies": "",
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 0,
+    "label": "Categories",
+    "link_count": 0,
+    "link_to": "MPIT Category",
+    "link_type": "DocType",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Master Plan IT",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Link"
+   },
+   {
+    "dependencies": "",
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 0,
+    "label": "Vendors",
+    "link_count": 0,
+    "link_to": "MPIT Vendor",
+    "link_type": "DocType",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Master Plan IT",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Link"
+   },
+   {
+    "dependencies": "",
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 0,
+    "label": "Contracts",
+    "link_count": 0,
+    "link_to": "MPIT Contract",
+    "link_type": "DocType",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Master Plan IT",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Link"
+   },
+   {
+    "dependencies": "",
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 0,
+    "label": "User Preferences",
+    "link_count": 0,
+    "link_to": "MPIT User Preferences",
+    "link_type": "DocType",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Master Plan IT",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Link"
+   },
+   {
+    "dependencies": null,
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 0,
+    "label": "Planning",
+    "link_count": 0,
+    "link_to": null,
+    "link_type": "DocType",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Master Plan IT",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Card Break"
+   },
+   {
+    "dependencies": "",
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 0,
+    "label": "Budgets",
+    "link_count": 0,
+    "link_to": "MPIT Budget",
+    "link_type": "DocType",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Master Plan IT",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Link"
+   },
+   {
+    "dependencies": "",
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 0,
+    "label": "Projects",
+    "link_count": 0,
+    "link_to": "MPIT Project",
+    "link_type": "DocType",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Master Plan IT",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Link"
+   },
+   {
+    "dependencies": "",
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 0,
+    "label": "Actual Entries",
+    "link_count": 0,
+    "link_to": "MPIT Actual Entry",
+    "link_type": "DocType",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Master Plan IT",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Link"
+   },
+   {
+    "dependencies": "",
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 0,
+    "label": "Budget Amendments",
+    "link_count": 0,
+    "link_to": "MPIT Budget Amendment",
+    "link_type": "DocType",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Master Plan IT",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Link"
+   },
+   {
+    "dependencies": "",
+    "description": null,
+    "hidden": 0,
+    "icon": null,
+    "is_query_report": 0,
+    "label": "Baseline Expense",
+    "link_count": 0,
+    "link_to": "MPIT Baseline Expense",
+    "link_type": "DocType",
+    "onboard": 0,
+    "only_for": null,
+    "parent": "Master Plan IT",
+    "parentfield": "links",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "type": "Link"
+   }
+  ],
+  "modified": "2025-12-22 12:42:17.589769",
+  "module": "Master Plan IT",
+  "name": "Master Plan IT",
+  "number_cards": [],
+  "parent_page": null,
+  "public": 1,
+  "quick_lists": [],
+  "restrict_to_domain": null,
+  "roles": [
+   {
+    "parent": "Master Plan IT",
+    "parentfield": "roles",
+    "parenttype": "Workspace",
+    "role": "vCIO Manager"
+   },
+   {
+    "parent": "Master Plan IT",
+    "parentfield": "roles",
+    "parenttype": "Workspace",
+    "role": "Client Editor"
+   },
+   {
+    "parent": "Master Plan IT",
+    "parentfield": "roles",
+    "parenttype": "Workspace",
+    "role": "Client Viewer"
+   },
+   {
+    "parent": "Master Plan IT",
+    "parentfield": "roles",
+    "parenttype": "Workspace",
+    "role": "System Manager"
+   }
+  ],
+  "sequence_id": 0.0,
+  "shortcuts": [
+   {
+    "color": null,
+    "doc_view": "",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Budgets",
+    "link_to": "MPIT Budget",
+    "parent": "Master Plan IT",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   },
+   {
+    "color": null,
+    "doc_view": "",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Actual Entries",
+    "link_to": "MPIT Actual Entry",
+    "parent": "Master Plan IT",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   },
+   {
+    "color": null,
+    "doc_view": "",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Budget Amendments",
+    "link_to": "MPIT Budget Amendment",
+    "parent": "Master Plan IT",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   },
+   {
+    "color": null,
+    "doc_view": "",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Projects",
+    "link_to": "MPIT Project",
+    "parent": "Master Plan IT",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   },
+   {
+    "color": null,
+    "doc_view": "",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Contracts",
+    "link_to": "MPIT Contract",
+    "parent": "Master Plan IT",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   },
+   {
+    "color": null,
+    "doc_view": "",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Vendors",
+    "link_to": "MPIT Vendor",
+    "parent": "Master Plan IT",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   },
+   {
+    "color": null,
+    "doc_view": "",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Categories",
+    "link_to": "MPIT Category",
+    "parent": "Master Plan IT",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   },
+   {
+    "color": null,
+    "doc_view": "",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "Baseline Expense",
+    "link_to": "MPIT Baseline Expense",
+    "parent": "Master Plan IT",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   },
+   {
+    "color": null,
+    "doc_view": "",
+    "format": null,
+    "icon": null,
+    "kanban_board": null,
+    "label": "User Preferences",
+    "link_to": "MPIT User Preferences",
+    "parent": "Master Plan IT",
+    "parentfield": "shortcuts",
+    "parenttype": "Workspace",
+    "report_ref_doctype": null,
+    "restrict_to_domain": null,
+    "stats_filter": null,
+    "type": "DocType",
+    "url": null
+   }
+  ],
+  "title": "Master Plan IT"
+ }
+]

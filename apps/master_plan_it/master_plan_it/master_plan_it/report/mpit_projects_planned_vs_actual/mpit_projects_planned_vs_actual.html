@@ -27,27 +27,27 @@
 </head>
 <body>
     <div class="report-header">
-        <h2>Projects: Planned vs Actual</h2>
+        <h2><%= __("Projects: Planned vs Actual") %></h2>
     </div>
 
     <div class="report-filters">
         <% if (filters.project) { %>
-            <strong>Project:</strong> <%= filters.project %> &nbsp;
+            <strong><%= __("Project") %>:</strong> <%= filters.project %> &nbsp;
         <% } %>
         <% if (filters.year) { %>
-            <strong>Year:</strong> <%= filters.year %>
+            <strong><%= __("Year") %>:</strong> <%= filters.year %>
         <% } %>
     </div>
 
     <table class="table">
         <thead>
             <tr>
-                <th>Project</th>
-                <th>Status</th>
-                <th>Year</th>
-                <th class="text-right">Planned Amount</th>
-                <th class="text-right">Actual Amount</th>
-                <th class="text-right">Variance</th>
+                <th><%= __("Project") %></th>
+                <th><%= __("Status") %></th>
+                <th><%= __("Year") %></th>
+                <th class="text-right"><%= __("Planned Amount") %></th>
+                <th class="text-right"><%= __("Actual Amount") %></th>
+                <th class="text-right"><%= __("Variance") %></th>
             </tr>
         </thead>
         <tbody>
@@ -56,14 +56,19 @@
                     <% var row = data[i]; %>
                     <% 
                         var statusClass = "";
+                        var statusLabel = row.status;
                         if (row.status === "Planning") statusClass = "badge-planning";
                         else if (row.status === "Active") statusClass = "badge-active";
                         else if (row.status === "Completed") statusClass = "badge-completed";
                         else if (row.status === "Cancelled") statusClass = "badge-cancelled";
+                        if (row.status === "Planning") statusLabel = __("Planning");
+                        else if (row.status === "Active") statusLabel = __("Active");
+                        else if (row.status === "Completed") statusLabel = __("Completed");
+                        else if (row.status === "Cancelled") statusLabel = __("Cancelled");
                     %>
                     <tr>
                         <td><%= row.project %></td>
-                        <td><span class="badge <%= statusClass %>"><%= row.status %></span></td>
+                        <td><span class="badge <%= statusClass %>"><%= statusLabel %></span></td>
                         <td><%= row.year %></td>
                         <td class="text-right"><%= format_currency(row.planned_amount) %></td>
                         <td class="text-right"><%= format_currency(row.actual_amount) %></td>
@@ -74,14 +79,14 @@
                 <% } %>
             <% } else { %>
                 <tr>
-                    <td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;">No data available</td>
+                    <td colspan="6" style="text-align: center; padding: 20px; color: #6c757d;"><%= __("No data available") %></td>
                 </tr>
             <% } %>
         </tbody>
     </table>
 
     <div class="report-footer">
-        Generated on <%= new Date().toLocaleDateString() %> at <%= new Date().toLocaleTimeString() %>
+        <%= __("Generated on") %> <%= new Date().toLocaleDateString() %> <%= __("at") %> <%= new Date().toLocaleTimeString() %>
     </div>
 </body>
 </html>

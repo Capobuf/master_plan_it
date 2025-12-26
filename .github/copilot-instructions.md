@@ -12,22 +12,21 @@ Breve: MPIT è un'app Frappe Desk multi-tenant (1 sito = 1 cliente). Tutte le mo
   - Modifica direttamente questi JSON; sono la base per il sito e per i deploy.
   - ⚠️ Non creare cartelle duplicate a livello superiore (drift).
 - **Python logic (calcoli/validazioni):** `apps/master_plan_it/master_plan_it/doctype/*/mpit_*.py`
-- Devtools/entrypoint: `apps/master_plan_it/master_plan_it/devtools/` (`sync.py`, `bootstrap.py`, `verify.py`)
-- Hooks: `apps/master_plan_it/master_plan_it/hooks.py`
+- Devtools/entrypoint: `apps/master_plan_it/master_plan_it/devtools/` (`verify.py`); install hooks in `setup/install.py`.
+- Hooks: `apps/master_plan_it/master_plan_it/hooks.py` (after_install/after_sync)
+- Fixtures: `apps/master_plan_it/master_plan_it/fixtures/role.json` (solo ruoli MPIT).
 - Docs operative: `docs/how-to/09-docker-compose-notes.md`, `docs/how-to/08-user-guide.md`
-- **Spec:** `apps/master_plan_it/master_plan_it/spec/` è documentazione di design; non usarla per import.
 
 ## Comandi essenziali (esempi concreti) ✅
 - Applicare metadata/versioning al sito (standard Frappe):
   - `bench --site <site> migrate`
   - `bench --site <site> clear-cache`
 - Esporta le Customizations da Desk quando necessario (non lasciare modifiche solo in DB).
-- Bootstrap tenant / workspace / ruoli:
-  - `bench --site <site> execute master_plan_it.devtools.bootstrap.run --kwargs '{"step":"tenant"}'`
+- Bootstrap base: gestito dagli install hooks (MPIT Settings + anni corrente/prossimo) e dalle fixtures ruoli.
 - Verifica post-apply:
-  - `bench --site <site> execute master_plan_it.devtools.verify.run`
+  - `bench --site <site> execute master_plan_it.devtools.verify.run` (opzionale)
 - Test (smoke/unit):
-  - `bench --site <site> run-tests --app master_plan_it` (vedi `starter-kit/overlay/.../tests/test_smoke.py`)
+  - `bench --site <site> run-tests --app master_plan_it` (es. `apps/master_plan_it/master_plan_it/tests/test_smoke.py`)
 
 ## Docker / ambiente locale 🐳
 - File principale: `compose.yml` (usa `Dockerfile.frappe`).

@@ -22,36 +22,36 @@
 </head>
 <body>
     <div class="report-header">
-        <h2>Current Budget vs Actual</h2>
+        <h2><%= __("Current Budget vs Actual") %></h2>
     </div>
 
     <div class="report-filters">
         <% if (filters.year) { %>
-            <strong>Year:</strong> <%= filters.year %> &nbsp;
+            <strong><%= __("Year") %>:</strong> <%= filters.year %> &nbsp;
         <% } %>
         <% if (filters.category) { %>
-            <strong>Category:</strong> <%= filters.category %> &nbsp;
+            <strong><%= __("Category") %>:</strong> <%= filters.category %> &nbsp;
         <% } %>
         <% if (filters.vendor) { %>
-            <strong>Vendor:</strong> <%= filters.vendor %> &nbsp;
+            <strong><%= __("Vendor") %>:</strong> <%= filters.vendor %> &nbsp;
         <% } %>
         <% if (filters.budget) { %>
-            <strong>Budget:</strong> <%= filters.budget %>
+            <strong><%= __("Budget") %>:</strong> <%= filters.budget %>
         <% } %>
     </div>
 
     <table class="table">
         <thead>
             <tr>
-                <th>Budget</th>
-                <th>Year</th>
-                <th>Category</th>
-                <th>Vendor</th>
-                <th class="text-right">Baseline</th>
-                <th class="text-right">Amendments</th>
-                <th class="text-right">Current Budget</th>
-                <th class="text-right">Actual</th>
-                <th class="text-right">Variance</th>
+                <th><%= __("Budget") %></th>
+                <th><%= __("Year") %></th>
+                <th><%= __("Category") %></th>
+                <th><%= __("Vendor") %></th>
+                <th class="text-right"><%= __("Baseline") %></th>
+                <th class="text-right"><%= __("Amendments") %></th>
+                <th class="text-right"><%= __("Current Budget") %></th>
+                <th class="text-right"><%= __("Actual") %></th>
+                <th class="text-right"><%= __("Variance") %></th>
             </tr>
         </thead>
         <tbody>
@@ -76,14 +76,14 @@
                 <% } %>
             <% } else { %>
                 <tr>
-                    <td colspan="9" style="text-align: center; padding: 20px; color: #6c757d;">No data available</td>
+                    <td colspan="9" style="text-align: center; padding: 20px; color: #6c757d;"><%= __("No data available") %></td>
                 </tr>
             <% } %>
         </tbody>
     </table>
 
     <div class="report-footer">
-        Generated on <%= new Date().toLocaleDateString() %> at <%= new Date().toLocaleTimeString() %>
+        <%= __("Generated on") %> <%= new Date().toLocaleDateString() %> <%= __("at") %> <%= new Date().toLocaleTimeString() %>
     </div>
 </body>
 </html>

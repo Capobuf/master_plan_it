@@ -9,14 +9,16 @@
  "field_order": [
   "year",
   "title",
-  "currency",
   "workflow_state",
   "lines_section",
   "lines",
   "totals_section",
+  "totals_col_break_1",
+  "totals_col_break_2",
   "total_amount_input",
-  "total_amount_net",
   "total_amount_vat",
+  "totals_col_break_3",
+  "total_amount_net",
   "total_amount_gross",
   "amended_from"
  ],
@@ -34,13 +36,6 @@
    "fieldtype": "Data",
    "in_list_view": 1,
    "label": "Title"
-  },
-  {
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Currency",
-   "options": "Currency"
   },
   {
    "allow_on_submit": 1,
@@ -68,21 +63,33 @@
    "label": "Totals"
   },
   {
+   "fieldname": "totals_col_break_1",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "totals_col_break_2",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "total_amount_input",
    "fieldtype": "Currency",
    "label": "Total Amount Input",
    "read_only": 1
   },
   {
-   "fieldname": "total_amount_net",
-   "fieldtype": "Currency",
-   "label": "Total Net Amount",
-   "read_only": 1
-  },
-  {
    "fieldname": "total_amount_vat",
    "fieldtype": "Currency",
    "label": "Total VAT Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "totals_col_break_3",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_amount_net",
+   "fieldtype": "Currency",
+   "label": "Total Net Amount",
    "read_only": 1
   },
   {

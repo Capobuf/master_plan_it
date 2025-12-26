@@ -30,7 +30,7 @@ class MPITBaselineExpense(Document):
 			self.amount,
 			self.vat_rate,
 			default_vat,
-			field_label="Amount"
+			field_label=frappe._("Amount")
 		)
 		
 		# Compute split
@@ -71,8 +71,7 @@ class MPITBaselineExpense(Document):
 		if self.period_start_date and self.period_end_date and overlap_months_count == 0:
 			frappe.throw(
 				frappe._(
-					"Baseline Expense period ({0} to {1}) has zero overlap with fiscal year {2}. "
-					"Cannot save baseline expense with no temporal overlap."
+					"Baseline Expense period ({0} to {1}) has zero overlap with fiscal year {2}. Cannot save baseline expense with no temporal overlap."
 				).format(self.period_start_date, self.period_end_date, self.year)
 			)
 		
@@ -96,4 +95,3 @@ class MPITBaselineExpense(Document):
 		self.annual_net = annual_net
 		self.annual_vat = annual_vat
 		self.annual_gross = annual_gross
-

@@ -5,6 +5,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+> Note: starter-kit overlays, spec folders, backups, and custom preflight have been removed in the current repo. Bootstrap now relies on install hooks + fixtures; historical entries remain for context.
+
 ## [0.1.0] - 2025-12-22
 
 ### Added - EPIC MPIT-E01 (Phases 1-6)
@@ -212,7 +214,7 @@ Budget: BUD-2025-04
 - ✅ **ADR 0006 (No Custom Frontend):** Server-side rendering only, no custom JS/CSS
 - ✅ **ADR 0008 (Print Formats Jinja):** All print formats versionable in git
 - ✅ **Zero Drift:** All metadata in filesystem, deterministic sync
-- ✅ **Idempotency:** sync_all, migrate, bootstrap all idempotent
+- ✅ **Idempotency:** standard migrate/clear-cache + bootstrap steps are all idempotent
 
 ### Known Issues
 None. All features fully implemented and tested.
@@ -227,7 +229,7 @@ None. All features fully implemented and tested.
 - Workflows: Budget Workflow, Budget Amendment Workflow
 - Reports: 4 Script Reports (Approved vs Actual, Current vs Actual, Projects Planned vs Actual, Renewals Window)
 - Dashboard: Master Plan IT Overview
-- Bootstrap scripts: `devtools/bootstrap.py`, `devtools/sync.py`, `devtools/verify.py`
+- Bootstrap helpers: `devtools/bootstrap.py`, `devtools/verify.py` (baseline handled by install hooks in current repo)
 - Documentation: Diátaxis structure (tutorials, how-to, reference, explanation)
 - ADRs: 0001-0007 (architecture decisions)
 

@@ -1,78 +1,237 @@
-Source Text,Translated Text
-Amount,Importo
-Amount Includes VAT,Importo IVA inclusa
-Net Amount,Importo netto
-VAT Amount,Importo IVA
-Gross Amount,Importo lordo
-Category,Categoria
-Vendor,Fornitore
-Contract,Contratto
-Project,Progetto
-Baseline Expense,Spesa di base
-Description,Descrizione
-VAT Rate,Aliquota IVA
-Recurrence Rule,Regola di ricorrenza
-Monthly,Mensile
-Quarterly,Trimestrale
-Annual,Annuale
-Custom,Personalizzato
-None,Nessuna
-Custom Period (Months),Periodo personalizzato (mesi)
-Period Start Date,Data inizio periodo
-Period End Date,Data fine periodo
-Annual Net Amount,Importo netto annuale
-Annual VAT Amount,IVA annuale
-Annual Gross Amount,Importo lordo annuale
-Cost Type,Tipo costo
-CAPEX,Investimento (CAPEX)
-OPEX,Spesa operativa (OPEX)
-Is Portfolio Bucket,Bucket di portafoglio
-Is Active,Attivo
-Server upgrade,Aggiornamento server
-License renewal,Rinnovo licenza
-Hardware,Hardware
-Software,Software
-Draft,Bozza
-Approved,Approvato
-Rejected,Respinto
-Line {0}: Period ({1} to {2}) has zero overlap with fiscal year {3}. Cannot save budget line with no temporal overlap.,Riga {0}: Il periodo ({1} - {2}) non si sovrappone con l'anno fiscale {3}. Impossibile salvare la riga di budget senza sovrapposizione temporale.
-Year is required to generate Budget name,Anno obbligatorio per generare il nome del budget
-Total Amount Input,Somma importi inseriti
-Total Net Amount,Somma importi netti
-Total VAT Amount,Somma IVA
-Total Gross Amount,Somma importi lordi
-Posting Date is required to derive MPIT Year.,La data di registrazione è obbligatoria per ricavare l'anno MPIT.
-No MPIT Year covers posting date {0}. Create year {1} or set start/end dates that include the date.,Nessun Anno MPIT copre la data {0}. Crea l'anno {1} o imposta date di inizio/fine che includano la data.
-Add at least one Allocation (year + planned amount) before moving a project to status {0}.,Aggiungi almeno un'Allocazione (anno + importo previsto) prima di cambiare lo stato del progetto in {0}.
-Next Renewal Date,Prossima data di rinnovo
-Days to Renewal,Giorni al rinnovo
-Notice Days,Giorni di preavviso
-Auto Renew,Rinnovo automatico
-Expired,Scaduto
-Upcoming (<= {0} days),In scadenza (≤ {0} giorni)
-Renewals,Rinnovi
-Expired Count,Numero scaduti
-Count,Conteggio
-Budget,Budget
-Year,Anno
-Budget Amount,Importo budget
-Actual Amount,Importo effettivo
-Variance (Actual - Budget),Scostamento (Effettivo - Budget)
-Planned Amount,Importo previsto
-Variance (Actual - Planned),Scostamento (Effettivo - Previsto)
-Baseline Amount,Importo base
-Amendments Delta,Delta emendamenti
-Current Budget,Budget corrente
-Variance (Actual - Current),Scostamento (Effettivo - Corrente)
-Planned,Previsto
-Actual,Effettivo
-Setup,Impostazioni
-"Setup & Planning",Impostazioni e pianificazione
-Categories,Categorie
-Vendors,Fornitori
-Contracts,Contratti
-"Expired Contracts",Contratti scaduti
-"Quick Actions",Azioni rapide
-"Quick Links",Collegamenti rapidi
-"Your Shortcuts",I tuoi collegamenti
-More,Altro
+source_string,translated_string,context
+Acceptance Date,Data di accettazione,
+Accepted,Accettato,
+Active,Attivo,
+Actual,Effettivo,
+Actual Amount,Importo effettivo,
+Actual Entries,Registrazioni effettive,
+Add at least one Allocation (year + planned amount) before moving a project to status {0}.,Aggiungi almeno un'Allocazione (anno + importo previsto) prima di cambiare lo stato del progetto in {0}.,
+Allocation {0} Planned Amount,Importo previsto allocazione {0},
+Allocations,Allocazioni,
+Amended From,Modificato da,
+Amendments,Emendamenti,
+Amendments Delta,Delta emendamenti,
+Amount,Importo,
+Amount Includes VAT,Importo IVA inclusa,
+Annual,Annuale,
+Annual Gross Amount,Importo lordo annuale,
+Annual Net Amount,Importo netto annuale,
+Annual Renewal,Rinnovo annuale,
+Annual VAT Amount,IVA annuale,
+Approve,Approva,
+Approved,Approvato,
+Approved Budget vs Actual,Budget approvato vs Effettivo,
+Approved Date,Data approvazione,
+Archived,Archiviato,
+Attachment,Allegato,
+Attachments,Allegati,
+Auto Renew,Rinnovo automatico,
+Baseline,Base,
+Baseline Amount,Importo base,
+Baseline Expense,Spesa di base,
+Baseline Expense period ({0} to {1}) has zero overlap with fiscal year {2}. Cannot save baseline expense with no temporal overlap.,Il periodo della Spesa di base ({0} - {1}) non si sovrappone con l'anno fiscale {2}. Impossibile salvare la spesa di base senza sovrapposizione temporale.,
+Billing Cycle,Ciclo di fatturazione,
+Budget,Budget,
+Budget Allocations,Allocazioni budget,
+Budget Amendments,Emendamenti budget,
+Budget Amount,Importo budget,
+Budget Line Ref,Rif. riga budget,
+Budget Lines,Righe budget,
+Budget Prefix,Prefisso budget,
+Budget Sequence Digits,Cifre sequenza budget,
+Budget naming requires year parameter (Budget.year field),La nomenclatura del budget richiede il parametro anno (campo Budget.year),
+Budgets,Budget,
+CAPEX,CAPEX,
+Cancelled,Annullato,
+Categories,Categorie,
+Category,Categoria,
+Category Name,Nome categoria,
+Client Editor,Client Editor,
+Completed,Completato,
+Contact Email,Email contatto,
+Contact Phone,Telefono contatto,
+Contract,Contratto,
+Contract End,Fine contratto,
+Contract Kind,Tipo contratto,
+Contract Renewals Window,Finestra rinnovi contratto,
+Contract Start,Inizio contratto,
+Contracts,Contratti,
+Cost Type,Tipo costo,
+Count,Conteggio,
+Currency,Valuta,
+Current Amount,Importo attuale,
+Current Amount Includes VAT,Importo attuale IVA inclusa,
+Current Budget,Budget corrente,
+Current Budget vs Actual,Budget corrente vs Effettivo,
+Custom,Personalizzato,
+Custom Period (Months),Periodo personalizzato (mesi),
+Custom recurrence rule requires custom_period_months to be specified,La regola di ricorrenza personalizzata richiede che sia specificato custom_period_months,
+Days Forward,Giorni in avanti,
+Days to Renewal,Giorni al rinnovo,
+Default Amount Includes VAT,Importo predefinito IVA inclusa,
+Default VAT Rate,Aliquota IVA predefinita,
+"Default VAT rate for new entries (leave blank for no default, 0 is valid)","Aliquota IVA predefinita per nuove registrazioni (lascia vuoto per nessun valore predefinito, 0 è valido)",
+Delta Amount,Importo delta,
+Delta Amount Includes VAT,Importo delta IVA inclusa,
+Description,Descrizione,
+Done,Completato,
+Draft,Bozza,
+Due Date,Data scadenza,
+Effective Date,Data di effetto,
+End Date,Data fine,
+Expense Kind,Tipo di spesa,
+Expired,Scaduto,
+Expired Contracts,Contratti scaduti,
+Expired Count,Numero scaduti,
+Fiscal Year,Anno fiscale,
+From Date,Data iniziale,
+Generated on,Generato il,
+Gross Amount,Importo lordo,
+Gross Delta Amount,Importo lordo delta,
+Gross Planned Amount,Importo lordo previsto,
+In Progress,In corso,
+In Review,In revisione,
+Include Past,Includi passati,
+Is Active,Attivo,
+Is Group,È gruppo,
+Is Portfolio Bucket,Bucket di portafoglio,
+Last Year,Anno precedente,
+Left,Sinistra,
+Line {0} Amount,Importo riga {0},
+Line {0} Delta Amount,Importo delta riga {0},
+Line {0}: Period ({1} to {2}) has zero overlap with fiscal year {3}. Cannot save budget line with no temporal overlap.,Riga {0}: Il periodo ({1} - {2}) non si sovrappone con l'anno fiscale {3}. Impossibile salvare la riga di budget senza sovrapposizione temporale.,
+Lines,Righe,
+MPIT Approved Budget vs Actual,MPIT Budget approvato vs Effettivo,
+MPIT Budget,MPIT Budget,
+MPIT Budget Amendment,MPIT Budget Amendment,
+MPIT Budget Amendment Workflow,MPIT Budget Amendment Workflow,
+MPIT Budget Professional,MPIT Budget Professionale,
+MPIT Budget Workflow,MPIT Budget Workflow,
+MPIT Budget vs Actual (Approved),MPIT Budget vs Effettivo (Approvato),
+MPIT Current Budget vs Actual,MPIT Budget corrente vs Effettivo,
+MPIT Project,Progetto MPIT,
+MPIT Project Professional,Progetto MPIT Professionale,
+MPIT Projects Planned vs Actual,Progetti MPIT: Previsto vs Effettivo,
+MPIT Renewals Window,Finestra rinnovi MPIT,
+MPIT Renewals by Month,Rinnovi MPIT per mese,
+Maintenance,Manutenzione,
+Master Plan IT,Master Plan IT,
+Master Plan IT Overview,Panoramica Master Plan IT,
+Milestones,Milestone,
+Monthly,Mensile,
+N/A,N/D,
+Naming Preferences,Preferenze di nomenclatura,
+Needs Clarification,Richiede chiarimenti,
+Net Amount,Importo netto,
+Net Delta Amount,Importo netto delta,
+Net Planned Amount,Importo netto previsto,
+Next Renewal,Prossimo rinnovo,
+Next Renewal Date,Prossima data di rinnovo,
+No MPIT Year covers posting date {0}. Create year {1} or set start/end dates that include the date.,Nessun Anno MPIT copre la data {0}. Crea l'anno {1} o imposta date di inizio/fine che includano la data.,
+No data available,Nessun dato disponibile,
+No renewals in this window,Nessun rinnovo in questa finestra,
+None,Nessuna,
+Normal,Normale,
+Note,Nota,
+Notes,Note,
+Notice Days,Giorni di preavviso,
+OPEX,OPEX,
+Old Parent,Vecchio genitore,
+On Hold,In sospeso,
+One-off,Una tantum,
+Other,Altro,
+Owner,Proprietario,
+Owner User,Utente proprietario,
+Parent Category,Categoria padre,
+Parent MPIT Category,Categoria MPIT padre,
+Pending Renewal,In attesa di rinnovo,
+Period End Date,Data fine periodo,
+Period Start Date,Data inizio periodo,
+Planned,Previsto,
+Planned Amount,Importo previsto,
+Planned Amount Includes VAT,Importo previsto IVA inclusa,
+Planned Gross,Lordo previsto,
+Planned Net,Netto previsto,
+Planning,Pianificazione,
+Portfolio Warning Threshold %,Soglia di avviso portafoglio %,
+Posting Date,Data di registrazione,
+Posting Date is required to derive MPIT Year.,La data di registrazione è obbligatoria per ricavare l'anno MPIT.,
+Print Preferences,Preferenze di stampa,
+Printed on,Stampato il,
+Project,Progetto,
+Project Prefix,Prefisso progetto,
+Project Sequence Digits,Cifre sequenza progetto,
+Projects,Progetti,
+Projects: Planned vs Actual,Progetti: Previsto vs Effettivo,
+Propose,Proponi,
+Proposed,Proposto,
+Quarterly,Trimestrale,
+Quote Date,Data preventivo,
+Quote {0} Amount,Importo preventivo {0},
+Quotes,Preventivi,
+Reason,Motivazione,
+Received,Ricevuto,
+Recorded,Registrato,
+Recurrence,Ricorrenza,
+Recurrence Rule,Regola di ricorrenza,
+Reject,Rifiuta,
+Rejected,Respinto,
+Renewal Window Days,Giorni finestra rinnovo,
+Renewals,Rinnovi,
+Renewals 30d,Rinnovi 30g,
+Renewals 60d,Rinnovi 60g,
+Renewals 90d,Rinnovi 90g,
+Renewed,Rinnovato,
+Resubmit,Reinvia,
+Right,Destra,
+Send to Review,Invia in revisione,
+Setup,Impostazioni,
+Show Attachments in Print,Mostra allegati in stampa,
+Soon,Presto,
+Sort Order,Ordinamento,
+Source Baseline Expense,Spesa di base origine,
+Start Date,Data inizio,
+Status,Stato,
+Subscription,Abbonamento,
+Title,Titolo,
+Total Amount Input,Somma importi inseriti,
+Total Gross,Totale lordo,
+Total Gross Amount,Importo lordo totale,
+Total Net,Totale netto,
+Total Net Amount,Importo netto totale,
+Total Planned Net,Totale netto previsto,
+Total Quotes Gross,Totale lordo preventivi,
+Total VAT,Totale IVA,
+Total VAT Amount,Importo totale IVA,
+Totals,Totali,
+Upcoming (<= {0} days),In scadenza (≤ {0} giorni),
+Urgent,Urgente,
+User,Utente,
+VAT %,% IVA,
+VAT Amount,Importo IVA,
+VAT Defaults,Impostazioni IVA predefinite,
+VAT Delta Amount,Importo IVA delta,
+VAT ID,Partita IVA,
+VAT Planned Amount,Importo IVA previsto,
+VAT Rate,Aliquota IVA,
+Validated,Validato,
+Variance,Scostamento,
+Variance (Actual - Budget),Scostamento (Effettivo - Budget),
+Variance (Actual - Current),Scostamento (Effettivo - Corrente),
+Variance (Actual - Planned),Scostamento (Effettivo - Previsto),
+Vendor,Fornitore,
+Vendor Name,Nome fornitore,
+Vendor Quotes,Preventivi fornitori,
+Vendors,Fornitori,
+Verified,Verificato,
+Workflow State,Stato workflow,
+Year,Anno,
+Year is required to generate Budget name,Anno obbligatorio per generare il nome del budget,
+Yearly,Annuale,
+Yes,Sì,
+at,alle,
+by,da,
+custom_period_months is only used when recurrence_rule is 'Custom' - value will be ignored,"custom_period_months è utilizzato solo quando recurrence_rule è ""Custom"": il valore verrà ignorato",
+custom_period_months must be between 1 and 12,custom_period_months deve essere tra 1 e 12,
+vCIO Manager,vCIO Manager,
+{0} is non-zero but no VAT rate is specified. Please set a VAT rate on this row or configure a default VAT rate in your User Preferences.,{0} è diverso da zero ma non è stata specificata alcuna aliquota IVA. Imposta un'aliquota IVA su questa riga o configura un'aliquota IVA predefinita nelle tue Preferenze utente.,

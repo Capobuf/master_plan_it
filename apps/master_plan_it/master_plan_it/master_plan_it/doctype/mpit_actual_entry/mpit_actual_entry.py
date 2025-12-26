@@ -32,7 +32,7 @@ class MPITActualEntry(Document):
 			self.amount,
 			self.vat_rate,
 			default_vat,
-			field_label="Amount"
+			field_label=_("Amount")
 		)
 		
 		# Compute split
