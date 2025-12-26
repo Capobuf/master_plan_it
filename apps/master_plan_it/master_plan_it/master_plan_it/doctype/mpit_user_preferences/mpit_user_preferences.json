@@ -24,6 +24,7 @@
   {
    "fieldname": "user",
    "fieldtype": "Link",
+   "description": "Select the user these preferences apply to.",
    "in_list_view": 1,
    "label": "User",
    "options": "User",
@@ -46,6 +47,7 @@
    "default": "0",
    "fieldname": "default_amount_includes_vat",
    "fieldtype": "Check",
+   "description": "If enabled, new amounts default to VAT-inclusive.",
    "label": "Default Amount Includes VAT"
   },
   {
@@ -57,12 +59,14 @@
    "default": "BUD-",
    "fieldname": "budget_prefix",
    "fieldtype": "Data",
+   "description": "Prefix used when generating budget names.",
    "label": "Budget Prefix"
   },
   {
    "default": "2",
    "fieldname": "budget_sequence_digits",
    "fieldtype": "Int",
+   "description": "Number of digits for budget sequence numbers.",
    "label": "Budget Sequence Digits"
   },
   {
@@ -73,12 +77,14 @@
    "default": "PRJ-",
    "fieldname": "project_prefix",
    "fieldtype": "Data",
+   "description": "Prefix used when generating project names.",
    "label": "Project Prefix"
   },
   {
    "default": "4",
    "fieldname": "project_sequence_digits",
    "fieldtype": "Int",
+   "description": "Number of digits for project sequence numbers.",
    "label": "Project Sequence Digits"
   },
   {
@@ -90,6 +96,7 @@
    "default": "0",
    "fieldname": "show_attachments_in_print",
    "fieldtype": "Check",
+   "description": "If enabled, attachments are shown on print formats.",
    "label": "Show Attachments in Print"
   }
  ],

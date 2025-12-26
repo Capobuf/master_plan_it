@@ -14,6 +14,7 @@
   {
    "fieldname": "currency",
    "fieldtype": "Link",
+   "description": "Select the default currency for Master Plan IT calculations.",
    "in_list_view": 1,
    "label": "Currency",
    "options": "Currency",
@@ -23,12 +24,14 @@
    "default": "90",
    "fieldname": "renewal_window_days",
    "fieldtype": "Int",
+   "description": "Days before renewal dates treated as the renewal window.",
    "label": "Renewal Window Days"
   },
   {
    "default": "100",
    "fieldname": "portfolio_warning_threshold_pct",
    "fieldtype": "Int",
+   "description": "Percentage threshold used for portfolio warnings.",
    "label": "Portfolio Warning Threshold %"
   }
  ],

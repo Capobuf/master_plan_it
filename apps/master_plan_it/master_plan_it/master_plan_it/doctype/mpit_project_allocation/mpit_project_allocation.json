@@ -9,16 +9,18 @@
   "year",
   "planned_amount",
   "planned_amount_includes_vat",
+  "planned_amount_gross",
   "vat_rate",
   "planned_amount_net",
-  "planned_amount_vat",
-  "planned_amount_gross"
+  "planned_amount_vat"
  ],
  "fields": [
   {
    "fieldname": "year",
    "fieldtype": "Link",
+   "description": "Select the year for this allocation.",
    "in_list_view": 1,
+   "columns": 2,
    "label": "Year",
    "options": "MPIT Year",
    "reqd": 1
@@ -26,6 +28,9 @@
   {
    "fieldname": "planned_amount",
    "fieldtype": "Currency",
+   "description": "Enter the planned amount for this year.",
+   "in_list_view": 1,
+   "columns": 2,
    "label": "Planned Amount",
    "reqd": 1
   },
@@ -33,29 +38,38 @@
    "default": "0",
    "fieldname": "planned_amount_includes_vat",
    "fieldtype": "Check",
+   "description": "If enabled, the planned amount includes VAT.",
+   "in_list_view": 1,
+   "columns": 1,
    "label": "Planned Amount Includes VAT"
   },
   {
    "fieldname": "vat_rate",
    "fieldtype": "Percent",
+   "description": "VAT rate applied to the planned amount.",
    "label": "VAT Rate",
    "precision": "2"
   },
   {
    "fieldname": "planned_amount_net",
    "fieldtype": "Currency",
+   "description": "Calculated automatically from planned amount and VAT settings.",
    "label": "Net Planned Amount",
    "read_only": 1
   },
   {
    "fieldname": "planned_amount_vat",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the VAT portion.",
    "label": "VAT Planned Amount",
    "read_only": 1
   },
   {
    "fieldname": "planned_amount_gross",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the gross amount.",
+   "in_list_view": 1,
+   "columns": 2,
    "label": "Gross Planned Amount",
    "read_only": 1
   }

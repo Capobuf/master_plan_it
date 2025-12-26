@@ -28,6 +28,7 @@
   {
    "fieldname": "posting_date",
    "fieldtype": "Date",
+   "description": "Posting date for the entry; used to derive the MPIT Year.",
    "in_list_view": 1,
    "label": "Posting Date",
    "reqd": 1
@@ -35,6 +36,7 @@
   {
    "fieldname": "year",
    "fieldtype": "Link",
+   "description": "Derived MPIT Year based on the posting date.",
    "in_list_view": 1,
    "label": "Year",
    "options": "MPIT Year",
@@ -44,6 +46,7 @@
   {
    "fieldname": "category",
    "fieldtype": "Link",
+   "description": "Select the category for this entry.",
    "in_list_view": 1,
    "label": "Category",
    "options": "MPIT Category",
@@ -52,6 +55,7 @@
   {
    "fieldname": "vendor",
    "fieldtype": "Link",
+   "description": "Select the vendor involved in this entry.",
    "in_list_view": 1,
    "label": "Vendor",
    "options": "MPIT Vendor"
@@ -59,41 +63,48 @@
   {
    "fieldname": "contract",
    "fieldtype": "Link",
+   "description": "Select the related contract, if applicable.",
    "label": "Contract",
    "options": "MPIT Contract"
   },
   {
    "fieldname": "project",
    "fieldtype": "Link",
+   "description": "Select the related project, if applicable.",
    "label": "Project",
    "options": "MPIT Project"
   },
   {
    "fieldname": "budget",
    "fieldtype": "Link",
+   "description": "Select the budget this entry relates to.",
    "label": "Budget",
    "options": "MPIT Budget"
   },
   {
    "fieldname": "budget_line_ref",
    "fieldtype": "Data",
+   "description": "Reference to the related budget line, if applicable.",
    "label": "Budget Line Ref"
   },
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
+   "description": "Enter the actual amount; use net or gross per the VAT setting.",
    "in_list_view": 1,
    "label": "Amount"
   },
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
+   "description": "Describe the actual entry.",
    "label": "Description"
   },
   {
    "default": "Recorded",
    "fieldname": "status",
    "fieldtype": "Select",
+   "description": "Choose whether the entry is recorded or verified.",
    "in_list_view": 1,
    "label": "Status",
    "options": "Recorded\nVerified"
@@ -102,29 +113,34 @@
    "default": "0",
    "fieldname": "amount_includes_vat",
    "fieldtype": "Check",
+   "description": "If enabled, the amount includes VAT.",
    "label": "Amount Includes VAT"
   },
   {
    "fieldname": "vat_rate",
    "fieldtype": "Percent",
+   "description": "VAT rate applied to the amount.",
    "label": "VAT Rate",
    "precision": "2"
   },
   {
    "fieldname": "amount_net",
    "fieldtype": "Currency",
+   "description": "Calculated automatically from amount and VAT settings.",
    "label": "Net Amount",
    "read_only": 1
   },
   {
    "fieldname": "amount_vat",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the VAT portion.",
    "label": "VAT Amount",
    "read_only": 1
   },
   {
    "fieldname": "amount_gross",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the gross amount.",
    "label": "Gross Amount",
    "read_only": 1
   }

@@ -7,43 +7,57 @@
  "engine": "InnoDB",
  "field_order": [
   "vendor",
+  "quote_date",
+  "attachment",
+  "status",
   "amount",
+  "amount_gross",
   "amount_includes_vat",
   "vat_rate",
   "amount_net",
-  "amount_vat",
-  "amount_gross",
-  "quote_date",
-  "attachment",
-  "status"
+  "amount_vat"
  ],
  "fields": [
   {
    "fieldname": "vendor",
    "fieldtype": "Link",
+   "description": "Select the vendor providing the quote.",
+   "in_list_view": 1,
+   "columns": 2,
    "label": "Vendor",
    "options": "MPIT Vendor"
   },
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
+   "description": "Enter the quoted amount.",
    "in_list_view": 1,
+   "columns": 1,
    "label": "Amount"
   },
   {
    "fieldname": "quote_date",
    "fieldtype": "Date",
+   "description": "Date when the quote was received.",
+   "in_list_view": 1,
+   "columns": 2,
    "label": "Quote Date"
   },
   {
    "fieldname": "attachment",
    "fieldtype": "Attach",
+   "description": "Upload the quote document.",
+   "in_list_view": 1,
+   "columns": 2,
    "label": "Attachment"
   },
   {
    "default": "Received",
    "fieldname": "status",
    "fieldtype": "Select",
+   "description": "Choose the quote status.",
+   "in_list_view": 1,
+   "columns": 1,
    "label": "Status",
    "options": "Received\nAccepted\nRejected"
   },
@@ -51,29 +65,36 @@
    "default": "0",
    "fieldname": "amount_includes_vat",
    "fieldtype": "Check",
+   "description": "If enabled, the amount includes VAT.",
    "label": "Amount Includes VAT"
   },
   {
    "fieldname": "vat_rate",
    "fieldtype": "Percent",
+   "description": "VAT rate applied to the quote amount.",
    "label": "VAT Rate",
    "precision": "2"
   },
   {
    "fieldname": "amount_net",
    "fieldtype": "Currency",
+   "description": "Calculated automatically from amount and VAT settings.",
    "label": "Net Amount",
    "read_only": 1
   },
   {
    "fieldname": "amount_vat",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the VAT portion.",
    "label": "VAT Amount",
    "read_only": 1
   },
   {
    "fieldname": "amount_gross",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the gross amount.",
+   "in_list_view": 1,
+   "columns": 1,
    "label": "Gross Amount",
    "read_only": 1
   }

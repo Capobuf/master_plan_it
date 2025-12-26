@@ -8,21 +8,24 @@
  "field_order": [
   "category",
   "vendor",
-  "contract",
-  "project",
   "description",
   "delta_amount",
   "delta_amount_includes_vat",
+  "delta_amount_gross",
   "vat_rate",
   "delta_amount_net",
   "delta_amount_vat",
-  "delta_amount_gross",
+  "contract",
+  "project",
   "note"
  ],
  "fields": [
   {
    "fieldname": "category",
    "fieldtype": "Link",
+   "description": "Select the category for this change.",
+   "in_list_view": 1,
+   "columns": 2,
    "label": "Category",
    "options": "MPIT Category",
    "reqd": 1
@@ -30,69 +33,87 @@
   {
    "fieldname": "vendor",
    "fieldtype": "Link",
+   "description": "Select the vendor linked to this change.",
    "in_list_view": 1,
+   "columns": 1,
    "label": "Vendor",
    "options": "MPIT Vendor"
   },
   {
    "fieldname": "contract",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "description": "Select the related contract, if applicable.",
+   "in_list_view": 0,
    "label": "Contract",
    "options": "MPIT Contract"
   },
   {
    "fieldname": "project",
    "fieldtype": "Link",
-   "in_list_view": 1,
+   "description": "Select the related project, if applicable.",
+   "in_list_view": 0,
    "label": "Project",
    "options": "MPIT Project"
   },
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
+   "description": "Describe the change captured by this line.",
    "in_list_view": 1,
+   "columns": 3,
    "label": "Description"
   },
   {
    "fieldname": "delta_amount",
    "fieldtype": "Currency",
+   "description": "Enter the adjustment amount for this line.",
    "in_list_view": 1,
+   "columns": 1,
    "label": "Delta Amount",
    "reqd": 1
   },
   {
    "fieldname": "note",
    "fieldtype": "Small Text",
+   "description": "Add an internal note for this line.",
    "label": "Note"
   },
   {
    "default": "0",
    "fieldname": "delta_amount_includes_vat",
    "fieldtype": "Check",
-   "label": "Delta Amount Includes VAT"
+   "description": "If enabled, the adjustment amount includes VAT.",
+   "in_list_view": 1,
+   "columns": 1,
+   "label": "VAT Included?"
   },
   {
    "fieldname": "vat_rate",
    "fieldtype": "Percent",
+   "description": "VAT rate applied to the adjustment.",
    "label": "VAT Rate",
    "precision": "2"
   },
   {
    "fieldname": "delta_amount_net",
    "fieldtype": "Currency",
+   "description": "Calculated automatically from delta amount and VAT settings.",
    "label": "Net Delta Amount",
    "read_only": 1
   },
   {
    "fieldname": "delta_amount_vat",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the VAT portion of the delta.",
    "label": "VAT Delta Amount",
    "read_only": 1
   },
   {
    "fieldname": "delta_amount_gross",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the gross delta amount.",
+   "in_list_view": 1,
+   "columns": 1,
    "label": "Gross Delta Amount",
    "read_only": 1
   }

@@ -7,45 +7,62 @@
  "engine": "InnoDB",
  "field_order": [
   "title",
-  "due_date",
   "status",
+  "due_date",
   "acceptance_date",
-  "notes",
-  "attachment"
+  "attachment",
+  "notes"
  ],
  "fields": [
   {
    "fieldname": "title",
    "fieldtype": "Data",
+   "description": "Enter the milestone title.",
    "in_list_view": 1,
+   "columns": 2,
    "label": "Title",
    "reqd": 1
   },
   {
    "fieldname": "due_date",
    "fieldtype": "Date",
+   "description": "Date when the milestone is due.",
+   "in_list_view": 1,
+   "columns": 1,
    "label": "Due Date"
   },
   {
    "default": "Planned",
    "fieldname": "status",
    "fieldtype": "Select",
+   "description": "Choose the milestone status.",
+   "in_list_view": 1,
+   "columns": 1,
    "label": "Status",
    "options": "Planned\nDone\nAccepted"
   },
   {
    "fieldname": "acceptance_date",
    "fieldtype": "Date",
+   "description": "Date when the milestone was accepted.",
+   "in_list_view": 1,
+   "columns": 1,
    "label": "Acceptance Date"
   },
   {
    "fieldname": "notes",
    "fieldtype": "Small Text",
+   "description": "Add notes about the milestone.",
+   "in_list_view": 1,
+   "columns": 3,
    "label": "Notes"
   },
   {
    "fieldname": "attachment",
    "fieldtype": "Attach",
+   "description": "Upload any supporting attachment.",
+   "in_list_view": 1,
+   "columns": 2,
    "label": "Attachment"
   }
  ],

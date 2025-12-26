@@ -34,6 +34,7 @@
   {
    "fieldname": "title",
    "fieldtype": "Data",
+   "description": "Enter the contract title.",
    "in_list_view": 1,
    "label": "Title",
    "reqd": 1,
@@ -42,6 +43,7 @@
   {
    "fieldname": "vendor",
    "fieldtype": "Link",
+   "description": "Select the vendor for this contract.",
    "in_list_view": 1,
    "label": "Vendor",
    "options": "MPIT Vendor",
@@ -50,6 +52,7 @@
   {
    "fieldname": "category",
    "fieldtype": "Link",
+   "description": "Select the category for this contract.",
    "in_list_view": 1,
    "label": "Category",
    "options": "MPIT Category",
@@ -58,6 +61,7 @@
   {
    "fieldname": "contract_kind",
    "fieldtype": "Select",
+   "description": "Choose the contract type (contract, subscription, renewal, or maintenance).",
    "label": "Contract Kind",
    "options": "Contract\nSubscription\nAnnual Renewal\nMaintenance",
    "reqd": 1
@@ -65,22 +69,26 @@
   {
    "fieldname": "billing_cycle",
    "fieldtype": "Select",
+   "description": "Choose the billing cycle for this contract.",
    "label": "Billing Cycle",
    "options": "Monthly\nQuarterly\nAnnual\nOther"
   },
   {
    "fieldname": "start_date",
    "fieldtype": "Date",
+   "description": "Date when the contract starts.",
    "label": "Start Date"
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Date",
+   "description": "Date when the contract ends.",
    "label": "End Date"
   },
   {
    "fieldname": "next_renewal_date",
    "fieldtype": "Date",
+   "description": "Next renewal date for this contract.",
    "in_list_view": 1,
    "label": "Next Renewal Date",
    "reqd": 1
@@ -88,23 +96,27 @@
   {
    "fieldname": "notice_days",
    "fieldtype": "Int",
+   "description": "Number of notice days required before renewal.",
    "label": "Notice Days"
   },
   {
    "default": "1",
    "fieldname": "auto_renew",
    "fieldtype": "Check",
+   "description": "If enabled, the contract renews automatically.",
    "label": "Auto Renew"
   },
   {
    "fieldname": "current_amount",
    "fieldtype": "Currency",
+   "description": "Enter the current contract amount; use net or gross per the VAT setting.",
    "label": "Current Amount"
   },
   {
    "default": "Active",
    "fieldname": "status",
    "fieldtype": "Select",
+   "description": "Choose the current contract status.",
    "in_list_view": 1,
    "label": "Status",
    "options": "Draft\nActive\nPending Renewal\nRenewed\nCancelled\nExpired"
@@ -112,52 +124,61 @@
   {
    "fieldname": "owner_user",
    "fieldtype": "Link",
+   "description": "Select the contract owner.",
    "label": "Owner User",
    "options": "User"
   },
   {
    "fieldname": "source_baseline_expense",
    "fieldtype": "Link",
+   "description": "Link to the baseline expense that created this contract.",
    "label": "Source Baseline Expense",
    "options": "MPIT Baseline Expense"
   },
   {
    "fieldname": "notes",
    "fieldtype": "Small Text",
+   "description": "Add internal notes about the contract.",
    "label": "Notes"
   },
   {
    "fieldname": "attachment",
    "fieldtype": "Attach",
+   "description": "Upload the contract file.",
    "label": "Attachment"
   },
   {
    "default": "0",
    "fieldname": "current_amount_includes_vat",
    "fieldtype": "Check",
+   "description": "If enabled, the current amount includes VAT.",
    "label": "Current Amount Includes VAT"
   },
   {
    "fieldname": "vat_rate",
    "fieldtype": "Percent",
+   "description": "VAT rate applied to the current amount.",
    "label": "VAT Rate",
    "precision": "2"
   },
   {
    "fieldname": "current_amount_net",
    "fieldtype": "Currency",
+   "description": "Calculated automatically from current amount and VAT settings.",
    "label": "Net Amount",
    "read_only": 1
   },
   {
    "fieldname": "current_amount_vat",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the VAT portion.",
    "label": "VAT Amount",
    "read_only": 1
   },
   {
    "fieldname": "current_amount_gross",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the gross amount.",
    "label": "Gross Amount",
    "read_only": 1
   }

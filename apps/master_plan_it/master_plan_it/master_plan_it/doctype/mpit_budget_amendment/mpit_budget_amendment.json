@@ -19,6 +19,7 @@
   {
    "fieldname": "budget",
    "fieldtype": "Link",
+   "description": "Select the budget being amended.",
    "in_list_view": 1,
    "label": "Budget",
    "options": "MPIT Budget",
@@ -27,18 +28,21 @@
   {
    "fieldname": "effective_date",
    "fieldtype": "Date",
+   "description": "Date when this amendment takes effect.",
    "in_list_view": 1,
    "label": "Effective Date"
   },
   {
    "fieldname": "reason",
    "fieldtype": "Small Text",
+   "description": "Describe why the budget is being amended.",
    "label": "Reason"
   },
   {
    "allow_on_submit": 1,
    "fieldname": "workflow_state",
    "fieldtype": "Select",
+   "description": "Workflow status set by the approval process.",
    "in_list_view": 1,
    "label": "Workflow State",
    "options": "Draft\nProposed\nIn Review\nApproved\nRejected",
@@ -52,12 +56,14 @@
   {
    "fieldname": "lines",
    "fieldtype": "Table",
+   "description": "Add amendment lines detailing the changes.",
    "label": "Lines",
    "options": "MPIT Amendment Line"
   },
   {
    "fieldname": "amended_from",
    "fieldtype": "Link",
+   "description": "Reference to the original amendment this document was copied from.",
    "label": "Amended From",
    "no_copy": 1,
    "options": "MPIT Budget Amendment",

@@ -24,6 +24,7 @@
   {
    "fieldname": "title",
    "fieldtype": "Data",
+   "description": "Enter the project title.",
    "in_list_view": 1,
    "label": "Title",
    "reqd": 1
@@ -31,12 +32,14 @@
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
+   "description": "Add a brief description of the project.",
    "label": "Description"
   },
   {
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
+   "description": "Choose the project status; at least one allocation is required before approval or later states.",
    "in_list_view": 1,
    "label": "Status",
    "options": "Draft\nProposed\nApproved\nIn Progress\nOn Hold\nCompleted\nCancelled"
@@ -44,16 +47,19 @@
   {
    "fieldname": "start_date",
    "fieldtype": "Date",
+   "description": "Date when the project starts.",
    "label": "Start Date"
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Date",
+   "description": "Date when the project ends.",
    "label": "End Date"
   },
   {
    "fieldname": "owner_user",
    "fieldtype": "Link",
+   "description": "Select the project owner.",
    "label": "Owner",
    "options": "User"
   },
@@ -65,6 +71,7 @@
   {
    "fieldname": "allocations",
    "fieldtype": "Table",
+   "description": "Add one or more allocations with year and planned amount.",
    "label": "Allocations",
    "options": "MPIT Project Allocation"
   },
@@ -76,6 +83,7 @@
   {
    "fieldname": "quotes",
    "fieldtype": "Table",
+   "description": "Add vendor quotes for this project.",
    "label": "Quotes",
    "options": "MPIT Project Quote"
   },
@@ -87,6 +95,7 @@
   {
    "fieldname": "milestones",
    "fieldtype": "Table",
+   "description": "Add project milestones.",
    "label": "Milestones",
    "options": "MPIT Project Milestone"
   }

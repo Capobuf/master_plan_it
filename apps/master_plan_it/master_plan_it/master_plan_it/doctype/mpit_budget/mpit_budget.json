@@ -26,6 +26,7 @@
   {
    "fieldname": "year",
    "fieldtype": "Link",
+   "description": "Select the budget year.",
    "in_list_view": 1,
    "label": "Year",
    "options": "MPIT Year",
@@ -34,6 +35,7 @@
   {
    "fieldname": "title",
    "fieldtype": "Data",
+   "description": "Enter a short budget title.",
    "in_list_view": 1,
    "label": "Title"
   },
@@ -41,6 +43,7 @@
    "allow_on_submit": 1,
    "fieldname": "workflow_state",
    "fieldtype": "Select",
+   "description": "Workflow status set by the approval process.",
    "in_list_view": 1,
    "label": "Workflow State",
    "options": "Draft\nProposed\nIn Review\nApproved",
@@ -54,6 +57,7 @@
   {
    "fieldname": "lines",
    "fieldtype": "Table",
+   "description": "Add budget lines for categories, vendors, and amounts.",
    "label": "Lines",
    "options": "MPIT Budget Line"
   },
@@ -73,12 +77,14 @@
   {
    "fieldname": "total_amount_input",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the sum of line amounts.",
    "label": "Total Amount Input",
    "read_only": 1
   },
   {
    "fieldname": "total_amount_vat",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the sum of line VAT amounts.",
    "label": "Total VAT Amount",
    "read_only": 1
   },
@@ -89,18 +95,21 @@
   {
    "fieldname": "total_amount_net",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the sum of net amounts.",
    "label": "Total Net Amount",
    "read_only": 1
   },
   {
    "fieldname": "total_amount_gross",
    "fieldtype": "Currency",
+   "description": "Calculated automatically as the sum of gross amounts.",
    "label": "Total Gross Amount",
    "read_only": 1
   },
   {
    "fieldname": "amended_from",
    "fieldtype": "Link",
+   "description": "Reference to the original budget this document was amended from.",
    "label": "Amended From",
    "no_copy": 1,
    "options": "MPIT Budget",

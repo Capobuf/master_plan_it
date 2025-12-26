@@ -16,6 +16,10 @@
 | **Fixtures** (`fixtures/*.json`, `hooks.py` fixtures list) | `bench --site <site> migrate` | `bench --site <site> clear-cache` |
 | **Patches** (`patches.txt` + patch modules) | `bench --site <site> migrate` (runs patches) | `bench --site <site> clear-cache` |
 
+DocField help text (`description`) updates are DocType JSON changes: apply with migrate or targeted `reload-doctype`, then `clear-cache` + hard refresh.
+
+Note: Default child-table columns/ordering come from `in_list_view` flags on the child DocType. Column widths set via “Configure Columns” are typically per-user; the app can set default visibility/order only.
+
 ---
 
 ## Operator apply sequence (pick one per deployment)

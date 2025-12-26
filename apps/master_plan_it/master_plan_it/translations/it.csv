@@ -212,6 +212,7 @@ VAT Amount,Importo IVA,
 VAT Defaults,Impostazioni IVA predefinite,
 VAT Delta Amount,Importo IVA delta,
 VAT ID,Partita IVA,
+VAT Included?,IVA Inclusa?,
 VAT Planned Amount,Importo IVA previsto,
 VAT Rate,Aliquota IVA,
 Validated,Validato,
@@ -235,3 +236,174 @@ custom_period_months is only used when recurrence_rule is 'Custom' - value will 
 custom_period_months must be between 1 and 12,custom_period_months deve essere tra 1 e 12,
 vCIO Manager,vCIO Manager,
 {0} is non-zero but no VAT rate is specified. Please set a VAT rate on this row or configure a default VAT rate in your User Preferences.,{0} è diverso da zero ma non è stata specificata alcuna aliquota IVA. Imposta un'aliquota IVA su questa riga o configura un'aliquota IVA predefinita nelle tue Preferenze utente.,
+Enter the year identifier (e.g. 2025).,Inserisci l'identificativo dell'anno (es. 2025).,DocType:MPIT Year Field:year
+Date when the year period starts.,Data di inizio del periodo annuale.,DocType:MPIT Year Field:start_date
+Date when the year period ends.,Data di fine del periodo annuale.,DocType:MPIT Year Field:end_date
+If enabled, the year is active for planning.,Se abilitato, l'anno è attivo per la pianificazione.,DocType:MPIT Year Field:is_active
+Enter the category name.,Inserisci il nome della categoria.,DocType:MPIT Category Field:category_name
+Select the parent category.,Seleziona la categoria padre.,DocType:MPIT Category Field:parent_category
+If enabled, the category is active for use.,Se abilitato, la categoria è attiva per l'uso.,DocType:MPIT Category Field:is_active
+Enter numeric order for sorting categories.,Inserisci l'ordinamento numerico delle categorie.,DocType:MPIT Category Field:sort_order
+Calculated automatically for tree positioning.,Calcolato automaticamente per la posizione nell'albero.,DocType:MPIT Category Field:lft
+Calculated automatically for tree positioning.,Calcolato automaticamente per la posizione nell'albero.,DocType:MPIT Category Field:rgt
+If enabled, category can contain child categories.,Se abilitato, la categoria può contenere sottocategorie.,DocType:MPIT Category Field:is_group
+Previous parent category captured during moves.,Categoria padre precedente registrata durante gli spostamenti.,DocType:MPIT Category Field:old_parent
+Parent category used by tree view.,Categoria padre usata dalla vista ad albero.,DocType:MPIT Category Field:parent_mpit_category
+Enter the vendor name.,Inserisci il nome del fornitore.,DocType:MPIT Vendor Field:vendor_name
+Enter the vendor VAT ID.,Inserisci la partita IVA del fornitore.,DocType:MPIT Vendor Field:vat_id
+Enter the main contact email.,Inserisci l'e-mail di contatto principale.,DocType:MPIT Vendor Field:contact_email
+Enter the main contact phone number.,Inserisci il numero di telefono di contatto.,DocType:MPIT Vendor Field:contact_phone
+Add internal notes about the vendor.,Aggiungi note interne sul fornitore.,DocType:MPIT Vendor Field:notes
+If enabled, the vendor is active for selection.,Se abilitato, il fornitore è attivo per la selezione.,DocType:MPIT Vendor Field:is_active
+Select the default currency for Master Plan IT calculations.,Seleziona la valuta predefinita per i calcoli di Master Plan IT.,DocType:MPIT Settings Field:currency
+Days before renewal dates treated as the renewal window.,Giorni prima delle date di rinnovo considerati nella finestra di rinnovo.,DocType:MPIT Settings Field:renewal_window_days
+Percentage threshold used for portfolio warnings.,Soglia percentuale utilizzata per gli avvisi di portafoglio.,DocType:MPIT Settings Field:portfolio_warning_threshold_pct
+Enter the milestone title.,Inserisci il titolo della milestone.,DocType:MPIT Project Milestone Field:title
+Date when the milestone is due.,Data di scadenza della milestone.,DocType:MPIT Project Milestone Field:due_date
+Choose the milestone status.,Seleziona lo stato della milestone.,DocType:MPIT Project Milestone Field:status
+Date when the milestone was accepted.,Data in cui la milestone è stata accettata.,DocType:MPIT Project Milestone Field:acceptance_date
+Add notes about the milestone.,Aggiungi note sulla milestone.,DocType:MPIT Project Milestone Field:notes
+Upload any supporting attachment.,Carica eventuali allegati di supporto.,DocType:MPIT Project Milestone Field:attachment
+Select the year for this allocation.,Seleziona l'anno per questa allocazione.,DocType:MPIT Project Allocation Field:year
+Enter the planned amount for this year.,Inserisci l'importo previsto per questo anno.,DocType:MPIT Project Allocation Field:planned_amount
+If enabled, the planned amount includes VAT.,Se abilitato, l'importo previsto include l'IVA.,DocType:MPIT Project Allocation Field:planned_amount_includes_vat
+VAT rate applied to the planned amount.,Aliquota IVA applicata all'importo previsto.,DocType:MPIT Project Allocation Field:vat_rate
+Calculated automatically from planned amount and VAT settings.,Calcolato automaticamente dall'importo previsto e dalle impostazioni IVA.,DocType:MPIT Project Allocation Field:planned_amount_net
+Calculated automatically as the VAT portion.,Calcolato automaticamente come quota IVA.,DocType:MPIT Project Allocation Field:planned_amount_vat
+Calculated automatically as the gross amount.,Calcolato automaticamente come importo lordo.,DocType:MPIT Project Allocation Field:planned_amount_gross
+Select the vendor providing the quote.,Seleziona il fornitore che ha inviato il preventivo.,DocType:MPIT Project Quote Field:vendor
+Enter the quoted amount.,Inserisci l'importo preventivato.,DocType:MPIT Project Quote Field:amount
+Date when the quote was received.,Data in cui è stato ricevuto il preventivo.,DocType:MPIT Project Quote Field:quote_date
+Upload the quote document.,Carica il documento del preventivo.,DocType:MPIT Project Quote Field:attachment
+Choose the quote status.,Seleziona lo stato del preventivo.,DocType:MPIT Project Quote Field:status
+If enabled, the amount includes VAT.,Se abilitato, l'importo include l'IVA.,DocType:MPIT Project Quote Field:amount_includes_vat
+VAT rate applied to the quote amount.,Aliquota IVA applicata all'importo preventivato.,DocType:MPIT Project Quote Field:vat_rate
+Calculated automatically from amount and VAT settings.,Calcolato automaticamente dall'importo e dalle impostazioni IVA.,DocType:MPIT Project Quote Field:amount_net
+Calculated automatically as the VAT portion.,Calcolato automaticamente come quota IVA.,DocType:MPIT Project Quote Field:amount_vat
+Calculated automatically as the gross amount.,Calcolato automaticamente come importo lordo.,DocType:MPIT Project Quote Field:amount_gross
+Enter the project title.,Inserisci il titolo del progetto.,DocType:MPIT Project Field:title
+Add a brief description of the project.,Aggiungi una breve descrizione del progetto.,DocType:MPIT Project Field:description
+Choose the project status; at least one allocation is required before approval or later states.,Seleziona lo stato del progetto; è necessaria almeno un'allocazione prima degli stati approvati o successivi.,DocType:MPIT Project Field:status
+Date when the project starts.,Data di inizio del progetto.,DocType:MPIT Project Field:start_date
+Date when the project ends.,Data di fine del progetto.,DocType:MPIT Project Field:end_date
+Select the project owner.,Seleziona il responsabile del progetto.,DocType:MPIT Project Field:owner_user
+Add one or more allocations with year and planned amount.,Aggiungi una o più allocazioni con anno e importo previsto.,DocType:MPIT Project Field:allocations
+Add vendor quotes for this project.,Aggiungi i preventivi dei fornitori per il progetto.,DocType:MPIT Project Field:quotes
+Add project milestones.,Aggiungi le milestone del progetto.,DocType:MPIT Project Field:milestones
+"Select the user these preferences apply to.",Seleziona l'utente a cui si applicano queste preferenze.,DocType:MPIT User Preferences Field:user
+If enabled, new amounts default to VAT-inclusive.,Se abilitato, i nuovi importi sono predefiniti come IVA inclusa.,DocType:MPIT User Preferences Field:default_amount_includes_vat
+Prefix used when generating budget names.,Prefisso usato durante la generazione dei nomi dei budget.,DocType:MPIT User Preferences Field:budget_prefix
+Number of digits for budget sequence numbers.,Numero di cifre per la numerazione dei budget.,DocType:MPIT User Preferences Field:budget_sequence_digits
+Prefix used when generating project names.,Prefisso usato durante la generazione dei nomi dei progetti.,DocType:MPIT User Preferences Field:project_prefix
+Number of digits for project sequence numbers.,Numero di cifre per la numerazione dei progetti.,DocType:MPIT User Preferences Field:project_sequence_digits
+If enabled, attachments are shown on print formats.,Se abilitato, gli allegati vengono mostrati nei formati di stampa.,DocType:MPIT User Preferences Field:show_attachments_in_print
+Select the budget being amended.,Seleziona il budget oggetto dell'emendamento.,DocType:MPIT Budget Amendment Field:budget
+Date when this amendment takes effect.,Data in cui questo emendamento entra in vigore.,DocType:MPIT Budget Amendment Field:effective_date
+Describe why the budget is being amended.,Descrivi perché il budget viene emendato.,DocType:MPIT Budget Amendment Field:reason
+Workflow status set by the approval process.,Stato del workflow impostato dal processo di approvazione.,DocType:MPIT Budget Amendment Field:workflow_state
+Add amendment lines detailing the changes.,Aggiungi le righe di emendamento con le modifiche.,DocType:MPIT Budget Amendment Field:lines
+Reference to the original amendment this document was copied from.,Riferimento all'emendamento originale da cui è stato copiato questo documento.,DocType:MPIT Budget Amendment Field:amended_from
+Select the category for this change.,Seleziona la categoria per questa modifica.,DocType:MPIT Amendment Line Field:category
+Select the vendor linked to this change.,Seleziona il fornitore collegato a questa modifica.,DocType:MPIT Amendment Line Field:vendor
+Select the related contract, if applicable.,Seleziona il contratto collegato, se applicabile.,DocType:MPIT Amendment Line Field:contract
+Select the related project, if applicable.,Seleziona il progetto collegato, se applicabile.,DocType:MPIT Amendment Line Field:project
+Describe the change captured by this line.,Descrivi la modifica apportata da questa riga.,DocType:MPIT Amendment Line Field:description
+Enter the adjustment amount for this line.,Inserisci l'importo di variazione per questa riga.,DocType:MPIT Amendment Line Field:delta_amount
+Add an internal note for this line.,Aggiungi una nota interna per questa riga.,DocType:MPIT Amendment Line Field:note
+If enabled, the adjustment amount includes VAT.,Se abilitato, l'importo di variazione include l'IVA.,DocType:MPIT Amendment Line Field:delta_amount_includes_vat
+VAT rate applied to the adjustment.,Aliquota IVA applicata all'importo di variazione.,DocType:MPIT Amendment Line Field:vat_rate
+Calculated automatically from delta amount and VAT settings.,Calcolato automaticamente dall'importo di variazione e dalle impostazioni IVA.,DocType:MPIT Amendment Line Field:delta_amount_net
+Calculated automatically as the VAT portion of the delta.,Calcolato automaticamente come quota IVA della variazione.,DocType:MPIT Amendment Line Field:delta_amount_vat
+Calculated automatically as the gross delta amount.,Calcolato automaticamente come importo lordo della variazione.,DocType:MPIT Amendment Line Field:delta_amount_gross
+Select the budget year.,Seleziona l'anno del budget.,DocType:MPIT Budget Field:year
+Enter a short budget title.,Inserisci un titolo breve per il budget.,DocType:MPIT Budget Field:title
+Workflow status set by the approval process.,Stato del workflow impostato dal processo di approvazione.,DocType:MPIT Budget Field:workflow_state
+Add budget lines for categories, vendors, and amounts.,Aggiungi righe di budget con categorie, fornitori e importi.,DocType:MPIT Budget Field:lines
+Calculated automatically as the sum of line amounts.,Calcolato automaticamente come somma degli importi delle righe.,DocType:MPIT Budget Field:total_amount_input
+Calculated automatically as the sum of line VAT amounts.,Calcolato automaticamente come somma degli importi IVA delle righe.,DocType:MPIT Budget Field:total_amount_vat
+Calculated automatically as the sum of net amounts.,Calcolato automaticamente come somma degli importi netti.,DocType:MPIT Budget Field:total_amount_net
+Calculated automatically as the sum of gross amounts.,Calcolato automaticamente come somma degli importi lordi.,DocType:MPIT Budget Field:total_amount_gross
+Reference to the original budget this document was amended from.,Riferimento al budget originale da cui questo documento è stato emendato.,DocType:MPIT Budget Field:amended_from
+Select the budget category.,Seleziona la categoria di budget.,DocType:MPIT Budget Line Field:category
+Select the vendor for this line.,Seleziona il fornitore per questa riga.,DocType:MPIT Budget Line Field:vendor
+Select the related contract, if applicable.,Seleziona il contratto collegato, se applicabile.,DocType:MPIT Budget Line Field:contract
+Select the related project, if applicable.,Seleziona il progetto collegato, se applicabile.,DocType:MPIT Budget Line Field:project
+Link to the baseline expense this line is based on.,Collega la spesa di baseline su cui si basa questa riga.,DocType:MPIT Budget Line Field:baseline_expense
+Describe this budget line.,Descrivi questa riga di budget.,DocType:MPIT Budget Line Field:description
+Enter the budgeted amount; use net or gross per the VAT setting.,Inserisci l'importo di budget; usa netto o lordo secondo l'impostazione IVA.,DocType:MPIT Budget Line Field:amount
+Choose whether the cost is CAPEX or OPEX.,Scegli se il costo è CAPEX o OPEX.,DocType:MPIT Budget Line Field:cost_type
+If enabled, this line acts as a portfolio bucket.,Se abilitato, questa riga funge da contenitore di portafoglio.,DocType:MPIT Budget Line Field:is_portfolio_bucket
+If enabled, the budget line is active.,Se abilitato, la riga di budget è attiva.,DocType:MPIT Budget Line Field:is_active
+If enabled, the amount includes VAT.,Se abilitato, l'importo include l'IVA.,DocType:MPIT Budget Line Field:amount_includes_vat
+VAT rate applied to the amount.,Aliquota IVA applicata all'importo.,DocType:MPIT Budget Line Field:vat_rate
+Calculated automatically from amount and VAT settings.,Calcolato automaticamente dall'importo e dalle impostazioni IVA.,DocType:MPIT Budget Line Field:amount_net
+Calculated automatically as the VAT portion.,Calcolato automaticamente come quota IVA.,DocType:MPIT Budget Line Field:amount_vat
+Calculated automatically as the gross amount.,Calcolato automaticamente come importo lordo.,DocType:MPIT Budget Line Field:amount_gross
+Choose how this amount recurs for annualization.,Scegli come questo importo si ripete per l'annualizzazione.,DocType:MPIT Budget Line Field:recurrence_rule
+Number of months per cycle when using a Custom recurrence.,Numero di mesi per ciclo quando si usa una ricorrenza personalizzata.,DocType:MPIT Budget Line Field:custom_period_months
+Start date of the period used to calculate overlap with the budget year.,Data di inizio del periodo usata per calcolare la sovrapposizione con l'anno di budget.,DocType:MPIT Budget Line Field:period_start_date
+End date of the period used to calculate overlap with the budget year.,Data di fine del periodo usata per calcolare la sovrapposizione con l'anno di budget.,DocType:MPIT Budget Line Field:period_end_date
+Calculated automatically as the annualized net amount.,Calcolato automaticamente come importo netto annualizzato.,DocType:MPIT Budget Line Field:annual_net
+Calculated automatically as the annualized VAT amount.,Calcolato automaticamente come importo IVA annualizzato.,DocType:MPIT Budget Line Field:annual_vat
+Calculated automatically as the annualized gross amount.,Calcolato automaticamente come importo lordo annualizzato.,DocType:MPIT Budget Line Field:annual_gross
+Select the year this expense belongs to.,Seleziona l'anno a cui appartiene questa spesa.,DocType:MPIT Baseline Expense Field:year
+Date when the baseline expense is recorded.,Data di registrazione della spesa di baseline.,DocType:MPIT Baseline Expense Field:posting_date
+Select the expense category.,Seleziona la categoria della spesa.,DocType:MPIT Baseline Expense Field:category
+Select the vendor for this expense.,Seleziona il fornitore per questa spesa.,DocType:MPIT Baseline Expense Field:vendor
+Describe the baseline expense.,Descrivi la spesa di baseline.,DocType:MPIT Baseline Expense Field:description
+Enter the expense amount; use net or gross per the VAT setting.,Inserisci l'importo della spesa; usa netto o lordo secondo l'impostazione IVA.,DocType:MPIT Baseline Expense Field:amount
+Choose the expense kind (one-off, subscription, renewal, or contract).,Scegli il tipo di spesa (una tantum, abbonamento, rinnovo annuale o contratto).,DocType:MPIT Baseline Expense Field:expense_kind
+Contract start date, if relevant.,Data di inizio del contratto, se rilevante.,DocType:MPIT Baseline Expense Field:contract_start
+Contract end date, if relevant.,Data di fine del contratto, se rilevante.,DocType:MPIT Baseline Expense Field:contract_end
+If enabled, the contract renews automatically.,Se abilitato, il contratto si rinnova automaticamente.,DocType:MPIT Baseline Expense Field:auto_renew
+Number of notice days required before renewal.,Numero di giorni di preavviso richiesti prima del rinnovo.,DocType:MPIT Baseline Expense Field:notice_days
+Current review status of this expense.,Stato di revisione corrente di questa spesa.,DocType:MPIT Baseline Expense Field:status
+If enabled, the amount includes VAT.,Se abilitato, l'importo include l'IVA.,DocType:MPIT Baseline Expense Field:amount_includes_vat
+VAT rate applied to the amount.,Aliquota IVA applicata all'importo.,DocType:MPIT Baseline Expense Field:vat_rate
+Calculated automatically from amount and VAT settings.,Calcolato automaticamente dall'importo e dalle impostazioni IVA.,DocType:MPIT Baseline Expense Field:amount_net
+Calculated automatically as the VAT portion.,Calcolato automaticamente come quota IVA.,DocType:MPIT Baseline Expense Field:amount_vat
+Calculated automatically as the gross amount.,Calcolato automaticamente come importo lordo.,DocType:MPIT Baseline Expense Field:amount_gross
+Choose how this expense recurs for annualization.,Scegli come questa spesa si ripete per l'annualizzazione.,DocType:MPIT Baseline Expense Field:recurrence_rule
+Number of months per cycle when using a Custom recurrence.,Numero di mesi per ciclo quando si usa una ricorrenza personalizzata.,DocType:MPIT Baseline Expense Field:custom_period_months
+Start date of the period used to calculate overlap with the year.,Data di inizio del periodo usata per calcolare la sovrapposizione con l'anno.,DocType:MPIT Baseline Expense Field:period_start_date
+End date of the period used to calculate overlap with the year.,Data di fine del periodo usata per calcolare la sovrapposizione con l'anno.,DocType:MPIT Baseline Expense Field:period_end_date
+Calculated automatically as the annualized net amount.,Calcolato automaticamente come importo netto annualizzato.,DocType:MPIT Baseline Expense Field:annual_net
+Calculated automatically as the annualized VAT amount.,Calcolato automaticamente come importo IVA annualizzato.,DocType:MPIT Baseline Expense Field:annual_vat
+Calculated automatically as the annualized gross amount.,Calcolato automaticamente come importo lordo annualizzato.,DocType:MPIT Baseline Expense Field:annual_gross
+Enter the contract title.,Inserisci il titolo del contratto.,DocType:MPIT Contract Field:title
+Select the vendor for this contract.,Seleziona il fornitore per questo contratto.,DocType:MPIT Contract Field:vendor
+Select the category for this contract.,Seleziona la categoria per questo contratto.,DocType:MPIT Contract Field:category
+Choose the contract type (contract, subscription, renewal, or maintenance).,Scegli il tipo di contratto (contratto, abbonamento, rinnovo o manutenzione).,DocType:MPIT Contract Field:contract_kind
+Choose the billing cycle for this contract.,Scegli il ciclo di fatturazione per questo contratto.,DocType:MPIT Contract Field:billing_cycle
+Date when the contract starts.,Data di inizio del contratto.,DocType:MPIT Contract Field:start_date
+Date when the contract ends.,Data di fine del contratto.,DocType:MPIT Contract Field:end_date
+Next renewal date for this contract.,Prossima data di rinnovo per questo contratto.,DocType:MPIT Contract Field:next_renewal_date
+Number of notice days required before renewal.,Numero di giorni di preavviso richiesti prima del rinnovo.,DocType:MPIT Contract Field:notice_days
+If enabled, the contract renews automatically.,Se abilitato, il contratto si rinnova automaticamente.,DocType:MPIT Contract Field:auto_renew
+Enter the current contract amount; use net or gross per the VAT setting.,Inserisci l'importo corrente del contratto; usa netto o lordo secondo l'impostazione IVA.,DocType:MPIT Contract Field:current_amount
+Choose the current contract status.,Seleziona lo stato attuale del contratto.,DocType:MPIT Contract Field:status
+Select the contract owner.,Seleziona il responsabile del contratto.,DocType:MPIT Contract Field:owner_user
+Link to the baseline expense that created this contract.,Collega la spesa di baseline che ha creato questo contratto.,DocType:MPIT Contract Field:source_baseline_expense
+Add internal notes about the contract.,Aggiungi note interne sul contratto.,DocType:MPIT Contract Field:notes
+Upload the contract file.,Carica il file del contratto.,DocType:MPIT Contract Field:attachment
+If enabled, the current amount includes VAT.,Se abilitato, l'importo corrente include l'IVA.,DocType:MPIT Contract Field:current_amount_includes_vat
+VAT rate applied to the current amount.,Aliquota IVA applicata all'importo corrente.,DocType:MPIT Contract Field:vat_rate
+Calculated automatically from current amount and VAT settings.,Calcolato automaticamente dall'importo corrente e dalle impostazioni IVA.,DocType:MPIT Contract Field:current_amount_net
+Calculated automatically as the VAT portion.,Calcolato automaticamente come quota IVA.,DocType:MPIT Contract Field:current_amount_vat
+Calculated automatically as the gross amount.,Calcolato automaticamente come importo lordo.,DocType:MPIT Contract Field:current_amount_gross
+Posting date for the entry; used to derive the MPIT Year.,Data di registrazione; usata per derivare l'anno MPIT.,DocType:MPIT Actual Entry Field:posting_date
+Derived MPIT Year based on the posting date.,Anno MPIT derivato in base alla data di registrazione.,DocType:MPIT Actual Entry Field:year
+Select the category for this entry.,Seleziona la categoria per questa registrazione.,DocType:MPIT Actual Entry Field:category
+Select the vendor involved in this entry.,Seleziona il fornitore coinvolto in questa registrazione.,DocType:MPIT Actual Entry Field:vendor
+Select the related contract, if applicable.,Seleziona il contratto collegato, se applicabile.,DocType:MPIT Actual Entry Field:contract
+Select the related project, if applicable.,Seleziona il progetto collegato, se applicabile.,DocType:MPIT Actual Entry Field:project
+Select the budget this entry relates to.,Seleziona il budget a cui si riferisce questa registrazione.,DocType:MPIT Actual Entry Field:budget
+Reference to the related budget line, if applicable.,Riferimento alla riga di budget collegata, se applicabile.,DocType:MPIT Actual Entry Field:budget_line_ref
+Enter the actual amount; use net or gross per the VAT setting.,Inserisci l'importo effettivo; usa netto o lordo secondo l'impostazione IVA.,DocType:MPIT Actual Entry Field:amount
+Describe the actual entry.,Descrivi la registrazione effettiva.,DocType:MPIT Actual Entry Field:description
+Choose whether the entry is recorded or verified.,Scegli se la registrazione è registrata o verificata.,DocType:MPIT Actual Entry Field:status
+If enabled, the amount includes VAT.,Se abilitato, l'importo include l'IVA.,DocType:MPIT Actual Entry Field:amount_includes_vat
+VAT rate applied to the amount.,Aliquota IVA applicata all'importo.,DocType:MPIT Actual Entry Field:vat_rate
+Calculated automatically from amount and VAT settings.,Calcolato automaticamente dall'importo e dalle impostazioni IVA.,DocType:MPIT Actual Entry Field:amount_net
+Calculated automatically as the VAT portion.,Calcolato automaticamente come quota IVA.,DocType:MPIT Actual Entry Field:amount_vat
+Calculated automatically as the gross amount.,Calcolato automaticamente come importo lordo.,DocType:MPIT Actual Entry Field:amount_gross

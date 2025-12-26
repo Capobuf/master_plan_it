@@ -19,6 +19,7 @@
   {
    "fieldname": "vendor_name",
    "fieldtype": "Data",
+   "description": "Enter the vendor name.",
    "in_list_view": 1,
    "label": "Vendor Name",
    "reqd": 1,
@@ -27,27 +28,32 @@
   {
    "fieldname": "vat_id",
    "fieldtype": "Data",
+   "description": "Enter the vendor VAT ID.",
    "label": "VAT ID"
   },
   {
    "fieldname": "contact_email",
    "fieldtype": "Data",
+   "description": "Enter the main contact email.",
    "label": "Contact Email"
   },
   {
    "fieldname": "contact_phone",
    "fieldtype": "Data",
+   "description": "Enter the main contact phone number.",
    "label": "Contact Phone"
   },
   {
    "fieldname": "notes",
    "fieldtype": "Small Text",
+   "description": "Add internal notes about the vendor.",
    "label": "Notes"
   },
   {
    "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
+   "description": "If enabled, the vendor is active for selection.",
    "label": "Is Active"
   }
  ],
