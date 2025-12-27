@@ -7,18 +7,21 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "tab_overview",
   "year",
   "posting_date",
+  "status",
   "category",
   "vendor",
-  "description",
   "amount",
+  "amount_col_break",
   "amount_includes_vat",
   "vat_rate",
   "amount_net",
   "amount_vat",
   "amount_gross",
-  "expense_kind",
+  "description",
+  "tab_recurrence",
   "recurrence_rule",
   "custom_period_months",
   "period_start_date",
@@ -26,13 +29,19 @@
   "annual_net",
   "annual_vat",
   "annual_gross",
+  "tab_contract",
+  "expense_kind",
   "contract_start",
   "contract_end",
   "auto_renew",
-  "notice_days",
-  "status"
+  "notice_days"
  ],
  "fields": [
+  {
+   "fieldname": "tab_overview",
+   "fieldtype": "Tab Break",
+   "label": "Overview"
+  },
   {
    "fieldname": "year",
    "fieldtype": "Link",
@@ -50,27 +59,13 @@
    "label": "Posting Date"
   },
   {
-   "fieldname": "category",
-   "fieldtype": "Link",
-   "description": "Select the expense category.",
+   "default": "In Review",
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "description": "Current review status of this expense.",
    "in_list_view": 1,
-   "label": "Category",
-   "options": "MPIT Category",
-   "reqd": 1
-  },
-  {
-   "fieldname": "vendor",
-   "fieldtype": "Link",
-   "description": "Select the vendor for this expense.",
-   "in_list_view": 1,
-   "label": "Vendor",
-   "options": "MPIT Vendor"
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "description": "Describe the baseline expense.",
-   "label": "Description"
+   "label": "Status",
+   "options": "In Review\nNeeds Clarification\nValidated\nArchived"
   },
   {
    "fieldname": "amount",
@@ -81,45 +76,8 @@
    "reqd": 1
   },
   {
-   "fieldname": "expense_kind",
-   "fieldtype": "Select",
-   "description": "Choose the expense kind (one-off, subscription, renewal, or contract).",
-   "label": "Expense Kind",
-   "options": "One-off\nSubscription\nAnnual Renewal\nContract"
-  },
-  {
-   "fieldname": "contract_start",
-   "fieldtype": "Date",
-   "description": "Contract start date, if relevant.",
-   "label": "Contract Start"
-  },
-  {
-   "fieldname": "contract_end",
-   "fieldtype": "Date",
-   "description": "Contract end date, if relevant.",
-   "label": "Contract End"
-  },
-  {
-   "default": "0",
-   "fieldname": "auto_renew",
-   "fieldtype": "Check",
-   "description": "If enabled, the contract renews automatically.",
-   "label": "Auto Renew"
-  },
-  {
-   "fieldname": "notice_days",
-   "fieldtype": "Int",
-   "description": "Number of notice days required before renewal.",
-   "label": "Notice Days"
-  },
-  {
-   "default": "In Review",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "description": "Current review status of this expense.",
-   "in_list_view": 1,
-   "label": "Status",
-   "options": "In Review\nNeeds Clarification\nValidated\nArchived"
+   "fieldname": "amount_col_break",
+   "fieldtype": "Column Break"
   },
   {
    "default": "0",
@@ -157,12 +115,25 @@
    "read_only": 1
   },
   {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "description": "Describe the baseline expense.",
+   "label": "Description"
+  },
+  {
+   "fieldname": "tab_recurrence",
+   "fieldtype": "Tab Break",
+   "label": "Recurrence & Period",
+   "depends_on": "eval:doc.expense_kind!=\"One-off\""
+  },
+  {
    "default": "None",
    "fieldname": "recurrence_rule",
    "fieldtype": "Select",
    "description": "Choose how this expense recurs for annualization.",
    "label": "Recurrence Rule",
-   "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone"
+   "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone",
+   "depends_on": "eval:doc.expense_kind!=\"One-off\""
   },
   {
    "depends_on": "eval:doc.recurrence_rule=='Custom'",
@@ -175,13 +146,15 @@
    "fieldname": "period_start_date",
    "fieldtype": "Date",
    "description": "Start date of the period used to calculate overlap with the year.",
-   "label": "Period Start Date"
+   "label": "Period Start Date",
+   "depends_on": "eval:doc.expense_kind!=\"One-off\""
   },
   {
    "fieldname": "period_end_date",
    "fieldtype": "Date",
    "description": "End date of the period used to calculate overlap with the year.",
-   "label": "Period End Date"
+   "label": "Period End Date",
+   "depends_on": "eval:doc.expense_kind!=\"One-off\""
   },
   {
    "fieldname": "annual_net",
@@ -203,6 +176,70 @@
    "description": "Calculated automatically as the annualized gross amount.",
    "label": "Annual Gross Amount",
    "read_only": 1
+  },
+  {
+   "fieldname": "tab_contract",
+   "fieldtype": "Tab Break",
+   "label": "Contract Dates",
+   "depends_on": "eval:doc.expense_kind!=\"One-off\""
+  },
+  {
+   "fieldname": "expense_kind",
+   "fieldtype": "Select",
+   "description": "Choose the expense kind (one-off, subscription, renewal, or contract).",
+   "label": "Expense Kind",
+   "options": "One-off\nSubscription\nAnnual Renewal\nContract"
+  },
+  {
+   "fieldname": "contract_start",
+   "fieldtype": "Date",
+   "description": "Contract start date, if relevant.",
+   "label": "Contract Start",
+   "depends_on": "eval:doc.expense_kind!=\"One-off\""
+  },
+  {
+   "fieldname": "contract_end",
+   "fieldtype": "Date",
+   "description": "Contract end date, if relevant.",
+   "label": "Contract End",
+   "depends_on": "eval:doc.expense_kind!=\"One-off\""
+  },
+  {
+   "default": "0",
+   "fieldname": "auto_renew",
+   "fieldtype": "Check",
+   "description": "If enabled, the contract renews automatically.",
+   "label": "Auto Renew",
+   "depends_on": "eval:doc.expense_kind!=\"One-off\""
+  },
+  {
+   "fieldname": "notice_days",
+   "fieldtype": "Int",
+   "description": "Number of notice days required before renewal.",
+   "label": "Notice Days",
+   "depends_on": "eval:doc.expense_kind!=\"One-off\""
+  },
+  {
+   "fieldname": "tab_links",
+   "fieldtype": "Tab Break",
+   "label": "Links & Context"
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "description": "Select the expense category.",
+   "in_list_view": 1,
+   "label": "Category",
+   "options": "MPIT Category",
+   "reqd": 1
+  },
+  {
+   "fieldname": "vendor",
+   "fieldtype": "Link",
+   "description": "Select the vendor for this expense.",
+   "in_list_view": 1,
+   "label": "Vendor",
+   "options": "MPIT Vendor"
   }
  ],
  "grid_page_length": 50,

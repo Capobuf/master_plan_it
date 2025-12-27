@@ -7,11 +7,14 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "tab_overview",
   "year",
   "title",
   "workflow_state",
+  "tab_lines",
   "lines_section",
   "lines",
+  "tab_totals",
   "totals_section",
   "totals_col_break_1",
   "totals_col_break_2",
@@ -20,9 +23,15 @@
   "totals_col_break_3",
   "total_amount_net",
   "total_amount_gross",
+  "tab_admin",
   "amended_from"
- ],
- "fields": [
+],
+"fields": [
+  {
+   "fieldname": "tab_overview",
+   "fieldtype": "Tab Break",
+   "label": "Overview"
+  },
   {
    "fieldname": "year",
    "fieldtype": "Link",
@@ -51,6 +60,11 @@
    "read_only": 0
   },
   {
+   "fieldname": "tab_lines",
+   "fieldtype": "Tab Break",
+   "label": "Lines"
+  },
+  {
    "fieldname": "lines_section",
    "fieldtype": "Section Break",
    "label": "Lines"
@@ -61,6 +75,11 @@
    "description": "Add budget lines for categories, vendors, and amounts.",
    "label": "Lines",
    "options": "MPIT Budget Line"
+  },
+  {
+   "fieldname": "tab_totals",
+   "fieldtype": "Tab Break",
+   "label": "Totals"
   },
   {
    "fieldname": "totals_section",
@@ -106,6 +125,11 @@
    "description": "Calculated automatically as the sum of gross amounts.",
    "label": "Total Gross Amount",
    "read_only": 1
+  },
+  {
+   "fieldname": "tab_admin",
+   "fieldtype": "Tab Break",
+   "label": "Admin"
   },
   {
    "fieldname": "amended_from",

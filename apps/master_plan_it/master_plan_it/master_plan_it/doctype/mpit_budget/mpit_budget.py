@@ -39,7 +39,6 @@ class MPITBudget(Document):
 		"""Compute net/vat/gross for all Budget Lines with strict VAT validation."""
 		# Get user defaults once
 		default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
-		default_includes = mpit_user_prefs.get_default_includes_vat(frappe.session.user)
 		
 		for line in self.lines:
 			# Skip if no amount is provided
@@ -54,10 +53,6 @@ class MPITBudget(Document):
 			# Apply VAT rate default if not specified
 			if line.vat_rate is None and default_vat is not None:
 				line.vat_rate = default_vat
-			
-			# Apply includes_vat default if not specified
-			if line.amount_includes_vat is None and default_includes:
-				line.amount_includes_vat = 1
 			
 			# Strict VAT validation
 			final_vat_rate = tax.validate_strict_vat(

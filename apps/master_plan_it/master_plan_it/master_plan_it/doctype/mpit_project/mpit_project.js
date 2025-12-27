@@ -1,46 +1,102 @@
 // Copyright (c) 2025, DOT and contributors
 // For license information, please see license.txt
 
-let mpitProjectVatDefaults;
+frappe.provide("master_plan_it.vat");
+frappe.provide("master_plan_it.project");
 
-const fetchProjectVatDefaults = () => {
-	if (!mpitProjectVatDefaults) {
-		mpitProjectVatDefaults = frappe.call({
-			method: "master_plan_it.mpit_user_prefs.get_vat_defaults",
-		}).then((r) => r.message || {});
-	}
-	return mpitProjectVatDefaults;
-};
+master_plan_it.vat.defaults_promise =
+	master_plan_it.vat.defaults_promise ||
+	frappe.call({ method: "master_plan_it.mpit_user_prefs.get_vat_defaults" }).then((r) => r.message || {});
 
-const applyVatDefaultsToAllocation = async (cdt, cdn) => {
-	const defaults = await fetchProjectVatDefaults();
-	const row = frappe.get_doc(cdt, cdn);
-	if (!row || row.__islocal === false) {
-		return;
-	}
-
-	const updates = {};
-	if (defaults.default_includes_vat !== undefined && defaults.default_includes_vat !== null) {
-		const includes = defaults.default_includes_vat ? 1 : 0;
-		if (row.planned_amount_includes_vat !== includes) {
-			updates.planned_amount_includes_vat = includes;
+master_plan_it.vat.apply_defaults_for_project_allocation =
+	master_plan_it.vat.apply_defaults_for_project_allocation ||
+	async function (cdt, cdn) {
+		const row = frappe.get_doc(cdt, cdn);
+		if (!row || row.__islocal === false || row.__vat_defaults_applied) {
+			return;
 		}
-	}
 
-	if (
-		(defaults.default_vat_rate || defaults.default_vat_rate === 0) &&
-		(row.vat_rate === undefined || row.vat_rate === null)
-	) {
-		updates.vat_rate = defaults.default_vat_rate;
-	}
+		const defaults = await master_plan_it.vat.defaults_promise;
+		const updates = {};
 
-	if (Object.keys(updates).length) {
-		frappe.model.set_value(cdt, cdn, updates);
-	}
-};
+		if (defaults.default_includes_vat !== undefined && defaults.default_includes_vat !== null) {
+			updates.planned_amount_includes_vat = defaults.default_includes_vat ? 1 : 0;
+		}
 
-frappe.ui.form.on("MPIT Project", {
-	async allocations_add(_frm, cdt, cdn) {
-		await applyVatDefaultsToAllocation(cdt, cdn);
-	},
-});
+		if (
+			(defaults.default_vat_rate || defaults.default_vat_rate === 0) &&
+			(row.vat_rate === undefined || row.vat_rate === null || row.vat_rate === "")
+		) {
+			updates.vat_rate = defaults.default_vat_rate;
+		}
+
+		if (Object.keys(updates).length) {
+			frappe.model.set_value(cdt, cdn, updates);
+		}
+
+		row.__vat_defaults_applied = true;
+	};
+
+	frappe.ui.form.on("MPIT Project", {
+		async allocations_add(_frm, cdt, cdn) {
+			await master_plan_it.vat.apply_defaults_for_project_allocation(cdt, cdn);
+		},
+		async refresh(frm) {
+			await master_plan_it.project.render_financial_summary(frm);
+		},
+	});
+
+master_plan_it.project.render_financial_summary =
+	master_plan_it.project.render_financial_summary ||
+	async function (frm) {
+		const summary_field = frm.fields_dict && frm.fields_dict.financial_summary;
+		if (!summary_field || !summary_field.$wrapper) {
+			return;
+		}
+
+		const planned = frm.doc.planned_total_net || 0;
+		const quoted = frm.doc.quoted_total_net || 0;
+		const expected = frm.doc.expected_total_net || planned;
+
+		let actual = 0;
+		if (frm.doc.name) {
+			const res = await frappe.call({
+				method: "master_plan_it.master_plan_it.doctype.mpit_project.mpit_project.get_project_actuals_totals",
+				args: { project: frm.doc.name },
+			});
+			actual = (res.message && res.message.actual_total_net) || 0;
+		}
+
+		const variance_expected = actual - expected;
+		const variance_planned = actual - planned;
+
+		const format_currency = (value) => frappe.format(value || 0, { fieldtype: "Currency" });
+		const html = `
+			<div class="mpit-project-summary">
+				<table class="table table-bordered" style="margin-bottom: 0">
+					<thead>
+						<tr>
+							<th>${__("Planned")}</th>
+							<th>${__("Quoted")}</th>
+							<th>${__("Expected")}</th>
+							<th>${__("Actual")}</th>
+							<th>${__("Variance vs Expected")}</th>
+							<th>${__("Variance vs Planned")}</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr>
+							<td>${format_currency(planned)}</td>
+							<td>${format_currency(quoted)}</td>
+							<td>${format_currency(expected)}</td>
+							<td>${format_currency(actual)}</td>
+							<td class="${variance_expected < 0 ? "text-danger" : "text-success"}">${format_currency(variance_expected)}</td>
+							<td class="${variance_planned < 0 ? "text-danger" : "text-success"}">${format_currency(variance_planned)}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
+		`;
+
+		summary_field.$wrapper.html(html);
+	};

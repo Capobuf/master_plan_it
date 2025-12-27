@@ -1,0 +1,3 @@
+year,category,vendor,description,recurrence_rule,custom_period_months,amount,amount_includes_vat,vat_rate,period_start_date,period_end_date
+2025,Connectivity,TIM,"Fibra FTTH HQ",Monthly,,100,1,22,2025-01-01,2025-12-31
+2025,Insurance,,"Cyber insurance annuale",Annual,,1200,0,0,2025-01-01,2025-12-31

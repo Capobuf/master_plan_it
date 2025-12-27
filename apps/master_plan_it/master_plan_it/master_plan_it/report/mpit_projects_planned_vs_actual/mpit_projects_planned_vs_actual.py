@@ -11,12 +11,15 @@ def execute(filters=None):
 	rows = _get_data(filters)
 
 	columns = [
-		_("Project") + ":Link/MPIT Project:200",
-		_("Status") + "::120",
-		_("Year") + ":Link/MPIT Year:80",
-		_("Planned Amount") + ":Currency:140",
-		_("Actual Amount") + ":Currency:140",
-		_("Variance (Actual - Planned)") + ":Currency:170",
+		{"label": _("Project"), "fieldname": "project", "fieldtype": "Link", "options": "MPIT Project", "width": 200},
+		{"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 120},
+		{"label": _("Year"), "fieldname": "year", "fieldtype": "Link", "options": "MPIT Year", "width": 80},
+		{"label": _("Planned (Net)"), "fieldname": "planned_amount", "fieldtype": "Currency", "width": 140},
+		{"label": _("Quoted (Net)"), "fieldname": "quoted_amount", "fieldtype": "Currency", "width": 140},
+		{"label": _("Expected (Net)"), "fieldname": "expected_amount", "fieldtype": "Currency", "width": 140},
+		{"label": _("Actual (Net)"), "fieldname": "actual_amount", "fieldtype": "Currency", "width": 140},
+		{"label": _("Variance vs Expected"), "fieldname": "variance_expected", "fieldtype": "Currency", "width": 170},
+		{"label": _("Variance vs Planned"), "fieldname": "variance_planned", "fieldtype": "Currency", "width": 170},
 	]
 
 	chart = _build_chart(rows)
@@ -52,6 +55,15 @@ def _get_data(filters) -> list[dict]:
 		as_dict=True,
 	)
 
+	quotes = frappe.db.sql(
+		"""
+		SELECT parent AS project, SUM(COALESCE(amount_net, amount)) AS quoted_amount
+		FROM `tabMPIT Project Quote`
+		GROUP BY parent
+		""",
+		as_dict=True,
+	)
+
 	actuals = frappe.db.sql(
 		"""
 		SELECT project, year, SUM(COALESCE(amount_net, amount)) AS actual_amount
@@ -62,19 +74,27 @@ def _get_data(filters) -> list[dict]:
 		as_dict=True,
 	)
 
+	quotes_map = {r["project"]: r.get("quoted_amount") or 0 for r in quotes}
 	actual_map = {(r["project"], r["year"]): r["actual_amount"] for r in actuals}
 
 	rows: list[dict] = []
 	for r in allocations:
 		actual_amount = float(actual_map.get((r["project"], r["year"]), 0))
-		variance = actual_amount - float(r.get("planned_amount") or 0)
+		planned = float(r.get("planned_amount") or 0)
+		quoted = float(quotes_map.get(r["project"], 0) or 0)
+		expected = quoted if quoted > 0 else planned
+		variance_expected = actual_amount - expected
+		variance_planned = actual_amount - planned
 		rows.append({
 			"project": r["project"],
 			"status": r["status"],
 			"year": r["year"],
-			"planned_amount": r.get("planned_amount") or 0,
+			"planned_amount": planned,
+			"quoted_amount": quoted,
+			"expected_amount": expected,
 			"actual_amount": actual_amount,
-			"variance": variance,
+			"variance_expected": variance_expected,
+			"variance_planned": variance_planned,
 		})
 
 	return rows
@@ -84,18 +104,18 @@ def _build_chart(rows: list[dict]) -> dict | None:
 	if not rows:
 		return None
 
-	planned_totals = {}
+	expected_totals = {}
 	actual_totals = {}
 	for r in rows:
-		planned_totals[r["project"]] = planned_totals.get(r["project"], 0) + float(r.get("planned_amount") or 0)
+		expected_totals[r["project"]] = expected_totals.get(r["project"], 0) + float(r.get("expected_amount") or 0)
 		actual_totals[r["project"]] = actual_totals.get(r["project"], 0) + float(r.get("actual_amount") or 0)
 
-	labels = sorted(planned_totals.keys())
+	labels = sorted(expected_totals.keys())
 	return {
 		"data": {
 			"labels": labels,
 			"datasets": [
-				{"name": _("Planned"), "values": [planned_totals.get(p, 0) for p in labels]},
+				{"name": _("Expected"), "values": [expected_totals.get(p, 0) for p in labels]},
 				{"name": _("Actual"), "values": [actual_totals.get(p, 0) for p in labels]},
 			],
 		},

@@ -15,7 +15,8 @@ def execute(filters=None):
 	rows, summary = _get_data(filters)
 
 	columns = [
-		_("Contract") + ":Link/MPIT Contract:200",
+		_("Contract") + ":Link/MPIT Contract:160",
+		_("Title") + ":Data:180",
 		_("Vendor") + ":Link/MPIT Vendor:150",
 		_("Category") + ":Link/MPIT Category:150",
 		_("Next Renewal Date") + ":Date:120",
@@ -23,6 +24,7 @@ def execute(filters=None):
 		_("Notice Days") + ":Int:100",
 		_("Auto Renew") + ":Check:90",
 		_("Status") + ":Data:100",
+		_("End Date") + ":Date:110",
 		_("Count") + ":Int:60",
 		_("Expired Count") + ":Int:80",
 	]
@@ -35,24 +37,31 @@ def execute(filters=None):
 def _get_data(filters):
 	days = cint(filters.get("days") or 90)
 	include_past = cint(filters.get("include_past") or 0)
+	auto_renew_only = cint(filters.get("auto_renew_only") or 0)
 	start_date = getdate(filters.get("from_date") or nowdate())
 	end_date = add_days(start_date, days)
 
 	rows = []
 	expired_count = 0
 
+	where = ["next_renewal_date IS NOT NULL"]
+	if auto_renew_only:
+		where.append("COALESCE(auto_renew, 0) = 1")
+
 	contracts = frappe.db.sql(
-		"""
+		f"""
 		SELECT
 			name,
+			title,
 			vendor,
 			category,
 			next_renewal_date,
 			notice_days,
 			auto_renew,
-			status
+			status,
+			end_date
 		FROM `tabMPIT Contract`
-		WHERE next_renewal_date IS NOT NULL
+		WHERE {" AND ".join(where)}
 		""",
 		as_dict=True,
 	)
@@ -74,6 +83,7 @@ def _get_data(filters):
 
 		rows.append({
 			"contract": c.name,
+			"title": c.title or c.name,
 			"vendor": c.vendor,
 			"category": c.category,
 			"next_renewal_date": c.next_renewal_date,
@@ -81,6 +91,7 @@ def _get_data(filters):
 			"notice_days": c.notice_days,
 			"auto_renew": c.auto_renew,
 			"status": c.status,
+			"end_date": c.end_date,
 			"count": 1,
 			"expired_count": is_expired,
 		})

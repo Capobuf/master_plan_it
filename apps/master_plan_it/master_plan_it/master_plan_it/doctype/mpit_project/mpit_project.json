@@ -7,20 +7,34 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "tab_overview",
   "title",
-  "description",
   "status",
+  "owner_user",
   "start_date",
   "end_date",
-  "owner_user",
+  "description",
+  "tab_financial",
+  "financial_summary",
+  "planned_total_net",
+  "quoted_total_net",
+  "expected_total_net",
+  "tab_allocations",
   "alloc_section",
   "allocations",
+  "tab_quotes",
   "quotes_section",
   "quotes",
+  "tab_milestones",
   "milestones_section",
   "milestones"
  ],
  "fields": [
+  {
+   "fieldname": "tab_overview",
+   "fieldtype": "Tab Break",
+   "label": "Overview"
+  },
   {
    "fieldname": "title",
    "fieldtype": "Data",
@@ -30,12 +44,6 @@
    "reqd": 1
   },
   {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "description": "Add a brief description of the project.",
-   "label": "Description"
-  },
-  {
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
@@ -43,6 +51,13 @@
    "in_list_view": 1,
    "label": "Status",
    "options": "Draft\nProposed\nApproved\nIn Progress\nOn Hold\nCompleted\nCancelled"
+  },
+  {
+   "fieldname": "owner_user",
+   "fieldtype": "Link",
+   "description": "Select the project owner.",
+   "label": "Owner",
+   "options": "User"
   },
   {
    "fieldname": "start_date",
@@ -57,11 +72,47 @@
    "label": "End Date"
   },
   {
-   "fieldname": "owner_user",
-   "fieldtype": "Link",
-   "description": "Select the project owner.",
-   "label": "Owner",
-   "options": "User"
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "description": "Add a brief description of the project.",
+   "label": "Description"
+  },
+  {
+   "fieldname": "tab_financial",
+   "fieldtype": "Tab Break",
+   "label": "Financials"
+  },
+  {
+   "fieldname": "financial_summary",
+   "fieldtype": "HTML",
+   "label": "Financial Summary",
+   "read_only": 1
+  },
+  {
+   "fieldname": "planned_total_net",
+   "fieldtype": "Currency",
+   "description": "Total planned net from allocations.",
+   "label": "Planned Total (Net)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "quoted_total_net",
+   "fieldtype": "Currency",
+   "description": "Total quoted net amount.",
+   "label": "Quoted Total (Net)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "expected_total_net",
+   "fieldtype": "Currency",
+   "description": "Expected total (quoted if present, otherwise planned).",
+   "label": "Expected Total (Net)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_allocations",
+   "fieldtype": "Tab Break",
+   "label": "Allocations"
   },
   {
    "fieldname": "alloc_section",
@@ -76,6 +127,11 @@
    "options": "MPIT Project Allocation"
   },
   {
+   "fieldname": "tab_quotes",
+   "fieldtype": "Tab Break",
+   "label": "Quotes"
+  },
+  {
    "fieldname": "quotes_section",
    "fieldtype": "Section Break",
    "label": "Quotes"
@@ -86,6 +142,11 @@
    "description": "Add vendor quotes for this project.",
    "label": "Quotes",
    "options": "MPIT Project Quote"
+  },
+  {
+   "fieldname": "tab_milestones",
+   "fieldtype": "Tab Break",
+   "label": "Milestones"
   },
   {
    "fieldname": "milestones_section",
