@@ -61,25 +61,19 @@ class MPITActualEntry(Document):
 		self.year = year_name
 
 	def _lookup_year_for_date(self, posting_date) -> str | None:
-		"""Find the MPIT Year covering a date, preferring date ranges then exact year name."""
+		"""Find the MPIT Year covering a date using strict date ranges."""
+		# Since start_date and end_date are mandatory in MPIT Year, we can rely on them.
 		res = frappe.db.sql(
 			"""
 			SELECT name
 			FROM `tabMPIT Year`
-			WHERE (start_date IS NULL OR start_date <= %(date)s)
-			  AND (end_date IS NULL OR end_date >= %(date)s)
-			ORDER BY start_date DESC, name DESC
+			WHERE start_date <= %(date)s AND end_date >= %(date)s
+			ORDER BY start_date DESC
 			LIMIT 1
 			""",
 			{"date": posting_date},
 		)
 		if res:
 			return res[0][0]
-
-		# Fallback to exact year match (name or field)
-		for candidate in (str(posting_date.year), posting_date.year):
-			found = frappe.db.exists("MPIT Year", candidate) or frappe.db.exists("MPIT Year", {"year": posting_date.year})
-			if found:
-				return found if isinstance(found, str) else str(found)
 
 		return None

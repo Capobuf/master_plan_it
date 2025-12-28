@@ -1,0 +1,40 @@
+{
+ "chart_name": "MPIT Amendments Delta (Net) by Category",
+ "chart_type": "Custom",
+ "creation": "2025-12-28 19:40:20.394606",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "filters_json": "{\n \"top_n\": 10,\n \"year\": \"2026\"\n}",
+ "group_by_type": "Count",
+ "idx": 0,
+ "is_public": 0,
+ "is_standard": 1,
+ "modified": "2025-12-28 19:40:20.394606",
+ "modified_by": "Administrator",
+ "module": "Master Plan IT",
+ "name": "MPIT Amendments Delta (Net) by Category",
+ "number_of_groups": 0,
+ "owner": "Administrator",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "vCIO Manager"
+  },
+  {
+   "role": "Client Editor"
+  },
+  {
+   "role": "Client Viewer"
+  }
+ ],
+ "show_values_over_chart": 0,
+ "source": "MPIT Amendments Delta (Net)",
+ "time_interval": "Yearly",
+ "timeseries": 0,
+ "timespan": "Last Year",
+ "type": "Bar",
+ "use_report_chart": 0,
+ "y_axis": []
+}

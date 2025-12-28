@@ -27,13 +27,15 @@
    "fieldname": "start_date",
    "fieldtype": "Date",
    "description": "Date when the year period starts.",
-   "label": "Start Date"
+   "label": "Start Date",
+   "reqd": 1
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Date",
    "description": "Date when the year period ends.",
-   "label": "End Date"
+   "label": "End Date",
+   "reqd": 1
   },
   {
    "default": "1",

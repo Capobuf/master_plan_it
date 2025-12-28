@@ -1,50 +1,51 @@
-{
- "cards": [
-  {
-   "card": "Renewals 30d",
-   "width": "Half"
-  },
-  {
-   "card": "Renewals 60d",
-   "width": "Half"
-  },
-  {
-   "card": "Renewals 90d",
-   "width": "Half"
-  },
-  {
-   "card": "Expired Contracts",
-   "width": "Half"
-  }
- ],
- "charts": [
-  {
-   "chart": "MPIT Current Budget vs Actual",
-   "width": "Half"
-  },
-  {
-   "chart": "MPIT Budget vs Actual (Approved)",
-   "width": "Half"
-  },
-  {
-   "chart": "MPIT Projects Planned vs Actual",
-   "width": "Half"
-  },
-  {
-   "chart": "MPIT Renewals by Month",
-   "width": "Half"
-  }
- ],
- "creation": "2025-12-24 20:00:26.295380",
- "dashboard_name": "Master Plan IT Overview",
- "docstatus": 0,
- "doctype": "Dashboard",
- "idx": 0,
- "is_default": 0,
- "is_standard": 1,
- "modified": "2025-12-24 20:00:26.629107",
- "modified_by": "Administrator",
- "module": "Master Plan IT",
- "name": "Master Plan IT Overview",
- "owner": "Administrator"
-}
+[
+ {
+  "cards": [],
+  "chart_options": null,
+  "charts": [
+   {
+    "chart": "MPIT Current Budget vs Actual",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Half"
+   },
+   {
+    "chart": "MPIT Budget vs Actual (Approved)",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Half"
+   },
+   {
+    "chart": "MPIT Amendments Delta (Net) by Category",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Half"
+   },
+   {
+    "chart": "MPIT Projects Planned vs Actual",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Half"
+   },
+   {
+    "chart": "MPIT Renewals by Month",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Half"
+   }
+  ],
+  "dashboard_name": "Master Plan IT Overview",
+  "docstatus": 0,
+  "doctype": "Dashboard",
+  "is_default": 0,
+  "is_standard": 1,
+  "modified": "2025-12-28 15:23:06.635455",
+  "module": "Master Plan IT",
+  "name": "Master Plan IT Overview"
+ }
+]

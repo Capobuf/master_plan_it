@@ -43,8 +43,8 @@ def get_year_bounds(year: int | str) -> tuple[datetime.date, datetime.date]:
 
 	if frappe.db.exists("MPIT Year", str(year_int)):
 		year_doc = frappe.get_doc("MPIT Year", str(year_int))
-		if year_doc.start_date and year_doc.end_date:
-			return (getdate(year_doc.start_date), getdate(year_doc.end_date))
+		# Dates are mandatory in MPIT Year, so we can trust them.
+		return (getdate(year_doc.start_date), getdate(year_doc.end_date))
 
 	return (calendar_start, calendar_end)
 

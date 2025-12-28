@@ -30,7 +30,7 @@
     "parenttype": "Workspace"
    }
   ],
-  "content": "[{\"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Master Plan IT</span>\", \"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">Gestione budget, progetti, contratti e fornitori</span>\", \"col\": 12}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Quick Actions\", \"col\": 12}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budgets\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Actual Entries\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budget Amendments\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Projects\", \"col\": 3}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Setup & Planning\", \"col\": 12}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 6}}, {\"type\": \"card\", \"data\": {\"card_name\": \"Planning\", \"col\": 6}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"Insights\", \"col\": 12}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Current Budget vs Actual\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Projects Planned vs Actual\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Budget vs Actual (Approved)\", \"col\": 6}}, {\"type\": \"chart\", \"data\": {\"chart_name\": \"MPIT Renewals by Month\", \"col\": 6}}, {\"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"type\": \"header\", \"data\": {\"text\": \"More\", \"col\": 12}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Contracts\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Vendors\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Categories\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Baseline Expense\", \"col\": 3}}, {\"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"User Preferences\", \"col\": 3}}]",
+  "content": "[{\"type\": \"header\",\"data\": {\"text\": \"<span class=\\\"h4\\\">Master Plan IT</span>\",\"col\": 12}},{\"type\": \"header\",\"data\": {\"text\": \"<span class=\\\"text-muted\\\">Gestione budget, progetti, contratti e fornitori</span>\",\"col\": 12}},{\"type\": \"spacer\",\"data\": {\"col\": 12}},{\"type\": \"header\",\"data\": {\"text\": \"Quick Actions\",\"col\": 12}},{\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Overview Dashboard\",\"col\": 3}},{\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Budgets\",\"col\": 3}},{\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Actual Entries\",\"col\": 3}},{\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Budget Amendments\",\"col\": 3}},{\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Projects\",\"col\": 3}},{\"type\": \"spacer\",\"data\": {\"col\": 12}},{\"type\": \"header\",\"data\": {\"text\": \"Setup & Planning\",\"col\": 12}},{\"type\": \"card\",\"data\": {\"card_name\": \"Setup\",\"col\": 6}},{\"type\": \"card\",\"data\": {\"card_name\": \"Planning\",\"col\": 6}},{\"type\": \"spacer\",\"data\": {\"col\": 12}},{\"type\": \"header\",\"data\": {\"text\": \"Insights\",\"col\": 12}},{\"type\": \"chart\",\"data\": {\"chart_name\": \"MPIT Current Budget vs Actual\",\"col\": 6}},{\"type\": \"chart\",\"data\": {\"chart_name\": \"MPIT Projects Planned vs Actual\",\"col\": 6}},{\"type\": \"chart\",\"data\": {\"chart_name\": \"MPIT Budget vs Actual (Approved)\",\"col\": 6}},{\"type\": \"chart\",\"data\": {\"chart_name\": \"MPIT Renewals by Month\",\"col\": 6}},{\"type\": \"spacer\",\"data\": {\"col\": 12}},{\"type\": \"header\",\"data\": {\"text\": \"More\",\"col\": 12}},{\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Contracts\",\"col\": 3}},{\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Vendors\",\"col\": 3}},{\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Categories\",\"col\": 3}},{\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"Baseline Expense\",\"col\": 3}},{\"type\": \"shortcut\",\"data\": {\"shortcut_name\": \"User Preferences\",\"col\": 3}}]",
   "custom_blocks": [],
   "docstatus": 0,
   "doctype": "Workspace",
@@ -276,6 +276,23 @@
   ],
   "sequence_id": 0.0,
   "shortcuts": [
+   {
+    "color": "Grey",
+    "doc_view": "",
+    "format": null,
+    "icon": "dashboard",
+    "kanban_board": null,
+    "label": "Overview Dashboard",
+   "link_to": null,
+   "parent": "Master Plan IT",
+   "parentfield": "shortcuts",
+   "parenttype": "Workspace",
+   "report_ref_doctype": null,
+   "restrict_to_domain": null,
+   "stats_filter": null,
+   "type": "URL",
+    "url": "/app/dashboard/Master%20Plan%20IT%20Overview"
+  },
    {
     "color": null,
     "doc_view": "",

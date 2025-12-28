@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 
@@ -17,3 +18,22 @@ def test_no_forbidden_metadata_paths():
 
     for path in forbidden:
         assert not path.exists(), f"Forbidden metadata path exists: {path}"
+
+
+def test_dashboards_are_only_in_canonical_path():
+    repo_root = Path(__file__).resolve().parents[4]
+    app_root = repo_root / "apps/master_plan_it"
+    canonical_dashboard_dir = repo_root / "apps/master_plan_it/master_plan_it/master_plan_it/dashboard"
+
+    dashboard_files = []
+    for json_path in app_root.rglob("*.json"):
+        try:
+            payload = json.loads(json_path.read_text())
+        except Exception:
+            continue
+
+        if payload.get("doctype") == "Dashboard":
+            dashboard_files.append(json_path)
+            assert canonical_dashboard_dir in json_path.parents, f"Dashboard JSON outside canonical path: {json_path}"
+
+    assert dashboard_files, "Expected at least one Dashboard JSON in canonical path"

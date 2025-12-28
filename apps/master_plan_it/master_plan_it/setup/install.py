@@ -12,12 +12,40 @@ import datetime
 import frappe
 
 
+def _determine_currency() -> str:
+	"""Pick a deterministic currency to satisfy the settings singleton."""
+	candidates = [
+		frappe.db.get_default("currency"),
+		frappe.db.get_default("default_currency"),
+	]
+
+	for doctype, field in [
+		("System Settings", "currency"),
+		("System Settings", "default_currency"),
+		("Global Defaults", "default_currency"),
+	]:
+		try:
+			candidates.append(frappe.db.get_single_value(doctype, field))
+		except Exception:
+			candidates.append(None)
+
+	currency = next((c for c in candidates if c), None)
+	if not currency:
+		currency_list = frappe.db.get_all("Currency", pluck="name", limit=1)
+		currency = currency_list[0] if currency_list else None
+
+	if not currency:
+		frappe.throw("Currency is required. Please create at least one Currency and set MPIT Settings.")
+
+	return currency
+
+
 def _ensure_settings() -> None:
 	"""Create the singleton MPIT Settings if missing."""
-	if frappe.db.exists("MPIT Settings", "MPIT Settings"):
-		return
-	doc = frappe.get_doc({"doctype": "MPIT Settings"})
-	doc.insert(ignore_permissions=True)
+	settings = frappe.get_single("MPIT Settings")
+	if not settings.currency:
+		settings.currency = _determine_currency()
+	settings.save(ignore_permissions=True)
 
 
 def _ensure_year(year: int) -> None:

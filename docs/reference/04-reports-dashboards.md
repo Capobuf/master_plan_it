@@ -43,8 +43,15 @@ Tutti i 4 report hanno HTML templates per stampa professionale:
 
 ## Dashboards
 Dashboard **“Master Plan IT Overview”** (standard):
+- Path standard (file-first): `apps/master_plan_it/master_plan_it/master_plan_it/dashboard/<name>/<name>.json`.
 - Number cards: Renewals 30d / 60d / 90d, Expired Contracts (all based on MPIT Renewals Window)
 - Charts: Budget vs Actual (approved), Current Budget vs Actual, Renewals by Month, Projects Planned vs Actual
+- Chart (nuovo) **MPIT Amendments Delta (Net) by Category**:
+  - Chart Source: `dashboard_chart_source/mpit_amendments_delta_net/mpit_amendments_delta_net.{js,py,json}`
+  - Chart JSON: `dashboard_chart/mpit_amendments_delta_net_by_category/mpit_amendments_delta_net_by_category.json`
+  - Inclusione: solo `MPIT Budget Amendment` con `docstatus=1`; Year derivato da `MPIT Budget.year`; nessun filtro su date; importi net `COALESCE(delta_amount_net, delta_amount)`
+  - Filtri disponibili via Set Filters: `year` (Link MPIT Year, richiesto), `budget` (Link MPIT Budget, opzionale), `top_n` (Int, default 10, clamp 1-50)
+  - Tipo: Bar; aggregazione per Category; pensato per overview Amendments senza passare da Report.
 
 ## Notes
 Reports should be implemented as Query Reports where possible.

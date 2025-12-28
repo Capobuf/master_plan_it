@@ -10,26 +10,23 @@
   "tab_overview",
   "year",
   "title",
+  "overview_col_break",
   "workflow_state",
   "tab_lines",
-  "lines_section",
   "lines",
   "tab_totals",
-  "totals_section",
-  "totals_col_break_1",
-  "totals_col_break_2",
   "total_amount_input",
   "total_amount_vat",
-  "totals_col_break_3",
+  "totals_col_break_1",
   "total_amount_net",
   "total_amount_gross",
   "tab_admin",
   "amended_from"
-],
+ ],
 "fields": [
   {
    "fieldname": "tab_overview",
-   "fieldtype": "Tab Break",
+   "fieldtype": "Section Break",
    "label": "Overview"
   },
   {
@@ -49,6 +46,10 @@
    "label": "Title"
   },
   {
+   "fieldname": "overview_col_break",
+   "fieldtype": "Column Break"
+  },
+  {
    "allow_on_submit": 1,
    "fieldname": "workflow_state",
    "fieldtype": "Select",
@@ -61,11 +62,6 @@
   },
   {
    "fieldname": "tab_lines",
-   "fieldtype": "Tab Break",
-   "label": "Lines"
-  },
-  {
-   "fieldname": "lines_section",
    "fieldtype": "Section Break",
    "label": "Lines"
   },
@@ -78,21 +74,8 @@
   },
   {
    "fieldname": "tab_totals",
-   "fieldtype": "Tab Break",
-   "label": "Totals"
-  },
-  {
-   "fieldname": "totals_section",
    "fieldtype": "Section Break",
    "label": "Totals"
-  },
-  {
-   "fieldname": "totals_col_break_1",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "totals_col_break_2",
-   "fieldtype": "Column Break"
   },
   {
    "fieldname": "total_amount_input",
@@ -109,7 +92,7 @@
    "read_only": 1
   },
   {
-   "fieldname": "totals_col_break_3",
+   "fieldname": "totals_col_break_1",
    "fieldtype": "Column Break"
   },
   {
@@ -128,7 +111,8 @@
   },
   {
    "fieldname": "tab_admin",
-   "fieldtype": "Tab Break",
+   "collapsible": 1,
+   "fieldtype": "Section Break",
    "label": "Admin"
   },
   {

@@ -5,10 +5,11 @@ This document defines the **native file-first** workflow for Master Plan IT.
 ## Source of truth
 
 - App root in Git: `apps/master_plan_it/` (same path under a bench).
-- Exported metadata lives under `apps/master_plan_it/master_plan_it/master_plan_it/` (doctype, report, workflow, dashboard, dashboard_chart, number_card, master_plan_it_dashboard, workspace, print_format).
+- Exported metadata lives under `apps/master_plan_it/master_plan_it/master_plan_it/` (doctype, report, workflow, dashboard, dashboard_chart, number_card, workspace, print_format). Legacy `master_plan_it_dashboard/` copies were removed to avoid duplicates.
 - These files are edited directly in Git; they are the canonical inputs for Frappe. No spec-import and no `sync_all`.
 - **Warning:** Do not manually create duplicate metadata folders outside the canonical module folder.
 - **Translations:** Follow `AGENT_INSTRUCTIONS.md` → “Translations (i18n) – Native Frappe Rules” for marking strings and maintaining `translations/it.csv`.
+- **Dashboard Chart/Source:** crea/aggiorna i record via bench/console e poi `bench --site <site> export-json "Dashboard Chart" "<Name>" <path>` (idem per Dashboard Chart Source) per evitare di indovinare lo schema JSON.
 
 ## Who generates/edits files?
 
