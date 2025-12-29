@@ -1,20 +1,27 @@
 // Copyright (c) 2025, DOT and contributors
 // For license information, please see license.txt
 
-frappe.query_reports["MPIT Approved Budget vs Actual"] = {
+frappe.query_reports["MPIT Monthly Budget vs Actual"] = {
 	filters: [
-		// Business filters
+		// Business filters (from JSON, consolidated here)
 		{
 			fieldname: "year",
 			label: __("Year"),
 			fieldtype: "Link",
-			options: "MPIT Year"
+			options: "MPIT Year",
+			reqd: 1
 		},
 		{
-			fieldname: "budget",
-			label: __("Budget"),
-			fieldtype: "Link",
-			options: "MPIT Budget"
+			fieldname: "from_month",
+			label: __("From Month"),
+			fieldtype: "Int",
+			default: 1
+		},
+		{
+			fieldname: "to_month",
+			label: __("To Month"),
+			fieldtype: "Int",
+			default: 12
 		},
 		{
 			fieldname: "category",
@@ -27,6 +34,24 @@ frappe.query_reports["MPIT Approved Budget vs Actual"] = {
 			label: __("Vendor"),
 			fieldtype: "Link",
 			options: "MPIT Vendor"
+		},
+		{
+			fieldname: "project",
+			label: __("Project"),
+			fieldtype: "Link",
+			options: "MPIT Project"
+		},
+		{
+			fieldname: "contract",
+			label: __("Contract"),
+			fieldtype: "Link",
+			options: "MPIT Contract"
+		},
+		{
+			fieldname: "include_portfolio",
+			label: __("Include Portfolio"),
+			fieldtype: "Check",
+			default: 1
 		},
 		// Print filters
 		{

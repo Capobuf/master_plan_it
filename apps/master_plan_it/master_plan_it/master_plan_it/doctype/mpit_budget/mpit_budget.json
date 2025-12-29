@@ -2,11 +2,13 @@
  "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
+ "autoname": "naming_series:",
  "creation": "2025-12-21 22:34:53.002565",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "naming_series",
   "tab_overview",
   "year",
   "title",
@@ -15,15 +17,24 @@
   "tab_lines",
   "lines",
   "tab_totals",
-  "total_amount_input",
-  "total_amount_vat",
   "totals_col_break_1",
+  "total_amount_monthly",
+  "total_amount_annual",
+  "total_amount_vat",
   "total_amount_net",
   "total_amount_gross",
-  "tab_admin",
   "amended_from"
  ],
 "fields": [
+  {
+   "fieldname": "naming_series",
+   "fieldtype": "Select",
+   "label": "Series",
+   "options": "BUD-.YYYY.-",
+   "default": "BUD-.YYYY.-",
+   "reqd": 1,
+   "hidden": 1
+  },
   {
    "fieldname": "tab_overview",
    "fieldtype": "Section Break",
@@ -75,45 +86,62 @@
   {
    "fieldname": "tab_totals",
    "fieldtype": "Section Break",
-   "label": "Totals"
-  },
-  {
-   "fieldname": "total_amount_input",
-   "fieldtype": "Currency",
-   "description": "Calculated automatically as the sum of line amounts.",
-   "label": "Total Amount Input",
-   "read_only": 1
-  },
-  {
-   "fieldname": "total_amount_vat",
-   "fieldtype": "Currency",
-   "description": "Calculated automatically as the sum of line VAT amounts.",
-   "label": "Total VAT Amount",
-   "read_only": 1
+   "label": "Totals",
+   "collapsible": 0
   },
   {
    "fieldname": "totals_col_break_1",
    "fieldtype": "Column Break"
   },
   {
+   "fieldname": "total_amount_monthly",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically as the sum of monthly amounts.",
+   "label": "Total Monthly Amount",
+   "read_only": 1,
+   "columns": 1,
+   "css_class": "text-right",
+   "label_align": "right"
+  },
+  {
+   "fieldname": "total_amount_annual",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically as the sum of annual amounts.",
+   "label": "Total Annual Amount",
+   "read_only": 1,
+   "columns": 1,
+   "css_class": "text-right",
+   "label_align": "right"
+  },
+  {
+   "fieldname": "total_amount_vat",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically as the sum of line VAT amounts.",
+   "label": "Total VAT Amount",
+   "read_only": 1,
+   "columns": 1,
+   "css_class": "text-right",
+   "label_align": "right"
+  },
+  {
    "fieldname": "total_amount_net",
    "fieldtype": "Currency",
    "description": "Calculated automatically as the sum of net amounts.",
    "label": "Total Net Amount",
-   "read_only": 1
+   "read_only": 1,
+   "columns": 1,
+   "css_class": "text-right",
+   "label_align": "right"
   },
   {
    "fieldname": "total_amount_gross",
    "fieldtype": "Currency",
    "description": "Calculated automatically as the sum of gross amounts.",
    "label": "Total Gross Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "tab_admin",
-   "collapsible": 1,
-   "fieldtype": "Section Break",
-   "label": "Admin"
+   "read_only": 1,
+   "columns": 1,
+   "css_class": "text-right",
+   "label_align": "right"
   },
   {
    "fieldname": "amended_from",

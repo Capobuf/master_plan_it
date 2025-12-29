@@ -15,18 +15,18 @@ def execute(filters=None):
 	rows, summary = _get_data(filters)
 
 	columns = [
-		_("Contract") + ":Link/MPIT Contract:160",
-		_("Title") + ":Data:180",
-		_("Vendor") + ":Link/MPIT Vendor:150",
-		_("Category") + ":Link/MPIT Category:150",
-		_("Next Renewal Date") + ":Date:120",
-		_("Days to Renewal") + ":Int:110",
-		_("Notice Days") + ":Int:100",
-		_("Auto Renew") + ":Check:90",
-		_("Status") + ":Data:100",
-		_("End Date") + ":Date:110",
-		_("Count") + ":Int:60",
-		_("Expired Count") + ":Int:80",
+		{"label": _("Contract"), "fieldname": "contract", "fieldtype": "Link", "options": "MPIT Contract", "width": 160},
+		{"label": _("Title"), "fieldname": "title", "fieldtype": "Data", "width": 180},
+		{"label": _("Vendor"), "fieldname": "vendor", "fieldtype": "Link", "options": "MPIT Vendor", "width": 150},
+		{"label": _("Category"), "fieldname": "category", "fieldtype": "Link", "options": "MPIT Category", "width": 150},
+		{"label": _("Next Renewal Date"), "fieldname": "next_renewal_date", "fieldtype": "Date", "width": 120},
+		{"label": _("Days to Renewal"), "fieldname": "days_to_renewal", "fieldtype": "Int", "width": 110},
+		{"label": _("Notice Days"), "fieldname": "notice_days", "fieldtype": "Int", "width": 100},
+		{"label": _("Auto Renew"), "fieldname": "auto_renew", "fieldtype": "Check", "width": 90},
+		{"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 100},
+		{"label": _("End Date"), "fieldname": "end_date", "fieldtype": "Date", "width": 110},
+		{"label": _("Count"), "fieldname": "count", "fieldtype": "Int", "width": 60, "hidden": 1},
+		{"label": _("Expired Count"), "fieldname": "expired_count", "fieldtype": "Int", "width": 80, "hidden": 1},
 	]
 
 	chart = _build_chart(rows)

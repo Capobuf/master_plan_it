@@ -3,13 +3,13 @@
 <head>
     <meta charset="utf-8">
     {#
-        MPIT Renewals Window - Report Print Format
+        MPIT Budget Diff - Report Print Format
         Dynamic template supporting print_profile, print_orientation, print_density filters.
         
         Profiles:
-        - Standard: contract, title, vendor, category, next_renewal_date, days_to_renewal, auto_renew, status
-        - Compact: contract, vendor, next_renewal_date, days_to_renewal, status
-        - All: all columns (includes notice_days, end_date)
+        - Standard: category, vendor, budget_a_annual_net, budget_b_annual_net, delta_annual
+        - Compact: category, budget_a_annual_net, budget_b_annual_net, delta_annual
+        - All: all columns (includes monthly equivalents)
     #}
     {%- set profile = (filters.print_profile or "Standard")|string %}
     {%- set orientation = (filters.print_orientation or "Auto")|string %}
@@ -17,8 +17,8 @@
     
     {# Define column profiles by fieldname #}
     {%- set profile_columns = {
-        "Standard": ["contract", "title", "vendor", "category", "next_renewal_date", "days_to_renewal", "auto_renew", "status"],
-        "Compact": ["contract", "vendor", "next_renewal_date", "days_to_renewal", "status"],
+        "Standard": ["category", "vendor", "budget_a_annual_net", "budget_b_annual_net", "delta_annual"],
+        "Compact": ["category", "budget_a_annual_net", "budget_b_annual_net", "delta_annual"],
         "All": []
     } %}
     
@@ -126,11 +126,12 @@
         .table tbody tr:nth-child(even) { 
             background-color: #f8f9fa; 
         }
+        .table tbody tr.total-row {
+            background-color: #e9ecef;
+            font-weight: 600;
+        }
         .text-right { 
             text-align: right; 
-        }
-        .text-center {
-            text-align: center;
         }
         .currency-cell {
             text-align: right;
@@ -138,26 +139,10 @@
         }
         .text-danger { 
             color: #dc3545; 
-            font-weight: 600;
-        }
-        .text-warning {
-            color: #fd7e14;
-            font-weight: 600;
         }
         .text-success { 
             color: #28a745; 
         }
-        .badge { 
-            display: inline-block; 
-            padding: 2px 6px; 
-            border-radius: 3px; 
-            font-size: 0.85em; 
-            font-weight: 500; 
-        }
-        .badge-expired { background-color: #dc3545; color: #fff; }
-        .badge-urgent { background-color: #fd7e14; color: #fff; }
-        .badge-soon { background-color: #ffc107; color: #000; }
-        .badge-normal { background-color: #17a2b8; color: #fff; }
         .report-footer { 
             margin-top: 15px; 
             padding-top: 8px; 
@@ -170,27 +155,27 @@
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .table thead { background-color: #e9ecef !important; }
             .table tbody tr:nth-child(even) { background-color: #f8f9fa !important; }
-            .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .table tbody tr.total-row { background-color: #e9ecef !important; }
         }
     </style>
 </head>
 <body>
     <div class="report-header">
-        <h2>{{ _("Contract Renewals Window") }}</h2>
+        <h2>{{ _("Budget Comparison") }}</h2>
     </div>
 
     <div class="report-filters">
-        {% if filters.days %}
-            <strong>{{ _("Days Forward") }}:</strong> {{ filters.days }} &nbsp;
+        {% if filters.budget_a %}
+            <strong>{{ _("Budget A") }}:</strong> {{ filters.budget_a }} &nbsp;
         {% endif %}
-        {% if filters.from_date %}
-            <strong>{{ _("From Date") }}:</strong> {{ frappe.utils.formatdate(filters.from_date) }} &nbsp;
+        {% if filters.budget_b %}
+            <strong>{{ _("Budget B") }}:</strong> {{ filters.budget_b }} &nbsp;
         {% endif %}
-        {% if filters.include_past %}
-            <strong>{{ _("Include Past") }}:</strong> {{ _("Yes") }} &nbsp;
+        {% if filters.group_by %}
+            <strong>{{ _("Group By") }}:</strong> {{ filters.group_by }} &nbsp;
         {% endif %}
-        {% if filters.auto_renew_only %}
-            <strong>{{ _("Auto Renew Only") }}:</strong> {{ _("Yes") }}
+        {% if filters.only_changed %}
+            <strong>{{ _("Only Changed") }}:</strong> {{ _("Yes") }}
         {% endif %}
     </div>
 
@@ -205,9 +190,8 @@
         <thead>
             <tr>
                 {% for col in visible_columns %}
-                    {% set fieldtype = col.get("fieldtype", "Data") %}
-                    {% set is_numeric = fieldtype in ["Int", "Float", "Currency"] %}
-                    <th class="{{ 'text-right' if is_numeric else '' }}">
+                    {% set is_currency = col.get("fieldtype") == "Currency" %}
+                    <th class="{{ 'text-right' if is_currency else '' }}">
                         {{ _(col.get("label", col.get("fieldname", ""))) }}
                     </th>
                 {% endfor %}
@@ -216,51 +200,28 @@
         <tbody>
             {% if data and data|length > 0 %}
                 {% for row in data %}
-                    <tr>
+                    {% set is_total = row.get("is_total_row", 0) %}
+                    <tr class="{{ 'total-row' if is_total else '' }}">
                         {% for col in visible_columns %}
                             {% set fieldname = col.get("fieldname", "") %}
                             {% set fieldtype = col.get("fieldtype", "Data") %}
                             {% set value = row.get(fieldname, "") %}
+                            {% set is_currency = fieldtype == "Currency" %}
+                            {% set is_delta = fieldname in ["delta_annual", "delta_monthly"] %}
                             
-                            {% if fieldname == "days_to_renewal" %}
-                                {# Days to renewal with color coding #}
-                                {% set days_class = "" %}
-                                {% if value is not none %}
-                                    {% if value < 0 %}
-                                        {% set days_class = "text-danger" %}
-                                    {% elif value <= 30 %}
-                                        {% set days_class = "text-warning" %}
-                                    {% endif %}
+                            {% if is_currency %}
+                                {% set delta_class = "" %}
+                                {% if is_delta and value is not none %}
+                                    {# Positive delta = B > A (increase), Negative = B < A (decrease) #}
+                                    {% set delta_class = "text-danger" if value > 0 else "text-success" if value < 0 else "" %}
                                 {% endif %}
-                                <td class="text-right {{ days_class }}">{{ value if value is not none else "" }}</td>
-                            {% elif fieldname == "status" %}
-                                {# Status badge based on days_to_renewal #}
-                                {% set days = row.get("days_to_renewal", 999) %}
-                                {% set badge_class = "badge-normal" %}
-                                {% set badge_label = _("Normal") %}
-                                {% if days is not none %}
-                                    {% if days < 0 %}
-                                        {% set badge_class = "badge-expired" %}
-                                        {% set badge_label = _("Expired") %}
-                                    {% elif days <= 30 %}
-                                        {% set badge_class = "badge-urgent" %}
-                                        {% set badge_label = _("Urgent") %}
-                                    {% elif days <= 60 %}
-                                        {% set badge_class = "badge-soon" %}
-                                        {% set badge_label = _("Soon") %}
-                                    {% endif %}
-                                {% endif %}
-                                <td><span class="badge {{ badge_class }}">{{ badge_label }}</span></td>
-                            {% elif fieldtype == "Currency" %}
-                                <td class="currency-cell">
+                                <td class="currency-cell {{ delta_class }}">
                                     {{ frappe.utils.fmt_money(value) if value is not none else "" }}
                                 </td>
                             {% elif fieldtype == "Check" %}
                                 <td class="text-center">{{ "✓" if value else "" }}</td>
                             {% elif fieldtype == "Date" %}
                                 <td>{{ frappe.utils.formatdate(value) if value else "" }}</td>
-                            {% elif fieldtype in ["Int", "Float"] %}
-                                <td class="text-right">{{ value if value is not none else "" }}</td>
                             {% else %}
                                 <td>{{ value if value is not none else "" }}</td>
                             {% endif %}
@@ -270,7 +231,7 @@
             {% else %}
                 <tr>
                     <td colspan="{{ col_count }}" style="text-align: center; padding: 20px; color: #6c757d;">
-                        {{ _("No renewals in this window") }}
+                        {{ _("No data available") }}
                     </td>
                 </tr>
             {% endif %}

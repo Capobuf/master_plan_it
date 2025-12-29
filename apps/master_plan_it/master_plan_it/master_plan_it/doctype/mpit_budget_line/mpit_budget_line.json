@@ -10,22 +10,34 @@
   "category",
   "vendor",
   "description",
-  "recurrence_rule",
-  "custom_period_months",
-  "period_start_date",
-  "period_end_date",
-  "amount",
+  "section_pricing",
+  "qty",
+  "unit_price",
+  "pricing_col_break",
+  "monthly_amount",
+  "annual_amount",
+  "section_vat",
   "amount_includes_vat",
-  "amount_gross",
   "vat_rate",
+  "vat_col_break",
   "amount_net",
   "amount_vat",
-  "contract",
-  "project",
-  "baseline_expense",
+  "amount_gross",
+  "section_recurrence",
+  "recurrence_rule",
+  "custom_period_months",
+  "recurrence_col_break",
+  "period_start_date",
+  "period_end_date",
+  "section_annualization",
   "annual_net",
   "annual_vat",
   "annual_gross",
+  "section_links",
+  "contract",
+  "project",
+  "baseline_expense",
+  "section_flags",
   "cost_type",
   "is_portfolio_bucket",
   "is_active"
@@ -51,10 +63,208 @@
    "options": "MPIT Vendor"
   },
   {
+   "fieldname": "description",
+   "fieldtype": "Small Text",
+   "description": "Describe this budget line.",
+   "in_list_view": 1,
+   "columns": 2,
+   "label": "Description"
+  },
+  {
+   "fieldname": "section_pricing",
+   "fieldtype": "Section Break",
+   "label": "Pricing"
+  },
+  {
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "description": "Quantity (e.g., number of licenses, units). Default is 1.",
+   "label": "Qty",
+   "default": "1",
+   "precision": "2",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "unit_price",
+   "fieldtype": "Currency",
+   "description": "Price per unit per period (based on recurrence). Leave empty to use monthly/annual amounts directly.",
+   "label": "Unit Price"
+  },
+  {
+   "fieldname": "pricing_col_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "monthly_amount",
+   "fieldtype": "Currency",
+   "description": "Monthly amount. Enter here OR in Annual Amount - the other will be calculated.",
+   "label": "Monthly Amount",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "annual_amount",
+   "fieldtype": "Currency",
+   "description": "Annual amount. Enter here OR in Monthly Amount - the other will be calculated.",
+   "label": "Annual Amount",
+   "in_list_view": 1,
+   "columns": 1
+  },
+  {
+   "fieldname": "section_vat",
+   "fieldtype": "Section Break",
+   "label": "VAT",
+   "collapsible": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "amount_includes_vat",
+   "fieldtype": "Check",
+   "description": "If enabled, the amounts entered include VAT.",
+   "label": "Amounts Include VAT"
+  },
+  {
+   "fieldname": "vat_rate",
+   "fieldtype": "Percent",
+   "description": "VAT rate applied to the amount.",
+   "label": "VAT Rate",
+   "precision": "2"
+  },
+  {
+   "fieldname": "vat_col_break",
+   "fieldtype": "Column Break"
+  },
+
+    {
+     "fieldname": "amount_net",
+     "fieldtype": "Currency",
+     "description": "Calculated automatically: annual amount net of VAT.",
+     "label": "Net Amount",
+     "read_only": 1,
+     "columns": 1,
+     "css_class": "text-right",
+     "label_align": "right"
+    },
+    {
+     "fieldname": "amount_vat",
+     "fieldtype": "Currency",
+     "description": "Calculated automatically as the VAT portion.",
+     "label": "VAT Amount",
+     "read_only": 1,
+     "columns": 1,
+     "css_class": "text-right",
+     "label_align": "right"
+    },
+    {
+     "fieldname": "amount_gross",
+     "fieldtype": "Currency",
+     "description": "Calculated automatically as the gross amount.",
+     "label": "Gross Amount",
+     "read_only": 1,
+     "columns": 1,
+     "css_class": "text-right",
+     "label_align": "right"
+    },
+  {
+   "fieldname": "section_recurrence",
+   "fieldtype": "Section Break",
+   "label": "Recurrence",
+   "collapsible": 1
+  },
+  {
+   "default": "Monthly",
+   "fieldname": "recurrence_rule",
+   "fieldtype": "Select",
+   "description": "How often this cost recurs. Used with Unit Price to calculate amounts.",
+   "label": "Recurrence Rule",
+   "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone"
+  },
+  {
+   "depends_on": "eval:doc.recurrence_rule=='Custom'",
+   "fieldname": "custom_period_months",
+   "fieldtype": "Int",
+   "description": "Number of months per cycle when using a Custom recurrence.",
+   "label": "Custom Period (Months)"
+  },
+  {
+   "fieldname": "recurrence_col_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "period_start_date",
+   "fieldtype": "Date",
+   "description": "Start date of the period used to calculate overlap with the budget year.",
+   "label": "Period Start Date"
+  },
+  {
+   "fieldname": "period_end_date",
+   "fieldtype": "Date",
+   "description": "End date of the period used to calculate overlap with the budget year.",
+   "label": "Period End Date"
+  },
+  {
+   "fieldname": "section_annualization",
+   "fieldtype": "Section Break",
+   "label": "Annualized Totals",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "annual_net",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically as the annualized net amount.",
+   "label": "Annual Net",
+   "read_only": 1
+  },
+  {
+   "fieldname": "annual_vat",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically as the annualized VAT amount.",
+   "label": "Annual VAT",
+   "read_only": 1
+  },
+  {
+   "fieldname": "annual_gross",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically as the annualized gross amount.",
+   "label": "Annual Gross",
+   "read_only": 1
+  },
+
+    {
+     "fieldname": "annual_net",
+     "fieldtype": "Currency",
+     "description": "Calculated automatically as the annualized net amount.",
+     "label": "Annual Net",
+     "read_only": 1,
+     "columns": 1
+    },
+    {
+     "fieldname": "annual_vat",
+     "fieldtype": "Currency",
+     "description": "Calculated automatically as the annualized VAT amount.",
+     "label": "Annual VAT",
+     "read_only": 1,
+     "columns": 1
+    },
+    {
+     "fieldname": "annual_gross",
+     "fieldtype": "Currency",
+     "description": "Calculated automatically as the annualized gross amount.",
+     "label": "Annual Gross",
+     "read_only": 1,
+     "columns": 1
+    },
+  {
+   "fieldname": "section_links",
+   "fieldtype": "Section Break",
+   "label": "Links",
+   "collapsible": 1
+  },
+  {
    "fieldname": "contract",
    "fieldtype": "Link",
    "description": "Select the related contract, if applicable.",
-   "in_list_view": 0,
    "label": "Contract",
    "options": "MPIT Contract"
   },
@@ -62,7 +272,6 @@
    "fieldname": "project",
    "fieldtype": "Link",
    "description": "Select the related project, if applicable.",
-   "in_list_view": 0,
    "label": "Project",
    "options": "MPIT Project"
   },
@@ -74,20 +283,10 @@
    "options": "MPIT Baseline Expense"
   },
   {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "description": "Describe this budget line.",
-   "in_list_view": 1,
-   "columns": 3,
-   "label": "Description"
-  },
-  {
-   "fieldname": "amount",
-   "fieldtype": "Currency",
-   "description": "Enter the budgeted amount; use net or gross per the VAT setting.",
-   "in_list_view": 1,
-   "columns": 1,
-   "label": "Amount"
+   "fieldname": "section_flags",
+   "fieldtype": "Section Break",
+   "label": "Flags",
+   "collapsible": 1
   },
   {
    "default": "OPEX",
@@ -110,102 +309,13 @@
    "fieldtype": "Check",
    "description": "If enabled, the budget line is active.",
    "label": "Is Active"
-  },
-  {
-   "default": "0",
-   "fieldname": "amount_includes_vat",
-   "fieldtype": "Check",
-   "description": "If enabled, the amount includes VAT.",
-   "in_list_view": 1,
-   "columns": 1,
-   "label": "VAT Included?"
-  },
-  {
-   "fieldname": "vat_rate",
-   "fieldtype": "Percent",
-   "description": "VAT rate applied to the amount.",
-   "label": "VAT Rate",
-   "precision": "2"
-  },
-  {
-   "fieldname": "amount_net",
-   "fieldtype": "Currency",
-   "description": "Calculated automatically from amount and VAT settings.",
-   "label": "Net Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "amount_vat",
-   "fieldtype": "Currency",
-   "description": "Calculated automatically as the VAT portion.",
-   "label": "VAT Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "amount_gross",
-   "fieldtype": "Currency",
-   "description": "Calculated automatically as the gross amount.",
-   "in_list_view": 1,
-   "columns": 1,
-   "label": "Gross Amount",
-   "read_only": 1
-  },
-  {
-   "default": "None",
-   "fieldname": "recurrence_rule",
-   "fieldtype": "Select",
-   "description": "Choose how this amount recurs for annualization.",
-   "in_list_view": 1,
-   "columns": 1,
-   "label": "Recurrence Rule",
-   "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone"
-  },
-  {
-   "depends_on": "eval:doc.recurrence_rule=='Custom'",
-   "fieldname": "custom_period_months",
-   "fieldtype": "Int",
-   "description": "Number of months per cycle when using a Custom recurrence.",
-   "label": "Custom Period (Months)"
-  },
-  {
-   "fieldname": "period_start_date",
-   "fieldtype": "Date",
-   "description": "Start date of the period used to calculate overlap with the budget year.",
-   "label": "Period Start Date"
-  },
-  {
-   "fieldname": "period_end_date",
-   "fieldtype": "Date",
-   "description": "End date of the period used to calculate overlap with the budget year.",
-   "label": "Period End Date"
-  },
-  {
-   "fieldname": "annual_net",
-   "fieldtype": "Currency",
-   "description": "Calculated automatically as the annualized net amount.",
-   "label": "Annual Net Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "annual_vat",
-   "fieldtype": "Currency",
-   "description": "Calculated automatically as the annualized VAT amount.",
-   "label": "Annual VAT Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "annual_gross",
-   "fieldtype": "Currency",
-   "description": "Calculated automatically as the annualized gross amount.",
-   "label": "Annual Gross Amount",
-   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-12-24 20:00:46.539881",
+ "modified": "2025-12-28 21:30:00.000000",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Budget Line",

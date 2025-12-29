@@ -8,7 +8,10 @@
  "field_order": [
   "currency",
   "renewal_window_days",
-  "portfolio_warning_threshold_pct"
+  "portfolio_warning_threshold_pct",
+  "section_naming",
+  "budget_naming_series",
+  "baseline_naming_series"
  ],
  "fields": [
   {
@@ -33,6 +36,25 @@
    "fieldtype": "Int",
    "description": "Percentage threshold used for portfolio warnings.",
    "label": "Portfolio Warning Threshold %"
+  },
+  {
+   "fieldname": "section_naming",
+   "fieldtype": "Section Break",
+   "label": "Document Naming"
+  },
+  {
+   "default": "BUD-.YYYY.-",
+   "fieldname": "budget_naming_series",
+   "fieldtype": "Data",
+   "description": "Naming series for Budget documents. Use .YYYY. for year, .##### for sequence.",
+   "label": "Budget Naming Series"
+  },
+  {
+   "default": "BAS-.YYYY.-",
+   "fieldname": "baseline_naming_series",
+   "fieldtype": "Data",
+   "description": "Naming series for Baseline Expense documents. Use .YYYY. for year, .##### for sequence.",
+   "label": "Baseline Expense Naming Series"
   }
  ],
  "grid_page_length": 50,

@@ -5,16 +5,16 @@ from __future__ import annotations
 
 import frappe
 from frappe.model.document import Document
-from master_plan_it import annualization, mpit_user_prefs, tax
+from frappe.utils import flt
+from master_plan_it import amounts, annualization, mpit_user_prefs
 
 
 class MPITBaselineExpense(Document):
 	def validate(self):
-		self._compute_vat_split()
-		self._compute_annualization()
+		self._compute_amounts()
 	
-	def _compute_vat_split(self):
-		"""Compute net/vat/gross for amount field with strict VAT validation."""
+	def _compute_amounts(self):
+		"""Compute all amounts using bidirectional logic from amounts module."""
 		# Get user default VAT rate
 		default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
 		
@@ -22,27 +22,6 @@ class MPITBaselineExpense(Document):
 		if self.vat_rate is None and default_vat is not None:
 			self.vat_rate = default_vat
 		
-		# Strict VAT validation
-		final_vat_rate = tax.validate_strict_vat(
-			self.amount,
-			self.vat_rate,
-			default_vat,
-			field_label=frappe._("Amount")
-		)
-		
-		# Compute split
-		net, vat, gross = tax.split_net_vat_gross(
-			self.amount,
-			final_vat_rate,
-			bool(self.amount_includes_vat)
-		)
-		
-		self.amount_net = net
-		self.amount_vat = vat
-		self.amount_gross = gross
-	
-	def _compute_annualization(self):
-		"""Compute annual amounts based on recurrence rule and overlap with fiscal year."""
 		# Validate recurrence rule consistency
 		annualization.validate_recurrence_rule(
 			self.recurrence_rule,
@@ -60,35 +39,37 @@ class MPITBaselineExpense(Document):
 				year_start,
 				year_end
 			)
+			
+			# Rule A: Block save if zero overlap
+			if overlap_months_count == 0:
+				frappe.throw(
+					frappe._(
+						"Baseline Expense period ({0} to {1}) has zero overlap with fiscal year {2}. Cannot save baseline expense with no temporal overlap."
+					).format(self.period_start_date, self.period_end_date, self.year)
+				)
 		else:
 			# No period specified: treat as full year overlap
 			overlap_months_count = 12
 		
-		# Rule A: Block save if zero overlap
-		if self.period_start_date and self.period_end_date and overlap_months_count == 0:
-			frappe.throw(
-				frappe._(
-					"Baseline Expense period ({0} to {1}) has zero overlap with fiscal year {2}. Cannot save baseline expense with no temporal overlap."
-				).format(self.period_start_date, self.period_end_date, self.year)
-			)
-		
-		# Calculate annualized amounts
-		annual_net = annualization.annualize(
-			self.amount_net,
-			self.recurrence_rule or "None",
-			self.custom_period_months,
-			overlap_months_count
+		# Use unified amounts module for all calculations
+		result = amounts.compute_line_amounts(
+			qty=flt(self.qty) or 1,
+			unit_price=flt(self.unit_price),
+			monthly_amount=flt(self.monthly_amount),
+			annual_amount=flt(self.annual_amount),
+			recurrence_rule=self.recurrence_rule or "Monthly",
+			custom_period_months=self.custom_period_months,
+			vat_rate=flt(self.vat_rate),
+			amount_includes_vat=bool(self.amount_includes_vat),
+			overlap_months=overlap_months_count
 		)
 		
-		# Annual VAT and gross
-		if self.vat_rate and annual_net:
-			vat_rate_decimal = self.vat_rate / 100.0
-			annual_vat = annual_net * vat_rate_decimal
-			annual_gross = annual_net + annual_vat
-		else:
-			annual_vat = 0.0
-			annual_gross = annual_net
-		
-		self.annual_net = annual_net
-		self.annual_vat = annual_vat
-		self.annual_gross = annual_gross
+		# Update document with calculated values
+		self.monthly_amount = result["monthly_amount"]
+		self.annual_amount = result["annual_amount"]
+		self.amount_net = result["amount_net"]
+		self.amount_vat = result["amount_vat"]
+		self.amount_gross = result["amount_gross"]
+		self.annual_net = result["annual_net"]
+		self.annual_vat = result["annual_vat"]
+		self.annual_gross = result["annual_gross"]

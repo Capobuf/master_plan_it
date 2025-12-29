@@ -11,15 +11,15 @@ def execute(filters=None):
 	rows = _get_data(filters)
 
 	columns = [
-		_("Budget") + ":Link/MPIT Budget:180",
-		_("Year") + ":Link/MPIT Year:80",
-		_("Category") + ":Link/MPIT Category:180",
-		_("Vendor") + ":Link/MPIT Vendor:150",
-		_("Baseline Amount") + ":Currency:140",
-		_("Amendments Delta") + ":Currency:140",
-		_("Current Budget") + ":Currency:140",
-		_("Actual Amount") + ":Currency:140",
-		_("Variance (Actual - Current)") + ":Currency:170",
+		{"label": _("Budget"), "fieldname": "budget", "fieldtype": "Link", "options": "MPIT Budget", "width": 180},
+		{"label": _("Year"), "fieldname": "year", "fieldtype": "Link", "options": "MPIT Year", "width": 80},
+		{"label": _("Category"), "fieldname": "category", "fieldtype": "Link", "options": "MPIT Category", "width": 180},
+		{"label": _("Vendor"), "fieldname": "vendor", "fieldtype": "Link", "options": "MPIT Vendor", "width": 150},
+		{"label": _("Baseline Amount"), "fieldname": "baseline_amount", "fieldtype": "Currency", "width": 140},
+		{"label": _("Amendments Delta"), "fieldname": "amendment_delta", "fieldtype": "Currency", "width": 140},
+		{"label": _("Current Budget"), "fieldname": "current_budget", "fieldtype": "Currency", "width": 140},
+		{"label": _("Actual Amount"), "fieldname": "actual_amount", "fieldtype": "Currency", "width": 140},
+		{"label": _("Variance (Actual - Current)"), "fieldname": "variance", "fieldtype": "Currency", "width": 170},
 	]
 
 	chart = _build_chart(rows)
@@ -109,6 +109,7 @@ def _get_data(filters) -> list[dict]:
 		WHERE {actual_where}
 		GROUP BY year, category, vendor
 		""",
+		params,
 		as_dict=True,
 	)
 

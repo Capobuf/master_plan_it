@@ -8,7 +8,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import getseries
 from frappe.utils import flt
-from master_plan_it import annualization, mpit_user_prefs, tax
+from master_plan_it import amounts, annualization, mpit_user_prefs
 
 
 class MPITBudget(Document):
@@ -31,61 +31,29 @@ class MPITBudget(Document):
 	
 	def validate(self):
 		self._enforce_status_invariants()
-		self._compute_lines_vat_split()
-		self._compute_lines_annualization()
+		self._compute_lines_amounts()
 		self._compute_totals()
 	
-	def _compute_lines_vat_split(self):
-		"""Compute net/vat/gross for all Budget Lines with strict VAT validation."""
+	def _compute_lines_amounts(self):
+		"""Compute all amounts for Budget Lines using bidirectional logic."""
 		# Get user defaults once
 		default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
 		
-		for line in self.lines:
-			# Skip if no amount is provided
-			if not line.amount:
-				# Clear calculated fields if no amount
-				line.amount_net = 0.0
-				line.amount_vat = 0.0
-				line.amount_gross = 0.0
-				continue
-			
-			# Use 'amount' as source and calculate net/vat/gross
-			# Apply VAT rate default if not specified
-			if line.vat_rate is None and default_vat is not None:
-				line.vat_rate = default_vat
-			
-			# Strict VAT validation
-			final_vat_rate = tax.validate_strict_vat(
-				line.amount,
-				line.vat_rate,
-				default_vat,
-				field_label=_("Line {0} Amount").format(line.idx)
-			)
-			
-			# Compute split
-			net, vat, gross = tax.split_net_vat_gross(
-				line.amount,
-				final_vat_rate,
-				bool(line.amount_includes_vat)
-			)
-			
-			line.amount_net = net
-			line.amount_vat = vat
-			line.amount_gross = gross
-	
-	def _compute_lines_annualization(self):
-		"""Compute annual amounts for all Budget Lines based on recurrence rules."""
 		# Get fiscal year bounds from year field
 		year_start, year_end = annualization.get_year_bounds(self.year)
 		
 		for line in self.lines:
+			# Apply VAT rate default if not specified
+			if line.vat_rate is None and default_vat is not None:
+				line.vat_rate = default_vat
+			
 			# Validate recurrence rule consistency
 			annualization.validate_recurrence_rule(
 				line.recurrence_rule,
 				line.custom_period_months
 			)
 			
-			# Calculate overlap months
+			# Calculate overlap months for annualization
 			if line.period_start_date and line.period_end_date:
 				overlap_months_count = annualization.overlap_months(
 					line.period_start_date,
@@ -93,38 +61,40 @@ class MPITBudget(Document):
 					year_start,
 					year_end
 				)
+				
+				# Rule A: Block save if zero overlap
+				if overlap_months_count == 0:
+					frappe.throw(
+						frappe._(
+							"Line {0}: Period ({1} to {2}) has zero overlap with fiscal year {3}. Cannot save budget line with no temporal overlap."
+						).format(line.idx, line.period_start_date, line.period_end_date, self.year)
+					)
 			else:
 				# No period specified: treat as full year overlap
 				overlap_months_count = 12
 			
-			# Rule A: Block save if zero overlap
-			if line.period_start_date and line.period_end_date and overlap_months_count == 0:
-				frappe.throw(
-					frappe._(
-						"Line {0}: Period ({1} to {2}) has zero overlap with fiscal year {3}. Cannot save budget line with no temporal overlap."
-					).format(line.idx, line.period_start_date, line.period_end_date, self.year)
-				)
-			
-			# Calculate annualized amounts
-			annual_net = annualization.annualize(
-				line.amount_net,
-				line.recurrence_rule or "None",
-				line.custom_period_months,
-				overlap_months_count
+			# Use unified amounts module for all calculations
+			result = amounts.compute_line_amounts(
+				qty=flt(line.qty) or 1,
+				unit_price=flt(line.unit_price),
+				monthly_amount=flt(line.monthly_amount),
+				annual_amount=flt(line.annual_amount),
+				recurrence_rule=line.recurrence_rule or "Monthly",
+				custom_period_months=line.custom_period_months,
+				vat_rate=flt(line.vat_rate),
+				amount_includes_vat=bool(line.amount_includes_vat),
+				overlap_months=overlap_months_count
 			)
 			
-			# Annual VAT and gross
-			if line.vat_rate and annual_net:
-				vat_rate_decimal = line.vat_rate / 100.0
-				annual_vat = annual_net * vat_rate_decimal
-				annual_gross = annual_net + annual_vat
-			else:
-				annual_vat = 0.0
-				annual_gross = annual_net
-			
-			line.annual_net = annual_net
-			line.annual_vat = annual_vat
-			line.annual_gross = annual_gross
+			# Update line with calculated values
+			line.monthly_amount = result["monthly_amount"]
+			line.annual_amount = result["annual_amount"]
+			line.amount_net = result["amount_net"]
+			line.amount_vat = result["amount_vat"]
+			line.amount_gross = result["amount_gross"]
+			line.annual_net = result["annual_net"]
+			line.annual_vat = result["annual_vat"]
+			line.annual_gross = result["annual_gross"]
 
 	def _enforce_status_invariants(self) -> None:
 		"""Keep workflow_state aligned with docstatus now that it is an editable status label."""
@@ -144,18 +114,21 @@ class MPITBudget(Document):
 			self.db_set("workflow_state", "Approved")
 
 	def _compute_totals(self):
-		total_input = 0.0
+		total_monthly = 0.0
+		total_annual = 0.0
 		total_net = 0.0
 		total_vat = 0.0
 		total_gross = 0.0
 
 		for line in (self.lines or []):
-			total_input += flt(getattr(line, "amount", 0) or 0, 2)
-			total_net += flt(getattr(line, "amount_net", 0) or 0, 2)
-			total_vat += flt(getattr(line, "amount_vat", 0) or 0, 2)
-			total_gross += flt(getattr(line, "amount_gross", 0) or 0, 2)
+			total_monthly += flt(getattr(line, "monthly_amount", 0) or 0, 2)
+			total_annual += flt(getattr(line, "annual_amount", 0) or 0, 2)
+			total_net += flt(getattr(line, "annual_net", 0) or 0, 2)
+			total_vat += flt(getattr(line, "annual_vat", 0) or 0, 2)
+			total_gross += flt(getattr(line, "annual_gross", 0) or 0, 2)
 
-		self.total_amount_input = flt(total_input, 2)
+		self.total_amount_monthly = flt(total_monthly, 2)
+		self.total_amount_annual = flt(total_annual, 2)
 		self.total_amount_net = flt(total_net, 2)
 		self.total_amount_vat = flt(total_vat, 2)
 		self.total_amount_gross = flt(total_gross, 2)
@@ -170,7 +143,8 @@ def update_budget_totals(budget_name: str) -> None:
 	budget._compute_totals()
 
 	totals = {
-		"total_amount_input": flt(budget.total_amount_input, 2),
+		"total_amount_monthly": flt(budget.total_amount_monthly, 2),
+		"total_amount_annual": flt(budget.total_amount_annual, 2),
 		"total_amount_net": flt(budget.total_amount_net, 2),
 		"total_amount_vat": flt(budget.total_amount_vat, 2),
 		"total_amount_gross": flt(budget.total_amount_gross, 2),

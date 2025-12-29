@@ -6,57 +6,7 @@
  "disabled": 0,
  "docstatus": 0,
  "doctype": "Report",
- "filters": [
-  {
-   "fieldname": "year",
-   "label": "Year",
-   "fieldtype": "Link",
-   "options": "MPIT Year",
-   "reqd": 1
-  },
-  {
-   "fieldname": "from_month",
-   "label": "From Month",
-   "fieldtype": "Int",
-   "default": "1"
-  },
-  {
-   "fieldname": "to_month",
-   "label": "To Month",
-   "fieldtype": "Int",
-   "default": "12"
-  },
-  {
-   "fieldname": "category",
-   "label": "Category",
-   "fieldtype": "Link",
-   "options": "MPIT Category"
-  },
-  {
-   "fieldname": "vendor",
-   "label": "Vendor",
-   "fieldtype": "Link",
-   "options": "MPIT Vendor"
-  },
-  {
-   "fieldname": "project",
-   "label": "Project",
-   "fieldtype": "Link",
-   "options": "MPIT Project"
-  },
-  {
-   "fieldname": "contract",
-   "label": "Contract",
-   "fieldtype": "Link",
-   "options": "MPIT Contract"
-  },
-  {
-   "fieldname": "include_portfolio",
-   "label": "Include Portfolio",
-   "fieldtype": "Check",
-   "default": "1"
-  }
- ],
+ "filters": [],
  "idx": 0,
  "is_standard": "Yes",
  "letter_head": null,

@@ -53,7 +53,12 @@ def _ensure_year(year: int) -> None:
 	name = str(year)
 	if frappe.db.exists("MPIT Year", name) or frappe.db.exists("MPIT Year", {"year": year}):
 		return
-	doc = frappe.get_doc({"doctype": "MPIT Year", "year": year})
+	doc = frappe.get_doc({
+		"doctype": "MPIT Year",
+		"year": year,
+		"start_date": f"{year}-01-01",
+		"end_date": f"{year}-12-31",
+	})
 	doc.name = name
 	doc.insert(ignore_permissions=True)
 

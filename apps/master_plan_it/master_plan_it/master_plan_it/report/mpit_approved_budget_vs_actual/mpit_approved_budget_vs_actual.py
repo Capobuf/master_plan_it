@@ -11,13 +11,13 @@ def execute(filters=None):
 	rows = _get_data(filters)
 
 	columns = [
-		_("Budget") + ":Link/MPIT Budget:180",
-		_("Year") + ":Link/MPIT Year:80",
-		_("Category") + ":Link/MPIT Category:180",
-		_("Vendor") + ":Link/MPIT Vendor:150",
-		_("Budget Amount") + ":Currency:140",
-		_("Actual Amount") + ":Currency:140",
-		_("Variance (Actual - Budget)") + ":Currency:160",
+		{"label": _("Budget"), "fieldname": "budget", "fieldtype": "Link", "options": "MPIT Budget", "width": 180},
+		{"label": _("Year"), "fieldname": "year", "fieldtype": "Link", "options": "MPIT Year", "width": 80},
+		{"label": _("Category"), "fieldname": "category", "fieldtype": "Link", "options": "MPIT Category", "width": 180},
+		{"label": _("Vendor"), "fieldname": "vendor", "fieldtype": "Link", "options": "MPIT Vendor", "width": 150},
+		{"label": _("Budget Amount"), "fieldname": "budget_amount", "fieldtype": "Currency", "width": 140},
+		{"label": _("Actual Amount"), "fieldname": "actual_amount", "fieldtype": "Currency", "width": 140},
+		{"label": _("Variance (Actual - Budget)"), "fieldname": "variance", "fieldtype": "Currency", "width": 160},
 	]
 
 	chart = _build_chart(rows)

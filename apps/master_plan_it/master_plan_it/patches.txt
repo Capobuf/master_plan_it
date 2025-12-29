@@ -1,2 +1,3 @@
 # Patches placeholder. Keep empty until a migration is required.
 master_plan_it.patches.v0_1_0.backfill_vat_fields
+master_plan_it.patches.v1_0.migrate_amounts_to_monthly_annual
