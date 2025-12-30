@@ -6,6 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "category",
   "vendor",
   "quote_date",
   "attachment",
@@ -18,6 +19,13 @@
   "amount_vat"
  ],
  "fields": [
+  {
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "label": "Category",
+   "options": "MPIT Category",
+   "reqd": 1
+  },
   {
    "fieldname": "vendor",
    "fieldtype": "Link",
@@ -52,14 +60,14 @@
    "label": "Attachment"
   },
   {
-   "default": "Received",
+   "default": "Informational",
    "fieldname": "status",
    "fieldtype": "Select",
    "description": "Choose the quote status.",
    "in_list_view": 1,
    "columns": 1,
    "label": "Status",
-   "options": "Received\nAccepted\nRejected"
+   "options": "Informational\nApproved"
   },
   {
    "default": "0",

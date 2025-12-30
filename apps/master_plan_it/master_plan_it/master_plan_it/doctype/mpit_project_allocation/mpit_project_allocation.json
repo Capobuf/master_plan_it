@@ -7,14 +7,22 @@
  "engine": "InnoDB",
  "field_order": [
   "year",
+  "category",
   "planned_amount",
   "planned_amount_includes_vat",
   "planned_amount_gross",
   "vat_rate",
   "planned_amount_net",
   "planned_amount_vat"
- ],
- "fields": [
+],
+"fields": [
+  {
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "label": "Category",
+   "options": "MPIT Category",
+   "reqd": 1
+  },
   {
    "fieldname": "year",
    "fieldtype": "Link",

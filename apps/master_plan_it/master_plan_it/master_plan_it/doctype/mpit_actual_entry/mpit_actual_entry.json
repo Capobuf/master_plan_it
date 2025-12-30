@@ -11,6 +11,7 @@
   "posting_date",
   "year",
   "status",
+  "entry_kind",
   "description",
   "tab_amounts",
   "amount",
@@ -60,6 +61,15 @@
    "in_list_view": 1,
    "label": "Status",
    "options": "Recorded\nVerified"
+  },
+  {
+   "fieldname": "entry_kind",
+   "fieldtype": "Select",
+   "description": "Type of entry: Delta or Allowance Spend.",
+   "label": "Entry Kind",
+   "options": "Delta\nAllowance Spend",
+   "default": "Delta",
+   "in_list_view": 1
   },
   {
    "fieldname": "description",
@@ -157,7 +167,8 @@
    "fetch_from": "contract.cost_center",
    "fetch_if_empty": 1,
    "label": "Cost Center",
-   "options": "MPIT Cost Center"
+   "options": "MPIT Cost Center",
+   "mandatory_depends_on": "eval:doc.entry_kind==\"Allowance Spend\""
   },
   {
    "fieldname": "budget",

@@ -128,14 +128,18 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 
 ### MPIT Project Allocation (Child Table)
 - year (Link: MPIT Year) [mandatory]
+- category (Link: MPIT Category) [mandatory]
 - planned_amount (Currency) [mandatory]
+- VAT split fields
 
 ### MPIT Project Quote (Child Table)
+- category (Link: MPIT Category) [mandatory]
 - vendor (Link: MPIT Vendor)
 - amount (Currency)
 - quote_date (Date)
 - attachment (Attach)
-- status (Select: Received / Accepted / Rejected)
+- status (Select: Informational / Approved; default Informational)
+- VAT split fields
 
 ### MPIT Project Milestone (Child Table)
 - title (Data)

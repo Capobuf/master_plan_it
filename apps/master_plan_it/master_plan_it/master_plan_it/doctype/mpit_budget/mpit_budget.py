@@ -3,14 +3,14 @@
 
 from __future__ import annotations
 
+from datetime import date, timedelta
+
 import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import getseries
-from frappe.utils import flt
+from frappe.utils import flt, getdate as _getdate
 from master_plan_it import amounts, annualization, mpit_user_prefs
-from datetime import date, timedelta
-from frappe.utils import getdate as _getdate
 
 
 class MPITBudget(Document):
@@ -93,7 +93,7 @@ class MPITBudget(Document):
 		generated_lines: list[dict] = []
 
 		generated_lines.extend(self._generate_contract_lines(year_start, year_end))
-		# Project generation will be added when project schema is category-granular (Step 8)
+		generated_lines.extend(self._generate_project_lines(year_start, year_end))
 
 		self._upsert_generated_lines(generated_lines)
 		self.save(ignore_permissions=True)
@@ -211,6 +211,109 @@ class MPITBudget(Document):
 				source_key=source_key,
 			)
 		)
+		return lines
+
+	def _generate_project_lines(self, year_start: date, year_end: date) -> list[dict]:
+		lines: list[dict] = []
+		projects = frappe.get_all(
+			"MPIT Project",
+			fields=[
+				"name",
+				"title",
+				"status",
+				"start_date",
+				"end_date",
+				"cost_center",
+			],
+		)
+		for p in projects:
+			if p.status in ("Cancelled",):
+				continue
+			project = frappe.get_doc("MPIT Project", p.name)
+			lines.extend(self._project_lines_for_year(project, year_start, year_end))
+		return lines
+
+	def _project_lines_for_year(self, project, year_start: date, year_end: date) -> list[dict]:
+		lines = []
+		# Planned dates rules: both or none; fallback full year
+		if project.start_date and not project.end_date:
+			frappe.throw(_("Project {0}: set both start and end date or clear both.").format(project.name))
+		if project.end_date and not project.start_date:
+			frappe.throw(_("Project {0}: set both start and end date or clear both.").format(project.name))
+
+		if project.start_date and project.end_date:
+			if _getdate(project.end_date) < _getdate(project.start_date):
+				frappe.throw(_("Project {0}: end date before start date.").format(project.name))
+			period_start = max(_getdate(project.start_date), year_start)
+			period_end = min(_getdate(project.end_date), year_end)
+		else:
+			period_start, period_end = year_start, year_end
+
+		months = annualization.overlap_months(period_start, period_end, year_start, year_end)
+		if months <= 0:
+			return lines
+
+		planned_by_cat = {}
+		for alloc in project.allocations or []:
+			if str(alloc.year) != str(self.year):
+				continue
+			planned_by_cat.setdefault(alloc.category, 0)
+			planned_by_cat[alloc.category] += flt(getattr(alloc, "planned_amount_net", None) or alloc.planned_amount or 0)
+
+		quotes_by_cat = {}
+		for quote in project.quotes or []:
+			if quote.status != "Approved":
+				continue
+			quotes_by_cat.setdefault(quote.category, 0)
+			quotes_by_cat[quote.category] += flt(getattr(quote, "amount_net", None) or quote.amount or 0)
+
+		# Deltas: Verified Delta entries linked to project/year
+		deltas = frappe.db.sql(
+			"""
+			SELECT category, SUM(COALESCE(amount_net, amount)) AS total
+			FROM `tabMPIT Actual Entry`
+			WHERE project = %(project)s
+			  AND status = 'Verified'
+			  AND entry_kind = 'Delta'
+			  AND year = %(year)s
+			GROUP BY category
+			""",
+			{"project": project.name, "year": self.year},
+			as_dict=True,
+		)
+		deltas_by_cat = {row.category: flt(row.total or 0) for row in deltas or []}
+
+		categories = set(planned_by_cat) | set(quotes_by_cat) | set(deltas_by_cat)
+		for cat in categories:
+			planned = planned_by_cat.get(cat, 0)
+			quoted = quotes_by_cat.get(cat, 0)
+			base = quoted if quoted > 0 else planned
+			expected = base + deltas_by_cat.get(cat, 0)
+			if expected == 0:
+				continue
+			monthly_net = flt(expected / months, 2)
+			source_key = f"PROJECT::{project.name}::{self.year}::{cat}"
+			lines.append(
+				{
+					"line_kind": "Project",
+					"source_key": source_key,
+					"category": cat,
+					"vendor": None,
+					"description": project.title,
+					"contract": None,
+					"project": project.name,
+					"cost_center": project.cost_center,
+					"monthly_amount": monthly_net,
+					"annual_amount": 0,
+					"amount_includes_vat": 0,
+					"vat_rate": 0,
+					"recurrence_rule": "Monthly",
+					"period_start_date": period_start,
+					"period_end_date": period_end,
+					"is_generated": 1,
+					"is_active": 1,
+				}
+			)
 		return lines
 
 	def _build_line_payload(self, contract, period_start: date, period_end: date, monthly_net: float, source_key: str) -> dict:

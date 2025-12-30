@@ -15,6 +15,8 @@ class MPITActualEntry(Document):
 		self._set_year_from_posting_date()
 		self._compute_vat_split()
 		self._autofill_cost_center()
+		self._enforce_entry_kind_rules()
+		self._enforce_status_rules()
 
 	def _autofill_cost_center(self) -> None:
 		"""Copy cost center from contract or project if missing."""
@@ -24,6 +26,55 @@ class MPITActualEntry(Document):
 			self.cost_center = frappe.db.get_value("MPIT Contract", self.contract, "cost_center")
 		if not self.cost_center and self.project:
 			self.cost_center = frappe.db.get_value("MPIT Project", self.project, "cost_center")
+
+	def _enforce_entry_kind_rules(self) -> None:
+		"""Validate entry_kind semantics (Delta vs Allowance Spend)."""
+		# Default entry_kind if not set
+		if not self.entry_kind:
+			self.entry_kind = "Delta" if (self.contract or self.project) else "Allowance Spend"
+
+		if self.entry_kind == "Delta":
+			links_set = [bool(self.contract), bool(self.project)]
+			if links_set.count(True) != 1:
+				frappe.throw(_("Delta entries must link to contract XOR project."))
+		elif self.entry_kind == "Allowance Spend":
+			if self.contract or self.project:
+				frappe.throw(_("Allowance Spend cannot link a contract or project."))
+			if not self.cost_center:
+				frappe.throw(_("Cost Center is required for Allowance Spend."))
+			if flt(self.amount) < 0 and not self.description:
+				frappe.throw(_("Description is required for negative allowance spend entries."))
+
+	def _enforce_status_rules(self) -> None:
+		"""Ensure Verified entries are locked; only vCIO Manager can revert."""
+		prev_status = None
+		if self.name:
+			prev_status = frappe.db.get_value("MPIT Actual Entry", self.name, "status")
+
+		# Verify read-only except status (re-verify)
+		if prev_status == "Verified" and self.status == "Verified":
+			immutable_fields = [
+				"posting_date",
+				"year",
+				"entry_kind",
+				"category",
+				"vendor",
+				"contract",
+				"project",
+				"cost_center",
+				"amount",
+				"amount_includes_vat",
+				"vat_rate",
+				"description",
+			]
+			for field in immutable_fields:
+				if self.has_value_changed(field):
+					frappe.throw(_("Verified entries are read-only (field {0}).").format(field))
+
+		# Revert Verified -> Recorded allowed only for vCIO Manager
+		if prev_status == "Verified" and self.status == "Recorded":
+			if not frappe.has_role("vCIO Manager"):
+				frappe.throw(_("Only vCIO Manager can revert a Verified entry to Recorded."))
 	
 	def _compute_vat_split(self):
 		"""Compute net/vat/gross for amount field with strict VAT validation."""

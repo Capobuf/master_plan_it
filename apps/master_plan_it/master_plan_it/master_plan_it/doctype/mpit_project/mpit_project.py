@@ -7,7 +7,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import getseries
-from frappe.utils import flt
+from frappe.utils import flt, getdate
 from master_plan_it import mpit_user_prefs, tax
 
 
@@ -27,6 +27,8 @@ class MPITProject(Document):
 	
 	def validate(self):
 		self._require_allocations_for_approval()
+		self._validate_planned_dates()
+		self._enforce_quote_approvals()
 		self._compute_allocations_vat_split()
 		self._compute_quotes_vat_split()
 		self._compute_project_totals()
@@ -106,6 +108,22 @@ class MPITProject(Document):
 					self.status
 				)
 			)
+
+	def _validate_planned_dates(self) -> None:
+		"""Enforce planned date rules for monthly distribution."""
+		if self.start_date and not self.end_date:
+			frappe.throw(_("Set both planned start and end date, or clear both."))
+		if self.end_date and not self.start_date:
+			frappe.throw(_("Set both planned start and end date, or clear both."))
+		if self.start_date and self.end_date:
+			if getdate(self.end_date) < getdate(self.start_date):
+				frappe.throw(_("Planned end date cannot be before planned start date."))
+
+	def _enforce_quote_approvals(self) -> None:
+		"""Only vCIO Manager can set Approved quotes."""
+		for quote in self.quotes or []:
+			if quote.status == "Approved" and not frappe.has_role("vCIO Manager"):
+				frappe.throw(_("Only vCIO Manager can approve a quote."))
 
 
 @frappe.whitelist()
