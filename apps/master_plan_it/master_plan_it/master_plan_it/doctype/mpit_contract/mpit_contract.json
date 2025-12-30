@@ -27,6 +27,12 @@
   "current_amount_net",
   "current_amount_vat",
   "current_amount_gross",
+  "section_spread",
+  "spread_months",
+  "spread_start_date",
+  "spread_end_date",
+  "section_rate_schedule",
+  "rate_schedule",
   "tb_renewal",
   "start_date",
   "end_date",
@@ -169,6 +175,44 @@
    "description": "Calculated automatically as the gross amount.",
    "label": "Gross Amount",
    "read_only": 1
+ },
+  {
+   "fieldname": "section_spread",
+   "fieldtype": "Section Break",
+   "label": "Spread / Accrual",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "spread_months",
+   "fieldtype": "Int",
+   "description": "Number of months to spread prepaid amount (mutually exclusive with rate schedule).",
+   "label": "Spread Months"
+  },
+  {
+   "fieldname": "spread_start_date",
+   "fieldtype": "Date",
+   "description": "Start date of the spread period.",
+   "label": "Spread Start Date"
+  },
+  {
+   "fieldname": "spread_end_date",
+   "fieldtype": "Date",
+   "description": "Computed end date of the spread period.",
+   "label": "Spread End Date",
+   "read_only": 1
+  },
+  {
+   "fieldname": "section_rate_schedule",
+   "fieldtype": "Section Break",
+   "label": "Rate Schedule",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "rate_schedule",
+   "fieldtype": "Table",
+   "description": "Rate changes over time (mutually exclusive with spread).",
+   "label": "Rate Schedule",
+   "options": "MPIT Contract Rate"
   },
   {
    "fieldname": "tb_renewal",

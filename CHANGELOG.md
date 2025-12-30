@@ -65,21 +65,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 #### Phase 5: Annualization
 - **Helper Module:** `master_plan_it/annualization.py` with functions:
   - `get_year_bounds(year)` — Get calendar year start/end dates
-  - `overlap_months(period_start, period_end, year_start, year_end)` — Count complete month overlap
-  - `annualize(amount_net, recurrence_rule, custom_period_months, overlap_months_count)` — Calculate annual amounts
-  - `validate_recurrence_rule(recurrence_rule, custom_period_months)` — Enforce Custom requires custom_period_months
+  - `overlap_months(period_start, period_end, year_start, year_end)` — Count calendar months touched
+  - `annualize(amount_net, recurrence_rule, overlap_months_count)` — Calculate annual amounts
+  - `validate_recurrence_rule(recurrence_rule)` — Validate supported recurrence
 - **DocTypes Updated:**
-  - `MPIT Budget Line` — Added `recurrence_rule`, `custom_period_months`, `period_start_date`, `period_end_date`, `annual_net`, `annual_vat`, `annual_gross`
+  - `MPIT Budget Line` — Added `recurrence_rule`, `period_start_date`, `period_end_date`, `annual_net`, `annual_vat`, `annual_gross`
 - **Controllers Updated:**
   - `mpit_budget.py` — `_compute_lines_annualization()` for child table lines
-- **Recurrence Rules:** Monthly, Quarterly, Annual, Custom, None
-- **Rule A Enforcement:** Block save if period has zero overlap with fiscal year
-- **Test Coverage:**
-  - Monthly: 100 net × 12 months = 1200 annual_net ✓
-  - Quarterly: 300 net × 4 quarters = 1200 annual_net ✓
-  - Custom: 600 net, 2-month period × 6 periods = 1200 annual_net ✓
-  - Partial overlap (Q1 only): 100 net × 3 months = 300 annual_net ✓
-  - Zero overlap: Blocked with validation error ✓
+- **Recurrence Rules:** Monthly, Quarterly, Annual, None
+- **Rule A Enforcement:** Block save if period has zero overlap with fiscal year (months touched)
 
 #### Phase 6: Professional Printing
 - **Print Formats Created (2 total):**

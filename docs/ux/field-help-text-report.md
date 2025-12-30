@@ -99,6 +99,10 @@
 - current_amount_net: Calculated automatically from current amount and VAT settings.
 - current_amount_vat: Calculated automatically as the VAT portion.
 - current_amount_gross: Calculated automatically as the gross amount.
+- spread_months: Number of months to spread a prepaid amount.
+- spread_start_date: Start date of the spread period.
+- spread_end_date: Computed end date of the spread period.
+- rate_schedule: Table of rate changes; mutually exclusive with spread.
 - status: Choose the current contract status.
 - owner_user: Select the contract owner.
 - notes: Add internal notes about the contract.

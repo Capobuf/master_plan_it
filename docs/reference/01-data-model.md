@@ -44,6 +44,8 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - category (Link: MPIT Category) [mandatory]
 - cost_center (Link: MPIT Cost Center, optional)
 - contract_kind (Select: Contract / Subscription / Annual Renewal / Maintenance)
+- spread_months (Int), spread_start_date (Date), spread_end_date (Date, computed)
+- rate_schedule (Table: MPIT Contract Rate, mutually exclusive with spread)
 - billing_cycle (Select: Monthly / Quarterly / Annual / Other)
 - start_date (Date, optional)
 - end_date (Date, optional)
@@ -54,6 +56,13 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - status (Select: Draft / Active / Pending Renewal / Renewed / Cancelled / Expired)
 - owner_user (Link: User, optional)
 - attachments (native Attach)
+
+### MPIT Contract Rate (Child Table)
+- effective_from (Date) [mandatory]
+- amount (Currency) [mandatory]
+- amount_includes_vat (Check)
+- vat_rate (Percent)
+- amount_net/vat/gross (Currency, read-only)
 
 ## Budgeting
 ### MPIT Budget (Submittable)

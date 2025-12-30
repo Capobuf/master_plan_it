@@ -1,0 +1,83 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "creation": "2025-01-01 00:00:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "effective_from",
+  "amount",
+  "amount_includes_vat",
+  "vat_rate",
+  "amount_net",
+  "amount_vat",
+  "amount_gross"
+ ],
+ "fields": [
+  {
+   "fieldname": "effective_from",
+   "fieldtype": "Date",
+   "description": "Start date when this rate becomes effective.",
+   "label": "Effective From",
+   "reqd": 1
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "description": "Rate amount (per month).",
+   "label": "Amount",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "amount_includes_vat",
+   "fieldtype": "Check",
+   "description": "If enabled, the amount includes VAT.",
+   "label": "Amount Includes VAT"
+  },
+  {
+   "fieldname": "vat_rate",
+   "fieldtype": "Percent",
+   "description": "VAT rate applied to the amount.",
+   "label": "VAT Rate",
+   "precision": "2"
+  },
+  {
+   "fieldname": "amount_net",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically from amount and VAT settings.",
+   "label": "Net Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_vat",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically as the VAT portion.",
+   "label": "VAT Amount",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_gross",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically as the gross amount.",
+   "label": "Gross Amount",
+   "read_only": 1
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2025-01-01 00:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Master Plan IT",
+ "name": "MPIT Contract Rate",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}
