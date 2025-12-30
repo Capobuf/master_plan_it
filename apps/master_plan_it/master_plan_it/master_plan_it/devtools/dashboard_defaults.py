@@ -14,8 +14,8 @@ def apply_chart_filters(site: str = None):
 			filters["year"] = filters.get("year") or default_year
 		frappe.db.set_value("Dashboard Chart", chart_name, "filters_json", frappe.as_json(filters))
 
-	# Amendments (custom)
-	set_filters("MPIT Amendments Delta (Net) by Category", {"year": default_year, "top_n": 10})
+	# Plan delta (custom)
+	set_filters("MPIT Plan Delta by Category", {"year": default_year, "top_n": 10})
 
 	# Report charts (filters are passed through to report)
 	set_filters("MPIT Approved Budget vs Actual", {"year": default_year})

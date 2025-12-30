@@ -62,15 +62,14 @@
    "label": "Status",
    "options": "Recorded\nVerified"
   },
-  {
-   "fieldname": "entry_kind",
-   "fieldtype": "Select",
-   "description": "Type of entry: Delta or Allowance Spend.",
-   "label": "Entry Kind",
-   "options": "Delta\nAllowance Spend",
-   "default": "Delta",
-   "in_list_view": 1
-  },
+ {
+  "fieldname": "entry_kind",
+  "fieldtype": "Select",
+  "description": "Delta links contract/project; Allowance Spend needs cost center and no links.",
+  "label": "Entry Kind",
+  "options": "Delta\nAllowance Spend",
+  "in_list_view": 1
+ },
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
@@ -243,8 +242,8 @@
  ],
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
- "sort_field": "modified",
- "sort_order": "DESC",
+ "sort_field": "posting_date",
+ "sort_order": "desc",
  "states": [],
  "track_changes": 1
 }

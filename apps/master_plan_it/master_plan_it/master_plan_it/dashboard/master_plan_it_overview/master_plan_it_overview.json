@@ -17,13 +17,13 @@
     "parenttype": "Dashboard",
     "width": "Half"
    },
-   {
-    "chart": "MPIT Amendments Delta (Net) by Category",
-    "parent": "Master Plan IT Overview",
-    "parentfield": "charts",
-    "parenttype": "Dashboard",
-    "width": "Half"
-   },
+  {
+   "chart": "MPIT Plan Delta by Category",
+   "parent": "Master Plan IT Overview",
+   "parentfield": "charts",
+   "parenttype": "Dashboard",
+   "width": "Half"
+  },
    {
     "chart": "MPIT Projects Planned vs Actual",
     "parent": "Master Plan IT Overview",

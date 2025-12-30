@@ -1,29 +1,38 @@
 import frappe
 
 
-def ensure_amendments_chart():
-	"""Create/update the Amendments Delta (Net) chart source and dashboard chart."""
-	# Allow editing/exporting standard docs even if developer_mode is off at runtime.
+def ensure_plan_delta_chart():
+	"""Create/update the Plan Delta chart source and dashboard chart."""
 	frappe.conf.developer_mode = 1
 	frappe.flags.in_patch = True
 
-	source_name = "MPIT Amendments Delta (Net)"
-	chart_name = "MPIT Amendments Delta (Net) by Category"
+	source_name = "MPIT Plan Delta by Category"
+	chart_name = "MPIT Plan Delta by Category"
 	module = "Master Plan IT"
 
-	source = frappe.get_doc("Dashboard Chart Source", source_name) if frappe.db.exists("Dashboard Chart Source", source_name) else frappe.new_doc("Dashboard Chart Source")
+	# Ensure chart source exists
+	source = (
+		frappe.get_doc("Dashboard Chart Source", source_name)
+		if frappe.db.exists("Dashboard Chart Source", source_name)
+		else frappe.new_doc("Dashboard Chart Source")
+	)
 	source.source_name = source_name
 	source.module = module
 	source.timeseries = 0
 	source.flags.ignore_mandatory = True
 	source.save(ignore_permissions=True)
 
+	# Default filters: latest year + top 10
 	default_years = frappe.get_all("MPIT Year", pluck="name", order_by="name desc")
 	default_filters = {"top_n": 10}
 	if default_years:
 		default_filters["year"] = default_years[0]
 
-	chart = frappe.get_doc("Dashboard Chart", chart_name) if frappe.db.exists("Dashboard Chart", chart_name) else frappe.new_doc("Dashboard Chart")
+	chart = (
+		frappe.get_doc("Dashboard Chart", chart_name)
+		if frappe.db.exists("Dashboard Chart", chart_name)
+		else frappe.new_doc("Dashboard Chart")
+	)
 	chart.chart_name = chart_name
 	chart.chart_type = "Custom"
 	chart.source = source_name
@@ -49,12 +58,12 @@ def ensure_amendments_chart():
 
 
 def ensure_dashboard_links():
-	"""Ensure the Overview dashboard includes the Amendments chart in the intended order."""
+	"""Ensure the Overview dashboard includes the Plan Delta chart in the intended order."""
 	frappe.conf.developer_mode = 1
 	charts = [
 		{"chart": "MPIT Current Budget vs Actual", "width": "Half"},
 		{"chart": "MPIT Approved Budget vs Actual", "width": "Half"},
-		{"chart": "MPIT Amendments Delta (Net) by Category", "width": "Half"},
+		{"chart": "MPIT Plan Delta by Category", "width": "Half"},
 		{"chart": "MPIT Projects Planned vs Actual", "width": "Half"},
 		{"chart": "MPIT Renewals Window (by Month)", "width": "Half"},
 	]

@@ -35,11 +35,37 @@ master_plan_it.vat.apply_defaults_for_actual =
 		frm.doc.__vat_defaults_applied = true;
 	};
 
+const sync_entry_kind_with_links = async (frm, force = false) => {
+	if (!force && !frm.is_new() && !frm.is_dirty()) {
+		return;
+	}
+
+	const has_link = !!frm.doc.contract || !!frm.doc.project;
+	const target = has_link ? "Delta" : "Allowance Spend";
+	const current = frm.doc.entry_kind;
+
+	if (!current || (has_link && current === "Allowance Spend") || (!has_link && current === "Delta")) {
+		await frm.set_value("entry_kind", target);
+	}
+};
+
 frappe.ui.form.on("MPIT Actual Entry", {
 	async onload(frm) {
 		await master_plan_it.vat.apply_defaults_for_actual(frm);
+		if (frm.is_new()) {
+			await sync_entry_kind_with_links(frm, true);
+		}
 	},
 	async refresh(frm) {
 		await master_plan_it.vat.apply_defaults_for_actual(frm);
+		if (frm.is_new()) {
+			await sync_entry_kind_with_links(frm, true);
+		}
+	},
+	async contract(frm) {
+		await sync_entry_kind_with_links(frm, true);
+	},
+	async project(frm) {
+		await sync_entry_kind_with_links(frm, true);
 	},
 });

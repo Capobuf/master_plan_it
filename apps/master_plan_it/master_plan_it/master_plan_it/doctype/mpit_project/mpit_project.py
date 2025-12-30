@@ -84,7 +84,7 @@ class MPITProject(Document):
 			quote.amount_gross = gross
 
 	def _compute_project_totals(self) -> None:
-		"""Persist planned/quoted/expected totals based on child tables (net amounts)."""
+		"""Persist planned/quoted/expected totals (net), including Verified delta entries."""
 		planned_total = 0.0
 		for alloc in (self.allocations or []):
 			planned_total += flt(getattr(alloc, "planned_amount_net", None) or alloc.planned_amount or 0)
@@ -93,7 +93,22 @@ class MPITProject(Document):
 		for quote in (self.quotes or []):
 			quoted_total += flt(getattr(quote, "amount_net", None) or quote.amount or 0)
 
-		expected_total = quoted_total if quoted_total > 0 else planned_total
+		verified_deltas = 0.0
+		if self.name:
+			row = frappe.db.sql(
+				"""
+				SELECT SUM(COALESCE(amount_net, amount)) AS total
+				FROM `tabMPIT Actual Entry`
+				WHERE project = %(project)s
+				  AND status = 'Verified'
+				  AND entry_kind = 'Delta'
+				""",
+				{"project": self.name},
+			)
+			verified_deltas = flt(row[0][0] or 0) if row else 0.0
+
+		expected_base = quoted_total if quoted_total > 0 else planned_total
+		expected_total = expected_base + verified_deltas
 
 		self.planned_total_net = flt(planned_total, 2)
 		self.quoted_total_net = flt(quoted_total, 2)
@@ -128,7 +143,7 @@ class MPITProject(Document):
 
 @frappe.whitelist()
 def get_project_actuals_totals(project: str) -> dict:
-	"""Return actual totals for a project (net) without persisting on the Project doc."""
+	"""Return verified delta totals for a project (net) without persisting on the Project doc."""
 	if not project:
 		return {"actual_total_net": 0.0}
 
@@ -137,6 +152,8 @@ def get_project_actuals_totals(project: str) -> dict:
 		SELECT SUM(COALESCE(amount_net, amount)) AS actual_total
 		FROM `tabMPIT Actual Entry`
 		WHERE project = %(project)s
+		  AND status = 'Verified'
+		  AND entry_kind = 'Delta'
 		""",
 		{"project": project},
 	)

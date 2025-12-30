@@ -37,14 +37,14 @@ master_plan_it.vat.apply_defaults_for_project_allocation =
 		row.__vat_defaults_applied = true;
 	};
 
-	frappe.ui.form.on("MPIT Project", {
-		async allocations_add(_frm, cdt, cdn) {
-			await master_plan_it.vat.apply_defaults_for_project_allocation(cdt, cdn);
-		},
-		async refresh(frm) {
-			await master_plan_it.project.render_financial_summary(frm);
-		},
-	});
+frappe.ui.form.on("MPIT Project", {
+	async allocations_add(_frm, cdt, cdn) {
+		await master_plan_it.vat.apply_defaults_for_project_allocation(cdt, cdn);
+	},
+	async refresh(frm) {
+		await master_plan_it.project.render_financial_summary(frm);
+	},
+});
 
 master_plan_it.project.render_financial_summary =
 	master_plan_it.project.render_financial_summary ||
@@ -56,19 +56,20 @@ master_plan_it.project.render_financial_summary =
 
 		const planned = frm.doc.planned_total_net || 0;
 		const quoted = frm.doc.quoted_total_net || 0;
-		const expected = frm.doc.expected_total_net || planned;
+		const expected_base = quoted > 0 ? quoted : planned;
 
-		let actual = 0;
+		let exceptions = 0;
 		if (frm.doc.name) {
 			const res = await frappe.call({
 				method: "master_plan_it.master_plan_it.doctype.mpit_project.mpit_project.get_project_actuals_totals",
 				args: { project: frm.doc.name },
 			});
-			actual = (res.message && res.message.actual_total_net) || 0;
+			exceptions = (res.message && res.message.actual_total_net) || 0;
 		}
 
-		const variance_expected = actual - expected;
-		const variance_planned = actual - planned;
+		const expected = frm.doc.expected_total_net || expected_base + exceptions;
+		const delta_vs_planned = expected - planned;
+		const delta_vs_quoted = quoted > 0 ? expected - quoted : expected - planned;
 
 		const format_currency = (value) => frappe.format(value || 0, { fieldtype: "Currency" });
 		const html = `
@@ -77,21 +78,21 @@ master_plan_it.project.render_financial_summary =
 					<thead>
 						<tr>
 							<th>${__("Planned")}</th>
-							<th>${__("Quoted")}</th>
-							<th>${__("Expected")}</th>
-							<th>${__("Actual")}</th>
-							<th>${__("Variance vs Expected")}</th>
-							<th>${__("Variance vs Planned")}</th>
+							<th>${__("Quoted (Approved)")}</th>
+							<th>${__("Verified Exceptions")}</th>
+							<th>${__("Expected (Plan + Exceptions)")}</th>
+							<th>${__("Delta vs Planned")}</th>
+							<th>${__("Delta vs Quoted")}</th>
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
 							<td>${format_currency(planned)}</td>
 							<td>${format_currency(quoted)}</td>
+							<td>${format_currency(exceptions)}</td>
 							<td>${format_currency(expected)}</td>
-							<td>${format_currency(actual)}</td>
-							<td class="${variance_expected < 0 ? "text-danger" : "text-success"}">${format_currency(variance_expected)}</td>
-							<td class="${variance_planned < 0 ? "text-danger" : "text-success"}">${format_currency(variance_planned)}</td>
+							<td class="${delta_vs_planned < 0 ? "text-danger" : "text-success"}">${format_currency(delta_vs_planned)}</td>
+							<td class="${delta_vs_quoted < 0 ? "text-danger" : "text-success"}">${format_currency(delta_vs_quoted)}</td>
 						</tr>
 					</tbody>
 				</table>

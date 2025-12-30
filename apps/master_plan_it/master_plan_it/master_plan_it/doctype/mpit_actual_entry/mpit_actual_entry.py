@@ -6,7 +6,7 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import getdate
+from frappe.utils import flt, getdate
 from master_plan_it import mpit_user_prefs, tax
 
 
@@ -29,21 +29,28 @@ class MPITActualEntry(Document):
 
 	def _enforce_entry_kind_rules(self) -> None:
 		"""Validate entry_kind semantics (Delta vs Allowance Spend)."""
+		has_contract = bool(self.contract)
+		has_project = bool(self.project)
+		has_link = has_contract or has_project
+
 		# Default entry_kind if not set
 		if not self.entry_kind:
-			self.entry_kind = "Delta" if (self.contract or self.project) else "Allowance Spend"
+			self.entry_kind = "Delta" if has_link else "Allowance Spend"
 
 		if self.entry_kind == "Delta":
-			links_set = [bool(self.contract), bool(self.project)]
-			if links_set.count(True) != 1:
+			if has_contract and has_project:
 				frappe.throw(_("Delta entries must link to contract XOR project."))
+			if not has_link:
+				frappe.throw(_("Delta entries require a contract or a project."))
 		elif self.entry_kind == "Allowance Spend":
-			if self.contract or self.project:
+			if has_link:
 				frappe.throw(_("Allowance Spend cannot link a contract or project."))
 			if not self.cost_center:
 				frappe.throw(_("Cost Center is required for Allowance Spend."))
 			if flt(self.amount) < 0 and not self.description:
 				frappe.throw(_("Description is required for negative allowance spend entries."))
+		else:
+			frappe.throw(_("Entry Kind must be Delta or Allowance Spend."))
 
 	def _enforce_status_rules(self) -> None:
 		"""Ensure Verified entries are locked; only vCIO Manager can revert."""
