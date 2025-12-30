@@ -30,6 +30,9 @@
 
 - year: Select the budget year.
 - title: Enter a short budget title.
+- budget_kind: Choose Baseline or Forecast.
+- is_active_forecast: If enabled, marks this Forecast as the active one for the year (unique).
+- baseline_ref: Reference the Baseline budget for this Forecast.
 - workflow_state: Workflow status set by the approval process.
 - lines: Add budget lines for categories, vendors, and amounts.
 - total_amount_input: Calculated automatically as the sum of line amounts.

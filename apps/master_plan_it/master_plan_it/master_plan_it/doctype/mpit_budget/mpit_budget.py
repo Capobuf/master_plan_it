@@ -9,6 +9,8 @@ from frappe.model.document import Document
 from frappe.model.naming import getseries
 from frappe.utils import flt
 from master_plan_it import amounts, annualization, mpit_user_prefs
+from datetime import date, timedelta
+from frappe.utils import getdate as _getdate
 
 
 class MPITBudget(Document):
@@ -31,6 +33,7 @@ class MPITBudget(Document):
 	
 	def validate(self):
 		self._enforce_status_invariants()
+		self._enforce_budget_kind_rules()
 		self._autofill_cost_centers()
 		self._compute_lines_amounts()
 		self._compute_totals()
@@ -45,6 +48,219 @@ class MPITBudget(Document):
 				line.cost_center = frappe.db.get_value("MPIT Contract", line.contract, "cost_center")
 			if not line.cost_center and line.project:
 				line.cost_center = frappe.db.get_value("MPIT Project", line.project, "cost_center")
+
+	def _enforce_budget_kind_rules(self) -> None:
+		"""Validate Baseline/Forecast semantics and active forecast uniqueness."""
+		if not self.budget_kind:
+			self.budget_kind = "Forecast"
+
+		if self.budget_kind == "Baseline" and self.is_active_forecast:
+			frappe.throw(_("Baseline budget cannot be marked as active forecast."))
+
+		# Uniqueness: one Baseline per year
+		if self.budget_kind == "Baseline":
+			existing = frappe.db.exists(
+				"MPIT Budget",
+				{
+					"year": self.year,
+					"budget_kind": "Baseline",
+					"name": ["!=", self.name],
+				},
+			)
+			if existing:
+				frappe.throw(_("Only one Baseline is allowed per year ({0}).").format(self.year))
+
+		# Active forecast uniqueness
+		if self.budget_kind == "Forecast" and self.is_active_forecast:
+			conflict = frappe.db.exists(
+				"MPIT Budget",
+				{
+					"year": self.year,
+					"budget_kind": "Forecast",
+					"is_active_forecast": 1,
+					"name": ["!=", self.name],
+				},
+			)
+			if conflict:
+				frappe.throw(_("Only one active Forecast allowed per year. Deactivate other forecasts first."))
+
+	def refresh_from_sources(self) -> None:
+		"""Generate/refresh Forecast lines from contracts/projects (idempotent)."""
+		if self.budget_kind != "Forecast":
+			frappe.throw(_("Only Forecast budgets can be refreshed."))
+
+		year_start, year_end = annualization.get_year_bounds(self.year)
+		generated_lines: list[dict] = []
+
+		generated_lines.extend(self._generate_contract_lines(year_start, year_end))
+		# Project generation will be added when project schema is category-granular (Step 8)
+
+		self._upsert_generated_lines(generated_lines)
+		self.save(ignore_permissions=True)
+
+	def _generate_contract_lines(self, year_start: date, year_end: date) -> list[dict]:
+		lines: list[dict] = []
+		contracts = frappe.get_all(
+			"MPIT Contract",
+			fields=[
+				"name",
+				"title",
+				"category",
+				"vendor",
+				"cost_center",
+				"current_amount_net",
+				"vat_rate",
+				"billing_cycle",
+				"start_date",
+				"end_date",
+				"spread_months",
+				"spread_start_date",
+				"spread_end_date",
+				"status",
+			],
+		)
+		for c in contracts:
+			if c.status in ("Cancelled", "Expired"):
+				continue
+			contract = frappe.get_doc("MPIT Contract", c.name)
+			if contract.spread_months:
+				lines.extend(self._generate_contract_spread_lines(contract, year_start, year_end))
+			elif contract.rate_schedule:
+				lines.extend(self._generate_contract_rate_lines(contract, year_start, year_end))
+			else:
+				lines.extend(self._generate_contract_flat_lines(contract, year_start, year_end))
+		return lines
+
+	def _generate_contract_spread_lines(self, contract, year_start: date, year_end: date) -> list[dict]:
+		lines = []
+		if not contract.spread_start_date or not contract.spread_months:
+			return lines
+		# spread months unbounded; end date already computed on doc
+		spread_start = max(_getdate(contract.spread_start_date), year_start)
+		spread_end = min(
+			_getdate(contract.spread_end_date) if contract.spread_end_date else year_end,
+			year_end,
+		)
+		months = annualization.overlap_months(spread_start, spread_end, year_start, year_end)
+		if months <= 0:
+			return lines
+		monthly_net = flt(contract.current_amount_net or 0) / flt(contract.spread_months or 1)
+		source_key = f"CONTRACT_SPREAD::{contract.name}"
+		lines.append(
+			self._build_line_payload(
+				contract=contract,
+				period_start=spread_start,
+				period_end=spread_end,
+				monthly_net=monthly_net,
+				source_key=source_key,
+			)
+		)
+		return lines
+
+	def _generate_contract_rate_lines(self, contract, year_start: date, year_end: date) -> list[dict]:
+		lines = []
+		rows = sorted(contract.rate_schedule, key=lambda r: _getdate(r.effective_from))
+		for idx, row in enumerate(rows):
+			start = _getdate(row.effective_from)
+			if idx + 1 < len(rows):
+				next_start = _getdate(rows[idx + 1].effective_from)
+				end = next_start - timedelta(days=1)
+			else:
+				# open-ended
+				end = contract.end_date or year_end
+			seg_start = max(start, year_start)
+			seg_end = min(_getdate(end), year_end)
+			months = annualization.overlap_months(seg_start, seg_end, year_start, year_end)
+			if months <= 0:
+				continue
+			source_key = f"CONTRACT_RATE::{contract.name}::{start.isoformat()}"
+			lines.append(
+				self._build_line_payload(
+					contract=contract,
+					period_start=seg_start,
+					period_end=seg_end,
+					monthly_net=flt(row.amount_net or 0),
+					source_key=source_key,
+				)
+			)
+		return lines
+
+	def _generate_contract_flat_lines(self, contract, year_start: date, year_end: date) -> list[dict]:
+		lines = []
+		period_start = max(_getdate(contract.start_date) if contract.start_date else year_start, year_start)
+		period_end = min(_getdate(contract.end_date) if contract.end_date else year_end, year_end)
+		months = annualization.overlap_months(period_start, period_end, year_start, year_end)
+		if months <= 0:
+			return lines
+
+		billing = contract.billing_cycle or "Monthly"
+		monthly_net = flt(contract.current_amount_net or 0)
+		if billing == "Quarterly":
+			monthly_net = flt((contract.current_amount_net or 0) * 4 / 12, 2)
+		elif billing == "Annual":
+			monthly_net = flt((contract.current_amount_net or 0) / 12, 2)
+		# Other -> treat as monthly
+
+		source_key = f"CONTRACT::{contract.name}"
+		lines.append(
+			self._build_line_payload(
+				contract=contract,
+				period_start=period_start,
+				period_end=period_end,
+				monthly_net=monthly_net,
+				source_key=source_key,
+			)
+		)
+		return lines
+
+	def _build_line_payload(self, contract, period_start: date, period_end: date, monthly_net: float, source_key: str) -> dict:
+		return {
+			"line_kind": "Contract",
+			"source_key": source_key,
+			"category": contract.category,
+			"vendor": contract.vendor,
+			"description": contract.title,
+			"contract": contract.name,
+			"project": None,
+			"cost_center": contract.cost_center,
+			"monthly_amount": monthly_net,
+			"annual_amount": 0,
+			"amount_includes_vat": 0,
+			"vat_rate": contract.vat_rate,
+			"recurrence_rule": "Monthly",
+			"period_start_date": period_start,
+			"period_end_date": period_end,
+			"is_generated": 1,
+			"is_active": 1,
+		}
+
+	def _upsert_generated_lines(self, generated: list[dict]) -> None:
+		existing = {line.source_key: line for line in self.lines if getattr(line, "is_generated", 0)}
+		seen = set()
+
+		for payload in generated:
+			sk = payload.get("source_key")
+			if not sk:
+				continue
+			seen.add(sk)
+			if sk in existing:
+				line = existing[sk]
+				for k, v in payload.items():
+					setattr(line, k, v)
+			else:
+				self.append("lines", payload)
+
+		# deactivate stale generated lines
+		for sk, line in existing.items():
+			if sk not in seen:
+				line.is_active = 0
+
+	def on_update(self):
+		# For Forecasts, refresh buttons handled client-side; server ensures readonly Baseline
+		if self.budget_kind == "Baseline":
+			# Prevent accidental edits beyond status invariants
+			if self.has_value_changed("lines"):
+				frappe.throw(_("Baseline budgets are immutable."))
 
 	def _enforce_generated_lines_read_only(self) -> None:
 		"""Prevent editing generated lines except is_active toggle."""
@@ -169,6 +385,10 @@ class MPITBudget(Document):
 		total_gross = 0.0
 
 		for line in (self.lines or []):
+			if line.is_generated:
+				# generated lines are read-only; skip inactive ones
+				if not getattr(line, "is_active", 1):
+					continue
 			total_monthly += flt(getattr(line, "monthly_amount", 0) or 0, 2)
 			total_annual += flt(getattr(line, "annual_amount", 0) or 0, 2)
 			total_net += flt(getattr(line, "annual_net", 0) or 0, 2)
@@ -199,3 +419,38 @@ def update_budget_totals(budget_name: str) -> None:
 	}
 
 	frappe.db.set_value("MPIT Budget", budget_name, totals)
+
+
+@frappe.whitelist()
+def set_active(budget_name: str) -> None:
+	"""Set a Forecast budget as active, deactivating others for the same year."""
+	if not budget_name:
+		frappe.throw(_("Budget name is required"))
+
+	budget = frappe.get_doc("MPIT Budget", budget_name)
+	if budget.budget_kind != "Forecast":
+		frappe.throw(_("Only Forecast budgets can be set as active."))
+
+	# Deactivate other forecasts for the same year
+	frappe.db.sql(
+		"""
+		UPDATE `tabMPIT Budget`
+		SET is_active_forecast = 0
+		WHERE year = %(year)s
+		  AND budget_kind = 'Forecast'
+		  AND name != %(name)s
+		""",
+		{"year": budget.year, "name": budget.name},
+	)
+
+	budget.is_active_forecast = 1
+	budget.save(ignore_permissions=True)
+
+
+@frappe.whitelist()
+def refresh_from_sources(budget: str) -> None:
+	"""Public API to refresh a budget from sources."""
+	if not budget:
+		frappe.throw(_("Budget name is required"))
+	doc = frappe.get_doc("MPIT Budget", budget)
+	doc.refresh_from_sources()

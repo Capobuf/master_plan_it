@@ -68,6 +68,9 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 ### MPIT Budget (Submittable)
 - year (Link: MPIT Year) [mandatory]
 - title (Data)
+- budget_kind (Select: Baseline / Forecast)
+- is_active_forecast (Check, only for Forecast; unique per year)
+- baseline_ref (Link: MPIT Budget, reference Baseline for a Forecast)
 - lines (Table: MPIT Budget Line)
 - total_amount_input (Currency, read-only sum of line amounts)
 - total_amount_net (Currency, read-only sum of line net amounts)

@@ -14,6 +14,11 @@
   "title",
   "overview_col_break",
   "workflow_state",
+  "set_active_btn",
+  "refresh_from_sources",
+  "budget_kind",
+  "is_active_forecast",
+  "baseline_ref",
   "tab_lines",
   "lines",
   "tab_totals",
@@ -25,7 +30,7 @@
   "total_amount_gross",
   "amended_from"
  ],
-"fields": [
+ "fields": [
   {
    "fieldname": "naming_series",
    "fieldtype": "Select",
@@ -70,6 +75,29 @@
    "label": "Status",
    "options": "Draft\nProposed\nIn Review\nApproved",
    "read_only": 0
+  },
+  {
+   "fieldname": "budget_kind",
+   "fieldtype": "Select",
+   "description": "Budget type (Baseline or Forecast).",
+   "label": "Budget Kind",
+   "options": "Baseline\nForecast",
+   "default": "Forecast",
+   "in_list_view": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "is_active_forecast",
+   "fieldtype": "Check",
+   "description": "Mark as active Forecast for the year (only one allowed).",
+   "label": "Is Active Forecast"
+  },
+  {
+   "fieldname": "baseline_ref",
+   "fieldtype": "Link",
+   "description": "Reference Baseline budget for this Forecast.",
+   "label": "Baseline Reference",
+   "options": "MPIT Budget"
   },
   {
    "fieldname": "tab_lines",
@@ -153,6 +181,16 @@
    "print_hide": 1,
    "read_only": 1,
    "search_index": 1
+  },
+  {
+   "fieldname": "refresh_from_sources",
+   "fieldtype": "Button",
+   "label": "Refresh from Sources"
+  },
+  {
+   "fieldname": "set_active_btn",
+   "fieldtype": "Button",
+   "label": "Set Active"
   }
  ],
  "grid_page_length": 50,
