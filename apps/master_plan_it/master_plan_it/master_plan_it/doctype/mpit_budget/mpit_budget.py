@@ -31,8 +31,19 @@ class MPITBudget(Document):
 	
 	def validate(self):
 		self._enforce_status_invariants()
+		self._autofill_cost_centers()
 		self._compute_lines_amounts()
 		self._compute_totals()
+
+	def _autofill_cost_centers(self) -> None:
+		"""Fill cost_center on lines from contract or project if empty."""
+		for line in self.lines:
+			if line.cost_center:
+				continue
+			if line.contract:
+				line.cost_center = frappe.db.get_value("MPIT Contract", line.contract, "cost_center")
+			if not line.cost_center and line.project:
+				line.cost_center = frappe.db.get_value("MPIT Project", line.project, "cost_center")
 	
 	def _compute_lines_amounts(self):
 		"""Compute all amounts for Budget Lines using bidirectional logic."""

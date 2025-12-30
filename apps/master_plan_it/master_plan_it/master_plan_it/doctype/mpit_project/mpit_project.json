@@ -10,6 +10,7 @@
   "tab_overview",
   "title",
   "status",
+  "cost_center",
   "owner_user",
   "start_date",
   "end_date",
@@ -51,6 +52,13 @@
    "in_list_view": 1,
    "label": "Status",
    "options": "Draft\nProposed\nApproved\nIn Progress\nOn Hold\nCompleted\nCancelled"
+ },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "description": "Select the cost center for this project.",
+   "label": "Cost Center",
+   "options": "MPIT Cost Center"
   },
   {
    "fieldname": "owner_user",

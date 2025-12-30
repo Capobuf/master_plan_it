@@ -21,6 +21,7 @@ REQUIRED_DOCTYPES = [
     "MPIT Budget",
     "MPIT Budget Line",
     "MPIT Actual Entry",
+    "MPIT Cost Center",
     "MPIT Project",
     "MPIT Project Allocation",
     "MPIT Project Quote",

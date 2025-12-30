@@ -19,6 +19,7 @@ def test_required_doctypes_exist():
         "MPIT Budget",
         "MPIT Budget Line",
         "MPIT Actual Entry",
+        "MPIT Cost Center",
         "MPIT Project",
     ]
     missing = [dt for dt in required if not frappe.db.exists("DocType", dt)]

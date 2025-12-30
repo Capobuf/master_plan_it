@@ -3,3 +3,4 @@ master_plan_it.patches.v0_1_0.backfill_vat_fields
 master_plan_it.patches.v1_0.migrate_amounts_to_monthly_annual
 master_plan_it.patches.v2_0.remove_baseline_expense_doctype
 master_plan_it.patches.v2_0.remove_custom_portfolio_fields
+master_plan_it.patches.v2_0.add_cost_center_root

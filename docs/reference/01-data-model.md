@@ -23,6 +23,12 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - is_active (Check)
 - sort_order (Int)
 
+### MPIT Cost Center (Tree DocType)
+- cost_center_name (Data)
+- parent_cost_center (Link: MPIT Cost Center)
+- is_group (Check)
+- is_active (Check)
+
 ### MPIT Vendor
 - vendor_name (Data, unique)
 - vat_id (Data, optional)
@@ -36,6 +42,7 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - title (Data)
 - vendor (Link: MPIT Vendor) [mandatory]
 - category (Link: MPIT Category) [mandatory]
+- cost_center (Link: MPIT Cost Center, optional)
 - contract_kind (Select: Contract / Subscription / Annual Renewal / Maintenance)
 - billing_cycle (Select: Monthly / Quarterly / Annual / Other)
 - start_date (Date, optional)
@@ -64,6 +71,7 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - vendor (Link: MPIT Vendor, optional)
 - contract (Link: MPIT Contract, optional)
 - project (Link: MPIT Project, optional)
+- cost_center (Link: MPIT Cost Center, optional; fetched from contract if set)
 - description (Small Text)
 - amount (Currency)
 - amount_includes_vat (Check)
@@ -83,6 +91,7 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - vendor (Link: MPIT Vendor, optional)
 - contract (Link: MPIT Contract, optional)
 - project (Link: MPIT Project, optional)
+- cost_center (Link: MPIT Cost Center, optional; mandatory for allowance spends in V2)
 - amount (Currency) [mandatory]
 - budget (Link: MPIT Budget, optional)
 - budget_line_ref (Data/Small Text, optional)
@@ -97,6 +106,7 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - start_date (Date)
 - end_date (Date)
 - owner (Link: User)
+- cost_center (Link: MPIT Cost Center)
 - allocations (Table: MPIT Project Allocation) [mandatory before approval]
 - quotes (Table: MPIT Project Quote) [optional]
 - milestones (Table: MPIT Project Milestone) [optional]

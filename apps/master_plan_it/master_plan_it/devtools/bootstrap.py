@@ -45,6 +45,19 @@ def _ensure_year(year: int) -> None:
     doc.insert(ignore_permissions=True)
 
 
+def _ensure_cost_center_root() -> None:
+    """Create root Cost Center if missing."""
+    if frappe.db.exists("MPIT Cost Center", "All Cost Centers"):
+        return
+    doc = frappe.get_doc({
+        "doctype": "MPIT Cost Center",
+        "cost_center_name": "All Cost Centers",
+        "is_group": 1,
+        "is_active": 1,
+    })
+    doc.insert(ignore_permissions=True)
+
+
 def _ensure_workspace() -> None:
     """Create/update Desk workspace for MPIT (restricted to MPIT roles)."""
     shortcuts = [
@@ -108,6 +121,9 @@ def run(step: str = "tenant") -> Dict[str, List[str]]:
         _ensure_year(now.year)
         _ensure_year(now.year + 1)
         out.append("years_ok")
+
+        _ensure_cost_center_root()
+        out.append("cost_centers_ok")
 
         _ensure_workspace()
         out.append("workspace_ok")

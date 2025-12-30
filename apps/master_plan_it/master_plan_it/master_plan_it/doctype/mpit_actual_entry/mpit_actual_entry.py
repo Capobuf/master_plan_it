@@ -14,6 +14,16 @@ class MPITActualEntry(Document):
 	def validate(self):
 		self._set_year_from_posting_date()
 		self._compute_vat_split()
+		self._autofill_cost_center()
+
+	def _autofill_cost_center(self) -> None:
+		"""Copy cost center from contract or project if missing."""
+		if self.cost_center:
+			return
+		if self.contract:
+			self.cost_center = frappe.db.get_value("MPIT Contract", self.contract, "cost_center")
+		if not self.cost_center and self.project:
+			self.cost_center = frappe.db.get_value("MPIT Project", self.project, "cost_center")
 	
 	def _compute_vat_split(self):
 		"""Compute net/vat/gross for amount field with strict VAT validation."""

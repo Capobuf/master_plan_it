@@ -24,9 +24,10 @@
   "vendor",
   "contract",
   "project",
+  "cost_center",
   "budget",
   "budget_line_ref"
- ],
+],
  "fields": [
   {
    "fieldname": "tab_overview",
@@ -148,6 +149,15 @@
    "description": "Select the related project, if applicable.",
    "label": "Project",
    "options": "MPIT Project"
+ },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "description": "Select the cost center for this entry.",
+   "fetch_from": "contract.cost_center",
+   "fetch_if_empty": 1,
+   "label": "Cost Center",
+   "options": "MPIT Cost Center"
   },
   {
    "fieldname": "budget",
