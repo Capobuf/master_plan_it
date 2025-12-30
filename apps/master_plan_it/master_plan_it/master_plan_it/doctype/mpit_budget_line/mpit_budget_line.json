@@ -10,6 +10,8 @@
   "category",
   "vendor",
   "description",
+  "line_kind",
+  "source_key",
   "section_pricing",
   "qty",
   "unit_price",
@@ -39,8 +41,24 @@
   "section_flags",
   "cost_type",
   "is_active"
- ],
- "fields": [
+],
+"fields": [
+  {
+   "fieldname": "line_kind",
+   "fieldtype": "Select",
+   "description": "Kind of budget line.",
+   "in_list_view": 1,
+   "label": "Line Kind",
+   "options": "Contract\nProject\nAllowance\nManual"
+  },
+  {
+   "fieldname": "source_key",
+   "fieldtype": "Data",
+   "description": "Deterministic key for generated lines.",
+   "label": "Source Key",
+   "read_only": 1,
+   "bold": 1
+  },
   {
    "fieldname": "category",
    "fieldtype": "Link",
@@ -283,11 +301,18 @@
   },
   {
    "default": "OPEX",
-   "fieldname": "cost_type",
-   "fieldtype": "Select",
-   "description": "Choose whether the cost is CAPEX or OPEX.",
-   "label": "Cost Type",
-   "options": "CAPEX\nOPEX"
+  "fieldname": "cost_type",
+  "fieldtype": "Select",
+  "description": "Choose whether the cost is CAPEX or OPEX.",
+  "label": "Cost Type",
+  "options": "CAPEX\nOPEX"
+ },
+  {
+   "default": "0",
+   "fieldname": "is_generated",
+   "fieldtype": "Check",
+   "description": "If enabled, this line is generated and should be read-only.",
+   "label": "Is Generated"
   },
   {
    "default": "1",

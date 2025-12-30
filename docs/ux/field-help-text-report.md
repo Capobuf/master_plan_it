@@ -38,20 +38,13 @@
 - total_amount_gross: Calculated automatically as the sum of gross amounts.
 - amended_from: Reference to the original budget this document was amended from.
 
-### MPIT Budget Amendment
-
-- budget: Select the budget being amended.
-- effective_date: Date when this amendment takes effect.
-- reason: Describe why the budget is being amended.
-- workflow_state: Workflow status set by the approval process.
-- lines: Add amendment lines detailing the changes.
-- amended_from: Reference to the original amendment this document was copied from.
-
 ### MPIT Budget Line
 
 - category: Select the budget category.
 - vendor: Select the vendor for this line.
 - description: Describe this budget line.
+- line_kind: Kind of budget line (Contract, Project, Allowance, Manual).
+- source_key: Deterministic key for generated lines (read-only).
 - recurrence_rule: Choose how this amount recurs for annualization.
 - period_start_date: Start date of the period used to calculate overlap with the budget year.
 - period_end_date: End date of the period used to calculate overlap with the budget year.
@@ -67,6 +60,7 @@
 - annual_vat: Calculated automatically as the annualized VAT amount.
 - annual_gross: Calculated automatically as the annualized gross amount.
 - cost_type: Choose whether the cost is CAPEX or OPEX.
+- is_generated: If enabled, the line is generated and should be read-only (manual edits blocked).
 - is_active: If enabled, the budget line is active.
 
 ### MPIT Category

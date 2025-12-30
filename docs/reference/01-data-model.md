@@ -82,6 +82,8 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - project (Link: MPIT Project, optional)
 - cost_center (Link: MPIT Cost Center, optional; fetched from contract if set)
 - description (Small Text)
+- line_kind (Select: Contract / Project / Allowance / Manual)
+- source_key (Data, read-only)
 - amount (Currency)
 - amount_includes_vat (Check)
 - vat_rate (Percent)
@@ -91,6 +93,7 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - cost_type (Select: CAPEX / OPEX)
 - recurrence (Select) + start_date/end_date (Date)
 - is_active (Check)
+- is_generated (Check, read-only in practice for generated lines)
 
 ## Actuals
 ### MPIT Actual Entry

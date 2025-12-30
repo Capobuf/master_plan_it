@@ -34,6 +34,7 @@ class MPITBudget(Document):
 		self._autofill_cost_centers()
 		self._compute_lines_amounts()
 		self._compute_totals()
+		self._enforce_generated_lines_read_only()
 
 	def _autofill_cost_centers(self) -> None:
 		"""Fill cost_center on lines from contract or project if empty."""
@@ -44,6 +45,46 @@ class MPITBudget(Document):
 				line.cost_center = frappe.db.get_value("MPIT Contract", line.contract, "cost_center")
 			if not line.cost_center and line.project:
 				line.cost_center = frappe.db.get_value("MPIT Project", line.project, "cost_center")
+
+	def _enforce_generated_lines_read_only(self) -> None:
+		"""Prevent editing generated lines except is_active toggle."""
+		for line in self.lines:
+			if not line.is_generated or not line.name:
+				continue
+			# fetch persisted row
+			existing = frappe.db.get_value(
+				"MPIT Budget Line",
+				line.name,
+				[
+					"category",
+					"vendor",
+					"description",
+					"line_kind",
+					"source_key",
+					"qty",
+					"unit_price",
+					"monthly_amount",
+					"annual_amount",
+					"amount_includes_vat",
+					"vat_rate",
+					"recurrence_rule",
+					"period_start_date",
+					"period_end_date",
+					"contract",
+					"project",
+					"cost_center",
+					"cost_type",
+					"is_active",
+				],
+				as_dict=True,
+			)
+			if not existing:
+				continue
+			for field, old_value in existing.items():
+				if field == "is_active":
+					continue  # allow toggling active flag
+				if line.get(field) != old_value:
+					frappe.throw(f"Generated line {line.name} is read-only (field {field}).")
 	
 	def _compute_lines_amounts(self):
 		"""Compute all amounts for Budget Lines using bidirectional logic."""
