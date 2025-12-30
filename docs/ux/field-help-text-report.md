@@ -26,27 +26,6 @@
 - description: Describe the actual entry.
 - status: Choose whether the entry is recorded or verified.
 
-### MPIT Amendment Line
-
-- category: Select the category for this change.
-- vendor: Select the vendor linked to this change.
-- description: Describe the change captured by this line.
-- delta_amount: Enter the adjustment amount for this line.
-- delta_amount_includes_vat: If enabled, the adjustment amount includes VAT.
-- delta_amount_gross: Calculated automatically as the gross delta amount.
-- vat_rate: VAT rate applied to the adjustment.
-- delta_amount_net: Calculated automatically from delta amount and VAT settings.
-- delta_amount_vat: Calculated automatically as the VAT portion of the delta.
-- period_end_date: End date of the period used to calculate overlap with the year.
-- annual_net: Calculated automatically as the annualized net amount.
-- annual_vat: Calculated automatically as the annualized VAT amount.
-- annual_gross: Calculated automatically as the annualized gross amount.
-- contract_start: Contract start date, if relevant.
-- contract_end: Contract end date, if relevant.
-- auto_renew: If enabled, the contract renews automatically.
-- notice_days: Number of notice days required before renewal.
-- status: Current review status of this expense.
-
 ### MPIT Budget
 
 - year: Select the budget year.

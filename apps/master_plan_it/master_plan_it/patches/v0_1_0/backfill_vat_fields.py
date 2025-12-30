@@ -15,7 +15,6 @@ Affected doctypes:
 - MPIT Actual Entry (parent, amount field)
 - MPIT Contract (parent, current_amount field)
 - MPIT Budget Line (child, amount field)
-- MPIT Amendment Line (child, delta_amount field)
 - MPIT Project Allocation (child, planned_amount field)
 - MPIT Project Quote (child, amount field)
 
@@ -31,7 +30,6 @@ def execute():
 	frappe.reload_doc("master_plan_it", "doctype", "mpit_actual_entry", force=True)
 	frappe.reload_doc("master_plan_it", "doctype", "mpit_contract", force=True)
 	frappe.reload_doc("master_plan_it", "doctype", "mpit_budget_line", force=True)
-	frappe.reload_doc("master_plan_it", "doctype", "mpit_amendment_line", force=True)
 	frappe.reload_doc("master_plan_it", "doctype", "mpit_project_allocation", force=True)
 	frappe.reload_doc("master_plan_it", "doctype", "mpit_project_quote", force=True)
 	
@@ -41,7 +39,6 @@ def execute():
 	
 	# Child table doctypes
 	backfill_child_doctype("MPIT Budget Line", "amount")
-	backfill_child_doctype("MPIT Amendment Line", "delta_amount")
 	backfill_child_doctype("MPIT Project Allocation", "planned_amount")
 	backfill_child_doctype("MPIT Project Quote", "amount")
 	

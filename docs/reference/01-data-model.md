@@ -77,22 +77,6 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - is_portfolio_bucket (Check)
 - is_active (Check)
 
-### MPIT Budget Amendment (Submittable)
-- budget (Link: MPIT Budget) [mandatory]
-- effective_date (Date)
-- reason (Text)
-- lines (Table: MPIT Amendment Line)
-- workflow_state
-
-### MPIT Amendment Line (Child Table)
-- category (Link: MPIT Category) [mandatory]
-- vendor (Link: MPIT Vendor, optional)
-- contract (Link: MPIT Contract, optional)
-- project (Link: MPIT Project, optional)
-- description (Small Text)
-- delta_amount (Currency) [mandatory]
-- note (Text)
-
 ## Actuals
 ### MPIT Actual Entry
 - posting_date (Date) [mandatory]

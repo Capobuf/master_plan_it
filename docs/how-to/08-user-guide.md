@@ -2,7 +2,7 @@
 
 Questa guida è pensata per utenti finali (vCIO e utenti cliente) che lavorano in **Frappe Desk**.
 
-> Nota: la Workspace “Master Plan IT”, i ruoli MPIT e i workflow (Budget, Budget Amendment) sono provisionati tramite i file canonici del modulo + fixtures e i normali comandi Frappe (`migrate`, `clear-cache`). Nessun pipeline custom è richiesto.
+> Nota: la Workspace “Master Plan IT”, i ruoli MPIT e i workflow (Budget) sono provisionati tramite i file canonici del modulo + fixtures e i normali comandi Frappe (`migrate`, `clear-cache`). Nessun pipeline custom è richiesto.
 
 ---
 
@@ -34,7 +34,7 @@ In Desk, apri:
 - Workspace **“Master Plan IT”**
 
 Da lì hai scorciatoie ai principali oggetti:
-- Budgets, Budget Amendments
+- Budgets
 - Actual Entries
 - Contracts, Projects
 - Categories, Vendors
@@ -83,17 +83,13 @@ Crea `MPIT Budget` per anno:
 - Compila la tabella `lines` con righe (category/vendor/amount/descrizione)
 - Il budget è “baseline” annuale; modifiche successive vanno in amendment
 
-### C) Amendments (variazioni post‑baseline)
-Crea `MPIT Budget Amendment` collegato al budget:
-- Compila `lines` con `delta_amount` (positivo/negativo)
-
-### D) Actuals (consuntivi)
+### C) Actuals (consuntivi)
 Inserisci `MPIT Actual Entry`:
 - `posting_date`, `category`, `amount` obbligatori
 - Se utile, collega `contract` e/o `project`
 - Il campo `year` viene valorizzato automaticamente dalla `posting_date` (serve che il relativo `MPIT Year` esista)
 
-### E) Projects (multi‑year)
+### D) Projects (multi‑year)
 Inserisci `MPIT Project`:
 - Aggiungi almeno una riga in `allocations` (anno + planned_amount)
 - Usa `quotes` e `milestones` se utili

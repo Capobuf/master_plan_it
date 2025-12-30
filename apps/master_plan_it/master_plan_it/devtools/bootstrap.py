@@ -49,7 +49,6 @@ def _ensure_workspace() -> None:
     """Create/update Desk workspace for MPIT (restricted to MPIT roles)."""
     shortcuts = [
         {"label": "Budgets", "link_to": "MPIT Budget", "type": "DocType"},
-        {"label": "Budget Amendments", "link_to": "MPIT Budget Amendment", "type": "DocType"},
         {"label": "Actual Entries", "link_to": "MPIT Actual Entry", "type": "DocType"},
         {"label": "Contracts", "link_to": "MPIT Contract", "type": "DocType"},
         {"label": "Projects", "link_to": "MPIT Project", "type": "DocType"},

@@ -1,7 +1,7 @@
 # 0009 — Overview dashboard: Amendments Delta (Net)
 
 ## Status
-Accepted (2025-12-28)
+Superseded by ADR 0011 (Budget Engine V2)
 
 ## Context
 - The overview dashboard needs a view of budget amendments by Category, using net deltas and filtering by Budget Year (not by dates).

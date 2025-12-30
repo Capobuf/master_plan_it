@@ -20,8 +20,6 @@ REQUIRED_DOCTYPES = [
     "MPIT Contract",
     "MPIT Budget",
     "MPIT Budget Line",
-    "MPIT Budget Amendment",
-    "MPIT Amendment Line",
     "MPIT Actual Entry",
     "MPIT Project",
     "MPIT Project Allocation",

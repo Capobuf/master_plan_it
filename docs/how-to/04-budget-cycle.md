@@ -12,5 +12,5 @@
 - Approval submits the document and freezes it (immutable baseline).
 
 ## After approval
-- Use `MPIT Budget Amendment` for any changes.
-- Record actuals continuously.
+- Post-approval changes are handled via the Forecast refresh (V2 model) and variance/exception entries, not amendments.
+- Record exceptions/allowance spends continuously.

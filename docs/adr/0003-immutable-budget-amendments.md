@@ -3,7 +3,7 @@
 Date: 2025-12-21
 
 ## Status
-Accepted
+Superseded by ADR 0011 (Budget Engine V2)
 
 ## Context
 We must compare 'budget defined at start of year' vs 'actual spent' consistently over time. Allowing edits to an approved budget would destroy the baseline and make reporting ambiguous.
@@ -15,4 +15,3 @@ Budgets are approved via workflow and submitted (docstatus=1), making them immut
 - Two stable comparisons: Approved vs Actual; Current vs Actual.
 - Clean audit trail of changes.
 - Requires amendment workflow discipline (but avoids technical debt).
-
