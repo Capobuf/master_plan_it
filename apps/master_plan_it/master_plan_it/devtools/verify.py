@@ -39,6 +39,7 @@ REQUIRED_DASHBOARD = "Master Plan IT Overview"
 REQUIRED_DASHBOARD_CHARTS = [
     "MPIT Approved Budget vs Actual",
     "MPIT Current Budget vs Actual",
+    "MPIT Plan Delta by Category",
     "MPIT Renewals Window (by Month)",
     "MPIT Projects Planned vs Actual",
 ]

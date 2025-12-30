@@ -59,15 +59,15 @@ def _ensure_cost_center_root() -> None:
 
 
 def _ensure_workspace() -> None:
-    """Create/update Desk workspace for MPIT (restricted to MPIT roles)."""
-    shortcuts = [
-        {"label": "Budgets", "link_to": "MPIT Budget", "type": "DocType"},
-        {"label": "Actual Entries", "link_to": "MPIT Actual Entry", "type": "DocType"},
-        {"label": "Contracts", "link_to": "MPIT Contract", "type": "DocType"},
-        {"label": "Projects", "link_to": "MPIT Project", "type": "DocType"},
-        {"label": "Categories", "link_to": "MPIT Category", "type": "DocType"},
-        {"label": "Vendors", "link_to": "MPIT Vendor", "type": "DocType"},
-    ]
+	"""Create/update Desk workspace for MPIT (restricted to MPIT roles)."""
+	shortcuts = [
+		{"label": "Budgets", "link_to": "MPIT Budget", "type": "DocType"},
+		{"label": "Exceptions / Allowance Entries", "link_to": "MPIT Actual Entry", "type": "DocType"},
+		{"label": "Contracts", "link_to": "MPIT Contract", "type": "DocType"},
+		{"label": "Projects", "link_to": "MPIT Project", "type": "DocType"},
+		{"label": "Categories", "link_to": "MPIT Category", "type": "DocType"},
+		{"label": "Vendors", "link_to": "MPIT Vendor", "type": "DocType"},
+	]
     content_blocks = [
         {"type": "header", "data": {"text": "Master Plan IT", "level": 4, "col": 12}},
     ]

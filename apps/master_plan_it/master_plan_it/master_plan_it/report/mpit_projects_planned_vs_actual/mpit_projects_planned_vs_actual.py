@@ -17,9 +17,9 @@ def execute(filters=None):
 		{"label": _("Planned (Net)"), "fieldname": "planned_amount", "fieldtype": "Currency", "width": 140},
 		{"label": _("Quoted (Net)"), "fieldname": "quoted_amount", "fieldtype": "Currency", "width": 140},
 		{"label": _("Expected (Net)"), "fieldname": "expected_amount", "fieldtype": "Currency", "width": 140},
-		{"label": _("Actual (Net)"), "fieldname": "actual_amount", "fieldtype": "Currency", "width": 140},
-		{"label": _("Variance vs Expected"), "fieldname": "variance_expected", "fieldtype": "Currency", "width": 170},
-		{"label": _("Variance vs Planned"), "fieldname": "variance_planned", "fieldtype": "Currency", "width": 170},
+		{"label": _("Exceptions (Verified Delta)"), "fieldname": "actual_amount", "fieldtype": "Currency", "width": 180},
+		{"label": _("Delta vs Expected"), "fieldname": "variance_expected", "fieldtype": "Currency", "width": 150},
+		{"label": _("Delta vs Planned"), "fieldname": "variance_planned", "fieldtype": "Currency", "width": 150},
 	]
 
 	chart = _build_chart(rows)
@@ -59,6 +59,7 @@ def _get_data(filters) -> list[dict]:
 		"""
 		SELECT parent AS project, SUM(COALESCE(amount_net, amount)) AS quoted_amount
 		FROM `tabMPIT Project Quote`
+		WHERE status = 'Approved'
 		GROUP BY parent
 		""",
 		as_dict=True,
@@ -69,6 +70,8 @@ def _get_data(filters) -> list[dict]:
 		SELECT project, year, SUM(COALESCE(amount_net, amount)) AS actual_amount
 		FROM `tabMPIT Actual Entry`
 		WHERE project IS NOT NULL
+		  AND status = 'Verified'
+		  AND entry_kind = 'Delta'
 		GROUP BY project, year
 		""",
 		as_dict=True,
@@ -116,7 +119,7 @@ def _build_chart(rows: list[dict]) -> dict | None:
 			"labels": labels,
 			"datasets": [
 				{"name": _("Expected"), "values": [expected_totals.get(p, 0) for p in labels]},
-				{"name": _("Actual"), "values": [actual_totals.get(p, 0) for p in labels]},
+				{"name": _("Exceptions (Verified Delta)"), "values": [actual_totals.get(p, 0) for p in labels]},
 			],
 		},
 		"type": "bar",

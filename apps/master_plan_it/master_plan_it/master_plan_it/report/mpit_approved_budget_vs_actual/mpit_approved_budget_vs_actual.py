@@ -15,9 +15,9 @@ def execute(filters=None):
 		{"label": _("Year"), "fieldname": "year", "fieldtype": "Link", "options": "MPIT Year", "width": 80},
 		{"label": _("Category"), "fieldname": "category", "fieldtype": "Link", "options": "MPIT Category", "width": 180},
 		{"label": _("Vendor"), "fieldname": "vendor", "fieldtype": "Link", "options": "MPIT Vendor", "width": 150},
-		{"label": _("Budget Amount"), "fieldname": "budget_amount", "fieldtype": "Currency", "width": 140},
-		{"label": _("Actual Amount"), "fieldname": "actual_amount", "fieldtype": "Currency", "width": 140},
-		{"label": _("Variance (Actual - Budget)"), "fieldname": "variance", "fieldtype": "Currency", "width": 160},
+		{"label": _("Baseline Plan"), "fieldname": "budget_amount", "fieldtype": "Currency", "width": 140},
+		{"label": _("Exceptions / Allowance"), "fieldname": "actual_amount", "fieldtype": "Currency", "width": 150},
+		{"label": _("Variance (Exceptions - Plan)"), "fieldname": "variance", "fieldtype": "Currency", "width": 180},
 	]
 
 	chart = _build_chart(rows)
@@ -26,48 +26,91 @@ def execute(filters=None):
 
 
 def _get_data(filters) -> list[dict]:
-	conditions = ["b.docstatus = 1"]
 	params = {}
-	if filters.get("year"):
-		conditions.append("b.year = %(year)s")
-		params["year"] = filters.year
+	budget = _resolve_baseline_budget(filters)
+	if not budget:
+		return []
+
+	conditions = ["bl.parent = %(budget)s", "COALESCE(bl.is_active,1)=1"]
+	params["budget"] = budget
 	if filters.get("category"):
 		conditions.append("bl.category = %(category)s")
 		params["category"] = filters.category
 	if filters.get("vendor"):
 		conditions.append("bl.vendor = %(vendor)s")
 		params["vendor"] = filters.vendor
-	if filters.get("budget"):
-		conditions.append("b.name = %(budget)s")
-		params["budget"] = filters.budget
 
 	where = " AND ".join(conditions)
 
-	return frappe.db.sql(
+	base_rows = frappe.db.sql(
 		f"""
-		WITH actuals AS (
-			SELECT category, year, vendor, SUM(COALESCE(amount_net, amount)) AS actual_amount
-			FROM `tabMPIT Actual Entry`
-			GROUP BY category, year, vendor
-		)
 		SELECT
-			b.name AS budget,
+			%(budget)s AS budget,
 			b.year AS year,
 			bl.category AS category,
 			bl.vendor AS vendor,
-			SUM(COALESCE(bl.annual_net, bl.amount_net, bl.amount)) AS budget_amount,
-			COALESCE(a.actual_amount, 0) AS actual_amount,
-			COALESCE(a.actual_amount, 0) - SUM(COALESCE(bl.annual_net, bl.amount_net, bl.amount)) AS variance
-		FROM `tabMPIT Budget` b
-		JOIN `tabMPIT Budget Line` bl ON bl.parent = b.name
-		LEFT JOIN actuals a ON a.category = bl.category AND a.year = b.year AND a.vendor <=> bl.vendor
+			SUM(COALESCE(bl.annual_net, bl.amount_net, bl.annual_amount, bl.amount)) AS budget_amount
+		FROM `tabMPIT Budget Line` bl
+		JOIN `tabMPIT Budget` b ON b.name = bl.parent
 		WHERE {where}
-		GROUP BY b.name, b.year, bl.category, bl.vendor, a.actual_amount
-		ORDER BY b.year, b.name, bl.category, bl.vendor
+		GROUP BY bl.category, bl.vendor, b.year
 		""",
 		params,
 		as_dict=True,
 	)
+
+	actual_conditions = ["status = 'Verified'"]
+	if filters.get("year"):
+		actual_conditions.append("year = %(year)s")
+		params["year"] = filters.year
+	if filters.get("category"):
+		actual_conditions.append("category = %(category)s")
+	if filters.get("vendor"):
+		actual_conditions.append("vendor = %(vendor)s")
+	if filters.get("entry_kind"):
+		actual_conditions.append("entry_kind = %(entry_kind)s")
+		params["entry_kind"] = filters.entry_kind
+	else:
+		actual_conditions.append("entry_kind in ('Delta','Allowance Spend')")
+
+	actual_where = " AND ".join(actual_conditions)
+
+	actual_rows = frappe.db.sql(
+		f"""
+		SELECT year, category, vendor, SUM(COALESCE(amount_net, amount)) AS actual_amount
+		FROM `tabMPIT Actual Entry`
+		WHERE {actual_where}
+		GROUP BY year, category, vendor
+		""",
+		params,
+		as_dict=True,
+	)
+
+	base_map = {(r["category"], r.get("vendor")): r for r in base_rows}
+	actual_map = {(r["category"], r.get("vendor")): r["actual_amount"] for r in actual_rows}
+
+	keys = set(base_map.keys()) | set(actual_map.keys())
+	result: list[dict] = []
+	for key in sorted(keys, key=lambda k: (str(k[0] or ""), str(k[1] or ""))):
+		category, vendor = key
+		base = base_map.get(key, {})
+		year = base.get("year") or filters.get("year")
+		budget_amount = float(base.get("budget_amount") or 0)
+		actual_amount = float(actual_map.get((category, vendor), 0) or 0)
+		variance = actual_amount - budget_amount
+		result.append(
+			{
+				"budget": budget,
+				"year": year,
+				"category": category,
+				"vendor": vendor,
+				"budget_amount": budget_amount,
+				"actual_amount": actual_amount,
+				"variance": variance,
+			}
+		)
+
+	return result
 
 
 def _build_chart(rows: list[dict]) -> dict | None:
@@ -85,10 +128,26 @@ def _build_chart(rows: list[dict]) -> dict | None:
 		"data": {
 			"labels": labels,
 			"datasets": [
-				{"name": _("Budget"), "values": [budget_totals.get(b, 0) for b in labels]},
-				{"name": _("Actual"), "values": [actual_totals.get(b, 0) for b in labels]},
+				{"name": _("Baseline Plan"), "values": [budget_totals.get(b, 0) for b in labels]},
+				{"name": _("Exceptions / Allowance"), "values": [actual_totals.get(b, 0) for b in labels]},
 			],
 		},
 		"type": "bar",
 		"axis_options": {"x_axis_mode": "tick", "y_axis_mode": "tick"},
 	}
+
+
+def _resolve_baseline_budget(filters) -> str | None:
+	"""Baseline for year, or explicit budget filter."""
+	if filters.get("budget"):
+		return filters.budget
+
+	year = filters.get("year")
+	if not year:
+		return None
+
+	return frappe.db.get_value(
+		"MPIT Budget",
+		{"year": year, "budget_kind": "Baseline"},
+		"name",
+	)
