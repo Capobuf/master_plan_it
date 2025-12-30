@@ -31,7 +31,7 @@ All 6 MPIT reports include these print-specific filters (defined in each report'
 
 ## Column Profiles by Report
 
-### MPIT Current Budget vs Actual
+### MPIT Current Plan vs Exceptions
 
 | Profile | Columns |
 |---------|---------|
@@ -39,7 +39,7 @@ All 6 MPIT reports include these print-specific filters (defined in each report'
 | **Compact** | budget, category, current_budget, actual_amount, variance |
 | **All** | All 9 columns (adds vendor, baseline_amount, amendment_delta) |
 
-### MPIT Approved Budget vs Actual
+### MPIT Baseline vs Exceptions
 
 | Profile | Columns |
 |---------|---------|
@@ -47,7 +47,7 @@ All 6 MPIT reports include these print-specific filters (defined in each report'
 | **Compact** | budget, category, budget_amount, actual_amount, variance |
 | **All** | All 7 columns (adds vendor) |
 
-### MPIT Monthly Budget vs Actual
+### MPIT Monthly Plan vs Exceptions
 
 | Profile | Columns |
 |---------|---------|

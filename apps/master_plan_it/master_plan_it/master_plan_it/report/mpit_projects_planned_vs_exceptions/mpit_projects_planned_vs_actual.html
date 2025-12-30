@@ -3,13 +3,15 @@
 <head>
     <meta charset="utf-8">
     {#
-        MPIT Monthly Budget vs Actual - Report Print Format
+        MPIT Projects Planned vs Exceptions - Report Print Format
         Dynamic template supporting print_profile, print_orientation, print_density filters.
         
         Profiles:
-        - Standard: month, planned, actual, variance, planned_cumulative, actual_cumulative, variance_cumulative
-        - Compact: month, planned, actual, variance
-        - All: all columns
+        - Standard: project, status, year, planned_amount, expected_amount, actual_amount, variance_expected
+        - Compact: project, year, expected_amount, actual_amount, variance_expected
+        - All: all columns (includes quoted_amount, variance_planned)
+        
+        Note: Uses variance_expected (not "variance" which doesn't exist in data keys)
     #}
     {%- set profile = (filters.print_profile or "Standard")|string %}
     {%- set orientation = (filters.print_orientation or "Auto")|string %}
@@ -17,8 +19,8 @@
     
     {# Define column profiles by fieldname #}
     {%- set profile_columns = {
-        "Standard": ["month", "planned", "actual", "variance", "planned_cumulative", "actual_cumulative", "variance_cumulative"],
-        "Compact": ["month", "planned", "actual", "variance"],
+        "Standard": ["project", "status", "year", "planned_amount", "expected_amount", "actual_amount", "variance_expected"],
+        "Compact": ["project", "year", "expected_amount", "actual_amount", "variance_expected"],
         "All": []
     } %}
     
@@ -129,6 +131,9 @@
         .text-right { 
             text-align: right; 
         }
+        .text-center {
+            text-align: center;
+        }
         .currency-cell {
             text-align: right;
             white-space: nowrap;
@@ -139,6 +144,18 @@
         .text-success { 
             color: #28a745; 
         }
+        .badge { 
+            display: inline-block; 
+            padding: 2px 6px; 
+            border-radius: 3px; 
+            font-size: 0.85em; 
+            font-weight: 500; 
+        }
+        .badge-proposed { background-color: #17a2b8; color: #fff; }
+        .badge-planning { background-color: #ffc107; color: #000; }
+        .badge-active { background-color: #28a745; color: #fff; }
+        .badge-completed { background-color: #6c757d; color: #fff; }
+        .badge-cancelled { background-color: #dc3545; color: #fff; }
         .report-footer { 
             margin-top: 15px; 
             padding-top: 8px; 
@@ -151,35 +168,21 @@
             body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
             .table thead { background-color: #e9ecef !important; }
             .table tbody tr:nth-child(even) { background-color: #f8f9fa !important; }
+            .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
         }
     </style>
 </head>
 <body>
     <div class="report-header">
-        <h2>{{ _("Monthly Budget vs Actual") }}</h2>
+        <h2>{{ _("Projects: Planned vs Actual") }}</h2>
     </div>
 
     <div class="report-filters">
-        {% if filters.year %}
-            <strong>{{ _("Year") }}:</strong> {{ filters.year }} &nbsp;
-        {% endif %}
-        {% if filters.from_month %}
-            <strong>{{ _("From Month") }}:</strong> {{ filters.from_month }} &nbsp;
-        {% endif %}
-        {% if filters.to_month %}
-            <strong>{{ _("To Month") }}:</strong> {{ filters.to_month }} &nbsp;
-        {% endif %}
-        {% if filters.category %}
-            <strong>{{ _("Category") }}:</strong> {{ filters.category }} &nbsp;
-        {% endif %}
-        {% if filters.vendor %}
-            <strong>{{ _("Vendor") }}:</strong> {{ filters.vendor }} &nbsp;
-        {% endif %}
         {% if filters.project %}
             <strong>{{ _("Project") }}:</strong> {{ filters.project }} &nbsp;
         {% endif %}
-        {% if filters.contract %}
-            <strong>{{ _("Contract") }}:</strong> {{ filters.contract }}
+        {% if filters.year %}
+            <strong>{{ _("Year") }}:</strong> {{ filters.year }}
         {% endif %}
     </div>
 
@@ -210,13 +213,16 @@
                             {% set fieldtype = col.get("fieldtype", "Data") %}
                             {% set value = row.get(fieldname, "") %}
                             {% set is_currency = fieldtype == "Currency" %}
-                            {% set is_variance = fieldname in ["variance", "variance_cumulative"] %}
+                            {% set is_variance = fieldname in ["variance_expected", "variance_planned"] %}
                             
-                            {% if is_currency %}
+                            {% if fieldname == "status" %}
+                                {# Status with badge #}
+                                {% set status_class = "badge-" + (value or "planning")|lower %}
+                                <td><span class="badge {{ status_class }}">{{ value or "" }}</span></td>
+                            {% elif is_currency %}
                                 {% set variance_class = "" %}
                                 {% if is_variance and value is not none %}
-                                    {# Positive variance = over budget (bad), Negative = under budget (good) #}
-                                    {% set variance_class = "text-danger" if value > 0 else "text-success" if value < 0 else "" %}
+                                    {% set variance_class = "text-success" if value < 0 else "text-danger" if value > 0 else "" %}
                                 {% endif %}
                                 <td class="currency-cell {{ variance_class }}">
                                     {{ frappe.utils.fmt_money(value) if value is not none else "" }}

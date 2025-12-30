@@ -61,8 +61,8 @@ def ensure_dashboard_links():
 	"""Ensure the Overview dashboard includes the Plan Delta chart in the intended order."""
 	frappe.conf.developer_mode = 1
 	charts = [
-		{"chart": "MPIT Current Budget vs Actual", "width": "Half"},
-		{"chart": "MPIT Approved Budget vs Actual", "width": "Half"},
+		{"chart": "MPIT Current Plan vs Exceptions", "width": "Half"},
+		{"chart": "MPIT Baseline vs Exceptions", "width": "Half"},
 		{"chart": "MPIT Plan Delta by Category", "width": "Half"},
 		{"chart": "MPIT Projects Planned vs Actual", "width": "Half"},
 		{"chart": "MPIT Renewals Window (by Month)", "width": "Half"},

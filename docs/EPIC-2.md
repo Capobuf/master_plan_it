@@ -545,24 +545,24 @@ Additionally, if these strings appear in GATE 0 results, they must also be remov
 ---
 
 ## 9) DoD checklist (copy/paste)
-- [ ] GATE 0 complete (impact map + schema freeze + logic freeze)
-- [ ] GATE 1 complete (project monthly distribution decision + docs)
-- [ ] Baseline Expense removed (doctype + docs + templates + devtools + tests)
-- [ ] Budget Amendment removed (doctype + docs + chart source + reports + tests)
-- [ ] ADR 0003 + 0009 marked Superseded + link to ADR 0011
-- [ ] ADR 0011 created (V2 model)
-- [ ] Cost Center tree implemented and used
-- [ ] Contract supports:
-  - [ ] spread_months + spread_start_date (unbounded)
-  - [ ] rate schedule segments (effective_from) with no overlap
-- [ ] Budget Line simplified; Allowance line_kind implemented
-- [ ] Budget Forecast refresh idempotent (source_key)
-- [ ] Variance/Exception entries implemented (delta + allowance spend)
-- [ ] All main reports rewritten (no amendments, no portfolio buckets)
-- [ ] Overview chart replaced (same purpose, new data source)
-- [ ] Workspace cleaned (no removed doctypes visible)
-- [ ] Repo grep must hit zero (section 8)
-- [ ] Tests and verify gates pass
+- [x] GATE 0 complete (impact map + schema freeze + logic freeze)
+- [x] GATE 1 complete (project monthly distribution decision + docs)
+- [x] Baseline Expense removed (doctype + docs + templates + devtools + tests)
+- [x] Budget Amendment removed (doctype + docs + chart source + reports + tests)
+- [x] ADR 0003 + 0009 marked Superseded + link to ADR 0011
+- [x] ADR 0011 created (V2 model)
+- [x] Cost Center tree implemented and used
+- [x] Contract supports:
+  - [x] spread_months + spread_start_date (unbounded)
+  - [x] rate schedule segments (effective_from) with no overlap
+- [x] Budget Line simplified; Allowance line_kind implemented
+- [x] Budget Forecast refresh idempotent (source_key)
+- [x] Variance/Exception entries implemented (delta + allowance spend)
+- [x] All main reports rewritten (no amendments, no portfolio buckets)
+- [x] Overview chart replaced (same purpose, new data source)
+- [x] Workspace cleaned (no removed doctypes visible)
+- [ ] Repo grep must hit zero (section 8) — pending cleanup of legacy references in docs/log dumps
+- [ ] Tests and verify gates pass (new tests added; suite not run in this session)
 
 ---
 

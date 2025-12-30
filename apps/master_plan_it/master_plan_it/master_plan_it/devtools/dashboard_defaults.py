@@ -18,9 +18,9 @@ def apply_chart_filters(site: str = None):
 	set_filters("MPIT Plan Delta by Category", {"year": default_year, "top_n": 10})
 
 	# Report charts (filters are passed through to report)
-	set_filters("MPIT Approved Budget vs Actual", {"year": default_year})
-	set_filters("MPIT Current Budget vs Actual", {"year": default_year})
-	set_filters("MPIT Projects Planned vs Actual", {"year": default_year})
+	set_filters("MPIT Baseline vs Exceptions", {"year": default_year})
+	set_filters("MPIT Current Plan vs Exceptions", {"year": default_year})
+	set_filters("MPIT Projects Planned vs Exceptions", {"year": default_year})
 	set_filters("MPIT Renewals Window (by Month)", {"year": default_year})
 
 	frappe.db.commit()

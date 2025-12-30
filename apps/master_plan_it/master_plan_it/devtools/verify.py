@@ -30,18 +30,18 @@ REQUIRED_DOCTYPES = [
 REQUIRED_ROLES = ["vCIO Manager", "Client Editor", "Client Viewer"]
 WORKSPACE_NAME = "Master Plan IT"
 REQUIRED_REPORTS = [
-    "MPIT Approved Budget vs Actual",
-    "MPIT Current Budget vs Actual",
+    "MPIT Baseline vs Exceptions",
+    "MPIT Current Plan vs Exceptions",
     "MPIT Renewals Window",
-    "MPIT Projects Planned vs Actual",
+    "MPIT Projects Planned vs Exceptions",
 ]
 REQUIRED_DASHBOARD = "Master Plan IT Overview"
 REQUIRED_DASHBOARD_CHARTS = [
-    "MPIT Approved Budget vs Actual",
-    "MPIT Current Budget vs Actual",
+    "MPIT Baseline vs Exceptions",
+    "MPIT Current Plan vs Exceptions",
     "MPIT Plan Delta by Category",
     "MPIT Renewals Window (by Month)",
-    "MPIT Projects Planned vs Actual",
+    "MPIT Projects Planned vs Exceptions",
 ]
 REQUIRED_NUMBER_CARDS = [
     "Renewals 30d",

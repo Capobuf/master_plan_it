@@ -194,7 +194,7 @@ Key views:
 - Project view (planned vs quoted vs expected vs deltas/savings)
 - Allowance remaining (per cost center)
 
-The existing “Monthly Budget vs Actual” report must be rewritten to:
+The existing “Monthly Plan vs Exceptions” report must be rewritten to:
 - include contract rate segments correctly
 - include spread contracts as monthly accruals across years
 - stop using annual/12 blindly
@@ -231,4 +231,3 @@ These were previously discussed and are considered locked for V2.0:
 - net is master; gross selectable in views
 - caps are implemented as allowance budget lines (manual per year)
 - variance entries exist; full actual ledger is not required
-

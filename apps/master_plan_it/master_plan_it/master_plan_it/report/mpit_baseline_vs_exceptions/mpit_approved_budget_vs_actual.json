@@ -13,11 +13,11 @@
  "modified": "2025-12-24 20:00:51.255638",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
- "name": "MPIT Approved Budget vs Actual",
+ "name": "MPIT Baseline vs Exceptions",
  "owner": "Administrator",
  "prepared_report": 0,
  "ref_doctype": "MPIT Budget",
- "report_name": "MPIT Approved Budget vs Actual",
+ "report_name": "MPIT Baseline vs Exceptions",
  "report_type": "Script Report",
  "roles": [
   {

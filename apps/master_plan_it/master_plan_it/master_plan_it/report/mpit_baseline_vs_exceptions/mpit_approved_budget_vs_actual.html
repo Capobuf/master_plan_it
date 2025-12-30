@@ -3,12 +3,12 @@
 <head>
     <meta charset="utf-8">
     {#
-        MPIT Current Budget vs Actual - Report Print Format
+        MPIT Baseline vs Exceptions - Report Print Format
         Dynamic template supporting print_profile, print_orientation, print_density filters.
         
         Profiles:
-        - Standard: budget, year, category, current_budget, actual_amount, variance
-        - Compact: budget, category, current_budget, actual_amount, variance
+        - Standard: budget, year, category, budget_amount, actual_amount, variance
+        - Compact: budget, category, budget_amount, actual_amount, variance
         - All: all columns
     #}
     {%- set profile = (filters.print_profile or "Standard")|string %}
@@ -17,8 +17,8 @@
     
     {# Define column profiles by fieldname #}
     {%- set profile_columns = {
-        "Standard": ["budget", "year", "category", "current_budget", "actual_amount", "variance"],
-        "Compact": ["budget", "category", "current_budget", "actual_amount", "variance"],
+        "Standard": ["budget", "year", "category", "budget_amount", "actual_amount", "variance"],
+        "Compact": ["budget", "category", "budget_amount", "actual_amount", "variance"],
         "All": []
     } %}
     
@@ -156,7 +156,7 @@
 </head>
 <body>
     <div class="report-header">
-        <h2>{{ _("Current Budget vs Actual") }}</h2>
+        <h2>{{ _("Baseline vs Exceptions") }}</h2>
     </div>
 
     <div class="report-filters">

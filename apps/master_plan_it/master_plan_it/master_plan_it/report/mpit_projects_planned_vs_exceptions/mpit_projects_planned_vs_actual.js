@@ -1,32 +1,20 @@
 // Copyright (c) 2025, DOT and contributors
 // For license information, please see license.txt
 
-frappe.query_reports["MPIT Approved Budget vs Actual"] = {
+frappe.query_reports["MPIT Projects Planned vs Exceptions"] = {
 	filters: [
 		// Business filters
+		{
+			fieldname: "project",
+			label: __("Project"),
+			fieldtype: "Link",
+			options: "MPIT Project"
+		},
 		{
 			fieldname: "year",
 			label: __("Year"),
 			fieldtype: "Link",
 			options: "MPIT Year"
-		},
-		{
-			fieldname: "budget",
-			label: __("Budget"),
-			fieldtype: "Link",
-			options: "MPIT Budget"
-		},
-		{
-			fieldname: "category",
-			label: __("Category"),
-			fieldtype: "Link",
-			options: "MPIT Category"
-		},
-		{
-			fieldname: "vendor",
-			label: __("Vendor"),
-			fieldtype: "Link",
-			options: "MPIT Vendor"
 		},
 		// Print filters
 		{

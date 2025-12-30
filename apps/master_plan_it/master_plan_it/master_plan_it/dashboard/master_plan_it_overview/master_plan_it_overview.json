@@ -4,14 +4,14 @@
   "chart_options": null,
   "charts": [
    {
-    "chart": "MPIT Current Budget vs Actual",
+    "chart": "MPIT Current Plan vs Exceptions",
     "parent": "Master Plan IT Overview",
     "parentfield": "charts",
     "parenttype": "Dashboard",
     "width": "Half"
    },
    {
-    "chart": "MPIT Approved Budget vs Actual",
+    "chart": "MPIT Baseline vs Exceptions",
     "parent": "Master Plan IT Overview",
     "parentfield": "charts",
     "parenttype": "Dashboard",
@@ -25,7 +25,7 @@
    "width": "Half"
   },
    {
-    "chart": "MPIT Projects Planned vs Actual",
+    "chart": "MPIT Projects Planned vs Exceptions",
     "parent": "Master Plan IT Overview",
     "parentfield": "charts",
     "parenttype": "Dashboard",
