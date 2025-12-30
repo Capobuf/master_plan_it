@@ -1,4 +1,4 @@
-# Budget Import Template (V1)
+# Budget Import Template (Budget Lines)
 
 Obiettivo: raccogliere righe Budget pronte per l’inserimento manuale, con gli stessi campi chiave del doctype.
 
@@ -12,19 +12,16 @@ Obiettivo: raccogliere righe Budget pronte per l’inserimento manuale, con gli 
 - `category` (obbligatorio): nome categoria.
 - `vendor` (facoltativo): nome vendor.
 - `description` (obbligatorio): testo breve.
-- `recurrence_rule` (obbligatorio): `Monthly` | `Quarterly` | `Annual` | `Custom` | `None`.
-- `custom_period_months` (richiesto solo se `recurrence_rule=Custom`): intero 1-12.
+- `recurrence_rule` (obbligatorio): `Monthly` | `Quarterly` | `Annual` | `None`.
 - `amount` (obbligatorio): importo della linea (net o gross in base alla colonna successiva).
 - `amount_includes_vat` (obbligatorio): `1` se l’importo include IVA, `0` altrimenti.
 - `vat_rate` (obbligatorio): percentuale IVA (es. `22`), `0` per esenzione.
 - `period_start_date` / `period_end_date` (facoltativi): date ISO `YYYY-MM-DD`; usate per l’overlap con l’anno MPIT.
 - `contract` / `project` (facoltativi): link ai rispettivi record se già esistenti.
-- `is_portfolio_bucket` (facoltativo, default 0): `1` se la riga rappresenta un bucket portfolio.
 
 ## Esempi validi
 - OPEX mensile: budget `BUD-2025-01`, category Connectivity, vendor TIM, 104 €/mese, includes=1, vat_rate=22, recurrence_rule=Monthly.
 - CAPEX annuale senza IVA: budget `BUD-2025-02`, category Hardware, vendor vuoto, 5000 €, includes=0, vat_rate=0, recurrence_rule=Annual.
-- Portfolio bucket: impostare `is_portfolio_bucket=1` per la riga dedicata al portafoglio.
 
 ## Preflight rapido (opzionale)
 ```python
@@ -38,8 +35,6 @@ with open(path) as f:
             errors.append((i, "budget mancante"))
         if not row["category"]:
             errors.append((i, "category mancante"))
-        if row.get("recurrence_rule") == "Custom" and not row.get("custom_period_months"):
-            errors.append((i, "custom_period_months richiesto per Custom"))
         try:
             float(row["amount"])
             float(row["vat_rate"])

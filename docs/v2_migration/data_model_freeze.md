@@ -9,9 +9,9 @@ Source paths inspected on 2025-xx-xx (no edits performed).
 
 ## MPIT Budget Line — apps/master_plan_it/master_plan_it/master_plan_it/doctype/mpit_budget_line/mpit_budget_line.json
 - Meta: child table.
-- Fields: category (reqd), vendor, description, qty, unit_price, monthly_amount, annual_amount, amount_includes_vat, vat_rate, amount_net/vat/gross, recurrence_rule (Monthly/Quarterly/Annual/Custom/None), custom_period_months, period_start/end_date, annual_net/vat/gross, contract, project, baseline_expense, cost_type (CAPEX/OPEX), is_portfolio_bucket, is_active.
+- Fields: category (reqd), vendor, description, qty, unit_price, monthly_amount, annual_amount, amount_includes_vat, vat_rate, amount_net/vat/gross, recurrence_rule (Monthly/Quarterly/Annual/None), period_start/end_date, annual_net/vat/gross, contract, project, baseline_expense, cost_type (CAPEX/OPEX), is_active.
 - Duplicated annual_net/vat/gross entries in JSON (appears twice).
-- Missing for V2: line_kind, source_key (read-only), is_generated, cost_center, fetch rules from contract/project, removal of baseline_expense link, removal of custom_period_months/recurrence Custom, allowance semantics.
+- Missing for V2: line_kind, source_key (read-only), is_generated, cost_center, fetch rules from contract/project, removal of baseline_expense link, removal of portfolio remnants, allowance semantics.
 
 ## MPIT Contract — apps/master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 - Meta: editable_grid=1.
@@ -31,7 +31,7 @@ Source paths inspected on 2025-xx-xx (no edits performed).
 - Missing: category link, status choices need to be Informational/Approved (default Informational, approval restricted), cost_center if needed.
 
 ## MPIT Settings — apps/master_plan_it/master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
-- Fields: currency (reqd), renewal_window_days, portfolio_warning_threshold_pct, budget_naming_series.
+- Fields: currency (reqd), renewal_window_days, budget_naming_series.
 - Missing: V1-only portfolio threshold to remove; any V2 refresh settings not present (none specified).
 
 ## MPIT Actual Entry — apps/master_plan_it/master_plan_it/master_plan_it/doctype/mpit_actual_entry/mpit_actual_entry.json

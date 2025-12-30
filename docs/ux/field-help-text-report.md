@@ -53,7 +53,6 @@
 - vendor: Select the vendor for this line.
 - description: Describe this budget line.
 - recurrence_rule: Choose how this amount recurs for annualization.
-- custom_period_months: Number of months per cycle when using a Custom recurrence.
 - period_start_date: Start date of the period used to calculate overlap with the budget year.
 - period_end_date: End date of the period used to calculate overlap with the budget year.
 - amount: Enter the budgeted amount; use net or gross per the VAT setting.
@@ -68,7 +67,6 @@
 - annual_vat: Calculated automatically as the annualized VAT amount.
 - annual_gross: Calculated automatically as the annualized gross amount.
 - cost_type: Choose whether the cost is CAPEX or OPEX.
-- is_portfolio_bucket: If enabled, this line acts as a portfolio bucket.
 - is_active: If enabled, the budget line is active.
 
 ### MPIT Category
@@ -154,7 +152,6 @@
 
 - currency: Select the default currency for Master Plan IT calculations.
 - renewal_window_days: Days before renewal dates treated as the renewal window.
-- portfolio_warning_threshold_pct: Percentage threshold used for portfolio warnings.
 
 ### MPIT User Preferences
 

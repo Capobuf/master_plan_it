@@ -17,12 +17,11 @@ from __future__ import annotations
 from frappe.utils import flt
 
 
-def get_recurrence_multiplier(recurrence_rule: str, custom_period_months: int | None = None) -> int:
+def get_recurrence_multiplier(recurrence_rule: str) -> int:
     """Return the number of periods per year for a given recurrence rule.
     
     Args:
-        recurrence_rule: Monthly, Quarterly, Annual, Custom, None
-        custom_period_months: Number of months per period (for Custom rule)
+        recurrence_rule: Monthly, Quarterly, Annual, None
     
     Returns:
         Number of periods per year (e.g., 12 for Monthly, 4 for Quarterly)
@@ -33,8 +32,6 @@ def get_recurrence_multiplier(recurrence_rule: str, custom_period_months: int | 
         return 4
     elif recurrence_rule == "Annual":
         return 1
-    elif recurrence_rule == "Custom" and custom_period_months:
-        return max(1, 12 // custom_period_months)
     else:  # None or unrecognized
         return 1
 
@@ -45,7 +42,6 @@ def compute_amounts(
     monthly_amount: float | None,
     annual_amount: float | None,
     recurrence_rule: str | None = "Monthly",
-    custom_period_months: int | None = None,
 ) -> dict:
     """Compute monthly and annual amounts from input values.
     
@@ -60,7 +56,6 @@ def compute_amounts(
         monthly_amount: Monthly amount (input or calculated)
         annual_amount: Annual amount (input or calculated)
         recurrence_rule: How often the cost recurs
-        custom_period_months: Custom period in months
     
     Returns:
         dict with keys: monthly_amount, annual_amount
@@ -70,7 +65,7 @@ def compute_amounts(
     monthly_amount = flt(monthly_amount)
     annual_amount = flt(annual_amount)
     
-    multiplier = get_recurrence_multiplier(recurrence_rule, custom_period_months)
+    multiplier = get_recurrence_multiplier(recurrence_rule)
     
     # Priority 1: Calculate from qty × unit_price
     if unit_price > 0:
@@ -87,11 +82,6 @@ def compute_amounts(
         elif recurrence_rule == "Annual":
             # unit_price is per year
             computed_annual = flt(line_total_per_period, 2)
-            computed_monthly = flt(computed_annual / 12, 2)
-        elif recurrence_rule == "Custom" and custom_period_months:
-            # unit_price is per custom period
-            periods_per_year = 12 / custom_period_months
-            computed_annual = flt(line_total_per_period * periods_per_year, 2)
             computed_monthly = flt(computed_annual / 12, 2)
         else:
             # None or unknown: treat as one-time/annual
@@ -203,7 +193,6 @@ def compute_line_amounts(
     vat_rate: float | None,
     amount_includes_vat: bool = False,
     recurrence_rule: str | None = "Monthly",
-    custom_period_months: int | None = None,
     overlap_months: int = 12,
 ) -> dict:
     """Compute all amounts for a budget line or expense.
@@ -218,7 +207,6 @@ def compute_line_amounts(
         vat_rate: VAT rate as percentage
         amount_includes_vat: Whether input amounts include VAT
         recurrence_rule: Recurrence rule for unit_price calculation
-        custom_period_months: Custom period months
         overlap_months: Number of months the period overlaps with fiscal year (1-12)
     
     Returns:
@@ -231,7 +219,6 @@ def compute_line_amounts(
         monthly_amount=monthly_amount,
         annual_amount=annual_amount,
         recurrence_rule=recurrence_rule,
-        custom_period_months=custom_period_months,
     )
     
     # Step 2: Compute VAT split based on annual amount

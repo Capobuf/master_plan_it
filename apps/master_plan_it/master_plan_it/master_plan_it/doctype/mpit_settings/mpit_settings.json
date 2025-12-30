@@ -8,7 +8,6 @@
  "field_order": [
   "currency",
   "renewal_window_days",
-  "portfolio_warning_threshold_pct",
   "section_naming",
   "budget_naming_series"
  ],
@@ -28,13 +27,6 @@
    "fieldtype": "Int",
    "description": "Days before renewal dates treated as the renewal window.",
    "label": "Renewal Window Days"
-  },
-  {
-   "default": "100",
-   "fieldname": "portfolio_warning_threshold_pct",
-   "fieldtype": "Int",
-   "description": "Percentage threshold used for portfolio warnings.",
-   "label": "Portfolio Warning Threshold %"
   },
   {
    "fieldname": "section_naming",

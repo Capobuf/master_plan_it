@@ -44,10 +44,10 @@ Arrotondamento:
 
 ## 3) Annualizzazione (CHIUSO)
 
-Recurrence: `Monthly, Quarterly, Annual, Custom, None`
+Recurrence: `Monthly, Quarterly, Annual, None`
 
 Overlap:
-- calcolare mesi di overlap tra anno del Budget.year (MPIT Year start/end) e range riga
+- calcolare mesi di overlap tra anno del Budget.year (MPIT Year start/end) e range riga (mesi toccati, non solo completi)
 - se overlap = 0 → blocco salvataggio (regola A)
 
 Regole:
@@ -55,8 +55,6 @@ Regole:
 - Quarterly: annual = amount * (overlap_months / 3)
 - Annual: annual = amount * (overlap_months / 12)
 - None: one-off → annual = amount (se overlap > 0)
-- Custom (Option A): richiede `custom_period_months` > 0
-  - annual = amount * (overlap_months / custom_period_months)
 
 Applicazione:
 - normalizzare net/vat/gross prima
@@ -158,7 +156,6 @@ In exported DocTypes (Budget Line, Actual Entry, Project Quote):
 annual_net = annualization.annualize(
     line.amount_net,  # ← Sempre popolato dal dual-mode controller
     line.recurrence_rule or "None",
-    line.custom_period_months,
     overlap_months_count
 )
 ```

@@ -1,9 +1,9 @@
 # Logic freeze (GATE 0.C)
 
 ## Annualization / overlap (to be rewritten)
-- apps/master_plan_it/master_plan_it/annualization.py: `overlap_months` counts only complete calendar months (excludes partials), contrary to V2 “months touched”. `annualize` supports Custom recurrence and uses overlap months to pro-rate. `validate_recurrence_rule` enforces Custom needing `custom_period_months` and 1..12 bounds.
-- apps/master_plan_it/master_plan_it/amounts.py: `compute_line_amounts` scales net/vat/gross by `overlap_months/12`. Relies on `compute_amounts` with recurrence Monthly/Quarterly/Annual/Custom/None and defaults annualization if no period dates. Uses annual_amount as master for VAT split.
-- apps/master_plan_it/master_plan_it/master_plan_it/doctype/mpit_budget/mpit_budget.py: validates recurrence per line, computes overlap via `annualization.overlap_months` (full months only), blocks save if zero overlap, defaults to 12 months when no period dates, uses `amounts.compute_line_amounts` to populate monthly/annual/net/vat/gross and totals. No concept of Forecast/Baseline split or refresh from sources.
+- apps/master_plan_it/master_plan_it/annualization.py: `overlap_months` now counts calendar months touched; recurrence supports Monthly/Quarterly/Annual/None (Custom removed). `annualize` multiplies by overlap months; `validate_recurrence_rule` blocks unsupported values.
+- apps/master_plan_it/master_plan_it/amounts.py: `compute_line_amounts` scales net/vat/gross by `overlap_months/12`. Relies on `compute_amounts` with recurrence Monthly/Quarterly/Annual/None and defaults annualization if no period dates. Uses annual_amount as master for VAT split.
+- apps/master_plan_it/master_plan_it/master_plan_it/doctype/mpit_budget/mpit_budget.py: validates recurrence per line, computes overlap via `annualization.overlap_months` (months touched), blocks save if zero overlap, defaults to 12 months when no period dates, uses `amounts.compute_line_amounts` to populate monthly/annual/net/vat/gross and totals. No concept of Forecast/Baseline split or refresh from sources.
 
 ## MPIT Actual Entry
 - apps/master_plan_it/master_plan_it/master_plan_it/doctype/mpit_actual_entry/mpit_actual_entry.py: on validate sets year from posting_date (lookup MPIT Year), computes VAT split via tax helpers, no entry_kind, no cost_center, no status-based read-only, no XOR contract/project enforcement. Reports currently treat entries as “actuals”.

@@ -6,7 +6,6 @@ Naming convention: all DocTypes are prefixed `MPIT`.
 ### MPIT Settings (Single)
 - currency (Link: Currency)
 - renewal_window_days (Int, default 90)
-- portfolio_warning_threshold_pct (Int, default 100)
 
 All monetary fields use the single currency configured in MPIT Settings; documents do not store their own currency choice.
 
@@ -74,7 +73,6 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - amount_gross (Currency, read-only)
 - cost_type (Select: CAPEX / OPEX)
 - recurrence (Select) + start_date/end_date (Date)
-- is_portfolio_bucket (Check)
 - is_active (Check)
 
 ## Actuals

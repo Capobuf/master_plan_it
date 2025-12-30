@@ -25,7 +25,6 @@
   "amount_gross",
   "section_recurrence",
   "recurrence_rule",
-  "custom_period_months",
   "recurrence_col_break",
   "period_start_date",
   "period_end_date",
@@ -38,7 +37,6 @@
   "project",
   "section_flags",
   "cost_type",
-  "is_portfolio_bucket",
   "is_active"
  ],
  "fields": [
@@ -177,14 +175,7 @@
    "fieldtype": "Select",
    "description": "How often this cost recurs. Used with Unit Price to calculate amounts.",
    "label": "Recurrence Rule",
-   "options": "Monthly\nQuarterly\nAnnual\nCustom\nNone"
-  },
-  {
-   "depends_on": "eval:doc.recurrence_rule=='Custom'",
-   "fieldname": "custom_period_months",
-   "fieldtype": "Int",
-   "description": "Number of months per cycle when using a Custom recurrence.",
-   "label": "Custom Period (Months)"
+   "options": "Monthly\nQuarterly\nAnnual\nNone"
   },
   {
    "fieldname": "recurrence_col_break",
@@ -287,13 +278,6 @@
    "description": "Choose whether the cost is CAPEX or OPEX.",
    "label": "Cost Type",
    "options": "CAPEX\nOPEX"
-  },
-  {
-   "default": "0",
-   "fieldname": "is_portfolio_bucket",
-   "fieldtype": "Check",
-   "description": "If enabled, this line acts as a portfolio bucket.",
-   "label": "Is Portfolio Bucket"
   },
   {
    "default": "1",

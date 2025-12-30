@@ -48,10 +48,7 @@ class MPITBudget(Document):
 				line.vat_rate = default_vat
 			
 			# Validate recurrence rule consistency
-			annualization.validate_recurrence_rule(
-				line.recurrence_rule,
-				line.custom_period_months
-			)
+			annualization.validate_recurrence_rule(line.recurrence_rule)
 			
 			# Calculate overlap months for annualization
 			if line.period_start_date and line.period_end_date:
@@ -80,7 +77,6 @@ class MPITBudget(Document):
 				monthly_amount=flt(line.monthly_amount),
 				annual_amount=flt(line.annual_amount),
 				recurrence_rule=line.recurrence_rule or "Monthly",
-				custom_period_months=line.custom_period_months,
 				vat_rate=flt(line.vat_rate),
 				amount_includes_vat=bool(line.amount_includes_vat),
 				overlap_months=overlap_months_count

@@ -62,36 +62,6 @@ def _get_data(filters) -> list[dict]:
 		as_dict=True,
 	)
 
-	amend_conditions = ["ba.docstatus = 1"]
-	if filters.get("budget"):
-		amend_conditions.append("ba.budget = %(budget)s")
-	if filters.get("category"):
-		amend_conditions.append("al.category = %(category)s")
-	if filters.get("vendor"):
-		amend_conditions.append("al.vendor = %(vendor)s")
-	if filters.get("year"):
-		amend_conditions.append("b.year = %(year)s")
-
-	amend_where = " AND ".join(amend_conditions)
-
-	amend_rows = frappe.db.sql(
-		f"""
-		SELECT
-			ba.budget AS budget,
-			b.year AS year,
-			al.category AS category,
-			al.vendor AS vendor,
-			SUM(COALESCE(al.delta_amount_net, al.delta_amount)) AS amendment_delta
-		FROM `tabMPIT Budget Amendment` ba
-		JOIN `tabMPIT Budget` b ON b.name = ba.budget
-		JOIN `tabMPIT Amendment Line` al ON al.parent = ba.name
-		WHERE {amend_where}
-		GROUP BY ba.budget, b.year, al.category, al.vendor
-		""",
-		params,
-		as_dict=True,
-	)
-
 	actual_conditions = ["1=1"]
 	if filters.get("year"):
 		actual_conditions.append("year = %(year)s")
@@ -114,10 +84,9 @@ def _get_data(filters) -> list[dict]:
 	)
 
 	base_map = {(r["budget"], r["year"], r["category"], r.get("vendor")): r for r in base_rows}
-	amend_map = {(r["budget"], r["year"], r["category"], r.get("vendor")): r for r in amend_rows}
 	actual_map = {(r["year"], r["category"], r.get("vendor")): r["actual_amount"] for r in actual_rows}
 
-	keys = set(base_map.keys()) | set(amend_map.keys())
+	keys = set(base_map.keys())
 	result: list[dict] = []
 	for key in sorted(
 		keys,
@@ -125,10 +94,9 @@ def _get_data(filters) -> list[dict]:
 	):
 		budget, year, category, vendor = key
 		base = base_map.get(key, {})
-		amend = amend_map.get(key, {})
 		baseline_amount = float(base.get("baseline_amount") or 0)
-		amendment_delta = float(amend.get("amendment_delta") or 0)
-		current_budget = baseline_amount + amendment_delta
+		amendment_delta = 0.0
+		current_budget = baseline_amount
 		actual_amount = float(actual_map.get((year, category, vendor), 0) or 0)
 		variance = actual_amount - current_budget
 		result.append({

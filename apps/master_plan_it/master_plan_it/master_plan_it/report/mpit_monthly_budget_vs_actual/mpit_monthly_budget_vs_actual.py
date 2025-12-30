@@ -11,12 +11,10 @@ def execute(filters=None):
 
 	_validate_filters(filters)
 	year = int(filters.year)
-	include_portfolio = frappe.utils.cint(filters.get("include_portfolio", 1))
 	from_month, to_month = _month_range(filters)
 
-	portfolio_categories = _get_portfolio_categories(year) if not include_portfolio else set()
-	planned_annual = _get_planned_annual_total(filters, portfolio_categories)
-	actual_by_month = _get_actuals_by_month(filters, portfolio_categories)
+	planned_annual = _get_planned_annual_total(filters)
+	actual_by_month = _get_actuals_by_month(filters)
 
 	rows = []
 	planned_cum = actual_cum = 0.0
@@ -74,7 +72,7 @@ def _build_columns() -> list[str]:
 	]
 
 
-def _get_planned_annual_total(filters, portfolio_categories: set[str]) -> float:
+def _get_planned_annual_total(filters) -> float:
 	params = {"year": filters.year}
 	conditions = ["b.docstatus = 1", "b.year = %(year)s"]
 	line_filters = []
@@ -91,9 +89,6 @@ def _get_planned_annual_total(filters, portfolio_categories: set[str]) -> float:
 	if filters.get("contract"):
 		line_filters.append("bl.contract = %(contract)s")
 		params["contract"] = filters.contract
-	if portfolio_categories:
-		line_filters.append("bl.category NOT IN %(portfolio)s")
-		params["portfolio"] = tuple(portfolio_categories)
 
 	where = " AND ".join(conditions + line_filters)
 
@@ -108,38 +103,10 @@ def _get_planned_annual_total(filters, portfolio_categories: set[str]) -> float:
 		as_dict=True,
 	)
 	base_total = float(base_rows[0]["planned"] or 0) if base_rows else 0.0
-
-	amend_conditions = ["ba.docstatus = 1", "b.year = %(year)s"]
-	if filters.get("category"):
-		amend_conditions.append("al.category = %(category)s")
-	if filters.get("vendor"):
-		amend_conditions.append("al.vendor = %(vendor)s")
-	if filters.get("project"):
-		amend_conditions.append("al.project = %(project)s")
-	if filters.get("contract"):
-		amend_conditions.append("al.contract = %(contract)s")
-	if portfolio_categories:
-		amend_conditions.append("al.category NOT IN %(portfolio)s")
-
-	amend_where = " AND ".join(amend_conditions)
-
-	amend_rows = frappe.db.sql(
-		f"""
-		SELECT SUM(COALESCE(al.delta_amount_net, al.delta_amount)) AS delta_planned
-		FROM `tabMPIT Budget Amendment` ba
-		JOIN `tabMPIT Budget` b ON b.name = ba.budget
-		JOIN `tabMPIT Amendment Line` al ON al.parent = ba.name
-		WHERE {amend_where}
-		""",
-		params,
-		as_dict=True,
-	)
-	amend_total = float(amend_rows[0]["delta_planned"] or 0) if amend_rows else 0.0
-
-	return base_total + amend_total
+	return base_total
 
 
-def _get_actuals_by_month(filters, portfolio_categories: set[str]) -> dict[int, float]:
+def _get_actuals_by_month(filters) -> dict[int, float]:
 	params = {"year": filters.year}
 	conditions = ["year = %(year)s"]
 
@@ -155,9 +122,6 @@ def _get_actuals_by_month(filters, portfolio_categories: set[str]) -> dict[int, 
 	if filters.get("contract"):
 		conditions.append("contract = %(contract)s")
 		params["contract"] = filters.contract
-	if portfolio_categories:
-		conditions.append("category NOT IN %(portfolio)s")
-		params["portfolio"] = tuple(portfolio_categories)
 
 	where = " AND ".join(conditions)
 
@@ -173,21 +137,6 @@ def _get_actuals_by_month(filters, portfolio_categories: set[str]) -> dict[int, 
 	)
 
 	return {int(r["month"]): float(r["actual"] or 0) for r in rows}
-
-
-def _get_portfolio_categories(year: int) -> set[str]:
-	rows = frappe.db.sql(
-		"""
-		SELECT DISTINCT bl.category
-		FROM `tabMPIT Budget` b
-		JOIN `tabMPIT Budget Line` bl ON bl.parent = b.name
-		WHERE b.docstatus = 1
-		  AND b.year = %(year)s
-		  AND COALESCE(bl.is_portfolio_bucket, 0) = 1
-		""",
-		{"year": year},
-	)
-	return {r[0] for r in rows if r and r[0]}
 
 
 def _build_summary(planned_cum: float, actual_cum: float, variance_cum: float) -> list[dict]:
