@@ -36,7 +36,6 @@
   "section_links",
   "contract",
   "project",
-  "baseline_expense",
   "section_flags",
   "cost_type",
   "is_portfolio_bucket",
@@ -274,13 +273,6 @@
    "description": "Select the related project, if applicable.",
    "label": "Project",
    "options": "MPIT Project"
-  },
-  {
-   "fieldname": "baseline_expense",
-   "fieldtype": "Link",
-   "description": "Link to the baseline expense this line is based on.",
-   "label": "Baseline Expense",
-   "options": "MPIT Baseline Expense"
   },
   {
    "fieldname": "section_flags",

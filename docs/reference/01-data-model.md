@@ -32,22 +32,6 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - notes (Text)
 - is_active (Check)
 
-## Baseline
-### MPIT Baseline Expense
-- year (Link: MPIT Year) [recommended mandatory]
-- posting_date (Date)
-- category (Link: MPIT Category) [mandatory]
-- vendor (Link: MPIT Vendor) [optional]
-- description (Small Text)
-- amount (Currency)
-- expense_kind (Select: One-off / Subscription / Annual Renewal / Contract)
-- recurrence (Select: Monthly / Quarterly / Annual / Custom / None)
-- contract_start (Date, optional)
-- contract_end (Date, optional)
-- auto_renew (Check)
-- notice_days (Int)
-- status (Select: In Review / Needs Clarification / Validated / Archived)
-
 ## Contracts
 ### MPIT Contract
 - title (Data)
@@ -63,7 +47,6 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - current_amount (Currency, optional)
 - status (Select: Draft / Active / Pending Renewal / Renewed / Cancelled / Expired)
 - owner_user (Link: User, optional)
-- source_baseline_expense (Link: MPIT Baseline Expense, optional)
 - attachments (native Attach)
 
 ## Budgeting
@@ -82,7 +65,6 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - vendor (Link: MPIT Vendor, optional)
 - contract (Link: MPIT Contract, optional)
 - project (Link: MPIT Project, optional)
-- baseline_expense (Link: MPIT Baseline Expense, optional)
 - description (Small Text)
 - amount (Currency)
 - amount_includes_vat (Check)

@@ -37,7 +37,6 @@ Da lì hai scorciatoie ai principali oggetti:
 - Budgets, Budget Amendments
 - Actual Entries
 - Contracts, Projects
-- Baseline Expenses
 - Categories, Vendors
 - Dashboard: **Master Plan IT Overview** (numero card e grafici pronti)
 
@@ -74,32 +73,27 @@ La workspace è visibile solo agli utenti con uno dei ruoli sopra (o System Mana
 
 ## 4) Flussi operativi (V1)
 
-### A) Baseline (storico spese)
-Usa **Data Import** su `MPIT Baseline Expense`:
-- Compila almeno: `year`, `category`, `amount`
-- `status` serve per gestire: In Review → Needs Clarification → Validated
-
-### B) Contracts / Renewals
+### A) Contracts / Renewals
 Crea `MPIT Contract` per spese ricorrenti:
 - `vendor`, `category`, `contract_kind`, `next_renewal_date` sono chiave
 - Usa viste Lista/Calendario e filtri salvati per “scadenze 30/60/90gg”
 
-### C) Budget annuale
+### B) Budget annuale
 Crea `MPIT Budget` per anno:
 - Compila la tabella `lines` con righe (category/vendor/amount/descrizione)
 - Il budget è “baseline” annuale; modifiche successive vanno in amendment
 
-### D) Amendments (variazioni post‑baseline)
+### C) Amendments (variazioni post‑baseline)
 Crea `MPIT Budget Amendment` collegato al budget:
 - Compila `lines` con `delta_amount` (positivo/negativo)
 
-### E) Actuals (consuntivi)
+### D) Actuals (consuntivi)
 Inserisci `MPIT Actual Entry`:
 - `posting_date`, `category`, `amount` obbligatori
 - Se utile, collega `contract` e/o `project`
 - Il campo `year` viene valorizzato automaticamente dalla `posting_date` (serve che il relativo `MPIT Year` esista)
 
-### F) Projects (multi‑year)
+### E) Projects (multi‑year)
 Inserisci `MPIT Project`:
 - Aggiungi almeno una riga in `allocations` (anno + planned_amount)
 - Usa `quotes` e `milestones` se utili

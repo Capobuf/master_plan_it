@@ -10,8 +10,7 @@
   "renewal_window_days",
   "portfolio_warning_threshold_pct",
   "section_naming",
-  "budget_naming_series",
-  "baseline_naming_series"
+  "budget_naming_series"
  ],
  "fields": [
   {
@@ -48,15 +47,8 @@
    "fieldtype": "Data",
    "description": "Naming series for Budget documents. Use .YYYY. for year, .##### for sequence.",
    "label": "Budget Naming Series"
-  },
-  {
-   "default": "BAS-.YYYY.-",
-   "fieldname": "baseline_naming_series",
-   "fieldtype": "Data",
-   "description": "Naming series for Baseline Expense documents. Use .YYYY. for year, .##### for sequence.",
-   "label": "Baseline Expense Naming Series"
   }
- ],
+],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,

@@ -18,7 +18,6 @@ REQUIRED_DOCTYPES = [
     "MPIT Vendor",
     "MPIT Category",
     "MPIT Contract",
-    "MPIT Baseline Expense",
     "MPIT Budget",
     "MPIT Budget Line",
     "MPIT Budget Amendment",

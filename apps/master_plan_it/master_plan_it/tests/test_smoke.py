@@ -16,7 +16,6 @@ def test_required_doctypes_exist():
         "MPIT Vendor",
         "MPIT Category",
         "MPIT Contract",
-        "MPIT Baseline Expense",
         "MPIT Budget",
         "MPIT Budget Line",
         "MPIT Actual Entry",

@@ -11,8 +11,7 @@ Sets default values for all Currency fields that now have VAT normalization:
 - _vat = 0 (no VAT for historical records)
 - _gross = amount (gross equals net when VAT is 0)
 
-Affected doctypes (7 total):
-- MPIT Baseline Expense (parent, amount field)
+Affected doctypes:
 - MPIT Actual Entry (parent, amount field)
 - MPIT Contract (parent, current_amount field)
 - MPIT Budget Line (child, amount field)
@@ -29,7 +28,6 @@ import frappe
 def execute():
 	"""Backfill VAT fields for all existing records."""
 	
-	frappe.reload_doc("master_plan_it", "doctype", "mpit_baseline_expense", force=True)
 	frappe.reload_doc("master_plan_it", "doctype", "mpit_actual_entry", force=True)
 	frappe.reload_doc("master_plan_it", "doctype", "mpit_contract", force=True)
 	frappe.reload_doc("master_plan_it", "doctype", "mpit_budget_line", force=True)
@@ -38,7 +36,6 @@ def execute():
 	frappe.reload_doc("master_plan_it", "doctype", "mpit_project_quote", force=True)
 	
 	# Parent doctypes with single Currency field
-	backfill_parent_doctype("MPIT Baseline Expense", "amount")
 	backfill_parent_doctype("MPIT Actual Entry", "amount")
 	backfill_parent_doctype("MPIT Contract", "current_amount")
 	
@@ -56,7 +53,7 @@ def backfill_parent_doctype(doctype, amount_field):
 	Backfill VAT fields for a parent doctype with single Currency field.
 	
 	Args:
-		doctype: Name of the doctype (e.g., "MPIT Baseline Expense")
+		doctype: Name of the doctype (e.g., "MPIT Actual Entry")
 		amount_field: Name of the Currency field (e.g., "amount")
 	"""
 	table_name = f"tab{doctype}"

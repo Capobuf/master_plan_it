@@ -34,9 +34,8 @@
   "tb_notes",
   "notes",
   "attachment",
-  "tb_admin",
-  "source_baseline_expense"
- ],
+  "tb_admin"
+],
  "fields": [
   {
    "fieldname": "tb_overview",
@@ -217,15 +216,8 @@
    "fieldname": "tb_admin",
    "fieldtype": "Tab Break",
    "label": "Admin"
-  },
-  {
-   "fieldname": "source_baseline_expense",
-   "fieldtype": "Link",
-   "description": "Link to the baseline expense that created this contract.",
-   "label": "Source Baseline Expense",
-   "options": "MPIT Baseline Expense"
   }
- ],
+],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],

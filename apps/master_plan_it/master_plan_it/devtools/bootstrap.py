@@ -53,7 +53,6 @@ def _ensure_workspace() -> None:
         {"label": "Actual Entries", "link_to": "MPIT Actual Entry", "type": "DocType"},
         {"label": "Contracts", "link_to": "MPIT Contract", "type": "DocType"},
         {"label": "Projects", "link_to": "MPIT Project", "type": "DocType"},
-        {"label": "Baseline Expenses", "link_to": "MPIT Baseline Expense", "type": "DocType"},
         {"label": "Categories", "link_to": "MPIT Category", "type": "DocType"},
         {"label": "Vendors", "link_to": "MPIT Vendor", "type": "DocType"},
     ]

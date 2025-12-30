@@ -133,7 +133,7 @@ def _compute_vat_split(self):
 
 ### 5.2 Campo Legacy Hidden
 
-In exported DocTypes (Budget Line, Baseline Expense, Actual Entry, Project Quote):
+In exported DocTypes (Budget Line, Actual Entry, Project Quote):
 ```json
 {
   "fieldname": "amount",

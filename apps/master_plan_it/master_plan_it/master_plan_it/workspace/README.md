@@ -6,7 +6,7 @@ Policy breve:
 - Evitare di duplicare lo stesso collegamento sia in `links` che in `shortcuts` per ridurre drift.
 
 Modifiche effettuate:
-- Consolidati i `shortcuts` (preservato `Overview Dashboard` e il report `Current Budget vs Actual`); rimosse voci duplicate (Budgets, Projects, Actual Entries, Budget Amendments, Contracts, Vendors, Categories, Baseline Expense, User Preferences).
+ - Consolidati i `shortcuts` (preservato `Overview Dashboard` e il report `Current Budget vs Actual`); rimosse voci duplicate (Budgets, Projects, Actual Entries, Budget Amendments, Contracts, Vendors, Categories, User Preferences).
 - Rimossi i riferimenti inline ai charts dal `content` (ora si usa il dashboard canonico `Master Plan IT Overview`).
 - Aggiornati i nomi dei chart per coerenza con i report: `MPIT Budget vs Actual (Approved)` → `MPIT Approved Budget vs Actual`, `MPIT Renewals by Month` → `MPIT Renewals Window (by Month)`.
 

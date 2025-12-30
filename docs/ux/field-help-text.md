@@ -23,7 +23,6 @@ Counts per DocType (current totals | with description | meaningful fields missin
 
 - MPIT Actual Entry: 16 | 16 | 0
 - MPIT Amendment Line: 12 | 12 | 0
-- MPIT Baseline Expense: 24 | 24 | 0
 - MPIT Budget: 14 | 9 | 0
 - MPIT Budget Amendment: 7 | 6 | 0
 - MPIT Budget Line: 22 | 22 | 0
