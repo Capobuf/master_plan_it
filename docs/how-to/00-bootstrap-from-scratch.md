@@ -6,4 +6,11 @@
    - `bench --site <site> migrate`
    - `bench --site <site> clear-cache`
 4) Export any Desk customizations back into the canonical folder immediately after making them.
-5) Install hooks will create MPIT Settings and MPIT Year (current + next); verify from Desk after migrate.
+5) Install hooks create MPIT Settings, MPIT Year (current + next), and seed the root Cost Center (“All Cost Centers”); verify from Desk after migrate.
+
+Reports/charts available after migrate:
+- MPIT Current Plan vs Exceptions
+- MPIT Baseline vs Exceptions
+- MPIT Monthly Plan vs Exceptions
+- MPIT Projects Planned vs Exceptions
+- MPIT Plan Delta by Category (chart)

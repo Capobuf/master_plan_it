@@ -18,5 +18,12 @@ Fixtures are standard Frappe exports filtered to Master Plan IT records only. Ke
 - Keep the fixture minimal (doctype, name/role_name, desk_access) so it stays stable between exports.
 
 ## Bootstrap (install hooks)
-- Install hooks (`master_plan_it.setup.install.after_install/after_sync`) create the singleton MPIT Settings document and MPIT Year for the current and next calendar year.
+- Install hooks (`master_plan_it.setup.install.after_install/after_sync`) create the singleton MPIT Settings document, MPIT Year for the current and next calendar year, and seed the root Cost Center (“All Cost Centers”).
 - No devtools “bootstrap” scripts are required for baseline data; verification happens later via Desk after a normal migrate.
+
+## Reports/charts available after migrate
+- MPIT Current Plan vs Exceptions
+- MPIT Baseline vs Exceptions
+- MPIT Monthly Plan vs Exceptions
+- MPIT Projects Planned vs Exceptions
+- MPIT Plan Delta by Category (chart)

@@ -4,4 +4,10 @@
 - Set `INSTALL_APPS=master_plan_it` to install the app during bootstrap.
 - Mount `./apps/master_plan_it` for development; avoid mounting empty `./data/apps`.
 - After bringing up services, apply app changes with `bench --site <site> migrate` and `bench --site <site> clear-cache`.
-- Install hooks create MPIT Settings and MPIT Year (current + next); verify in Desk after migrate. No additional bootstrap scripts are required for baseline data.
+- Install hooks create MPIT Settings, MPIT Year (current + next), and seed the root Cost Center (“All Cost Centers”); verify in Desk after migrate. No additional bootstrap scripts are required for baseline data.
+- Post-migrate, the reports/charts available are:
+  - MPIT Current Plan vs Exceptions
+  - MPIT Baseline vs Exceptions
+  - MPIT Monthly Plan vs Exceptions
+  - MPIT Projects Planned vs Exceptions
+  - MPIT Plan Delta by Category (chart)
