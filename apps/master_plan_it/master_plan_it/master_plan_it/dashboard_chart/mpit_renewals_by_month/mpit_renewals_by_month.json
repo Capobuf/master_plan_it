@@ -1,5 +1,5 @@
 {
- "chart_name": "MPIT Renewals by Month",
+ "chart_name": "MPIT Renewals Window (by Month)",
  "chart_type": "Report",
  "creation": "2025-12-21 19:25:35.339908",
  "currency": "EUR",
@@ -13,7 +13,7 @@
  "modified": "2025-12-22 20:53:26.843285",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
- "name": "MPIT Renewals by Month",
+ "name": "MPIT Renewals Window (by Month)",
  "number_of_groups": 0,
  "owner": "Administrator",
  "report_name": "MPIT Renewals Window",

@@ -39,9 +39,9 @@ REQUIRED_REPORTS = [
 ]
 REQUIRED_DASHBOARD = "Master Plan IT Overview"
 REQUIRED_DASHBOARD_CHARTS = [
-    "MPIT Budget vs Actual (Approved)",
+    "MPIT Approved Budget vs Actual",
     "MPIT Current Budget vs Actual",
-    "MPIT Renewals by Month",
+    "MPIT Renewals Window (by Month)",
     "MPIT Projects Planned vs Actual",
 ]
 REQUIRED_NUMBER_CARDS = [

@@ -1,5 +1,5 @@
 {
- "chart_name": "MPIT Budget vs Actual (Approved)",
+ "chart_name": "MPIT Approved Budget vs Actual",
  "chart_type": "Report",
  "creation": "2025-12-21 19:25:35.283257",
  "currency": "EUR",
@@ -13,7 +13,7 @@
  "modified": "2025-12-22 20:53:26.711425",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
- "name": "MPIT Budget vs Actual (Approved)",
+ "name": "MPIT Approved Budget vs Actual",
  "number_of_groups": 0,
  "owner": "Administrator",
  "report_name": "MPIT Approved Budget vs Actual",

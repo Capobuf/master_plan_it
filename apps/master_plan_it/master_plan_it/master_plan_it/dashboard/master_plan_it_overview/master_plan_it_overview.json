@@ -11,7 +11,7 @@
     "width": "Half"
    },
    {
-    "chart": "MPIT Budget vs Actual (Approved)",
+    "chart": "MPIT Approved Budget vs Actual",
     "parent": "Master Plan IT Overview",
     "parentfield": "charts",
     "parenttype": "Dashboard",
@@ -32,7 +32,7 @@
     "width": "Half"
    },
    {
-    "chart": "MPIT Renewals by Month",
+    "chart": "MPIT Renewals Window (by Month)",
     "parent": "Master Plan IT Overview",
     "parentfield": "charts",
     "parenttype": "Dashboard",

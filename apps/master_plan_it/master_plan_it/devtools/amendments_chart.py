@@ -53,10 +53,10 @@ def ensure_dashboard_links():
 	frappe.conf.developer_mode = 1
 	charts = [
 		{"chart": "MPIT Current Budget vs Actual", "width": "Half"},
-		{"chart": "MPIT Budget vs Actual (Approved)", "width": "Half"},
+		{"chart": "MPIT Approved Budget vs Actual", "width": "Half"},
 		{"chart": "MPIT Amendments Delta (Net) by Category", "width": "Half"},
 		{"chart": "MPIT Projects Planned vs Actual", "width": "Half"},
-		{"chart": "MPIT Renewals by Month", "width": "Half"},
+		{"chart": "MPIT Renewals Window (by Month)", "width": "Half"},
 	]
 
 	dash = frappe.get_doc("Dashboard", "Master Plan IT Overview")
