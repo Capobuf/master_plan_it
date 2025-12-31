@@ -35,7 +35,8 @@ def execute(filters=None):
 
 
 def _get_data(filters):
-	days = cint(filters.get("days") or 90)
+	settings = frappe.get_single("MPIT Settings")
+	days = cint(filters.get("days") or settings.renewal_window_days or 90)
 	include_past = cint(filters.get("include_past") or 0)
 	auto_renew_only = cint(filters.get("auto_renew_only") or 0)
 	start_date = getdate(filters.get("from_date") or nowdate())
@@ -44,7 +45,7 @@ def _get_data(filters):
 	rows = []
 	expired_count = 0
 
-	where = ["next_renewal_date IS NOT NULL"]
+	where = ["COALESCE(next_renewal_date, end_date) IS NOT NULL"]
 	if auto_renew_only:
 		where.append("COALESCE(auto_renew, 0) = 1")
 
@@ -55,7 +56,7 @@ def _get_data(filters):
 			title,
 			vendor,
 			category,
-			next_renewal_date,
+			COALESCE(next_renewal_date, end_date) AS renewal_date,
 			notice_days,
 			auto_renew,
 			status,
@@ -67,7 +68,7 @@ def _get_data(filters):
 	)
 
 	for c in contracts:
-		nrd = getdate(c.next_renewal_date)
+		nrd = getdate(c.renewal_date)
 		is_expired = 1 if nrd < start_date else 0
 
 		# Skip records outside the forward window
@@ -86,7 +87,7 @@ def _get_data(filters):
 			"title": c.title or c.name,
 			"vendor": c.vendor,
 			"category": c.category,
-			"next_renewal_date": c.next_renewal_date,
+			"next_renewal_date": c.renewal_date,
 			"days_to_renewal": days_to,
 			"notice_days": c.notice_days,
 			"auto_renew": c.auto_renew,

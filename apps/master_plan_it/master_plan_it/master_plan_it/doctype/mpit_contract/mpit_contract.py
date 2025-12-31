@@ -18,6 +18,7 @@ class MPITContract(Document):
 		self._compute_spread_end_date()
 		self._validate_rate_schedule()
 		self._compute_rate_vat()
+		self._default_next_renewal_date()
 	
 	def _compute_vat_split(self):
 		"""Compute net/vat/gross for current_amount field with strict VAT validation."""
@@ -103,3 +104,12 @@ class MPITContract(Document):
 			row.amount_net = net
 			row.amount_vat = vat
 			row.amount_gross = gross
+
+	def _default_next_renewal_date(self) -> None:
+		"""Ensure next_renewal_date is present for auto-renew contracts."""
+		if not self.auto_renew:
+			return
+		if self.next_renewal_date:
+			return
+		if self.end_date:
+			self.next_renewal_date = self.end_date

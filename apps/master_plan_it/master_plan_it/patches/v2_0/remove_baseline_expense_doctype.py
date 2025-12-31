@@ -19,4 +19,4 @@ def execute():
 		frappe.delete_doc("DocType", doctype, ignore_missing=True, force=1)
 
 	# Drop table to avoid stray schema
-	frappe.db.sql(f"DROP TABLE IF EXISTS `tab{doctype}`")
+	frappe.db.sql_ddl(f"DROP TABLE IF EXISTS `tab{doctype}`")

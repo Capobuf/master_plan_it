@@ -17,6 +17,9 @@
   "column_break_naming",
   "project_prefix",
   "project_sequence_digits",
+  "column_break_actual",
+  "actual_prefix",
+  "actual_sequence_digits",
   "print_section",
   "show_attachments_in_print"
  ],
@@ -81,11 +84,29 @@
    "label": "Project Prefix"
   },
   {
-   "default": "4",
+   "default": "2",
    "fieldname": "project_sequence_digits",
    "fieldtype": "Int",
    "description": "Number of digits for project sequence numbers.",
    "label": "Project Sequence Digits"
+  },
+  {
+   "fieldname": "column_break_actual",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "AE-",
+   "fieldname": "actual_prefix",
+   "fieldtype": "Data",
+   "description": "Prefix used when generating Exceptions / Allowance Entry names.",
+   "label": "Exceptions / Allowance Prefix"
+  },
+  {
+   "default": "2",
+   "fieldname": "actual_sequence_digits",
+   "fieldtype": "Int",
+   "description": "Number of digits for Exceptions / Allowance Entries.",
+   "label": "Exceptions / Allowance Digits"
   },
   {
    "fieldname": "print_section",

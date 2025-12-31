@@ -8,20 +8,29 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "section_overview",
   "cost_center_name",
   "parent_cost_center",
-  "is_active",
-  "lft",
-  "rgt",
+  "column_overview_right",
   "is_group",
+  "is_active",
+  "section_advanced",
   "old_parent",
-  "parent_mpit_cost_center"
+  "parent_mpit_cost_center",
+  "lft",
+  "rgt"
  ],
  "fields": [
+  {
+   "fieldname": "section_overview",
+   "fieldtype": "Section Break",
+   "label": "Overview"
+  },
   {
    "fieldname": "cost_center_name",
    "fieldtype": "Data",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Cost Center Name",
    "reqd": 1,
    "unique": 1
@@ -29,13 +38,19 @@
   {
    "fieldname": "parent_cost_center",
    "fieldtype": "Link",
+   "in_list_view": 1,
    "label": "Parent Cost Center",
    "options": "MPIT Cost Center"
+  },
+  {
+   "fieldname": "column_overview_right",
+   "fieldtype": "Column Break"
   },
   {
    "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
+   "in_standard_filter": 1,
    "label": "Is Active"
   },
   {
@@ -59,6 +74,12 @@
    "fieldname": "is_group",
    "fieldtype": "Check",
    "label": "Is Group"
+  },
+  {
+   "fieldname": "section_advanced",
+   "fieldtype": "Section Break",
+   "label": "Advanced",
+   "collapsible": 1
   },
   {
    "fieldname": "old_parent",

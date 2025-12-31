@@ -7,11 +7,12 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "section_overview",
+  "line_kind",
+  "source_key",
   "category",
   "vendor",
   "description",
-  "line_kind",
-  "source_key",
   "section_pricing",
   "qty",
   "unit_price",
@@ -40,13 +41,19 @@
   "cost_center",
   "section_flags",
   "cost_type",
+  "is_generated",
   "is_active"
 ],
-"fields": [
+ "fields": [
+  {
+   "fieldname": "section_overview",
+   "fieldtype": "Section Break",
+   "label": "Overview"
+  },
   {
    "fieldname": "line_kind",
    "fieldtype": "Select",
-   "description": "Kind of budget line.",
+   "description": "Sorgente riga (Contract, Project, Allowance cap, Manual).",
    "in_list_view": 1,
    "label": "Line Kind",
    "options": "Contract\nProject\nAllowance\nManual"
@@ -54,7 +61,7 @@
   {
    "fieldname": "source_key",
    "fieldtype": "Data",
-   "description": "Deterministic key for generated lines.",
+   "description": "Chiave generata (solo lettura).",
    "label": "Source Key",
    "read_only": 1,
    "bold": 1
@@ -72,7 +79,7 @@
   {
    "fieldname": "vendor",
    "fieldtype": "Link",
-   "description": "Select the vendor for this line.",
+   "description": "Fornitore (opzionale).",
    "in_list_view": 1,
    "columns": 1,
    "label": "Vendor",
@@ -81,7 +88,7 @@
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "description": "Describe this budget line.",
+   "description": "Descrizione sintetica.",
    "in_list_view": 1,
    "columns": 2,
    "label": "Description"
@@ -151,37 +158,36 @@
    "fieldname": "vat_col_break",
    "fieldtype": "Column Break"
   },
-
-    {
-     "fieldname": "amount_net",
-     "fieldtype": "Currency",
-     "description": "Calculated automatically: annual amount net of VAT.",
-     "label": "Net Amount",
-     "read_only": 1,
-     "columns": 1,
-     "css_class": "text-right",
-     "label_align": "right"
-    },
-    {
-     "fieldname": "amount_vat",
-     "fieldtype": "Currency",
-     "description": "Calculated automatically as the VAT portion.",
-     "label": "VAT Amount",
-     "read_only": 1,
-     "columns": 1,
-     "css_class": "text-right",
-     "label_align": "right"
-    },
-    {
-     "fieldname": "amount_gross",
-     "fieldtype": "Currency",
-     "description": "Calculated automatically as the gross amount.",
-     "label": "Gross Amount",
-     "read_only": 1,
-     "columns": 1,
-     "css_class": "text-right",
-     "label_align": "right"
-    },
+  {
+   "fieldname": "amount_net",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically: annual amount net of VAT.",
+   "label": "Net Amount",
+   "read_only": 1,
+   "columns": 1,
+   "css_class": "text-right",
+   "label_align": "right"
+  },
+  {
+   "fieldname": "amount_vat",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically as the VAT portion.",
+   "label": "VAT Amount",
+   "read_only": 1,
+   "columns": 1,
+   "css_class": "text-right",
+   "label_align": "right"
+  },
+  {
+   "fieldname": "amount_gross",
+   "fieldtype": "Currency",
+   "description": "Calculated automatically as the gross amount.",
+   "label": "Gross Amount",
+   "read_only": 1,
+   "columns": 1,
+   "css_class": "text-right",
+   "label_align": "right"
+  },
   {
    "fieldname": "section_recurrence",
    "fieldtype": "Section Break",
@@ -239,31 +245,6 @@
    "label": "Annual Gross",
    "read_only": 1
   },
-
-    {
-     "fieldname": "annual_net",
-     "fieldtype": "Currency",
-     "description": "Calculated automatically as the annualized net amount.",
-     "label": "Annual Net",
-     "read_only": 1,
-     "columns": 1
-    },
-    {
-     "fieldname": "annual_vat",
-     "fieldtype": "Currency",
-     "description": "Calculated automatically as the annualized VAT amount.",
-     "label": "Annual VAT",
-     "read_only": 1,
-     "columns": 1
-    },
-    {
-     "fieldname": "annual_gross",
-     "fieldtype": "Currency",
-     "description": "Calculated automatically as the annualized gross amount.",
-     "label": "Annual Gross",
-     "read_only": 1,
-     "columns": 1
-    },
   {
    "fieldname": "section_links",
    "fieldtype": "Section Break",
@@ -273,21 +254,21 @@
   {
    "fieldname": "contract",
    "fieldtype": "Link",
-   "description": "Select the related contract, if applicable.",
+   "description": "Solo per line_kind=Contract (read-only se generata).",
    "label": "Contract",
    "options": "MPIT Contract"
   },
   {
    "fieldname": "project",
    "fieldtype": "Link",
-   "description": "Select the related project, if applicable.",
+   "description": "Solo per line_kind=Project (read-only se generata).",
    "label": "Project",
    "options": "MPIT Project"
  },
   {
    "fieldname": "cost_center",
    "fieldtype": "Link",
-   "description": "Select the related cost center; fetched from contract if set.",
+   "description": "Cost center consigliato (obbligatorio di fatto per allowance caps).",
    "fetch_from": "contract.cost_center",
    "fetch_if_empty": 1,
    "label": "Cost Center",
@@ -301,18 +282,19 @@
   },
   {
    "default": "OPEX",
-  "fieldname": "cost_type",
-  "fieldtype": "Select",
-  "description": "Choose whether the cost is CAPEX or OPEX.",
-  "label": "Cost Type",
-  "options": "CAPEX\nOPEX"
- },
+   "fieldname": "cost_type",
+   "fieldtype": "Select",
+   "description": "Choose whether the cost is CAPEX or OPEX.",
+   "label": "Cost Type",
+   "options": "CAPEX\nOPEX"
+  },
   {
    "default": "0",
    "fieldname": "is_generated",
    "fieldtype": "Check",
    "description": "If enabled, this line is generated and should be read-only.",
-   "label": "Is Generated"
+   "label": "Is Generated",
+   "read_only": 1
   },
   {
    "default": "1",

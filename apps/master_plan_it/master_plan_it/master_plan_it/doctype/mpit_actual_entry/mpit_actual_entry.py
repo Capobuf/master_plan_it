@@ -6,11 +6,21 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.model.naming import getseries
 from frappe.utils import flt, getdate
 from master_plan_it import mpit_user_prefs, tax
 
 
 class MPITActualEntry(Document):
+	def autoname(self):
+		"""Generate name using user preferences / settings."""
+		from master_plan_it import mpit_user_prefs
+
+		prefix, digits = mpit_user_prefs.get_actual_entry_series(user=frappe.session.user)
+		series_key = f"{prefix}.####"
+		seq = getseries(series_key, digits)
+		self.name = f"{prefix}{seq}"
+
 	def validate(self):
 		self._set_year_from_posting_date()
 		self._compute_vat_split()

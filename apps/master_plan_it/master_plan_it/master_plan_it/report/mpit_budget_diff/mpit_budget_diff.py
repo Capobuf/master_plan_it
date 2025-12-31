@@ -50,7 +50,7 @@ def _build_columns() -> list[dict]:
 def _load_budget_totals(budget: str, group_by: str) -> dict:
 	fields = [
 		"category",
-		"SUM(COALESCE(annual_net, amount_net, amount)) AS planned",
+		"SUM(COALESCE(annual_net, amount_net, annual_amount, monthly_amount * 12, 0)) AS planned",
 	]
 	group_fields = ["category"]
 	if group_by == "Category+Vendor":
@@ -62,6 +62,7 @@ def _load_budget_totals(budget: str, group_by: str) -> dict:
 		SELECT {", ".join(fields)}
 		FROM `tabMPIT Budget Line`
 		WHERE parent = %(budget)s
+		  AND COALESCE(is_active, 1) = 1
 		GROUP BY {", ".join(group_fields)}
 		""",
 		{"budget": budget},

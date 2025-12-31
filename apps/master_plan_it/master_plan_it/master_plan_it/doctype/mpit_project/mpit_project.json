@@ -10,12 +10,14 @@
   "tab_overview",
   "title",
   "status",
+  "overview_col_break",
   "cost_center",
   "owner_user",
   "start_date",
   "end_date",
   "description",
   "tab_financial",
+  "financial_section",
   "financial_summary",
   "planned_total_net",
   "quoted_total_net",
@@ -39,8 +41,9 @@
   {
    "fieldname": "title",
    "fieldtype": "Data",
-   "description": "Enter the project title.",
+   "description": "Titolo del progetto.",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Title",
    "reqd": 1
   },
@@ -48,47 +51,59 @@
    "default": "Draft",
    "fieldname": "status",
    "fieldtype": "Select",
-   "description": "Choose the project status; at least one allocation is required before approval or later states.",
+   "description": "Stato (richiede almeno una allocation per Approved+).",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
    "options": "Draft\nProposed\nApproved\nIn Progress\nOn Hold\nCompleted\nCancelled"
- },
+},
+  {
+   "fieldname": "overview_col_break",
+   "fieldtype": "Column Break"
+  },
   {
    "fieldname": "cost_center",
    "fieldtype": "Link",
-   "description": "Select the cost center for this project.",
+   "description": "Cost Center principale (report/cap).",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Cost Center",
    "options": "MPIT Cost Center"
   },
   {
    "fieldname": "owner_user",
    "fieldtype": "Link",
-   "description": "Select the project owner.",
+   "description": "Owner del progetto.",
    "label": "Owner",
    "options": "User"
   },
   {
    "fieldname": "start_date",
    "fieldtype": "Date",
-   "description": "Date when the project starts.",
+   "description": "Data inizio (richiede end_date se valorizzata).",
    "label": "Start Date"
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Date",
-   "description": "Date when the project ends.",
+   "description": "Data fine (>= start).",
    "label": "End Date"
   },
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "description": "Add a brief description of the project.",
+   "description": "Note sintetiche sul perimetro.",
    "label": "Description"
   },
   {
    "fieldname": "tab_financial",
    "fieldtype": "Tab Break",
    "label": "Financials"
+  },
+  {
+   "fieldname": "financial_section",
+   "fieldtype": "Section Break",
+   "label": "Totals"
   },
   {
    "fieldname": "financial_summary",

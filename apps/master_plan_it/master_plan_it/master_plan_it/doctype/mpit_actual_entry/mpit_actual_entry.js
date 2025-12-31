@@ -49,23 +49,43 @@ const sync_entry_kind_with_links = async (frm, force = false) => {
 	}
 };
 
+const toggle_actual_layout = (frm) => {
+	const is_delta = frm.doc.entry_kind === "Delta";
+	const is_allowance = frm.doc.entry_kind === "Allowance Spend";
+
+	frm.toggle_display(["contract", "project"], is_delta);
+	frm.toggle_reqd("cost_center", is_allowance);
+	frm.toggle_display("cost_center", true);
+
+	if (is_delta) {
+		frm.set_intro("contract", __("Seleziona un Contract o un Project (non entrambi)."));
+	} else {
+		frm.set_intro("contract", "");
+	}
+};
+
 frappe.ui.form.on("MPIT Actual Entry", {
 	async onload(frm) {
 		await master_plan_it.vat.apply_defaults_for_actual(frm);
 		if (frm.is_new()) {
 			await sync_entry_kind_with_links(frm, true);
+			toggle_actual_layout(frm);
 		}
 	},
 	async refresh(frm) {
 		await master_plan_it.vat.apply_defaults_for_actual(frm);
-		if (frm.is_new()) {
-			await sync_entry_kind_with_links(frm, true);
-		}
+		await sync_entry_kind_with_links(frm, true);
+		toggle_actual_layout(frm);
 	},
 	async contract(frm) {
 		await sync_entry_kind_with_links(frm, true);
+		toggle_actual_layout(frm);
 	},
 	async project(frm) {
 		await sync_entry_kind_with_links(frm, true);
+		toggle_actual_layout(frm);
+	},
+	entry_kind(frm) {
+		toggle_actual_layout(frm);
 	},
 });

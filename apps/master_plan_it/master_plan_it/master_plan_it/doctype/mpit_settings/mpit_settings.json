@@ -6,10 +6,18 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
+  "section_defaults",
   "currency",
   "renewal_window_days",
   "section_naming",
-  "budget_naming_series"
+  "budget_prefix_default",
+  "budget_digits_default",
+  "column_break_naming",
+  "project_prefix_default",
+  "project_digits_default",
+  "column_break_actual",
+  "actual_prefix_default",
+  "actual_digits_default"
  ],
  "fields": [
   {
@@ -26,7 +34,12 @@
    "fieldname": "renewal_window_days",
    "fieldtype": "Int",
    "description": "Days before renewal dates treated as the renewal window.",
-   "label": "Renewal Window Days"
+  "label": "Renewal Window Days"
+ },
+  {
+   "fieldname": "section_defaults",
+   "fieldtype": "Section Break",
+   "label": "Defaults"
   },
   {
    "fieldname": "section_naming",
@@ -34,13 +47,56 @@
    "label": "Document Naming"
   },
   {
-   "default": "BUD-.YYYY.-",
-   "fieldname": "budget_naming_series",
+   "default": "BUD-",
+   "fieldname": "budget_prefix_default",
    "fieldtype": "Data",
-   "description": "Naming series for Budget documents. Use .YYYY. for year, .##### for sequence.",
-   "label": "Budget Naming Series"
+   "description": "Default prefix for Budgets (per-user prefs override).",
+   "label": "Budget Prefix (Default)"
+  },
+  {
+   "default": "2",
+   "fieldname": "budget_digits_default",
+   "fieldtype": "Int",
+   "description": "Digits for Budget sequence (per-user prefs override).",
+   "label": "Budget Digits (Default)"
+  },
+  {
+   "fieldname": "column_break_naming",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "PRJ-",
+   "fieldname": "project_prefix_default",
+   "fieldtype": "Data",
+   "description": "Default prefix for Projects (per-user prefs override).",
+   "label": "Project Prefix (Default)"
+  },
+  {
+   "default": "2",
+   "fieldname": "project_digits_default",
+   "fieldtype": "Int",
+   "description": "Digits for Project sequence (per-user prefs override).",
+   "label": "Project Digits (Default)"
+  },
+  {
+   "fieldname": "column_break_actual",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "AE-",
+   "fieldname": "actual_prefix_default",
+   "fieldtype": "Data",
+   "description": "Default prefix for Exceptions / Allowance Entries (per-user prefs override).",
+   "label": "Exceptions / Allowance Prefix (Default)"
+  },
+  {
+   "default": "2",
+   "fieldname": "actual_digits_default",
+   "fieldtype": "Int",
+   "description": "Digits for Exceptions / Allowance sequence (per-user prefs override).",
+   "label": "Exceptions / Allowance Digits (Default)"
   }
-],
+ ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,

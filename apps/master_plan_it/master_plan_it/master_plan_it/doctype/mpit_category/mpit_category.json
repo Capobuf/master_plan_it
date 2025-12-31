@@ -24,6 +24,7 @@
    "fieldtype": "Data",
    "description": "Enter the category name.",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Category Name",
    "reqd": 1,
    "unique": 1
@@ -40,7 +41,8 @@
    "fieldname": "is_active",
    "fieldtype": "Check",
    "description": "If enabled, the category is active for use.",
-   "label": "Is Active"
+   "label": "Is Active",
+   "in_standard_filter": 1
   },
   {
    "fieldname": "sort_order",

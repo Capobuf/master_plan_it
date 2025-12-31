@@ -4,6 +4,7 @@
 import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt
+from master_plan_it import amounts
 
 
 class TestMPITBudget(FrappeTestCase):
@@ -42,28 +43,31 @@ class TestMPITBudget(FrappeTestCase):
 				{
 					"doctype": "MPIT Budget Line",
 					"category": self.category.name,
-					"amount": 100,
+					"line_kind": "Manual",
+					"monthly_amount": 100,
 					"amount_includes_vat": 0,
 					"vat_rate": 10,
-					"recurrence_rule": "None"
+					"recurrence_rule": "Monthly"
 				},
 				{
 					"doctype": "MPIT Budget Line",
 					"category": self.category.name,
-					"amount": 200,
+					"line_kind": "Manual",
+					"monthly_amount": 200,
 					"amount_includes_vat": 0,
 					"vat_rate": 5,
-					"recurrence_rule": "None"
+					"recurrence_rule": "Monthly"
 				}
 			]
 		})
 		budget.insert()
 		budget.reload()
 
-		self.assertEqual(budget.total_amount_input, flt(300, 2))
-		self.assertEqual(budget.total_amount_net, flt(300, 2))
-		self.assertEqual(budget.total_amount_vat, flt(20, 2))
-		self.assertEqual(budget.total_amount_gross, flt(320, 2))
+		self.assertEqual(budget.total_amount_monthly, flt(300, 2))
+		self.assertEqual(budget.total_amount_annual, flt(3600, 2))
+		self.assertEqual(budget.total_amount_net, flt(3600, 2))
+		self.assertEqual(budget.total_amount_vat, flt(240, 2))
+		self.assertEqual(budget.total_amount_gross, flt(3840, 2))
 
 	def test_totals_update_when_line_saved_individually(self):
 		budget = frappe.get_doc({
@@ -74,18 +78,20 @@ class TestMPITBudget(FrappeTestCase):
 				{
 					"doctype": "MPIT Budget Line",
 					"category": self.category.name,
-					"amount": 100,
+					"line_kind": "Manual",
+					"monthly_amount": 100,
 					"amount_includes_vat": 0,
 					"vat_rate": 10,
-					"recurrence_rule": "None"
+					"recurrence_rule": "Monthly"
 				},
 				{
 					"doctype": "MPIT Budget Line",
 					"category": self.category.name,
-					"amount": 200,
+					"line_kind": "Manual",
+					"monthly_amount": 200,
 					"amount_includes_vat": 0,
 					"vat_rate": 5,
-					"recurrence_rule": "None"
+					"recurrence_rule": "Monthly"
 				}
 			]
 		})
@@ -93,14 +99,29 @@ class TestMPITBudget(FrappeTestCase):
 		budget.reload()
 
 		line = frappe.get_doc("MPIT Budget Line", budget.lines[0].name)
-		line.amount = 150
-		line.amount_net = 150
-		line.amount_vat = 15
-		line.amount_gross = 165
+		updated = amounts.compute_line_amounts(
+			qty=1,
+			unit_price=0,
+			monthly_amount=150,
+			annual_amount=0,
+			vat_rate=10,
+			amount_includes_vat=False,
+			recurrence_rule="Monthly",
+			overlap_months=12,
+		)
+		line.monthly_amount = updated["monthly_amount"]
+		line.annual_amount = updated["annual_amount"]
+		line.amount_net = updated["amount_net"]
+		line.amount_vat = updated["amount_vat"]
+		line.amount_gross = updated["amount_gross"]
+		line.annual_net = updated["annual_net"]
+		line.annual_vat = updated["annual_vat"]
+		line.annual_gross = updated["annual_gross"]
 		line.save()
 
 		updated_budget = frappe.get_doc("MPIT Budget", budget.name)
-		self.assertEqual(updated_budget.total_amount_input, flt(350, 2))
-		self.assertEqual(updated_budget.total_amount_net, flt(350, 2))
-		self.assertEqual(updated_budget.total_amount_vat, flt(25, 2))
-		self.assertEqual(updated_budget.total_amount_gross, flt(375, 2))
+		self.assertEqual(updated_budget.total_amount_monthly, flt(350, 2))
+		self.assertEqual(updated_budget.total_amount_annual, flt(4200, 2))
+		self.assertEqual(updated_budget.total_amount_net, flt(4200, 2))
+		self.assertEqual(updated_budget.total_amount_vat, flt(300, 2))
+		self.assertEqual(updated_budget.total_amount_gross, flt(4500, 2))

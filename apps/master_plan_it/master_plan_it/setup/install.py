@@ -45,6 +45,19 @@ def _ensure_settings() -> None:
 	settings = frappe.get_single("MPIT Settings")
 	if not settings.currency:
 		settings.currency = _determine_currency()
+	# Ensure naming defaults are set (idempotent)
+	if not settings.budget_prefix_default:
+		settings.budget_prefix_default = "BUD-"
+	if not settings.budget_digits_default:
+		settings.budget_digits_default = 2
+	if not settings.project_prefix_default:
+		settings.project_prefix_default = "PRJ-"
+	if not settings.project_digits_default:
+		settings.project_digits_default = 2
+	if not settings.actual_prefix_default:
+		settings.actual_prefix_default = "AE-"
+	if not settings.actual_digits_default:
+		settings.actual_digits_default = 2
 	settings.save(ignore_permissions=True)
 
 
@@ -70,6 +83,16 @@ def _bootstrap_basics() -> None:
 	today = datetime.date.today()
 	_ensure_year(today.year)
 	_ensure_year(today.year + 1)
+	_reload_standard_assets()
+
+
+def _reload_standard_assets() -> None:
+	"""Ensure dashboards/workspaces/chart sources are synced on new sites."""
+	# Chart sources used by dashboards
+	frappe.reload_doc("master_plan_it", "dashboard_chart_source", "mpit_plan_delta_by_category", force=1)
+	# Dashboards and workspace
+	frappe.reload_doc("master_plan_it", "dashboard", "master_plan_it_overview", force=1)
+	frappe.reload_doc("master_plan_it", "workspace", "master_plan_it", force=1)
 
 
 def after_install() -> None:

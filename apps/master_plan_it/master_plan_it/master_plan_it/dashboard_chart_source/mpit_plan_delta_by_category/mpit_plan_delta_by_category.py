@@ -1,8 +1,12 @@
 from __future__ import annotations
 
+import json
+
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import flt, getdate
+
+# This chart source is called via Frappe's whitelisted API.
 
 
 def _get_budget_name(year: str, kind: str) -> str | None:
@@ -36,11 +40,28 @@ def _get_category_totals(budget: str | None, cost_center: str | None) -> dict[st
 	return {row.category: flt(row.total or 0, 2) for row in rows}
 
 
+def _normalize_filters(raw) -> dict:
+	"""Accept dict or JSON string and return a dict."""
+	if raw is None:
+		return {}
+	if isinstance(raw, str):
+		try:
+			return json.loads(raw) or {}
+		except Exception:
+			return {}
+	if isinstance(raw, dict):
+		return raw
+	return {}
+
+
+@frappe.whitelist()
 def get(filters=None):
-	filters = filters or {}
+	filters = _normalize_filters(filters)
+
 	year = filters.get("year")
 	if not year:
-		frappe.throw(_("Year filter is required."))
+		# default to current year if not provided to avoid AttributeError
+		year = str(getdate().year)
 
 	cost_center = filters.get("cost_center")
 	try:

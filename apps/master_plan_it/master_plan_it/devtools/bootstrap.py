@@ -59,15 +59,15 @@ def _ensure_cost_center_root() -> None:
 
 
 def _ensure_workspace() -> None:
-	"""Create/update Desk workspace for MPIT (restricted to MPIT roles)."""
-	shortcuts = [
-		{"label": "Budgets", "link_to": "MPIT Budget", "type": "DocType"},
-		{"label": "Exceptions / Allowance Entries", "link_to": "MPIT Actual Entry", "type": "DocType"},
-		{"label": "Contracts", "link_to": "MPIT Contract", "type": "DocType"},
-		{"label": "Projects", "link_to": "MPIT Project", "type": "DocType"},
-		{"label": "Categories", "link_to": "MPIT Category", "type": "DocType"},
-		{"label": "Vendors", "link_to": "MPIT Vendor", "type": "DocType"},
-	]
+    """Create/update Desk workspace for MPIT (restricted to MPIT roles)."""
+    shortcuts = [
+        {"label": "Budgets", "link_to": "MPIT Budget", "type": "DocType"},
+        {"label": "Exceptions / Allowance Entries", "link_to": "MPIT Actual Entry", "type": "DocType"},
+        {"label": "Contracts", "link_to": "MPIT Contract", "type": "DocType"},
+        {"label": "Projects", "link_to": "MPIT Project", "type": "DocType"},
+        {"label": "Categories", "link_to": "MPIT Category", "type": "DocType"},
+        {"label": "Vendors", "link_to": "MPIT Vendor", "type": "DocType"},
+    ]
     content_blocks = [
         {"type": "header", "data": {"text": "Master Plan IT", "level": 4, "col": 12}},
     ]
@@ -79,8 +79,8 @@ def _ensure_workspace() -> None:
     if frappe.db.exists("Workspace", WORKSPACE_NAME):
         doc = frappe.get_doc("Workspace", WORKSPACE_NAME)
         dirty = False
-        if doc.public:
-            doc.public = 0
+        if not doc.public:
+            doc.public = 1
             dirty = True
         existing_roles = {r.role for r in doc.get("roles", [])}
         desired_roles = {r["role"] for r in workspace_roles}

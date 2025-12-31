@@ -40,4 +40,24 @@ frappe.ui.form.on("MPIT Budget", {
 	async lines_add(_frm, cdt, cdn) {
 		await master_plan_it.vat.apply_defaults_for_budget_line(cdt, cdn);
 	},
+	async refresh_from_sources(frm) {
+		// Trigger server-side refresh; works only for Forecast budgets
+		if (frm.is_dirty()) {
+			await frm.save();
+		}
+		await frm.call("refresh_from_sources");
+		await frm.reload_doc();
+		frappe.msgprint(__("Budget refreshed from sources."));
+	},
+	async set_active_btn(frm) {
+		if (frm.is_dirty()) {
+			await frm.save();
+		}
+		await frappe.call({
+			method: "master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget.set_active",
+			args: { budget: frm.doc.name },
+		});
+		await frm.reload_doc();
+		frappe.msgprint(__("Budget set as active Forecast."));
+	},
 });

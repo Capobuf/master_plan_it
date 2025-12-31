@@ -35,11 +35,32 @@ master_plan_it.vat.apply_defaults_for_contract =
 		frm.doc.__vat_defaults_applied = true;
 	};
 
+const toggle_contract_layout = (frm) => {
+	const has_spread = !!frm.doc.spread_months;
+	const has_rate_rows = Array.isArray(frm.doc.rate_schedule) && frm.doc.rate_schedule.length > 0;
+
+	frm.toggle_display("billing_cycle", !has_spread);
+	frm.toggle_display("section_rate_schedule", !has_spread);
+	// Spread visible when no rate schedule or when using spread
+	frm.toggle_display("section_spread", !has_rate_rows || has_spread);
+};
+
 frappe.ui.form.on("MPIT Contract", {
 	async onload(frm) {
 		await master_plan_it.vat.apply_defaults_for_contract(frm);
+		toggle_contract_layout(frm);
 	},
 	async refresh(frm) {
 		await master_plan_it.vat.apply_defaults_for_contract(frm);
+		toggle_contract_layout(frm);
+	},
+	spread_months(frm) {
+		toggle_contract_layout(frm);
+	},
+	rate_schedule_add(frm) {
+		toggle_contract_layout(frm);
+	},
+	rate_schedule_remove(frm) {
+		toggle_contract_layout(frm);
 	},
 });

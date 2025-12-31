@@ -9,9 +9,10 @@
  "field_order": [
   "tab_overview",
   "posting_date",
-  "year",
-  "status",
   "entry_kind",
+  "status",
+  "overview_col_break",
+  "year",
   "description",
   "tab_amounts",
   "amount",
@@ -38,7 +39,7 @@
   {
    "fieldname": "posting_date",
    "fieldtype": "Date",
-   "description": "Posting date for the entry; used to derive the MPIT Year.",
+   "description": "Data registrazione (deriva l'MPIT Year).",
    "in_list_view": 1,
    "label": "Posting Date",
    "reqd": 1
@@ -46,7 +47,7 @@
   {
    "fieldname": "year",
    "fieldtype": "Link",
-   "description": "Derived MPIT Year based on the posting date.",
+   "description": "MPIT Year derivato.",
    "in_list_view": 1,
    "label": "Year",
    "options": "MPIT Year",
@@ -57,23 +58,29 @@
    "default": "Recorded",
    "fieldname": "status",
    "fieldtype": "Select",
-   "description": "Choose whether the entry is recorded or verified.",
+   "description": "Recorded o Verified (solo vCIO può revert).",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
    "options": "Recorded\nVerified"
-  },
- {
-  "fieldname": "entry_kind",
-  "fieldtype": "Select",
-  "description": "Delta links contract/project; Allowance Spend needs cost center and no links.",
+ },
+{
+ "fieldname": "entry_kind",
+ "fieldtype": "Select",
+  "description": "Delta = contract/project, Allowance Spend = cost center (nessun link).",
   "label": "Entry Kind",
   "options": "Delta\nAllowance Spend",
-  "in_list_view": 1
+  "in_list_view": 1,
+  "in_standard_filter": 1
  },
+  {
+   "fieldname": "overview_col_break",
+   "fieldtype": "Column Break"
+  },
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "description": "Describe the actual entry.",
+   "description": "Motivazione / nota (richiesta per allowance negativa).",
    "label": "Description"
   },
   {
@@ -84,9 +91,10 @@
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
-   "description": "Enter the actual amount; use net or gross per the VAT setting.",
+   "description": "Importo (netto o lordo secondo flag).",
    "in_list_view": 1,
-   "label": "Amount"
+   "label": "Amount",
+   "reqd": 1
   },
   {
    "default": "0",
@@ -105,21 +113,21 @@
   {
    "fieldname": "amount_net",
    "fieldtype": "Currency",
-   "description": "Calculated automatically from amount and VAT settings.",
+   "description": "Calcolo automatico (net).",
    "label": "Net Amount",
    "read_only": 1
   },
   {
    "fieldname": "amount_vat",
    "fieldtype": "Currency",
-   "description": "Calculated automatically as the VAT portion.",
+   "description": "Calcolo automatico IVA.",
    "label": "VAT Amount",
    "read_only": 1
   },
   {
    "fieldname": "amount_gross",
    "fieldtype": "Currency",
-   "description": "Calculated automatically as the gross amount.",
+   "description": "Calcolo automatico lordo.",
    "label": "Gross Amount",
    "read_only": 1
   },
@@ -131,8 +139,9 @@
   {
    "fieldname": "category",
    "fieldtype": "Link",
-   "description": "Select the category for this entry.",
+   "description": "Categoria obbligatoria.",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Category",
    "options": "MPIT Category",
    "reqd": 1
@@ -140,7 +149,7 @@
   {
    "fieldname": "vendor",
    "fieldtype": "Link",
-   "description": "Select the vendor involved in this entry.",
+   "description": "Fornitore (opzionale).",
    "in_list_view": 1,
    "label": "Vendor",
    "options": "MPIT Vendor"
@@ -148,23 +157,27 @@
   {
    "fieldname": "contract",
    "fieldtype": "Link",
-   "description": "Select the related contract, if applicable.",
+   "description": "Se Delta: seleziona contract (oppure project).",
    "label": "Contract",
-   "options": "MPIT Contract"
+   "options": "MPIT Contract",
+   "depends_on": "eval:doc.entry_kind=='Delta'"
   },
   {
    "fieldname": "project",
    "fieldtype": "Link",
-   "description": "Select the related project, if applicable.",
+   "description": "Se Delta: seleziona project (oppure contract).",
    "label": "Project",
-   "options": "MPIT Project"
+   "options": "MPIT Project",
+   "depends_on": "eval:doc.entry_kind=='Delta'"
  },
   {
    "fieldname": "cost_center",
    "fieldtype": "Link",
-   "description": "Select the cost center for this entry.",
+   "description": "Richiesto per Allowance Spend; auto da contract/project quando presente.",
    "fetch_from": "contract.cost_center",
    "fetch_if_empty": 1,
+   "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Cost Center",
    "options": "MPIT Cost Center",
    "mandatory_depends_on": "eval:doc.entry_kind==\"Allowance Spend\""
@@ -172,15 +185,16 @@
   {
    "fieldname": "budget",
    "fieldtype": "Link",
-   "description": "Select the budget this entry relates to.",
+   "description": "Riferimento budget (opzionale).",
    "label": "Budget",
    "options": "MPIT Budget"
   },
   {
    "fieldname": "budget_line_ref",
    "fieldtype": "Data",
-   "description": "Reference to the related budget line, if applicable.",
-   "label": "Budget Line Ref"
+   "description": "Riga budget collegata (solo lettura).",
+   "label": "Budget Line Ref",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

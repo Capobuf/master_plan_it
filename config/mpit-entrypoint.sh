@@ -6,6 +6,16 @@ export PYTHONPATH="/home/frappe/frappe-bench/apps:${PYTHONPATH:-}"
 
 cd /home/frappe/frappe-bench
 
+# If running as root (first hop), loosen perms on mounted volumes for dev and re-exec as frappe user.
+if [ "$(id -u)" -eq 0 ] && [ "${RUN_AS_FRAPPE:-0}" != "1" ]; then
+  install -d -m 0777 /home/frappe/frappe-bench/sites /home/frappe/frappe-bench/logs
+  chmod -R 0777 /home/frappe/frappe-bench/sites /home/frappe/frappe-bench/logs || true
+  export RUN_AS_FRAPPE=1
+  exec su -s /bin/bash frappe -c "/home/frappe/frappe-bench/config/mpit-entrypoint.sh"
+fi
+
+umask 000
+
 if [ ! -f sites/common_site_config.json ]; then
   echo "{}" > sites/common_site_config.json
 fi

@@ -84,8 +84,10 @@ def get_budget_series(user: str | None = None, year: str | None = None) -> tuple
 		tuple: (prefix, digits, middle) where middle is "{year}-"
 	"""
 	prefs = get_or_create(user)
-	prefix = prefs.budget_prefix or "BUD-"
-	digits = prefs.budget_sequence_digits or 2
+	settings = frappe.get_single("MPIT Settings")
+
+	prefix = prefs.budget_prefix or settings.budget_prefix_default or "BUD-"
+	digits = prefs.budget_sequence_digits or settings.budget_digits_default or 2
 	
 	if not year:
 		frappe.throw(_("Budget naming requires year parameter (Budget.year field)"))
@@ -109,9 +111,22 @@ def get_project_series(user: str | None = None) -> tuple[str, int]:
 		tuple: (prefix, digits)
 	"""
 	prefs = get_or_create(user)
-	prefix = prefs.project_prefix or "PRJ-"
-	digits = prefs.project_sequence_digits or 4
-	
+	settings = frappe.get_single("MPIT Settings")
+
+	prefix = prefs.project_prefix or settings.project_prefix_default or "PRJ-"
+	digits = prefs.project_sequence_digits or settings.project_digits_default or 2
+
+	return prefix, digits
+
+
+def get_actual_entry_series(user: str | None = None) -> tuple[str, int]:
+	"""Get Exceptions/Allowance naming series components for user."""
+	prefs = get_or_create(user)
+	settings = frappe.get_single("MPIT Settings")
+
+	prefix = prefs.actual_prefix or settings.actual_prefix_default or "AE-"
+	digits = prefs.actual_sequence_digits or settings.actual_digits_default or 2
+
 	return prefix, digits
 
 

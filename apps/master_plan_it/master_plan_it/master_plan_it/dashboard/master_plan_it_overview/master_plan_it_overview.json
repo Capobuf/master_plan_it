@@ -2,7 +2,7 @@
  {
   "cards": [],
   "chart_options": null,
-  "charts": [
+ "charts": [
    {
     "chart": "MPIT Current Plan vs Exceptions",
     "parent": "Master Plan IT Overview",
@@ -44,6 +44,36 @@
   "doctype": "Dashboard",
   "is_default": 0,
   "is_standard": 1,
+  "cards": [
+   {
+    "card": "Renewals 30d",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard",
+    "width": "Quarter"
+   },
+   {
+    "card": "Renewals 60d",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard",
+    "width": "Quarter"
+   },
+   {
+    "card": "Renewals 90d",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard",
+    "width": "Quarter"
+   },
+   {
+    "card": "Expired Contracts",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard",
+    "width": "Quarter"
+   }
+  ],
   "modified": "2025-12-28 15:23:06.635455",
   "module": "Master Plan IT",
   "name": "Master Plan IT Overview"

@@ -44,7 +44,7 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
-    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
+    user: "0:0"
     environment:
       SITE_NAME: ${SITE_NAME}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD}
@@ -58,6 +58,8 @@ services:
       FRAPPE_REDIS_QUEUE: redis://redis:6379
       FRAPPE_REDIS_SOCKETIO: redis://redis:6379
       INSTALL_APPS: ${INSTALL_APPS}
+      HOST_UID: ${HOST_UID:-1000}
+      HOST_GID: ${HOST_GID:-1000}
 
     command: ["bash", "-lc", "/home/frappe/frappe-bench/config/mpit-entrypoint.sh"]
     volumes:

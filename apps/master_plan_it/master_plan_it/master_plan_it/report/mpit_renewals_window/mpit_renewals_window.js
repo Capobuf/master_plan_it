@@ -8,7 +8,7 @@ frappe.query_reports["MPIT Renewals Window"] = {
 			fieldname: "days",
 			label: __("Next N Days"),
 			fieldtype: "Int",
-			default: 60
+			default: 90
 		},
 		{
 			fieldname: "from_date",

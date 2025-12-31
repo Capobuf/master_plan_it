@@ -16,14 +16,16 @@
   "cost_center",
   "contract_kind",
   "cb_overview_right",
-  "auto_renew",
   "status",
   "owner_user",
+  "auto_renew",
   "tb_billing",
-  "billing_cycle",
+  "section_pricing",
   "current_amount",
   "current_amount_includes_vat",
   "vat_rate",
+  "cb_pricing_right",
+  "billing_cycle",
   "current_amount_net",
   "current_amount_vat",
   "current_amount_gross",
@@ -56,7 +58,7 @@
   {
    "fieldname": "title",
    "fieldtype": "Data",
-   "description": "Enter the contract title.",
+   "description": "Titolo parlante del contratto/servizio.",
    "in_list_view": 1,
    "label": "Title",
    "reqd": 1,
@@ -65,8 +67,9 @@
   {
    "fieldname": "vendor",
    "fieldtype": "Link",
-   "description": "Select the vendor for this contract.",
+   "description": "Fornitore",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Vendor",
    "options": "MPIT Vendor",
    "reqd": 1
@@ -74,8 +77,9 @@
   {
    "fieldname": "category",
    "fieldtype": "Link",
-   "description": "Select the category for this contract.",
+   "description": "Categoria budget (obbligatoria).",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Category",
    "options": "MPIT Category",
    "reqd": 1
@@ -83,14 +87,15 @@
   {
    "fieldname": "cost_center",
    "fieldtype": "Link",
-   "description": "Select the cost center for this contract.",
+   "description": "Cost Center di imputazione (caps/report).",
+   "in_standard_filter": 1,
    "label": "Cost Center",
    "options": "MPIT Cost Center"
   },
   {
    "fieldname": "contract_kind",
    "fieldtype": "Select",
-   "description": "Choose the contract type (contract, subscription, renewal, or maintenance).",
+   "description": "Tipo di accordo.",
    "label": "Contract Kind",
    "options": "Contract\nSubscription\nAnnual Renewal\nMaintenance",
    "reqd": 1
@@ -100,25 +105,27 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "1",
-   "fieldname": "auto_renew",
-   "fieldtype": "Check",
-   "description": "If enabled, the contract renews automatically.",
-   "label": "Auto Renew"
-  },
-  {
    "default": "Active",
    "fieldname": "status",
    "fieldtype": "Select",
-   "description": "Choose the current contract status.",
+   "description": "Stato operativo.",
    "in_list_view": 1,
+   "in_standard_filter": 1,
    "label": "Status",
    "options": "Draft\nActive\nPending Renewal\nRenewed\nCancelled\nExpired"
   },
   {
+   "default": "1",
+   "fieldname": "auto_renew",
+   "fieldtype": "Check",
+   "description": "Rinnovo automatico con notice.",
+   "label": "Auto Renew",
+   "in_standard_filter": 1
+  },
+  {
    "fieldname": "owner_user",
    "fieldtype": "Link",
-   "description": "Select the contract owner.",
+   "description": "Responsabile/owner del contratto.",
    "label": "Owner User",
    "options": "User"
   },
@@ -128,16 +135,22 @@
    "label": "Billing"
   },
   {
+   "fieldname": "section_pricing",
+   "fieldtype": "Section Break",
+   "label": "Pricing"
+  },
+  {
    "fieldname": "billing_cycle",
    "fieldtype": "Select",
-   "description": "Choose the billing cycle for this contract.",
+   "description": "Cadenza di fatturazione (nascosta se spread).",
    "label": "Billing Cycle",
-   "options": "Monthly\nQuarterly\nAnnual\nOther"
+   "options": "Monthly\nQuarterly\nAnnual\nOther",
+   "depends_on": "eval:!doc.spread_months"
   },
   {
    "fieldname": "current_amount",
    "fieldtype": "Currency",
-   "description": "Enter the current contract amount; use net or gross per the VAT setting.",
+   "description": "Importo corrente (netto o lordo secondo flag VAT).",
    "label": "Current Amount"
   },
   {
@@ -150,29 +163,33 @@
   {
    "fieldname": "vat_rate",
    "fieldtype": "Percent",
-   "description": "VAT rate applied to the current amount.",
+   "description": "Aliquota IVA applicata.",
    "label": "VAT Rate",
    "depends_on": "eval:doc.current_amount_includes_vat || doc.current_amount",
    "precision": "2"
   },
   {
+   "fieldname": "cb_pricing_right",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "current_amount_net",
    "fieldtype": "Currency",
-   "description": "Calculated automatically from current amount and VAT settings.",
+   "description": "Calcolo automatico (net).",
    "label": "Net Amount",
    "read_only": 1
   },
   {
    "fieldname": "current_amount_vat",
    "fieldtype": "Currency",
-   "description": "Calculated automatically as the VAT portion.",
+   "description": "Calcolo automatico IVA.",
    "label": "VAT Amount",
    "read_only": 1
   },
   {
    "fieldname": "current_amount_gross",
    "fieldtype": "Currency",
-   "description": "Calculated automatically as the gross amount.",
+   "description": "Calcolo automatico lordo.",
    "label": "Gross Amount",
    "read_only": 1
  },
@@ -180,7 +197,8 @@
    "fieldname": "section_spread",
    "fieldtype": "Section Break",
    "label": "Spread / Accrual",
-   "collapsible": 1
+   "collapsible": 1,
+   "depends_on": "eval:!doc.rate_schedule || doc.spread_months"
   },
   {
    "fieldname": "spread_months",
@@ -205,7 +223,8 @@
    "fieldname": "section_rate_schedule",
    "fieldtype": "Section Break",
    "label": "Rate Schedule",
-   "collapsible": 1
+   "collapsible": 1,
+   "depends_on": "eval:!doc.spread_months"
   },
   {
    "fieldname": "rate_schedule",
@@ -222,19 +241,19 @@
   {
    "fieldname": "start_date",
    "fieldtype": "Date",
-   "description": "Date when the contract starts.",
+   "description": "Data inizio contratto.",
    "label": "Start Date"
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Date",
-   "description": "Date when the contract ends.",
+   "description": "Data fine contratto.",
    "label": "End Date"
   },
   {
    "fieldname": "next_renewal_date",
    "fieldtype": "Date",
-   "description": "Next renewal date for this contract.",
+   "description": "Prossima data rinnovo (auto se mancante).",
    "in_list_view": 1,
    "label": "Next Renewal Date",
    "depends_on": "eval:doc.auto_renew",
@@ -243,7 +262,7 @@
   {
    "fieldname": "notice_days",
    "fieldtype": "Int",
-   "description": "Number of notice days required before renewal.",
+   "description": "Giorni di preavviso per disdetta.",
    "label": "Notice Days",
    "depends_on": "eval:doc.auto_renew"
   },

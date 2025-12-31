@@ -84,6 +84,7 @@ class MPITBudget(Document):
 			if conflict:
 				frappe.throw(_("Only one active Forecast allowed per year. Deactivate other forecasts first."))
 
+	@frappe.whitelist()
 	def refresh_from_sources(self) -> None:
 		"""Generate/refresh Forecast lines from contracts/projects (idempotent)."""
 		if self.budget_kind != "Forecast":
@@ -525,12 +526,13 @@ def update_budget_totals(budget_name: str) -> None:
 
 
 @frappe.whitelist()
-def set_active(budget_name: str) -> None:
+def set_active(budget: str | None = None, budget_name: str | None = None) -> None:
 	"""Set a Forecast budget as active, deactivating others for the same year."""
-	if not budget_name:
+	target = budget_name or budget
+	if not target:
 		frappe.throw(_("Budget name is required"))
 
-	budget = frappe.get_doc("MPIT Budget", budget_name)
+	budget = frappe.get_doc("MPIT Budget", target)
 	if budget.budget_kind != "Forecast":
 		frappe.throw(_("Only Forecast budgets can be set as active."))
 
