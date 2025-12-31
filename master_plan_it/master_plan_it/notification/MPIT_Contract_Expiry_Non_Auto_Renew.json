@@ -1,0 +1,21 @@
+{
+  "name": "MPIT Contract Expiry (Non Auto Renew)",
+  "doctype": "Notification",
+  "document_type": "MPIT Contract",
+  "event": "Days Before",
+  "days_in_advance": 90,
+  "date_changed": 0,
+  "subject": "Scadenza contratto: {{ doc.title }} ({{ doc.vendor }})",
+  "message": "Gentile utente,\n\nIl contratto <b>{{ doc.title }}</b> (fornitore: {{ doc.vendor }}, categoria: {{ doc.category }}) scadrà il <b>{{ doc.end_date }}</b> (notifica {{ notification.days_in_advance }} giorni prima).<br>\n<a href=\"{{ get_url_to_form(doc.doctype, doc.name) }}\">Apri contratto</a>\n\nCordiali saluti,\nMaster Plan IT",
+  "recipients": [
+    {
+      "receiver_by_document_field": "owner_user"
+    },
+    {
+      "receiver_by_role": "vCIO Manager"
+    }
+  ],
+  "condition": "doc.auto_renew != 1 and doc.status in (\"Active\", \"Pending Renewal\")",
+  "reference_date_field": "end_date",
+  "enabled": 1
+}
