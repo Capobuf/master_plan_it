@@ -25,10 +25,6 @@ venv/
 .vscode/
 .idea/
 
-# Cypress artifacts (keep tests, ignore generated media)
-cypress/videos/
-cypress/screenshots/
-
 # Frappe local data
 data/
 private/

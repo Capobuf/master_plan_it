@@ -11,6 +11,5 @@ recursive-include master_plan_it *.svg
 recursive-include master_plan_it *.png
 recursive-include master_plan_it *.gif
 recursive-include master_plan_it *.ico
-recursive-include cypress *.js
 recursive-exclude * __pycache__*
 recursive-exclude * *.pyc
