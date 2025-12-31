@@ -1,356 +1,391 @@
 {
- "actions": [],
- "allow_import": 1,
- "allow_rename": 1,
- "autoname": "field:title",
- "creation": "2025-12-21 22:34:32.098018",
- "doctype": "DocType",
- "editable_grid": 1,
- "engine": "InnoDB",
- "field_order": [
-  "tb_overview",
-  "sb_overview_main",
-  "title",
-  "vendor",
-  "category",
-  "cost_center",
-  "contract_kind",
-  "cb_overview_right",
-  "status",
-  "owner_user",
-  "auto_renew",
-  "tb_billing",
-  "section_pricing",
-  "current_amount",
-  "current_amount_includes_vat",
-  "vat_rate",
-  "cb_pricing_right",
-  "billing_cycle",
-  "current_amount_net",
-  "current_amount_vat",
-  "current_amount_gross",
-  "section_spread",
-  "spread_months",
-  "spread_start_date",
-  "spread_end_date",
-  "section_rate_schedule",
-  "rate_schedule",
-  "tb_renewal",
-  "start_date",
-  "end_date",
-  "next_renewal_date",
-  "notice_days",
-  "tb_notes",
-  "notes",
-  "attachment",
-  "tb_admin"
-],
- "fields": [
-  {
-   "fieldname": "tb_overview",
-   "fieldtype": "Tab Break",
-   "label": "Overview"
-  },
-  {
-   "fieldname": "sb_overview_main",
-   "fieldtype": "Section Break"
-  },
-  {
-   "fieldname": "title",
-   "fieldtype": "Data",
-   "description": "Titolo parlante del contratto/servizio.",
-   "in_list_view": 1,
-   "label": "Title",
-   "reqd": 1,
-   "unique": 1
-  },
-  {
-   "fieldname": "vendor",
-   "fieldtype": "Link",
-   "description": "Fornitore",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Vendor",
-   "options": "MPIT Vendor",
-   "reqd": 1
-  },
-  {
-   "fieldname": "category",
-   "fieldtype": "Link",
-   "description": "Categoria budget (obbligatoria).",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Category",
-   "options": "MPIT Category",
-   "reqd": 1
- },
-  {
-   "fieldname": "cost_center",
-   "fieldtype": "Link",
-   "description": "Cost Center di imputazione (caps/report).",
-   "in_standard_filter": 1,
-   "label": "Cost Center",
-   "options": "MPIT Cost Center"
-  },
-  {
-   "fieldname": "contract_kind",
-   "fieldtype": "Select",
-   "description": "Tipo di accordo.",
-   "label": "Contract Kind",
-   "options": "Contract\nSubscription\nAnnual Renewal\nMaintenance",
-   "reqd": 1
-  },
-  {
-   "fieldname": "cb_overview_right",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "Active",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "description": "Stato operativo.",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Status",
-   "options": "Draft\nActive\nPending Renewal\nRenewed\nCancelled\nExpired"
-  },
-  {
-   "default": "1",
-   "fieldname": "auto_renew",
-   "fieldtype": "Check",
-   "description": "Rinnovo automatico con notice.",
-   "label": "Auto Renew",
-   "in_standard_filter": 1
-  },
-  {
-   "fieldname": "owner_user",
-   "fieldtype": "Link",
-   "description": "Responsabile/owner del contratto.",
-   "label": "Owner User",
-   "options": "User"
-  },
+  "actions": [],
+  "allow_import": 1,
+  "allow_rename": 1,
+  "autoname": "field:title",
+  "creation": "2025-12-21 22:34:32.098018",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "quick_entry": 1,
+  "show_preview_popup": 1,
+  "field_order": [
+    "tb_overview",
+    "sb_overview_main",
+    "title",
+    "vendor",
+    "category",
+    "contract_kind",
+    "cb_overview_right",
+    "status",
+    "owner_user",
+    "cost_center",
+    "tb_renewal",
+    "start_date",
+    "end_date",
+    "auto_renew",
+    "next_renewal_date",
+    "notice_days",
+    "tb_billing",
+    "section_pricing",
+    "current_amount",
+    "current_amount_includes_vat",
+    "vat_rate",
+    "billing_cycle",
+    "cb_pricing_right",
+    "current_amount_net",
+    "current_amount_vat",
+    "current_amount_gross",
+    "section_spread",
+    "spread_months",
+    "spread_start_date",
+    "spread_end_date",
+    "section_rate_schedule",
+    "rate_schedule",
+    "tb_notes",
+    "notes",
+    "attachment",
+    "tb_admin"
+  ],
+  "fields": [
+    {
+      "fieldname": "tb_overview",
+      "fieldtype": "Section Break",
+      "label": "Overview"
+    },
+    {
+      "fieldname": "sb_overview_main",
+      "fieldtype": "Section Break",
+      "hidden": 1
+    },
+    {
+      "fieldname": "title",
+      "fieldtype": "Data",
+      "description": "Titolo parlante del contratto/servizio.",
+      "in_list_view": 1,
+      "label": "Title",
+      "reqd": 1,
+      "unique": 1,
+      "bold": 1,
+      "allow_in_quick_entry": 1,
+      "in_preview": 1
+    },
+    {
+      "fieldname": "vendor",
+      "fieldtype": "Link",
+      "description": "Fornitore",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Vendor",
+      "options": "MPIT Vendor",
+      "reqd": 1,
+      "bold": 1,
+      "allow_in_quick_entry": 1,
+      "in_preview": 1
+    },
+    {
+      "fieldname": "category",
+      "fieldtype": "Link",
+      "description": "Categoria budget (obbligatoria).",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Category",
+      "options": "MPIT Category",
+      "reqd": 1,
+      "bold": 1,
+      "allow_in_quick_entry": 1,
+      "in_preview": 1
+    },
+    {
+      "fieldname": "contract_kind",
+      "fieldtype": "Select",
+      "description": "Tipo di accordo.",
+      "label": "Contract Kind",
+      "options": "Contract\nSubscription\nAnnual Renewal\nMaintenance",
+      "reqd": 1,
+      "bold": 1,
+      "allow_in_quick_entry": 1,
+      "in_preview": 1
+    },
+    {
+      "fieldname": "cb_overview_right",
+      "fieldtype": "Column Break"
+    },
+    {
+      "default": "Active",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "description": "Stato operativo.",
+      "in_standard_filter": 1,
+      "label": "Status",
+      "options": "Draft\nActive\nPending Renewal\nRenewed\nCancelled\nExpired",
+      "allow_in_quick_entry": 1,
+      "in_preview": 1
+    },
+    {
+      "fieldname": "owner_user",
+      "fieldtype": "Link",
+      "description": "Responsabile/owner del contratto.",
+      "label": "Owner User",
+      "options": "User",
+      "in_preview": 1
+    },
+    {
+      "fieldname": "cost_center",
+      "fieldtype": "Link",
+      "description": "Cost Center di imputazione (caps/report).",
+      "in_standard_filter": 1,
+      "label": "Cost Center",
+      "options": "MPIT Cost Center"
+    },
+    {
+      "fieldname": "tb_renewal",
+      "fieldtype": "Section Break",
+      "label": "Renewal & Dates"
+    },
+    {
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "description": "Data inizio contratto.",
+      "label": "Start Date",
+      "allow_in_quick_entry": 1,
+      "in_preview": 1
+    },
+    {
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "description": "Data fine contratto.",
+      "label": "End Date",
+      "allow_in_quick_entry": 1,
+      "in_preview": 1
+    },
+    {
+      "default": "1",
+      "fieldname": "auto_renew",
+      "fieldtype": "Check",
+      "description": "Rinnovo automatico con notice.",
+      "label": "Auto Renew",
+      "in_standard_filter": 1,
+      "in_list_view": 1,
+      "allow_in_quick_entry": 1,
+      "in_preview": 1
+    },
+    {
+      "fieldname": "next_renewal_date",
+      "fieldtype": "Date",
+      "description": "Prossima data rinnovo (auto se mancante).",
+      "in_list_view": 1,
+      "label": "Next Renewal Date",
+      "depends_on": "eval:doc.auto_renew",
+      "mandatory_depends_on": "eval:doc.auto_renew",
+      "bold": 1,
+      "allow_in_quick_entry": 1,
+      "in_preview": 1
+    },
+    {
+      "fieldname": "notice_days",
+      "fieldtype": "Int",
+      "description": "Giorni di preavviso per disdetta.",
+      "label": "Notice Days",
+      "depends_on": "eval:doc.auto_renew",
+      "allow_in_quick_entry": 1
+    },
   {
    "fieldname": "tb_billing",
-   "fieldtype": "Tab Break",
+   "fieldtype": "Section Break",
    "label": "Billing"
   },
   {
    "fieldname": "section_pricing",
    "fieldtype": "Section Break",
-   "label": "Pricing"
-  },
-  {
-   "fieldname": "billing_cycle",
-   "fieldtype": "Select",
-   "description": "Cadenza di fatturazione (nascosta se spread).",
-   "label": "Billing Cycle",
-   "options": "Monthly\nQuarterly\nAnnual\nOther",
-   "depends_on": "eval:!doc.spread_months"
+   "label": "Pricing",
+   "description": "Importo ricorrente e cadenza di fatturazione."
   },
   {
    "fieldname": "current_amount",
    "fieldtype": "Currency",
-   "description": "Importo corrente (netto o lordo secondo flag VAT).",
-   "label": "Current Amount"
+   "description": "Importo corrente per la cadenza scelta (netto o lordo in base al flag IVA).",
+   "label": "Current Amount",
+   "in_list_view": 1,
+   "allow_in_quick_entry": 1,
+   "in_preview": 1
   },
   {
    "default": "0",
    "fieldname": "current_amount_includes_vat",
    "fieldtype": "Check",
-   "description": "If enabled, the current amount includes VAT.",
+   "description": "Se selezionato, l'importo include IVA (netto/calcoli adeguati automaticamente).",
    "label": "Current Amount Includes VAT"
   },
   {
    "fieldname": "vat_rate",
    "fieldtype": "Percent",
-   "description": "Aliquota IVA applicata.",
+   "description": "Aliquota IVA applicata all'importo corrente (usa il default dell'utente se vuoto).",
    "label": "VAT Rate",
    "depends_on": "eval:doc.current_amount_includes_vat || doc.current_amount",
    "precision": "2"
   },
   {
-   "fieldname": "cb_pricing_right",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "current_amount_net",
-   "fieldtype": "Currency",
-   "description": "Calcolo automatico (net).",
-   "label": "Net Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "current_amount_vat",
-   "fieldtype": "Currency",
-   "description": "Calcolo automatico IVA.",
-   "label": "VAT Amount",
-   "read_only": 1
-  },
-  {
+   "fieldname": "billing_cycle",
+   "fieldtype": "Select",
+   "description": "Cadenza di fatturazione per l'importo corrente (nascosta se usi lo spread).",
+   "label": "Billing Cycle",
+   "options": "Monthly\nQuarterly\nAnnual\nOther",
+   "depends_on": "eval:!doc.spread_months",
+   "in_list_view": 1,
+   "allow_in_quick_entry": 1
+    },
+    {
+      "fieldname": "cb_pricing_right",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "current_amount_net",
+      "fieldtype": "Currency",
+      "description": "Calcolo automatico (net).",
+      "label": "Net Amount",
+      "read_only": 1,
+      "depends_on": "eval:doc.current_amount"
+    },
+    {
+      "fieldname": "current_amount_vat",
+      "fieldtype": "Currency",
+      "description": "Calcolo automatico IVA.",
+      "label": "VAT Amount",
+      "read_only": 1,
+      "depends_on": "eval:doc.current_amount"
+    },
+    {
    "fieldname": "current_amount_gross",
    "fieldtype": "Currency",
    "description": "Calcolo automatico lordo.",
    "label": "Gross Amount",
-   "read_only": 1
- },
+   "read_only": 1,
+   "depends_on": "eval:doc.current_amount"
+  },
   {
    "fieldname": "section_spread",
    "fieldtype": "Section Break",
-   "label": "Spread / Accrual",
-   "collapsible": 1,
-   "depends_on": "eval:!doc.rate_schedule || doc.spread_months"
+   "label": "Spread / Accrual (ripartizione)",
+   "collapsible": 0
   },
   {
    "fieldname": "spread_months",
    "fieldtype": "Int",
-   "description": "Number of months to spread prepaid amount (mutually exclusive with rate schedule).",
+   "description": "Mesi di ripartizione di un costo prepagato (es. 36 per 3 anni). Alternativa alla rate schedule.",
    "label": "Spread Months"
   },
   {
    "fieldname": "spread_start_date",
    "fieldtype": "Date",
-   "description": "Start date of the spread period.",
+   "description": "Data di inizio della ripartizione.",
    "label": "Spread Start Date"
   },
   {
    "fieldname": "spread_end_date",
    "fieldtype": "Date",
-   "description": "Computed end date of the spread period.",
+   "description": "Fine ripartizione calcolata automaticamente.",
    "label": "Spread End Date",
    "read_only": 1
   },
   {
    "fieldname": "section_rate_schedule",
    "fieldtype": "Section Break",
-   "label": "Rate Schedule",
-   "collapsible": 1,
-   "depends_on": "eval:!doc.spread_months"
+   "label": "Rate Schedule (cambi prezzo)",
+   "collapsible": 0
   },
   {
    "fieldname": "rate_schedule",
    "fieldtype": "Table",
-   "description": "Rate changes over time (mutually exclusive with spread).",
+   "description": "Cambi prezzo nel tempo: aggiungi righe con data di inizio in ordine cronologico, senza sovrapposizioni. Alternativa allo spread.",
    "label": "Rate Schedule",
    "options": "MPIT Contract Rate"
   },
-  {
-   "fieldname": "tb_renewal",
-   "fieldtype": "Tab Break",
-   "label": "Renewal & Dates"
-  },
-  {
-   "fieldname": "start_date",
-   "fieldtype": "Date",
-   "description": "Data inizio contratto.",
-   "label": "Start Date"
-  },
-  {
-   "fieldname": "end_date",
-   "fieldtype": "Date",
-   "description": "Data fine contratto.",
-   "label": "End Date"
-  },
-  {
-   "fieldname": "next_renewal_date",
-   "fieldtype": "Date",
-   "description": "Prossima data rinnovo (auto se mancante).",
-   "in_list_view": 1,
-   "label": "Next Renewal Date",
-   "depends_on": "eval:doc.auto_renew",
-   "mandatory_depends_on": "eval:doc.auto_renew"
-  },
-  {
-   "fieldname": "notice_days",
-   "fieldtype": "Int",
-   "description": "Giorni di preavviso per disdetta.",
-   "label": "Notice Days",
-   "depends_on": "eval:doc.auto_renew"
-  },
-  {
-   "fieldname": "tb_notes",
-   "fieldtype": "Tab Break",
-   "label": "Notes"
-  },
-  {
-   "fieldname": "notes",
-   "fieldtype": "Small Text",
-   "description": "Add internal notes about the contract.",
-   "label": "Notes"
-  },
-  {
-   "fieldname": "attachment",
-   "fieldtype": "Attach",
-   "description": "Upload the contract file.",
-   "label": "Attachment"
-  },
-  {
-   "fieldname": "tb_admin",
-   "fieldtype": "Tab Break",
-   "label": "Admin"
-  }
-],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-12-24 20:00:43.898411",
- "modified_by": "Administrator",
- "module": "Master Plan IT",
- "name": "MPIT Contract",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "import": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "import": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "vCIO Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Client Editor",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Client Viewer",
-   "share": 1
-  }
- ],
- "row_format": "Dynamic",
- "rows_threshold_for_grid_search": 20,
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": [],
- "title_field": "title",
- "track_changes": 1
+    {
+      "fieldname": "tb_notes",
+      "fieldtype": "Section Break",
+      "label": "Notes"
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "description": "Add internal notes about the contract.",
+      "label": "Notes"
+    },
+    {
+      "fieldname": "attachment",
+      "fieldtype": "Attach",
+      "description": "Upload the contract file.",
+      "label": "Attachment"
+    },
+    {
+      "fieldname": "tb_admin",
+      "fieldtype": "Section Break",
+      "label": "Admin"
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "links": [],
+  "modified": "2025-12-24 20:00:43.898411",
+  "modified_by": "Administrator",
+  "module": "Master Plan IT",
+  "name": "MPIT Contract",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "import": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "import": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "vCIO Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Client Editor",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Client Viewer",
+      "share": 1
+    }
+  ],
+  "row_format": "Dynamic",
+  "rows_threshold_for_grid_search": 20,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "title",
+  "track_changes": 1
 }

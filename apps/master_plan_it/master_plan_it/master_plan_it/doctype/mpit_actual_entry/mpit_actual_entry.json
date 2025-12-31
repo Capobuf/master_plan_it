@@ -18,6 +18,7 @@
   "amount",
   "amount_includes_vat",
   "vat_rate",
+  "amounts_col_break",
   "amount_net",
   "amount_vat",
   "amount_gross",
@@ -26,14 +27,15 @@
   "vendor",
   "contract",
   "project",
+  "links_col_break",
   "cost_center",
   "budget",
   "budget_line_ref"
-],
+ ],
  "fields": [
   {
    "fieldname": "tab_overview",
-   "fieldtype": "Tab Break",
+   "fieldtype": "Section Break",
    "label": "Overview"
   },
   {
@@ -85,7 +87,7 @@
   },
   {
    "fieldname": "tab_amounts",
-   "fieldtype": "Tab Break",
+   "fieldtype": "Section Break",
    "label": "Amounts & VAT"
   },
   {
@@ -111,6 +113,10 @@
    "precision": "2"
   },
   {
+   "fieldname": "amounts_col_break",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "amount_net",
    "fieldtype": "Currency",
    "description": "Calcolo automatico (net).",
@@ -133,8 +139,8 @@
   },
   {
    "fieldname": "tab_links",
-   "fieldtype": "Tab Break",
-   "label": "Links & Context"
+   "fieldtype": "Section Break",
+   "label": "Links (scegli una sola fonte)"
   },
   {
    "fieldname": "category",
@@ -157,28 +163,32 @@
   {
    "fieldname": "contract",
    "fieldtype": "Link",
-   "description": "Se Delta: seleziona contract (oppure project).",
-   "label": "Contract",
+   "description": "Per Delta: collega un Contract (oppure un Project).",
+   "label": "Contract (Delta)",
    "options": "MPIT Contract",
    "depends_on": "eval:doc.entry_kind=='Delta'"
   },
   {
    "fieldname": "project",
    "fieldtype": "Link",
-   "description": "Se Delta: seleziona project (oppure contract).",
-   "label": "Project",
+   "description": "Per Delta: collega un Project (oppure un Contract).",
+   "label": "Project (Delta)",
    "options": "MPIT Project",
    "depends_on": "eval:doc.entry_kind=='Delta'"
  },
   {
+   "fieldname": "links_col_break",
+   "fieldtype": "Column Break"
+  },
+  {
    "fieldname": "cost_center",
    "fieldtype": "Link",
-   "description": "Richiesto per Allowance Spend; auto da contract/project quando presente.",
+   "description": "Per Allowance Spend: scegli il cost center (auto da Contract/Project se presenti).",
    "fetch_from": "contract.cost_center",
    "fetch_if_empty": 1,
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Cost Center",
+   "label": "Cost Center (Allowance)",
    "options": "MPIT Cost Center",
    "mandatory_depends_on": "eval:doc.entry_kind==\"Allowance Spend\""
   },

@@ -9,9 +9,9 @@
  "engine": "InnoDB",
  "field_order": [
   "vendor_name",
-  "vat_id",
-  "contact_email",
   "contact_phone",
+  "contact_email",
+  "vat_id",
   "notes",
   "is_active"
  ],
@@ -29,25 +29,29 @@
    "fieldname": "vat_id",
    "fieldtype": "Data",
    "description": "Enter the vendor VAT ID.",
-   "label": "VAT ID"
+   "label": "VAT ID",
+   "in_list_view": 1
   },
   {
    "fieldname": "contact_email",
    "fieldtype": "Data",
    "description": "Enter the main contact email.",
-   "label": "Contact Email"
+   "label": "Contact Email",
+   "in_list_view": 1
   },
   {
    "fieldname": "contact_phone",
    "fieldtype": "Data",
    "description": "Enter the main contact phone number.",
-   "label": "Contact Phone"
+   "label": "Contact Phone",
+   "in_list_view": 1
   },
   {
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "description": "Add internal notes about the vendor.",
-   "label": "Notes"
+   "label": "Notes",
+   "in_list_view": 1
   },
   {
    "default": "1",

@@ -19,30 +19,34 @@
   {
    "fieldname": "effective_from",
    "fieldtype": "Date",
-   "description": "Start date when this rate becomes effective.",
+   "description": "Data da cui parte questo prezzo.",
    "label": "Effective From",
-   "reqd": 1
+   "reqd": 1,
+   "in_list_view": 1
   },
   {
    "fieldname": "amount",
    "fieldtype": "Currency",
-   "description": "Rate amount (per month).",
-   "label": "Amount",
-   "reqd": 1
+   "description": "Importo per mese dal periodo indicato.",
+   "label": "Amount (per month)",
+   "reqd": 1,
+   "in_list_view": 1
   },
   {
    "default": "0",
    "fieldname": "amount_includes_vat",
    "fieldtype": "Check",
-   "description": "If enabled, the amount includes VAT.",
-   "label": "Amount Includes VAT"
+   "description": "Se selezionato, l'importo include IVA.",
+   "label": "Amount Includes VAT",
+   "in_list_view": 1
   },
   {
    "fieldname": "vat_rate",
    "fieldtype": "Percent",
-   "description": "VAT rate applied to the amount.",
+   "description": "Aliquota IVA applicata (usa il default utente se vuoto).",
    "label": "VAT Rate",
-   "precision": "2"
+   "precision": "2",
+   "in_list_view": 1
   },
   {
    "fieldname": "amount_net",

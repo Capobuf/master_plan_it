@@ -8,15 +8,13 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "category_name",
   "parent_category",
+  "category_name",
+  "is_group",
   "is_active",
-  "sort_order",
   "lft",
   "rgt",
-  "is_group",
-  "old_parent",
-  "parent_mpit_category"
+  "old_parent"
  ],
  "fields": [
   {
@@ -34,21 +32,16 @@
    "fieldtype": "Link",
    "description": "Select the parent category.",
    "label": "Parent Category",
-   "options": "MPIT Category"
+   "options": "MPIT Category",
+   "in_list_view": 1
   },
   {
-   "default": "1",
-   "fieldname": "is_active",
-   "fieldtype": "Check",
-   "description": "If enabled, the category is active for use.",
-   "label": "Is Active",
-   "in_standard_filter": 1
-  },
-  {
-   "fieldname": "sort_order",
-   "fieldtype": "Int",
-   "description": "Enter numeric order for sorting categories.",
-   "label": "Sort Order"
+  "default": "1",
+  "fieldname": "is_active",
+  "fieldtype": "Check",
+  "description": "If enabled, the category is active for use.",
+  "label": "Is Active",
+  "in_standard_filter": 1
   },
   {
    "fieldname": "lft",
@@ -73,22 +66,17 @@
    "fieldname": "is_group",
    "fieldtype": "Check",
    "description": "If enabled, category can contain child categories.",
-   "label": "Is Group"
+   "label": "Is Group",
+   "in_list_view": 1
   },
   {
    "fieldname": "old_parent",
    "fieldtype": "Link",
    "description": "Previous parent category captured during moves.",
    "label": "Old Parent",
-   "options": "MPIT Category"
-  },
-  {
-   "fieldname": "parent_mpit_category",
-   "fieldtype": "Link",
-   "description": "Parent category used by tree view.",
-   "ignore_user_permissions": 1,
-   "label": "Parent MPIT Category",
-   "options": "MPIT Category"
+   "options": "MPIT Category",
+   "hidden": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

@@ -16,7 +16,6 @@
   "is_active",
   "section_advanced",
   "old_parent",
-  "parent_mpit_cost_center",
   "lft",
   "rgt"
  ],
@@ -85,14 +84,9 @@
    "fieldname": "old_parent",
    "fieldtype": "Link",
    "label": "Old Parent",
-   "options": "MPIT Cost Center"
-  },
-  {
-   "fieldname": "parent_mpit_cost_center",
-   "fieldtype": "Link",
-   "ignore_user_permissions": 1,
-   "label": "Parent MPIT Cost Center",
-   "options": "MPIT Cost Center"
+   "options": "MPIT Cost Center",
+   "hidden": 1,
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,

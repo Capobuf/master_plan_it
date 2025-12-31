@@ -21,6 +21,15 @@ class MPITActualEntry(Document):
 		seq = getseries(series_key, digits)
 		self.name = f"{prefix}{seq}"
 
+	def before_insert(self):
+		"""Ensure name follows user preferences (covers cases where a random hash was set)."""
+		prefix, digits = mpit_user_prefs.get_actual_entry_series(user=frappe.session.user)
+		if self.name and self.name.startswith(prefix):
+			return
+		series_key = f"{prefix}.####"
+		seq = getseries(series_key, digits)
+		self.name = f"{prefix}{seq}"
+
 	def validate(self):
 		self._set_year_from_posting_date()
 		self._compute_vat_split()
