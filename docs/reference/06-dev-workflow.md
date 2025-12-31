@@ -4,8 +4,8 @@ This document defines the **native file-first** workflow for Master Plan IT.
 
 ## Source of truth
 
-- App root in Git: `apps/master_plan_it/` (same path under a bench).
-- Exported metadata lives under `apps/master_plan_it/master_plan_it/master_plan_it/` (doctype, report, workflow, dashboard, dashboard_chart, number_card, workspace, print_format). Legacy `master_plan_it_dashboard/` copies were removed to avoid duplicates.
+- App root in Git: this repo root (`.`); inside a bench it lives at `/home/frappe/frappe-bench/apps/master_plan_it`.
+- Exported metadata lives under `master_plan_it/master_plan_it/` (doctype, report, workflow, dashboard, dashboard_chart, number_card, workspace, print_format). Legacy `master_plan_it_dashboard/` copies were removed to avoid duplicates.
 - These files are edited directly in Git; they are the canonical inputs for Frappe. No spec-import and no `sync_all`.
 - **Warning:** Do not manually create duplicate metadata folders outside the canonical module folder.
 - **Translations:** Follow `AGENT_INSTRUCTIONS.md` → “Translations (i18n) – Native Frappe Rules” for marking strings and maintaining `translations/it.csv`.
@@ -20,7 +20,7 @@ This document defines the **native file-first** workflow for Master Plan IT.
 
 ## Native workflow (file-first)
 
-1. Edit the exported JSON and Python controllers under `apps/master_plan_it/master_plan_it/master_plan_it/`.
+1. Edit the exported JSON and Python controllers under `master_plan_it/master_plan_it/`.
 2. If you used Desk for skeleton/customizations, immediately export to files so the canonical folder stays accurate.
 3. Apply changes with standard Frappe commands (`bench --site <site> migrate` / `clear-cache`) as needed. No `sync_all` or custom import pipelines.
 4. Commit the canonical files; these are the sole source for deployments.

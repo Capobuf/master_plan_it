@@ -120,7 +120,7 @@ Colonne minime:
 
 ### Task
 1) Creare nuovo report Script Report:
-- path: `apps/master_plan_it/master_plan_it/master_plan_it/report/mpit_budget_diff/`
+- path: `master_plan_it/master_plan_it/report/mpit_budget_diff/`
   - `mpit_budget_diff.py`
   - `mpit_budget_diff.json`
 2) Implementare `execute(filters)`:

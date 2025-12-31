@@ -139,7 +139,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### File Structure Created
 ```
-apps/master_plan_it/master_plan_it/
+master_plan_it/master_plan_it/
 ├── mpit_user_prefs.py (Phase 1)
 ├── tax.py (Phase 4)
 ├── annualization.py (Phase 5)

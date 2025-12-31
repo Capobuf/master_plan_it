@@ -18,7 +18,7 @@ Per MPIT usiamo `autoname(self)` perché è:
 - indipendente dalla configurazione UI del tenant
 
 ### 1.1 Implementazione consigliata
-- crea `apps/master_plan_it/master_plan_it/naming.py`
+- crea `master_plan_it/master_plan_it/naming.py`
 - usa `frappe.model.naming.getseries(prefix, digits)`
 
 ### 1.2 Regola Budget (chiusa)

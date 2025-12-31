@@ -1,7 +1,7 @@
 # ADR 0008 — Print formats (Jinja, server-side)
 
 ## Decision
-Print formats are maintained as server-side Jinja templates checked into the canonical module folder (`apps/master_plan_it/master_plan_it/master_plan_it/print_format/`). They may be imported with `frappe.modules.import_file.import_file_by_path()` when needed, but no custom sync pipeline is used.
+Print formats are maintained as server-side Jinja templates checked into the canonical module folder (`master_plan_it/master_plan_it/print_format/`). They may be imported with `frappe.modules.import_file.import_file_by_path()` when needed, but no custom sync pipeline is used.
 
 ## Rationale
 - Keep print formats versioned alongside the rest of the app metadata.

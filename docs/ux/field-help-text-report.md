@@ -2,7 +2,7 @@
 
 ## Inventory summary
 - Before: 16 DocTypes with 171 meaningful fields missing description.
-- After: all meaningful fields now have descriptions with Italian translations in `apps/master_plan_it/master_plan_it/translations/it.csv`.
+- After: all meaningful fields now have descriptions with Italian translations in `master_plan_it/master_plan_it/translations/it.csv`.
 - Context format for translations: `DocType:<Doctype> Field:<fieldname>`.
 - Stop questions: none (all meanings derived from schema and controllers).
 

@@ -113,7 +113,7 @@ This is informational only — printing proceeds regardless.
 
 Each report has its print template at:
 ```
-apps/master_plan_it/master_plan_it/master_plan_it/report/<report_name>/<report_name>.html
+master_plan_it/master_plan_it/report/<report_name>/<report_name>.html
 ```
 
 ### Template Structure

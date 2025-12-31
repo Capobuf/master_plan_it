@@ -304,6 +304,35 @@
    "report_ref_doctype": "MPIT Contract",
    "type": "Report"
   }
+    ,
+    {
+        "color": "Grey",
+        "icon": "settings",
+        "label": "MPIT Settings",
+        "type": "DocType",
+        "link_to": "MPIT Settings"
+    },
+    {
+        "color": "Grey",
+        "icon": "mail",
+        "label": "Email Account",
+        "type": "DocType",
+        "link_to": "Email Account"
+    },
+    {
+        "color": "Grey",
+        "icon": "bell",
+        "label": "Notification",
+        "type": "DocType",
+        "link_to": "Notification"
+    },
+    {
+        "color": "Grey",
+        "icon": "queue",
+        "label": "Email Queue",
+        "type": "DocType",
+        "link_to": "Email Queue"
+    }
  ],
  "title": "Master Plan IT"
 }

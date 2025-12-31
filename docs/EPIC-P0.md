@@ -74,7 +74,7 @@ Defaults are per-user in **MPIT User Preferences**:
 - `default_amount_includes_vat`
 
 Used via helper in:
-- `apps/master_plan_it/master_plan_it/mpit_user_prefs.py`
+- `master_plan_it/master_plan_it/mpit_user_prefs.py`
 
 ### 3.2 Correct semantics (must enforce)
 - If a doc/row has explicit values set (`vat_rate`, `amount_includes_vat`), **do not override** them.
@@ -95,8 +95,8 @@ We are in dev reset; **do NOT create migration patches** for workflow deletion.
 
 #### Code tasks
 1) Delete workflow folders from repo:
-- `apps/master_plan_it/master_plan_it/master_plan_it/workflow/mpit_budget_workflow/`
-- `apps/master_plan_it/master_plan_it/master_plan_it/workflow/mpit_budget_amendment_workflow/`
+- `master_plan_it/master_plan_it/workflow/mpit_budget_workflow/`
+- `master_plan_it/master_plan_it/workflow/mpit_budget_amendment_workflow/`
 
 2) Convert workflow fields to editable “Status label”
 Do NOT rename fieldnames (avoid churn). Keep `workflow_state` but change behavior:
@@ -112,8 +112,8 @@ Do NOT rename fieldnames (avoid churn). Keep `workflow_state` but change behavio
 - On submit (`docstatus=1`) force status “Approved”
 
 4) Update repo checks:
-- `apps/master_plan_it/master_plan_it/devtools/verify.py`: remove REQUIRED_WORKFLOWS enforcement
-- `apps/master_plan_it/master_plan_it/tests/test_smoke.py`: remove workflow existence assertion
+- `master_plan_it/master_plan_it/devtools/verify.py`: remove REQUIRED_WORKFLOWS enforcement
+- `master_plan_it/master_plan_it/tests/test_smoke.py`: remove workflow existence assertion
 
 #### Apply cycle
 Run migrate + clear cache (Section 2).
@@ -147,7 +147,7 @@ frappe.db.exists("Workflow", "MPIT Budget Amendment Workflow")
 `MPIT Actual Entry` derives `year` based on the `MPIT Year` date range. Annualization must use the same bounds.
 
 #### Code tasks
-1) Edit `apps/master_plan_it/master_plan_it/annualization.py`
+1) Edit `master_plan_it/master_plan_it/annualization.py`
 - `get_year_bounds(year)` must:
   - attempt to load `MPIT Year` doc (name is the integer year as string)
   - if `start_date`/`end_date` exist, use those bounds

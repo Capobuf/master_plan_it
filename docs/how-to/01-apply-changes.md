@@ -1,6 +1,6 @@
 # How-to: Apply changes (native file-first)
 
-**Source of truth:** exported metadata (JSON) and controllers (Python/JS) inside the app’s **python package folder** (the folder that contains `hooks.py`) under your bench `apps/master_plan_it/...`.  
+**Source of truth:** exported metadata (JSON) and controllers (Python/JS) inside the app’s **python package folder** (`master_plan_it/...` in this repo; inside a bench `/home/frappe/frappe-bench/apps/master_plan_it/...`).  
 **Rules:** stay native (no spec/import pipeline, no `sync_all`). Apply changes using standard Bench/Frappe commands.
 
 ---
@@ -63,7 +63,7 @@ Confirm:
 
 ### Debug (when it doesn’t move)
 1) **Prove you edited the canonical file path** used by the running bench/container  
-   - In Docker setups, confirm the bind-mount for `/home/frappe/frappe-bench/apps/master_plan_it` points to the same host folder you edited.
+   - In Docker setups, confirm the bind-mount for `/home/frappe/frappe-bench/apps/master_plan_it` points to the app repo root you edited (../master-plan-it).
 2) **Check Workspace 2.0 file layout**  
    - Workspace JSON should follow the folder pattern:  
      `<app>/<module>/workspace/<workspace_id>/<workspace_id>.json`  

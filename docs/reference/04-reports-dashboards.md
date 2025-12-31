@@ -43,7 +43,7 @@ Tutti i 4 report hanno HTML templates per stampa professionale:
 
 ## Dashboards
 Dashboard **“Master Plan IT Overview”** (standard):
-- Path standard (file-first): `apps/master_plan_it/master_plan_it/master_plan_it/dashboard/<name>/<name>.json`.
+- Path standard (file-first): `master_plan_it/master_plan_it/dashboard/<name>/<name>.json`.
 - Number cards: Renewals 30d / 60d / 90d, Expired Contracts (all based on MPIT Renewals Window)
 - Charts: Baseline vs Exceptions, Current Plan vs Exceptions, Renewals by Month, Projects Planned vs Exceptions
 
