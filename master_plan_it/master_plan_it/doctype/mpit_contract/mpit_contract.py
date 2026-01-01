@@ -152,8 +152,10 @@ class MPITContract(Document):
 			self.next_renewal_date = self.end_date
 
 	def _normalize_status(self) -> None:
-		"""Keep auto-renew contracts in Active (avoid drift to Pending Renewal)."""
+		"""Keep auto-renew contracts coherent without promoting Draft into Active."""
 		if not self.auto_renew:
 			return
-		if self.status in ("Pending Renewal", "Draft", None, ""):
+		if self.status in (None, ""):
+			self.status = "Active"
+		elif self.status == "Pending Renewal":
 			self.status = "Active"

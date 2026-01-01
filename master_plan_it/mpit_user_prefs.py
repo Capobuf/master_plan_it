@@ -2,9 +2,10 @@
 # For license information, please see license.txt
 
 """
-Helper for MPIT User Preferences (per-user defaults for VAT, naming, print).
-
-Provides idempotent get_or_create and typed getters for user preferences.
+FILE: master_plan_it/mpit_user_prefs.py
+SCOPO: Gestisce preferenze utente MPIT (VAT default, naming, print) con getter tipizzati e creazione automatica.
+INPUT: user (email) opzionale, year/budget_type per naming budget.
+OUTPUT/SIDE EFFECTS: Ritorna o crea MPIT User Preferences, restituisce prefissi/suffissi naming e VAT defaults; può inserire un nuovo record prefs.
 """
 
 from __future__ import annotations
@@ -69,19 +70,20 @@ def get_default_includes_vat(user: str | None = None) -> bool:
 	return bool(prefs.default_amount_includes_vat)
 
 
-def get_budget_series(user: str | None = None, year: str | None = None) -> tuple[str, int, str]:
+def get_budget_series(user: str | None = None, year: str | None = None, budget_type: str = "Live") -> tuple[str, int, str]:
 	"""
-	Get Budget naming series components for user.
+	Get Budget naming series components for user based on budget type.
 	
-	Budget name format: {prefix}{year}-{NNNN...}
-	where {year} is the Budget.year field value (MPIT Year name).
+	Budget name format: {prefix}{year}-{TOKEN}-{NNNN...}
+	where TOKEN is LIVE or APP depending on budget type.
 	
 	Args:
 		user: User email. If None, uses frappe.session.user.
 		year: Year name (e.g., "2025"). Required for Budget naming.
+		budget_type: "Live" or "Snapshot".
 	
 	Returns:
-		tuple: (prefix, digits, middle) where middle is "{year}-"
+		tuple: (prefix, digits, middle) where middle is "{year}-{TOKEN}-"
 	"""
 	prefs = get_or_create(user)
 	settings = frappe.get_single("MPIT Settings")
@@ -92,8 +94,9 @@ def get_budget_series(user: str | None = None, year: str | None = None) -> tuple
 	if not year:
 		frappe.throw(_("Budget naming requires year parameter (Budget.year field)"))
 	
-	# Budget must include year in the name: BUD-2025-01
-	middle = f"{year}-"
+	token_map = {"Live": "LIVE", "Snapshot": "APP"}
+	token = token_map.get(budget_type) or budget_type
+	middle = f"{year}-{token}-"
 	
 	return prefix, digits, middle
 

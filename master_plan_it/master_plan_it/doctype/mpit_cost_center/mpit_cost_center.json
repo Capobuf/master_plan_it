@@ -10,6 +10,7 @@
  "field_order": [
   "section_overview",
   "cost_center_name",
+  "abbr",
   "parent_cost_center",
   "column_overview_right",
   "is_group",
@@ -33,6 +34,13 @@
    "label": "Cost Center Name",
    "reqd": 1,
    "unique": 1
+  },
+  {
+   "description": "Short code used for Addendum autoname.",
+   "fieldname": "abbr",
+   "fieldtype": "Data",
+   "in_standard_filter": 1,
+   "label": "Abbreviation"
   },
   {
    "fieldname": "parent_cost_center",

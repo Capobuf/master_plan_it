@@ -1,15 +1,11 @@
 {
  "charts": [
   {
-   "chart_name": "MPIT Plan Delta by Cost Center",
-   "label": "Plan Delta by Cost Center"
-  },
-  {
    "chart_name": "MPIT Renewals Window (by Month)",
    "label": "Renewals Window (by Month)"
   }
  ],
- "content": "[{\"id\": \"hdr-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Master Plan IT</span>\", \"col\": 12}}, {\"id\": \"sub-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">Gestione budget, progetti, contratti e fornitori</span>\", \"col\": 12}}, {\"id\": \"spc-1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-qa\", \"type\": \"header\", \"data\": {\"text\": \"Quick Actions\", \"col\": 12}}, {\"id\": \"qa-dash\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Overview Dashboard\", \"col\": 3}}, {\"id\": \"qa-budget\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Forecast Budget\", \"col\": 3}}, {\"id\": \"qa-refresh\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Refresh Active Forecast\", \"col\": 3}}, {\"id\": \"qa-allowance\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Record Allowance Spend\", \"col\": 3}}, {\"id\": \"spc-2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-setup\", \"type\": \"header\", \"data\": {\"text\": \"Setup & Pianificazione\", \"col\": 12}}, {\"id\": \"card-setup\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 4}}, {\"id\": \"card-plan\", \"type\": \"card\", \"data\": {\"card_name\": \"Planning\", \"col\": 4}}, {\"id\": \"card-reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"spc-4\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-reports\", \"type\": \"header\", \"data\": {\"text\": \"Reports & Monitoring\", \"col\": 12}}, {\"id\": \"rep-current\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Current Plan vs Exceptions\", \"col\": 3}}, {\"id\": \"rep-diff\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budget Diff\", \"col\": 3}}, {\"id\": \"rep-baseline\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Baseline vs Exceptions\", \"col\": 3}}, {\"id\": \"rep-monthly\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Monthly Plan vs Exceptions\", \"col\": 3}}, {\"id\": \"rep-projects\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Projects Planned vs Exceptions\", \"col\": 3}}, {\"id\": \"rep-renewals\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Renewals Window\", \"col\": 3}}, {\"id\": \"spc-5\", \"type\": \"spacer\", \"data\": {\"col\": 12}}]",
+ "content": "[{\"id\": \"hdr-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Master Plan IT</span>\", \"col\": 12}}, {\"id\": \"sub-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">Budget Engine v3 - Live/Snapshot/Addendum</span>\", \"col\": 12}}, {\"id\": \"spc-1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-qa\", \"type\": \"header\", \"data\": {\"text\": \"Quick Actions\", \"col\": 12}}, {\"id\": \"qa-dash\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Overview Dashboard\", \"col\": 3}}, {\"id\": \"qa-budget\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Live Budget\", \"col\": 3}}, {\"id\": \"qa-addendum\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Addendum\", \"col\": 3}}, {\"id\": \"qa-planned\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Planned Item\", \"col\": 3}}, {\"id\": \"spc-2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-setup\", \"type\": \"header\", \"data\": {\"text\": \"Setup & Pianificazione\", \"col\": 12}}, {\"id\": \"card-setup\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 4}}, {\"id\": \"card-plan\", \"type\": \"card\", \"data\": {\"card_name\": \"Planning\", \"col\": 4}}, {\"id\": \"card-reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"spc-4\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-reports\", \"type\": \"header\", \"data\": {\"text\": \"Reports & Monitoring (v3)\", \"col\": 12}}, {\"id\": \"rep-cap\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Plan vs Cap vs Actual\", \"col\": 3}}, {\"id\": \"rep-monthly\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Monthly Plan v3\", \"col\": 3}}, {\"id\": \"rep-renewals\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Renewals Window\", \"col\": 3}}, {\"id\": \"rep-diff\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budget Diff\", \"col\": 3}}, {\"id\": \"spc-5\", \"type\": \"spacer\", \"data\": {\"col\": 12}}]",
  "creation": "2025-12-31 05:34:40.229880",
  "custom_blocks": [],
  "docstatus": 0,
@@ -119,9 +115,31 @@
    "dependencies": "",
    "hidden": 0,
    "is_query_report": 0,
+   "label": "Budget Addendums",
+   "link_count": 0,
+   "link_to": "MPIT Budget Addendum",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
    "label": "Projects",
    "link_count": 0,
    "link_to": "MPIT Project",
+   "link_type": "DocType",
+   "onboard": 0,
+   "type": "Link"
+  },
+  {
+   "dependencies": "",
+   "hidden": 0,
+   "is_query_report": 0,
+   "label": "Planned Items",
+   "link_count": 0,
+   "link_to": "MPIT Planned Item",
    "link_type": "DocType",
    "onboard": 0,
    "type": "Link"
@@ -150,12 +168,12 @@
   },
   {
    "dependencies": "",
-   "description": "Piano corrente vs eccezioni verificate/allowance spend",
+   "description": "Plan vs Cap vs Actual per Cost Center",
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Current Plan vs Exceptions",
+   "label": "Plan vs Cap vs Actual",
    "link_count": 0,
-   "link_to": "MPIT Current Plan vs Exceptions",
+   "link_to": "MPIT Plan vs Cap vs Actual",
    "link_type": "Report",
    "onboard": 0,
    "report_ref_doctype": "MPIT Budget",
@@ -163,28 +181,15 @@
   },
   {
    "dependencies": "",
-   "description": "Baseline vs verified exceptions/allowance spend",
+   "description": "Monthly plan respecting spend_date and distribution",
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Baseline vs Exceptions",
+   "label": "Monthly Plan v3",
    "link_count": 0,
-   "link_to": "MPIT Baseline vs Exceptions",
+   "link_to": "MPIT Monthly Plan v3",
    "link_type": "Report",
    "onboard": 0,
-   "report_ref_doctype": "MPIT Actual Entry",
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "description": "Monthly plan vs verified exceptions/allowance spend",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Monthly Plan vs Exceptions",
-   "link_count": 0,
-   "link_to": "MPIT Monthly Plan vs Exceptions",
-   "link_type": "Report",
-   "onboard": 0,
-   "report_ref_doctype": "MPIT Actual Entry",
+   "report_ref_doctype": "MPIT Budget",
    "type": "Link"
   },
   {
@@ -202,19 +207,6 @@
   },
   {
    "dependencies": "",
-   "description": "Progetti: pianificato vs consuntivo",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Projects Planned vs Exceptions",
-   "link_count": 0,
-   "link_to": "MPIT Projects Planned vs Exceptions",
-   "link_type": "Report",
-   "onboard": 0,
-   "report_ref_doctype": "MPIT Project",
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
    "description": "Contratti in scadenza",
    "hidden": 0,
    "is_query_report": 1,
@@ -227,7 +219,7 @@
    "type": "Link"
   }
  ],
- "modified": "2025-12-31 01:43:31.892493",
+ "modified": "2026-01-02 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "Master Plan IT",
@@ -263,8 +255,8 @@
    "color": "Blue",
    "doc_view": "",
    "icon": "file",
-   "label": "Current Plan vs Exceptions",
-   "link_to": "MPIT Current Plan vs Exceptions",
+   "label": "Plan vs Cap vs Actual",
+   "link_to": "MPIT Plan vs Cap vs Actual",
    "report_ref_doctype": "MPIT Budget",
    "type": "Report"
   },
@@ -272,25 +264,25 @@
    "color": "Green",
    "doc_view": "New",
    "icon": "add",
-   "label": "Create Forecast Budget",
+   "label": "Create Live Budget",
    "link_to": "MPIT Budget",
    "type": "DocType"
   },
   {
    "color": "Orange",
-   "doc_view": "",
-   "icon": "refresh",
-   "label": "Refresh Active Forecast",
-   "type": "URL",
-   "url": "/app/query-report/MPIT%20Current%20Plan%20vs%20Exceptions?is_active_forecast=1"
+   "doc_view": "New",
+   "icon": "add",
+   "label": "Create Addendum",
+   "link_to": "MPIT Budget Addendum",
+   "type": "DocType"
   },
   {
    "color": "Purple",
    "doc_view": "New",
-   "icon": "edit",
-   "label": "Record Allowance Spend",
-   "type": "URL",
-   "url": "/app/mpit-actual-entry/new?entry_kind=Allowance%20Spend"
+   "icon": "add",
+   "label": "Create Planned Item",
+   "link_to": "MPIT Planned Item",
+   "type": "DocType"
   },
   {
    "color": "Blue",
@@ -305,27 +297,9 @@
    "color": "Blue",
    "doc_view": "",
    "icon": "file",
-   "label": "Baseline vs Exceptions",
-   "link_to": "MPIT Baseline vs Exceptions",
-   "report_ref_doctype": "MPIT Actual Entry",
-   "type": "Report"
-  },
-  {
-   "color": "Blue",
-   "doc_view": "",
-   "icon": "file",
-   "label": "Monthly Plan vs Exceptions",
-   "link_to": "MPIT Monthly Plan vs Exceptions",
-   "report_ref_doctype": "MPIT Actual Entry",
-   "type": "Report"
-  },
-  {
-   "color": "Blue",
-   "doc_view": "",
-   "icon": "file",
-   "label": "Projects Planned vs Exceptions",
-   "link_to": "MPIT Projects Planned vs Exceptions",
-   "report_ref_doctype": "MPIT Project",
+   "label": "Monthly Plan v3",
+   "link_to": "MPIT Monthly Plan v3",
+   "report_ref_doctype": "MPIT Budget",
    "type": "Report"
   },
   {
@@ -389,30 +363,23 @@
   {
    "color": "Grey",
    "icon": "list",
+   "label": "Planned Items",
+   "type": "DocType",
+   "link_to": "MPIT Planned Item"
+  },
+  {
+   "color": "Grey",
+   "icon": "list",
+   "label": "Budget Addendums",
+   "type": "DocType",
+   "link_to": "MPIT Budget Addendum"
+  },
+  {
+   "color": "Grey",
+   "icon": "list",
    "label": "Variance / Exception Entries",
    "type": "DocType",
    "link_to": "MPIT Actual Entry"
-  },
-  {
-   "color": "Grey",
-   "icon": "mail",
-   "label": "Email Account",
-   "type": "DocType",
-   "link_to": "Email Account"
-  },
-  {
-   "color": "Grey",
-   "icon": "bell",
-   "label": "Notification",
-   "type": "DocType",
-   "link_to": "Notification"
-  },
-  {
-   "color": "Grey",
-   "icon": "queue",
-   "label": "Email Queue",
-   "type": "DocType",
-   "link_to": "Email Queue"
   }
  ],
  "title": "Master Plan IT"

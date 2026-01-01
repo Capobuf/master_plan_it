@@ -2,22 +2,19 @@
  "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
- "autoname": "naming_series:",
+ "autoname": "",
  "creation": "2025-12-21 22:34:53.002565",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "naming_series",
   "section_overview",
   "year",
   "title",
   "overview_col_break",
   "workflow_state",
-  "budget_kind",
-  "is_active_forecast",
+  "budget_type",
   "actions_col_break",
-  "set_active_btn",
   "refresh_from_sources",
   "section_lines",
   "lines",
@@ -33,15 +30,6 @@
   "amended_from"
 ],
  "fields": [
-  {
-   "fieldname": "naming_series",
-   "fieldtype": "Select",
-   "label": "Series",
-   "options": "BUD-.YYYY.-",
-   "default": "BUD-.YYYY.-",
-   "reqd": 1,
-   "hidden": 1
-  },
   {
    "fieldname": "section_overview",
    "fieldtype": "Section Break",
@@ -81,28 +69,15 @@
    "read_only": 0
   },
   {
-   "fieldname": "budget_kind",
-   "fieldtype": "Select",
-   "description": "Budget type (Baseline or Forecast).",
-   "label": "Budget Kind",
-   "options": "Baseline\nForecast",
-   "default": "Forecast",
-   "in_list_view": 1,
-   "in_standard_filter": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "is_active_forecast",
-   "fieldtype": "Check",
-   "description": "Mark as active Forecast for the year (only one allowed).",
-   "label": "Is Active Forecast",
-   "depends_on": "eval:doc.budget_kind=='Forecast'",
-   "in_list_view": 1,
-   "in_standard_filter": 1
-  },
-  {
-   "fieldname": "actions_col_break",
-   "fieldtype": "Column Break"
+  "fieldname": "budget_type",
+  "fieldtype": "Select",
+  "description": "Budget type (Live or Snapshot).",
+  "label": "Budget Type",
+  "options": "Live\nSnapshot",
+  "default": "Live",
+  "in_list_view": 1,
+  "in_standard_filter": 1,
+  "reqd": 1
   },
   {
    "fieldname": "actions_col_break",
@@ -202,20 +177,14 @@
    "no_copy": 1,
    "options": "MPIT Budget",
    "print_hide": 1,
-   "read_only": 1,
-   "search_index": 1
-  },
+  "read_only": 1,
+  "search_index": 1
+ },
   {
    "fieldname": "refresh_from_sources",
    "fieldtype": "Button",
    "label": "Refresh from Sources",
-   "depends_on": "eval:doc.budget_kind=='Forecast'"
-  },
-  {
-   "fieldname": "set_active_btn",
-   "fieldtype": "Button",
-   "label": "Set Active",
-   "depends_on": "eval:doc.budget_kind=='Forecast'"
+   "depends_on": "eval:doc.budget_type=='Live'"
   }
  ],
  "grid_page_length": 50,

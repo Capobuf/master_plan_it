@@ -19,3 +19,22 @@ after_sync = "master_plan_it.setup.install.after_sync"
 fixtures = [
     {"dt": "Role", "filters": [["name", "in", ["vCIO Manager", "Client Editor", "Client Viewer"]]]},
 ]
+
+# Budget Engine v3: Auto-refresh triggers
+# When validated sources change, enqueue refresh for Live budgets in horizon (current year + next)
+doc_events = {
+    "MPIT Contract": {
+        "on_update": "master_plan_it.budget_refresh_hooks.on_contract_change",
+        "on_trash": "master_plan_it.budget_refresh_hooks.on_contract_change",
+    },
+    "MPIT Planned Item": {
+        "on_update": "master_plan_it.budget_refresh_hooks.on_planned_item_change",
+        "after_submit": "master_plan_it.budget_refresh_hooks.on_planned_item_change",
+        "on_cancel": "master_plan_it.budget_refresh_hooks.on_planned_item_change",
+        "on_trash": "master_plan_it.budget_refresh_hooks.on_planned_item_change",
+    },
+    "MPIT Budget Addendum": {
+        "after_submit": "master_plan_it.budget_refresh_hooks.on_addendum_change",
+        "on_cancel": "master_plan_it.budget_refresh_hooks.on_addendum_change",
+    },
+}

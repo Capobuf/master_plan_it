@@ -55,7 +55,7 @@
    "description": "Sorgente riga (Contract, Project, Allowance cap, Manual).",
    "in_list_view": 1,
    "label": "Line Kind",
-   "options": "Contract\nProject\nAllowance\nManual"
+   "options": "Contract\nPlanned Item\nProject\nAllowance\nManual"
   },
   {
    "fieldname": "source_key",
