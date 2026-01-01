@@ -26,4 +26,4 @@ Fixtures are standard Frappe exports filtered to Master Plan IT records only. Ke
 - MPIT Baseline vs Exceptions
 - MPIT Monthly Plan vs Exceptions
 - MPIT Projects Planned vs Exceptions
-- MPIT Plan Delta by Category (chart)
+- MPIT Plan Delta by Cost Center (chart)

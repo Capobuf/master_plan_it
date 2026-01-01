@@ -6,7 +6,9 @@ import frappe
 from frappe import _
 from frappe.utils import flt, getdate
 
-# This chart source is called via Frappe's whitelisted API.
+# Chart source: Plan Delta (Forecast - Baseline) aggregated by Cost Center.
+# Inputs: filters (year optional, cost_center optional, top_n optional).
+# Output: labels/values for bar chart keyed by cost center totals.
 
 
 def _get_budget_name(year: str, kind: str) -> str | None:
@@ -16,12 +18,20 @@ def _get_budget_name(year: str, kind: str) -> str | None:
 	return frappe.db.get_value("MPIT Budget", filters, "name")
 
 
-def _get_category_totals(budget: str | None, cost_center: str | None) -> dict[str, float]:
+def _get_latest_year() -> str | None:
+	row = frappe.db.sql(
+		"select year from `tabMPIT Budget` where ifnull(year, '') != '' order by year desc limit 1",
+		as_dict=True,
+	)
+	return row[0].year if row else None
+
+
+def _get_cost_center_totals(budget: str | None, cost_center: str | None) -> dict[str, float]:
 	if not budget:
 		return {}
 
 	params = {"budget": budget}
-	conditions = ["parent = %(budget)s", "is_active = 1", "ifnull(category, '') != ''"]
+	conditions = ["parent = %(budget)s", "is_active = 1", "ifnull(cost_center, '') != ''"]
 
 	if cost_center:
 		conditions.append("cost_center = %(cost_center)s")
@@ -29,15 +39,15 @@ def _get_category_totals(budget: str | None, cost_center: str | None) -> dict[st
 
 	rows = frappe.db.sql(
 		f"""
-		SELECT category, SUM(COALESCE(annual_net, amount_net, annual_amount, 0)) AS total
+		SELECT cost_center, SUM(COALESCE(annual_net, amount_net, annual_amount, 0)) AS total
 		FROM `tabMPIT Budget Line`
 		WHERE {' AND '.join(conditions)}
-		GROUP BY category
+		GROUP BY cost_center
 		""",
 		params,
 		as_dict=True,
 	)
-	return {row.category: flt(row.total or 0, 2) for row in rows}
+	return {row.cost_center: flt(row.total or 0, 2) for row in rows}
 
 
 def _normalize_filters(raw) -> dict:
@@ -60,8 +70,8 @@ def get(filters=None):
 
 	year = filters.get("year")
 	if not year:
-		# default to current year if not provided to avoid AttributeError
-		year = str(getdate().year)
+		# Use latest budget year, otherwise fallback to current calendar year
+		year = _get_latest_year() or str(getdate().year)
 
 	cost_center = filters.get("cost_center")
 	try:
@@ -72,13 +82,13 @@ def get(filters=None):
 	baseline = _get_budget_name(year, "Baseline")
 	forecast = _get_budget_name(year, "Forecast") or baseline
 
-	baseline_totals = _get_category_totals(baseline, cost_center)
-	forecast_totals = _get_category_totals(forecast, cost_center)
+	baseline_totals = _get_cost_center_totals(baseline, cost_center)
+	forecast_totals = _get_cost_center_totals(forecast, cost_center)
 
 	rows = []
-	for cat in set(baseline_totals) | set(forecast_totals):
-		delta = forecast_totals.get(cat, 0) - baseline_totals.get(cat, 0)
-		rows.append((cat, flt(delta, 2)))
+	for cc in set(baseline_totals) | set(forecast_totals):
+		delta = forecast_totals.get(cc, 0) - baseline_totals.get(cc, 0)
+		rows.append((cc, flt(delta, 2)))
 
 	# Sort by absolute delta desc and apply top_n if provided
 	rows.sort(key=lambda x: abs(x[1]), reverse=True)

@@ -7,7 +7,7 @@
  "engine": "InnoDB",
  "field_order": [
   "year",
-  "category",
+  "cost_center",
   "planned_amount",
   "planned_amount_includes_vat",
   "planned_amount_gross",
@@ -17,17 +17,19 @@
 ],
 "fields": [
   {
-   "fieldname": "category",
+   "fieldname": "cost_center",
    "fieldtype": "Link",
-   "label": "Category",
-   "options": "MPIT Category",
+   "in_list_view": 1,
+   "label": "Cost Center",
+   "options": "MPIT Cost Center",
    "reqd": 1,
-   "columns": 2
+   "columns": 1
   },
   {
    "fieldname": "year",
    "fieldtype": "Link",
    "description": "Select the year for this allocation.",
+   "in_preview": 0,
    "in_list_view": 1,
    "columns": 1,
    "label": "Year",

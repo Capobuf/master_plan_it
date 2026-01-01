@@ -14,7 +14,6 @@
     "sb_overview_main",
     "title",
     "vendor",
-    "category",
     "contract_kind",
     "cb_overview_right",
     "status",
@@ -85,19 +84,6 @@
       "allow_in_quick_entry": 1,
       "in_preview": 1
     },
-  {
-   "fieldname": "category",
-   "fieldtype": "Link",
-   "description": "Categoria budget (obbligatoria).",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Category",
-   "options": "MPIT Category",
-   "reqd": 0,
-   "bold": 1,
-   "allow_in_quick_entry": 1,
-   "in_preview": 1
-  },
     {
       "fieldname": "contract_kind",
       "fieldtype": "Select",
@@ -139,7 +125,8 @@
    "in_standard_filter": 1,
    "label": "Cost Center",
    "options": "MPIT Cost Center",
-   "allow_in_quick_entry": 1
+   "allow_in_quick_entry": 1,
+   "reqd": 1
   },
     {
       "fieldname": "tb_renewal",

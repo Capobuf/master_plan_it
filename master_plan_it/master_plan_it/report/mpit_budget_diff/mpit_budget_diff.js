@@ -22,8 +22,8 @@ frappe.query_reports["MPIT Budget Diff"] = {
 			fieldname: "group_by",
 			label: __("Group By"),
 			fieldtype: "Select",
-			options: "Category+Vendor\nCategory",
-			default: "Category+Vendor"
+			options: "CostCenter+Vendor\nCostCenter",
+			default: "CostCenter+Vendor"
 		},
 		{
 			fieldname: "only_changed",

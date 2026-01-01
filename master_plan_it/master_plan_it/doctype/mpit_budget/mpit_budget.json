@@ -16,7 +16,6 @@
   "workflow_state",
   "budget_kind",
   "is_active_forecast",
-  "baseline_ref",
   "actions_col_break",
   "set_active_btn",
   "refresh_from_sources",
@@ -100,14 +99,6 @@
    "depends_on": "eval:doc.budget_kind=='Forecast'",
    "in_list_view": 1,
    "in_standard_filter": 1
-  },
-  {
-   "fieldname": "baseline_ref",
-   "fieldtype": "Link",
-   "description": "Baseline di riferimento per confronti.",
-   "label": "Baseline Reference",
-   "options": "MPIT Budget",
-   "depends_on": "eval:doc.budget_kind=='Forecast'"
   },
   {
    "fieldname": "actions_col_break",

@@ -17,7 +17,20 @@
  "number_of_groups": 0,
  "owner": "Administrator",
  "report_name": "MPIT Renewals Window",
- "roles": [],
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "vCIO Manager"
+  },
+  {
+   "role": "Client Editor"
+  },
+  {
+   "role": "Client Viewer"
+  }
+ ],
  "show_values_over_chart": 0,
  "time_interval": "Yearly",
  "timeseries": 0,

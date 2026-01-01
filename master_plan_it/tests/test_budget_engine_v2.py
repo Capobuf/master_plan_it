@@ -19,12 +19,6 @@ def _ensure_year(year: int):
 		doc.insert(ignore_permissions=True)
 
 
-def _ensure_category(name: str = "Test Category"):
-	if not frappe.db.exists("MPIT Category", name):
-		frappe.get_doc({"doctype": "MPIT Category", "category_name": name}).insert(ignore_permissions=True)
-	return name
-
-
 def _ensure_cost_center(name: str = "All Cost Centers"):
 	if not frappe.db.exists("MPIT Cost Center", name):
 		frappe.get_doc({"doctype": "MPIT Cost Center", "cost_center_name": name, "is_group": 1, "is_active": 1}).insert(ignore_permissions=True)
@@ -32,7 +26,7 @@ def _ensure_cost_center(name: str = "All Cost Centers"):
 
 
 def _ensure_contract(name: str = "CT-TEST"):
-	_ensure_category()
+	cc = _ensure_cost_center()
 	if not frappe.db.exists("MPIT Vendor", "Vendor-X"):
 		frappe.get_doc({"doctype": "MPIT Vendor", "vendor_name": "Vendor-X"}).insert(ignore_permissions=True)
 	if frappe.db.exists("MPIT Contract", name):
@@ -43,7 +37,7 @@ def _ensure_contract(name: str = "CT-TEST"):
 			"name": name,
 			"title": name,
 			"vendor": "Vendor-X",
-			"category": "Test Category",
+			"cost_center": cc,
 			"contract_kind": "Contract",
 			"current_amount_net": 100,
 			"start_date": "2025-01-01",
@@ -110,14 +104,12 @@ def test_refresh_idempotence_upsert():
 
 def test_actual_entry_constraints_allowance_and_delta():
 	_ensure_year(2025)
-	_ensure_category()
 	cc = _ensure_cost_center()
 	contract_name = _ensure_contract()
 
 	# Allowance spend must require cost center and forbid links
 	ae = MPITActualEntry()
 	ae.posting_date = "2025-01-10"
-	ae.category = "Test Category"
 	ae.entry_kind = "Allowance Spend"
 	ae.amount = 100
 	ae.cost_center = None
@@ -132,7 +124,6 @@ def test_actual_entry_constraints_allowance_and_delta():
 	# Delta requires exactly one link
 	ae2 = MPITActualEntry()
 	ae2.posting_date = "2025-02-01"
-	ae2.category = "Test Category"
 	ae2.entry_kind = "Delta"
 	ae2.amount = 50
 	ae2.contract = contract_name
@@ -144,7 +135,7 @@ def test_actual_entry_constraints_allowance_and_delta():
 def test_refresh_skips_draft_and_proposed_projects():
 	year = 2032
 	_ensure_year(year)
-	cat = _ensure_category("Project Test Cat")
+	cc = _ensure_cost_center("Project Test CC")
 
 	# Draft project with allocation
 	draft_proj = frappe.get_doc(
@@ -155,7 +146,7 @@ def test_refresh_skips_draft_and_proposed_projects():
 			"allocations": [
 				{
 					"year": str(year),
-					"category": cat,
+					"cost_center": cc,
 					"planned_amount": 1000,
 					"planned_amount_net": 1000,
 				}
@@ -173,7 +164,7 @@ def test_refresh_skips_draft_and_proposed_projects():
 			"allocations": [
 				{
 					"year": str(year),
-					"category": cat,
+					"cost_center": cc,
 					"planned_amount": 2000,
 					"planned_amount_net": 2000,
 				}
@@ -201,7 +192,6 @@ def test_refresh_skips_draft_and_proposed_projects():
 def test_refresh_updates_generated_lines_without_readonly_errors():
 	year = 2033
 	_ensure_year(year)
-	_ensure_category()
 	_ensure_cost_center()
 	contract_name = _ensure_contract("CT-REFRESH")
 

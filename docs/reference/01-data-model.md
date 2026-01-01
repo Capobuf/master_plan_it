@@ -1,4 +1,4 @@
-# Reference: Data model (V1)
+# Reference: Data model (V2, Cost Center only)
 
 Naming convention: all DocTypes are prefixed `MPIT`.
 
@@ -16,13 +16,6 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - is_active (Check)
 
 ## Classification
-### MPIT Category (Tree DocType)
-- category_name (Data)
-- parent_category (Link: MPIT Category)
-- is_group (Check)
-- is_active (Check)
-- sort_order (Int)
-
 ### MPIT Cost Center (Tree DocType)
 - cost_center_name (Data)
 - parent_cost_center (Link: MPIT Cost Center)
@@ -41,8 +34,7 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 ### MPIT Contract
 - title (Data)
 - vendor (Link: MPIT Vendor) [mandatory]
-- category (Link: MPIT Category) [mandatory]
-- cost_center (Link: MPIT Cost Center, optional)
+- cost_center (Link: MPIT Cost Center) [mandatory]
 - contract_kind (Select: Contract / Subscription / Annual Renewal / Maintenance)
 - spread_months (Int), spread_start_date (Date), spread_end_date (Date, computed)
 - rate_schedule (Table: MPIT Contract Rate, mutually exclusive with spread)
@@ -79,11 +71,10 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - workflow_state (managed by Workflow)
 
 ### MPIT Budget Line (Child Table)
-- category (Link: MPIT Category) [mandatory]
 - vendor (Link: MPIT Vendor, optional)
 - contract (Link: MPIT Contract, optional)
 - project (Link: MPIT Project, optional)
-- cost_center (Link: MPIT Cost Center, optional; fetched from contract if set)
+- cost_center (Link: MPIT Cost Center, mandatory; fetched from contract/project if set)
 - description (Small Text)
 - line_kind (Select: Contract / Project / Allowance / Manual)
 - source_key (Data, read-only)
@@ -102,11 +93,10 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 ### MPIT Actual Entry
 - posting_date (Date) [mandatory]
 - year (Link: MPIT Year) [derived from posting_date]
-- category (Link: MPIT Category) [mandatory]
 - vendor (Link: MPIT Vendor, optional)
 - contract (Link: MPIT Contract, optional)
 - project (Link: MPIT Project, optional)
-- cost_center (Link: MPIT Cost Center, optional; mandatory for allowance spends in V2)
+- cost_center (Link: MPIT Cost Center) [mandatory for allowance; defaulted from contract/project if set]
 - amount (Currency) [mandatory]
 - budget (Link: MPIT Budget, optional)
 - budget_line_ref (Data/Small Text, optional)
@@ -128,12 +118,12 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 
 ### MPIT Project Allocation (Child Table)
 - year (Link: MPIT Year) [mandatory]
-- category (Link: MPIT Category) [mandatory]
+- cost_center (Link: MPIT Cost Center) [mandatory]
 - planned_amount (Currency) [mandatory]
 - VAT split fields
 
 ### MPIT Project Quote (Child Table)
-- category (Link: MPIT Category) [mandatory]
+- cost_center (Link: MPIT Cost Center) [mandatory]
 - vendor (Link: MPIT Vendor)
 - amount (Currency)
 - quote_date (Date)

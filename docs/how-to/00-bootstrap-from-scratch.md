@@ -13,7 +13,7 @@ Reports/charts available after migrate:
 - MPIT Baseline vs Exceptions
 - MPIT Monthly Plan vs Exceptions
 - MPIT Projects Planned vs Exceptions
-- MPIT Plan Delta by Category (chart)
+- MPIT Plan Delta by Cost Center (chart)
 
 ## Docker compose (prod) – promemoria rapido
 - Stack minimale: `db` (MariaDB 10.6) + `redis` + `backend` (gunicorn + workers/scheduler/socketio in un solo container) + `frontend` (nginx). Compose: `master-plan-it-deploy/compose.prod.yaml`, env: `master-plan-it-deploy/prod.env`.

@@ -1,3 +1,6 @@
+# MPIT Project controller: handles naming, VAT normalization for allocations/quotes, permissions on quote approval,
+# validation of required allocations and dates, and keeps financial totals in sync. Inputs: project doc with
+# allocations/quotes (cost_center, amounts). Output: validated project with computed net totals and enforced rules.
 # Copyright (c) 2025, DOT and contributors
 # For license information, please see license.txt
 
@@ -26,6 +29,8 @@ class MPITProject(Document):
 		self.name = f"{prefix}{sequence}"
 	
 	def validate(self):
+		if not self.cost_center:
+			frappe.throw(_("Cost Center is required on Project."))
 		self._require_allocations_for_approval()
 		self._validate_planned_dates()
 		self._enforce_quote_approvals()

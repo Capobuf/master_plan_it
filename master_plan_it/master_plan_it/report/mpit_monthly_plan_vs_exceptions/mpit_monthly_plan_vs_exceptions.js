@@ -30,10 +30,10 @@ frappe.query_reports["MPIT Monthly Plan vs Exceptions"] = {
 			default: 12
 		},
 		{
-			fieldname: "category",
-			label: __("Category"),
+			fieldname: "cost_center",
+			label: __("Cost Center"),
 			fieldtype: "Link",
-			options: "MPIT Category"
+			options: "MPIT Cost Center"
 		},
 		{
 			fieldname: "vendor",

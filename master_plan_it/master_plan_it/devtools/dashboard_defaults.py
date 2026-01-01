@@ -1,5 +1,8 @@
 import frappe
 
+# Utility: seed default filters for overview dashboard charts using latest year.
+# Input: site (unused; present for bench execute compatibility). Output: default year applied.
+
 
 def apply_chart_filters(site: str = None):
 	"""Seed default filters for all overview charts to make Set Filters non-empty."""
@@ -15,7 +18,7 @@ def apply_chart_filters(site: str = None):
 		frappe.db.set_value("Dashboard Chart", chart_name, "filters_json", frappe.as_json(filters))
 
 	# Plan delta (custom)
-	set_filters("MPIT Plan Delta by Category", {"year": default_year, "top_n": 10})
+	set_filters("MPIT Plan Delta by Cost Center", {"year": default_year, "top_n": 10})
 
 	# Report charts (filters are passed through to report)
 	set_filters("MPIT Baseline vs Exceptions", {"year": default_year})

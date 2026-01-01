@@ -66,23 +66,11 @@
 - is_generated: If enabled, the line is generated and should be read-only (manual edits blocked).
 - is_active: If enabled, the budget line is active.
 
-### MPIT Category
-
-- category_name: Enter the category name.
-- parent_category: Select the parent category.
-- is_active: If enabled, the category is active for use.
-- sort_order: Enter numeric order for sorting categories.
-- lft: Calculated automatically for tree positioning.
-- rgt: Calculated automatically for tree positioning.
-- is_group: If enabled, category can contain child categories.
-- old_parent: Previous parent category captured during moves.
-- parent_mpit_category: Parent category used by tree view.
-
 ### MPIT Contract
 
 - title: Enter the contract title.
 - vendor: Select the vendor for this contract.
-- category: Select the category for this contract.
+- cost_center: Select the cost center for this contract.
 - contract_kind: Choose the contract type (contract, subscription, renewal, or maintenance).
 - billing_cycle: Choose the billing cycle for this contract.
 - start_date: Date when the contract starts.

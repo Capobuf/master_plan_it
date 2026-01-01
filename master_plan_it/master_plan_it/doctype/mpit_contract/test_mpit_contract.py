@@ -9,19 +9,8 @@ from frappe.utils import flt, now_datetime
 class TestMPITContract(FrappeTestCase):
 	def setUp(self):
 		super().setUp()
-		self.category = self._ensure_category("Test Contract Category")
 		self.vendor = self._ensure_vendor("Test Contract Vendor")
-
-	def _ensure_category(self, name: str):
-		if not frappe.db.exists("MPIT Category", name):
-			frappe.get_doc(
-				{
-					"doctype": "MPIT Category",
-					"category_name": name,
-					"is_group": 0,
-				}
-			).insert(ignore_if_duplicate=True)
-		return frappe.get_doc("MPIT Category", name)
+		self.cost_center = self._ensure_cost_center("Test Contract CC")
 
 	def _ensure_vendor(self, name: str):
 		if not frappe.db.exists("MPIT Vendor", name):
@@ -32,6 +21,18 @@ class TestMPITContract(FrappeTestCase):
 				}
 			).insert(ignore_if_duplicate=True)
 		return frappe.get_doc("MPIT Vendor", name)
+
+	def _ensure_cost_center(self, name: str):
+		if not frappe.db.exists("MPIT Cost Center", name):
+			frappe.get_doc(
+				{
+					"doctype": "MPIT Cost Center",
+					"cost_center_name": name,
+					"is_group": 0,
+					"is_active": 1,
+				}
+			).insert(ignore_if_duplicate=True)
+		return frappe.get_doc("MPIT Cost Center", name)
 
 	def _make_contract(
 		self,
@@ -48,7 +49,7 @@ class TestMPITContract(FrappeTestCase):
 				"doctype": "MPIT Contract",
 				"title": title,
 				"vendor": self.vendor.name,
-				"category": self.category.name,
+				"cost_center": self.cost_center.name,
 				"contract_kind": "Contract",
 				"auto_renew": 0,
 				"current_amount": amount,

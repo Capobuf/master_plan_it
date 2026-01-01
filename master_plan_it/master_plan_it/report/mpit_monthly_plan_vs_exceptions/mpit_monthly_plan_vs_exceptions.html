@@ -169,9 +169,9 @@
         {% if filters.to_month %}
             <strong>{{ _("To Month") }}:</strong> {{ filters.to_month }} &nbsp;
         {% endif %}
-        {% if filters.category %}
-            <strong>{{ _("Category") }}:</strong> {{ filters.category }} &nbsp;
-        {% endif %}
+{% if filters.cost_center %}
+            <strong>{{ _("Cost Center") }}:</strong> {{ filters.cost_center }} &nbsp;
+{% endif %}
         {% if filters.vendor %}
             <strong>{{ _("Vendor") }}:</strong> {{ filters.vendor }} &nbsp;
         {% endif %}

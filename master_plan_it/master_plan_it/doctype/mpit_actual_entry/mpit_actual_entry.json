@@ -23,15 +23,12 @@
   "amount_vat",
   "amount_gross",
   "tab_links",
-  "category",
   "vendor",
   "contract",
   "project",
   "links_col_break",
-  "cost_center",
-  "budget",
-  "budget_line_ref"
- ],
+  "cost_center"
+],
  "fields": [
   {
    "fieldname": "tab_overview",
@@ -143,16 +140,6 @@
    "label": "Links (scegli una sola fonte)"
   },
   {
-   "fieldname": "category",
-   "fieldtype": "Link",
-   "description": "Categoria obbligatoria.",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Category",
-   "options": "MPIT Category",
-   "reqd": 1
-  },
-  {
    "fieldname": "vendor",
    "fieldtype": "Link",
    "description": "Fornitore (opzionale).",
@@ -191,20 +178,6 @@
    "label": "Cost Center (Allowance)",
    "options": "MPIT Cost Center",
    "mandatory_depends_on": "eval:doc.entry_kind==\"Allowance Spend\""
-  },
-  {
-   "fieldname": "budget",
-   "fieldtype": "Link",
-   "description": "Riferimento budget (opzionale).",
-   "label": "Budget",
-   "options": "MPIT Budget"
-  },
-  {
-   "fieldname": "budget_line_ref",
-   "fieldtype": "Data",
-   "description": "Riga budget collegata (solo lettura).",
-   "label": "Budget Line Ref",
-   "read_only": 1
   }
  ],
  "grid_page_length": 50,

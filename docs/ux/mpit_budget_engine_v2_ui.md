@@ -42,7 +42,7 @@ Note: `EPIC_MPTI_BudgetEngine_v2.md` non trovato nel repo; il piano segue le dec
 - Remove any V1 references (Baseline Expense, Amendments, portfolio bucket, custom_period_months) from workspace/charts/reports.
 
 ## F) Hard UX rules
-- Category mandatory per entries and lines.
+- Cost Center mandatory per entries and lines; Category non utilizzata.
 - Cost Center central for allowances: required on Allowance Spend and suggested on allowance budget lines.
 - Spread lives only on Contract; mutually exclusive with rate schedule and billing cycle.
 - Rate schedule rows strictly increasing effective_from; gaps allowed.

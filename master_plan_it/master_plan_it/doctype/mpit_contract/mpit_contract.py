@@ -1,3 +1,6 @@
+# MPIT Contract controller: validates contract monetary splits, spread vs rate schedule, naming invariants,
+# and keeps renewal/status coherence. Inputs: contract fields (amounts, billing cadence, spread/rate rows, cost_center).
+# Output: normalized contract with net/vat/gross, monthly equivalent, and clean status/renewal dates.
 # Copyright (c) 2025, DOT and contributors
 # For license information, please see license.txt
 
@@ -15,6 +18,8 @@ from master_plan_it import mpit_user_prefs, tax
 
 class MPITContract(Document):
 	def validate(self):
+		if not self.cost_center:
+			frappe.throw(_("Cost Center is required for contracts."))
 		self._compute_vat_split()
 		self._validate_spread_vs_rate()
 		self._compute_spread_end_date()

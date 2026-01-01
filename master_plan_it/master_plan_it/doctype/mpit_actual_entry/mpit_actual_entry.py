@@ -1,3 +1,6 @@
+# MPIT Actual Entry controller: validates variance/allowance entries, enforces naming, year derivation, VAT split,
+# and status guards. Inputs: Doc fields (posting_date, entry_kind, contract/project, cost_center, amounts). Outputs:
+# persisted entry with derived year and net/vat/gross amounts, enforcing Delta vs Allowance rules.
 # Copyright (c) 2025, DOT and contributors
 # For license information, please see license.txt
 
@@ -83,7 +86,6 @@ class MPITActualEntry(Document):
 				"posting_date",
 				"year",
 				"entry_kind",
-				"category",
 				"vendor",
 				"contract",
 				"project",

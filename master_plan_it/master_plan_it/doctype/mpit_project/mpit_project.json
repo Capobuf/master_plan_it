@@ -11,7 +11,6 @@
   "title",
   "status",
   "overview_col_break",
-  "category",
   "cost_center",
   "owner_user",
   "start_date",
@@ -61,21 +60,14 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "category",
-   "fieldtype": "Link",
-   "label": "Category",
-   "description": "Categoria principale del progetto (per report e allocazioni).",
-   "options": "MPIT Category",
-   "in_standard_filter": 1
-  },
-  {
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "description": "Cost Center principale (report/cap).",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Cost Center",
-   "options": "MPIT Cost Center"
+   "options": "MPIT Cost Center",
+   "reqd": 1
   },
   {
    "fieldname": "owner_user",

@@ -7,8 +7,8 @@
         Dynamic template supporting print_profile, print_orientation, print_density filters.
         
         Profiles:
-        - Standard: category, vendor, budget_a_annual_net, budget_b_annual_net, delta_annual
-        - Compact: category, budget_a_annual_net, budget_b_annual_net, delta_annual
+        - Standard: cost_center, vendor, budget_a_annual_net, budget_b_annual_net, delta_annual
+        - Compact: cost_center, budget_a_annual_net, budget_b_annual_net, delta_annual
         - All: all columns (includes monthly equivalents)
     #}
     {%- set profile = (filters.print_profile or "Standard")|string %}
@@ -17,8 +17,8 @@
     
     {# Define column profiles by fieldname #}
     {%- set profile_columns = {
-        "Standard": ["category", "vendor", "budget_a_annual_net", "budget_b_annual_net", "delta_annual"],
-        "Compact": ["category", "budget_a_annual_net", "budget_b_annual_net", "delta_annual"],
+        "Standard": ["cost_center", "vendor", "budget_a_annual_net", "budget_b_annual_net", "delta_annual"],
+        "Compact": ["cost_center", "budget_a_annual_net", "budget_b_annual_net", "delta_annual"],
         "All": []
     } %}
     

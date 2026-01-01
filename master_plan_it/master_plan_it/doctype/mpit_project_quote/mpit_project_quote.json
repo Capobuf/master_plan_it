@@ -6,7 +6,7 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "category",
+  "cost_center",
   "vendor",
   "quote_date",
   "attachment",
@@ -20,10 +20,10 @@
  ],
  "fields": [
   {
-   "fieldname": "category",
+   "fieldname": "cost_center",
    "fieldtype": "Link",
-   "label": "Category",
-   "options": "MPIT Category",
+   "label": "Cost Center",
+   "options": "MPIT Cost Center",
    "reqd": 1
   },
   {

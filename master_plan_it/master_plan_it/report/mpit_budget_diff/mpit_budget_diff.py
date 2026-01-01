@@ -3,6 +3,10 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
+# Report: Budget Diff between two budgets grouped by Cost Center (and optionally Vendor).
+# Inputs: budget_a, budget_b (required), group_by (CostCenter+Vendor or CostCenter), only_changed flag.
+# Outputs: rows with annual/monthly deltas and summary total.
+
 
 def execute(filters=None):
 	if isinstance(filters, str):
@@ -10,7 +14,7 @@ def execute(filters=None):
 	filters = frappe._dict(filters or {})
 
 	_validate_filters(filters)
-	group_by = (filters.get("group_by") or "Category+Vendor").strip()
+	group_by = (filters.get("group_by") or "CostCenter+Vendor").strip()
 	only_changed = frappe.utils.cint(filters.get("only_changed", 1))
 
 	budget_a = filters.budget_a
@@ -30,13 +34,13 @@ def _validate_filters(filters) -> None:
 		frappe.throw(_("budget_b is required"))
 	if filters.budget_a == filters.budget_b:
 		frappe.throw(_("budget_a and budget_b must be different budgets"))
-	if filters.get("group_by") and filters.get("group_by") not in {"Category+Vendor", "Category"}:
-		frappe.throw(_("group_by must be either 'Category+Vendor' or 'Category'"))
+	if filters.get("group_by") and filters.get("group_by") not in {"CostCenter+Vendor", "CostCenter"}:
+		frappe.throw(_("group_by must be either 'CostCenter+Vendor' or 'CostCenter'"))
 
 
 def _build_columns() -> list[dict]:
 	return [
-		{"label": _("Category"), "fieldname": "category", "fieldtype": "Link", "options": "MPIT Category", "width": 200},
+		{"label": _("Cost Center"), "fieldname": "cost_center", "fieldtype": "Link", "options": "MPIT Cost Center", "width": 200},
 		{"label": _("Vendor"), "fieldname": "vendor", "fieldtype": "Link", "options": "MPIT Vendor", "width": 180},
 		{"label": _("Budget A Annual Net"), "fieldname": "budget_a_annual_net", "fieldtype": "Currency", "width": 140},
 		{"label": _("Budget B Annual Net"), "fieldname": "budget_b_annual_net", "fieldtype": "Currency", "width": 140},
@@ -49,11 +53,11 @@ def _build_columns() -> list[dict]:
 
 def _load_budget_totals(budget: str, group_by: str) -> dict:
 	fields = [
-		"category",
+		"cost_center",
 		"SUM(COALESCE(annual_net, amount_net, annual_amount, monthly_amount * 12, 0)) AS planned",
 	]
-	group_fields = ["category"]
-	if group_by == "Category+Vendor":
+	group_fields = ["cost_center"]
+	if group_by == "CostCenter+Vendor":
 		fields.insert(1, "vendor")
 		group_fields.append("vendor")
 
@@ -71,7 +75,7 @@ def _load_budget_totals(budget: str, group_by: str) -> dict:
 
 	result = {}
 	for row in rows:
-		key = (row.get("category"), row.get("vendor") if group_by == "Category+Vendor" else None)
+		key = (row.get("cost_center"), row.get("vendor") if group_by == "CostCenter+Vendor" else None)
 		result[key] = float(row.get("planned") or 0)
 	return result
 
@@ -85,7 +89,7 @@ def _build_rows(budget_a: str, budget_b: str, group_by: str, only_changed: int) 
 	total_a = total_b = 0.0
 
 	for key in sorted(keys, key=lambda k: (str(k[0] or ""), str(k[1] or ""))):
-		category, vendor = key
+		cost_center, vendor = key
 		planned_a = float(a_map.get(key, 0) or 0)
 		planned_b = float(b_map.get(key, 0) or 0)
 		delta_annual = planned_b - planned_a
@@ -98,7 +102,7 @@ def _build_rows(budget_a: str, budget_b: str, group_by: str, only_changed: int) 
 		delta_monthly = monthly_b - monthly_a
 
 		rows.append({
-			"category": category,
+			"cost_center": cost_center,
 			"vendor": vendor,
 			"budget_a_annual_net": planned_a,
 			"budget_b_annual_net": planned_b,
@@ -114,7 +118,7 @@ def _build_rows(budget_a: str, budget_b: str, group_by: str, only_changed: int) 
 	if rows:
 		delta_total = total_b - total_a
 		rows.append({
-			"category": _("Total"),
+			"cost_center": _("Total"),
 			"vendor": "",
 			"budget_a_annual_net": total_a,
 			"budget_b_annual_net": total_b,

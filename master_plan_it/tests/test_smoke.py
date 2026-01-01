@@ -14,7 +14,6 @@ import frappe
 def test_required_doctypes_exist():
     required = [
         "MPIT Vendor",
-        "MPIT Category",
         "MPIT Contract",
         "MPIT Budget",
         "MPIT Budget Line",

@@ -12,7 +12,7 @@ Print: HTML templates live next to each report; no custom JS/CSS; use microtempl
 ## Dashboard
 **Master Plan IT Overview** (`dashboard/master_plan_it_overview`):
 - Number cards: Renewals 30d / 60d / 90d, Expired Contracts.
-- Charts: Baseline vs Exceptions, Current Plan vs Exceptions, Plan Delta by Category, Projects Planned vs Exceptions, Renewals by Month.
+- Charts: Baseline vs Exceptions, Current Plan vs Exceptions, Plan Delta by Cost Center, Projects Planned vs Exceptions, Renewals by Month.
 
 ## Notes
 - All variance views rely on `status = 'Verified'` actual entries and `entry_kind in ('Delta','Allowance Spend')`.

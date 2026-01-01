@@ -21,7 +21,6 @@ def run(year: str = "2025") -> dict:
 	errors = []
 
 	# Create master data
-	cat = frappe.get_doc({"doctype": "MPIT Category", "category_name": "ZZZ VAT Test Category"})
 	vendor = frappe.get_doc({"doctype": "MPIT Vendor", "vendor_name": "ZZZ VAT Test Vendor"})
 	cc = frappe.get_doc(
 		{
@@ -38,7 +37,6 @@ def run(year: str = "2025") -> dict:
 	budget = None
 
 	try:
-		cat.insert(ignore_permissions=True)
 		vendor.insert(ignore_permissions=True)
 		cc.insert(ignore_permissions=True)
 
@@ -48,7 +46,6 @@ def run(year: str = "2025") -> dict:
 				"doctype": "MPIT Contract",
 				"title": "ZZZ VAT Contract",
 				"vendor": vendor.name,
-				"category": cat.name,
 				"cost_center": cc.name,
 				"contract_kind": "Contract",
 				"status": "Active",
@@ -82,7 +79,7 @@ def run(year: str = "2025") -> dict:
 					{
 						"doctype": "MPIT Project Allocation",
 						"year": year,
-						"category": cat.name,
+						"cost_center": cc.name,
 						"planned_amount": 122.0,
 						"planned_amount_includes_vat": 1,
 						"vat_rate": 22.0,
@@ -92,7 +89,7 @@ def run(year: str = "2025") -> dict:
 					{
 						"doctype": "MPIT Project Quote",
 						"vendor": vendor.name,
-						"category": cat.name,
+						"cost_center": cc.name,
 						"amount": 244.0,
 						"amount_includes_vat": 1,
 						"vat_rate": 22.0,
@@ -124,9 +121,9 @@ def run(year: str = "2025") -> dict:
 				"posting_date": f"{year}-05-01",
 				"status": "Verified",
 				"entry_kind": "Delta",
-				"category": cat.name,
 				"vendor": vendor.name,
 				"project": project.name,
+				"cost_center": cc.name,
 				"amount": 122.0,
 				"amount_includes_vat": 1,
 				"vat_rate": 22.0,
@@ -152,8 +149,8 @@ def run(year: str = "2025") -> dict:
 				"lines": [
 					{
 						"doctype": "MPIT Budget Line",
-						"category": cat.name,
 						"vendor": vendor.name,
+						"cost_center": cc.name,
 						"line_kind": "Manual",
 						"monthly_amount": 100,
 						"amount_includes_vat": 0,
@@ -181,7 +178,7 @@ def run(year: str = "2025") -> dict:
 		frappe.db.commit()
 	finally:
 		# Clean up created docs to avoid polluting tenant data
-		for doc in [budget, actual, project, contract, cc, vendor, cat]:
+		for doc in [budget, actual, project, contract, cc, vendor]:
 			try:
 				if doc:
 					doc.delete(ignore_permissions=True)

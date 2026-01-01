@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Create deterministic demo data to exercise V2 flows."""
+"""Create deterministic demo data to exercise V2 flows with Cost Centers only (no categories)."""
 
 from __future__ import annotations
 
@@ -34,7 +34,7 @@ def _has_role(role: str, user: str | None = None) -> bool:
 	return bool(frappe.db.exists("Has Role", {"parent": target, "role": role}))
 
 
-def _make_contracts(year: str, vendor_map: dict, cat_map: dict, cc_map: dict) -> list:
+def _make_contracts(year: str, vendor_map: dict, cc_map: dict) -> list:
 	contracts = []
 	# Monthly contract with VAT included
 	contracts.append(
@@ -43,7 +43,6 @@ def _make_contracts(year: str, vendor_map: dict, cat_map: dict, cc_map: dict) ->
 			name="CT-ZZZ-MONTHLY",
 			title="CT-ZZZ-MONTHLY",
 			vendor=vendor_map["A"].name,
-			category=cat_map["A"].name,
 			cost_center=cc_map["A"].name,
 			contract_kind="Contract",
 			status="Active",
@@ -62,7 +61,6 @@ def _make_contracts(year: str, vendor_map: dict, cat_map: dict, cc_map: dict) ->
 			name="CT-ZZZ-QUARTERLY",
 			title="CT-ZZZ-QUARTERLY",
 			vendor=vendor_map["B"].name,
-			category=cat_map["B"].name,
 			cost_center=cc_map["B"].name,
 			contract_kind="Subscription",
 			status="Active",
@@ -77,7 +75,7 @@ def _make_contracts(year: str, vendor_map: dict, cat_map: dict, cc_map: dict) ->
 	return contracts
 
 
-def _make_projects(year: str, vendor_map: dict, cat_map: dict, cc_map: dict) -> list:
+def _make_projects(year: str, vendor_map: dict, cc_map: dict) -> list:
 	projects = []
 	# Project with approved quote (needs vCIO role)
 	projects.append(
@@ -93,7 +91,7 @@ def _make_projects(year: str, vendor_map: dict, cat_map: dict, cc_map: dict) -> 
 				{
 					"doctype": "MPIT Project Allocation",
 					"year": year,
-					"category": cat_map["A"].name,
+					"cost_center": cc_map["A"].name,
 					"planned_amount": 1200,
 					"planned_amount_includes_vat": 0,
 					"vat_rate": 22.0,
@@ -103,7 +101,7 @@ def _make_projects(year: str, vendor_map: dict, cat_map: dict, cc_map: dict) -> 
 				{
 					"doctype": "MPIT Project Quote",
 					"vendor": vendor_map["A"].name,
-					"category": cat_map["A"].name,
+					"cost_center": cc_map["A"].name,
 					"amount": 2500,
 					"amount_includes_vat": 0,
 					"vat_rate": 22.0,
@@ -126,7 +124,7 @@ def _make_projects(year: str, vendor_map: dict, cat_map: dict, cc_map: dict) -> 
 				{
 					"doctype": "MPIT Project Allocation",
 					"year": year,
-					"category": cat_map["B"].name,
+					"cost_center": cc_map["B"].name,
 					"planned_amount": 1800,
 					"planned_amount_includes_vat": 0,
 					"vat_rate": 22.0,
@@ -138,7 +136,7 @@ def _make_projects(year: str, vendor_map: dict, cat_map: dict, cc_map: dict) -> 
 	return projects
 
 
-def _make_actual_entries(year: str, projects: list, contracts: list, cat_map: dict, vendor_map: dict, cc_map: dict) -> None:
+def _make_actual_entries(year: str, projects: list, contracts: list, vendor_map: dict, cc_map: dict) -> None:
 	# Delta linked to project
 	if not frappe.db.exists("MPIT Actual Entry", {"project": projects[0].name, "description": "ZZZ delta A"}):
 		frappe.get_doc(
@@ -147,9 +145,9 @@ def _make_actual_entries(year: str, projects: list, contracts: list, cat_map: di
 				"posting_date": f"{year}-02-01",
 				"status": "Verified",
 				"entry_kind": "Delta",
-				"category": cat_map["A"].name,
 				"vendor": vendor_map["A"].name,
 				"project": projects[0].name,
+				"cost_center": cc_map["A"].name,
 				"amount": 150,
 				"amount_includes_vat": 0,
 				"vat_rate": 22.0,
@@ -164,9 +162,9 @@ def _make_actual_entries(year: str, projects: list, contracts: list, cat_map: di
 				"posting_date": f"{year}-03-01",
 				"status": "Verified",
 				"entry_kind": "Delta",
-				"category": cat_map["B"].name,
 				"vendor": vendor_map["B"].name,
 				"contract": contracts[1].name,
+				"cost_center": cc_map["B"].name,
 				"amount": -50,  # savings
 				"amount_includes_vat": 0,
 				"vat_rate": 22.0,
@@ -181,7 +179,6 @@ def _make_actual_entries(year: str, projects: list, contracts: list, cat_map: di
 				"posting_date": f"{year}-04-15",
 				"status": "Verified",
 				"entry_kind": "Allowance Spend",
-				"category": cat_map["A"].name,
 				"vendor": vendor_map["A"].name,
 				"cost_center": cc_map["A"].name,
 				"amount": 200,
@@ -205,10 +202,6 @@ def run(year: str = "2025") -> dict:
 		_ensure_user_role(frappe.session.user, "vCIO Manager")
 
 	# Master data
-	cat_map = {
-		"A": _get_or_make("MPIT Category", name="ZZZ Demo Category A", category_name="ZZZ Demo Category A"),
-		"B": _get_or_make("MPIT Category", name="ZZZ Demo Category B", category_name="ZZZ Demo Category B"),
-	}
 	vendor_map = {
 		"A": _get_or_make("MPIT Vendor", name="ZZZ Demo Vendor A", vendor_name="ZZZ Demo Vendor A"),
 		"B": _get_or_make("MPIT Vendor", name="ZZZ Demo Vendor B", vendor_name="ZZZ Demo Vendor B"),
@@ -233,9 +226,9 @@ def run(year: str = "2025") -> dict:
 		),
 	}
 
-	contracts = _make_contracts(year, vendor_map, cat_map, cc_map)
-	projects = _make_projects(year, vendor_map, cat_map, cc_map)
-	_make_actual_entries(year, projects, contracts, cat_map, vendor_map, cc_map)
+	contracts = _make_contracts(year, vendor_map, cc_map)
+	projects = _make_projects(year, vendor_map, cc_map)
+	_make_actual_entries(year, projects, contracts, vendor_map, cc_map)
 
 	# Create Forecast budget and refresh from sources
 	budget = frappe.get_doc(

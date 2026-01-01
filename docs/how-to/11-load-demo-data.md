@@ -13,7 +13,7 @@ bench --site <tuo_sito> execute master_plan_it.devtools.demo_data.run --kwargs '
 ```
 
 ## Cosa crea
-- Master data: 2 categorie (`ZZZ Demo Category A/B`), 2 vendor, cost center root + 2 leaf.
+- Master data: 2 vendor, cost center root + 2 leaf (nessuna categoria).
 - Contratti: `CT-ZZZ-MONTHLY` (mensile, VAT inclusa), `CT-ZZZ-QUARTERLY` (trimestrale).
 - Progetti: `PRJ-ZZZ-APPROVED` (quote Approved), `PRJ-ZZZ-PLANNED` (solo allocazioni).
 - Actual Entry: 2 Delta (uno progetto, uno contratto), 1 Allowance Spend.

@@ -16,7 +16,6 @@ REQUIRED_DOCTYPES = [
     "MPIT Settings",
     "MPIT Year",
     "MPIT Vendor",
-    "MPIT Category",
     "MPIT Contract",
     "MPIT Budget",
     "MPIT Budget Line",
@@ -39,7 +38,7 @@ REQUIRED_DASHBOARD = "Master Plan IT Overview"
 REQUIRED_DASHBOARD_CHARTS = [
     "MPIT Baseline vs Exceptions",
     "MPIT Current Plan vs Exceptions",
-    "MPIT Plan Delta by Category",
+    "MPIT Plan Delta by Cost Center",
     "MPIT Renewals Window (by Month)",
     "MPIT Projects Planned vs Exceptions",
 ]

@@ -10,7 +10,6 @@
   "section_overview",
   "line_kind",
   "source_key",
-  "category",
   "vendor",
   "description",
   "section_pricing",
@@ -65,16 +64,6 @@
    "label": "Source Key",
    "read_only": 1,
    "bold": 1
-  },
-  {
-   "fieldname": "category",
-   "fieldtype": "Link",
-   "description": "Select the budget category.",
-   "in_list_view": 1,
-   "columns": 2,
-   "label": "Category",
-   "options": "MPIT Category",
-   "reqd": 1
   },
   {
    "fieldname": "vendor",
@@ -272,7 +261,8 @@
    "fetch_from": "contract.cost_center",
    "fetch_if_empty": 1,
    "label": "Cost Center",
-   "options": "MPIT Cost Center"
+   "options": "MPIT Cost Center",
+   "reqd": 1
   },
   {
    "fieldname": "section_flags",

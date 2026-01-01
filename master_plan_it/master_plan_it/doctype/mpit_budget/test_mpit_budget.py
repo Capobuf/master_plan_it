@@ -11,7 +11,7 @@ class TestMPITBudget(FrappeTestCase):
 	def setUp(self):
 		super().setUp()
 		self.year = self._ensure_year(2099)
-		self.category = self._ensure_category("Totals Test Category")
+		self.cost_center = self._ensure_cost_center("Totals Test CC")
 
 	def _ensure_year(self, year_value: int):
 		if not frappe.db.exists("MPIT Year", year_value):
@@ -24,15 +24,16 @@ class TestMPITBudget(FrappeTestCase):
 			doc.insert(ignore_if_duplicate=True)
 		return frappe.get_doc("MPIT Year", year_value)
 
-	def _ensure_category(self, category_name: str):
-		if not frappe.db.exists("MPIT Category", category_name):
+	def _ensure_cost_center(self, name: str):
+		if not frappe.db.exists("MPIT Cost Center", name):
 			doc = frappe.get_doc({
-				"doctype": "MPIT Category",
-				"category_name": category_name,
-				"is_group": 0
+				"doctype": "MPIT Cost Center",
+				"cost_center_name": name,
+				"is_group": 0,
+				"is_active": 1
 			})
 			doc.insert(ignore_if_duplicate=True)
-		return frappe.get_doc("MPIT Category", category_name)
+		return frappe.get_doc("MPIT Cost Center", name)
 
 	def test_totals_aggregated_from_lines(self):
 		budget = frappe.get_doc({
@@ -42,7 +43,7 @@ class TestMPITBudget(FrappeTestCase):
 			"lines": [
 				{
 					"doctype": "MPIT Budget Line",
-					"category": self.category.name,
+					"cost_center": self.cost_center.name,
 					"line_kind": "Manual",
 					"monthly_amount": 100,
 					"amount_includes_vat": 0,
@@ -51,7 +52,7 @@ class TestMPITBudget(FrappeTestCase):
 				},
 				{
 					"doctype": "MPIT Budget Line",
-					"category": self.category.name,
+					"cost_center": self.cost_center.name,
 					"line_kind": "Manual",
 					"monthly_amount": 200,
 					"amount_includes_vat": 0,
@@ -77,7 +78,7 @@ class TestMPITBudget(FrappeTestCase):
 			"lines": [
 				{
 					"doctype": "MPIT Budget Line",
-					"category": self.category.name,
+					"cost_center": self.cost_center.name,
 					"line_kind": "Manual",
 					"monthly_amount": 100,
 					"amount_includes_vat": 0,
@@ -86,7 +87,7 @@ class TestMPITBudget(FrappeTestCase):
 				},
 				{
 					"doctype": "MPIT Budget Line",
-					"category": self.category.name,
+					"cost_center": self.cost_center.name,
 					"line_kind": "Manual",
 					"monthly_amount": 200,
 					"amount_includes_vat": 0,

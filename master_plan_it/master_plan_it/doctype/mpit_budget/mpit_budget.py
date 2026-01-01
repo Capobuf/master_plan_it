@@ -1,3 +1,6 @@
+# MPIT Budget controller: manages Baseline/Forecast invariants, refresh from contracts/projects,
+# generated line protections, amount computations, and totals. Input: budget doc (year, lines, budget_kind).
+# Output: normalized lines (cost centers, monthly/annual amounts, VAT splits) and enforced workflow rules.
 # Copyright (c) 2025, DOT and contributors
 # For license information, please see license.txt
 
@@ -108,7 +111,6 @@ class MPITBudget(Document):
 			fields=[
 				"name",
 				"title",
-				"category",
 				"vendor",
 				"cost_center",
 				"current_amount_net",
@@ -126,7 +128,8 @@ class MPITBudget(Document):
 			if c.status in ("Cancelled", "Expired"):
 				continue
 			contract = frappe.get_doc("MPIT Contract", c.name)
-			self._require_contract_category(contract)
+			if not contract.cost_center:
+				frappe.throw(_("Contract {0} is missing Cost Center. Please set it to include in Forecast.").format(contract.name))
 			if contract.spread_months:
 				lines.extend(self._generate_contract_spread_lines(contract, year_start, year_end))
 			elif contract.rate_schedule:
@@ -217,14 +220,6 @@ class MPITBudget(Document):
 		)
 		return lines
 
-	def _require_contract_category(self, contract) -> None:
-		if contract.category:
-			return
-		frappe.throw(
-			_("Contract {0} is missing Category. Please set a Category to include it in Forecast refresh.")
-			.format(contract.name)
-		)
-
 	def _generate_project_lines(self, year_start: date, year_end: date) -> list[dict]:
 		lines: list[dict] = []
 		projects = frappe.get_all(
@@ -265,56 +260,59 @@ class MPITBudget(Document):
 		if months <= 0:
 			return lines
 
-		planned_by_cat = {}
+		planned_by_cc = {}
 		for alloc in project.allocations or []:
 			if str(alloc.year) != str(self.year):
 				continue
-			planned_by_cat.setdefault(alloc.category, 0)
-			planned_by_cat[alloc.category] += flt(getattr(alloc, "planned_amount_net", None) or alloc.planned_amount or 0)
+			if not alloc.cost_center:
+				frappe.throw(_("Project {0}: allocation {1} missing Cost Center.").format(project.name, alloc.idx))
+			planned_by_cc.setdefault(alloc.cost_center, 0)
+			planned_by_cc[alloc.cost_center] += flt(getattr(alloc, "planned_amount_net", None) or alloc.planned_amount or 0)
 
-		quotes_by_cat = {}
+		quotes_by_cc = {}
 		for quote in project.quotes or []:
 			if quote.status != "Approved":
 				continue
-			quotes_by_cat.setdefault(quote.category, 0)
-			quotes_by_cat[quote.category] += flt(getattr(quote, "amount_net", None) or quote.amount or 0)
+			if not quote.cost_center:
+				frappe.throw(_("Project {0}: quote {1} missing Cost Center.").format(project.name, quote.idx))
+			quotes_by_cc.setdefault(quote.cost_center, 0)
+			quotes_by_cc[quote.cost_center] += flt(getattr(quote, "amount_net", None) or quote.amount or 0)
 
 		# Deltas: Verified Delta entries linked to project/year
 		deltas = frappe.db.sql(
 			"""
-			SELECT category, SUM(COALESCE(amount_net, amount)) AS total
+			SELECT cost_center, SUM(COALESCE(amount_net, amount)) AS total
 			FROM `tabMPIT Actual Entry`
 			WHERE project = %(project)s
 			  AND status = 'Verified'
 			  AND entry_kind = 'Delta'
 			  AND year = %(year)s
-			GROUP BY category
+			GROUP BY cost_center
 			""",
 			{"project": project.name, "year": self.year},
 			as_dict=True,
 		)
-		deltas_by_cat = {row.category: flt(row.total or 0) for row in deltas or []}
+		deltas_by_cc = {row.cost_center: flt(row.total or 0) for row in deltas or []}
 
-		categories = set(planned_by_cat) | set(quotes_by_cat) | set(deltas_by_cat)
-		for cat in categories:
-			planned = planned_by_cat.get(cat, 0)
-			quoted = quotes_by_cat.get(cat, 0)
+		cost_centers = set(planned_by_cc) | set(quotes_by_cc) | set(deltas_by_cc)
+		for cc in cost_centers:
+			planned = planned_by_cc.get(cc, 0)
+			quoted = quotes_by_cc.get(cc, 0)
 			base = quoted if quoted > 0 else planned
-			expected = base + deltas_by_cat.get(cat, 0)
+			expected = base + deltas_by_cc.get(cc, 0)
 			if expected == 0:
 				continue
 			monthly_net = flt(expected / months, 2)
-			source_key = f"PROJECT::{project.name}::{self.year}::{cat}"
+			source_key = f"PROJECT::{project.name}::{self.year}::{cc}"
 			lines.append(
 				{
 					"line_kind": "Project",
 					"source_key": source_key,
-					"category": cat,
 					"vendor": None,
 					"description": project.title,
 					"contract": None,
 					"project": project.name,
-					"cost_center": project.cost_center,
+					"cost_center": cc,
 					"monthly_amount": monthly_net,
 					"annual_amount": 0,
 					"amount_includes_vat": 0,
@@ -332,7 +330,6 @@ class MPITBudget(Document):
 		return {
 			"line_kind": "Contract",
 			"source_key": source_key,
-			"category": contract.category,
 			"vendor": contract.vendor,
 			"description": contract.title,
 			"contract": contract.name,
@@ -387,7 +384,6 @@ class MPITBudget(Document):
 				"MPIT Budget Line",
 				line.name,
 				[
-					"category",
 					"vendor",
 					"description",
 					"line_kind",
@@ -426,6 +422,8 @@ class MPITBudget(Document):
 		year_start, year_end = annualization.get_year_bounds(self.year)
 		
 		for line in self.lines:
+			if not line.cost_center:
+				frappe.throw(_("Line {0}: Cost Center is required.").format(line.idx))
 			# Apply VAT rate default if not specified
 			if line.vat_rate is None and default_vat is not None:
 				line.vat_rate = default_vat

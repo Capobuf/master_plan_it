@@ -17,7 +17,7 @@ V1 relied on Baseline Expense imports, Budget Amendments, portfolio buckets, and
 - MPIT Actual Entry reframed as Variance/Exception: add `entry_kind` (Delta vs Allowance Spend); only status=Verified counts; Delta requires contract XOR project; Allowance Spend requires cost_center and forbids contract/project; negative allowed only for Allowance Spend (description mandatory if negative); Verified entries read-only, revert to Recorded only for vCIO Manager.
 - Budget Lines: simplify fields (remove portfolio flag, custom recurrence, baseline link), add `line_kind`, `source_key`, `is_generated`, `is_active`, cost_center; generated lines read-only; Allowance lines are manual.
 - Refresh engine: idempotent upsert using deterministic `source_key` (contract spread/rate/flat, project + year + category), deactivates stale generated lines instead of deleting.
-- Reporting/UX: default to active Forecast, fallback Baseline; labels switch to “Exceptions/Allowance” (avoid “Actual”); dashboard chart replaced with Baseline vs Forecast “Plan Delta” by Category (+ optional Cost Center filter); filters default status=Verified.
+- Reporting/UX: default to active Forecast, fallback Baseline; labels switch to “Exceptions/Allowance” (avoid “Actual”); dashboard chart “Plan Delta” by Cost Center; filters default status=Verified.
 - Seeds/devtools: seed Cost Center root “All Cost Centers”; keep roles; make historical Forecasts read-only when inactive.
 
 ## Consequences

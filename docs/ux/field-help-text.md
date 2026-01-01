@@ -24,7 +24,6 @@ Counts per DocType (current totals | with description | meaningful fields missin
 - MPIT Actual Entry: 16 | 16 | 0
 - MPIT Budget: 14 | 9 | 0
 - MPIT Budget Line: 22 | 22 | 0
-- MPIT Category: 9 | 9 | 0
 - MPIT Contract: 21 | 21 | 0
 - MPIT Project: 12 | 9 | 0
 - MPIT Project Allocation: 7 | 7 | 0

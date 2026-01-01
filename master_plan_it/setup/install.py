@@ -89,7 +89,7 @@ def _bootstrap_basics() -> None:
 def _reload_standard_assets() -> None:
 	"""Ensure dashboards/workspaces/chart sources are synced on new sites."""
 	# Chart sources used by dashboards
-	frappe.reload_doc("master_plan_it", "dashboard_chart_source", "mpit_plan_delta_by_category", force=1)
+	frappe.reload_doc("master_plan_it", "dashboard_chart_source", "mpit_plan_delta_by_cost_center", force=1)
 	# Dashboards and workspace
 	frappe.reload_doc("master_plan_it", "dashboard", "master_plan_it_overview", force=1)
 	frappe.reload_doc("master_plan_it", "workspace", "master_plan_it", force=1)

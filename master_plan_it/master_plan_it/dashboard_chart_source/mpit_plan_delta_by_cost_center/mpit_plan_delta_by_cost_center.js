@@ -1,12 +1,12 @@
-frappe.dashboards.chart_sources["MPIT Plan Delta by Category"] = {
-	method: "master_plan_it.master_plan_it.dashboard_chart_source.mpit_plan_delta_by_category.mpit_plan_delta_by_category.get",
+frappe.dashboards.chart_sources["MPIT Plan Delta by Cost Center"] = {
+	method: "master_plan_it.master_plan_it.dashboard_chart_source.mpit_plan_delta_by_cost_center.mpit_plan_delta_by_cost_center.get",
 	filters: [
 		{
 			fieldname: "year",
 			label: __("Year"),
 			fieldtype: "Link",
 			options: "MPIT Year",
-			reqd: 1,
+			reqd: 0,
 		},
 		{
 			fieldname: "cost_center",

@@ -7,13 +7,13 @@ from frappe.modules.import_file import import_file_by_path
 
 def setup_fixtures():
     """Create necessary fixtures."""
-    # Create Category
-    if not frappe.db.exists("MPIT Category", "Hardware"):
-        c1 = frappe.get_doc({"doctype": "MPIT Category", "category_name": "Hardware"})
+    # Create Cost Centers
+    if not frappe.db.exists("MPIT Cost Center", "Hardware CC"):
+        c1 = frappe.get_doc({"doctype": "MPIT Cost Center", "cost_center_name": "Hardware CC", "is_group": 0, "is_active": 1})
         c1.insert()
-    
-    if not frappe.db.exists("MPIT Category", "Software"):
-        c2 = frappe.get_doc({"doctype": "MPIT Category", "category_name": "Software"})
+
+    if not frappe.db.exists("MPIT Cost Center", "Software CC"):
+        c2 = frappe.get_doc({"doctype": "MPIT Cost Center", "cost_center_name": "Software CC", "is_group": 0, "is_active": 1})
         c2.insert()
 
     # Create Vendor
@@ -70,7 +70,7 @@ def create_test_budget():
         "title": "Test Budget 2025",
         "lines": [
             {
-                "category": "Hardware",
+                "cost_center": "Hardware CC",
                 "vendor": "Acme Corp",
                 "description": "Server upgrade",
                 "amount_net": 1000,
@@ -79,7 +79,7 @@ def create_test_budget():
                 "recurrence_rule": "Monthly"
             },
             {
-                "category": "Software",
+                "cost_center": "Software CC",
                 "vendor": "Tech Inc",
                 "description": "License renewal",
                 "amount_net": 500,

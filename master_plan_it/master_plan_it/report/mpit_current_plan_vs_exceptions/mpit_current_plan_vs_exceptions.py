@@ -3,6 +3,10 @@ from __future__ import annotations
 import frappe
 from frappe import _
 
+# Report: Current Plan vs Exceptions by cost center and vendor.
+# Inputs: filters (year, budget optional, cost_center, vendor, entry_kind).
+# Output: columns/rows aggregated by cost center/vendor, chart totals per budget.
+
 
 def execute(filters=None):
 	if isinstance(filters, str):
@@ -11,13 +15,13 @@ def execute(filters=None):
 	rows = _get_data(filters)
 
 	columns = [
-		{"label": _("Budget"), "fieldname": "budget", "fieldtype": "Link", "options": "MPIT Budget", "width": 180},
-		{"label": _("Year"), "fieldname": "year", "fieldtype": "Link", "options": "MPIT Year", "width": 80},
-		{"label": _("Category"), "fieldname": "category", "fieldtype": "Link", "options": "MPIT Category", "width": 180},
-		{"label": _("Vendor"), "fieldname": "vendor", "fieldtype": "Link", "options": "MPIT Vendor", "width": 150},
+		{"label": _("Budget"), "fieldname": "budget", "fieldtype": "Link", "options": "MPIT Budget", "width": 160},
+		{"label": _("Year"), "fieldname": "year", "fieldtype": "Link", "options": "MPIT Year", "width": 70},
+		{"label": _("Cost Center"), "fieldname": "cost_center", "fieldtype": "Link", "options": "MPIT Cost Center", "width": 180},
+		{"label": _("Vendor"), "fieldname": "vendor", "fieldtype": "Link", "options": "MPIT Vendor", "width": 140},
 		{"label": _("Current Plan"), "fieldname": "current_budget", "fieldtype": "Currency", "width": 140},
 		{"label": _("Exceptions / Allowance"), "fieldname": "actual_amount", "fieldtype": "Currency", "width": 150},
-		{"label": _("Variance (Exceptions - Plan)"), "fieldname": "variance", "fieldtype": "Currency", "width": 200},
+		{"label": _("Variance (Exceptions - Plan)"), "fieldname": "variance", "fieldtype": "Currency", "width": 180},
 	]
 
 	chart = _build_chart(rows)
@@ -33,9 +37,9 @@ def _get_data(filters) -> list[dict]:
 
 	conditions = ["bl.parent = %(budget)s", "COALESCE(bl.is_active,1)=1"]
 	params["budget"] = budget
-	if filters.get("category"):
-		conditions.append("bl.category = %(category)s")
-		params["category"] = filters.category
+	if filters.get("cost_center"):
+		conditions.append("bl.cost_center = %(cost_center)s")
+		params["cost_center"] = filters.cost_center
 	if filters.get("vendor"):
 		conditions.append("bl.vendor = %(vendor)s")
 		params["vendor"] = filters.vendor
@@ -47,13 +51,13 @@ def _get_data(filters) -> list[dict]:
 		SELECT
 			%(budget)s AS budget,
 			b.year AS year,
-			bl.category AS category,
+			bl.cost_center AS cost_center,
 			bl.vendor AS vendor,
 			SUM(COALESCE(bl.annual_net, bl.amount_net, bl.annual_amount, bl.amount)) AS current_budget
 		FROM `tabMPIT Budget Line` bl
 		JOIN `tabMPIT Budget` b ON b.name = bl.parent
 		WHERE {where}
-		GROUP BY bl.category, bl.vendor, b.year
+		GROUP BY bl.cost_center, bl.vendor, b.year
 		""",
 		params,
 		as_dict=True,
@@ -63,8 +67,8 @@ def _get_data(filters) -> list[dict]:
 	if filters.get("year"):
 		actual_conditions.append("year = %(year)s")
 		params["year"] = filters.year
-	if filters.get("category"):
-		actual_conditions.append("category = %(category)s")
+	if filters.get("cost_center"):
+		actual_conditions.append("cost_center = %(cost_center)s")
 	if filters.get("vendor"):
 		actual_conditions.append("vendor = %(vendor)s")
 	if filters.get("entry_kind"):
@@ -77,17 +81,17 @@ def _get_data(filters) -> list[dict]:
 
 	actual_rows = frappe.db.sql(
 		f"""
-		SELECT year, category, vendor, SUM(COALESCE(amount_net, amount)) AS actual_amount
+		SELECT year, cost_center, vendor, SUM(COALESCE(amount_net, amount)) AS actual_amount
 		FROM `tabMPIT Actual Entry`
 		WHERE {actual_where}
-		GROUP BY year, category, vendor
+		GROUP BY year, cost_center, vendor
 		""",
 		params,
 		as_dict=True,
 	)
 
-	base_map = {(r["category"], r.get("vendor")): r for r in base_rows}
-	actual_map = {(r["category"], r.get("vendor")): r["actual_amount"] for r in actual_rows}
+	base_map = {(r["cost_center"], r.get("vendor")): r for r in base_rows}
+	actual_map = {(r["cost_center"], r.get("vendor")): r["actual_amount"] for r in actual_rows}
 
 	keys = set(base_map.keys()) | set(actual_map.keys())
 	result: list[dict] = []
@@ -95,16 +99,16 @@ def _get_data(filters) -> list[dict]:
 		keys,
 		key=lambda k: (str(k[0] or ""), str(k[1] or "")),
 	):
-		category, vendor = key
+		cost_center, vendor = key
 		base = base_map.get(key, {})
 		year = base.get("year") or filters.get("year")
 		current_budget = float(base.get("current_budget") or 0)
-		actual_amount = float(actual_map.get((category, vendor), 0) or 0)
+		actual_amount = float(actual_map.get((cost_center, vendor), 0) or 0)
 		variance = actual_amount - current_budget
 		result.append({
 			"budget": budget,
 			"year": year,
-			"category": category,
+			"cost_center": cost_center,
 			"vendor": vendor,
 			"current_budget": current_budget,
 			"actual_amount": actual_amount,

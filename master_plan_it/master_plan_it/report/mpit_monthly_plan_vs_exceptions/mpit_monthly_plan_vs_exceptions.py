@@ -4,6 +4,10 @@ import frappe
 from frappe import _
 from master_plan_it import annualization
 
+# Report: Monthly Plan vs Exceptions by cost center/vendor/project/contract.
+# Inputs: filters (year required, from_month/to_month optional, cost_center/vendor/project/contract).
+# Output: monthly rows with plan vs exceptions, plus cumulative summary.
+
 
 def execute(filters=None):
 	if isinstance(filters, str):
@@ -82,7 +86,7 @@ def _get_plan_by_month(filters, budget: str | None) -> dict[int, float]:
 	year_start, year_end = annualization.get_year_bounds(filters.year)
 	conditions = ["bl.parent = %(budget)s", "COALESCE(bl.is_active,1)=1"]
 
-	for field in ("category", "vendor", "project", "contract", "cost_center"):
+	for field in ("vendor", "project", "contract", "cost_center"):
 		if filters.get(field):
 			conditions.append(f"bl.{field} = %({field})s")
 			params[field] = filters.get(field)
@@ -139,9 +143,6 @@ def _get_actuals_by_month(filters) -> dict[int, float]:
 	params = {"year": filters.year}
 	conditions = ["year = %(year)s", "status = 'Verified'", "entry_kind in ('Delta','Allowance Spend')"]
 
-	if filters.get("category"):
-		conditions.append("category = %(category)s")
-		params["category"] = filters.category
 	if filters.get("vendor"):
 		conditions.append("vendor = %(vendor)s")
 		params["vendor"] = filters.vendor
