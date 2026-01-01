@@ -37,7 +37,8 @@ class MPITBudget(Document):
 		self._autofill_cost_centers()
 		self._compute_lines_amounts()
 		self._compute_totals()
-		self._enforce_generated_lines_read_only()
+		if not getattr(self.flags, "skip_generated_guard", False):
+			self._enforce_generated_lines_read_only()
 
 	def _autofill_cost_centers(self) -> None:
 		"""Fill cost_center on lines from contract or project if empty."""
@@ -97,6 +98,7 @@ class MPITBudget(Document):
 		generated_lines.extend(self._generate_project_lines(year_start, year_end))
 
 		self._upsert_generated_lines(generated_lines)
+		self.flags.skip_generated_guard = True
 		self.save(ignore_permissions=True)
 
 	def _generate_contract_lines(self, year_start: date, year_end: date) -> list[dict]:
@@ -124,6 +126,7 @@ class MPITBudget(Document):
 			if c.status in ("Cancelled", "Expired"):
 				continue
 			contract = frappe.get_doc("MPIT Contract", c.name)
+			self._require_contract_category(contract)
 			if contract.spread_months:
 				lines.extend(self._generate_contract_spread_lines(contract, year_start, year_end))
 			elif contract.rate_schedule:
@@ -214,6 +217,14 @@ class MPITBudget(Document):
 		)
 		return lines
 
+	def _require_contract_category(self, contract) -> None:
+		if contract.category:
+			return
+		frappe.throw(
+			_("Contract {0} is missing Category. Please set a Category to include it in Forecast refresh.")
+			.format(contract.name)
+		)
+
 	def _generate_project_lines(self, year_start: date, year_end: date) -> list[dict]:
 		lines: list[dict] = []
 		projects = frappe.get_all(
@@ -228,7 +239,7 @@ class MPITBudget(Document):
 			],
 		)
 		for p in projects:
-			if p.status in ("Cancelled",):
+			if p.status in ("Cancelled", "Draft", "Proposed"):
 				continue
 			project = frappe.get_doc("MPIT Project", p.name)
 			lines.extend(self._project_lines_for_year(project, year_start, year_end))
@@ -404,7 +415,7 @@ class MPITBudget(Document):
 				if field == "is_active":
 					continue  # allow toggling active flag
 				if line.get(field) != old_value:
-					frappe.throw(f"Generated line {line.name} is read-only (field {field}).")
+					frappe.throw(frappe._("Generated line {0} is read-only (field {1}).").format(line.name, field))
 	
 	def _compute_lines_amounts(self):
 		"""Compute all amounts for Budget Lines using bidirectional logic."""

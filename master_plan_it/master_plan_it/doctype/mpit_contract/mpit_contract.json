@@ -30,22 +30,24 @@
     "section_pricing",
     "current_amount",
     "current_amount_includes_vat",
-    "vat_rate",
-    "billing_cycle",
-    "cb_pricing_right",
-    "current_amount_net",
-    "current_amount_vat",
-    "current_amount_gross",
+  "vat_rate",
+  "billing_cycle",
+  "cb_pricing_right",
+  "monthly_amount_net",
+  "current_amount_net",
+  "current_amount_vat",
+  "current_amount_gross",
     "section_spread",
     "spread_months",
     "spread_start_date",
     "spread_end_date",
     "section_rate_schedule",
     "rate_schedule",
-    "tb_notes",
-    "notes",
-    "attachment",
-    "tb_admin"
+  "tb_notes",
+  "notes",
+  "attachment",
+  "tb_admin",
+  "document_id"
   ],
   "fields": [
     {
@@ -53,11 +55,11 @@
       "fieldtype": "Section Break",
       "label": "Overview"
     },
-    {
-      "fieldname": "sb_overview_main",
-      "fieldtype": "Section Break",
-      "hidden": 1
-    },
+  {
+   "fieldname": "sb_overview_main",
+   "fieldtype": "Section Break",
+   "hidden": 0
+  },
     {
       "fieldname": "title",
       "fieldtype": "Data",
@@ -83,19 +85,19 @@
       "allow_in_quick_entry": 1,
       "in_preview": 1
     },
-    {
-      "fieldname": "category",
-      "fieldtype": "Link",
-      "description": "Categoria budget (obbligatoria).",
-      "in_list_view": 1,
-      "in_standard_filter": 1,
-      "label": "Category",
-      "options": "MPIT Category",
-      "reqd": 1,
-      "bold": 1,
-      "allow_in_quick_entry": 1,
-      "in_preview": 1
-    },
+  {
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "description": "Categoria budget (obbligatoria).",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Category",
+   "options": "MPIT Category",
+   "reqd": 0,
+   "bold": 1,
+   "allow_in_quick_entry": 1,
+   "in_preview": 1
+  },
     {
       "fieldname": "contract_kind",
       "fieldtype": "Select",
@@ -130,14 +132,15 @@
       "options": "User",
       "in_preview": 1
     },
-    {
-      "fieldname": "cost_center",
-      "fieldtype": "Link",
-      "description": "Cost Center di imputazione (caps/report).",
-      "in_standard_filter": 1,
-      "label": "Cost Center",
-      "options": "MPIT Cost Center"
-    },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "description": "Cost Center di imputazione (caps/report).",
+   "in_standard_filter": 1,
+   "label": "Cost Center",
+   "options": "MPIT Cost Center",
+   "allow_in_quick_entry": 1
+  },
     {
       "fieldname": "tb_renewal",
       "fieldtype": "Section Break",
@@ -240,6 +243,14 @@
       "fieldtype": "Column Break"
     },
     {
+      "fieldname": "monthly_amount_net",
+      "fieldtype": "Currency",
+      "description": "Equivalente mensile (netto) calcolato in base a importo/cadenza o spread. Vuoto se usi una rate schedule.",
+      "label": "Monthly Amount (Net)",
+      "read_only": 1,
+      "depends_on": "eval:doc.current_amount"
+    },
+    {
       "fieldname": "current_amount_net",
       "fieldtype": "Currency",
       "description": "Calcolo automatico (net).",
@@ -318,12 +329,20 @@
       "description": "Upload the contract file.",
       "label": "Attachment"
     },
-    {
-      "fieldname": "tb_admin",
-      "fieldtype": "Section Break",
-      "label": "Admin"
-    }
-  ],
+  {
+    "fieldname": "tb_admin",
+    "fieldtype": "Section Break",
+    "label": "Admin"
+  },
+  {
+   "fieldname": "document_id",
+   "fieldtype": "Read Only",
+   "label": "Document ID",
+   "options": "name",
+   "description": "ID univoco del documento (name).",
+   "in_preview": 1
+  }
+ ],
   "grid_page_length": 50,
   "index_web_pages_for_search": 1,
   "links": [],

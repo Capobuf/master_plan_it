@@ -1,4 +1,4 @@
-# Reference: Workflows (V1)
+# Reference: Workflows (V2)
 
 ## MPIT Budget workflow
 States:
@@ -16,11 +16,10 @@ Actions:
 - Approve → Approved
 
 Notes:
-- Approved state sets docstatus=1 to enforce immutability.
+- Approved sets docstatus=1 and freezes Baseline. Forecasts stay editable but rely on server actions: Refresh from Sources (contracts/projects) and Set Active (one per year).
 - Client Viewer cannot transition states.
 
 ## Optional: MPIT Project workflow/policy
-V1 can use a simple `status` Select field without a formal workflow.
-If you need strict approval gates, introduce a workflow later (ADR required).
+Default is a simple `status` Select (Draft → Proposed → Approved → …). No formal workflow shipped; add one only if governance requires it.
 
-Implementation note: workflows live under `master_plan_it/master_plan_it/workflow/`, field name `workflow_state`, and are picked up from files via standard Frappe sync/migrate.
+Implementation note: workflows live under `master_plan_it/master_plan_it/workflow/` (`workflow_state` field) and sync via standard migrate/clear-cache.

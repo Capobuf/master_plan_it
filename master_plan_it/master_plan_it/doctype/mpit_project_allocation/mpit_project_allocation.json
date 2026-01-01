@@ -21,14 +21,15 @@
    "fieldtype": "Link",
    "label": "Category",
    "options": "MPIT Category",
-   "reqd": 1
+   "reqd": 1,
+   "columns": 2
   },
   {
    "fieldname": "year",
    "fieldtype": "Link",
    "description": "Select the year for this allocation.",
    "in_list_view": 1,
-   "columns": 2,
+   "columns": 1,
    "label": "Year",
    "options": "MPIT Year",
    "reqd": 1
@@ -38,7 +39,7 @@
    "fieldtype": "Currency",
    "description": "Enter the planned amount for this year.",
    "in_list_view": 1,
-   "columns": 2,
+   "columns": 1,
    "label": "Planned Amount",
    "reqd": 1
   },
@@ -77,7 +78,7 @@
    "fieldtype": "Currency",
    "description": "Calculated automatically as the gross amount.",
    "in_list_view": 1,
-   "columns": 2,
+   "columns": 1,
    "label": "Gross Planned Amount",
    "read_only": 1
   }

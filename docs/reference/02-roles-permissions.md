@@ -1,4 +1,4 @@
-# Reference: Roles and permissions (V1)
+# Reference: Roles and permissions (V2)
 
 ## Roles
 - vCIO Manager
@@ -12,11 +12,11 @@
 - Workspace “Master Plan IT” is restricted to these roles (plus System Manager).
 
 ## Key permission rules
-- Approved Budgets are immutable (docstatus=1). Editing is blocked by Frappe.
-- Amendments are used for any post-approval changes.
-- Actual Entries:
-  - create/write allowed for Client Editor and vCIO Manager
-  - read for all
+- Budgets: Baseline is immutable after submit; Forecast can be refreshed/set active via server actions (no amendments).
+- Actual/Variance Entries:
+  - entry_kind = Delta requires Contract XOR Project; Allowance Spend requires Cost Center and forbids Contract/Project.
+  - status Verified locks fields; only vCIO Manager can revert Verified→Recorded.
+  - create/write allowed for Client Editor and vCIO Manager; read for all.
 
 ## Notes
 Exact DocPerm matrices stay in DocType JSON (native Frappe). Roles are shipped as filtered fixtures only for: vCIO Manager, Client Editor, Client Viewer.

@@ -223,8 +223,8 @@
    "doc_view": "",
    "icon": "dashboard",
    "label": "Overview Dashboard",
-   "type": "URL",
-   "url": "/dashboard-view/Master%20Plan%20IT%20Overview"
+   "link_to": "Master Plan IT Overview",
+   "type": "Dashboard"
   },
   {
    "color": "Blue",

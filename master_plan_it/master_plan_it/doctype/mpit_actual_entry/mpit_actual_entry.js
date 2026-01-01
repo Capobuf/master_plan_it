@@ -58,7 +58,7 @@ const toggle_actual_layout = (frm) => {
 	frm.toggle_display("cost_center", true);
 
 	if (is_delta) {
-		frm.set_intro(__("Seleziona un Contract o un Project (non entrambi)."));
+		frm.set_intro(__("Select a Contract or a Project (not both)."));
 	} else {
 		frm.set_intro("");
 	}

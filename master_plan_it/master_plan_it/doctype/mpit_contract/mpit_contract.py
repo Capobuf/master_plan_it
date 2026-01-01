@@ -3,11 +3,13 @@
 
 from __future__ import annotations
 
-import frappe
-from frappe.model.document import Document
 from datetime import timedelta
 
-from frappe.utils import add_months, getdate
+import frappe
+from frappe import _
+from frappe.model.document import Document
+from frappe.utils import add_months, flt, getdate
+
 from master_plan_it import mpit_user_prefs, tax
 
 
@@ -18,7 +20,9 @@ class MPITContract(Document):
 		self._compute_spread_end_date()
 		self._validate_rate_schedule()
 		self._compute_rate_vat()
+		self._compute_monthly_amount()
 		self._default_next_renewal_date()
+		self._normalize_status()
 	
 	def _compute_vat_split(self):
 		"""Compute net/vat/gross for current_amount field with strict VAT validation."""
@@ -48,13 +52,41 @@ class MPITContract(Document):
 		self.current_amount_vat = vat
 		self.current_amount_gross = gross
 
+	def _compute_monthly_amount(self) -> None:
+		"""Compute monthly net equivalent based on billing cadence or spread."""
+		if self.current_amount_net is None:
+			self.monthly_amount_net = None
+			return
+
+		# Rate schedules carry their own monthly amounts; avoid flattening
+		if self.rate_schedule:
+			self.monthly_amount_net = None
+			return
+
+		if self.spread_months:
+			months = flt(self.spread_months or 0)
+			if months <= 0:
+				self.monthly_amount_net = None
+				return
+			self.monthly_amount_net = flt(flt(self.current_amount_net or 0, 2) / months, 2)
+			return
+
+		billing = self.billing_cycle or "Monthly"
+		if billing == "Quarterly":
+			self.monthly_amount_net = flt((self.current_amount_net or 0) * 4 / 12, 2)
+		elif billing == "Annual":
+			self.monthly_amount_net = flt((self.current_amount_net or 0) / 12, 2)
+		else:
+			# Monthly and "Other" default to same value
+			self.monthly_amount_net = flt(self.current_amount_net or 0, 2)
+
 	def _validate_spread_vs_rate(self) -> None:
 		"""Enforce mutual exclusivity between spread and rate schedule."""
 		has_spread = bool(self.spread_months)
 		has_rate = bool(self.rate_schedule)
 
 		if has_spread and has_rate:
-			frappe.throw("Spread and rate schedule cannot both be set.")
+			frappe.throw(_("Spread and rate schedule cannot both be set."))
 
 	def _compute_spread_end_date(self) -> None:
 		"""Compute spread_end_date if spread is defined."""
@@ -76,11 +108,11 @@ class MPITContract(Document):
 		rows = sorted(self.rate_schedule, key=lambda r: getdate(r.effective_from) if r.effective_from else getdate("1900-01-01"))
 		for i, row in enumerate(rows):
 			if not row.effective_from:
-				frappe.throw("Rate row is missing effective_from.")
+				frappe.throw(_("Rate row is missing effective_from."))
 			if i > 0:
 				prev = rows[i - 1]
 				if getdate(row.effective_from) <= getdate(prev.effective_from):
-					frappe.throw("Rate schedule must be strictly increasing by effective_from (no duplicates or overlaps).")
+					frappe.throw(_("Rate schedule must be strictly increasing by effective_from (no duplicates or overlaps)."))
 
 	def _compute_rate_vat(self) -> None:
 		"""Compute VAT split for rate rows."""
@@ -94,7 +126,7 @@ class MPITContract(Document):
 				row.amount,
 				row.vat_rate,
 				default_vat,
-				field_label="Rate Amount"
+				field_label=_("Rate Amount")
 			)
 			net, vat, gross = tax.split_net_vat_gross(
 				row.amount,
@@ -113,3 +145,10 @@ class MPITContract(Document):
 			return
 		if self.end_date:
 			self.next_renewal_date = self.end_date
+
+	def _normalize_status(self) -> None:
+		"""Keep auto-renew contracts in Active (avoid drift to Pending Renewal)."""
+		if not self.auto_renew:
+			return
+		if self.status in ("Pending Renewal", "Draft", None, ""):
+			self.status = "Active"

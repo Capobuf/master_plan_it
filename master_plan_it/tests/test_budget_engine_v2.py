@@ -139,3 +139,95 @@ def test_actual_entry_constraints_allowance_and_delta():
 	ae2.project = "NonExistent"
 	with pytest.raises(frappe.ValidationError):
 		ae2.validate()
+
+
+def test_refresh_skips_draft_and_proposed_projects():
+	year = 2032
+	_ensure_year(year)
+	cat = _ensure_category("Project Test Cat")
+
+	# Draft project with allocation
+	draft_proj = frappe.get_doc(
+		{
+			"doctype": "MPIT Project",
+			"title": "Draft Project",
+			"status": "Draft",
+			"allocations": [
+				{
+					"year": str(year),
+					"category": cat,
+					"planned_amount": 1000,
+					"planned_amount_net": 1000,
+				}
+			],
+		}
+	)
+	draft_proj.insert(ignore_permissions=True)
+
+	# Proposed project with allocation
+	prop_proj = frappe.get_doc(
+		{
+			"doctype": "MPIT Project",
+			"title": "Proposed Project",
+			"status": "Proposed",
+			"allocations": [
+				{
+					"year": str(year),
+					"category": cat,
+					"planned_amount": 2000,
+					"planned_amount_net": 2000,
+				}
+			],
+		}
+	)
+	prop_proj.insert(ignore_permissions=True)
+
+	budget = frappe.get_doc(
+		{
+			"doctype": "MPIT Budget",
+			"year": str(year),
+			"title": "Forecast 2032",
+			"budget_kind": "Forecast",
+		}
+	)
+	budget.insert(ignore_permissions=True)
+	budget.refresh_from_sources()
+	budget.reload()
+
+	source_keys = [l.source_key for l in budget.lines if l.source_key]
+	assert not any(sk.startswith("PROJECT::") for sk in source_keys)
+
+
+def test_refresh_updates_generated_lines_without_readonly_errors():
+	year = 2033
+	_ensure_year(year)
+	_ensure_category()
+	_ensure_cost_center()
+	contract_name = _ensure_contract("CT-REFRESH")
+
+	# First refresh
+	budget = frappe.get_doc(
+		{
+			"doctype": "MPIT Budget",
+			"year": str(year),
+			"title": "Forecast Refresh Guard",
+			"budget_kind": "Forecast",
+		}
+	)
+	budget.insert(ignore_permissions=True)
+	budget.refresh_from_sources()
+	budget.reload()
+
+	line = next(l for l in budget.lines if l.source_key and l.source_key.startswith("CONTRACT::CT-REFRESH"))
+	initial_monthly = line.monthly_amount
+	assert initial_monthly > 0
+
+	# Update contract amount so refresh must update generated line
+	contract = frappe.get_doc("MPIT Contract", contract_name)
+	contract.current_amount_net = contract.current_amount_net * 2
+	contract.save(ignore_permissions=True)
+
+	budget.refresh_from_sources()
+	budget.reload()
+	updated_line = next(l for l in budget.lines if l.source_key and l.source_key.startswith("CONTRACT::CT-REFRESH"))
+	assert updated_line.monthly_amount == contract.current_amount_net

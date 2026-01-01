@@ -7,36 +7,35 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "tab_overview",
+  "section_overview",
   "title",
   "status",
   "overview_col_break",
+  "category",
   "cost_center",
   "owner_user",
   "start_date",
   "end_date",
   "description",
-  "tab_financial",
+  "document_id",
   "financial_section",
   "financial_summary",
   "planned_total_net",
   "quoted_total_net",
   "expected_total_net",
-  "tab_allocations",
   "alloc_section",
   "allocations",
-  "tab_quotes",
   "quotes_section",
   "quotes",
-  "tab_milestones",
   "milestones_section",
   "milestones"
- ],
- "fields": [
+],
+"fields": [
   {
-   "fieldname": "tab_overview",
-   "fieldtype": "Tab Break",
-   "label": "Overview"
+   "fieldname": "section_overview",
+   "fieldtype": "Section Break",
+   "label": "Overview",
+   "collapsible": 0
   },
   {
    "fieldname": "title",
@@ -60,6 +59,14 @@
   {
    "fieldname": "overview_col_break",
    "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "category",
+   "fieldtype": "Link",
+   "label": "Category",
+   "description": "Categoria principale del progetto (per report e allocazioni).",
+   "options": "MPIT Category",
+   "in_standard_filter": 1
   },
   {
    "fieldname": "cost_center",
@@ -96,14 +103,10 @@
    "label": "Description"
   },
   {
-   "fieldname": "tab_financial",
-   "fieldtype": "Tab Break",
-   "label": "Financials"
-  },
-  {
    "fieldname": "financial_section",
    "fieldtype": "Section Break",
-   "label": "Totals"
+   "label": "Financials",
+   "collapsible": 0
   },
   {
    "fieldname": "financial_summary",
@@ -133,14 +136,10 @@
    "read_only": 1
   },
   {
-   "fieldname": "tab_allocations",
-   "fieldtype": "Tab Break",
-   "label": "Allocations"
-  },
-  {
    "fieldname": "alloc_section",
    "fieldtype": "Section Break",
-   "label": "Allocations"
+   "label": "Allocations",
+   "collapsible": 0
   },
   {
    "fieldname": "allocations",
@@ -150,14 +149,10 @@
    "options": "MPIT Project Allocation"
   },
   {
-   "fieldname": "tab_quotes",
-   "fieldtype": "Tab Break",
-   "label": "Quotes"
-  },
-  {
    "fieldname": "quotes_section",
    "fieldtype": "Section Break",
-   "label": "Quotes"
+   "label": "Quotes",
+   "collapsible": 0
   },
   {
    "fieldname": "quotes",
@@ -167,14 +162,10 @@
    "options": "MPIT Project Quote"
   },
   {
-   "fieldname": "tab_milestones",
-   "fieldtype": "Tab Break",
-   "label": "Milestones"
-  },
-  {
    "fieldname": "milestones_section",
    "fieldtype": "Section Break",
-   "label": "Milestones"
+   "label": "Milestones",
+   "collapsible": 0
   },
   {
    "fieldname": "milestones",
@@ -182,8 +173,16 @@
    "description": "Add project milestones.",
    "label": "Milestones",
    "options": "MPIT Project Milestone"
+  },
+  {
+   "fieldname": "document_id",
+   "fieldtype": "Read Only",
+   "label": "Document ID",
+   "options": "name",
+   "description": "ID univoco del documento (name).",
+   "in_preview": 1
   }
- ],
+],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],

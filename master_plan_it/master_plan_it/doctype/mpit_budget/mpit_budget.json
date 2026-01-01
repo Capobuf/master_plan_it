@@ -9,7 +9,7 @@
  "engine": "InnoDB",
  "field_order": [
   "naming_series",
-  "tab_overview",
+  "section_overview",
   "year",
   "title",
   "overview_col_break",
@@ -20,17 +20,19 @@
   "actions_col_break",
   "set_active_btn",
   "refresh_from_sources",
-  "tab_lines",
+  "section_lines",
   "lines",
-  "tab_totals",
+  "section_totals",
   "totals_col_break_1",
   "total_amount_monthly",
   "total_amount_annual",
   "total_amount_vat",
   "total_amount_net",
   "total_amount_gross",
+  "section_admin",
+  "document_id",
   "amended_from"
- ],
+],
  "fields": [
   {
    "fieldname": "naming_series",
@@ -42,9 +44,10 @@
    "hidden": 1
   },
   {
-  "fieldname": "tab_overview",
-   "fieldtype": "Tab Break",
-   "label": "Overview"
+   "fieldname": "section_overview",
+   "fieldtype": "Section Break",
+   "label": "Overview",
+   "collapsible": 0
   },
   {
    "fieldname": "year",
@@ -115,9 +118,10 @@
    "fieldtype": "Column Break"
   },
   {
-   "fieldname": "tab_lines",
-   "fieldtype": "Tab Break",
-   "label": "Lines"
+   "fieldname": "section_lines",
+   "fieldtype": "Section Break",
+   "label": "Lines",
+   "collapsible": 0
   },
   {
    "fieldname": "lines",
@@ -127,10 +131,23 @@
    "options": "MPIT Budget Line"
   },
   {
-   "fieldname": "tab_totals",
-   "fieldtype": "Tab Break",
+   "fieldname": "section_totals",
+   "fieldtype": "Section Break",
    "label": "Totals",
    "collapsible": 0
+  },
+  {
+   "fieldname": "section_admin",
+   "fieldtype": "Section Break",
+   "label": "Admin"
+  },
+  {
+   "fieldname": "document_id",
+   "fieldtype": "Read Only",
+   "label": "Document ID",
+   "options": "name",
+   "description": "ID univoco del documento (name).",
+   "in_preview": 1
   },
   {
    "fieldname": "totals_col_break_1",

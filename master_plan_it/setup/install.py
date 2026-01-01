@@ -35,7 +35,7 @@ def _determine_currency() -> str:
 		currency = currency_list[0] if currency_list else None
 
 	if not currency:
-		frappe.throw("Currency is required. Please create at least one Currency and set MPIT Settings.")
+		frappe.throw(frappe._("Currency is required. Please create at least one Currency and set MPIT Settings."))
 
 	return currency
 
