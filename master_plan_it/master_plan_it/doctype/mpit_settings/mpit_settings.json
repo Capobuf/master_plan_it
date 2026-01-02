@@ -7,7 +7,6 @@
  "engine": "InnoDB",
  "field_order": [
   "section_defaults",
-  "currency",
   "renewal_window_days",
   "section_naming",
   "budget_prefix_default",
@@ -20,15 +19,6 @@
   "actual_digits_default"
  ],
  "fields": [
-  {
-   "fieldname": "currency",
-   "fieldtype": "Link",
-   "description": "Select the default currency for Master Plan IT calculations.",
-   "in_list_view": 1,
-   "label": "Currency",
-   "options": "Currency",
-   "reqd": 1
-  },
   {
    "default": "90",
    "fieldname": "renewal_window_days",

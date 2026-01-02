@@ -1,9 +1,0 @@
-{
- "chart_type": "Custom",
- "docstatus": 0,
- "doctype": "Dashboard Chart Source",
- "module": "Master Plan IT",
- "name": "MPIT Plan Delta by Cost Center",
- "source_name": "MPIT Plan Delta by Cost Center",
- "timeseries": 0
-}

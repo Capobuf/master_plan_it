@@ -47,7 +47,6 @@ def run(year: str = "2025") -> dict:
 				"title": "ZZZ VAT Contract",
 				"vendor": vendor.name,
 				"cost_center": cc.name,
-				"contract_kind": "Contract",
 				"status": "Active",
 				"billing_cycle": "Monthly",
 				"current_amount": 122.0,

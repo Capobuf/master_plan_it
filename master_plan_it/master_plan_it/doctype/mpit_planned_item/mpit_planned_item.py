@@ -63,7 +63,8 @@ class MPITPlannedItem(Document):
 				frappe.throw(_("Spend Date cannot be in the past."))
 			if spend.year not in horizon_years:
 				self.out_of_horizon = 1
-				frappe.throw(_("Spend Date must be in current year or next."))
+			else:
+				self.out_of_horizon = 0
 			# coherence with period
 			start = getdate(self.start_date)
 			end = getdate(self.end_date)
@@ -130,3 +131,31 @@ class MPITPlannedItem(Document):
 		end = getdate(self.end_date)
 		period_years = {start.year, end.year}
 		self.out_of_horizon = 0 if allowed_years & period_years else 1
+
+
+def set_coverage(planned_item: str, covered_by_type: str | None, covered_by_name: str | None) -> None:
+	"""Set or clear coverage for a Planned Item in a controlled way.
+	
+	Args:
+		planned_item: MPIT Planned Item name
+		covered_by_type: "Contract" | "Actual" or None to clear
+		covered_by_name: linked document name or None to clear
+	"""
+	if not planned_item:
+		return
+
+	doc = frappe.get_doc("MPIT Planned Item", planned_item)
+
+	new_type = covered_by_type or None
+	new_name = covered_by_name or None
+
+	# Idempotent guard
+	if doc.covered_by_type == new_type and doc.covered_by_name == new_name:
+		return
+
+	doc.covered_by_type = new_type
+	doc.covered_by_name = new_name
+	doc.is_covered = 1 if (new_type and new_name) else 0
+
+	# Save without altering immutable fields
+	doc.save(ignore_permissions=True)

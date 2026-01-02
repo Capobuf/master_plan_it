@@ -20,9 +20,11 @@ import frappe
 from frappe.utils import flt, getdate
 
 
+# Used by client (JS) to fetch year bounds; must be whitelisted
 RecurrenceRule = Literal["Monthly", "Quarterly", "Annual", "None"]
 
 
+@frappe.whitelist()
 def get_year_bounds(year: int | str) -> tuple[datetime.date, datetime.date]:
 	"""
 	Get the start and end dates for a fiscal year.

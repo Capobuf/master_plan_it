@@ -2,6 +2,7 @@
 # See license.txt
 
 import frappe
+import pytest
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt, now_datetime
 
@@ -50,7 +51,6 @@ class TestMPITContract(FrappeTestCase):
 				"title": title,
 				"vendor": self.vendor.name,
 				"cost_center": self.cost_center.name,
-				"contract_kind": "Contract",
 				"auto_renew": 0,
 				"current_amount": amount,
 				"current_amount_includes_vat": 0,
@@ -81,10 +81,12 @@ class TestMPITContract(FrappeTestCase):
 		self.assertEqual(annual.monthly_amount_net, flt(100, 2))
 
 	def test_monthly_amount_respects_spread_months(self):
+		self.skipTest("Spread_months legacy logic removed in Budget Engine v3")
 		contract = self._make_contract("Spread", amount=1200, spread_months=12)
 		self.assertEqual(contract.monthly_amount_net, flt(100, 2))
 
 	def test_monthly_amount_omitted_for_rate_schedule(self):
+		self.skipTest("Rate schedule legacy logic removed in Budget Engine v3")
 		contract = self._make_contract(
 			"RateSchedule",
 			amount=0,

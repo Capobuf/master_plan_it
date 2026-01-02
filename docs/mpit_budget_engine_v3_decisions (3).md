@@ -129,10 +129,10 @@ Serve come riferimento ufficiale col cliente.
 
 **Invariante anti-confusione:** lo stato **Approved** è consentito solo per documenti “APP” (es. naming `-APP-` o flag equivalente). L’unico flusso supportato per creare un budget Approved è l’azione “Crea Snapshot Approved”.
 
-### 5.3 Naming coerente con le Preferenze Utente
-Manteniamo prefix e digits dalle preferenze, distinguendo per token:
+### 5.3 Naming coerente con le Impostazioni
+Manteniamo prefix e digits da `MPIT Settings`, distinguendo per token:
 
-- Live: `{prefix}{year}-LIVE-{NN}`
+- Live: `{prefix}{year}-LIVE` (un solo Live per anno)
 - Snapshot: `{prefix}{year}-APP-{NN}`
 
 ### 5.4 Chiusura anno configurabile (fonte di verità)

@@ -26,6 +26,7 @@
   "vendor",
   "contract",
   "project",
+  "planned_item",
   "links_col_break",
   "cost_center"
 ],
@@ -163,6 +164,14 @@
    "options": "MPIT Project",
    "depends_on": "eval:doc.entry_kind=='Delta'"
  },
+  {
+   "fieldname": "planned_item",
+   "fieldtype": "Link",
+   "label": "Planned Item (Delta)",
+   "options": "MPIT Planned Item",
+   "description": "Se presente, l'Actual copre il Planned Item e lo esclude dal budget.",
+   "depends_on": "eval:doc.entry_kind=='Delta'"
+  },
   {
    "fieldname": "links_col_break",
    "fieldtype": "Column Break"

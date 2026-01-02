@@ -14,13 +14,19 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import getseries
-from frappe.utils import flt, getdate as _getdate, nowdate
+from frappe.utils import cint, flt, getdate as _getdate, nowdate
 from master_plan_it import amounts, annualization, mpit_user_prefs
 
 
 class MPITBudget(Document):
 	def autoname(self):
-		"""Generate name: {prefix}{year}-LIVE/APP-{NN} based on year, type, and user preferences."""
+		"""Generate name:
+		
+		- Live: `{prefix}{year}-LIVE` (single Live per year)
+		- Snapshot: `{prefix}{year}-APP-{NN}`
+		
+		Prefix/digits are global (MPIT Settings), not per-user.
+		"""
 		if not self.year:
 			frappe.throw(_("Year and Budget Type are required to generate Budget name"))
 		budget_type = self.budget_type or "Live"
@@ -30,6 +36,14 @@ class MPITBudget(Document):
 			user=frappe.session.user, year=self.year, budget_type=budget_type
 		)
 
+		if budget_type == "Live":
+			# Deterministic name (no sequence): one Live budget per year.
+			existing = frappe.db.get_value("MPIT Budget", {"year": self.year, "budget_type": "Live"}, "name")
+			if existing:
+				frappe.throw(_("Live budget for year {0} already exists: {1}.").format(self.year, existing))
+			self.name = f"{prefix}{self.year}-LIVE"
+			return
+
 		series_key = f"{prefix}{middle}.####"
 		sequence = getseries(series_key, digits)
 		self.name = f"{prefix}{middle}{sequence}"
@@ -37,6 +51,7 @@ class MPITBudget(Document):
 	def validate(self):
 		self._enforce_budget_type_rules()
 		self._enforce_status_invariants()
+		self._enforce_live_no_manual_lines()
 		self._autofill_cost_centers()
 		self._compute_lines_amounts()
 		self._compute_totals()
@@ -68,20 +83,46 @@ class MPITBudget(Document):
 				frappe.throw(_("Submit the Snapshot to approve it."))
 		else:
 			frappe.throw(_("Unsupported Budget Type: {0}").format(self.budget_type))
+	
+	def _enforce_live_no_manual_lines(self) -> None:
+		"""Live budgets are system-managed: block manual lines."""
+		if self.budget_type != "Live":
+			return
+		if frappe.flags.in_test and getattr(frappe.flags, "allow_live_manual_lines", False):
+			return
+		for line in self.lines:
+			if not getattr(line, "is_generated", 0):
+				frappe.throw(
+					_("Live budgets are system-managed. Remove manual line at position {0}.").format(line.idx)
+				)
 
 	@frappe.whitelist()
-	def refresh_from_sources(self) -> None:
-		"""Generate/refresh Live budget lines from contracts/projects (idempotent)."""
+	def refresh_from_sources(self, is_manual: int = 0, reason: str | None = None) -> None:
+		"""Generate/refresh Live budget lines from contracts/projects (idempotent).
+		
+		Args:
+			is_manual: 1 if triggered by user action (allows refresh on closed years)
+			reason: optional reason provided by the user for manual refresh
+		"""
 		if self.budget_type != "Live":
 			frappe.throw(_("Only Live budgets can be refreshed."))
+
+		year_start, year_end = annualization.get_year_bounds(self.year)
+		year_closed = self._is_year_closed(year_end)
+		manual = bool(cint(is_manual))
+
+		if year_closed and not manual:
+			self._add_timeline_comment(_("Auto-refresh skipped: year {0} is closed.").format(self.year))
+			return
 
 		if not self._within_horizon():
 			self._add_timeline_comment(_("Refresh on out-of-horizon year (manual only): proceed with caution."))
 
-		year_start, year_end = annualization.get_year_bounds(self.year)
-
-		if self._is_year_closed(year_end):
-			self._add_timeline_comment(_("Year closed: manual refresh executed; auto-refresh should be OFF."))
+		if year_closed and manual:
+			note = reason or _("No reason provided.")
+			self._add_timeline_comment(
+				_("Manual refresh on closed year by {0}. Reason: {1}").format(frappe.session.user, note)
+			)
 
 		generated_lines: list[dict] = []
 
@@ -115,25 +156,13 @@ class MPITBudget(Document):
 		allowed_status = {"Active", "Pending Renewal", "Renewed"}
 		contracts = frappe.get_all(
 			"MPIT Contract",
+			filters={"status": ["in", list(allowed_status)]},
 			fields=[
 				"name",
-				"title",
-				"vendor",
-				"cost_center",
-				"current_amount_net",
-				"vat_rate",
-				"billing_cycle",
-				"start_date",
-				"end_date",
-				"spread_months",
-				"spread_start_date",
-				"spread_end_date",
 				"status",
 			],
 		)
 		for c in contracts:
-			if c.status not in allowed_status:
-				continue
 			contract = frappe.get_doc("MPIT Contract", c.name)
 			if not contract.cost_center:
 				frappe.throw(_("Contract {0} is missing Cost Center. Please set it to include in Forecast.").format(contract.name))
@@ -198,6 +227,11 @@ class MPITBudget(Document):
 			)
 		}
 
+		# v3 inclusion rules (§7.1 decisions doc):
+		# - Approved, In Progress, On Hold: always included
+		# - Completed: included only if it has valid Planned Items (enforced by
+		#   the outer filter on Planned Items: docstatus=1, is_covered=0, out_of_horizon=0)
+		# - Draft, Proposed, Cancelled: excluded
 		allowed_status = {"Approved", "In Progress", "On Hold", "Completed"}
 
 		for item in items:
@@ -331,6 +365,10 @@ class MPITBudget(Document):
 			self.remove(line)
 
 	def on_update(self):
+		if self.is_new():
+			return
+		if getattr(self.flags, "skip_immutability", False):
+			return
 		# Snapshots are immutable beyond status invariants
 		if self.budget_type == "Snapshot" and self.has_value_changed("lines"):
 			frappe.throw(_("Snapshot budgets are immutable."))
@@ -493,7 +531,7 @@ def update_budget_totals(budget_name: str) -> None:
 		"total_amount_gross": flt(budget.total_amount_gross, 2),
 	}
 
-frappe.db.set_value("MPIT Budget", budget_name, totals)
+	frappe.db.set_value("MPIT Budget", budget_name, totals)
 
 
 @frappe.whitelist()
@@ -540,6 +578,7 @@ def create_snapshot(source_budget: str) -> str:
 		new_line.is_generated = 1
 
 	snapshot.flags.skip_generated_guard = True
+	snapshot.flags.skip_immutability = True
 	snapshot.insert(ignore_permissions=True)
 
 	# Add timeline comment to both documents
@@ -638,12 +677,32 @@ def enqueue_budget_refresh(years: list[str] | None = None) -> None:
 		pluck="name",
 	)
 
+	# Auto-create missing Live budgets within horizon
+	existing_years = {
+		str(frappe.db.get_value("MPIT Budget", name, "year")) for name in live_budgets
+	}
+	missing_years = [y for y in years_to_refresh if str(y) not in existing_years]
+
+	for year in missing_years:
+		try:
+			doc = frappe.new_doc("MPIT Budget")
+			doc.budget_type = "Live"
+			doc.year = year
+			doc.workflow_state = "Draft"
+			doc.insert(ignore_permissions=True)
+			live_budgets.append(doc.name)
+			doc.add_comment("Comment", _("Auto-created Live budget for year {0} (auto-refresh event).").format(year))
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"Failed to auto-create Live budget for year {year}")
+
 	for budget_name in live_budgets:
 		try:
 			frappe.enqueue(
 				"master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget.refresh_from_sources",
 				budget=budget_name,
 				queue="short",
+				# job_id required when deduplicate=True to avoid duplicate jobs per budget
+				job_id=f"mpit-budget-refresh-{budget_name}",
 				deduplicate=True,
 			)
 		except Exception:

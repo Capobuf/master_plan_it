@@ -14,7 +14,6 @@
     "sb_overview_main",
     "title",
     "vendor",
-    "contract_kind",
     "cb_overview_right",
     "status",
     "owner_user",
@@ -36,12 +35,7 @@
   "current_amount_net",
   "current_amount_vat",
   "current_amount_gross",
-    "section_spread",
-    "spread_months",
-    "spread_start_date",
-    "spread_end_date",
-    "section_rate_schedule",
-    "rate_schedule",
+    "planned_item",
   "tb_notes",
   "notes",
   "attachment",
@@ -84,17 +78,13 @@
       "allow_in_quick_entry": 1,
       "in_preview": 1
     },
-    {
-      "fieldname": "contract_kind",
-      "fieldtype": "Select",
-      "description": "Tipo di accordo.",
-      "label": "Contract Kind",
-      "options": "Contract\nSubscription\nAnnual Renewal\nMaintenance",
-      "reqd": 1,
-      "bold": 1,
-      "allow_in_quick_entry": 1,
-      "in_preview": 1
-    },
+  {
+   "fieldname": "planned_item",
+   "fieldtype": "Link",
+   "label": "Planned Item (coverage)",
+   "options": "MPIT Planned Item",
+   "description": "Collega il Planned Item che questo contratto copre (esclude doppio conteggio)."
+  },
     {
       "fieldname": "cb_overview_right",
       "fieldtype": "Column Break"
@@ -167,7 +157,6 @@
       "in_list_view": 1,
       "label": "Next Renewal Date",
       "depends_on": "eval:doc.auto_renew",
-      "mandatory_depends_on": "eval:doc.auto_renew",
       "bold": 1,
       "allow_in_quick_entry": 1,
       "in_preview": 1
@@ -218,10 +207,9 @@
   {
    "fieldname": "billing_cycle",
    "fieldtype": "Select",
-   "description": "Cadenza di fatturazione per l'importo corrente (nascosta se usi lo spread).",
+   "description": "Cadenza di fatturazione per l'importo corrente.",
    "label": "Billing Cycle",
    "options": "Monthly\nQuarterly\nAnnual\nOther",
-   "depends_on": "eval:!doc.spread_months",
    "in_list_view": 1,
    "allow_in_quick_entry": 1
     },
@@ -260,44 +248,6 @@
    "label": "Gross Amount",
    "read_only": 1,
    "depends_on": "eval:doc.current_amount"
-  },
-  {
-   "fieldname": "section_spread",
-   "fieldtype": "Section Break",
-   "label": "Spread / Accrual (ripartizione)",
-   "collapsible": 0
-  },
-  {
-   "fieldname": "spread_months",
-   "fieldtype": "Int",
-   "description": "Mesi di ripartizione di un costo prepagato (es. 36 per 3 anni). Alternativa alla rate schedule.",
-   "label": "Spread Months"
-  },
-  {
-   "fieldname": "spread_start_date",
-   "fieldtype": "Date",
-   "description": "Data di inizio della ripartizione.",
-   "label": "Spread Start Date"
-  },
-  {
-   "fieldname": "spread_end_date",
-   "fieldtype": "Date",
-   "description": "Fine ripartizione calcolata automaticamente.",
-   "label": "Spread End Date",
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_rate_schedule",
-   "fieldtype": "Section Break",
-   "label": "Rate Schedule (cambi prezzo)",
-   "collapsible": 0
-  },
-  {
-   "fieldname": "rate_schedule",
-   "fieldtype": "Table",
-   "description": "Cambi prezzo nel tempo: aggiungi righe con data di inizio in ordine cronologico, senza sovrapposizioni. Alternativa allo spread.",
-   "label": "Rate Schedule",
-   "options": "MPIT Contract Rate"
   },
     {
       "fieldname": "tb_notes",

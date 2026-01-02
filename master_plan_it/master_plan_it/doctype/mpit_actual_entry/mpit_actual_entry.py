@@ -12,6 +12,7 @@ from frappe.model.document import Document
 from frappe.model.naming import getseries
 from frappe.utils import flt, getdate
 from master_plan_it import mpit_user_prefs, tax
+from master_plan_it.master_plan_it.doctype.mpit_planned_item import mpit_planned_item
 
 
 class MPITActualEntry(Document):
@@ -39,6 +40,7 @@ class MPITActualEntry(Document):
 		self._autofill_cost_center()
 		self._enforce_entry_kind_rules()
 		self._enforce_status_rules()
+		self._sync_planned_item_coverage()
 
 	def _autofill_cost_center(self) -> None:
 		"""Copy cost center from contract or project if missing."""
@@ -103,6 +105,18 @@ class MPITActualEntry(Document):
 		if prev_status == "Verified" and self.status == "Recorded":
 			if not frappe.has_role("vCIO Manager"):
 				frappe.throw(_("Only vCIO Manager can revert a Verified entry to Recorded."))
+
+	def _sync_planned_item_coverage(self) -> None:
+		"""Set/clear Planned Item coverage when an Actual Entry (Delta) is verified."""
+		prev = self.get_doc_before_save()
+		prev_planned = getattr(prev, "planned_item", None) if prev else None
+		prev_status = getattr(prev, "status", None) if prev else None
+
+		if prev_planned and (prev_planned != self.planned_item or (prev_status == "Verified" and self.status != "Verified")):
+			mpit_planned_item.set_coverage(prev_planned, None, None)
+
+		if self.planned_item and self.status == "Verified" and self.entry_kind == "Delta":
+			mpit_planned_item.set_coverage(self.planned_item, "Actual", self.name)
 	
 	def _compute_vat_split(self):
 		"""Compute net/vat/gross for amount field with strict VAT validation."""

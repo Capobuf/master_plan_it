@@ -12,6 +12,10 @@ class TestMPITBudget(FrappeTestCase):
 		super().setUp()
 		self.year = self._ensure_year(2099)
 		self.cost_center = self._ensure_cost_center("Totals Test CC")
+		frappe.flags.allow_live_manual_lines = True
+
+	def tearDown(self):
+		frappe.flags.allow_live_manual_lines = False
 
 	def _ensure_year(self, year_value: int):
 		if not frappe.db.exists("MPIT Year", year_value):

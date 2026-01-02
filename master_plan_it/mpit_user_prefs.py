@@ -85,11 +85,13 @@ def get_budget_series(user: str | None = None, year: str | None = None, budget_t
 	Returns:
 		tuple: (prefix, digits, middle) where middle is "{year}-{TOKEN}-"
 	"""
-	prefs = get_or_create(user)
 	settings = frappe.get_single("MPIT Settings")
 
-	prefix = prefs.budget_prefix or settings.budget_prefix_default or "BUD-"
-	digits = prefs.budget_sequence_digits or settings.budget_digits_default or 2
+	# Budget naming is global (per-site), not per-user.
+	# Keeping per-user naming here increases the chance of duplicate/mismatched names
+	# when jobs/automations run under different users.
+	prefix = settings.budget_prefix_default or "BUD-"
+	digits = settings.budget_digits_default or 2
 	
 	if not year:
 		frappe.throw(_("Budget naming requires year parameter (Budget.year field)"))

@@ -45,14 +45,35 @@ const toggle_contract_layout = (frm) => {
 	frm.toggle_display("section_spread", !has_rate_rows || has_spread);
 };
 
+const maybe_autofill_next_renewal_date = async (frm) => {
+	if (!frm.doc.auto_renew) {
+		return;
+	}
+	if (frm.doc.next_renewal_date) {
+		return;
+	}
+	if (!frm.doc.end_date) {
+		return;
+	}
+	await frm.set_value("next_renewal_date", frm.doc.end_date);
+};
+
 frappe.ui.form.on("MPIT Contract", {
 	async onload(frm) {
 		await master_plan_it.vat.apply_defaults_for_contract(frm);
 		toggle_contract_layout(frm);
+		await maybe_autofill_next_renewal_date(frm);
 	},
 	async refresh(frm) {
 		await master_plan_it.vat.apply_defaults_for_contract(frm);
 		toggle_contract_layout(frm);
+		await maybe_autofill_next_renewal_date(frm);
+	},
+	async auto_renew(frm) {
+		await maybe_autofill_next_renewal_date(frm);
+	},
+	async end_date(frm) {
+		await maybe_autofill_next_renewal_date(frm);
 	},
 	spread_months(frm) {
 		toggle_contract_layout(frm);

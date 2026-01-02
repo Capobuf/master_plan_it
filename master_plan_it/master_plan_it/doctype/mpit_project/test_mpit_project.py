@@ -17,6 +17,7 @@ class TestMPITProject(FrappeTestCase):
 			"doctype": "MPIT Project",
 			"title": "Test Project",
 			"status": "Approved",
+			"cost_center": "Infrastructure CC",
 		})
 		with self.assertRaises(frappe.ValidationError):
 			doc.insert()

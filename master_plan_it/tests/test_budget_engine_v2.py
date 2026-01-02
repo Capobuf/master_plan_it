@@ -38,7 +38,6 @@ def _ensure_contract(name: str = "CT-TEST"):
 			"title": name,
 			"vendor": "Vendor-X",
 			"cost_center": cc,
-			"contract_kind": "Contract",
 			"current_amount_net": 100,
 			"start_date": "2025-01-01",
 		}

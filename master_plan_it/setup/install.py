@@ -12,39 +12,9 @@ import datetime
 import frappe
 
 
-def _determine_currency() -> str:
-	"""Pick a deterministic currency to satisfy the settings singleton."""
-	candidates = [
-		frappe.db.get_default("currency"),
-		frappe.db.get_default("default_currency"),
-	]
-
-	for doctype, field in [
-		("System Settings", "currency"),
-		("System Settings", "default_currency"),
-		("Global Defaults", "default_currency"),
-	]:
-		try:
-			candidates.append(frappe.db.get_single_value(doctype, field))
-		except Exception:
-			candidates.append(None)
-
-	currency = next((c for c in candidates if c), None)
-	if not currency:
-		currency_list = frappe.db.get_all("Currency", pluck="name", limit=1)
-		currency = currency_list[0] if currency_list else None
-
-	if not currency:
-		frappe.throw(frappe._("Currency is required. Please create at least one Currency and set MPIT Settings."))
-
-	return currency
-
-
 def _ensure_settings() -> None:
-	"""Create the singleton MPIT Settings if missing."""
+	"""Create the singleton MPIT Settings if missing and set naming defaults."""
 	settings = frappe.get_single("MPIT Settings")
-	if not settings.currency:
-		settings.currency = _determine_currency()
 	# Ensure naming defaults are set (idempotent)
 	if not settings.budget_prefix_default:
 		settings.budget_prefix_default = "BUD-"
@@ -89,7 +59,6 @@ def _bootstrap_basics() -> None:
 def _reload_standard_assets() -> None:
 	"""Ensure dashboards/workspaces/chart sources are synced on new sites."""
 	# Chart sources used by dashboards
-	frappe.reload_doc("master_plan_it", "dashboard_chart_source", "mpit_plan_delta_by_cost_center", force=1)
 	# Dashboards and workspace
 	frappe.reload_doc("master_plan_it", "dashboard", "master_plan_it_overview", force=1)
 	frappe.reload_doc("master_plan_it", "workspace", "master_plan_it", force=1)

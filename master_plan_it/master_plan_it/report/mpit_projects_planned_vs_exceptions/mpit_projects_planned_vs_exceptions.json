@@ -6,17 +6,50 @@
  "disabled": 0,
  "docstatus": 0,
  "doctype": "Report",
- "filters": [],
+ "filters": [
+  {
+   "fieldname": "year",
+   "fieldtype": "Link",
+   "label": "Year",
+   "mandatory": 1,
+   "options": "MPIT Year",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "label": "Project",
+   "mandatory": 0,
+   "options": "MPIT Project",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "label": "Cost Center",
+   "mandatory": 0,
+   "options": "MPIT Cost Center",
+   "wildcard_filter": 0
+  },
+  {
+   "fieldname": "status",
+   "fieldtype": "Select",
+   "label": "Project Status",
+   "mandatory": 0,
+   "options": "\nDraft\nProposed\nApproved\nIn Progress\nOn Hold\nCompleted\nCancelled",
+   "wildcard_filter": 0
+  }
+ ],
  "idx": 0,
  "is_standard": "Yes",
  "letter_head": null,
- "modified": "2025-12-24 20:00:51.525958",
+ "modified": "2026-01-12 10:00:00.000000",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Projects Planned vs Exceptions",
  "owner": "Administrator",
  "prepared_report": 0,
- "ref_doctype": "MPIT Project",
+ "ref_doctype": "MPIT Planned Item",
  "report_name": "MPIT Projects Planned vs Exceptions",
  "report_type": "Script Report",
  "roles": [

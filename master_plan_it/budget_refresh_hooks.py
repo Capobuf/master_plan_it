@@ -49,34 +49,36 @@ VALID_CONTRACT_STATUSES = {"Active", "Pending Renewal", "Renewed"}
 
 
 def on_contract_change(doc, method: str) -> None:
-    """Handle contract changes: trigger refresh only for validated statuses.
-    
-    Draft/Cancelled/Expired contracts do not trigger refresh (per v3 spec).
-    When a contract transitions to/from valid status, refresh removes/adds lines.
-    """
-    # Skip Draft contracts entirely (they don't impact budget)
-    if doc.status == "Draft":
-        return
+	"""Handle contract changes: trigger refresh only for validated statuses.
+	
+	Draft/Cancelled/Expired contracts do not trigger refresh (per v3 spec).
+	When a contract transitions to/from valid status, refresh removes/adds lines.
+	"""
+	prev = doc.get_doc_before_save()
+	prev_status = prev.status if prev else None
 
-    # Skip Cancelled/Expired unless they were previously valid (transition case)
-    if doc.status in ("Cancelled", "Expired"):
-        # Check if was previously in valid status (to remove from budget)
-        if doc.get_doc_before_save():
-            old_status = doc.get_doc_before_save().status
-            if old_status not in VALID_CONTRACT_STATUSES:
-                return
-        else:
-            return
+	# Draft: trigger only on regression from a valid status, else skip
+	if doc.status == "Draft":
+		if prev_status in VALID_CONTRACT_STATUSES:
+			years = _extract_years_from_dates(doc.start_date, doc.end_date) or _get_horizon_years()
+			_trigger_refresh(years)
+		return
 
-    # Extract years from contract period
-    years = _extract_years_from_dates(doc.start_date, doc.end_date)
+	# Skip Cancelled/Expired unless they were previously valid (transition case)
+	if doc.status in ("Cancelled", "Expired"):
+		# Check if was previously in valid status (to remove from budget)
+		if not prev_status or prev_status not in VALID_CONTRACT_STATUSES:
+			return
 
-    # If no dates, use current year as fallback
-    if not years:
-        horizon = _get_horizon_years()
-        years = list(horizon)
+	# Extract years from contract period
+	years = _extract_years_from_dates(doc.start_date, doc.end_date)
 
-    _trigger_refresh(years)
+	# If no dates, use current year as fallback
+	if not years:
+		horizon = _get_horizon_years()
+		years = list(horizon)
+
+	_trigger_refresh(years)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -85,31 +87,34 @@ def on_contract_change(doc, method: str) -> None:
 
 
 def on_planned_item_change(doc, method: str) -> None:
-    """Handle Planned Item changes: trigger refresh when submitted items change.
-    
-    Only submitted (docstatus=1) and not covered items affect budget.
-    on_update also fires for draft edits - skip those.
-    """
-    # Skip draft items (docstatus=0) on update - they don't affect budget yet
-    if method == "on_update" and doc.docstatus == 0:
-        return
+	"""Handle Planned Item changes: trigger refresh when submitted items change.
+	
+	Only submitted (docstatus=1) and not covered items affect budget.
+	on_update also fires for draft edits - skip those.
+	"""
+	prev = doc.get_doc_before_save()
+	coverage_changed = bool(prev) and prev.is_covered != doc.is_covered
 
-    # Skip covered items - they're excluded from budget calculation
-    if doc.is_covered:
-        return
+	# Skip draft items (docstatus=0) on update - they don't affect budget yet
+	if method == "on_update" and doc.docstatus == 0 and not coverage_changed:
+		return
 
-    # Skip out_of_horizon items
-    if doc.out_of_horizon:
-        return
+	# Skip covered items - they're excluded from budget calculation, unless coverage just flipped
+	if doc.is_covered and not coverage_changed:
+		return
 
-    # Extract years from spend_date or period
-    years = []
-    if doc.spend_date:
-        years = [str(getdate(doc.spend_date).year)]
-    else:
-        years = _extract_years_from_dates(doc.start_date, doc.end_date)
+	# Skip out_of_horizon items
+	if doc.out_of_horizon:
+		return
 
-    _trigger_refresh(years)
+	# Extract years from spend_date or period
+	years = []
+	if doc.spend_date:
+		years = [str(getdate(doc.spend_date).year)]
+	else:
+		years = _extract_years_from_dates(doc.start_date, doc.end_date)
+
+	_trigger_refresh(years)
 
 
 # ─────────────────────────────────────────────────────────────────────────────

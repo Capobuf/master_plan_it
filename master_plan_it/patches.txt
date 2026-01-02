@@ -7,3 +7,6 @@ master_plan_it.patches.v2_0.add_cost_center_root
 master_plan_it.patches.v2_0.populate_contract_monthly_amount
 master_plan_it.patches.v2_0.normalize_contract_status
 master_plan_it.patches.v3_0.migrate_budget_types
+master_plan_it.patches.v3_0.remove_contract_spread_rate_fields
+master_plan_it.patches.v3_0.remove_mpit_settings_currency
+master_plan_it.patches.v3_0.remove_contract_kind_field
