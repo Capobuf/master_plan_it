@@ -31,7 +31,6 @@ def _ensure_cc(name: str):
 				"doctype": "MPIT Cost Center",
 				"cost_center_name": name,
 				"is_group": 0,
-				"is_active": 1,
 			}
 		).insert()
 	return frappe.get_doc("MPIT Cost Center", name)
@@ -97,7 +96,7 @@ def run_seed() -> dict:
 	contract = frappe.get_doc(
 		{
 			"doctype": "MPIT Contract",
-			"title": "Acceptance Contract",
+			"description": "Acceptance Contract",
 			"vendor": ven.name,
 			"cost_center": cc.name,
 			"status": "Active",

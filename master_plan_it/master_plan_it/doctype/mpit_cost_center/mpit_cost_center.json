@@ -7,6 +7,7 @@
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
+ "quick_entry": 1,
  "field_order": [
   "section_overview",
   "cost_center_name",
@@ -14,7 +15,6 @@
   "parent_cost_center",
   "column_overview_right",
   "is_group",
-  "is_active",
   "section_advanced",
   "old_parent",
   "lft",
@@ -54,11 +54,10 @@
    "fieldtype": "Column Break"
   },
   {
-   "default": "1",
-   "fieldname": "is_active",
+   "default": "0",
+   "fieldname": "is_group",
    "fieldtype": "Check",
-   "in_standard_filter": 1,
-   "label": "Is Active"
+   "label": "Is Group"
   },
   {
    "fieldname": "lft",
@@ -75,12 +74,6 @@
    "label": "Right",
    "no_copy": 1,
    "read_only": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "is_group",
-   "fieldtype": "Check",
-   "label": "Is Group"
   },
   {
    "fieldname": "section_advanced",

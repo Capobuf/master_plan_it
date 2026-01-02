@@ -62,9 +62,7 @@
 - annual_net: Calculated automatically as the annualized net amount.
 - annual_vat: Calculated automatically as the annualized VAT amount.
 - annual_gross: Calculated automatically as the annualized gross amount.
-- cost_type: Choose whether the cost is CAPEX or OPEX.
 - is_generated: If enabled, the line is generated and should be read-only (manual edits blocked).
-- is_active: If enabled, the budget line is active.
 
 ### MPIT Contract
 
@@ -76,7 +74,6 @@
 - start_date: Date when the contract starts.
 - end_date: Date when the contract ends.
 - next_renewal_date: Next renewal date for this contract.
-- notice_days: Number of notice days required before renewal.
 - auto_renew: If enabled, the contract renews automatically.
 - current_amount: Enter the current contract amount; use net or gross per the VAT setting.
 - current_amount_includes_vat: If enabled, the current amount includes VAT.
@@ -89,7 +86,6 @@
 - spread_end_date: Computed end date of the spread period.
 - rate_schedule: Table of rate changes; mutually exclusive with spread.
 - status: Choose the current contract status.
-- owner_user: Select the contract owner.
 - notes: Add internal notes about the contract.
 - attachment: Upload the contract file.
 
@@ -100,10 +96,8 @@
 - status: Choose the project status; at least one allocation is required before approval or later states.
 - start_date: Date when the project starts.
 - end_date: Date when the project ends.
-- owner_user: Select the project owner.
 - allocations: Add one or more allocations with year and planned amount.
 - quotes: Add vendor quotes for this project.
-- milestones: Add project milestones.
 
 ### MPIT Project Allocation
 
@@ -114,15 +108,6 @@
 - vat_rate: VAT rate applied to the planned amount.
 - planned_amount_net: Calculated automatically from planned amount and VAT settings.
 - planned_amount_vat: Calculated automatically as the VAT portion.
-
-### MPIT Project Milestone
-
-- title: Enter the milestone title.
-- status: Choose the milestone status.
-- due_date: Date when the milestone is due.
-- acceptance_date: Date when the milestone was accepted.
-- attachment: Upload any supporting attachment.
-- notes: Add notes about the milestone.
 
 ### MPIT Project Quote
 

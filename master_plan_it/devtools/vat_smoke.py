@@ -28,7 +28,6 @@ def run(year: str = "2025") -> dict:
 			"cost_center_name": "ZZZ VAT Test CC",
 			"parent_cost_center": "All Cost Centers",
 			"is_group": 0,
-			"is_active": 1,
 		}
 	)
 	project = None
@@ -44,7 +43,7 @@ def run(year: str = "2025") -> dict:
 		contract = frappe.get_doc(
 			{
 				"doctype": "MPIT Contract",
-				"title": "ZZZ VAT Contract",
+				"description": "ZZZ VAT Contract",
 				"vendor": vendor.name,
 				"cost_center": cc.name,
 				"status": "Active",

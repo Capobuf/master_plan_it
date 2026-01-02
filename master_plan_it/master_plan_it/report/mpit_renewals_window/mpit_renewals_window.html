@@ -9,7 +9,7 @@
         Profiles:
         - Standard: contract, title, vendor, category, next_renewal_date, days_to_renewal, auto_renew, status
         - Compact: contract, vendor, next_renewal_date, days_to_renewal, status
-        - All: all columns (includes notice_days, end_date)
+        - All: all columns (includes end_date)
     #}
     {%- set profile = (filters.print_profile or "Standard")|string %}
     {%- set orientation = (filters.print_orientation or "Auto")|string %}

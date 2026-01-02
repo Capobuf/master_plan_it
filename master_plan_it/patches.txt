@@ -1,2 +1,3 @@
 # Patches placeholder. Keep empty until a migration is required.
 master_plan_it.patches.v2_0.add_cost_center_root
+master_plan_it.patches.v3_0.remove_contract_title_field

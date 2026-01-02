@@ -9,11 +9,11 @@ def setup_fixtures():
     """Create necessary fixtures."""
     # Create Cost Centers
     if not frappe.db.exists("MPIT Cost Center", "Hardware CC"):
-        c1 = frappe.get_doc({"doctype": "MPIT Cost Center", "cost_center_name": "Hardware CC", "is_group": 0, "is_active": 1})
+        c1 = frappe.get_doc({"doctype": "MPIT Cost Center", "cost_center_name": "Hardware CC", "is_group": 0})
         c1.insert()
 
     if not frappe.db.exists("MPIT Cost Center", "Software CC"):
-        c2 = frappe.get_doc({"doctype": "MPIT Cost Center", "cost_center_name": "Software CC", "is_group": 0, "is_active": 1})
+        c2 = frappe.get_doc({"doctype": "MPIT Cost Center", "cost_center_name": "Software CC", "is_group": 0})
         c2.insert()
 
     # Create Vendor

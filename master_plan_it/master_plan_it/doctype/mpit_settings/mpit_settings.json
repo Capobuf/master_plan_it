@@ -17,6 +17,8 @@
   "column_break_naming",
   "project_prefix_default",
   "project_digits_default",
+  "contract_prefix_default",
+  "contract_digits_default",
   "column_break_actual",
   "actual_prefix_default",
   "actual_digits_default",
@@ -77,6 +79,20 @@
   {
    "fieldname": "column_break_naming",
    "fieldtype": "Column Break"
+  },
+  {
+   "default": "CONTR-",
+   "fieldname": "contract_prefix_default",
+   "fieldtype": "Data",
+   "description": "Prefix for Contract document names.",
+   "label": "Contract Prefix"
+  },
+  {
+   "default": "2",
+   "fieldname": "contract_digits_default",
+   "fieldtype": "Int",
+   "description": "Digits for Contract sequence numbers.",
+   "label": "Contract Digits"
   },
   {
    "default": "PRJ-",

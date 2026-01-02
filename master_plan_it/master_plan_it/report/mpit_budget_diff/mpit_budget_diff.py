@@ -66,7 +66,6 @@ def _load_budget_totals(budget: str, group_by: str) -> dict:
 		SELECT {", ".join(fields)}
 		FROM `tabMPIT Budget Line`
 		WHERE parent = %(budget)s
-		  AND COALESCE(is_active, 1) = 1
 		GROUP BY {", ".join(group_fields)}
 		""",
 		{"budget": budget},

@@ -20,6 +20,5 @@ def execute():
 		"doctype": "MPIT Cost Center",
 		"cost_center_name": "All Cost Centers",
 		"is_group": 1,
-		"is_active": 1,
 	})
 	doc.insert(ignore_permissions=True)

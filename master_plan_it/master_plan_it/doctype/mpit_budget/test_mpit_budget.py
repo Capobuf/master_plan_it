@@ -10,7 +10,7 @@ from master_plan_it import amounts
 class TestMPITBudget(FrappeTestCase):
 	def setUp(self):
 		super().setUp()
-		self.year = self._ensure_year(2099)
+		self.year = self._ensure_year(self._find_unused_year())
 		self.cost_center = self._ensure_cost_center("Totals Test CC")
 		frappe.flags.allow_live_manual_lines = True
 
@@ -28,13 +28,18 @@ class TestMPITBudget(FrappeTestCase):
 			doc.insert(ignore_if_duplicate=True)
 		return frappe.get_doc("MPIT Year", year_value)
 
+	def _find_unused_year(self) -> int:
+		year = 2080
+		while frappe.db.exists("MPIT Budget", {"year": str(year), "budget_type": "Live"}):
+			year += 1
+		return year
+
 	def _ensure_cost_center(self, name: str):
 		if not frappe.db.exists("MPIT Cost Center", name):
 			doc = frappe.get_doc({
 				"doctype": "MPIT Cost Center",
 				"cost_center_name": name,
-				"is_group": 0,
-				"is_active": 1
+				"is_group": 0
 			})
 			doc.insert(ignore_if_duplicate=True)
 		return frappe.get_doc("MPIT Cost Center", name)

@@ -40,8 +40,7 @@ def _make_contracts(year: str, vendor_map: dict, cc_map: dict) -> list:
 	contracts.append(
 		_get_or_make(
 			"MPIT Contract",
-			name="CT-ZZZ-MONTHLY",
-			title="CT-ZZZ-MONTHLY",
+			description="CT-ZZZ-MONTHLY",
 			vendor=vendor_map["A"].name,
 			cost_center=cc_map["A"].name,
 			status="Active",
@@ -57,8 +56,7 @@ def _make_contracts(year: str, vendor_map: dict, cc_map: dict) -> list:
 	contracts.append(
 		_get_or_make(
 			"MPIT Contract",
-			name="CT-ZZZ-QUARTERLY",
-			title="CT-ZZZ-QUARTERLY",
+			description="CT-ZZZ-QUARTERLY",
 			vendor=vendor_map["B"].name,
 			cost_center=cc_map["B"].name,
 			status="Active",
@@ -204,7 +202,7 @@ def run(year: str = "2025") -> dict:
 		"A": _get_or_make("MPIT Vendor", name="ZZZ Demo Vendor A", vendor_name="ZZZ Demo Vendor A"),
 		"B": _get_or_make("MPIT Vendor", name="ZZZ Demo Vendor B", vendor_name="ZZZ Demo Vendor B"),
 	}
-	_get_or_make("MPIT Cost Center", name="All Cost Centers", cost_center_name="All Cost Centers", is_group=1, is_active=1)
+	_get_or_make("MPIT Cost Center", name="All Cost Centers", cost_center_name="All Cost Centers", is_group=1)
 	cc_map = {
 		"A": _get_or_make(
 			"MPIT Cost Center",
@@ -212,7 +210,6 @@ def run(year: str = "2025") -> dict:
 			cost_center_name="ZZZ Demo CC A",
 			parent_cost_center="All Cost Centers",
 			is_group=0,
-			is_active=1,
 		),
 		"B": _get_or_make(
 			"MPIT Cost Center",
@@ -220,7 +217,6 @@ def run(year: str = "2025") -> dict:
 			cost_center_name="ZZZ Demo CC B",
 			parent_cost_center="All Cost Centers",
 			is_group=0,
-			is_active=1,
 		),
 	}
 

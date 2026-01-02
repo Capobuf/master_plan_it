@@ -2,7 +2,7 @@
   "actions": [],
   "allow_import": 1,
   "allow_rename": 1,
-  "autoname": "field:title",
+  "autoname": "",
   "creation": "2025-12-21 22:34:32.098018",
   "doctype": "DocType",
   "editable_grid": 1,
@@ -12,18 +12,16 @@
   "field_order": [
     "tb_overview",
     "sb_overview_main",
-    "title",
+    "description",
     "vendor",
     "cb_overview_right",
     "status",
-    "owner_user",
     "cost_center",
     "tb_renewal",
     "start_date",
     "end_date",
     "auto_renew",
     "next_renewal_date",
-    "notice_days",
     "tb_billing",
     "section_pricing",
     "current_amount",
@@ -54,13 +52,11 @@
    "hidden": 0
   },
     {
-      "fieldname": "title",
+      "fieldname": "description",
       "fieldtype": "Data",
-      "description": "Titolo parlante del contratto/servizio.",
+      "description": "Descrizione sintetica (opzionale).",
       "in_list_view": 1,
-      "label": "Title",
-      "reqd": 1,
-      "unique": 1,
+      "label": "Description",
       "bold": 1,
       "allow_in_quick_entry": 1,
       "in_preview": 1
@@ -101,14 +97,6 @@
       "in_preview": 1
     },
     {
-      "fieldname": "owner_user",
-      "fieldtype": "Link",
-      "description": "Responsabile/owner del contratto.",
-      "label": "Owner User",
-      "options": "User",
-      "in_preview": 1
-    },
-  {
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "description": "Cost Center di imputazione (caps/report).",
@@ -162,14 +150,6 @@
       "in_preview": 1
     },
     {
-      "fieldname": "notice_days",
-      "fieldtype": "Int",
-      "description": "Giorni di preavviso per disdetta.",
-      "label": "Notice Days",
-      "depends_on": "eval:doc.auto_renew",
-      "allow_in_quick_entry": 1
-    },
-  {
    "fieldname": "tb_billing",
    "fieldtype": "Section Break",
    "label": "Billing"
@@ -342,6 +322,6 @@
   "sort_field": "modified",
   "sort_order": "DESC",
   "states": [],
-  "title_field": "title",
+ "title_field": "description",
   "track_changes": 1
 }

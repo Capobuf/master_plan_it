@@ -39,9 +39,7 @@
   "project",
   "cost_center",
   "section_flags",
-  "cost_type",
-  "is_generated",
-  "is_active"
+  "is_generated"
 ],
  "fields": [
   {
@@ -271,27 +269,12 @@
    "collapsible": 1
   },
   {
-   "default": "OPEX",
-   "fieldname": "cost_type",
-   "fieldtype": "Select",
-   "description": "Choose whether the cost is CAPEX or OPEX.",
-   "label": "Cost Type",
-   "options": "CAPEX\nOPEX"
-  },
-  {
    "default": "0",
    "fieldname": "is_generated",
    "fieldtype": "Check",
    "description": "If enabled, this line is generated and should be read-only.",
    "label": "Is Generated",
    "read_only": 1
-  },
-  {
-   "default": "1",
-   "fieldname": "is_active",
-   "fieldtype": "Check",
-   "description": "If enabled, the budget line is active.",
-   "label": "Is Active"
   }
  ],
  "grid_page_length": 50,

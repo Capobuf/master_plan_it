@@ -2,7 +2,6 @@
 # See license.txt
 
 import frappe
-import pytest
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import flt, now_datetime
 
@@ -30,23 +29,22 @@ class TestMPITContract(FrappeTestCase):
 					"doctype": "MPIT Cost Center",
 					"cost_center_name": name,
 					"is_group": 0,
-					"is_active": 1,
 				}
 			).insert(ignore_if_duplicate=True)
 		return frappe.get_doc("MPIT Cost Center", name)
 
 	def _make_contract(
 		self,
-		title_suffix: str,
+		description_suffix: str,
 		amount: float,
 		billing_cycle: str = "Monthly",
 	):
 		timestamp = now_datetime().strftime("%Y%m%d%H%M%S%f")
-		title = f"Contract {title_suffix} {timestamp}"
+		description = f"Contract {description_suffix} {timestamp}"
 		doc = frappe.get_doc(
 			{
 				"doctype": "MPIT Contract",
-				"title": title,
+				"description": description,
 				"vendor": self.vendor.name,
 				"cost_center": self.cost_center.name,
 				"auto_renew": 0,

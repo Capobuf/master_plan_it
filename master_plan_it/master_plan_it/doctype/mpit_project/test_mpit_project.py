@@ -10,7 +10,7 @@ class TestMPITProject(FrappeTestCase):
 		if not frappe.db.exists("MPIT Year", "2031"):
 			frappe.get_doc({"doctype": "MPIT Year", "year": 2031, "start_date": "2031-01-01", "end_date": "2031-12-31"}).insert()
 		if not frappe.db.exists("MPIT Cost Center", "Infrastructure CC"):
-			frappe.get_doc({"doctype": "MPIT Cost Center", "cost_center_name": "Infrastructure CC", "is_group": 0, "is_active": 1}).insert()
+			frappe.get_doc({"doctype": "MPIT Cost Center", "cost_center_name": "Infrastructure CC", "is_group": 0}).insert()
 
 	def test_requires_allocation_before_approval(self):
 		doc = frappe.get_doc({

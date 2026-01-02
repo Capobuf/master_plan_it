@@ -42,11 +42,9 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - start_date (Date, optional)
 - end_date (Date, optional)
 - next_renewal_date (Date) [mandatory]
-- notice_days (Int, optional)
 - auto_renew (Check)
 - current_amount (Currency, optional)
 - status (Select: Draft / Active / Pending Renewal / Renewed / Cancelled / Expired)
-- owner_user (Link: User, optional)
 - attachments (native Attach)
 
 ### MPIT Contract Rate (Child Table)
@@ -84,16 +82,13 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - amount_net (Currency, read-only)
 - amount_vat (Currency, read-only)
 - amount_gross (Currency, read-only)
-- cost_type (Select: CAPEX / OPEX)
 - recurrence (Select) + start_date/end_date (Date)
-- is_active (Check)
 - is_generated (Check, read-only in practice for generated lines)
 
 ## Actuals
 ### MPIT Actual Entry
 - posting_date (Date) [mandatory]
 - year (Link: MPIT Year) [derived from posting_date]
-- vendor (Link: MPIT Vendor, optional)
 - contract (Link: MPIT Contract, optional)
 - project (Link: MPIT Project, optional)
 - cost_center (Link: MPIT Cost Center) [mandatory for allowance; defaulted from contract/project if set]
@@ -110,11 +105,9 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - status (Select: Draft / Proposed / Approved / In Progress / On Hold / Completed / Cancelled)
 - start_date (Date)
 - end_date (Date)
-- owner (Link: User)
 - cost_center (Link: MPIT Cost Center)
 - allocations (Table: MPIT Project Allocation) [mandatory before approval]
 - quotes (Table: MPIT Project Quote) [optional]
-- milestones (Table: MPIT Project Milestone) [optional]
 
 ### MPIT Project Allocation (Child Table)
 - year (Link: MPIT Year) [mandatory]
@@ -131,10 +124,3 @@ All monetary fields use the single currency configured in MPIT Settings; documen
 - status (Select: Informational / Approved; default Informational)
 - VAT split fields
 
-### MPIT Project Milestone (Child Table)
-- title (Data)
-- due_date (Date)
-- status (Select: Planned / Done / Accepted)
-- acceptance_date (Date)
-- notes (Text)
-- attachment (Attach)

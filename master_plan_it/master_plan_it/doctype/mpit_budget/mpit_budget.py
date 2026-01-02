@@ -278,7 +278,6 @@ class MPITBudget(Document):
 						"period_start_date": period_start,
 						"period_end_date": period_end,
 						"is_generated": 1,
-						"is_active": 1,
 					}
 				)
 
@@ -332,7 +331,7 @@ class MPITBudget(Document):
 			"line_kind": "Contract",
 			"source_key": source_key,
 			"vendor": contract.vendor,
-			"description": contract.title,
+			"description": contract.description or contract.name,
 			"contract": contract.name,
 			"project": None,
 			"cost_center": contract.cost_center,
@@ -345,7 +344,6 @@ class MPITBudget(Document):
 			"period_start_date": period_start,
 			"period_end_date": period_end,
 			"is_generated": 1,
-			"is_active": 1,
 		}
 
 	def _upsert_generated_lines(self, generated: list[dict]) -> None:
@@ -408,8 +406,6 @@ class MPITBudget(Document):
 					"contract",
 					"project",
 					"cost_center",
-					"cost_type",
-					"is_active",
 				],
 				as_dict=True,
 			)

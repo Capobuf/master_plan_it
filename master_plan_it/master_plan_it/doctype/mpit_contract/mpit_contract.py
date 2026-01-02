@@ -9,6 +9,7 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.model.document import Document
+from frappe.model.naming import make_autoname
 from frappe.utils import flt, getdate
 
 from master_plan_it.master_plan_it.doctype.mpit_planned_item import mpit_planned_item
@@ -16,6 +17,15 @@ from master_plan_it import mpit_defaults, tax
 
 
 class MPITContract(Document):
+	def autoname(self):
+		"""Name contracts using series from settings (no manual titles)."""
+		prefix, digits = mpit_defaults.get_contract_series()
+		series = f"{prefix}.{'#' * digits}"
+		self.name = make_autoname(series)
+
+		if not self.description:
+			self.description = self.name
+
 	def validate(self):
 		prev = self.get_doc_before_save()
 		if not self.cost_center:

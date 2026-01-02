@@ -110,6 +110,21 @@ def get_actual_entry_series() -> tuple[str, int]:
     return prefix, digits
 
 
+def get_contract_series() -> tuple[str, int]:
+    """
+    Get Contract naming series components.
+    
+    Returns:
+        tuple: (prefix, digits)
+    """
+    settings = _get_settings()
+
+    prefix = settings.contract_prefix_default or "CONTR-"
+    digits = settings.contract_digits_default or 2
+
+    return prefix, digits
+
+
 # =============================================================================
 # Print Settings
 # =============================================================================

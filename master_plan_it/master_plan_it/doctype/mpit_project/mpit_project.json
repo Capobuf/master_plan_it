@@ -12,7 +12,6 @@
   "status",
   "overview_col_break",
   "cost_center",
-  "owner_user",
   "start_date",
   "end_date",
   "description",
@@ -25,9 +24,7 @@
   "alloc_section",
   "allocations",
   "quotes_section",
-  "quotes",
-  "milestones_section",
-  "milestones"
+  "quotes"
 ],
 "fields": [
   {
@@ -68,13 +65,6 @@
    "label": "Cost Center",
    "options": "MPIT Cost Center",
    "reqd": 1
-  },
-  {
-   "fieldname": "owner_user",
-   "fieldtype": "Link",
-   "description": "Owner del progetto.",
-   "label": "Owner",
-   "options": "User"
   },
   {
    "fieldname": "start_date",
@@ -152,19 +142,6 @@
    "description": "Add vendor quotes for this project.",
    "label": "Quotes",
    "options": "MPIT Project Quote"
-  },
-  {
-   "fieldname": "milestones_section",
-   "fieldtype": "Section Break",
-   "label": "Milestones",
-   "collapsible": 0
-  },
-  {
-   "fieldname": "milestones",
-   "fieldtype": "Table",
-   "description": "Add project milestones.",
-   "label": "Milestones",
-   "options": "MPIT Project Milestone"
   },
   {
    "fieldname": "document_id",

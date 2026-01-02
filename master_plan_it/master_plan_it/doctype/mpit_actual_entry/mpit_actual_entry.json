@@ -23,7 +23,6 @@
   "amount_vat",
   "amount_gross",
   "tab_links",
-  "vendor",
   "contract",
   "project",
   "planned_item",
@@ -139,14 +138,6 @@
    "fieldname": "tab_links",
    "fieldtype": "Section Break",
    "label": "Links (scegli una sola fonte)"
-  },
-  {
-   "fieldname": "vendor",
-   "fieldtype": "Link",
-   "description": "Fornitore (opzionale).",
-   "in_list_view": 1,
-   "label": "Vendor",
-   "options": "MPIT Vendor"
   },
   {
    "fieldname": "contract",

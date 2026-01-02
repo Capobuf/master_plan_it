@@ -9,9 +9,6 @@
   "message": "Gentile utente,\n\nIl contratto <b>{{ doc.title }}</b> (fornitore: {{ doc.vendor }}, categoria: {{ doc.category }}) sarà rinnovato automaticamente il <b>{{ doc.next_renewal_date }}</b> (notifica {{ notification.days_in_advance }} giorni prima).<br>\n<a href=\"{{ get_url_to_form(doc.doctype, doc.name) }}\">Apri contratto</a>\n\nCordiali saluti,\nMaster Plan IT",
   "recipients": [
     {
-      "receiver_by_document_field": "owner_user"
-    },
-    {
       "receiver_by_role": "vCIO Manager"
     }
   ],

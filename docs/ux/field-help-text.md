@@ -21,15 +21,14 @@
 
 Counts per DocType (current totals | with description | meaningful fields missing description):
 
-- MPIT Actual Entry: 16 | 16 | 0
+- MPIT Actual Entry: 15 | 15 | 0
 - MPIT Budget: 14 | 9 | 0
-- MPIT Budget Line: 22 | 22 | 0
-- MPIT Contract: 21 | 21 | 0
-- MPIT Project: 12 | 9 | 0
+- MPIT Budget Line: 20 | 20 | 0
+- MPIT Contract: 19 | 19 | 0
+- MPIT Cost Center: 6 | 6 | 0
+- MPIT Project: 11 | 8 | 0
 - MPIT Project Allocation: 7 | 7 | 0
-- MPIT Project Milestone: 6 | 6 | 0
 - MPIT Project Quote: 10 | 10 | 0
-- MPIT Settings: 3 | 3 | 0
-- MPIT User Preferences: 12 | 8 | 0
+- MPIT Settings: 6 | 6 | 0
 - MPIT Vendor: 6 | 6 | 0
 - MPIT Year: 4 | 4 | 0

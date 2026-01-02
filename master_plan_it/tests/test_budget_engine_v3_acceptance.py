@@ -47,7 +47,6 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 					"doctype": "MPIT Cost Center",
 					"cost_center_name": name,
 					"is_group": 0,
-					"is_active": 1,
 				}
 			).insert(ignore_if_duplicate=True)
 		return frappe.get_doc("MPIT Cost Center", name)
@@ -71,7 +70,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		contract = frappe.get_doc(
 			{
 				"doctype": "MPIT Contract",
-				"title": "Draft Contract",
+				"description": "Draft Contract",
 				"vendor": self._ensure_vendor("Vendor Draft").name,
 				"cost_center": cc.name,
 				"status": "Draft",
@@ -95,7 +94,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		contract = frappe.get_doc(
 			{
 				"doctype": "MPIT Contract",
-				"title": "Active Contract",
+				"description": "Active Contract",
 				"vendor": self._ensure_vendor("Vendor Active").name,
 				"cost_center": cc.name,
 				"status": "Active",
@@ -125,7 +124,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		contract = frappe.get_doc(
 			{
 				"doctype": "MPIT Contract",
-				"title": "Annual Contract",
+				"description": "Annual Contract",
 				"vendor": self._ensure_vendor("Vendor Annual").name,
 				"cost_center": cc.name,
 				"status": "Active",
@@ -151,7 +150,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		contract = frappe.get_doc(
 			{
 				"doctype": "MPIT Contract",
-				"title": "Annual Contract VAT",
+				"description": "Annual Contract VAT",
 				"vendor": self._ensure_vendor("Vendor Annual VAT").name,
 				"cost_center": cc.name,
 				"status": "Active",
@@ -177,7 +176,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		contract = frappe.get_doc(
 			{
 				"doctype": "MPIT Contract",
-				"title": "Monthly Contract",
+				"description": "Monthly Contract",
 				"vendor": self._ensure_vendor("Vendor Monthly").name,
 				"cost_center": cc.name,
 				"status": "Active",
@@ -200,7 +199,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		contract = frappe.get_doc(
 			{
 				"doctype": "MPIT Contract",
-				"title": "Quarterly Contract",
+				"description": "Quarterly Contract",
 				"vendor": self._ensure_vendor("Vendor Quarterly").name,
 				"cost_center": cc.name,
 				"status": "Active",

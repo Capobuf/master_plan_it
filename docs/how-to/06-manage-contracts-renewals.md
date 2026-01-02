@@ -14,7 +14,7 @@ Contracts/subscriptions are managed in `MPIT Contract`.
 - vendor, category, title
 - start/end dates (if applicable)
 - next_renewal_date (mandatory)
-- notice_days, auto_renew
+- auto_renew
 - current_amount (uses the site currency from MPIT Settings)
 
 ## Optional reminders (V1.1)

@@ -21,7 +21,6 @@ def execute(filters=None):
 		{"label": _("Cost Center"), "fieldname": "cost_center", "fieldtype": "Link", "options": "MPIT Cost Center", "width": 150},
 		{"label": _("Next Renewal Date"), "fieldname": "next_renewal_date", "fieldtype": "Date", "width": 120},
 		{"label": _("Days to Renewal"), "fieldname": "days_to_renewal", "fieldtype": "Int", "width": 110},
-		{"label": _("Notice Days"), "fieldname": "notice_days", "fieldtype": "Int", "width": 100},
 		{"label": _("Auto Renew"), "fieldname": "auto_renew", "fieldtype": "Check", "width": 90},
 		{"label": _("Status"), "fieldname": "status", "fieldtype": "Data", "width": 100},
 		{"label": _("End Date"), "fieldname": "end_date", "fieldtype": "Date", "width": 110},
@@ -57,7 +56,6 @@ def _get_data(filters):
 			vendor,
 			cost_center,
 			COALESCE(next_renewal_date, end_date) AS renewal_date,
-			notice_days,
 			auto_renew,
 			status,
 			end_date
@@ -89,7 +87,6 @@ def _get_data(filters):
 			"category": c.category,
 			"next_renewal_date": c.renewal_date,
 			"days_to_renewal": days_to,
-			"notice_days": c.notice_days,
 			"auto_renew": c.auto_renew,
 			"status": c.status,
 			"end_date": c.end_date,

@@ -24,7 +24,6 @@ REQUIRED_DOCTYPES = [
     "MPIT Project",
     "MPIT Project Allocation",
     "MPIT Project Quote",
-    "MPIT Project Milestone",
 ]
 REQUIRED_ROLES = ["vCIO Manager", "Client Editor", "Client Viewer"]
 WORKSPACE_NAME = "Master Plan IT"

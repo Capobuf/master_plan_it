@@ -77,7 +77,7 @@ All 6 MPIT reports include these print-specific filters (defined in each report'
 |---------|---------|
 | **Standard** | contract, title, vendor, category, next_renewal_date, days_to_renewal, auto_renew, status |
 | **Compact** | contract, vendor, next_renewal_date, days_to_renewal, status |
-| **All** | All visible columns (adds notice_days, end_date; count/expired_count are always hidden) |
+| **All** | All visible columns (adds end_date; count/expired_count are always hidden) |
 
 ## Wide Table Warning
 

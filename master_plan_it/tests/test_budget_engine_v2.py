@@ -6,7 +6,6 @@ from __future__ import annotations
 import datetime
 
 import frappe
-import pytest
 
 from master_plan_it import annualization
 from master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget import MPITBudget
@@ -21,28 +20,29 @@ def _ensure_year(year: int):
 
 def _ensure_cost_center(name: str = "All Cost Centers"):
 	if not frappe.db.exists("MPIT Cost Center", name):
-		frappe.get_doc({"doctype": "MPIT Cost Center", "cost_center_name": name, "is_group": 1, "is_active": 1}).insert(ignore_permissions=True)
+		frappe.get_doc({"doctype": "MPIT Cost Center", "cost_center_name": name, "is_group": 1}).insert(ignore_permissions=True)
 	return name
 
 
-def _ensure_contract(name: str = "CT-TEST"):
+def _ensure_contract(label: str = "CT-TEST"):
 	cc = _ensure_cost_center()
 	if not frappe.db.exists("MPIT Vendor", "Vendor-X"):
 		frappe.get_doc({"doctype": "MPIT Vendor", "vendor_name": "Vendor-X"}).insert(ignore_permissions=True)
-	if frappe.db.exists("MPIT Contract", name):
-		return name
-	frappe.get_doc(
+	doc = frappe.get_doc(
 		{
 			"doctype": "MPIT Contract",
-			"name": name,
-			"title": name,
+			"description": label,
 			"vendor": "Vendor-X",
 			"cost_center": cc,
-			"current_amount_net": 100,
+			"current_amount": 100,
+			"current_amount_includes_vat": 0,
+			"vat_rate": 0,
 			"start_date": "2025-01-01",
+			"billing_cycle": "Monthly",
 		}
-	).insert(ignore_permissions=True)
-	return name
+	)
+	doc.insert(ignore_permissions=True)
+	return doc.name
 
 
 def test_overlap_months_touched():
@@ -73,7 +73,7 @@ def test_refresh_idempotence_upsert():
 	budget.budget_kind = "Forecast"
 	budget.lines = []
 
-	first_payload = {"source_key": "CONTRACT::X", "line_kind": "Contract", "is_generated": 1, "monthly_amount": 10, "is_active": 1}
+	first_payload = {"source_key": "CONTRACT::X", "line_kind": "Contract", "is_generated": 1, "monthly_amount": 10}
 	budget._upsert_generated_lines([first_payload])
 	assert len(budget.lines) == 1
 	assert budget.lines[0].monthly_amount == 10
@@ -84,13 +84,14 @@ def test_refresh_idempotence_upsert():
 	assert len(budget.lines) == 1
 	assert budget.lines[0].monthly_amount == 20
 
-	# Add stale generated line and ensure it gets deactivated
-	stale = {"source_key": "CONTRACT::Y", "line_kind": "Contract", "is_generated": 1, "monthly_amount": 5, "is_active": 1}
+	# Add stale generated line and ensure it gets removed
+	stale = {"source_key": "CONTRACT::Y", "line_kind": "Contract", "is_generated": 1, "monthly_amount": 5}
 	budget._upsert_generated_lines([second_payload, stale])
 	assert len(budget.lines) == 2
 	budget._upsert_generated_lines([second_payload])  # remove stale
-	stale_line = [l for l in budget.lines if l.source_key == "CONTRACT::Y"][0]
-	assert stale_line.is_active == 0
+	# Stale line should now be removed (not deactivated)
+	stale_lines = [l for l in budget.lines if l.source_key == "CONTRACT::Y"]
+	assert len(stale_lines) == 0
 
 
 def test_actual_entry_constraints_allowance_and_delta():
@@ -199,7 +200,7 @@ def test_refresh_updates_generated_lines_without_readonly_errors():
 	budget.refresh_from_sources()
 	budget.reload()
 
-	line = next(l for l in budget.lines if l.source_key and l.source_key.startswith("CONTRACT::CT-REFRESH"))
+	line = next(l for l in budget.lines if l.source_key and l.source_key.startswith(f"CONTRACT::{contract_name}"))
 	initial_monthly = line.monthly_amount
 	assert initial_monthly > 0
 
@@ -210,5 +211,5 @@ def test_refresh_updates_generated_lines_without_readonly_errors():
 
 	budget.refresh_from_sources()
 	budget.reload()
-	updated_line = next(l for l in budget.lines if l.source_key and l.source_key.startswith("CONTRACT::CT-REFRESH"))
+	updated_line = next(l for l in budget.lines if l.source_key and l.source_key.startswith(f"CONTRACT::{contract_name}"))
 	assert updated_line.monthly_amount == contract.current_amount_net
