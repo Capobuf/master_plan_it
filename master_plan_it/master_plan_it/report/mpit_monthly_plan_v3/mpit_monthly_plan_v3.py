@@ -8,6 +8,7 @@ OUTPUT: Righe aggregate per Cost Center con colonne mensili (gen-dic), totale an
 from __future__ import annotations
 
 import calendar
+import datetime
 from datetime import date
 
 import frappe
@@ -22,14 +23,32 @@ def execute(filters=None):
         filters = frappe.parse_json(filters)
     filters = frappe._dict(filters or {})
 
-    if not filters.get("year"):
-        frappe.throw(_("Year is required"))
+    filters.year = _resolve_year(filters)
+    if not filters.year:
+        frappe.throw(_("No MPIT Year found. Please create one or set the Year filter."))
 
     columns = _get_columns()
     data = _get_data(filters)
     chart = _build_chart(data)
 
     return columns, data, None, chart
+
+
+def _resolve_year(filters) -> str | None:
+    """Resolve year from filters or the MPIT Year covering today (fallback: latest year)."""
+    if filters.get("year"):
+        return str(filters.year)
+
+    today = datetime.date.today()
+    year_name = frappe.db.get_value(
+        "MPIT Year",
+        {"start_date": ["<=", today], "end_date": [">=", today]},
+        "name",
+    )
+    if year_name:
+        return year_name
+
+    return frappe.db.get_value("MPIT Year", {}, "name", order_by="year desc")
 
 
 def _get_columns() -> list[dict]:

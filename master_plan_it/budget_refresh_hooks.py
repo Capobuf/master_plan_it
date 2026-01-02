@@ -135,3 +135,47 @@ def on_addendum_change(doc, method: str) -> None:
     year_str = str(doc.year)
 
     _trigger_refresh([year_str])
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Horizon realignment (scheduler)
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+def realign_planned_items_horizon() -> None:
+	"""Daily job: bring Planned Items back into budget when they re-enter horizon."""
+	horizon = _get_horizon_years()
+	items = frappe.get_all(
+		"MPIT Planned Item",
+		filters={"docstatus": 1, "out_of_horizon": 1},
+		fields=["name", "spend_date", "start_date", "end_date"],
+	)
+
+	if not items:
+		return
+
+	affected_years = set()
+
+	for item in items:
+		years = set()
+		if item.get("spend_date"):
+			years.add(str(getdate(item.get("spend_date")).year))
+		else:
+			if item.get("start_date"):
+				years.add(str(getdate(item.get("start_date")).year))
+			if item.get("end_date"):
+				years.add(str(getdate(item.get("end_date")).year))
+
+		if not years or not (horizon & years):
+			continue
+
+		try:
+			doc = frappe.get_doc("MPIT Planned Item", item.name)
+			doc.out_of_horizon = 0
+			doc.save(ignore_permissions=True)
+			affected_years.update(y for y in years if y in horizon)
+		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"Failed to realign Planned Item {item.name}")
+
+	if affected_years:
+		_trigger_refresh(list(affected_years))

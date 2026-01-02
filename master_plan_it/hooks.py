@@ -20,6 +20,13 @@ fixtures = [
     {"dt": "Role", "filters": [["name", "in", ["vCIO Manager", "Client Editor", "Client Viewer"]]]},
 ]
 
+# Scheduled jobs
+scheduler_events = {
+    "daily": [
+        "master_plan_it.budget_refresh_hooks.realign_planned_items_horizon",
+    ],
+}
+
 # Budget Engine v3: Auto-refresh triggers
 # When validated sources change, enqueue refresh for Live budgets in horizon (current year + next)
 doc_events = {

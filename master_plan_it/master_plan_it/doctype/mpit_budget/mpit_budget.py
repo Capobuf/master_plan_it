@@ -52,6 +52,7 @@ class MPITBudget(Document):
 		self._enforce_budget_type_rules()
 		self._enforce_status_invariants()
 		self._enforce_live_no_manual_lines()
+		self._enforce_snapshot_manual_line_rules()
 		self._autofill_cost_centers()
 		self._compute_lines_amounts()
 		self._compute_totals()
@@ -95,6 +96,20 @@ class MPITBudget(Document):
 				frappe.throw(
 					_("Live budgets are system-managed. Remove manual line at position {0}.").format(line.idx)
 				)
+
+	def _enforce_snapshot_manual_line_rules(self) -> None:
+		"""Snapshot budgets allow manual lines only for Allowance while in Draft."""
+		if self.budget_type != "Snapshot":
+			return
+		for line in self.lines:
+			if getattr(line, "is_generated", 0):
+				continue
+			if line.line_kind != "Allowance":
+				frappe.throw(
+					_("Snapshot budgets allow only Allowance manual lines (row {0}).").format(line.idx)
+				)
+			if not line.cost_center:
+				frappe.throw(_("Snapshot budget line {0}: Cost Center is required.").format(line.idx))
 
 	@frappe.whitelist()
 	def refresh_from_sources(self, is_manual: int = 0, reason: str | None = None) -> None:
@@ -300,23 +315,31 @@ class MPITBudget(Document):
 
 		start = _getdate(item.start_date)
 		end = _getdate(item.end_date)
+		total_months = annualization.overlap_months(start, end, start, end)
+		if total_months <= 0:
+			return []
+
 		period_start = max(start, year_start)
 		period_end = min(end, year_end)
 		if period_end < period_start:
 			return []
 
-		months = annualization.overlap_months(period_start, period_end, year_start, year_end)
-		if months <= 0:
-			return []
-
 		if distribution == "start":
-			first_month_start, first_month_end = self._month_bounds(period_start)
+			first_month_start, first_month_end = self._month_bounds(start)
+			if first_month_end < year_start or first_month_start > year_end:
+				return []
 			return [(first_month_start, first_month_end, amount)]
 		if distribution == "end":
-			last_month_start, last_month_end = self._month_bounds(period_end)
+			last_month_start, last_month_end = self._month_bounds(end)
+			if last_month_end < year_start or last_month_start > year_end:
+				return []
 			return [(last_month_start, last_month_end, amount)]
 
-		monthly_amount = amount / months
+		months_in_year = annualization.overlap_months(period_start, period_end, year_start, year_end)
+		if months_in_year <= 0:
+			return []
+
+		monthly_amount = amount / total_months
 		return [(period_start, period_end, monthly_amount)]
 
 	@staticmethod
@@ -377,7 +400,7 @@ class MPITBudget(Document):
 		if getattr(self.flags, "skip_immutability", False):
 			return
 		# Snapshots are immutable beyond status invariants
-		if self.budget_type == "Snapshot" and self.has_value_changed("lines"):
+		if self.budget_type == "Snapshot" and self.docstatus == 1 and self.has_value_changed("lines"):
 			frappe.throw(_("Snapshot budgets are immutable."))
 
 	def _enforce_generated_lines_read_only(self) -> None:
@@ -412,7 +435,15 @@ class MPITBudget(Document):
 			if not existing:
 				continue
 			for field, old_value in existing.items():
-				if line.get(field) != old_value:
+				new_value = line.get(field)
+				# normalize date fields (UI may send strings)
+				if field in ("period_start_date", "period_end_date"):
+					try:
+						if _getdate(new_value) == _getdate(old_value):
+							continue
+					except Exception:
+						pass
+				if new_value != old_value:
 					frappe.throw(frappe._("Generated line {0} is read-only (field {1}).").format(line.name, field))
 	
 	def _compute_lines_amounts(self):
@@ -490,6 +521,10 @@ class MPITBudget(Document):
 				frappe.throw(_("Approved status is reserved for Snapshot budgets."))
 			if self.docstatus == 1:
 				frappe.throw(_("Live budgets cannot be submitted."))
+
+	def before_submit(self):
+		"""Allow submit of Snapshots without tripping immutability guard."""
+		self.flags.skip_immutability = True
 
 	def on_submit(self):
 		# Only Snapshot budgets can be approved/submitted
@@ -649,6 +684,95 @@ def get_cap_for_cost_center(year: str, cost_center: str) -> dict:
 		"snapshot_amount": snapshot_amount,
 		"addendum_total": addendum_total,
 		"cap_total": cap_total,
+	}
+
+
+@frappe.whitelist()
+def get_cost_center_summary(year: str, cost_center: str) -> dict:
+	"""Return plan/cap/actual summary for a cost center in a given year."""
+	if not year or not cost_center:
+		frappe.throw(_("Year and Cost Center are required"))
+
+	plan = 0.0
+	actual = 0.0
+	snapshot_amount = 0.0
+	addendum_total = 0.0
+	cap_total = 0.0
+	live_budget = frappe.db.get_value(
+		"MPIT Budget",
+		{"year": year, "budget_type": "Live", "docstatus": 0},
+		"name",
+	)
+	if live_budget:
+		plan_rows = frappe.db.sql(
+			"""
+			SELECT COALESCE(SUM(annual_net), 0) AS total
+			FROM `tabMPIT Budget Line`
+			WHERE parent = %(parent)s AND cost_center = %(cc)s
+			""",
+			{"parent": live_budget, "cc": cost_center},
+			as_dict=True,
+		)
+		plan = flt(plan_rows[0].total if plan_rows else 0)
+
+	# Cap (snapshot allowance + addendum)
+	snapshot_budget = frappe.db.get_value(
+		"MPIT Budget",
+		{"year": year, "budget_type": "Snapshot", "docstatus": 1},
+		"name",
+		order_by="modified desc",
+	)
+	if snapshot_budget:
+		allowance_sum = frappe.db.sql(
+			"""
+			SELECT COALESCE(SUM(annual_net), 0) AS total
+			FROM `tabMPIT Budget Line`
+			WHERE parent = %(parent)s AND cost_center = %(cc)s AND line_kind = 'Allowance'
+			""",
+			{"parent": snapshot_budget, "cc": cost_center},
+			as_dict=True,
+		)
+		snapshot_amount = flt(allowance_sum[0].total if allowance_sum else 0)
+
+	add_rows = frappe.db.sql(
+		"""
+		SELECT COALESCE(SUM(delta_amount), 0) AS total
+		FROM `tabMPIT Budget Addendum`
+		WHERE year = %(year)s AND cost_center = %(cc)s AND docstatus = 1
+		""",
+		{"year": year, "cc": cost_center},
+		as_dict=True,
+	)
+	addendum_total = flt(add_rows[0].total if add_rows else 0)
+	cap_total = flt(snapshot_amount + addendum_total)
+
+	# Actual (Verified)
+	act_rows = frappe.db.sql(
+		"""
+		SELECT COALESCE(SUM(amount_net), 0) AS total
+		FROM `tabMPIT Actual Entry`
+		WHERE year = %(year)s AND status = 'Verified' AND cost_center = %(cc)s
+		""",
+		{"year": year, "cc": cost_center},
+		as_dict=True,
+	)
+	actual = flt(act_rows[0].total if act_rows else 0)
+
+	remaining = cap_total - actual if cap_total > actual else 0
+	over_cap = actual - cap_total if actual > cap_total else 0
+
+	return {
+		"year": year,
+		"cost_center": cost_center,
+		"plan": plan,
+		"snapshot_allowance": snapshot_amount,
+		"addendum_total": addendum_total,
+		"cap_total": cap_total,
+		"actual": actual,
+		"remaining": remaining,
+		"over_cap": over_cap,
+		"live_budget": live_budget,
+		"snapshot_budget": snapshot_budget,
 	}
 
 

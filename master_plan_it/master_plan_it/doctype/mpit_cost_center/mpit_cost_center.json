@@ -8,13 +8,23 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "quick_entry": 1,
- "field_order": [
+  "field_order": [
   "section_overview",
   "cost_center_name",
   "abbr",
-  "parent_cost_center",
+  "parent_mpit_cost_center",
   "column_overview_right",
   "is_group",
+  "section_budget_summary",
+  "summary_year",
+  "plan_amount",
+  "snapshot_allowance",
+  "addendum_total",
+  "column_budget_summary_right",
+  "cap_total",
+  "actual_amount",
+  "remaining_amount",
+  "over_cap_amount",
   "section_advanced",
   "old_parent",
   "lft",
@@ -43,7 +53,7 @@
    "label": "Abbreviation"
   },
   {
-   "fieldname": "parent_cost_center",
+   "fieldname": "parent_mpit_cost_center",
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Parent Cost Center",
@@ -58,6 +68,64 @@
    "fieldname": "is_group",
    "fieldtype": "Check",
    "label": "Is Group"
+  },
+  {
+   "fieldname": "section_budget_summary",
+   "fieldtype": "Section Break",
+   "label": "Budget Summary"
+  },
+  {
+   "description": "Year used for budget summary.",
+   "fieldname": "summary_year",
+   "fieldtype": "Data",
+   "label": "Summary Year",
+   "read_only": 1
+  },
+  {
+   "fieldname": "plan_amount",
+   "fieldtype": "Currency",
+   "label": "Plan (Live)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "snapshot_allowance",
+   "fieldtype": "Currency",
+   "label": "Snapshot Allowance",
+   "read_only": 1
+  },
+  {
+   "fieldname": "addendum_total",
+   "fieldtype": "Currency",
+   "label": "Addendum Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "column_budget_summary_right",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "cap_total",
+   "fieldtype": "Currency",
+   "label": "Cap",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actual_amount",
+   "fieldtype": "Currency",
+   "label": "Actual (Verified)",
+   "read_only": 1
+  },
+  {
+   "fieldname": "remaining_amount",
+   "fieldtype": "Currency",
+   "label": "Remaining",
+   "read_only": 1
+  },
+  {
+   "fieldname": "over_cap_amount",
+   "fieldtype": "Currency",
+   "label": "Over Cap",
+   "read_only": 1
   },
   {
    "fieldname": "lft",
@@ -94,11 +162,11 @@
  "index_web_pages_for_search": 1,
  "is_tree": 1,
  "links": [],
- "modified": "2025-01-01 00:00:00.000000",
+ "modified": "2026-01-02 23:22:41.306031",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Cost Center",
- "nsm_parent_field": "parent_cost_center",
+ "nsm_parent_field": "parent_mpit_cost_center",
  "owner": "Administrator",
  "permissions": [
   {

@@ -2,52 +2,123 @@
  {
   "cards": [
    {
+    "card": "Budgets (Live)",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard"
+   },
+   {
+    "card": "Budgets (Snapshot)",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard"
+   },
+   {
+    "card": "Addendums (Approved)",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard"
+   },
+   {
+    "card": "Contracts",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard"
+   },
+   {
+    "card": "Projects",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard"
+   },
+   {
+    "card": "Planned Items (Submitted)",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard"
+   },
+   {
+    "card": "Actual Entries (Verified)",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard"
+   },
+   {
+    "card": "Cost Centers",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard"
+   },
+   {
+    "card": "Vendors",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "cards",
+    "parenttype": "Dashboard"
+   },
+   {
     "card": "Renewals 30d",
     "parent": "Master Plan IT Overview",
     "parentfield": "cards",
-    "parenttype": "Dashboard",
-    "width": "Quarter"
+    "parenttype": "Dashboard"
    },
    {
     "card": "Renewals 60d",
     "parent": "Master Plan IT Overview",
     "parentfield": "cards",
-    "parenttype": "Dashboard",
-    "width": "Quarter"
+    "parenttype": "Dashboard"
    },
    {
     "card": "Renewals 90d",
     "parent": "Master Plan IT Overview",
     "parentfield": "cards",
-    "parenttype": "Dashboard",
-    "width": "Quarter"
+    "parenttype": "Dashboard"
    },
    {
     "card": "Expired Contracts",
     "parent": "Master Plan IT Overview",
     "parentfield": "cards",
-    "parenttype": "Dashboard",
-    "width": "Quarter"
+    "parenttype": "Dashboard"
    }
   ],
   "chart_options": null,
   "charts": [
    {
-    "chart": "MPIT Current Plan vs Exceptions",
+    "chart": "MPIT Budget Totals",
     "parent": "Master Plan IT Overview",
     "parentfield": "charts",
     "parenttype": "Dashboard",
     "width": "Half"
    },
    {
-    "chart": "MPIT Baseline vs Exceptions",
+    "chart": "MPIT Cap vs Actual by Cost Center",
     "parent": "Master Plan IT Overview",
     "parentfield": "charts",
     "parenttype": "Dashboard",
     "width": "Half"
    },
    {
-    "chart": "MPIT Plan Delta by Cost Center",
+    "chart": "MPIT Monthly Plan vs Actual",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Full"
+   },
+   {
+    "chart": "MPIT Monthly Plan v3",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Full"
+   },
+   {
+    "chart": "MPIT Plan vs Cap vs Actual",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Full"
+   },
+   {
+    "chart": "MPIT Budgets by Type",
     "parent": "Master Plan IT Overview",
     "parentfield": "charts",
     "parenttype": "Dashboard",
@@ -61,7 +132,42 @@
     "width": "Half"
    },
    {
+    "chart": "MPIT Projects by Status",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Half"
+   },
+   {
+    "chart": "MPIT Contracts by Status",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Half"
+   },
+   {
     "chart": "MPIT Renewals Window (by Month)",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Half"
+   },
+   {
+    "chart": "MPIT Planned Items Coverage",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Half"
+   },
+   {
+    "chart": "MPIT Actual Entries by Status",
+    "parent": "Master Plan IT Overview",
+    "parentfield": "charts",
+    "parenttype": "Dashboard",
+    "width": "Half"
+   },
+   {
+    "chart": "MPIT Actual Entries by Kind",
     "parent": "Master Plan IT Overview",
     "parentfield": "charts",
     "parenttype": "Dashboard",
@@ -73,7 +179,7 @@
   "doctype": "Dashboard",
   "is_default": 0,
   "is_standard": 1,
-  "modified": "2025-12-28 15:23:06.635455",
+  "modified": "2026-01-02 23:22:41.306031",
   "module": "Master Plan IT",
   "name": "Master Plan IT Overview"
  }

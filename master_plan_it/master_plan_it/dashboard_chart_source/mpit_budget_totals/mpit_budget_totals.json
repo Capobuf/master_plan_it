@@ -1,0 +1,14 @@
+{
+ "chart_source_name": "MPIT Budget Totals",
+ "doctype": "Dashboard Chart Source",
+ "filters_json": "[]",
+ "idx": 0,
+ "is_standard": 1,
+ "method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_budget_totals.get_data",
+ "modified": "2026-01-02 23:22:41.306031",
+ "module": "Master Plan IT",
+ "name": "MPIT Budget Totals",
+ "owner": "Administrator",
+ "reference_doctype": "MPIT Budget",
+ "type": "Custom"
+}

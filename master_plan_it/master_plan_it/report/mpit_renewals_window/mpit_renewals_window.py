@@ -52,7 +52,7 @@ def _get_data(filters):
 		f"""
 		SELECT
 			name,
-			title,
+			description,
 			vendor,
 			cost_center,
 			COALESCE(next_renewal_date, end_date) AS renewal_date,
@@ -82,9 +82,8 @@ def _get_data(filters):
 
 		rows.append({
 			"contract": c.name,
-			"title": c.title or c.name,
+			"title": c.description or c.name,
 			"vendor": c.vendor,
-			"category": c.category,
 			"next_renewal_date": c.renewal_date,
 			"days_to_renewal": days_to,
 			"auto_renew": c.auto_renew,

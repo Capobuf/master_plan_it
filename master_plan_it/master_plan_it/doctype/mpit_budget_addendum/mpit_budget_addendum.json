@@ -49,7 +49,7 @@
    "fieldtype": "Link",
    "label": "Reference Snapshot",
    "options": "MPIT Budget",
-   "link_filters": "[[\"MPIT Budget\",\"budget_type\",\"=\",\"Snapshot\"],[\"MPIT Budget\",\"docstatus\",\"=\",1]]",
+   "link_filters": "[[\"MPIT Budget\",\"budget_type\",\"=\",\"Snapshot\"]]",
    "reqd": 1
   },
   {
@@ -58,11 +58,11 @@
    "label": "Delta"
   },
   {
-   "description": "Cap increase/decrease (can be negative).",
+   "description": "Annual delta (Cap) - can be negative.",
    "fieldname": "delta_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
-   "label": "Delta Amount",
+   "label": "Delta Amount (Annual)",
    "reqd": 1
   },
   {

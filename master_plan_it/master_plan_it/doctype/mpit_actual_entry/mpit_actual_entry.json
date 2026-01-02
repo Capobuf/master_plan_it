@@ -51,7 +51,7 @@
    "label": "Year",
    "options": "MPIT Year",
    "read_only": 1,
-   "reqd": 1
+   "reqd": 0
   },
   {
    "default": "Recorded",

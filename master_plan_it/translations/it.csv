@@ -1,118 +1,63 @@
-source_string,translated_string,context
-Overview,Panoramica,
-Billing,Fatturazione,
-Renewal & Dates,Rinnovo e Date,
-Admin,Amministrazione,
-Acceptance Date,Data di accettazione,
-Accepted,Accettato,
-Active,Attivo,
-Actual,Effettivo,
-Actual Amount,Importo effettivo,
-Actual Entries,Registrazioni consuntive,
-Add at least one Allocation (year + planned amount) before moving a project to status {0}.,Aggiungi almeno un'Allocazione (anno + importo previsto) prima di cambiare lo stato del progetto in {0}.,
-Allocation {0} Planned Amount,Importo previsto allocazione {0},
-Allocations,Allocazioni,
-Amended From,Modificato da,
-Amendments,Variazioni,
-Amendments Delta,Delta variazioni,
-Amount,Importo,
-Amount Includes VAT,Importo IVA inclusa,
-Annual,Annuale,
-Annual Gross Amount,Importo lordo annuale,
-Annual Net Amount,Importo netto annuale,
-Annual Renewal,Rinnovo annuale,
-Annual VAT Amount,IVA annuale,
-Approve,Approva,
-Approved,Approvato,
-Approved Budget vs Actual,Budget approvato vs Effettivo,
-Approved Date,Data approvazione,
-Archived,Archiviato,
-Attachment,Allegato,
-Attachments,Allegati,
-Auto Renew,Rinnovo automatico,
-Baseline,Baseline,
-Baseline Amount,Importo baseline,
-Billing Cycle,Ciclo di fatturazione,
-Budget,Budget,
-Budget Allocations,Allocazioni budget,
-Budget Amount,Importo budget,
-Budget Line Ref,Rif. riga budget,
-Budget Lines,Righe budget,
-Budget Prefix,Prefisso budget,
-Budget Sequence Digits,Cifre sequenza budget,
-Budget naming requires year parameter (Budget.year field),La nomenclatura del budget richiede il parametro anno (campo Budget.year),
-Budgets,Budget,
-CAPEX,CAPEX,
-Cancelled,Annullato,
-Categories,Categorie,
-Client Editor,Client Editor,
-Completed,Completato,
-Contact Email,Email contatto,
-Contact Phone,Telefono contatto,
-Contract,Contratto,
-Contract End,Fine contratto,
-Contract Kind,Tipo contratto,
-Contract Renewals Window,Finestra rinnovi contratto,
-Contract Start,Inizio contratto,
-Contracts,Contratti,
-Cost Type,Tipo costo,
-Count,Conteggio,
-Currency,Valuta,
-Current Amount,Importo attuale,
-Current Amount Includes VAT,Importo attuale IVA inclusa,
-Current Budget,Budget corrente,
-Current Budget vs Actual,Budget corrente vs Effettivo,
-Custom,Personalizzato,
-Custom Period (Months),Periodo personalizzato (mesi),
-Days Forward,Giorni in avanti,
-Days to Renewal,Giorni al rinnovo,
-Default Amount Includes VAT,Importo predefinito IVA inclusa,
-Default VAT Rate,Aliquota IVA predefinita,
-Delta Amount,Importo delta,
-Delta Amount Includes VAT,Importo delta IVA inclusa,
-Description,Descrizione,
-Done,Completato,
-Draft,Bozza,
-Due Date,Data scadenza,
-Effective Date,Data di effetto,
-End Date,Data fine,
-Expense Kind,Tipo di spesa,
-Expired,Scaduto,
-Excel,Excel,
-Expired Contracts,Contratti scaduti,
-Expired Count,Numero scaduti,
-Fiscal Year,Anno fiscale,
-From Date,Data iniziale,
-Generated on,Generato il,
-Gross Amount,Importo lordo,
-Gross Delta Amount,Importo lordo delta,
-Gross Planned Amount,Importo lordo previsto,
-In Progress,In corso,
-In Review,In revisione,
-Insights,Approfondimenti,
-Include Past,Includi passati,
-Is Active,Attivo,
-Is Group,È gruppo,
-Is Portfolio Bucket,Bucket di portafoglio,
-Last Year,Anno precedente,
-Left,Sinistra,
-Line {0} Amount,Importo riga {0},
-Line {0} Delta Amount,Importo delta riga {0},
-Line {0}: Period ({1} to {2}) has zero overlap with fiscal year {3}. Cannot save budget line with no temporal overlap.,Riga {0}: Il periodo ({1} - {2}) non si sovrappone con l'anno fiscale {3}. Impossibile salvare la riga di budget senza sovrapposizione temporale.,
-Lines,Righe,
-MPIT Approved Budget vs Actual,MPIT Budget approvato vs Effettivo,
-MPIT Budget,MPIT Budget,
-MPIT Budget Professional,MPIT Budget Professionale,
-MPIT Budget Workflow,MPIT Budget Workflow,
-MPIT Budget vs Actual (Approved),MPIT Budget vs Effettivo (Approvato),
-MPIT Current Budget vs Actual,MPIT Budget corrente vs Effettivo,
-MPIT Actual Entry,Voce eccezione/varianza,
-MPIT Project,Progetto MPIT,
-MPIT Project Professional,Progetto MPIT Professionale,
-MPIT Projects Planned vs Actual,Progetti MPIT: Previsto vs Effettivo,
-MPIT Renewals Window,Finestra rinnovi MPIT,
-MPIT Renewals Window (by Month),Rinnovi MPIT per mese,
-Maintenance,Manutenzione,
+"source_string","translated_string","context"
+"Overview","Panoramica",""
+"Billing","Fatturazione",""
+"Renewal & Dates","Rinnovo e Date",""
+"Currency","Valuta",""
+"Current Amount","Importo attuale",""
+"Current Amount Includes VAT","Importo attuale IVA inclusa",""
+"Current Budget","Budget corrente",""
+"Current Budget vs Actual","Budget corrente vs Effettivo",""
+"Custom","Personalizzato",""
+"Custom Period (Months)","Periodo personalizzato (mesi)",""
+"Days Forward","Giorni in avanti",""
+"Days to Renewal","Giorni al rinnovo",""
+"Default Amount Includes VAT","Importo predefinito IVA inclusa",""
+"Default VAT Rate","Aliquota IVA predefinita",""
+"Delta Amount","Importo delta",""
+"Delta Amount Includes VAT","Importo delta IVA inclusa",""
+"Description","Descrizione",""
+"Done","Completato",""
+"Draft","Bozza",""
+"Due Date","Data scadenza",""
+"Effective Date","Data di effetto",""
+"End Date","Data fine",""
+"Expense Kind","Tipo di spesa",""
+"Expired","Scaduto",""
+"Excel","Excel",""
+"Expired Contracts","Contratti scaduti",""
+"Expired Count","Numero scaduti",""
+"Fiscal Year","Anno fiscale",""
+"From Date","Data iniziale",""
+"Generated on","Generato il",""
+"Gross Amount","Importo lordo",""
+"Gross Delta Amount","Importo lordo delta",""
+"Gross Planned Amount","Importo lordo previsto",""
+"In Progress","In corso",""
+"In Review","In revisione",""
+"Insights","Approfondimenti",""
+"Include Past","Includi passati",""
+"Is Active","Attivo",""
+"Is Group","È gruppo",""
+"Is Portfolio Bucket","Bucket di portafoglio",""
+"Last Year","Anno precedente",""
+"Left","Sinistra",""
+"Line {0} Amount","Importo riga {0}",""
+"Line {0} Delta Amount","Importo delta riga {0}",""
+"Line {0}: Period ({1} to {2}) has zero overlap with fiscal year {3}. Cannot save budget line with no temporal overlap.","Riga {0}: Il periodo ({1} - {2}) non si sovrappone con l'anno fiscale {3}. Impossibile salvare la riga di budget senza sovrapposizione temporale.",""
+"Lines","Righe",""
+"MPIT Approved Budget vs Actual","MPIT Budget approvato vs Effettivo",""
+"MPIT Budget","MPIT Budget",""
+"MPIT Budget Professional","MPIT Budget Professionale",""
+"MPIT Budget Workflow","MPIT Budget Workflow",""
+"MPIT Budget vs Actual (Approved)","MPIT Budget vs Effettivo (Approvato)",""
+"MPIT Current Budget vs Actual","MPIT Budget corrente vs Effettivo",""
+"MPIT Actual Entry","Voce eccezione/varianza",""
+"MPIT Project","Progetto MPIT",""
+"MPIT Project Professional","Progetto MPIT Professionale",""
+"MPIT Projects Planned vs Actual","Progetti MPIT: Previsto vs Effettivo",""
+"MPIT Renewals Window","Finestra rinnovi MPIT",""
+"MPIT Renewals Window (by Month)","Rinnovi MPIT per mese",""
+"Maintenance","Manutenzione",""
 Master Plan IT,Master Plan IT,
 Master Plan IT Overview,Panoramica Master Plan IT,
 Milestones,Milestone,
@@ -381,10 +326,6 @@ Calculated automatically as the gross amount.,Calcolato automaticamente come imp
 "MPIT Current Plan vs Exceptions","MPIT Piano corrente vs Eccezioni",
 "MPIT Monthly Plan vs Exceptions","MPIT Piano mensile vs Eccezioni",
 "MPIT Projects Planned vs Exceptions","MPIT Progetti pianificati vs Eccezioni",
-"Baseline vs Exceptions","Baseline vs Eccezioni",
-"Monthly Plan vs Exceptions","Piano mensile vs Eccezioni",
-"Projects Planned vs Exceptions","Progetti pianificati vs Eccezioni",
-"Current Plan vs Exceptions","Piano corrente vs Eccezioni",
 "Delta links contract/project; Allowance Spend needs cost center and no links.","Delta richiede contratto o progetto; Spesa plafond richiede centro di costo e nessun collegamento.",
 "Currency is required. Please set a Currency on MPIT Settings.","La valuta è obbligatoria. Impostare una valuta in Impostazioni MPIT.",
 "Spread and rate schedule cannot both be set.","Il piano di dilazione e il calendario tariffe non possono essere entrambi impostati.",
@@ -394,3 +335,46 @@ Calculated automatically as the gross amount.,Calcolato automaticamente come imp
 "Currency is required. Please create at least one Currency and set MPIT Settings.","La valuta è obbligatoria. Creare almeno una valuta e impostare Impostazioni MPIT.",
 "Generated line {0} is read-only (field {1}).","La riga generata {0} è in sola lettura (campo {1}).",
 "Select a Contract or a Project (not both).","Seleziona un contratto o un progetto (non entrambi).",
+"Exceptions (Verified)","Eccezioni (Verificate)",
+"Snapshot (APP)","Snapshot (Approvato)",
+"Addendum Total","Totale Addendum",
+"Over Cap","Oltre il Plafond",
+"Source","Sorgente",
+"Year is required","Anno richiesto",
+"budget_a is required","budget_a è obbligatorio",
+"budget_b is required","budget_b è obbligatorio",
+"budget_a and budget_b must be different budgets","budget_a e budget_b devono essere budget diversi",
+"group_by must be either 'CostCenter+Vendor' or 'CostCenter'","group_by deve essere 'CostCenter+Vendor' o 'CostCenter'",
+"Budget A Annual Net","Budget A Netto Annuale",
+"Budget B Annual Net","Budget B Netto Annuale",
+"Delta Annual (B - A)","Delta Annuale (B - A)",
+"Budget A Monthly Eq","Budget A Equivalente Mensile",
+"Budget B Monthly Eq","Budget B Equivalente Mensile",
+"Delta Monthly Eq","Delta Equivalente Mensile",
+"Budget A","Budget A",
+"Budget B","Budget B",
+"Delta (B - A)","Delta (B - A)",
+"Total","Totale",
+"Jan","Gen",
+"Feb","Feb",
+"Mar","Mar",
+"Apr","Apr",
+"May","Mag",
+"Jun","Giu",
+"Jul","Lug",
+"Aug","Ago",
+"Sep","Set",
+"Oct","Ott",
+"Nov","Nov",
+"Dec","Dic",
+"Planned Items","Elementi previsti",
+"% Variance","% Scostamento",
+"No MPIT Year found. Please create one or set the Year filter.","Nessun anno MPIT trovato. Crearne uno o impostare il filtro Anno.",
+"Project Status","Stato Progetto",
+"Plan (Live)","Piano (Live)",
+"Cap","Plafond",
+"Remaining","Rimanente",
+"% Used","% Utilizzato",
+"Planned (Net)","Previsto (Netto)",
+"Delta","Delta",
+"Cost Center","Centro di Costo",

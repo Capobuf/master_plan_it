@@ -1,0 +1,41 @@
+{
+ "chart_name": "MPIT Planned Items Coverage",
+ "chart_type": "Custom",
+ "creation": "2026-01-02 23:22:41.306031",
+ "currency": "EUR",
+ "custom_options": "{}",
+ "docstatus": 0,
+ "doctype": "Dashboard Chart",
+ "filters_json": "{\"year\": \"\"}",
+ "group_by_type": "Sum",
+ "idx": 0,
+ "is_public": 0,
+ "is_standard": 1,
+ "modified": "2026-01-02 23:22:41.306031",
+ "modified_by": "Administrator",
+ "module": "Master Plan IT",
+ "name": "MPIT Planned Items Coverage",
+ "number_of_groups": 0,
+ "owner": "Administrator",
+ "roles": [
+  {
+   "role": "System Manager"
+  },
+  {
+   "role": "vCIO Manager"
+  },
+  {
+   "role": "Client Editor"
+  },
+  {
+   "role": "Client Viewer"
+  }
+ ],
+ "source": "MPIT Planned Items Coverage",
+ "time_interval": "Yearly",
+ "timeseries": 0,
+ "timespan": "Last Year",
+ "type": "Bar",
+ "use_report_chart": 0,
+ "y_axis": []
+}

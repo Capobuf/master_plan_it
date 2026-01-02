@@ -63,7 +63,7 @@
    "fieldtype": "Select",
    "default": "Draft",
    "description": "Stato visibile (Draft/Proposed/In Review/Approved).",
-   "in_list_view": 1,
+   "in_list_view": 0,
    "label": "Status",
    "options": "Draft\nProposed\nIn Review\nApproved",
    "read_only": 0

@@ -10,7 +10,7 @@ frappe.ui.form.on("MPIT Budget Addendum", {
 		frm.set_query("reference_snapshot", function () {
 			const filters = {
 				budget_type: "Snapshot",
-				docstatus: 1,
+				docstatus: ["!=", 2],
 			};
 			if (frm.doc.year) {
 				filters.year = frm.doc.year;
@@ -19,4 +19,3 @@ frappe.ui.form.on("MPIT Budget Addendum", {
 		});
 	},
 });
-
