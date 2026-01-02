@@ -11,16 +11,13 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import getseries
 from frappe.utils import flt, getdate
-from master_plan_it import mpit_user_prefs, tax
+from master_plan_it import mpit_defaults, tax
 
 
 class MPITProject(Document):
 	def autoname(self):
-		"""Generate name: PRJ-{NNNN} based on user preferences."""
-		from master_plan_it import mpit_user_prefs
-		
-		# Get user preferences for prefix and digits
-		prefix, digits = mpit_user_prefs.get_project_series(user=frappe.session.user)
+		"""Generate name: PRJ-{NNNN} based on Settings."""
+		prefix, digits = mpit_defaults.get_project_series()
 		
 		# Generate name: PRJ-0001, PRJ-0002, etc.
 		# getseries returns only the number part, we need to add prefix
@@ -42,7 +39,7 @@ class MPITProject(Document):
 	
 	def _compute_allocations_vat_split(self):
 		"""Compute net/vat/gross for all Project Allocations with strict VAT validation."""
-		default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
+		default_vat = mpit_defaults.get_default_vat_rate()
 		
 		for alloc in self.allocations:
 			if alloc.vat_rate is None and default_vat is not None:
@@ -67,7 +64,7 @@ class MPITProject(Document):
 	
 	def _compute_quotes_vat_split(self):
 		"""Compute net/vat/gross for all Project Quotes with strict VAT validation."""
-		default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
+		default_vat = mpit_defaults.get_default_vat_rate()
 		
 		for quote in self.quotes:
 			if quote.vat_rate is None and default_vat is not None:

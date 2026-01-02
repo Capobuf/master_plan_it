@@ -8,6 +8,9 @@
  "field_order": [
   "section_defaults",
   "renewal_window_days",
+  "section_vat",
+  "default_vat_rate",
+  "default_amount_includes_vat",
   "section_naming",
   "budget_prefix_default",
   "budget_digits_default",
@@ -16,7 +19,9 @@
   "project_digits_default",
   "column_break_actual",
   "actual_prefix_default",
-  "actual_digits_default"
+  "actual_digits_default",
+  "section_print",
+  "show_attachments_in_print"
  ],
  "fields": [
   {
@@ -24,12 +29,31 @@
    "fieldname": "renewal_window_days",
    "fieldtype": "Int",
    "description": "Days before renewal dates treated as the renewal window.",
-  "label": "Renewal Window Days"
- },
+   "label": "Renewal Window Days"
+  },
   {
    "fieldname": "section_defaults",
    "fieldtype": "Section Break",
-   "label": "Defaults"
+   "label": "General Defaults"
+  },
+  {
+   "fieldname": "section_vat",
+   "fieldtype": "Section Break",
+   "label": "VAT Defaults"
+  },
+  {
+   "description": "Default VAT rate for new entries (leave blank for no default, 0 is valid for zero-rated items).",
+   "fieldname": "default_vat_rate",
+   "fieldtype": "Percent",
+   "label": "Default VAT Rate",
+   "precision": "2"
+  },
+  {
+   "default": "0",
+   "description": "If enabled, new amounts default to VAT-inclusive.",
+   "fieldname": "default_amount_includes_vat",
+   "fieldtype": "Check",
+   "label": "Default Amount Includes VAT"
   },
   {
    "fieldname": "section_naming",
@@ -40,15 +64,15 @@
    "default": "BUD-",
    "fieldname": "budget_prefix_default",
    "fieldtype": "Data",
-   "description": "Default prefix for Budgets (per-user prefs override).",
-   "label": "Budget Prefix (Default)"
+   "description": "Prefix for Budget document names.",
+   "label": "Budget Prefix"
   },
   {
    "default": "2",
    "fieldname": "budget_digits_default",
    "fieldtype": "Int",
-   "description": "Digits for Budget sequence (per-user prefs override).",
-   "label": "Budget Digits (Default)"
+   "description": "Digits for Budget sequence numbers.",
+   "label": "Budget Digits"
   },
   {
    "fieldname": "column_break_naming",
@@ -58,15 +82,15 @@
    "default": "PRJ-",
    "fieldname": "project_prefix_default",
    "fieldtype": "Data",
-   "description": "Default prefix for Projects (per-user prefs override).",
-   "label": "Project Prefix (Default)"
+   "description": "Prefix for Project document names.",
+   "label": "Project Prefix"
   },
   {
    "default": "2",
    "fieldname": "project_digits_default",
    "fieldtype": "Int",
-   "description": "Digits for Project sequence (per-user prefs override).",
-   "label": "Project Digits (Default)"
+   "description": "Digits for Project sequence numbers.",
+   "label": "Project Digits"
   },
   {
    "fieldname": "column_break_actual",
@@ -76,15 +100,27 @@
    "default": "AE-",
    "fieldname": "actual_prefix_default",
    "fieldtype": "Data",
-   "description": "Default prefix for Exceptions / Allowance Entries (per-user prefs override).",
-   "label": "Exceptions / Allowance Prefix (Default)"
+   "description": "Prefix for Exceptions / Allowance Entry document names.",
+   "label": "Exceptions / Allowance Prefix"
   },
   {
    "default": "2",
    "fieldname": "actual_digits_default",
    "fieldtype": "Int",
-   "description": "Digits for Exceptions / Allowance sequence (per-user prefs override).",
-   "label": "Exceptions / Allowance Digits (Default)"
+   "description": "Digits for Exceptions / Allowance sequence numbers.",
+   "label": "Exceptions / Allowance Digits"
+  },
+  {
+   "fieldname": "section_print",
+   "fieldtype": "Section Break",
+   "label": "Print Settings"
+  },
+  {
+   "default": "0",
+   "description": "If enabled, attachments are shown on print formats.",
+   "fieldname": "show_attachments_in_print",
+   "fieldtype": "Check",
+   "label": "Show Attachments in Print"
   }
  ],
  "grid_page_length": 50,

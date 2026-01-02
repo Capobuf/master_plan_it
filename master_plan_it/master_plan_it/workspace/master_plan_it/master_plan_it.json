@@ -81,17 +81,6 @@
    "type": "Link"
   },
   {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "User Preferences",
-   "link_count": 0,
-   "link_to": "MPIT User Preferences",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
    "hidden": 0,
    "is_query_report": 0,
    "label": "Planning",
@@ -331,13 +320,6 @@
    "label": "Years",
    "type": "DocType",
    "link_to": "MPIT Year"
-  },
-  {
-   "color": "Grey",
-   "icon": "user",
-   "label": "User Preferences",
-   "type": "DocType",
-   "link_to": "MPIT User Preferences"
   },
   {
    "color": "Grey",

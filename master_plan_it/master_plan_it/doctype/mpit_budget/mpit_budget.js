@@ -9,7 +9,7 @@ frappe.provide("master_plan_it.vat");
 
 master_plan_it.vat.defaults_promise =
 	master_plan_it.vat.defaults_promise ||
-	frappe.call({ method: "master_plan_it.mpit_user_prefs.get_vat_defaults" }).then((r) => r.message || {});
+	frappe.call({ method: "master_plan_it.mpit_defaults.get_vat_defaults" }).then((r) => r.message || {});
 
 master_plan_it.vat.apply_defaults_for_budget_line =
 	master_plan_it.vat.apply_defaults_for_budget_line ||

@@ -114,6 +114,6 @@ def validate_strict_vat(
 	# No VAT rate found: BLOCK save
 	frappe.throw(
 		frappe._(
-			"{0} is non-zero but no VAT rate is specified. Please set a VAT rate on this row or configure a default VAT rate in your User Preferences."
+			"{0} is non-zero but no VAT rate is specified. Please set a VAT rate on this row or configure a default VAT rate in MPIT Settings."
 		).format(field_label)
 	)

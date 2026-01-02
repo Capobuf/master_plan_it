@@ -119,9 +119,112 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 			"Cancelled contract should remove generated lines",
 		)
 
+	def test_contract_annual_amount_preserves_total(self):
+		cc = self._ensure_cost_center(f"CC-Annual-{frappe.generate_hash(length=6)}")
+		budget = self._make_live_budget(self.year_current)
+		contract = frappe.get_doc(
+			{
+				"doctype": "MPIT Contract",
+				"title": "Annual Contract",
+				"vendor": self._ensure_vendor("Vendor Annual").name,
+				"cost_center": cc.name,
+				"status": "Active",
+				"current_amount": 1000,
+				"current_amount_includes_vat": 0,
+				"vat_rate": 0,
+				"billing_cycle": "Annual",
+			}
+		).insert()
+
+		budget.refresh_from_sources()
+		budget.reload()
+		lines = [ln for ln in budget.lines if ln.contract == contract.name]
+		self.assertEqual(len(lines), 1, "Annual contract should generate one line")
+		line = lines[0]
+		# Monthly may have more precision, but annual must stay exact to input
+		self.assertAlmostEqual(float(line.annual_net), 1000.0, places=2)
+		self.assertAlmostEqual(float(line.amount_net), 1000.0, places=2)
+
+	def test_contract_annual_amount_with_vat_preserves_net_and_gross(self):
+		cc = self._ensure_cost_center(f"CC-Annual-VAT-{frappe.generate_hash(length=6)}")
+		budget = self._make_live_budget(self.year_current)
+		contract = frappe.get_doc(
+			{
+				"doctype": "MPIT Contract",
+				"title": "Annual Contract VAT",
+				"vendor": self._ensure_vendor("Vendor Annual VAT").name,
+				"cost_center": cc.name,
+				"status": "Active",
+				"current_amount": 1220,
+				"current_amount_includes_vat": 1,
+				"vat_rate": 22,
+				"billing_cycle": "Annual",
+			}
+		).insert()
+
+		budget.refresh_from_sources()
+		budget.reload()
+		lines = [ln for ln in budget.lines if ln.contract == contract.name]
+		self.assertEqual(len(lines), 1, "Annual contract with VAT should generate one line")
+		line = lines[0]
+		self.assertAlmostEqual(float(line.annual_net), 1000.0, places=2)
+		self.assertAlmostEqual(float(line.annual_vat), 220.0, places=2)
+		self.assertAlmostEqual(float(line.annual_gross), 1220.0, places=2)
+
+	def test_contract_monthly_amounts_are_consistent(self):
+		cc = self._ensure_cost_center(f"CC-Monthly-{frappe.generate_hash(length=6)}")
+		budget = self._make_live_budget(self.year_current)
+		contract = frappe.get_doc(
+			{
+				"doctype": "MPIT Contract",
+				"title": "Monthly Contract",
+				"vendor": self._ensure_vendor("Vendor Monthly").name,
+				"cost_center": cc.name,
+				"status": "Active",
+				"current_amount": 100,
+				"current_amount_includes_vat": 0,
+				"vat_rate": 0,
+				"billing_cycle": "Monthly",
+			}
+		).insert()
+
+		budget.refresh_from_sources()
+		budget.reload()
+		line = [ln for ln in budget.lines if ln.contract == contract.name][0]
+		self.assertAlmostEqual(float(line.monthly_amount), 100.0, places=2)
+		self.assertAlmostEqual(float(line.annual_net), 1200.0, places=2)
+
+	def test_contract_quarterly_amounts_are_consistent(self):
+		cc = self._ensure_cost_center(f"CC-Quarterly-{frappe.generate_hash(length=6)}")
+		budget = self._make_live_budget(self.year_current)
+		contract = frappe.get_doc(
+			{
+				"doctype": "MPIT Contract",
+				"title": "Quarterly Contract",
+				"vendor": self._ensure_vendor("Vendor Quarterly").name,
+				"cost_center": cc.name,
+				"status": "Active",
+				"current_amount": 300,
+				"current_amount_includes_vat": 0,
+				"vat_rate": 0,
+				"billing_cycle": "Quarterly",
+			}
+		).insert()
+
+		budget.refresh_from_sources()
+		budget.reload()
+		line = [ln for ln in budget.lines if ln.contract == contract.name][0]
+		self.assertAlmostEqual(float(line.monthly_amount), 100.0, places=2)
+		self.assertAlmostEqual(float(line.annual_net), 1200.0, places=2)
+
 	def test_multi_year_planned_item_impacts_both_years(self):
-		budget_current = self._make_live_budget(self.year_current)
-		budget_next = self._make_live_budget(self.year_next)
+		year_a = str(int(self.year_current) + 5)
+		year_b = str(int(self.year_current) + 6)
+		self._ensure_year(year_a)
+		self._ensure_year(year_b)
+
+		budget_current = self._make_live_budget(year_a)
+		budget_next = self._make_live_budget(year_b)
 		project = frappe.get_doc(
 			{
 				"doctype": "MPIT Project",
@@ -131,7 +234,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"cost_center": self.cost_center.name,
 				# Required by Project validation for On Hold status
 				"allocations": [
-					{"year": self.year_current, "cost_center": self.cost_center.name, "planned_amount": 1}
+					{"year": year_a, "cost_center": self.cost_center.name, "planned_amount": 1}
 				],
 			}
 		).insert()
@@ -141,8 +244,8 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"project": project.name,
 				"description": "Two-year item",
 				"amount": 1200,
-				"start_date": f"{self.year_current}-01-01",
-				"end_date": f"{self.year_next}-12-31",
+				"start_date": f"{year_a}-01-01",
+				"end_date": f"{year_b}-12-31",
 				"distribution": "all",
 				"docstatus": 1,
 				"covered_by_type": "",
@@ -151,13 +254,119 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		)
 		item.insert()
 
-		budget_current.refresh_from_sources()
-		budget_next.refresh_from_sources()
+		# Reload budgets just before refresh to avoid timestamp mismatch from other hooks
+		frappe.call("master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget.refresh_from_sources", budget=budget_current.name)
+		frappe.call("master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget.refresh_from_sources", budget=budget_next.name)
 		budget_current.reload()
 		budget_next.reload()
 
 		self.assertGreater(len(budget_current.lines), 0, "Current year budget should have planned item lines")
 		self.assertGreater(len(budget_next.lines), 0, "Next year budget should have planned item lines")
+
+	def test_planned_item_distribution_all_splits_evenly(self):
+		budget = self._make_live_budget(self.year_current)
+		project = frappe.get_doc(
+			{
+				"doctype": "MPIT Project",
+				"title": "Planned Dist All",
+				"status": "In Progress",
+				"cost_center": self.cost_center.name,
+				"allocations": [
+					{"year": self.year_current, "cost_center": self.cost_center.name, "planned_amount": 1}
+				],
+			}
+		).insert()
+		item = frappe.get_doc(
+			{
+				"doctype": "MPIT Planned Item",
+				"project": project.name,
+				"description": "Dist all",
+				"amount": 1200,
+				"start_date": f"{self.year_current}-01-01",
+				"end_date": f"{self.year_current}-12-31",
+				"distribution": "all",
+				"docstatus": 1,
+				"is_covered": 0,
+				"covered_by_type": "",
+				"covered_by_name": "",
+			}
+		).insert()
+
+		budget.refresh_from_sources()
+		budget.reload()
+		line = [ln for ln in budget.lines if ln.project == project.name][0]
+		self.assertAlmostEqual(float(line.monthly_amount), 100.0, places=2)
+		self.assertAlmostEqual(float(line.annual_net), 1200.0, places=2)
+
+	def test_planned_item_distribution_start_single_month(self):
+		budget = self._make_live_budget(self.year_current)
+		project = frappe.get_doc(
+			{
+				"doctype": "MPIT Project",
+				"title": "Planned Dist Start",
+				"status": "In Progress",
+				"cost_center": self.cost_center.name,
+				"allocations": [
+					{"year": self.year_current, "cost_center": self.cost_center.name, "planned_amount": 1}
+				],
+			}
+		).insert()
+		item = frappe.get_doc(
+			{
+				"doctype": "MPIT Planned Item",
+				"project": project.name,
+				"description": "Dist start",
+				"amount": 1200,
+				"start_date": f"{self.year_current}-01-01",
+				"end_date": f"{self.year_current}-12-31",
+				"distribution": "start",
+				"docstatus": 1,
+				"is_covered": 0,
+				"covered_by_type": "",
+				"covered_by_name": "",
+			}
+		).insert()
+
+		budget.refresh_from_sources()
+		budget.reload()
+		line = [ln for ln in budget.lines if ln.project == project.name][0]
+		self.assertAlmostEqual(float(line.monthly_amount), 1200.0, places=2)
+		self.assertAlmostEqual(float(line.annual_net), 1200.0, places=2)
+
+	def test_planned_item_spend_date_single_month(self):
+		budget = self._make_live_budget(self.year_current)
+		project = frappe.get_doc(
+			{
+				"doctype": "MPIT Project",
+				"title": "Planned Spend Date",
+				"status": "In Progress",
+				"cost_center": self.cost_center.name,
+				"allocations": [
+					{"year": self.year_current, "cost_center": self.cost_center.name, "planned_amount": 1}
+				],
+			}
+		).insert()
+		item = frappe.get_doc(
+			{
+				"doctype": "MPIT Planned Item",
+				"project": project.name,
+				"description": "Spend date only",
+				"amount": 500,
+				"start_date": f"{self.year_current}-10-01",
+				"end_date": f"{self.year_current}-10-31",
+				"spend_date": f"{self.year_current}-10-15",
+				"docstatus": 1,
+				"is_covered": 0,
+				"covered_by_type": "",
+				"covered_by_name": "",
+			}
+		).insert()
+
+		budget.refresh_from_sources()
+		budget.reload()
+		line = [ln for ln in budget.lines if ln.project == project.name][0]
+		self.assertAlmostEqual(float(line.monthly_amount), 500.0, places=2)
+		self.assertAlmostEqual(float(line.annual_net), 500.0, places=2)
 
 	def test_auto_refresh_skips_out_of_horizon_years(self):
 		from master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget import enqueue_budget_refresh

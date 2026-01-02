@@ -50,11 +50,7 @@ def import_print_formats():
 
 def create_test_budget():
     """Create test Budget with VAT and recurrence."""
-    from master_plan_it.mpit_user_prefs import get_or_create
-    
-    # Ensure user prefs exist
-    prefs = get_or_create("Administrator")
-    frappe.db.commit()
+    # No user prefs needed - Settings is used globally
     
     # Create Year if not exists
     if not frappe.db.exists("MPIT Year", "2025"):

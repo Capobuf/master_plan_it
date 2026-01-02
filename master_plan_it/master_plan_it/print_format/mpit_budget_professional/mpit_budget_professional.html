@@ -1,6 +1,6 @@
 {# MPIT Budget Professional Print Format #}
-{% set user_prefs = frappe.get_doc("MPIT User Preferences", frappe.session.user) if frappe.db.exists("MPIT User Preferences", frappe.session.user) else None %}
-{% set show_attachments = user_prefs.show_attachments_in_print if user_prefs else 0 %}
+{% set settings = frappe.get_single("MPIT Settings") %}
+{% set show_attachments = settings.show_attachments_in_print if settings else 0 %}
 
 <!DOCTYPE html>
 <html>

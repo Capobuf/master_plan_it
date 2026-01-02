@@ -40,8 +40,6 @@ class TestMPITContract(FrappeTestCase):
 		title_suffix: str,
 		amount: float,
 		billing_cycle: str = "Monthly",
-		spread_months: int | None = None,
-		rate_rows: list[dict] | None = None,
 	):
 		timestamp = now_datetime().strftime("%Y%m%d%H%M%S%f")
 		title = f"Contract {title_suffix} {timestamp}"
@@ -59,13 +57,6 @@ class TestMPITContract(FrappeTestCase):
 			}
 		)
 
-		if spread_months:
-			doc.spread_months = spread_months
-			doc.spread_start_date = "2099-01-01"
-
-		if rate_rows:
-			doc.rate_schedule = rate_rows
-
 		doc.insert()
 		doc.reload()
 		return doc
@@ -79,28 +70,6 @@ class TestMPITContract(FrappeTestCase):
 
 		annual = self._make_contract("Annual", amount=1200, billing_cycle="Annual")
 		self.assertEqual(annual.monthly_amount_net, flt(100, 2))
-
-	def test_monthly_amount_respects_spread_months(self):
-		self.skipTest("Spread_months legacy logic removed in Budget Engine v3")
-		contract = self._make_contract("Spread", amount=1200, spread_months=12)
-		self.assertEqual(contract.monthly_amount_net, flt(100, 2))
-
-	def test_monthly_amount_omitted_for_rate_schedule(self):
-		self.skipTest("Rate schedule legacy logic removed in Budget Engine v3")
-		contract = self._make_contract(
-			"RateSchedule",
-			amount=0,
-			rate_rows=[
-				{
-					"doctype": "MPIT Contract Rate",
-					"effective_from": "2099-01-01",
-					"amount": 100,
-					"amount_includes_vat": 0,
-					"vat_rate": 0,
-				}
-			],
-		)
-		self.assertIsNone(contract.monthly_amount_net)
 
 	def test_auto_renew_contract_stays_active(self):
 		contract = self._make_contract("AutoRenew", amount=100, billing_cycle="Monthly")

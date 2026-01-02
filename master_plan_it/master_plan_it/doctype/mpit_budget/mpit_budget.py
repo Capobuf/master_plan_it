@@ -15,7 +15,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import getseries
 from frappe.utils import cint, flt, getdate as _getdate, nowdate
-from master_plan_it import amounts, annualization, mpit_user_prefs
+from master_plan_it import amounts, annualization, mpit_defaults
 
 
 class MPITBudget(Document):
@@ -25,15 +25,15 @@ class MPITBudget(Document):
 		- Live: `{prefix}{year}-LIVE` (single Live per year)
 		- Snapshot: `{prefix}{year}-APP-{NN}`
 		
-		Prefix/digits are global (MPIT Settings), not per-user.
+		Prefix/digits are global (MPIT Settings).
 		"""
 		if not self.year:
 			frappe.throw(_("Year and Budget Type are required to generate Budget name"))
 		budget_type = self.budget_type or "Live"
 		self.budget_type = budget_type
 
-		prefix, digits, middle = mpit_user_prefs.get_budget_series(
-			user=frappe.session.user, year=self.year, budget_type=budget_type
+		prefix, digits, middle = mpit_defaults.get_budget_series(
+			year=self.year, budget_type=budget_type
 		)
 
 		if budget_type == "Live":
@@ -131,7 +131,8 @@ class MPITBudget(Document):
 
 		self._upsert_generated_lines(generated_lines)
 		self.flags.skip_generated_guard = True
-		self.save(ignore_permissions=True)
+		self.flags.ignore_version = True
+		self.save(ignore_permissions=True, ignore_version=True)
 		self._add_timeline_comment(_("Budget refreshed from sources."))
 
 	def _within_horizon(self) -> bool:
@@ -180,12 +181,17 @@ class MPITBudget(Document):
 			return lines
 
 		billing = contract.billing_cycle or "Monthly"
-		monthly_net = flt(contract.current_amount_net or 0)
+		base_amount = flt(contract.current_amount or 0, 6)
+		monthly_amount = flt(base_amount, 6)
+		recurrence_rule = "Monthly"
+		unit_price = flt(base_amount, 6)
 		if billing == "Quarterly":
-			monthly_net = flt((contract.current_amount_net or 0) * 4 / 12, 2)
+			monthly_amount = flt((base_amount) * 4 / 12, 6)
+			recurrence_rule = "Quarterly"
 		elif billing == "Annual":
-			monthly_net = flt((contract.current_amount_net or 0) / 12, 2)
-		# Other -> treat as monthly
+			monthly_amount = flt((base_amount) / 12, 6)
+			recurrence_rule = "Annual"
+		# Other -> treat as monthly, recurrence_rule stays Monthly
 
 		source_key = f"CONTRACT::{contract.name}"
 		lines.append(
@@ -193,7 +199,9 @@ class MPITBudget(Document):
 				contract=contract,
 				period_start=period_start,
 				period_end=period_end,
-				monthly_net=monthly_net,
+				monthly_amount=monthly_amount,
+				unit_price=unit_price,
+				recurrence_rule=recurrence_rule,
 				source_key=source_key,
 			)
 		)
@@ -319,7 +327,7 @@ class MPITBudget(Document):
 		month_end = date(dt.year, dt.month, last_day)
 		return month_start, month_end
 
-	def _build_line_payload(self, contract, period_start: date, period_end: date, monthly_net: float, source_key: str) -> dict:
+	def _build_line_payload(self, contract, period_start: date, period_end: date, monthly_amount: float, unit_price: float, recurrence_rule: str, source_key: str) -> dict:
 		return {
 			"line_kind": "Contract",
 			"source_key": source_key,
@@ -328,11 +336,12 @@ class MPITBudget(Document):
 			"contract": contract.name,
 			"project": None,
 			"cost_center": contract.cost_center,
-			"monthly_amount": monthly_net,
+			"monthly_amount": monthly_amount,
 			"annual_amount": 0,
-			"amount_includes_vat": 0,
+			"unit_price": unit_price,
+			"amount_includes_vat": contract.current_amount_includes_vat,
 			"vat_rate": contract.vat_rate,
-			"recurrence_rule": "Monthly",
+			"recurrence_rule": recurrence_rule,
 			"period_start_date": period_start,
 			"period_end_date": period_end,
 			"is_generated": 1,
@@ -412,8 +421,8 @@ class MPITBudget(Document):
 	
 	def _compute_lines_amounts(self):
 		"""Compute all amounts for Budget Lines using bidirectional logic."""
-		# Get user defaults once
-		default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
+		# Get global defaults once
+		default_vat = mpit_defaults.get_default_vat_rate()
 		
 		# Get fiscal year bounds from year field
 		year_start, year_end = annualization.get_year_bounds(self.year)

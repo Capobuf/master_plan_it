@@ -66,14 +66,6 @@ def test_spread_months_across_years():
 	assert count_2025 == 7 and count_2026 == 12 and count_2027 == 12 and count_2028 == 5
 
 
-def test_rate_schedule_segments_months():
-	year_start = datetime.date(2025, 1, 1)
-	year_end = datetime.date(2025, 12, 31)
-	seg1 = annualization.overlap_months("2025-01-01", "2025-07-31", year_start, year_end)
-	seg2 = annualization.overlap_months("2025-08-01", "2025-12-31", year_start, year_end)
-	assert seg1 == 7 and seg2 == 5
-
-
 def test_refresh_idempotence_upsert():
 	_ensure_year(2025)
 	budget = MPITBudget()

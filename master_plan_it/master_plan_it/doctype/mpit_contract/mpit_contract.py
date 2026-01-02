@@ -12,7 +12,7 @@ from frappe.model.document import Document
 from frappe.utils import flt, getdate
 
 from master_plan_it.master_plan_it.doctype.mpit_planned_item import mpit_planned_item
-from master_plan_it import mpit_user_prefs, tax
+from master_plan_it import mpit_defaults, tax
 
 
 class MPITContract(Document):
@@ -28,8 +28,8 @@ class MPITContract(Document):
 	
 	def _compute_vat_split(self):
 		"""Compute net/vat/gross for current_amount field with strict VAT validation."""
-		# Get user default VAT rate
-		default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
+		# Get global default VAT rate
+		default_vat = mpit_defaults.get_default_vat_rate()
 		
 		# Apply default if field is empty
 		if self.vat_rate is None and default_vat is not None:
