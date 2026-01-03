@@ -6,14 +6,7 @@
    - `bench --site <site> migrate`
    - `bench --site <site> clear-cache`
 4) Export any Desk customizations back into the canonical folder immediately after making them.
-5) Install hooks create MPIT Settings, MPIT Year (current + next), and seed the root Cost Center (“All Cost Centers”); verify from Desk after migrate.
-
-Reports/charts available after migrate:
-- MPIT Current Plan vs Exceptions
-- MPIT Baseline vs Exceptions
-- MPIT Monthly Plan vs Exceptions
-- MPIT Projects Planned vs Exceptions
-- MPIT Plan Delta by Cost Center (chart)
+5) Install hooks create MPIT Settings and MPIT Year (current + next); verify from Desk after migrate.
 
 ## Docker compose (prod) – promemoria rapido
 - Stack minimale: `db` (MariaDB 10.6) + `redis` + `backend` (gunicorn + workers/scheduler/socketio in un solo container) + `frontend` (nginx). Compose: `master-plan-it-deploy/compose.prod.yaml`, env: `master-plan-it-deploy/prod.env`.

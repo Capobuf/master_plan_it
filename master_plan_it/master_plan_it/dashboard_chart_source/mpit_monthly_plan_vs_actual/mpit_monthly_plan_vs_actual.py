@@ -33,7 +33,7 @@ def get_data(filters=None):
 	if cost_centers:
 		cost_centers = tuple(cost_centers)
 		if not cost_centers:
-			return {"labels": [], "datasets": [], "type": "bar"}
+			return {"labels": [], "datasets": [], "type": "line"}
 	cc_clause = " AND cost_center IN %(cost_centers)s" if cost_centers else ""
 
 	plan = [0.0] * 12
@@ -92,9 +92,8 @@ def get_data(filters=None):
 			{"name": _("Plan (Live)"), "values": [flt(v, 2) for v in plan]},
 			{"name": _("Actual"), "values": [flt(v, 2) for v in actual]},
 		],
-		"type": "bar",
+		"type": "line",
 		"colors": ["#5E64FF", "#FF5858"],
-		"barOptions": {"stacked": False},
 	}
 
 @frappe.whitelist()

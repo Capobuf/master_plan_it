@@ -237,16 +237,16 @@
    "doc_view": "",
    "icon": "dashboard",
    "label": "Overview",
-   "link_to": "mpit-dashboard",
-   "type": "Page"
+   "link_to": "Master Plan IT Overview",
+   "type": "Dashboard"
   },
   {
    "color": "Grey",
    "doc_view": "",
    "icon": "dashboard",
    "label": "Overview Dashboard",
-   "link_to": "mpit-dashboard",
-   "type": "Page"
+   "link_to": "Master Plan IT Overview",
+   "type": "Dashboard"
   },
   {
    "color": "Blue",

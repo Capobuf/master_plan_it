@@ -69,7 +69,7 @@ def get_data(filters=None):
 	return {
 		"labels": labels,
 		"datasets": [{"name": _("Budgets"), "values": values}],
-		"type": "bar",
+		"type": "pie",
 	}
 
 @frappe.whitelist()

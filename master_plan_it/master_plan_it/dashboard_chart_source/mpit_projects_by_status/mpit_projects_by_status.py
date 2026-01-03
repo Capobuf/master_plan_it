@@ -23,7 +23,7 @@ def get_data(filters=None):
 	if cost_centers:
 		cost_centers = tuple(cost_centers)
 		if not cost_centers:
-			return {"labels": [], "datasets": [], "type": "bar"}
+			return {"labels": [], "datasets": [], "type": "percentage"}
 	cc_clause = " WHERE cost_center IN %(cost_centers)s" if cost_centers else ""
 	params = {"cost_centers": cost_centers} if cost_centers else {}
 
@@ -49,7 +49,7 @@ def get_data(filters=None):
 	return {
 		"labels": labels,
 		"datasets": [{"name": _("Projects"), "values": values}],
-		"type": "bar",
+		"type": "percentage",
 	}
 
 @frappe.whitelist()

@@ -17,7 +17,7 @@ For applying changes to a site, see `docs/how-to/01-apply-changes.md`.
 ### Location of source files
 - **Metadata (source of truth):** `master_plan_it/master_plan_it/{doctype,report,workflow,dashboard,dashboard_chart,number_card,master_plan_it_dashboard,workspace,print_format}/`
 - **Python logic:** `master_plan_it/master_plan_it/doctype/*/mpit_*.py`
-- **Install hooks & fixtures:** `master_plan_it/master_plan_it/setup/install.py` and `master_plan_it/master_plan_it/fixtures/role.json` handle bootstrap (settings/years) and ship MPIT roles.
+- **Install hooks & fixtures:** `master_plan_it/setup/install.py` and `master_plan_it/fixtures/role.json` handle bootstrap (settings/years) and ship MPIT roles.
 
 ### The correct flow (native file-first)
 1) Edit exported metadata JSON directly in the canonical module folder.
@@ -40,53 +40,28 @@ For applying changes to a site, see `docs/how-to/01-apply-changes.md`.
 - **Fixtures:** `master_plan_it/fixtures/` (filtered exports only; roles already provided)
 - **Hooks:** `master_plan_it/hooks.py`
 
-### Forbidden paths (must not exist)
-- `master_plan_it/master_plan_it/doctype/`
-- `master_plan_it/master_plan_it/report/`
-- `master_plan_it/master_plan_it/workflow/`
-- `master_plan_it/master_plan_it/workspace/`
-- `master_plan_it/master_plan_it/dashboard/`
-- `master_plan_it/master_plan_it/dashboard_chart/`
-- `master_plan_it/master_plan_it/number_card/`
-- `master_plan_it/master_plan_it/master_plan_it_dashboard/`
-- `master_plan_it/master_plan_it/print_format/`
+### Anti-patterns (do not duplicate)
+Do not create metadata in these paths (the inner `master_plan_it/` folder is the correct location):
+- `master_plan_it/doctype/`
+- `master_plan_it/report/`
+- `master_plan_it/workflow/`
+- `master_plan_it/workspace/`
+- `master_plan_it/dashboard/`
+- `master_plan_it/dashboard_chart/`
+- `master_plan_it/number_card/`
+- `master_plan_it/master_plan_it_dashboard/`
+- `master_plan_it/print_format/`
 
-## Translations (i18n) – Native Frappe Rules
+A regression test (`test_no_forbidden_metadata_paths.py`) enforces this.
 
-Source of truth
-- Translation file lives only at `master_plan_it/master_plan_it/translations/it.csv`. Do not create alternative translation sources or duplicate CSVs.
-- The CSV filename must match the Frappe Language code configured in **System Settings > Language**. Default is `it.csv`; if your site uses `it-IT`, rename accordingly.
+## Translations (i18n)
 
-What auto-translates vs what must be explicit
-- DocType JSON (labels, descriptions, select options, workflow/workspace/report labels) is auto-translatable by Frappe; no `_()` needed inside JSON.
-- Code strings must be marked explicitly:
-  - Python: `from frappe import _` then `_("Literal string")`
-  - JS: `__("Literal string")`
-  - Jinja/Print Format: `{{ _("Literal string") }}`
+→ See `docs/reference/12-i18n.md` for complete translation rules.
 
-Literal-string rules (mirror Frappe docs)
-- `_()` / `__()` take literal strings only (no variables). Use positional placeholders `{0}`, `{1}` and format after translating:
-  - Python: `_("Welcome {0}.").format(name)`
-  - JS: `__("Welcome {0}.", [name])`
-- No concatenation or multiline translation literals; avoid trailing spaces; do not pluralize by appending “s” (write full singular/plural strings).
-- Add context when the same source string has multiple meanings:
-  - JS: `__("Change", null, "Coins")`
-  - Python: `_("Change", context="Switch")`
-  - In `it.csv` use the 3rd “context” column to disambiguate.
+**Quick ref:**
+- Source: `master_plan_it/master_plan_it/translations/it.csv`
+- Python: `_("text")` | JS: `__("text")` | Jinja: `{{ _("text") }}`
 
-How to update it.csv (anti-drift)
-- Use a 3-column CSV: `source_string,translated_string,context` (context empty when not needed).
-- Keep one entry per unique source_string + context; quote values containing commas; keep rows deterministically sorted (e.g., by source_string then context).
-- Do not translate technical identifiers (DocType names, fieldnames, module names, route paths, DB keys). Keep app/product names as-is unless the business glossary says otherwise.
-- Prefer existing translations for consistency. If a core business term lacks precedent, pause and obtain a glossary decision before adding it.
-
-Verification (manual, not run here)
-- Switch a test user to Italian and confirm UI/prints/reports show translated labels/messages.
-- If UI strings stay stale, clear cache/build per native bench steps for the site; no custom tooling beyond standard Frappe commands.
-
-Italian translations — verify & troubleshoot
-- Verify steps (in order): (1) Set your user language to Italian. (2) Confirm translation file exists at `master_plan_it/master_plan_it/translations/it.csv`. (3) Ensure the filename matches your Frappe Language code (e.g., use `it-IT.csv` if Language code is `it-IT`). (4) Hard-refresh the browser. (5) If still stale, clear cache: `bench --site <site> clear-cache`. (6) If still stale, restart bench/web services for the site. (7) Only when you changed custom frontend JS with `__()`, build assets: `bench --site <site> build`.
-- Common causes: wrong folder (not under the app package), wrong filename vs Language code, source string mismatch (spaces/punctuation), string not wrapped in `_()` / `__()` / `{{ _("...") }}`, cache not cleared or services not restarted.
 
 ## Required outputs for each task
 - If you change metadata: ensure `bench migrate` is the apply step and update the relevant docs.

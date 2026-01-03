@@ -1,3 +1,0 @@
-budget,category,vendor,description,recurrence_rule,amount,amount_includes_vat,vat_rate,period_start_date,period_end_date,contract,project
-BUD-2025-01,Connectivity,TIM,"Connettività TIM 104/mese",Monthly,104,1,22,2025-01-01,2025-12-31,,
-BUD-2025-01,Connectivity,Dimensione,"Connettività backup 49/mese",Monthly,49,1,22,2025-01-01,2025-12-31,,

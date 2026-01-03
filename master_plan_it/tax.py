@@ -86,7 +86,7 @@ def validate_strict_vat(
 	Args:
 		amount: The amount being validated
 		vat_rate: VAT rate from the row/document (can be None)
-		default_vat_rate: Default VAT rate from user preferences (can be None)
+		default_vat_rate: Default VAT rate from MPIT Settings (can be None)
 		field_label: Label for error messages
 	
 	Returns:

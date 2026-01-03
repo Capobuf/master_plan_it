@@ -14,16 +14,9 @@ Fixtures are standard Frappe exports filtered to Master Plan IT records only. Ke
 - Apply to a site with standard Frappe commands (`bench --site <site> migrate`, `clear-cache`) as needed.
 
 ## What ships as fixtures
-- Roles are shipped as a filtered fixture (`master_plan_it/master_plan_it/fixtures/role.json`) covering only: `vCIO Manager`, `Client Editor`, `Client Viewer`.
+- Roles are shipped as a filtered fixture (`master_plan_it/fixtures/role.json`) covering only: `vCIO Manager`, `Client Editor`, `Client Viewer`.
 - Keep the fixture minimal (doctype, name/role_name, desk_access) so it stays stable between exports.
 
 ## Bootstrap (install hooks)
-- Install hooks (`master_plan_it.setup.install.after_install/after_sync`) create the singleton MPIT Settings document, MPIT Year for the current and next calendar year, and seed the root Cost Center (“All Cost Centers”).
+- Install hooks (`master_plan_it.setup.install.after_install/after_sync`) create the singleton MPIT Settings document and MPIT Year for the current and next calendar year.
 - No devtools “bootstrap” scripts are required for baseline data; verification happens later via Desk after a normal migrate.
-
-## Reports/charts available after migrate
-- MPIT Current Plan vs Exceptions
-- MPIT Baseline vs Exceptions
-- MPIT Monthly Plan vs Exceptions
-- MPIT Projects Planned vs Exceptions
-- MPIT Plan Delta by Cost Center (chart)

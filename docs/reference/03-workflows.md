@@ -1,4 +1,4 @@
-# Reference: Workflows (V2)
+# Reference: Workflows
 
 ## MPIT Budget workflow
 States:
@@ -16,7 +16,7 @@ Actions:
 - Approve → Approved
 
 Notes:
-- Approved sets docstatus=1 and freezes Baseline. Forecasts stay editable but rely on server actions: Refresh from Sources (contracts/projects) and Set Active (one per year).
+- Approved sets docstatus=1. Snapshot budgets become immutable after submit. Live budgets are refreshable and never submitted.
 - Client Viewer cannot transition states.
 
 ## Optional: MPIT Project workflow/policy

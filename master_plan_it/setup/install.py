@@ -14,21 +14,9 @@ import frappe
 
 
 def _ensure_settings() -> None:
-	"""Create the singleton MPIT Settings if missing and set naming defaults."""
+	"""Create the singleton MPIT Settings if missing."""
 	settings = frappe.get_single("MPIT Settings")
-	# Ensure naming defaults are set (idempotent)
-	if not settings.budget_prefix_default:
-		settings.budget_prefix_default = "BUD-"
-	if not settings.budget_digits_default:
-		settings.budget_digits_default = 2
-	if not settings.project_prefix_default:
-		settings.project_prefix_default = "PRJ-"
-	if not settings.project_digits_default:
-		settings.project_digits_default = 2
-	if not settings.actual_prefix_default:
-		settings.actual_prefix_default = "AE-"
-	if not settings.actual_digits_default:
-		settings.actual_digits_default = 2
+	# Defaults are handled by DocType JSON (CONTR-, BUD-, PRJ-, AE-)
 	settings.save(ignore_permissions=True)
 
 

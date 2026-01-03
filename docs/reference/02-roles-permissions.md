@@ -12,7 +12,7 @@
 - Workspace “Master Plan IT” is restricted to these roles (plus System Manager).
 
 ## Key permission rules
-- Budgets: Baseline is immutable after submit; Forecast can be refreshed/set active via server actions (no amendments).
+- Budgets: Snapshot is immutable after submit; Live is refreshable and system-managed.
 - Actual/Variance Entries:
   - entry_kind = Delta requires Contract XOR Project; Allowance Spend requires Cost Center and forbids Contract/Project.
   - status Verified locks fields; only vCIO Manager can revert Verified→Recorded.

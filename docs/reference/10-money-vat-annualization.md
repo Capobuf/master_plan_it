@@ -8,7 +8,7 @@ Fonte di verità per calcoli, report e stampa.
 
 Se `amount != 0`:
 - `vat_rate` è obbligatorio (0 valido)
-- se manca sulla riga e manca anche in `MPIT User Preferences.default_vat_rate` → blocco salvataggio
+- se manca sulla riga e manca anche in `MPIT Settings.default_vat_rate` → blocco salvataggio
 
 Se `amount == 0`:
 - `vat_rate` può essere vuoto (ma consigliato 0).

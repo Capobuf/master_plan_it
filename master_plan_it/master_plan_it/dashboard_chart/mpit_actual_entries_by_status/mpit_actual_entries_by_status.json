@@ -35,7 +35,7 @@
  "time_interval": "Yearly",
  "timeseries": 0,
  "timespan": "Last Year",
- "type": "Bar",
+ "type": "Percentage",
  "use_report_chart": 0,
  "y_axis": []
 }

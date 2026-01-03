@@ -8,7 +8,7 @@ This document defines the **native file-first** workflow for Master Plan IT.
 - Exported metadata lives under `master_plan_it/master_plan_it/` (doctype, report, workflow, dashboard, dashboard_chart, number_card, workspace, print_format). Legacy `master_plan_it_dashboard/` copies were removed to avoid duplicates.
 - These files are edited directly in Git; they are the canonical inputs for Frappe. No spec-import and no `sync_all`.
 - **Warning:** Do not manually create duplicate metadata folders outside the canonical module folder.
-- **Translations:** Follow `AGENT_INSTRUCTIONS.md` → “Translations (i18n) – Native Frappe Rules” for marking strings and maintaining `translations/it.csv`.
+- **Translations:** Follow `docs/reference/12-i18n.md` for marking strings and maintaining `translations/it.csv`.
 - **Dashboard Chart/Source:** crea/aggiorna i record via bench/console e poi `bench --site <site> export-json "Dashboard Chart" "<Name>" <path>` (idem per Dashboard Chart Source) per evitare di indovinare lo schema JSON.
 - **Dashboard Chart/Source:** vengono ricaricati via `after_migrate` (`reload_doc`) per garantire file-first deterministico.
 - **Dashboard Chart Source:** richiede registrazione JS in `frappe.dashboards.chart_sources` e un metodo server whitelisted `get(...)` (stile ERPNext); non dipendere da `tabDashboard Chart Source.method`.

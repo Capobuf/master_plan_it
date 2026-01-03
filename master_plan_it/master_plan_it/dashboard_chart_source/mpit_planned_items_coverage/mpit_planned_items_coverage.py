@@ -46,7 +46,7 @@ def get_data(filters=None):
 	if cost_centers:
 		cost_centers = tuple(cost_centers)
 		if not cost_centers:
-			return {"labels": [], "datasets": [], "type": "bar"}
+			return {"labels": [], "datasets": [], "type": "pie"}
 
 	where = ["docstatus = 1"]
 	params = {}
@@ -65,7 +65,7 @@ def get_data(filters=None):
 			return {
 				"labels": [_("Covered"), _("Uncovered"), _("Out of Horizon")],
 				"datasets": [{"name": _("Planned Items"), "values": [0, 0, 0]}],
-				"type": "bar",
+				"type": "pie",
 			}
 		where.append("project IN %(projects)s")
 		params["projects"] = projects
@@ -100,7 +100,7 @@ def get_data(filters=None):
 	return {
 		"labels": labels,
 		"datasets": [{"name": _("Planned Items"), "values": values}],
-		"type": "bar",
+		"type": "pie",
 	}
 
 @frappe.whitelist()
