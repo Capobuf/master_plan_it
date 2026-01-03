@@ -8,8 +8,8 @@ Last updated: 2026-01-04T00:30:00+01:00
 
 | Status | Count |
 |--------|-------|
-| ✅ Resolved | 13 |
-| 🟡 Open | 48 |
+| ✅ Resolved | 14 |
+| 🟡 Open | 45 |
 
 ---
 
@@ -47,13 +47,6 @@ Last updated: 2026-01-04T00:30:00+01:00
 - **Location**: `docs/reference/10-printing-and-report-print-formats.md` L105-109
 - **Issue**: Example folder structure references `mpit_current_budget_vs_actual/` which doesn't exist
 - **Status**: Update required
-
-### O-008: CHANGELOG.md v0.1.0 references "MPIT User Preferences" but code uses "MPIT Settings"
-- **Location**: `CHANGELOG.md` L15-24, L33-38, L51
-- **Issue**: Phase 1 documents `MPIT User Preferences` DocType and `mpit_user_prefs.py` helper. Code now uses `MPIT Settings` as singleton.
-- **Evidence**: `mpit_settings.json` exists; no `mpit_user_preferences.json` in doctype folder
-- **Status**: Historical changelog — document as note or leave as-is
-- **Root Cause**: **Refactor Name Drift**. The feature "User Preferences" (Per-User) was refactored to "MPIT Settings" (Tenant-Wide) but the Changelog/Docs kept the old name. Logic in `mpit_defaults.py` correctly maps to Settings.
 
 ### O-009: docs/ux/mpit_budget_engine_v2_ui.md is entirely obsolete v2 design doc
 - **Location**: `docs/ux/mpit_budget_engine_v2_ui.md` (56 lines)
@@ -177,13 +170,7 @@ Last updated: 2026-01-04T00:30:00+01:00
 - **Status**: Replace hardcoded year with dynamic current year
 - **Root Cause**: **Implementation Shortcut**. Script was written with a hardcoded year "2025" instead of using `datetime.now().year` or an argument.
 
-### O-031: Empty dashboard directory 'master_plan_it_overview_v3'
-- **Location**: `dashboard/master_plan_it_overview_v3/`
-- **Issue**: Directory exists but is empty (no JSON metadata)
-- **Evidence**: `ls` command returned empty result
-- **Impact**: LOW — Dead directory cluttering the repo
-- **Status**: Delete directory or restore missing JSON
-- **Root Cause**: **Deployment Artifact**. Likely created during a manual dashboard creation but the JSON definition was never exported or committed.
+
 
 ### O-032: Missing Workflow definition for MPIT Budget
 - **Location**: Repository root (missing `fixtures/workflow.json` or `workflow/` definition)
@@ -193,13 +180,6 @@ Last updated: 2026-01-04T00:30:00+01:00
 - **Status**: Export "MPIT Budget Workflow" (and states/transitions) to `fixtures/workflow.json` or as a new app module
 - **Root Cause**: **Missing Configuration Export**. Workflow logic is used in code (`workflow_state` field) but the Workflow definition itself was not exported to fixtures.
 
-### O-033: requirements.txt requests non-existent pytest version
-- **Location**: `requirements.txt`
-- **Issue**: Requests `pytest>=9.0.2` but current stable is ~8.3.x (as of early 2025)
-- **Evidence**: `pytest>=9.0.2` in file
-- **Impact**: HIGH — Installation will fail (No matching distribution found)
-- **Status**: Downgrade to `pytest>=8.0.0` or similar
-- **Root Cause**: **Typo / Hallucination**. Version `9.0.2` does not exist; developer likely guessed or typoed the version number.
 
 ### O-034: Duplicate documentation file with messy name
 - **Location**: `docs/mpit_budget_engine_v3_decisions (3).md`
@@ -414,3 +394,4 @@ Last updated: 2026-01-04T00:30:00+01:00
 | 09-naming-title | User Prefs section | → MPIT Settings |
 | field-help-text | User Prefs section | Removed |
 | O-003 | field-help-text-report.md | File deleted |
+| O-033 | requirements.txt | Invalid - Pytest 9.0.2 verified |
