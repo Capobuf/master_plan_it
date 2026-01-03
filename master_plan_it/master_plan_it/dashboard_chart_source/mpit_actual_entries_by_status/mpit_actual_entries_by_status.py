@@ -1,7 +1,7 @@
 """
-Dashboard Chart Source: Actual Entries by Kind
+Dashboard Chart Source: Actual Entries by Status
 
-Counts MPIT Actual Entry records grouped by entry_kind for a given year.
+Counts MPIT Actual Entry records grouped by status for a given year.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from frappe import _
 def get_config():
 	return {
 		"fieldname": "year",
-		"method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_actual_entries_by_kind.get_data",
+		"method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_actual_entries_by_status.mpit_actual_entries_by_status.get",
 		"filters": [{"fieldname": "year", "fieldtype": "Data", "label": _("Year")}],
 	}
 
@@ -39,20 +39,28 @@ def _resolve_year(filters) -> str | None:
 def get_data(filters=None):
 	filters = frappe._dict(filters or {})
 	year = _resolve_year(filters)
+	cost_centers = filters.get("cost_centers") or None
+	if cost_centers:
+		cost_centers = tuple(cost_centers)
+		if not cost_centers:
+			return {"labels": [], "datasets": [], "type": "bar"}
 
 	where = []
 	params = {}
 	if year:
 		where.append("year = %(year)s")
 		params["year"] = year
+	if cost_centers:
+		where.append("cost_center IN %(cost_centers)s")
+		params["cost_centers"] = cost_centers
 
 	where_clause = " AND ".join(where) if where else "1=1"
 	rows = frappe.db.sql(
 		f"""
-		SELECT entry_kind, COUNT(*) AS total
+		SELECT status, COUNT(*) AS total
 		FROM `tabMPIT Actual Entry`
 		WHERE {where_clause}
-		GROUP BY entry_kind
+		GROUP BY status
 		ORDER BY total DESC
 		""",
 		params,
@@ -62,7 +70,7 @@ def get_data(filters=None):
 	labels = []
 	values = []
 	for row in rows:
-		label = row.entry_kind or _("Unknown")
+		label = row.status or _("Unknown")
 		labels.append(label)
 		values.append(int(row.total or 0))
 
@@ -71,3 +79,27 @@ def get_data(filters=None):
 		"datasets": [{"name": _("Actual Entries"), "values": values}],
 		"type": "bar",
 	}
+
+@frappe.whitelist()
+def get(
+	chart_name=None,
+	chart=None,
+	no_cache=None,
+	filters=None,
+	from_date=None,
+	to_date=None,
+	timespan=None,
+	time_interval=None,
+	heatmap_year=None,
+):
+	# Normalizza filters (puo arrivare dict o JSON-string)
+	if isinstance(filters, str):
+		filters = frappe.parse_json(filters)
+
+	filters = frappe._dict(filters or {})
+
+	# Compatibilita: filtro UI usa cost_center singolo; i tuoi get_data usano cost_centers lista
+	if filters.get("cost_center") and not filters.get("cost_centers"):
+		filters.cost_centers = [filters.cost_center]
+
+	return get_data(filters)

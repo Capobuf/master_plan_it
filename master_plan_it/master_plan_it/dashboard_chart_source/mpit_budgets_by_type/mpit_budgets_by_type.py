@@ -1,7 +1,7 @@
 """
-Dashboard Chart Source: Actual Entries by Status
+Dashboard Chart Source: Budgets by Type
 
-Counts MPIT Actual Entry records grouped by status for a given year.
+Counts MPIT Budget records grouped by budget_type for a given year.
 """
 
 from __future__ import annotations
@@ -15,7 +15,7 @@ from frappe import _
 def get_config():
 	return {
 		"fieldname": "year",
-		"method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_actual_entries_by_status.get_data",
+		"method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_budgets_by_type.mpit_budgets_by_type.get",
 		"filters": [{"fieldname": "year", "fieldtype": "Data", "label": _("Year")}],
 	}
 
@@ -49,10 +49,10 @@ def get_data(filters=None):
 	where_clause = " AND ".join(where) if where else "1=1"
 	rows = frappe.db.sql(
 		f"""
-		SELECT status, COUNT(*) AS total
-		FROM `tabMPIT Actual Entry`
+		SELECT budget_type, COUNT(*) AS total
+		FROM `tabMPIT Budget`
 		WHERE {where_clause}
-		GROUP BY status
+		GROUP BY budget_type
 		ORDER BY total DESC
 		""",
 		params,
@@ -62,12 +62,36 @@ def get_data(filters=None):
 	labels = []
 	values = []
 	for row in rows:
-		label = row.status or _("Unknown")
+		label = row.budget_type or _("Unknown")
 		labels.append(label)
 		values.append(int(row.total or 0))
 
 	return {
 		"labels": labels,
-		"datasets": [{"name": _("Actual Entries"), "values": values}],
+		"datasets": [{"name": _("Budgets"), "values": values}],
 		"type": "bar",
 	}
+
+@frappe.whitelist()
+def get(
+	chart_name=None,
+	chart=None,
+	no_cache=None,
+	filters=None,
+	from_date=None,
+	to_date=None,
+	timespan=None,
+	time_interval=None,
+	heatmap_year=None,
+):
+	# Normalizza filters (puo arrivare dict o JSON-string)
+	if isinstance(filters, str):
+		filters = frappe.parse_json(filters)
+
+	filters = frappe._dict(filters or {})
+
+	# Compatibilita: filtro UI usa cost_center singolo; i tuoi get_data usano cost_centers lista
+	if filters.get("cost_center") and not filters.get("cost_centers"):
+		filters.cost_centers = [filters.cost_center]
+
+	return get_data(filters)

@@ -15,6 +15,7 @@ app_license = "MIT"
 
 after_install = "master_plan_it.setup.install.after_install"
 after_sync = "master_plan_it.setup.install.after_sync"
+after_migrate = "master_plan_it.setup.install.after_migrate"
 
 fixtures = [
     {"dt": "Role", "filters": [["name", "in", ["vCIO Manager", "Client Editor", "Client Viewer"]]]},

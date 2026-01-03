@@ -175,7 +175,7 @@ def _get_contract_monthly(year: str, year_start: date, year_end: date, cost_cent
 
 
 def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_center_filter: str | None) -> dict[str, dict[int, float]]:
-    """Get monthly amounts per cost center from Planned Items respecting spend_date/distribution."""
+    """Get monthly amounts per cost center from Planned Items respecting spend_date/distribution and overlap."""
     items = frappe.get_all(
         "MPIT Planned Item",
         filters={"docstatus": 1, "is_covered": 0, "out_of_horizon": 0},
@@ -223,7 +223,13 @@ def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_
 
         distribution = (item.distribution or "all").lower()
 
-        # Case 1: spend_date specified - all amount goes to that month
+        start = getdate(item.start_date) if item.start_date else year_start
+        end = getdate(item.end_date) if item.end_date else year_end
+
+        if end < year_start or start > year_end:
+            continue
+
+        # Case 1: spend_date specified - all amount goes to that month (if in year)
         if item.spend_date:
             spend = getdate(item.spend_date)
             if year_start <= spend <= year_end:
@@ -231,30 +237,30 @@ def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_
             continue
 
         # Case 2: distribution based on period
-        start = getdate(item.start_date) if item.start_date else year_start
-        end = getdate(item.end_date) if item.end_date else year_end
+        if distribution == "start":
+            if year_start <= start <= year_end:
+                result[cc][start.month] += amount
+            continue
+
+        if distribution == "end":
+            if year_start <= end <= year_end:
+                result[cc][end.month] += amount
+            continue
 
         period_start = max(start, year_start)
         period_end = min(end, year_end)
-
-        if period_end < period_start:
-            continue
 
         overlap_months = _get_overlap_month_list(period_start, period_end, year_start)
         if not overlap_months:
             continue
 
-        if distribution == "start":
-            # All amount to first overlap month
-            result[cc][overlap_months[0]] += amount
-        elif distribution == "end":
-            # All amount to last overlap month
-            result[cc][overlap_months[-1]] += amount
-        else:
-            # "all" - uniform distribution
-            monthly_amount = amount / len(overlap_months)
-            for m in overlap_months:
-                result[cc][m] += monthly_amount
+        total_months = _get_total_months(start, end)
+        if total_months <= 0:
+            continue
+
+        monthly_amount = amount / total_months
+        for m in overlap_months:
+            result[cc][m] += monthly_amount
 
     return result
 
@@ -270,6 +276,11 @@ def _get_overlap_month_list(period_start: date, period_end: date, year_start: da
             months.append(month)
 
     return months
+
+
+def _get_total_months(start: date, end: date) -> int:
+    """Return total months in the item period (inclusive)."""
+    return (end.year - start.year) * 12 + end.month - start.month + 1
 
 
 def _build_chart(data: list[dict]) -> dict:

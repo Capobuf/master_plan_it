@@ -25,7 +25,7 @@ from frappe.utils import flt
 def get_config():
 	return {
 		"fieldname": "year",
-		"method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_budget_totals.get_data",
+		"method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_budget_totals.mpit_budget_totals.get",
 		"filters": [{"fieldname": "year", "fieldtype": "Data", "label": _("Year")}],
 	}
 
@@ -142,3 +142,27 @@ def get_data(filters=None):
 		],
 		"type": "bar",
 	}
+
+@frappe.whitelist()
+def get(
+	chart_name=None,
+	chart=None,
+	no_cache=None,
+	filters=None,
+	from_date=None,
+	to_date=None,
+	timespan=None,
+	time_interval=None,
+	heatmap_year=None,
+):
+	# Normalizza filters (puo arrivare dict o JSON-string)
+	if isinstance(filters, str):
+		filters = frappe.parse_json(filters)
+
+	filters = frappe._dict(filters or {})
+
+	# Compatibilita: filtro UI usa cost_center singolo; i tuoi get_data usano cost_centers lista
+	if filters.get("cost_center") and not filters.get("cost_centers"):
+		filters.cost_centers = [filters.cost_center]
+
+	return get_data(filters)

@@ -11,7 +11,7 @@ import datetime
 
 import frappe
 from frappe import _
-from frappe.utils import flt
+from frappe.utils import cint, flt
 
 
 def execute(filters=None):
@@ -22,6 +22,8 @@ def execute(filters=None):
     filters.year = _resolve_year(filters)
     if not filters.year:
         frappe.throw(_("No MPIT Year found. Please create one or set the Year filter."))
+
+    filters.allowed_cost_centers = _resolve_cost_centers(filters.get("cost_center"), cint(filters.get("include_children")))
 
     columns = _get_columns()
     data = _get_data(filters)
@@ -47,6 +49,23 @@ def _resolve_year(filters) -> str | None:
     return frappe.db.get_value("MPIT Year", {}, "name", order_by="year desc")
 
 
+def _resolve_cost_centers(cost_center: str | None, include_children: int = 0) -> list[str] | None:
+    if not cost_center:
+        return None
+    if not include_children:
+        return [cost_center]
+
+    row = frappe.db.get_value("MPIT Cost Center", cost_center, ["lft", "rgt"], as_dict=True)
+    if not row or row.lft is None or row.rgt is None:
+        frappe.throw(_("Cost Center {0} is missing tree bounds (lft/rgt).").format(cost_center))
+
+    return frappe.db.get_all(
+        "MPIT Cost Center",
+        filters={"lft": [">=", row.lft], "rgt": ["<=", row.rgt]},
+        pluck="name",
+    )
+
+
 def _get_columns() -> list[dict]:
     return [
         {"label": _("Cost Center"), "fieldname": "cost_center", "fieldtype": "Link", "options": "MPIT Cost Center", "width": 200},
@@ -63,24 +82,24 @@ def _get_columns() -> list[dict]:
 
 def _get_data(filters) -> list[dict]:
     year = filters.year
-    cost_center_filter = filters.get("cost_center")
+    allowed_cost_centers = filters.get("allowed_cost_centers")
 
     # Get all cost centers with activity for this year
-    cost_centers = _get_active_cost_centers(year, cost_center_filter)
+    cost_centers = _get_active_cost_centers(year, allowed_cost_centers)
     if not cost_centers:
         return []
 
     # Get Live budget amounts per cost center
-    live_amounts = _get_live_amounts(year, cost_center_filter)
+    live_amounts = _get_live_amounts(year, allowed_cost_centers)
 
     # Get Snapshot amounts per cost center
-    snapshot_amounts = _get_snapshot_amounts(year, cost_center_filter)
+    snapshot_amounts = _get_snapshot_amounts(year, allowed_cost_centers)
 
     # Get Addendum totals per cost center
-    addendum_totals = _get_addendum_totals(year, cost_center_filter)
+    addendum_totals = _get_addendum_totals(year, allowed_cost_centers)
 
     # Get Actual amounts per cost center
-    actual_amounts = _get_actual_amounts(year, cost_center_filter)
+    actual_amounts = _get_actual_amounts(year, allowed_cost_centers)
 
     rows = []
     for cc in cost_centers:
@@ -109,7 +128,7 @@ def _get_data(filters) -> list[dict]:
     return rows
 
 
-def _get_active_cost_centers(year: str, cost_center_filter: str | None) -> list[str]:
+def _get_active_cost_centers(year: str, allowed_cost_centers: list[str] | None) -> list[str]:
     """Get all cost centers that have any activity (budget lines, actual, or addendum) for this year."""
     ccs = set()
 
@@ -164,13 +183,14 @@ def _get_active_cost_centers(year: str, cost_center_filter: str | None) -> list[
 
     result = sorted(list(ccs))
 
-    if cost_center_filter:
-        result = [cc for cc in result if cc == cost_center_filter]
+    if allowed_cost_centers:
+        allowed = set(allowed_cost_centers)
+        result = [cc for cc in result if cc in allowed]
 
     return result
 
 
-def _get_live_amounts(year: str, cost_center_filter: str | None) -> dict[str, float]:
+def _get_live_amounts(year: str, allowed_cost_centers: list[str] | None) -> dict[str, float]:
     """Get sum of annual_net per cost center from Live budget."""
     live_budget = frappe.db.get_value(
         "MPIT Budget",
@@ -181,8 +201,8 @@ def _get_live_amounts(year: str, cost_center_filter: str | None) -> dict[str, fl
         return {}
 
     filters = {"parent": live_budget}
-    if cost_center_filter:
-        filters["cost_center"] = cost_center_filter
+    if allowed_cost_centers:
+        filters["cost_center"] = ["in", allowed_cost_centers]
 
     lines = frappe.get_all(
         "MPIT Budget Line",
@@ -198,7 +218,7 @@ def _get_live_amounts(year: str, cost_center_filter: str | None) -> dict[str, fl
     return amounts
 
 
-def _get_snapshot_amounts(year: str, cost_center_filter: str | None) -> dict[str, float]:
+def _get_snapshot_amounts(year: str, allowed_cost_centers: list[str] | None) -> dict[str, float]:
     """Get sum of annual_net per cost center from approved Snapshot (Allowance lines only for Cap)."""
     snapshot_budget = frappe.db.get_value(
         "MPIT Budget",
@@ -210,8 +230,8 @@ def _get_snapshot_amounts(year: str, cost_center_filter: str | None) -> dict[str
         return {}
 
     filters = {"parent": snapshot_budget, "line_kind": "Allowance"}
-    if cost_center_filter:
-        filters["cost_center"] = cost_center_filter
+    if allowed_cost_centers:
+        filters["cost_center"] = ["in", allowed_cost_centers]
 
     lines = frappe.get_all(
         "MPIT Budget Line",
@@ -227,11 +247,11 @@ def _get_snapshot_amounts(year: str, cost_center_filter: str | None) -> dict[str
     return amounts
 
 
-def _get_addendum_totals(year: str, cost_center_filter: str | None) -> dict[str, float]:
+def _get_addendum_totals(year: str, allowed_cost_centers: list[str] | None) -> dict[str, float]:
     """Get sum of delta_amount per cost center from approved Addendums."""
     filters = {"year": year, "docstatus": 1}
-    if cost_center_filter:
-        filters["cost_center"] = cost_center_filter
+    if allowed_cost_centers:
+        filters["cost_center"] = ["in", allowed_cost_centers]
 
     addendums = frappe.get_all(
         "MPIT Budget Addendum",
@@ -247,11 +267,11 @@ def _get_addendum_totals(year: str, cost_center_filter: str | None) -> dict[str,
     return amounts
 
 
-def _get_actual_amounts(year: str, cost_center_filter: str | None) -> dict[str, float]:
+def _get_actual_amounts(year: str, allowed_cost_centers: list[str] | None) -> dict[str, float]:
     """Get sum of amount_net per cost center from Verified Actual Entries."""
     filters = {"year": year, "status": "Verified"}
-    if cost_center_filter:
-        filters["cost_center"] = cost_center_filter
+    if allowed_cost_centers:
+        filters["cost_center"] = ["in", allowed_cost_centers]
 
     actuals = frappe.get_all(
         "MPIT Actual Entry",

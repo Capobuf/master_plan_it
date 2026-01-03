@@ -4,7 +4,7 @@ SCOPO: Report v3 che mostra per Project: Planned Items (amount sum), Actual (Del
 INPUT: Filtri (year obbligatorio, project/cost_center/status opzionali).
 OUTPUT: Righe aggregate per Project con confronto Planned vs Actual (Exceptions).
 DESIGN: Uses MPIT Planned Item (v3) instead of legacy MPIT Project Allocation.
-        Planned Item date range determines year based on start_date falling within MPIT Year.
+        Planned Item date range determines year based on overlap with MPIT Year.
 """
 
 from __future__ import annotations
@@ -77,7 +77,7 @@ def _get_data(filters) -> list[dict]:
     if not projects:
         return []
 
-    # Get Planned Item amounts per project (items whose start_date falls in year)
+    # Get Planned Item amounts per project (items overlapping the year)
     planned_amounts = _get_planned_amounts(year_start, year_end, project_filter, cost_center_filter, status_filter)
 
     # Get Actual amounts per project (Delta + Verified)
@@ -134,10 +134,11 @@ def _get_active_projects(
         pluck="name",
     ) if project_filters else None
 
-    # From Planned Items (submitted, start_date in year range)
+    # From Planned Items (submitted, overlap year range)
     pi_filters = {
         "docstatus": 1,
-        "start_date": ["between", [year_start, year_end]],
+        "start_date": ["<=", year_end],
+        "end_date": [">=", year_start],
     }
     if matching_projects is not None:
         pi_filters["project"] = ["in", matching_projects]
@@ -195,10 +196,11 @@ def _get_planned_amounts(
         if not project_names:
             return {}
 
-    # Get Planned Items for year range
+    # Get Planned Items for year overlap
     pi_filters = {
         "docstatus": 1,
-        "start_date": ["between", [year_start, year_end]],
+        "start_date": ["<=", year_end],
+        "end_date": [">=", year_start],
     }
     if project_names:
         pi_filters["project"] = ["in", project_names]

@@ -19,7 +19,7 @@ from frappe.utils import cint, flt
 def get_config():
 	return {
 		"fieldname": "year",
-		"method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_cap_vs_actual_by_cost_center.get_data",
+		"method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_cap_vs_actual_by_cost_center.mpit_cap_vs_actual_by_cost_center.get",
 		"filters": [{"fieldname": "year", "fieldtype": "Data", "label": _("Year")}],
 	}
 
@@ -29,6 +29,12 @@ def get_data(filters=None):
 	today = datetime.date.today()
 	year = str(filters.get("year") or today.year)
 	top_n = cint(filters.get("top_n") or 10)
+	cost_centers = filters.get("cost_centers") or None
+	if cost_centers:
+		cost_centers = tuple(cost_centers)
+		if not cost_centers:
+			return {"labels": [], "datasets": [], "type": "bar"}
+	cc_clause = " AND cost_center IN %(cost_centers)s" if cost_centers else ""
 
 	labels: list[str] = []
 	plan_map: dict[str, float] = {}
@@ -41,14 +47,17 @@ def get_data(filters=None):
 		"name",
 	)
 	if live_budget:
+		params = {"parent": live_budget}
+		if cost_centers:
+			params["cost_centers"] = cost_centers
 		for row in frappe.db.sql(
-			"""
+			f"""
 			SELECT cost_center, COALESCE(SUM(annual_net), 0) AS total
 			FROM `tabMPIT Budget Line`
-			WHERE parent = %(parent)s
+			WHERE parent = %(parent)s{cc_clause}
 			GROUP BY cost_center
 			""",
-			{"parent": live_budget},
+			params,
 			as_dict=True,
 		):
 			if row.cost_center:
@@ -61,40 +70,43 @@ def get_data(filters=None):
 		order_by="modified desc",
 	)
 	if snapshot_budget:
+		params = {"parent": snapshot_budget}
+		if cost_centers:
+			params["cost_centers"] = cost_centers
 		for row in frappe.db.sql(
-			"""
+			f"""
 			SELECT cost_center, COALESCE(SUM(annual_net), 0) AS total
 			FROM `tabMPIT Budget Line`
-			WHERE parent = %(parent)s AND line_kind = 'Allowance'
+			WHERE parent = %(parent)s AND line_kind = 'Allowance'{cc_clause}
 			GROUP BY cost_center
 			""",
-			{"parent": snapshot_budget},
+			params,
 			as_dict=True,
 		):
 			if row.cost_center:
 				cap_map[row.cost_center] = flt(row.total)
 
 	for row in frappe.db.sql(
-		"""
+		f"""
 		SELECT cost_center, COALESCE(SUM(delta_amount), 0) AS total
 		FROM `tabMPIT Budget Addendum`
-		WHERE year = %(year)s AND docstatus = 1
+		WHERE year = %(year)s AND docstatus = 1{cc_clause}
 		GROUP BY cost_center
 		""",
-		{"year": year},
+		{"year": year, "cost_centers": cost_centers} if cost_centers else {"year": year},
 		as_dict=True,
 	):
 		if row.cost_center:
 			cap_map[row.cost_center] = cap_map.get(row.cost_center, 0) + flt(row.total)
 
 	for row in frappe.db.sql(
-		"""
+		f"""
 		SELECT cost_center, COALESCE(SUM(amount_net), 0) AS total
 		FROM `tabMPIT Actual Entry`
-		WHERE year = %(year)s AND status = 'Verified' AND cost_center IS NOT NULL
+		WHERE year = %(year)s AND status = 'Verified' AND cost_center IS NOT NULL{cc_clause}
 		GROUP BY cost_center
 		""",
-		{"year": year},
+		{"year": year, "cost_centers": cost_centers} if cost_centers else {"year": year},
 		as_dict=True,
 	):
 		if row.cost_center:
@@ -128,3 +140,27 @@ def get_data(filters=None):
 		],
 		"type": "bar",
 	}
+
+@frappe.whitelist()
+def get(
+	chart_name=None,
+	chart=None,
+	no_cache=None,
+	filters=None,
+	from_date=None,
+	to_date=None,
+	timespan=None,
+	time_interval=None,
+	heatmap_year=None,
+):
+	# Normalizza filters (puo arrivare dict o JSON-string)
+	if isinstance(filters, str):
+		filters = frappe.parse_json(filters)
+
+	filters = frappe._dict(filters or {})
+
+	# Compatibilita: filtro UI usa cost_center singolo; i tuoi get_data usano cost_centers lista
+	if filters.get("cost_center") and not filters.get("cost_centers"):
+		filters.cost_centers = [filters.cost_center]
+
+	return get_data(filters)

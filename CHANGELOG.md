@@ -218,7 +218,7 @@ None. All features fully implemented and tested.
 - Core DocTypes: Budget, Project, Actual Entry, Contract, Vendor, Category, Year
 - Workflows: Budget Workflow, Budget Amendment Workflow
 - Reports: 4 Script Reports (Approved vs Actual, Current vs Actual, Projects Planned vs Actual, Renewals Window)
-- Dashboard: Master Plan IT Overview
+- Dashboard: MPIT Dashboard (`mpit-dashboard` page) replaces the legacy Overview dashboard
 - Bootstrap helpers: `devtools/bootstrap.py`, `devtools/verify.py` (baseline handled by install hooks in current repo)
 - Documentation: Diátaxis structure (tutorials, how-to, reference, explanation)
 - ADRs: 0001-0007 (architecture decisions)

@@ -10,10 +10,12 @@
 Print: HTML templates live next to each report; no custom JS/CSS; use microtemplating (`<%= ... %>`) with bootstrap classes.
 
 ## Dashboard
-**Master Plan IT Overview** (`dashboard/master_plan_it_overview`) — control center:
-- **Number cards:** Budgets (Live), Budgets (Snapshot), Addendums (Approved), Contracts, Projects, Planned Items (Submitted), Actual Entries (Verified), Cost Centers, Vendors, Renewals 30d/60d/90d, Expired Contracts.
-- **Charts:** Budget Totals, Cap vs Actual by Cost Center, Monthly Plan vs Actual, Monthly Plan v3, Plan vs Cap vs Actual, Budgets by Type, Projects Planned vs Exceptions, Projects by Status, Contracts by Status, Renewals Window (by Month), Planned Items Coverage, Actual Entries by Status, Actual Entries by Kind.
-- Charts use native Dashboard Chart Sources and Report charts (no custom JS/CSS).
+**MPIT Dashboard** (page `mpit-dashboard`) — deterministic Desk Page that replaces the legacy dashboard:
+- **Global filters:** Year (MPIT Year), Cost Center, Include Children, plus a refresh control; filters re-run every block (KPI, charts, tables) and persist in `localStorage`.
+- **KPI strip:** Plan (Live), Cap (Snapshot allowance + addendums), Actual YTD, Remaining (Cap − Actual), Addendums total, Over Cap (count + amount), Renewals window count, Coverage % (planned items). Each card links to an appropriate List or Report for drilldown.
+- **Charts:** monthly Plan vs Actual, Cap vs Actual by Cost Center, Actual Entries by Kind, Contracts by Status, Projects by Status (all reuse the dashboard chart sources with Year/Cost Center filters).
+- **Worklists:** Over Cap Cost Centers, Upcoming Renewals, Planned Items exceptions/out-of-horizon, Latest Verified Actual Entries. Each table is limited to 10 rows and surfaces a “View all” drilldown.
+- Page is powered entirely by `master_plan_it/master_plan_it/page/mpit_dashboard/mpit_dashboard.js` + server API endpoints under `master_plan_it/master_plan_it/api/dashboard.py`; zero Vue/external libs, purely Frappe Desk.
 
 ## Notes
 - Variance views rely on `status = 'Verified'` Actual Entries and `entry_kind in ('Delta','Allowance Spend')`.

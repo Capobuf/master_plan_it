@@ -1,6 +1,6 @@
 import frappe
 
-# Utility: ensure Plan Delta chart/source exist for Cost Centers and link to overview dashboard.
+# Utility: ensure Plan Delta chart/source exist for Cost Centers.
 # Inputs: none (uses DB state). Outputs: created/updated Dashboard Chart Source and Chart records.
 
 
@@ -59,21 +59,3 @@ def ensure_plan_delta_chart():
 	frappe.db.commit()
 	return {"chart_source": source.name, "chart": chart.name, "filters": default_filters}
 
-
-def ensure_dashboard_links():
-	"""Ensure the Overview dashboard includes the Plan Delta chart in the intended order."""
-	frappe.conf.developer_mode = 1
-	charts = [
-		{"chart": "MPIT Current Plan vs Exceptions", "width": "Half"},
-		{"chart": "MPIT Baseline vs Exceptions", "width": "Half"},
-		{"chart": "MPIT Plan Delta by Cost Center", "width": "Half"},
-		{"chart": "MPIT Projects Planned vs Actual", "width": "Half"},
-		{"chart": "MPIT Renewals Window (by Month)", "width": "Half"},
-	]
-
-	dash = frappe.get_doc("Dashboard", "Master Plan IT Overview")
-	dash.set("charts", charts)
-	dash.flags.ignore_mandatory = True
-	dash.save(ignore_permissions=True)
-	frappe.db.commit()
-	return [c.chart for c in dash.charts]

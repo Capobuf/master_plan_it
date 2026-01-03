@@ -8,6 +8,7 @@ external scripts.
 from __future__ import annotations
 
 import datetime
+import os
 
 import frappe
 
@@ -58,10 +59,27 @@ def _bootstrap_basics() -> None:
 
 def _reload_standard_assets() -> None:
 	"""Ensure dashboards/workspaces/chart sources are synced on new sites."""
-	# Chart sources used by dashboards
-	# Dashboards and workspace
 	frappe.reload_doc("master_plan_it", "dashboard", "master_plan_it_overview", force=1)
 	frappe.reload_doc("master_plan_it", "workspace", "master_plan_it", force=1)
+	_reload_doc_folder("dashboard_chart_source")
+	_reload_doc_folder("dashboard_chart")
+
+
+def _reload_doc_folder(folder: str) -> None:
+	base_path = frappe.get_app_path("master_plan_it", "master_plan_it", folder)
+	if not base_path or not os.path.exists(base_path):
+		return
+
+	for entry in os.listdir(base_path):
+		if entry.startswith(".") or entry.startswith("_"):
+			continue
+		entry_path = os.path.join(base_path, entry)
+		if not os.path.isdir(entry_path):
+			continue
+		json_path = os.path.join(entry_path, f"{entry}.json")
+		if not os.path.exists(json_path):
+			continue
+		frappe.reload_doc("master_plan_it", folder, entry, force=1)
 
 
 def after_install() -> None:
@@ -70,3 +88,7 @@ def after_install() -> None:
 
 def after_sync() -> None:
 	_bootstrap_basics()
+
+
+def after_migrate() -> None:
+	_reload_standard_assets()

@@ -12,6 +12,7 @@ def execute(filters=None):
 	if isinstance(filters, str):
 		filters = frappe.parse_json(filters)
 	filters = frappe._dict(filters or {})
+	filters.allowed_cost_centers = _resolve_cost_centers(filters.get("cost_center"), cint(filters.get("include_children")))
 	rows, summary = _get_data(filters)
 
 	columns = [
@@ -40,6 +41,7 @@ def _get_data(filters):
 	auto_renew_only = cint(filters.get("auto_renew_only") or 0)
 	start_date = getdate(filters.get("from_date") or nowdate())
 	end_date = add_days(start_date, days)
+	allowed_cost_centers = filters.get("allowed_cost_centers")
 
 	rows = []
 	expired_count = 0
@@ -47,6 +49,8 @@ def _get_data(filters):
 	where = ["COALESCE(next_renewal_date, end_date) IS NOT NULL"]
 	if auto_renew_only:
 		where.append("COALESCE(auto_renew, 0) = 1")
+	if allowed_cost_centers:
+		where.append("cost_center IN %(cost_centers)s")
 
 	contracts = frappe.db.sql(
 		f"""
@@ -62,6 +66,7 @@ def _get_data(filters):
 		FROM `tabMPIT Contract`
 		WHERE {" AND ".join(where)}
 		""",
+		{"cost_centers": tuple(allowed_cost_centers)} if allowed_cost_centers else {},
 		as_dict=True,
 	)
 
@@ -123,3 +128,20 @@ def _build_chart(rows: list[dict]) -> dict | None:
 		"type": "bar",
 		"axis_options": {"x_axis_mode": "tick", "y_axis_mode": "tick"},
 	}
+
+
+def _resolve_cost_centers(cost_center: str | None, include_children: int = 0) -> list[str] | None:
+	if not cost_center:
+		return None
+	if not include_children:
+		return [cost_center]
+
+	row = frappe.db.get_value("MPIT Cost Center", cost_center, ["lft", "rgt"], as_dict=True)
+	if not row or row.lft is None or row.rgt is None:
+		frappe.throw(_("Cost Center {0} is missing tree bounds (lft/rgt).").format(cost_center))
+
+	return frappe.db.get_all(
+		"MPIT Cost Center",
+		filters={"lft": [">=", row.lft], "rgt": ["<=", row.rgt]},
+		pluck="name",
+	)

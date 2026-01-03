@@ -5,7 +5,7 @@
    "label": "Renewals Window (by Month)"
   }
  ],
- "content": "[{\"id\": \"hdr-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Master Plan IT</span>\", \"col\": 12}}, {\"id\": \"sub-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">Budget Engine v3 - Live/Snapshot/Addendum</span>\", \"col\": 12}}, {\"id\": \"spc-1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-qa\", \"type\": \"header\", \"data\": {\"text\": \"Quick Actions\", \"col\": 12}}, {\"id\": \"qa-dash\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Overview Dashboard\", \"col\": 3}}, {\"id\": \"qa-budget\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Live Budget\", \"col\": 3}}, {\"id\": \"qa-addendum\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Addendum\", \"col\": 3}}, {\"id\": \"qa-planned\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Planned Item\", \"col\": 3}}, {\"id\": \"spc-2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-setup\", \"type\": \"header\", \"data\": {\"text\": \"Setup & Pianificazione\", \"col\": 12}}, {\"id\": \"card-setup\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 4}}, {\"id\": \"card-plan\", \"type\": \"card\", \"data\": {\"card_name\": \"Planning\", \"col\": 4}}, {\"id\": \"card-reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"spc-4\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-reports\", \"type\": \"header\", \"data\": {\"text\": \"Reports & Monitoring (v3)\", \"col\": 12}}, {\"id\": \"rep-cap\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Plan vs Cap vs Actual\", \"col\": 3}}, {\"id\": \"rep-monthly\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Monthly Plan v3\", \"col\": 3}}, {\"id\": \"rep-renewals\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Renewals Window\", \"col\": 3}}, {\"id\": \"rep-diff\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budget Diff\", \"col\": 3}}, {\"id\": \"spc-5\", \"type\": \"spacer\", \"data\": {\"col\": 12}}]",
+ "content": "[{\"id\": \"hdr-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Master Plan IT</span>\", \"col\": 12}}, {\"id\": \"sub-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">Budget Engine v3 - Live/Snapshot/Addendum</span>\", \"col\": 12}}, {\"id\": \"spc-1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-qa\", \"type\": \"header\", \"data\": {\"text\": \"Quick Actions\", \"col\": 12}}, {\"id\": \"qa-overview\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Overview Dashboard\", \"col\": 3}}, {\"id\": \"qa-budget\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Live Budget\", \"col\": 3}}, {\"id\": \"qa-addendum\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Addendum\", \"col\": 3}}, {\"id\": \"qa-planned\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Planned Item\", \"col\": 3}}, {\"id\": \"spc-2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-setup\", \"type\": \"header\", \"data\": {\"text\": \"Setup & Pianificazione\", \"col\": 12}}, {\"id\": \"card-setup\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 4}}, {\"id\": \"card-plan\", \"type\": \"card\", \"data\": {\"card_name\": \"Planning\", \"col\": 4}}, {\"id\": \"card-reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"spc-4\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-reports\", \"type\": \"header\", \"data\": {\"text\": \"Reports & Monitoring (v3)\", \"col\": 12}}, {\"id\": \"rep-cap\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Plan vs Cap vs Actual\", \"col\": 3}}, {\"id\": \"rep-monthly\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Monthly Plan v3\", \"col\": 3}}, {\"id\": \"rep-renewals\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Renewals Window\", \"col\": 3}}, {\"id\": \"rep-diff\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budget Diff\", \"col\": 3}}, {\"id\": \"spc-5\", \"type\": \"spacer\", \"data\": {\"col\": 12}}]",
  "creation": "2025-12-31 05:34:40.229880",
  "custom_blocks": [],
  "docstatus": 0,
@@ -208,7 +208,7 @@
    "type": "Link"
   }
  ],
- "modified": "2026-01-02 10:00:00.000000",
+ "modified": "2026-01-03 00:00:00.000000",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "Master Plan IT",
@@ -236,9 +236,17 @@
    "color": "Grey",
    "doc_view": "",
    "icon": "dashboard",
+   "label": "Overview",
+   "link_to": "mpit-dashboard",
+   "type": "Page"
+  },
+  {
+   "color": "Grey",
+   "doc_view": "",
+   "icon": "dashboard",
    "label": "Overview Dashboard",
-   "link_to": "Master Plan IT Overview",
-   "type": "Dashboard"
+   "link_to": "mpit-dashboard",
+   "type": "Page"
   },
   {
    "color": "Blue",
