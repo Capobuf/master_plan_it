@@ -26,19 +26,19 @@
     "section_pricing",
     "current_amount",
     "current_amount_includes_vat",
-  "vat_rate",
-  "billing_cycle",
-  "cb_pricing_right",
-  "monthly_amount_net",
-  "current_amount_net",
-  "current_amount_vat",
-  "current_amount_gross",
+    "vat_rate",
+    "billing_cycle",
+    "cb_pricing_right",
+    "monthly_amount_net",
+    "current_amount_net",
+    "current_amount_vat",
+    "current_amount_gross",
     "planned_item",
-  "tb_notes",
-  "notes",
-  "attachment",
-  "tb_admin",
-  "document_id"
+    "tb_notes",
+    "notes",
+    "attachment",
+    "tb_admin",
+    "document_id"
   ],
   "fields": [
     {
@@ -46,15 +46,15 @@
       "fieldtype": "Section Break",
       "label": "Overview"
     },
-  {
-   "fieldname": "sb_overview_main",
-   "fieldtype": "Section Break",
-   "hidden": 0
-  },
+    {
+      "fieldname": "sb_overview_main",
+      "fieldtype": "Section Break",
+      "hidden": 0
+    },
     {
       "fieldname": "description",
       "fieldtype": "Data",
-      "description": "Descrizione sintetica (opzionale).",
+      "description": "Brief description (optional).",
       "in_list_view": 1,
       "label": "Description",
       "bold": 1,
@@ -64,7 +64,7 @@
     {
       "fieldname": "vendor",
       "fieldtype": "Link",
-      "description": "Fornitore",
+      "description": "Vendor",
       "in_list_view": 1,
       "in_standard_filter": 1,
       "label": "Vendor",
@@ -74,13 +74,13 @@
       "allow_in_quick_entry": 1,
       "in_preview": 1
     },
-  {
-   "fieldname": "planned_item",
-   "fieldtype": "Link",
-   "label": "Planned Item (coverage)",
-   "options": "MPIT Planned Item",
-   "description": "Collega il Planned Item che questo contratto copre (esclude doppio conteggio)."
-  },
+    {
+      "fieldname": "planned_item",
+      "fieldtype": "Link",
+      "label": "Planned Item (coverage)",
+      "options": "MPIT Planned Item",
+      "description": "Link the Planned Item this contract covers (prevents double counting)."
+    },
     {
       "fieldname": "cb_overview_right",
       "fieldtype": "Column Break"
@@ -89,7 +89,7 @@
       "default": "Active",
       "fieldname": "status",
       "fieldtype": "Select",
-      "description": "Stato operativo.",
+      "description": "Operational status.",
       "in_standard_filter": 1,
       "label": "Status",
       "options": "Draft\nActive\nPending Renewal\nRenewed\nCancelled\nExpired",
@@ -97,15 +97,15 @@
       "in_preview": 1
     },
     {
-   "fieldname": "cost_center",
-   "fieldtype": "Link",
-   "description": "Cost Center di imputazione (caps/report).",
-   "in_standard_filter": 1,
-   "label": "Cost Center",
-   "options": "MPIT Cost Center",
-   "allow_in_quick_entry": 1,
-   "reqd": 1
-  },
+      "fieldname": "cost_center",
+      "fieldtype": "Link",
+      "description": "Cost Center (Caps/Reporting).",
+      "in_standard_filter": 1,
+      "label": "Cost Center",
+      "options": "MPIT Cost Center",
+      "allow_in_quick_entry": 1,
+      "reqd": 1
+    },
     {
       "fieldname": "tb_renewal",
       "fieldtype": "Section Break",
@@ -114,7 +114,7 @@
     {
       "fieldname": "start_date",
       "fieldtype": "Date",
-      "description": "Data inizio contratto.",
+      "description": "Contract start date.",
       "label": "Start Date",
       "allow_in_quick_entry": 1,
       "in_preview": 1
@@ -122,7 +122,7 @@
     {
       "fieldname": "end_date",
       "fieldtype": "Date",
-      "description": "Data fine contratto.",
+      "description": "Contract end date.",
       "label": "End Date",
       "allow_in_quick_entry": 1,
       "in_preview": 1
@@ -131,7 +131,7 @@
       "default": "1",
       "fieldname": "auto_renew",
       "fieldtype": "Check",
-      "description": "Rinnovo automatico con notice.",
+      "description": "Auto-renew with notice.",
       "label": "Auto Renew",
       "in_standard_filter": 1,
       "in_list_view": 1,
@@ -141,7 +141,7 @@
     {
       "fieldname": "next_renewal_date",
       "fieldtype": "Date",
-      "description": "Prossima data rinnovo (auto se mancante).",
+      "description": "Next renewal date (auto if missing).",
       "in_list_view": 1,
       "label": "Next Renewal Date",
       "depends_on": "eval:doc.auto_renew",
@@ -150,48 +150,48 @@
       "in_preview": 1
     },
     {
-   "fieldname": "tb_billing",
-   "fieldtype": "Section Break",
-   "label": "Billing"
-  },
-  {
-   "fieldname": "section_pricing",
-   "fieldtype": "Section Break",
-   "label": "Pricing",
-   "description": "Importo ricorrente e cadenza di fatturazione."
-  },
-  {
-   "fieldname": "current_amount",
-   "fieldtype": "Currency",
-   "description": "Importo corrente per la cadenza scelta (netto o lordo in base al flag IVA).",
-   "label": "Current Amount",
-   "in_list_view": 1,
-   "allow_in_quick_entry": 1,
-   "in_preview": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "current_amount_includes_vat",
-   "fieldtype": "Check",
-   "description": "Se selezionato, l'importo include IVA (netto/calcoli adeguati automaticamente).",
-   "label": "Current Amount Includes VAT"
-  },
-  {
-   "fieldname": "vat_rate",
-   "fieldtype": "Percent",
-   "description": "Aliquota IVA applicata all'importo corrente (usa il default dell'utente se vuoto).",
-   "label": "VAT Rate",
-   "depends_on": "eval:doc.current_amount_includes_vat || doc.current_amount",
-   "precision": "2"
-  },
-  {
-   "fieldname": "billing_cycle",
-   "fieldtype": "Select",
-   "description": "Cadenza di fatturazione per l'importo corrente.",
-   "label": "Billing Cycle",
-   "options": "Monthly\nQuarterly\nAnnual\nOther",
-   "in_list_view": 1,
-   "allow_in_quick_entry": 1
+      "fieldname": "tb_billing",
+      "fieldtype": "Section Break",
+      "label": "Billing"
+    },
+    {
+      "fieldname": "section_pricing",
+      "fieldtype": "Section Break",
+      "label": "Pricing",
+      "description": "Recurring amount and billing cycle."
+    },
+    {
+      "fieldname": "current_amount",
+      "fieldtype": "Currency",
+      "description": "Current amount for the chosen cycle (net or gross per VAT flag).",
+      "label": "Current Amount",
+      "in_list_view": 1,
+      "allow_in_quick_entry": 1,
+      "in_preview": 1
+    },
+    {
+      "default": "0",
+      "fieldname": "current_amount_includes_vat",
+      "fieldtype": "Check",
+      "description": "If enabled, amount includes VAT (net/calcs adjusted automatically).",
+      "label": "Current Amount Includes VAT"
+    },
+    {
+      "fieldname": "vat_rate",
+      "fieldtype": "Percent",
+      "description": "VAT Rate applied to current amount (uses user default if empty).",
+      "label": "VAT Rate",
+      "depends_on": "eval:doc.current_amount_includes_vat || doc.current_amount",
+      "precision": "2"
+    },
+    {
+      "fieldname": "billing_cycle",
+      "fieldtype": "Select",
+      "description": "Billing cycle for the current amount.",
+      "label": "Billing Cycle",
+      "options": "Monthly\nQuarterly\nAnnual\nOther",
+      "in_list_view": 1,
+      "allow_in_quick_entry": 1
     },
     {
       "fieldname": "cb_pricing_right",
@@ -200,7 +200,7 @@
     {
       "fieldname": "monthly_amount_net",
       "fieldtype": "Currency",
-      "description": "Equivalente mensile (netto) calcolato in base a importo/cadenza o spread. Vuoto se usi una rate schedule.",
+      "description": "Monthly (Net) equivalent calculated based on amount/cycle or spread. Empty if using rate schedule.",
       "label": "Monthly Amount (Net)",
       "read_only": 1,
       "depends_on": "eval:doc.current_amount"
@@ -208,7 +208,7 @@
     {
       "fieldname": "current_amount_net",
       "fieldtype": "Currency",
-      "description": "Calcolo automatico (net).",
+      "description": "Auto-calculated (Net).",
       "label": "Net Amount",
       "read_only": 1,
       "depends_on": "eval:doc.current_amount"
@@ -216,19 +216,19 @@
     {
       "fieldname": "current_amount_vat",
       "fieldtype": "Currency",
-      "description": "Calcolo automatico IVA.",
+      "description": "Auto-calculated VAT.",
       "label": "VAT Amount",
       "read_only": 1,
       "depends_on": "eval:doc.current_amount"
     },
     {
-   "fieldname": "current_amount_gross",
-   "fieldtype": "Currency",
-   "description": "Calcolo automatico lordo.",
-   "label": "Gross Amount",
-   "read_only": 1,
-   "depends_on": "eval:doc.current_amount"
-  },
+      "fieldname": "current_amount_gross",
+      "fieldtype": "Currency",
+      "description": "Auto-calculated Gross.",
+      "label": "Gross Amount",
+      "read_only": 1,
+      "depends_on": "eval:doc.current_amount"
+    },
     {
       "fieldname": "tb_notes",
       "fieldtype": "Section Break",
@@ -246,20 +246,20 @@
       "description": "Upload the contract file.",
       "label": "Attachment"
     },
-  {
-    "fieldname": "tb_admin",
-    "fieldtype": "Section Break",
-    "label": "Admin"
-  },
-  {
-   "fieldname": "document_id",
-   "fieldtype": "Read Only",
-   "label": "Document ID",
-   "options": "name",
-   "description": "ID univoco del documento (name).",
-   "in_preview": 1
-  }
- ],
+    {
+      "fieldname": "tb_admin",
+      "fieldtype": "Section Break",
+      "label": "Admin"
+    },
+    {
+      "fieldname": "document_id",
+      "fieldtype": "Read Only",
+      "label": "Document ID",
+      "options": "name",
+      "description": "Unique Document ID (name).",
+      "in_preview": 1
+    }
+  ],
   "grid_page_length": 50,
   "index_web_pages_for_search": 1,
   "links": [],
@@ -322,6 +322,6 @@
   "sort_field": "modified",
   "sort_order": "DESC",
   "states": [],
- "title_field": "description",
+  "title_field": "description",
   "track_changes": 1
 }

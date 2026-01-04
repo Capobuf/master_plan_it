@@ -49,7 +49,7 @@
     {
       "fieldname": "title",
       "fieldtype": "Data",
-      "description": "Titolo sintetico (es. \"2025 Forecast\").",
+      "description": "Short title (e.g. \"2025 Forecast\").",
       "in_list_view": 1,
       "label": "Title"
     },
@@ -62,7 +62,7 @@
       "fieldname": "workflow_state",
       "fieldtype": "Select",
       "default": "Draft",
-      "description": "Stato visibile (Draft/Proposed/In Review/Approved per Snapshot; Active/Closed per Live).",
+      "description": "Visible status (Draft/Proposed/In Review/Approved for Snapshot; Active/Closed for Live).",
       "in_list_view": 0,
       "label": "Status",
       "options": "Draft\nProposed\nIn Review\nApproved\nActive\nClosed",
@@ -92,7 +92,7 @@
     {
       "fieldname": "lines",
       "fieldtype": "Table",
-      "description": "Righe da fonti (contracts/projects) + manuali (Allowance cap per cost center).",
+      "description": "Lines from sources (contracts/projects) + manual (Allowance cap per cost center).",
       "label": "Lines",
       "options": "MPIT Budget Line"
     },
@@ -112,7 +112,7 @@
       "fieldtype": "Read Only",
       "label": "Document ID",
       "options": "name",
-      "description": "ID univoco del documento (name).",
+      "description": "Unique Document ID (name).",
       "in_preview": 1
     },
     {

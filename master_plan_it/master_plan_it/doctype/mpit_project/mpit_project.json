@@ -32,7 +32,7 @@
     {
       "fieldname": "title",
       "fieldtype": "Data",
-      "description": "Titolo del progetto.",
+      "description": "Project Title.",
       "in_list_view": 1,
       "in_standard_filter": 1,
       "label": "Title",
@@ -42,7 +42,7 @@
       "default": "Draft",
       "fieldname": "status",
       "fieldtype": "Select",
-      "description": "Stato (richiede almeno una allocation per Approved+).",
+      "description": "Status (requires at least one allocation for Approved+).",
       "in_list_view": 1,
       "in_standard_filter": 1,
       "label": "Status",
@@ -55,7 +55,7 @@
     {
       "fieldname": "cost_center",
       "fieldtype": "Link",
-      "description": "Cost Center principale (report/cap).",
+      "description": "Main Cost Center (Report/Cap).",
       "in_list_view": 1,
       "in_standard_filter": 1,
       "label": "Cost Center",
@@ -65,19 +65,19 @@
     {
       "fieldname": "start_date",
       "fieldtype": "Date",
-      "description": "Data inizio (richiede end_date se valorizzata).",
+      "description": "Start Date (requires end_date if set).",
       "label": "Start Date"
     },
     {
       "fieldname": "end_date",
       "fieldtype": "Date",
-      "description": "Data fine (>= start).",
+      "description": "End Date (>= start).",
       "label": "End Date"
     },
     {
       "fieldname": "description",
       "fieldtype": "Small Text",
-      "description": "Note sintetiche sul perimetro.",
+      "description": "Brief notes on scope.",
       "label": "Description"
     },
     {
@@ -118,7 +118,7 @@
       "fieldtype": "Read Only",
       "label": "Document ID",
       "options": "name",
-      "description": "ID univoco del documento (name).",
+      "description": "Unique Document ID (name).",
       "in_preview": 1
     }
   ],

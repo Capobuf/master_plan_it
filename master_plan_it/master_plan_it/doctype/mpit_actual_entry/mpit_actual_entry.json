@@ -1,246 +1,246 @@
 {
- "actions": [],
- "allow_import": 1,
- "allow_rename": 1,
- "creation": "2025-12-21 22:34:53.313023",
- "doctype": "DocType",
- "editable_grid": 1,
- "engine": "InnoDB",
- "field_order": [
-  "tab_overview",
-  "posting_date",
-  "entry_kind",
-  "status",
-  "overview_col_break",
-  "year",
-  "description",
-  "tab_amounts",
-  "amount",
-  "amount_includes_vat",
-  "vat_rate",
-  "amounts_col_break",
-  "amount_net",
-  "amount_vat",
-  "amount_gross",
-  "tab_links",
-  "contract",
-  "project",
-  "planned_item",
-  "links_col_break",
-  "cost_center"
-],
- "fields": [
-  {
-   "fieldname": "tab_overview",
-   "fieldtype": "Section Break",
-   "label": "Overview"
-  },
-  {
-   "fieldname": "posting_date",
-   "fieldtype": "Date",
-   "description": "Data registrazione (deriva l'MPIT Year).",
-   "in_list_view": 1,
-   "label": "Posting Date",
-   "reqd": 1
-  },
-  {
-   "fieldname": "year",
-   "fieldtype": "Link",
-   "description": "MPIT Year derivato.",
-   "in_list_view": 1,
-   "label": "Year",
-   "options": "MPIT Year",
-   "read_only": 1,
-   "reqd": 0
-  },
-  {
-   "default": "Recorded",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "description": "Recorded o Verified (solo vCIO può revert).",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Status",
-   "options": "Recorded\nVerified"
- },
-{
- "fieldname": "entry_kind",
- "fieldtype": "Select",
-  "description": "Delta = contract/project, Allowance Spend = cost center (nessun link).",
-  "label": "Entry Kind",
-  "options": "Delta\nAllowance Spend",
-  "in_list_view": 1,
-  "in_standard_filter": 1
- },
-  {
-   "fieldname": "overview_col_break",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "description": "Motivazione / nota (richiesta per allowance negativa).",
-   "label": "Description"
-  },
-  {
-   "fieldname": "tab_amounts",
-   "fieldtype": "Section Break",
-   "label": "Amounts & VAT"
-  },
-  {
-   "fieldname": "amount",
-   "fieldtype": "Currency",
-   "description": "Importo (netto o lordo secondo flag).",
-   "in_list_view": 1,
-   "label": "Amount",
-   "reqd": 1
-  },
-  {
-   "default": "0",
-   "fieldname": "amount_includes_vat",
-   "fieldtype": "Check",
-   "description": "If enabled, the amount includes VAT.",
-   "label": "Amount Includes VAT"
-  },
-  {
-   "fieldname": "vat_rate",
-   "fieldtype": "Percent",
-   "description": "VAT rate applied to the amount.",
-   "label": "VAT Rate",
-   "precision": "2"
-  },
-  {
-   "fieldname": "amounts_col_break",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "amount_net",
-   "fieldtype": "Currency",
-   "description": "Calcolo automatico (net).",
-   "label": "Net Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "amount_vat",
-   "fieldtype": "Currency",
-   "description": "Calcolo automatico IVA.",
-   "label": "VAT Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "amount_gross",
-   "fieldtype": "Currency",
-   "description": "Calcolo automatico lordo.",
-   "label": "Gross Amount",
-   "read_only": 1
-  },
-  {
-   "fieldname": "tab_links",
-   "fieldtype": "Section Break",
-   "label": "Links (scegli una sola fonte)"
-  },
-  {
-   "fieldname": "contract",
-   "fieldtype": "Link",
-   "description": "Per Delta: collega un Contract (oppure un Project).",
-   "label": "Contract (Delta)",
-   "options": "MPIT Contract",
-   "depends_on": "eval:doc.entry_kind=='Delta'"
-  },
-  {
-   "fieldname": "project",
-   "fieldtype": "Link",
-   "description": "Per Delta: collega un Project (oppure un Contract).",
-   "label": "Project (Delta)",
-   "options": "MPIT Project",
-   "depends_on": "eval:doc.entry_kind=='Delta'"
- },
-  {
-   "fieldname": "planned_item",
-   "fieldtype": "Link",
-   "label": "Planned Item (Delta)",
-   "options": "MPIT Planned Item",
-   "description": "Se presente, l'Actual copre il Planned Item e lo esclude dal budget.",
-   "depends_on": "eval:doc.entry_kind=='Delta'"
-  },
-  {
-   "fieldname": "links_col_break",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "cost_center",
-   "fieldtype": "Link",
-   "description": "Per Allowance Spend: scegli il cost center (auto da Contract/Project se presenti).",
-   "fetch_from": "contract.cost_center",
-   "fetch_if_empty": 1,
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Cost Center (Allowance)",
-   "options": "MPIT Cost Center",
-   "mandatory_depends_on": "eval:doc.entry_kind==\"Allowance Spend\""
-  }
- ],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-12-24 20:00:48.972730",
- "modified_by": "Administrator",
- "module": "Master Plan IT",
- "name": "MPIT Actual Entry",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "import": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "import": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "vCIO Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "import": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Client Editor",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Client Viewer",
-   "share": 1
-  }
- ],
- "row_format": "Dynamic",
- "rows_threshold_for_grid_search": 20,
- "sort_field": "posting_date",
- "sort_order": "desc",
- "states": [],
- "track_changes": 1
+  "actions": [],
+  "allow_import": 1,
+  "allow_rename": 1,
+  "creation": "2025-12-21 22:34:53.313023",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "tab_overview",
+    "posting_date",
+    "entry_kind",
+    "status",
+    "overview_col_break",
+    "year",
+    "description",
+    "tab_amounts",
+    "amount",
+    "amount_includes_vat",
+    "vat_rate",
+    "amounts_col_break",
+    "amount_net",
+    "amount_vat",
+    "amount_gross",
+    "tab_links",
+    "contract",
+    "project",
+    "planned_item",
+    "links_col_break",
+    "cost_center"
+  ],
+  "fields": [
+    {
+      "fieldname": "tab_overview",
+      "fieldtype": "Section Break",
+      "label": "Overview"
+    },
+    {
+      "fieldname": "posting_date",
+      "fieldtype": "Date",
+      "description": "Posting Date (derives MPIT Year).",
+      "in_list_view": 1,
+      "label": "Posting Date",
+      "reqd": 1
+    },
+    {
+      "fieldname": "year",
+      "fieldtype": "Link",
+      "description": "Derived MPIT Year.",
+      "in_list_view": 1,
+      "label": "Year",
+      "options": "MPIT Year",
+      "read_only": 1,
+      "reqd": 0
+    },
+    {
+      "default": "Recorded",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "description": "Recorded or Verified (only vCIO can revert).",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Status",
+      "options": "Recorded\nVerified"
+    },
+    {
+      "fieldname": "entry_kind",
+      "fieldtype": "Select",
+      "description": "Delta = contract/project, Allowance Spend = cost center (no link).",
+      "label": "Entry Kind",
+      "options": "Delta\nAllowance Spend",
+      "in_list_view": 1,
+      "in_standard_filter": 1
+    },
+    {
+      "fieldname": "overview_col_break",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "description": "Motivation / note (required for negative allowance).",
+      "label": "Description"
+    },
+    {
+      "fieldname": "tab_amounts",
+      "fieldtype": "Section Break",
+      "label": "Amounts & VAT"
+    },
+    {
+      "fieldname": "amount",
+      "fieldtype": "Currency",
+      "description": "Amount (net or gross per flag).",
+      "in_list_view": 1,
+      "label": "Amount",
+      "reqd": 1
+    },
+    {
+      "default": "0",
+      "fieldname": "amount_includes_vat",
+      "fieldtype": "Check",
+      "description": "If enabled, the amount includes VAT.",
+      "label": "Amount Includes VAT"
+    },
+    {
+      "fieldname": "vat_rate",
+      "fieldtype": "Percent",
+      "description": "VAT rate applied to the amount.",
+      "label": "VAT Rate",
+      "precision": "2"
+    },
+    {
+      "fieldname": "amounts_col_break",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "amount_net",
+      "fieldtype": "Currency",
+      "description": "Auto-calculated (Net).",
+      "label": "Net Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "amount_vat",
+      "fieldtype": "Currency",
+      "description": "Auto-calculated VAT.",
+      "label": "VAT Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "amount_gross",
+      "fieldtype": "Currency",
+      "description": "Auto-calculated Gross.",
+      "label": "Gross Amount",
+      "read_only": 1
+    },
+    {
+      "fieldname": "tab_links",
+      "fieldtype": "Section Break",
+      "label": "Links (choose one source only)"
+    },
+    {
+      "fieldname": "contract",
+      "fieldtype": "Link",
+      "description": "For Delta: link a Contract (or a Project).",
+      "label": "Contract (Delta)",
+      "options": "MPIT Contract",
+      "depends_on": "eval:doc.entry_kind=='Delta'"
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "description": "For Delta: link a Project (or a Contract).",
+      "label": "Project (Delta)",
+      "options": "MPIT Project",
+      "depends_on": "eval:doc.entry_kind=='Delta'"
+    },
+    {
+      "fieldname": "planned_item",
+      "fieldtype": "Link",
+      "label": "Planned Item (Delta)",
+      "options": "MPIT Planned Item",
+      "description": "If present, Actual covers the Planned Item and excludes it from budget.",
+      "depends_on": "eval:doc.entry_kind=='Delta'"
+    },
+    {
+      "fieldname": "links_col_break",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "cost_center",
+      "fieldtype": "Link",
+      "description": "For Allowance Spend: choose cost center (auto from Contract/Project if present).",
+      "fetch_from": "contract.cost_center",
+      "fetch_if_empty": 1,
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Cost Center (Allowance)",
+      "options": "MPIT Cost Center",
+      "mandatory_depends_on": "eval:doc.entry_kind==\"Allowance Spend\""
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "links": [],
+  "modified": "2025-12-24 20:00:48.972730",
+  "modified_by": "Administrator",
+  "module": "Master Plan IT",
+  "name": "MPIT Actual Entry",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "import": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "import": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "vCIO Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "import": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Client Editor",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Client Viewer",
+      "share": 1
+    }
+  ],
+  "row_format": "Dynamic",
+  "rows_threshold_for_grid_search": 20,
+  "sort_field": "posting_date",
+  "sort_order": "desc",
+  "states": [],
+  "track_changes": 1
 }
