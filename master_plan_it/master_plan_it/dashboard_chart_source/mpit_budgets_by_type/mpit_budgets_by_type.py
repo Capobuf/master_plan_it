@@ -37,6 +37,8 @@ def _resolve_year(filters) -> str | None:
 
 
 def get_data(filters=None):
+	if isinstance(filters, list):
+		filters = _normalize_dashboard_filters(filters)
 	filters = frappe._dict(filters or {})
 	year = _resolve_year(filters)
 
@@ -65,11 +67,16 @@ def get_data(filters=None):
 		label = row.budget_type or _("Unknown")
 		labels.append(label)
 		values.append(int(row.total or 0))
+	
+	if not labels:
+		labels = [_("No Data")]
+		values = [0]
 
 	return {
 		"labels": labels,
 		"datasets": [{"name": _("Budgets"), "values": values}],
 		"type": "pie",
+		"colors": ["#5E64FF", "#7CD6FD", "#743ee2", "#ffb86c", "#ff5858"]
 	}
 
 @frappe.whitelist()
@@ -83,6 +90,7 @@ def get(
 	timespan=None,
 	time_interval=None,
 	heatmap_year=None,
+	refresh=None,
 ):
 	# Normalizza filters (puo arrivare dict o JSON-string)
 	if isinstance(filters, str):
@@ -95,3 +103,19 @@ def get(
 		filters.cost_centers = [filters.cost_center]
 
 	return get_data(filters)
+
+def _normalize_dashboard_filters(filters_list: list) -> dict:
+	"""
+	Dashboard Chart (backend) passes filters as a list and appends a docstatus check.
+	We must convert carefully.
+	Expected format in list: [doctype, fieldname, op, value, ...]
+	"""
+	out = {}
+	for f in filters_list:
+		if isinstance(f, (list, tuple)) and len(f) >= 4:
+			# f[1] is fieldname, f[3] is value
+			fieldname = f[1]
+			value = f[3]
+			if fieldname:
+				out[fieldname] = value
+	return out

@@ -25,6 +25,8 @@ def get_config():
 
 
 def get_data(filters=None):
+	if isinstance(filters, list):
+		filters = _normalize_dashboard_filters(filters)
 	filters = frappe._dict(filters or {})
 	today = datetime.date.today()
 	year = str(filters.get("year") or today.year)
@@ -85,12 +87,16 @@ def get_data(filters=None):
 			actual[m - 1] += flt(row.total)
 
 	labels = [calendar.month_abbr[i] for i in range(1, 13)]
+	
+	# Validate no None/NaNs in values
+	plan_clean = [flt(v or 0.0, 2) for v in plan]
+	actual_clean = [flt(v or 0.0, 2) for v in actual]
 
 	return {
 		"labels": labels,
 		"datasets": [
-			{"name": _("Plan (Live)"), "values": [flt(v, 2) for v in plan]},
-			{"name": _("Actual"), "values": [flt(v, 2) for v in actual]},
+			{"name": _("Plan (Live)"), "values": plan_clean},
+			{"name": _("Actual"), "values": actual_clean},
 		],
 		"type": "line",
 		"colors": ["#5E64FF", "#FF5858"],
@@ -107,6 +113,7 @@ def get(
 	timespan=None,
 	time_interval=None,
 	heatmap_year=None,
+	refresh=None,
 ):
 	# Normalizza filters (puo arrivare dict o JSON-string)
 	if isinstance(filters, str):
@@ -119,3 +126,19 @@ def get(
 		filters.cost_centers = [filters.cost_center]
 
 	return get_data(filters)
+
+def _normalize_dashboard_filters(filters_list: list) -> dict:
+	"""
+	Dashboard Chart (backend) passes filters as a list and appends a docstatus check.
+	We must convert carefully.
+	Expected format in list: [doctype, fieldname, op, value, ...]
+	"""
+	out = {}
+	for f in filters_list:
+		if isinstance(f, (list, tuple)) and len(f) >= 4:
+			# f[1] is fieldname, f[3] is value
+			fieldname = f[1]
+			value = f[3]
+			if fieldname:
+				out[fieldname] = value
+	return out
