@@ -26,6 +26,12 @@ class MPITContract(Document):
 		if not self.description:
 			self.description = self.name
 
+	def on_trash(self):
+		"""Reset series counter if this was the last Contract in sequence."""
+		from master_plan_it.naming_utils import reset_series_on_delete
+		prefix, digits = mpit_defaults.get_contract_series()
+		reset_series_on_delete(self.name, prefix, digits)
+
 	def validate(self):
 		prev = self.get_doc_before_save()
 		if not self.cost_center:

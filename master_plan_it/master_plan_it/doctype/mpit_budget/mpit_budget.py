@@ -416,6 +416,17 @@ class MPITBudget(Document):
 		if self.budget_type == "Snapshot" and self.docstatus == 1 and self.has_value_changed("lines"):
 			frappe.throw(_("Snapshot budgets are immutable."))
 
+	def on_trash(self):
+		"""Reset series counter if this was the last Snapshot in sequence."""
+		if self.budget_type != "Snapshot":
+			return
+		from master_plan_it.naming_utils import reset_series_on_delete
+		prefix, digits, middle = mpit_defaults.get_budget_series(
+			year=self.year, budget_type="Snapshot"
+		)
+		series_prefix = f"{prefix}{middle}"
+		reset_series_on_delete(self.name, series_prefix, digits)
+
 	def _enforce_generated_lines_read_only(self) -> None:
 		"""Prevent editing generated lines."""
 		for line in self.lines:
@@ -537,6 +548,12 @@ class MPITBudget(Document):
 				frappe.throw(_("Approved status is reserved for Snapshot budgets."))
 			if self.docstatus == 1:
 				frappe.throw(_("Live budgets cannot be submitted."))
+			# Auto-set Active/Closed based on year
+			year_start, year_end = annualization.get_year_bounds(self.year)
+			if _getdate(nowdate()) > year_end:
+				self.workflow_state = "Closed"
+			else:
+				self.workflow_state = "Active"
 
 	def before_submit(self):
 		"""Allow submit of Snapshots without tripping immutability guard."""
@@ -834,7 +851,7 @@ def enqueue_budget_refresh(years: list[str] | None = None) -> None:
 			doc = frappe.new_doc("MPIT Budget")
 			doc.budget_type = "Live"
 			doc.year = year
-			doc.workflow_state = "Draft"
+			doc.workflow_state = "Active"
 			doc.insert(ignore_permissions=True)
 			live_budgets.append(doc.name)
 			doc.add_comment("Comment", _("Auto-created Live budget for year {0} (auto-refresh event).").format(year))

@@ -32,6 +32,12 @@ class MPITActualEntry(Document):
 		seq = getseries(series_key, digits)
 		self.name = f"{prefix}{seq}"
 
+	def on_trash(self):
+		"""Reset series counter if this was the last Actual Entry in sequence."""
+		from master_plan_it.naming_utils import reset_series_on_delete
+		prefix, digits = mpit_defaults.get_actual_entry_series()
+		reset_series_on_delete(self.name, prefix, digits)
+
 	def validate(self):
 		self._set_year_from_posting_date()
 		self._compute_vat_split()

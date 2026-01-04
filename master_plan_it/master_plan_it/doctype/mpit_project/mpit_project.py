@@ -10,8 +10,8 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import getseries
-from frappe.utils import flt, getdate
-from master_plan_it import mpit_defaults, tax
+from frappe.utils import cint, flt, getdate
+from master_plan_it import amounts, mpit_defaults, tax
 
 
 class MPITProject(Document):
@@ -24,6 +24,12 @@ class MPITProject(Document):
 		series_key = f"{prefix}.####"
 		sequence = getseries(series_key, digits)
 		self.name = f"{prefix}{sequence}"
+
+	def on_trash(self):
+		"""Reset series counter if this was the last Project in sequence."""
+		from master_plan_it.naming_utils import reset_series_on_delete
+		prefix, digits = mpit_defaults.get_project_series()
+		reset_series_on_delete(self.name, prefix, digits)
 	
 	def validate(self):
 		if not self.cost_center:
@@ -52,15 +58,15 @@ class MPITProject(Document):
 				field_label=_("Allocation {0} Planned Amount").format(alloc.idx)
 			)
 			
-			net, vat, gross = tax.split_net_vat_gross(
-				alloc.planned_amount,
-				final_vat_rate,
-				bool(alloc.planned_amount_includes_vat)
+			result = amounts.compute_vat_split(
+				amount=alloc.planned_amount,
+				vat_rate=final_vat_rate,
+				amount_includes_vat=bool(cint(alloc.planned_amount_includes_vat))
 			)
 			
-			alloc.planned_amount_net = net
-			alloc.planned_amount_vat = vat
-			alloc.planned_amount_gross = gross
+			alloc.planned_amount_net = result["amount_net"]
+			alloc.planned_amount_vat = result["amount_vat"]
+			alloc.planned_amount_gross = result["amount_gross"]
 	
 	def _compute_quotes_vat_split(self):
 		"""Compute net/vat/gross for all Project Quotes with strict VAT validation."""
@@ -77,26 +83,48 @@ class MPITProject(Document):
 				field_label=_("Quote {0} Amount").format(quote.idx)
 			)
 			
-			net, vat, gross = tax.split_net_vat_gross(
-				quote.amount,
-				final_vat_rate,
-				bool(quote.amount_includes_vat)
+			result = amounts.compute_vat_split(
+				amount=quote.amount,
+				vat_rate=final_vat_rate,
+				amount_includes_vat=bool(cint(quote.amount_includes_vat))
 			)
 			
-			quote.amount_net = net
-			quote.amount_vat = vat
-			quote.amount_gross = gross
+			quote.amount_net = result["amount_net"]
+			quote.amount_vat = result["amount_vat"]
+			quote.amount_gross = result["amount_gross"]
 
 	def _compute_project_totals(self) -> None:
 		"""Persist planned/quoted/expected totals (net), including Verified delta entries."""
 		planned_total = 0.0
 		for alloc in (self.allocations or []):
-			planned_total += flt(getattr(alloc, "planned_amount_net", None) or alloc.planned_amount or 0)
+			# Use net if computed. If missing, strictly recalculate using shared module.
+			if getattr(alloc, "planned_amount_net", None) is not None:
+				planned_total += flt(alloc.planned_amount_net)
+			else:
+				# Deterministic recalculation (no guessing)
+				# Note: validate_strict_vat is skipped here as this is a fallback calc, 
+				# we use whatever rate is on the row or 0.
+				result = amounts.compute_vat_split(
+					amount=flt(alloc.planned_amount),
+					vat_rate=flt(alloc.vat_rate) if alloc.vat_rate is not None else 0.0,
+					amount_includes_vat=bool(cint(alloc.planned_amount_includes_vat))
+				)
+				planned_total += result["amount_net"]
 
 		quoted_total = 0.0
 		for quote in (self.quotes or []):
-			quoted_total += flt(getattr(quote, "amount_net", None) or quote.amount or 0)
-
+			# Use net if computed. If missing, strictly recalculate using shared module.
+			if getattr(quote, "amount_net", None) is not None:
+				quoted_total += flt(quote.amount_net)
+			else:
+				# Deterministic recalculation (no guessing)
+				result = amounts.compute_vat_split(
+					amount=flt(quote.amount),
+					vat_rate=flt(quote.vat_rate) if quote.vat_rate is not None else 0.0,
+					amount_includes_vat=bool(cint(quote.amount_includes_vat))
+				)
+				quoted_total += result["amount_net"]
+			
 		verified_deltas = 0.0
 		if self.name:
 			row = frappe.db.sql(
@@ -141,7 +169,7 @@ class MPITProject(Document):
 	def _enforce_quote_approvals(self) -> None:
 		"""Only vCIO Manager can set Approved quotes."""
 		for quote in self.quotes or []:
-			if quote.status == "Approved" and not frappe.has_role("vCIO Manager"):
+			if quote.status == "Approved" and "vCIO Manager" not in frappe.get_roles():
 				frappe.throw(_("Only vCIO Manager can approve a quote."))
 
 

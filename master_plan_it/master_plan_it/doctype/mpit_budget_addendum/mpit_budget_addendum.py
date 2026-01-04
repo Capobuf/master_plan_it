@@ -26,6 +26,13 @@ class MPITBudgetAddendum(Document):
 		seq = getseries(series_key, 4)
 		self.name = f"ADD-{self.year}-{abbr}-{seq}"
 
+	def on_trash(self):
+		"""Reset series counter if this was the last Addendum in sequence."""
+		from master_plan_it.naming_utils import reset_series_on_delete
+		abbr = self._get_cost_center_abbr()
+		series_prefix = f"ADD-{self.year}-{abbr}-"
+		reset_series_on_delete(self.name, series_prefix, 4)
+
 	def validate(self):
 		if not self.reason:
 			frappe.throw(_("Reason is required."))
