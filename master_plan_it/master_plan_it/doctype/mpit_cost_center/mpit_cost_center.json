@@ -1,224 +1,235 @@
 {
- "actions": [],
- "allow_import": 1,
- "allow_rename": 1,
- "autoname": "field:cost_center_name",
- "creation": "2025-01-01 00:00:00.000000",
- "doctype": "DocType",
- "editable_grid": 1,
- "engine": "InnoDB",
- "quick_entry": 1,
-  "field_order": [
-  "section_overview",
-  "cost_center_name",
-  "abbr",
-  "parent_mpit_cost_center",
-  "column_overview_right",
-  "is_group",
-  "section_budget_summary",
-  "summary_year",
-  "plan_amount",
-  "snapshot_allowance",
-  "addendum_total",
-  "column_budget_summary_right",
-  "cap_total",
-  "actual_amount",
-  "remaining_amount",
-  "over_cap_amount",
-  "section_advanced",
-  "old_parent",
-  "lft",
-  "rgt"
- ],
- "fields": [
-  {
-   "fieldname": "section_overview",
-   "fieldtype": "Section Break",
-   "label": "Overview"
-  },
-  {
-   "fieldname": "cost_center_name",
-   "fieldtype": "Data",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Cost Center Name",
-   "reqd": 1,
-   "unique": 1
-  },
-  {
-   "description": "Short code used for Addendum autoname.",
-   "fieldname": "abbr",
-   "fieldtype": "Data",
-   "in_standard_filter": 1,
-   "label": "Abbreviation"
-  },
-  {
-   "fieldname": "parent_mpit_cost_center",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "label": "Parent Cost Center",
-   "options": "MPIT Cost Center"
-  },
-  {
-   "fieldname": "column_overview_right",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "0",
-   "fieldname": "is_group",
-   "fieldtype": "Check",
-   "label": "Is Group"
-  },
-  {
-   "fieldname": "section_budget_summary",
-   "fieldtype": "Section Break",
-   "label": "Budget Summary"
-  },
-  {
-   "description": "Year used for budget summary.",
-   "fieldname": "summary_year",
-   "fieldtype": "Data",
-   "label": "Summary Year",
-   "read_only": 1
-  },
-  {
-   "fieldname": "plan_amount",
-   "fieldtype": "Currency",
-   "label": "Plan (Live)",
-   "read_only": 1
-  },
-  {
-   "fieldname": "snapshot_allowance",
-   "fieldtype": "Currency",
-   "label": "Snapshot Allowance",
-   "read_only": 1
-  },
-  {
-   "fieldname": "addendum_total",
-   "fieldtype": "Currency",
-   "label": "Addendum Total",
-   "read_only": 1
-  },
-  {
-   "fieldname": "column_budget_summary_right",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "cap_total",
-   "fieldtype": "Currency",
-   "label": "Cap",
-   "read_only": 1
-  },
-  {
-   "fieldname": "actual_amount",
-   "fieldtype": "Currency",
-   "label": "Actual (Verified)",
-   "read_only": 1
-  },
-  {
-   "fieldname": "remaining_amount",
-   "fieldtype": "Currency",
-   "label": "Remaining",
-   "read_only": 1
-  },
-  {
-   "fieldname": "over_cap_amount",
-   "fieldtype": "Currency",
-   "label": "Over Cap",
-   "read_only": 1
-  },
-  {
-   "fieldname": "lft",
-   "fieldtype": "Int",
-   "hidden": 1,
-   "label": "Left",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "rgt",
-   "fieldtype": "Int",
-   "hidden": 1,
-   "label": "Right",
-   "no_copy": 1,
-   "read_only": 1
-  },
-  {
-   "fieldname": "section_advanced",
-   "fieldtype": "Section Break",
-   "label": "Advanced",
-   "collapsible": 1
-  },
-  {
-   "fieldname": "old_parent",
-   "fieldtype": "Link",
-   "label": "Old Parent",
-   "options": "MPIT Cost Center",
-   "hidden": 1,
-   "read_only": 1
-  }
- ],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "is_tree": 1,
- "links": [],
- "modified": "2026-01-02 23:22:41.306031",
- "modified_by": "Administrator",
- "module": "Master Plan IT",
- "name": "MPIT Cost Center",
- "nsm_parent_field": "parent_mpit_cost_center",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "import": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "import": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "vCIO Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Client Editor",
-   "share": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Client Viewer",
-   "share": 1
-  }
- ],
- "row_format": "Dynamic",
- "rows_threshold_for_grid_search": 20,
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": [],
- "title_field": "cost_center_name",
- "track_changes": 1
+    "actions": [],
+    "allow_import": 1,
+    "allow_rename": 1,
+    "autoname": "field:cost_center_name",
+    "creation": "2025-01-01 00:00:00.000000",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "quick_entry": 1,
+    "field_order": [
+        "section_meta",
+        "cost_center_name",
+        "cb_meta_right",
+        "is_group",
+        "parent_mpit_cost_center",
+        "cb_meta_right2",
+        "abbr",
+        "section_budget_summary",
+        "summary_year",
+        "cap_total",
+        "cb_budget_mid",
+        "plan_amount",
+        "actual_amount",
+        "cb_budget_right",
+        "snapshot_allowance",
+        "remaining_amount",
+        "addendum_total",
+        "over_cap_amount",
+        "section_advanced",
+        "old_parent",
+        "lft",
+        "rgt"
+    ],
+    "fields": [
+        {
+            "fieldname": "section_meta",
+            "fieldtype": "Section Break",
+            "show_title": 0
+        },
+        {
+            "fieldname": "cost_center_name",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Cost Center Name",
+            "reqd": 1,
+            "unique": 1
+        },
+        {
+            "fieldname": "cb_meta_right",
+            "fieldtype": "Column Break"
+        },
+        {
+            "default": "0",
+            "fieldname": "is_group",
+            "fieldtype": "Check",
+            "label": "Is Group"
+        },
+        {
+            "fieldname": "parent_mpit_cost_center",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "label": "Parent Cost Center",
+            "options": "MPIT Cost Center"
+        },
+        {
+            "fieldname": "cb_meta_right2",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "abbr",
+            "fieldtype": "Data",
+            "in_standard_filter": 1,
+            "label": "Abbreviation"
+        },
+        {
+            "fieldname": "section_budget_summary",
+            "fieldtype": "Section Break",
+            "label": "Budget Summary",
+            "collapsible": 1,
+            "collapsible_depends_on": "eval:!doc.summary_year"
+        },
+        {
+            "fieldname": "summary_year",
+            "fieldtype": "Data",
+            "label": "Year",
+            "read_only": 1
+        },
+        {
+            "fieldname": "cap_total",
+            "fieldtype": "Currency",
+            "label": "Cap",
+            "read_only": 1
+        },
+        {
+            "fieldname": "cb_budget_mid",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "plan_amount",
+            "fieldtype": "Currency",
+            "label": "Plan (Live)",
+            "read_only": 1
+        },
+        {
+            "fieldname": "actual_amount",
+            "fieldtype": "Currency",
+            "label": "Actual",
+            "read_only": 1
+        },
+        {
+            "fieldname": "cb_budget_right",
+            "fieldtype": "Column Break"
+        },
+        {
+            "fieldname": "snapshot_allowance",
+            "fieldtype": "Currency",
+            "label": "Snapshot",
+            "read_only": 1
+        },
+        {
+            "fieldname": "remaining_amount",
+            "fieldtype": "Currency",
+            "label": "Remaining",
+            "read_only": 1
+        },
+        {
+            "fieldname": "addendum_total",
+            "fieldtype": "Currency",
+            "label": "Addendum",
+            "read_only": 1
+        },
+        {
+            "fieldname": "over_cap_amount",
+            "fieldtype": "Currency",
+            "label": "Over Cap",
+            "read_only": 1
+        },
+        {
+            "fieldname": "lft",
+            "fieldtype": "Int",
+            "hidden": 1,
+            "label": "Left",
+            "no_copy": 1,
+            "read_only": 1
+        },
+        {
+            "fieldname": "rgt",
+            "fieldtype": "Int",
+            "hidden": 1,
+            "label": "Right",
+            "no_copy": 1,
+            "read_only": 1
+        },
+        {
+            "fieldname": "section_advanced",
+            "fieldtype": "Section Break",
+            "label": "Advanced",
+            "collapsible": 1,
+            "hidden": 1
+        },
+        {
+            "fieldname": "old_parent",
+            "fieldtype": "Link",
+            "label": "Old Parent",
+            "options": "MPIT Cost Center",
+            "hidden": 1,
+            "read_only": 1
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "is_tree": 1,
+    "links": [],
+    "modified": "2026-01-04 21:45:00.000000",
+    "modified_by": "Administrator",
+    "module": "Master Plan IT",
+    "name": "MPIT Cost Center",
+    "nsm_parent_field": "parent_mpit_cost_center",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "import": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "import": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "vCIO Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Client Editor",
+            "share": 1
+        },
+        {
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Client Viewer",
+            "share": 1
+        }
+    ],
+    "row_format": "Dynamic",
+    "rows_threshold_for_grid_search": 20,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "title_field": "cost_center_name",
+    "track_changes": 1
 }
