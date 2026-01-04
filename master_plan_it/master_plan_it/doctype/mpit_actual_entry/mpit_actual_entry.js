@@ -46,7 +46,9 @@ const sync_entry_kind_with_links = async (frm, force = false) => {
 
 	if (!current || (has_link && current === "Allowance Spend") || (!has_link && current === "Delta")) {
 		await frm.set_value("entry_kind", target);
+		return true;
 	}
+	return false;
 };
 
 const toggle_actual_layout = (frm) => {
@@ -67,23 +69,19 @@ const toggle_actual_layout = (frm) => {
 frappe.ui.form.on("MPIT Actual Entry", {
 	async onload(frm) {
 		await master_plan_it.vat.apply_defaults_for_actual(frm);
-		if (frm.is_new()) {
-			await sync_entry_kind_with_links(frm, true);
-			toggle_actual_layout(frm);
-		}
 	},
 	async refresh(frm) {
 		await master_plan_it.vat.apply_defaults_for_actual(frm);
-		await sync_entry_kind_with_links(frm, true);
-		toggle_actual_layout(frm);
+		const changed = await sync_entry_kind_with_links(frm, true);
+		if (!changed) {
+			toggle_actual_layout(frm);
+		}
 	},
 	async contract(frm) {
 		await sync_entry_kind_with_links(frm, true);
-		toggle_actual_layout(frm);
 	},
 	async project(frm) {
 		await sync_entry_kind_with_links(frm, true);
-		toggle_actual_layout(frm);
 	},
 	entry_kind(frm) {
 		toggle_actual_layout(frm);

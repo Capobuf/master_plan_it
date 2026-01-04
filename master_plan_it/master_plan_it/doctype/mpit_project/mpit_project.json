@@ -1,218 +1,188 @@
 {
- "actions": [],
- "allow_import": 1,
- "allow_rename": 1,
- "creation": "2025-12-21 22:34:51.970208",
- "doctype": "DocType",
- "editable_grid": 1,
- "engine": "InnoDB",
- "field_order": [
-  "section_overview",
-  "title",
-  "status",
-  "overview_col_break",
-  "cost_center",
-  "start_date",
-  "end_date",
-  "description",
-  "document_id",
-  "financial_section",
-  "financial_summary",
-  "planned_total_net",
-  "quoted_total_net",
-  "expected_total_net",
-  "alloc_section",
-  "allocations",
-  "quotes_section",
-  "quotes"
-],
-"fields": [
-  {
-   "fieldname": "section_overview",
-   "fieldtype": "Section Break",
-   "label": "Overview",
-   "collapsible": 0
-  },
-  {
-   "fieldname": "title",
-   "fieldtype": "Data",
-   "description": "Titolo del progetto.",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Title",
-   "reqd": 1
-  },
-  {
-   "default": "Draft",
-   "fieldname": "status",
-   "fieldtype": "Select",
-   "description": "Stato (richiede almeno una allocation per Approved+).",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Status",
-   "options": "Draft\nProposed\nApproved\nIn Progress\nOn Hold\nCompleted\nCancelled"
-},
-  {
-   "fieldname": "overview_col_break",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "cost_center",
-   "fieldtype": "Link",
-   "description": "Cost Center principale (report/cap).",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Cost Center",
-   "options": "MPIT Cost Center",
-   "reqd": 1
-  },
-  {
-   "fieldname": "start_date",
-   "fieldtype": "Date",
-   "description": "Data inizio (richiede end_date se valorizzata).",
-   "label": "Start Date"
-  },
-  {
-   "fieldname": "end_date",
-   "fieldtype": "Date",
-   "description": "Data fine (>= start).",
-   "label": "End Date"
-  },
-  {
-   "fieldname": "description",
-   "fieldtype": "Small Text",
-   "description": "Note sintetiche sul perimetro.",
-   "label": "Description"
-  },
-  {
-   "fieldname": "financial_section",
-   "fieldtype": "Section Break",
-   "label": "Financials",
-   "collapsible": 0
-  },
-  {
-   "fieldname": "financial_summary",
-   "fieldtype": "HTML",
-   "label": "Financial Summary",
-   "read_only": 1
-  },
-  {
-   "fieldname": "planned_total_net",
-   "fieldtype": "Currency",
-   "description": "Total planned net from allocations.",
-   "label": "Planned Total (Net)",
-   "read_only": 1
-  },
-  {
-   "fieldname": "quoted_total_net",
-   "fieldtype": "Currency",
-   "description": "Total quoted net amount.",
-   "label": "Quoted Total (Net)",
-   "read_only": 1
-  },
-  {
-   "fieldname": "expected_total_net",
-   "fieldtype": "Currency",
-   "description": "Expected total (quoted if present, otherwise planned).",
-   "label": "Expected Total (Net)",
-   "read_only": 1
-  },
-  {
-   "fieldname": "alloc_section",
-   "fieldtype": "Section Break",
-   "label": "Allocations",
-   "collapsible": 0
-  },
-  {
-   "fieldname": "allocations",
-   "fieldtype": "Table",
-   "description": "Add one or more allocations with year and planned amount.",
-   "label": "Allocations",
-   "options": "MPIT Project Allocation"
-  },
-  {
-   "fieldname": "quotes_section",
-   "fieldtype": "Section Break",
-   "label": "Quotes",
-   "collapsible": 0
-  },
-  {
-   "fieldname": "quotes",
-   "fieldtype": "Table",
-   "description": "Add vendor quotes for this project.",
-   "label": "Quotes",
-   "options": "MPIT Project Quote"
-  },
-  {
-   "fieldname": "document_id",
-   "fieldtype": "Read Only",
-   "label": "Document ID",
-   "options": "name",
-   "description": "ID univoco del documento (name).",
-   "in_preview": 1
-  }
-],
- "grid_page_length": 50,
- "index_web_pages_for_search": 1,
- "links": [],
- "modified": "2025-12-24 20:00:45.088553",
- "modified_by": "Administrator",
- "module": "Master Plan IT",
- "name": "MPIT Project",
- "owner": "Administrator",
- "permissions": [
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "import": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "System Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "delete": 1,
-   "email": 1,
-   "import": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "vCIO Manager",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "create": 1,
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Client Editor",
-   "share": 1,
-   "write": 1
-  },
-  {
-   "email": 1,
-   "export": 1,
-   "print": 1,
-   "read": 1,
-   "report": 1,
-   "role": "Client Viewer",
-   "share": 1
-  }
- ],
- "row_format": "Dynamic",
- "rows_threshold_for_grid_search": 20,
- "sort_field": "modified",
- "sort_order": "DESC",
- "states": [],
- "title_field": "title",
- "track_changes": 1
+  "actions": [],
+  "allow_import": 1,
+  "allow_rename": 1,
+  "creation": "2025-12-21 22:34:51.970208",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "section_overview",
+    "title",
+    "status",
+    "overview_col_break",
+    "cost_center",
+    "start_date",
+    "end_date",
+    "description",
+    "document_id",
+    "financial_section",
+    "financial_summary",
+    "planned_total_net",
+    "quoted_total_net",
+    "expected_total_net"
+  ],
+  "fields": [
+    {
+      "fieldname": "section_overview",
+      "fieldtype": "Section Break",
+      "label": "Overview",
+      "collapsible": 0
+    },
+    {
+      "fieldname": "title",
+      "fieldtype": "Data",
+      "description": "Titolo del progetto.",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Title",
+      "reqd": 1
+    },
+    {
+      "default": "Draft",
+      "fieldname": "status",
+      "fieldtype": "Select",
+      "description": "Stato (richiede almeno una allocation per Approved+).",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Status",
+      "options": "Draft\nProposed\nApproved\nIn Progress\nOn Hold\nCompleted\nCancelled"
+    },
+    {
+      "fieldname": "overview_col_break",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "cost_center",
+      "fieldtype": "Link",
+      "description": "Cost Center principale (report/cap).",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Cost Center",
+      "options": "MPIT Cost Center",
+      "reqd": 1
+    },
+    {
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "description": "Data inizio (richiede end_date se valorizzata).",
+      "label": "Start Date"
+    },
+    {
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "description": "Data fine (>= start).",
+      "label": "End Date"
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "description": "Note sintetiche sul perimetro.",
+      "label": "Description"
+    },
+    {
+      "fieldname": "financial_section",
+      "fieldtype": "Section Break",
+      "label": "Financials",
+      "collapsible": 0
+    },
+    {
+      "fieldname": "financial_summary",
+      "fieldtype": "HTML",
+      "label": "Financial Summary",
+      "read_only": 1
+    },
+    {
+      "fieldname": "planned_total_net",
+      "fieldtype": "Currency",
+      "description": "Total planned net from allocations.",
+      "label": "Planned Total (Net)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "quoted_total_net",
+      "fieldtype": "Currency",
+      "description": "Total quoted net amount.",
+      "label": "Quoted Total (Net)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "expected_total_net",
+      "fieldtype": "Currency",
+      "description": "Expected total (quoted if present, otherwise planned).",
+      "label": "Expected Total (Net)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "document_id",
+      "fieldtype": "Read Only",
+      "label": "Document ID",
+      "options": "name",
+      "description": "ID univoco del documento (name).",
+      "in_preview": 1
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "links": [],
+  "modified": "2025-12-24 20:00:45.088553",
+  "modified_by": "Administrator",
+  "module": "Master Plan IT",
+  "name": "MPIT Project",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "import": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "import": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "vCIO Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Client Editor",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Client Viewer",
+      "share": 1
+    }
+  ],
+  "row_format": "Dynamic",
+  "rows_threshold_for_grid_search": 20,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "title",
+  "track_changes": 1
 }

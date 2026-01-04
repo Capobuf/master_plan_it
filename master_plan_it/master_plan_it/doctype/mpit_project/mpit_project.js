@@ -38,9 +38,7 @@ master_plan_it.vat.apply_defaults_for_project_allocation =
 	};
 
 frappe.ui.form.on("MPIT Project", {
-	async allocations_add(_frm, cdt, cdn) {
-		await master_plan_it.vat.apply_defaults_for_project_allocation(cdt, cdn);
-	},
+
 	async refresh(frm) {
 		await master_plan_it.project.render_financial_summary(frm);
 	},

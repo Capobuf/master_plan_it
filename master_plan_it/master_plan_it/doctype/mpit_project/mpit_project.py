@@ -36,94 +36,17 @@ class MPITProject(Document):
 			# In tests we skip the strict check to keep fixtures light
 			if not frappe.flags.in_test:
 				frappe.throw(_("Cost Center is required on Project."))
-		self._require_allocations_for_approval()
 		self._validate_planned_dates()
-		self._enforce_quote_approvals()
-		self._compute_allocations_vat_split()
-		self._compute_quotes_vat_split()
-		self._compute_project_totals()
+		# self._compute_project_totals() # TODO: Re-implement using Planned Items summation later if needed
+		self._warn_if_approved_without_planned_items()
 	
-	def _compute_allocations_vat_split(self):
-		"""Compute net/vat/gross for all Project Allocations with strict VAT validation."""
-		default_vat = mpit_defaults.get_default_vat_rate()
-		
-		for alloc in self.allocations:
-			if alloc.vat_rate is None and default_vat is not None:
-				alloc.vat_rate = default_vat
-			
-			final_vat_rate = tax.validate_strict_vat(
-				alloc.planned_amount,
-				alloc.vat_rate,
-				default_vat,
-				field_label=_("Allocation {0} Planned Amount").format(alloc.idx)
-			)
-			
-			result = amounts.compute_vat_split(
-				amount=alloc.planned_amount,
-				vat_rate=final_vat_rate,
-				amount_includes_vat=bool(cint(alloc.planned_amount_includes_vat))
-			)
-			
-			alloc.planned_amount_net = result["amount_net"]
-			alloc.planned_amount_vat = result["amount_vat"]
-			alloc.planned_amount_gross = result["amount_gross"]
-	
-	def _compute_quotes_vat_split(self):
-		"""Compute net/vat/gross for all Project Quotes with strict VAT validation."""
-		default_vat = mpit_defaults.get_default_vat_rate()
-		
-		for quote in self.quotes:
-			if quote.vat_rate is None and default_vat is not None:
-				quote.vat_rate = default_vat
-			
-			final_vat_rate = tax.validate_strict_vat(
-				quote.amount,
-				quote.vat_rate,
-				default_vat,
-				field_label=_("Quote {0} Amount").format(quote.idx)
-			)
-			
-			result = amounts.compute_vat_split(
-				amount=quote.amount,
-				vat_rate=final_vat_rate,
-				amount_includes_vat=bool(cint(quote.amount_includes_vat))
-			)
-			
-			quote.amount_net = result["amount_net"]
-			quote.amount_vat = result["amount_vat"]
-			quote.amount_gross = result["amount_gross"]
+
 
 	def _compute_project_totals(self) -> None:
 		"""Persist planned/quoted/expected totals (net), including Verified delta entries."""
+		# v3: Allocations and Quotes are removed. Totals are pending re-implementation based on Planned Items.
 		planned_total = 0.0
-		for alloc in (self.allocations or []):
-			# Use net if computed. If missing, strictly recalculate using shared module.
-			if getattr(alloc, "planned_amount_net", None) is not None:
-				planned_total += flt(alloc.planned_amount_net)
-			else:
-				# Deterministic recalculation (no guessing)
-				# Note: validate_strict_vat is skipped here as this is a fallback calc, 
-				# we use whatever rate is on the row or 0.
-				result = amounts.compute_vat_split(
-					amount=flt(alloc.planned_amount),
-					vat_rate=flt(alloc.vat_rate) if alloc.vat_rate is not None else 0.0,
-					amount_includes_vat=bool(cint(alloc.planned_amount_includes_vat))
-				)
-				planned_total += result["amount_net"]
-
 		quoted_total = 0.0
-		for quote in (self.quotes or []):
-			# Use net if computed. If missing, strictly recalculate using shared module.
-			if getattr(quote, "amount_net", None) is not None:
-				quoted_total += flt(quote.amount_net)
-			else:
-				# Deterministic recalculation (no guessing)
-				result = amounts.compute_vat_split(
-					amount=flt(quote.amount),
-					vat_rate=flt(quote.vat_rate) if quote.vat_rate is not None else 0.0,
-					amount_includes_vat=bool(cint(quote.amount_includes_vat))
-				)
-				quoted_total += result["amount_net"]
 			
 		verified_deltas = 0.0
 		if self.name:
@@ -146,14 +69,17 @@ class MPITProject(Document):
 		self.quoted_total_net = flt(quoted_total, 2)
 		self.expected_total_net = flt(expected_total, 2)
 
-	def _require_allocations_for_approval(self) -> None:
-		"""Ensure at least one allocation exists before approval or later states."""
-		required_for_status = {"Approved", "In Progress", "On Hold", "Completed", "Cancelled"}
-		if self.status in required_for_status and not self.allocations:
-			frappe.throw(
-				_("Add at least one Allocation (year + planned amount) before moving a project to status {0}.").format(
-					self.status
-				)
+	def _warn_if_approved_without_planned_items(self) -> None:
+		"""Warn user if Project is active but won't appear in Budget (missing Planned Items)."""
+		# Only relevant for statuses that the Budget Engine includes
+		if self.status not in ("Approved", "In Progress", "Completed"):
+			return
+		
+		# Check if any Planned Item exists for this project
+		if not frappe.db.exists("MPIT Planned Item", {"project": self.name}):
+			frappe.msgprint(
+				_("Project is active ({0}) but has no Planned Items. It will not generate lines in the Live Budget.").format(self.status),
+				indicator="orange"
 			)
 
 	def _validate_planned_dates(self) -> None:
@@ -166,11 +92,7 @@ class MPITProject(Document):
 			if getdate(self.end_date) < getdate(self.start_date):
 				frappe.throw(_("Planned end date cannot be before planned start date."))
 
-	def _enforce_quote_approvals(self) -> None:
-		"""Only vCIO Manager can set Approved quotes."""
-		for quote in self.quotes or []:
-			if quote.status == "Approved" and "vCIO Manager" not in frappe.get_roles():
-				frappe.throw(_("Only vCIO Manager can approve a quote."))
+
 
 
 @frappe.whitelist()
