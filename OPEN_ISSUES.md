@@ -8,8 +8,8 @@ Last updated: 2026-01-04T00:30:00+01:00
 
 | Status | Count |
 |--------|-------|
-| ✅ Resolved | 14 |
-| 🟡 Open | 45 |
+| ✅ Resolved | 15 |
+| 🟡 Open | 44 |
 
 ---
 
@@ -309,11 +309,7 @@ Last updated: 2026-01-04T00:30:00+01:00
 
 ## Product Logic & UX Issues
 
-### O-045: Workspace Ambiguity - Double Entry Paths
-- **Location**: Workspace "Master Plan IT"
-- **Issue**: Both "Projects" and "Planned Items" are top-level shortcuts. Users may overlook that Projects require Planned Items to affect the budget, leading to confusion or double-counting attempts.
-- **Impact**: MED — UX friction and potential data entry errors.
-- **Proposed Fix**: Clarify that Planned Items are child-elements. Consider removing "Projects" from main list if Planned Items are the primary entry point for costs.
+
 
 ### O-046: Poor Feedback Loop on Budget Refresh
 - **Location**: `mpit_budget.js` / "Refresh from Sources" button.
@@ -395,3 +391,4 @@ Last updated: 2026-01-04T00:30:00+01:00
 | field-help-text | User Prefs section | Removed |
 | O-003 | field-help-text-report.md | File deleted |
 | O-033 | requirements.txt | Invalid - Pytest 9.0.2 verified |
+| O-045 | Workspace ambiguity | Removed 'Planned Items' shortcut from Workspace |

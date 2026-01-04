@@ -1,376 +1,358 @@
 {
- "charts": [
-  {
-   "chart_name": "MPIT Renewals Window (by Month)",
-   "label": "Renewals Window (by Month)"
-  }
- ],
- "content": "[{\"id\": \"hdr-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Master Plan IT</span>\", \"col\": 12}}, {\"id\": \"sub-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">Budget Engine v3 - Live/Snapshot/Addendum</span>\", \"col\": 12}}, {\"id\": \"spc-1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-qa\", \"type\": \"header\", \"data\": {\"text\": \"Quick Actions\", \"col\": 12}}, {\"id\": \"qa-overview\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Overview Dashboard\", \"col\": 3}}, {\"id\": \"qa-budget\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Live Budget\", \"col\": 3}}, {\"id\": \"qa-addendum\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Addendum\", \"col\": 3}}, {\"id\": \"qa-planned\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Planned Item\", \"col\": 3}}, {\"id\": \"spc-2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-setup\", \"type\": \"header\", \"data\": {\"text\": \"Setup & Pianificazione\", \"col\": 12}}, {\"id\": \"card-setup\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 4}}, {\"id\": \"card-plan\", \"type\": \"card\", \"data\": {\"card_name\": \"Planning\", \"col\": 4}}, {\"id\": \"card-reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"spc-4\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-reports\", \"type\": \"header\", \"data\": {\"text\": \"Reports & Monitoring (v3)\", \"col\": 12}}, {\"id\": \"rep-cap\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Plan vs Cap vs Actual\", \"col\": 3}}, {\"id\": \"rep-monthly\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Monthly Plan v3\", \"col\": 3}}, {\"id\": \"rep-renewals\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Renewals Window\", \"col\": 3}}, {\"id\": \"rep-diff\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budget Diff\", \"col\": 3}}, {\"id\": \"spc-5\", \"type\": \"spacer\", \"data\": {\"col\": 12}}]",
- "creation": "2025-12-31 05:34:40.229880",
- "custom_blocks": [],
- "docstatus": 0,
- "doctype": "Workspace",
- "hide_custom": 0,
- "idx": 0,
- "indicator_color": "green",
- "is_hidden": 0,
- "label": "Master Plan IT",
- "links": [
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Setup",
-   "link_count": 0,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Cost Centers",
-   "link_count": 0,
-   "link_to": "MPIT Cost Center",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Years",
-   "link_count": 0,
-   "link_to": "MPIT Year",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Vendors",
-   "link_count": 0,
-   "link_to": "MPIT Vendor",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Contracts",
-   "link_count": 0,
-   "link_to": "MPIT Contract",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Settings",
-   "link_count": 0,
-   "link_to": "MPIT Settings",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Planning",
-   "link_count": 0,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Budgets",
-   "link_count": 0,
-   "link_to": "MPIT Budget",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Budget Addendums",
-   "link_count": 0,
-   "link_to": "MPIT Budget Addendum",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Projects",
-   "link_count": 0,
-   "link_to": "MPIT Project",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Planned Items",
-   "link_count": 0,
-   "link_to": "MPIT Planned Item",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "description": "Variance / Allowance entries (Verified only count).",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Variance / Exception Entries",
-   "link_count": 0,
-   "link_to": "MPIT Actual Entry",
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "hidden": 0,
-   "is_query_report": 0,
-   "label": "Reports",
-   "link_count": 0,
-   "link_type": "DocType",
-   "onboard": 0,
-   "type": "Card Break"
-  },
-  {
-   "dependencies": "",
-   "description": "Plan vs Cap vs Actual per Cost Center",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Plan vs Cap vs Actual",
-   "link_count": 0,
-   "link_to": "MPIT Plan vs Cap vs Actual",
-   "link_type": "Report",
-   "onboard": 0,
-   "report_ref_doctype": "MPIT Budget",
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "description": "Monthly plan respecting spend_date and distribution",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Monthly Plan v3",
-   "link_count": 0,
-   "link_to": "MPIT Monthly Plan v3",
-   "link_type": "Report",
-   "onboard": 0,
-   "report_ref_doctype": "MPIT Budget",
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "description": "Confronto tra due budget",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Budget Diff",
-   "link_count": 0,
-   "link_to": "MPIT Budget Diff",
-   "link_type": "Report",
-   "onboard": 0,
-   "report_ref_doctype": "MPIT Budget",
-   "type": "Link"
-  },
-  {
-   "dependencies": "",
-   "description": "Contratti in scadenza",
-   "hidden": 0,
-   "is_query_report": 1,
-   "label": "Renewals Window",
-   "link_count": 0,
-   "link_to": "MPIT Renewals Window",
-   "link_type": "Report",
-   "onboard": 0,
-   "report_ref_doctype": "MPIT Contract",
-   "type": "Link"
-  }
- ],
- "modified": "2026-01-03 00:00:00.000000",
- "modified_by": "Administrator",
- "module": "Master Plan IT",
- "name": "Master Plan IT",
- "number_cards": [],
- "owner": "Administrator",
- "public": 1,
- "quick_lists": [],
- "roles": [
-  {
-   "role": "vCIO Manager"
-  },
-  {
-   "role": "Client Editor"
-  },
-  {
-   "role": "Client Viewer"
-  },
-  {
-   "role": "System Manager"
-  }
- ],
- "sequence_id": 0.0,
- "shortcuts": [
-  {
-   "color": "Grey",
-   "doc_view": "",
-   "icon": "dashboard",
-   "label": "Overview",
-   "link_to": "Master Plan IT Overview",
-   "type": "Dashboard"
-  },
-  {
-   "color": "Grey",
-   "doc_view": "",
-   "icon": "dashboard",
-   "label": "Overview Dashboard",
-   "link_to": "Master Plan IT Overview",
-   "type": "Dashboard"
-  },
-  {
-   "color": "Blue",
-   "doc_view": "",
-   "icon": "file",
-   "label": "Plan vs Cap vs Actual",
-   "link_to": "MPIT Plan vs Cap vs Actual",
-   "report_ref_doctype": "MPIT Budget",
-   "type": "Report"
-  },
-  {
-   "color": "Green",
-   "doc_view": "New",
-   "icon": "add",
-   "label": "Create Live Budget",
-   "link_to": "MPIT Budget",
-   "type": "DocType"
-  },
-  {
-   "color": "Orange",
-   "doc_view": "New",
-   "icon": "add",
-   "label": "Create Addendum",
-   "link_to": "MPIT Budget Addendum",
-   "type": "DocType"
-  },
-  {
-   "color": "Purple",
-   "doc_view": "New",
-   "icon": "add",
-   "label": "Create Planned Item",
-   "link_to": "MPIT Planned Item",
-   "type": "DocType"
-  },
-  {
-   "color": "Blue",
-   "doc_view": "",
-   "icon": "file",
-   "label": "Budget Diff",
-   "link_to": "MPIT Budget Diff",
-   "report_ref_doctype": "MPIT Budget",
-   "type": "Report"
-  },
-  {
-   "color": "Blue",
-   "doc_view": "",
-   "icon": "file",
-   "label": "Monthly Plan v3",
-   "link_to": "MPIT Monthly Plan v3",
-   "report_ref_doctype": "MPIT Budget",
-   "type": "Report"
-  },
-  {
-   "color": "Blue",
-   "doc_view": "",
-   "icon": "file",
-   "label": "Renewals Window",
-   "link_to": "MPIT Renewals Window",
-   "report_ref_doctype": "MPIT Contract",
-   "type": "Report"
-  },
-  {
-   "color": "Grey",
-   "icon": "settings",
-   "label": "MPIT Settings",
-   "type": "DocType",
-   "link_to": "MPIT Settings"
-  },
-  {
-   "color": "Grey",
-   "icon": "folder",
-   "label": "Cost Centers",
-   "type": "DocType",
-   "link_to": "MPIT Cost Center"
-  },
-  {
-   "color": "Grey",
-   "icon": "calendar",
-   "label": "Years",
-   "type": "DocType",
-   "link_to": "MPIT Year"
-  },
-  {
-   "color": "Grey",
-   "icon": "users",
-   "label": "Vendors",
-   "type": "DocType",
-   "link_to": "MPIT Vendor"
-  },
-  {
-   "color": "Grey",
-   "icon": "file",
-   "label": "Contracts",
-   "type": "DocType",
-   "link_to": "MPIT Contract"
-  },
-  {
-   "color": "Grey",
-   "icon": "project",
-   "label": "Projects",
-   "type": "DocType",
-   "link_to": "MPIT Project"
-  },
-  {
-   "color": "Grey",
-   "icon": "list",
-   "label": "Planned Items",
-   "type": "DocType",
-   "link_to": "MPIT Planned Item"
-  },
-  {
-   "color": "Grey",
-   "icon": "list",
-   "label": "Budget Addendums",
-   "type": "DocType",
-   "link_to": "MPIT Budget Addendum"
-  },
-  {
-   "color": "Grey",
-   "icon": "list",
-   "label": "Variance / Exception Entries",
-   "type": "DocType",
-   "link_to": "MPIT Actual Entry"
-  }
- ],
- "title": "Master Plan IT"
+    "charts": [
+        {
+            "chart_name": "MPIT Renewals Window (by Month)",
+            "label": "Renewals Window (by Month)"
+        }
+    ],
+    "content": "[{\"id\": \"hdr-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"h4\\\">Master Plan IT</span>\", \"col\": 12}}, {\"id\": \"sub-main\", \"type\": \"header\", \"data\": {\"text\": \"<span class=\\\"text-muted\\\">Budget Engine v3 - Live/Snapshot/Addendum</span>\", \"col\": 12}}, {\"id\": \"spc-1\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-qa\", \"type\": \"header\", \"data\": {\"text\": \"Quick Actions\", \"col\": 12}}, {\"id\": \"qa-overview\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Overview Dashboard\", \"col\": 3}}, {\"id\": \"qa-budget\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Live Budget\", \"col\": 3}}, {\"id\": \"qa-addendum\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Addendum\", \"col\": 3}}, {\"id\": \"qa-planned\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Create Planned Item\", \"col\": 3}}, {\"id\": \"spc-2\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-setup\", \"type\": \"header\", \"data\": {\"text\": \"Setup & Pianificazione\", \"col\": 12}}, {\"id\": \"card-setup\", \"type\": \"card\", \"data\": {\"card_name\": \"Setup\", \"col\": 4}}, {\"id\": \"card-plan\", \"type\": \"card\", \"data\": {\"card_name\": \"Planning\", \"col\": 4}}, {\"id\": \"card-reports\", \"type\": \"card\", \"data\": {\"card_name\": \"Reports\", \"col\": 4}}, {\"id\": \"spc-4\", \"type\": \"spacer\", \"data\": {\"col\": 12}}, {\"id\": \"hdr-reports\", \"type\": \"header\", \"data\": {\"text\": \"Reports & Monitoring (v3)\", \"col\": 12}}, {\"id\": \"rep-cap\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Plan vs Cap vs Actual\", \"col\": 3}}, {\"id\": \"rep-monthly\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Monthly Plan v3\", \"col\": 3}}, {\"id\": \"rep-renewals\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Renewals Window\", \"col\": 3}}, {\"id\": \"rep-diff\", \"type\": \"shortcut\", \"data\": {\"shortcut_name\": \"Budget Diff\", \"col\": 3}}, {\"id\": \"spc-5\", \"type\": \"spacer\", \"data\": {\"col\": 12}}]",
+    "creation": "2025-12-31 05:34:40.229880",
+    "custom_blocks": [],
+    "docstatus": 0,
+    "doctype": "Workspace",
+    "hide_custom": 0,
+    "idx": 0,
+    "indicator_color": "green",
+    "is_hidden": 0,
+    "label": "Master Plan IT",
+    "links": [
+        {
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Setup",
+            "link_count": 0,
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Card Break"
+        },
+        {
+            "dependencies": "",
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Cost Centers",
+            "link_count": 0,
+            "link_to": "MPIT Cost Center",
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Years",
+            "link_count": 0,
+            "link_to": "MPIT Year",
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Vendors",
+            "link_count": 0,
+            "link_to": "MPIT Vendor",
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Contracts",
+            "link_count": 0,
+            "link_to": "MPIT Contract",
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Settings",
+            "link_count": 0,
+            "link_to": "MPIT Settings",
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Link"
+        },
+        {
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Planning",
+            "link_count": 0,
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Card Break"
+        },
+        {
+            "dependencies": "",
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Budgets",
+            "link_count": 0,
+            "link_to": "MPIT Budget",
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Budget Addendums",
+            "link_count": 0,
+            "link_to": "MPIT Budget Addendum",
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Projects",
+            "link_count": 0,
+            "link_to": "MPIT Project",
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "description": "Variance / Allowance entries (Verified only count).",
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Variance / Exception Entries",
+            "link_count": 0,
+            "link_to": "MPIT Actual Entry",
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "hidden": 0,
+            "is_query_report": 0,
+            "label": "Reports",
+            "link_count": 0,
+            "link_type": "DocType",
+            "onboard": 0,
+            "type": "Card Break"
+        },
+        {
+            "dependencies": "",
+            "description": "Plan vs Cap vs Actual per Cost Center",
+            "hidden": 0,
+            "is_query_report": 1,
+            "label": "Plan vs Cap vs Actual",
+            "link_count": 0,
+            "link_to": "MPIT Plan vs Cap vs Actual",
+            "link_type": "Report",
+            "onboard": 0,
+            "report_ref_doctype": "MPIT Budget",
+            "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "description": "Monthly plan respecting spend_date and distribution",
+            "hidden": 0,
+            "is_query_report": 1,
+            "label": "Monthly Plan v3",
+            "link_count": 0,
+            "link_to": "MPIT Monthly Plan v3",
+            "link_type": "Report",
+            "onboard": 0,
+            "report_ref_doctype": "MPIT Budget",
+            "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "description": "Confronto tra due budget",
+            "hidden": 0,
+            "is_query_report": 1,
+            "label": "Budget Diff",
+            "link_count": 0,
+            "link_to": "MPIT Budget Diff",
+            "link_type": "Report",
+            "onboard": 0,
+            "report_ref_doctype": "MPIT Budget",
+            "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "description": "Contratti in scadenza",
+            "hidden": 0,
+            "is_query_report": 1,
+            "label": "Renewals Window",
+            "link_count": 0,
+            "link_to": "MPIT Renewals Window",
+            "link_type": "Report",
+            "onboard": 0,
+            "report_ref_doctype": "MPIT Contract",
+            "type": "Link"
+        }
+    ],
+    "modified": "2026-01-03 00:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Master Plan IT",
+    "name": "Master Plan IT",
+    "number_cards": [],
+    "owner": "Administrator",
+    "public": 1,
+    "quick_lists": [],
+    "roles": [
+        {
+            "role": "vCIO Manager"
+        },
+        {
+            "role": "Client Editor"
+        },
+        {
+            "role": "Client Viewer"
+        },
+        {
+            "role": "System Manager"
+        }
+    ],
+    "sequence_id": 0.0,
+    "shortcuts": [
+        {
+            "color": "Grey",
+            "doc_view": "",
+            "icon": "dashboard",
+            "label": "Overview",
+            "link_to": "Master Plan IT Overview",
+            "type": "Dashboard"
+        },
+        {
+            "color": "Grey",
+            "doc_view": "",
+            "icon": "dashboard",
+            "label": "Overview Dashboard",
+            "link_to": "Master Plan IT Overview",
+            "type": "Dashboard"
+        },
+        {
+            "color": "Blue",
+            "doc_view": "",
+            "icon": "file",
+            "label": "Plan vs Cap vs Actual",
+            "link_to": "MPIT Plan vs Cap vs Actual",
+            "report_ref_doctype": "MPIT Budget",
+            "type": "Report"
+        },
+        {
+            "color": "Green",
+            "doc_view": "New",
+            "icon": "add",
+            "label": "Create Live Budget",
+            "link_to": "MPIT Budget",
+            "type": "DocType"
+        },
+        {
+            "color": "Orange",
+            "doc_view": "New",
+            "icon": "add",
+            "label": "Create Addendum",
+            "link_to": "MPIT Budget Addendum",
+            "type": "DocType"
+        },
+        {
+            "color": "Purple",
+            "doc_view": "New",
+            "icon": "add",
+            "label": "Create Planned Item",
+            "link_to": "MPIT Planned Item",
+            "type": "DocType"
+        },
+        {
+            "color": "Blue",
+            "doc_view": "",
+            "icon": "file",
+            "label": "Budget Diff",
+            "link_to": "MPIT Budget Diff",
+            "report_ref_doctype": "MPIT Budget",
+            "type": "Report"
+        },
+        {
+            "color": "Blue",
+            "doc_view": "",
+            "icon": "file",
+            "label": "Monthly Plan v3",
+            "link_to": "MPIT Monthly Plan v3",
+            "report_ref_doctype": "MPIT Budget",
+            "type": "Report"
+        },
+        {
+            "color": "Blue",
+            "doc_view": "",
+            "icon": "file",
+            "label": "Renewals Window",
+            "link_to": "MPIT Renewals Window",
+            "report_ref_doctype": "MPIT Contract",
+            "type": "Report"
+        },
+        {
+            "color": "Grey",
+            "icon": "settings",
+            "label": "MPIT Settings",
+            "type": "DocType",
+            "link_to": "MPIT Settings"
+        },
+        {
+            "color": "Grey",
+            "icon": "folder",
+            "label": "Cost Centers",
+            "type": "DocType",
+            "link_to": "MPIT Cost Center"
+        },
+        {
+            "color": "Grey",
+            "icon": "calendar",
+            "label": "Years",
+            "type": "DocType",
+            "link_to": "MPIT Year"
+        },
+        {
+            "color": "Grey",
+            "icon": "users",
+            "label": "Vendors",
+            "type": "DocType",
+            "link_to": "MPIT Vendor"
+        },
+        {
+            "color": "Grey",
+            "icon": "file",
+            "label": "Contracts",
+            "type": "DocType",
+            "link_to": "MPIT Contract"
+        },
+        {
+            "color": "Grey",
+            "icon": "project",
+            "label": "Projects",
+            "type": "DocType",
+            "link_to": "MPIT Project"
+        },
+        {
+            "color": "Grey",
+            "icon": "list",
+            "label": "Budget Addendums",
+            "type": "DocType",
+            "link_to": "MPIT Budget Addendum"
+        },
+        {
+            "color": "Grey",
+            "icon": "list",
+            "label": "Variance / Exception Entries",
+            "type": "DocType",
+            "link_to": "MPIT Actual Entry"
+        }
+    ],
+    "title": "Master Plan IT"
 }
