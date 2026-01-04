@@ -48,12 +48,15 @@ class MPITBudget(Document):
 		sequence = getseries(series_key, digits)
 		self.name = f"{prefix}{middle}{sequence}"
 	
+	def before_validate(self):
+		"""Auto-set values before validation runs."""
+		self._autofill_cost_centers()
+
 	def validate(self):
 		self._enforce_budget_type_rules()
 		self._enforce_status_invariants()
 		self._enforce_live_no_manual_lines()
 		self._enforce_snapshot_manual_line_rules()
-		self._autofill_cost_centers()
 		self._compute_lines_amounts()
 		self._compute_totals()
 		if not getattr(self.flags, "skip_generated_guard", False):
@@ -156,6 +159,7 @@ class MPITBudget(Document):
 		try:
 			return int(self.year) in allowed_years
 		except Exception:
+			frappe.log_error(frappe.get_traceback(), f"MPIT Budget _within_horizon: year parse failed for {self.name}")
 			return False
 
 	def _is_year_closed(self, year_end: date) -> bool:
@@ -170,16 +174,25 @@ class MPITBudget(Document):
 	def _generate_contract_lines(self, year_start: date, year_end: date) -> list[dict]:
 		lines: list[dict] = []
 		allowed_status = {"Active", "Pending Renewal", "Renewed"}
+		# Batch-fetch all needed fields to avoid N+1 queries
 		contracts = frappe.get_all(
 			"MPIT Contract",
 			filters={"status": ["in", list(allowed_status)]},
 			fields=[
 				"name",
 				"status",
+				"cost_center",
+				"start_date",
+				"end_date",
+				"billing_cycle",
+				"current_amount",
+				"current_amount_includes_vat",
+				"vat_rate",
+				"vendor",
+				"description",
 			],
 		)
-		for c in contracts:
-			contract = frappe.get_doc("MPIT Contract", c.name)
+		for contract in contracts:
 			if not contract.cost_center:
 				frappe.throw(_("Contract {0} is missing Cost Center. Please set it to include in Forecast.").format(contract.name))
 			# v3: no spread/rate schedule; use flat amount with billing_cycle
@@ -442,7 +455,10 @@ class MPITBudget(Document):
 						if _getdate(new_value) == _getdate(old_value):
 							continue
 					except Exception:
-						pass
+						frappe.log_error(
+							f"Date comparison failed: line={line.name}, field={field}",
+							"MPIT Budget _enforce_generated_lines_read_only"
+						)
 				if new_value != old_value:
 					frappe.throw(frappe._("Generated line {0} is read-only (field {1}).").format(line.name, field))
 	
@@ -657,25 +673,29 @@ def get_cap_for_cost_center(year: str, cost_center: str) -> dict:
 
 	snapshot_amount = 0.0
 	if snapshot_name:
-		# Sum Allowance lines for this cost center from the Snapshot
-		allowance_sum = frappe.db.sql("""
-			SELECT COALESCE(SUM(annual_net), 0) as total
-			FROM `tabMPIT Budget Line`
-			WHERE parent = %(snapshot)s
-			  AND cost_center = %(cc)s
-			  AND line_kind = 'Allowance'
-		""", {"snapshot": snapshot_name, "cc": cost_center}, as_dict=True)
-		snapshot_amount = flt(allowance_sum[0].total if allowance_sum else 0, 2)
+		# Sum Allowance lines for this cost center from the Snapshot (Query Builder)
+		from frappe.query_builder.functions import Coalesce, Sum
+		BudgetLine = frappe.qb.DocType("MPIT Budget Line")
+		result = (
+			frappe.qb.from_(BudgetLine)
+			.select(Coalesce(Sum(BudgetLine.annual_net), 0).as_("total"))
+			.where(BudgetLine.parent == snapshot_name)
+			.where(BudgetLine.cost_center == cost_center)
+			.where(BudgetLine.line_kind == "Allowance")
+		).run(as_dict=True)
+		snapshot_amount = flt(result[0].total if result else 0, 2)
 
-	# Sum approved Addendums for this year + cost center
-	addendum_sum = frappe.db.sql("""
-		SELECT COALESCE(SUM(delta_amount), 0) as total
-		FROM `tabMPIT Budget Addendum`
-		WHERE year = %(year)s
-		  AND cost_center = %(cc)s
-		  AND docstatus = 1
-	""", {"year": year, "cc": cost_center}, as_dict=True)
-	addendum_total = flt(addendum_sum[0].total if addendum_sum else 0, 2)
+	# Sum approved Addendums for this year + cost center (Query Builder)
+	from frappe.query_builder.functions import Coalesce, Sum
+	Addendum = frappe.qb.DocType("MPIT Budget Addendum")
+	add_result = (
+		frappe.qb.from_(Addendum)
+		.select(Coalesce(Sum(Addendum.delta_amount), 0).as_("total"))
+		.where(Addendum.year == year)
+		.where(Addendum.cost_center == cost_center)
+		.where(Addendum.docstatus == 1)
+	).run(as_dict=True)
+	addendum_total = flt(add_result[0].total if add_result else 0, 2)
 
 	cap_total = flt(snapshot_amount + addendum_total, 2)
 
@@ -704,16 +724,15 @@ def get_cost_center_summary(year: str, cost_center: str) -> dict:
 		"name",
 	)
 	if live_budget:
-		plan_rows = frappe.db.sql(
-			"""
-			SELECT COALESCE(SUM(annual_net), 0) AS total
-			FROM `tabMPIT Budget Line`
-			WHERE parent = %(parent)s AND cost_center = %(cc)s
-			""",
-			{"parent": live_budget, "cc": cost_center},
-			as_dict=True,
-		)
-		plan = flt(plan_rows[0].total if plan_rows else 0)
+		from frappe.query_builder.functions import Coalesce, Sum
+		BudgetLine = frappe.qb.DocType("MPIT Budget Line")
+		plan_result = (
+			frappe.qb.from_(BudgetLine)
+			.select(Coalesce(Sum(BudgetLine.annual_net), 0).as_("total"))
+			.where(BudgetLine.parent == live_budget)
+			.where(BudgetLine.cost_center == cost_center)
+		).run(as_dict=True)
+		plan = flt(plan_result[0].total if plan_result else 0)
 
 	# Cap (snapshot allowance + addendum)
 	snapshot_budget = frappe.db.get_value(
@@ -723,40 +742,39 @@ def get_cost_center_summary(year: str, cost_center: str) -> dict:
 		order_by="modified desc",
 	)
 	if snapshot_budget:
-		allowance_sum = frappe.db.sql(
-			"""
-			SELECT COALESCE(SUM(annual_net), 0) AS total
-			FROM `tabMPIT Budget Line`
-			WHERE parent = %(parent)s AND cost_center = %(cc)s AND line_kind = 'Allowance'
-			""",
-			{"parent": snapshot_budget, "cc": cost_center},
-			as_dict=True,
-		)
-		snapshot_amount = flt(allowance_sum[0].total if allowance_sum else 0)
+		from frappe.query_builder.functions import Coalesce, Sum
+		BudgetLine = frappe.qb.DocType("MPIT Budget Line")
+		allowance_result = (
+			frappe.qb.from_(BudgetLine)
+			.select(Coalesce(Sum(BudgetLine.annual_net), 0).as_("total"))
+			.where(BudgetLine.parent == snapshot_budget)
+			.where(BudgetLine.cost_center == cost_center)
+			.where(BudgetLine.line_kind == "Allowance")
+		).run(as_dict=True)
+		snapshot_amount = flt(allowance_result[0].total if allowance_result else 0)
 
-	add_rows = frappe.db.sql(
-		"""
-		SELECT COALESCE(SUM(delta_amount), 0) AS total
-		FROM `tabMPIT Budget Addendum`
-		WHERE year = %(year)s AND cost_center = %(cc)s AND docstatus = 1
-		""",
-		{"year": year, "cc": cost_center},
-		as_dict=True,
-	)
-	addendum_total = flt(add_rows[0].total if add_rows else 0)
+	from frappe.query_builder.functions import Coalesce, Sum
+	Addendum = frappe.qb.DocType("MPIT Budget Addendum")
+	add_result = (
+		frappe.qb.from_(Addendum)
+		.select(Coalesce(Sum(Addendum.delta_amount), 0).as_("total"))
+		.where(Addendum.year == year)
+		.where(Addendum.cost_center == cost_center)
+		.where(Addendum.docstatus == 1)
+	).run(as_dict=True)
+	addendum_total = flt(add_result[0].total if add_result else 0)
 	cap_total = flt(snapshot_amount + addendum_total)
 
 	# Actual (Verified)
-	act_rows = frappe.db.sql(
-		"""
-		SELECT COALESCE(SUM(amount_net), 0) AS total
-		FROM `tabMPIT Actual Entry`
-		WHERE year = %(year)s AND status = 'Verified' AND cost_center = %(cc)s
-		""",
-		{"year": year, "cc": cost_center},
-		as_dict=True,
-	)
-	actual = flt(act_rows[0].total if act_rows else 0)
+	ActualEntry = frappe.qb.DocType("MPIT Actual Entry")
+	actual_result = (
+		frappe.qb.from_(ActualEntry)
+		.select(Coalesce(Sum(ActualEntry.amount_net), 0).as_("total"))
+		.where(ActualEntry.year == year)
+		.where(ActualEntry.status == "Verified")
+		.where(ActualEntry.cost_center == cost_center)
+	).run(as_dict=True)
+	actual = flt(actual_result[0].total if actual_result else 0)
 
 	remaining = cap_total - actual if cap_total > actual else 0
 	over_cap = actual - cap_total if actual > cap_total else 0
@@ -795,21 +813,20 @@ def enqueue_budget_refresh(years: list[str] | None = None) -> None:
 	if not years_to_refresh:
 		return
 
-	# Find Live budgets for these years
-	live_budgets = frappe.get_all(
+	# Find Live budgets for these years (include year field to avoid N+1)
+	live_budget_rows = frappe.get_all(
 		"MPIT Budget",
 		filters={
 			"budget_type": "Live",
 			"year": ["in", years_to_refresh],
 			"docstatus": 0,
 		},
-		pluck="name",
+		fields=["name", "year"],
 	)
+	live_budgets = [r.name for r in live_budget_rows]
 
-	# Auto-create missing Live budgets within horizon
-	existing_years = {
-		str(frappe.db.get_value("MPIT Budget", name, "year")) for name in live_budgets
-	}
+	# Build existing years set from fetched data (no additional queries)
+	existing_years = {str(r.year) for r in live_budget_rows}
 	missing_years = [y for y in years_to_refresh if str(y) not in existing_years]
 
 	for year in missing_years:

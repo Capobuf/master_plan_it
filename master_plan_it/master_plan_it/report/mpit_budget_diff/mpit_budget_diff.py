@@ -52,25 +52,32 @@ def _build_columns() -> list[dict]:
 
 
 def _load_budget_totals(budget: str, group_by: str) -> dict:
-	fields = [
-		"cost_center",
-		"SUM(COALESCE(annual_net, amount_net, annual_amount, monthly_amount * 12, 0)) AS planned",
-	]
-	group_fields = ["cost_center"]
-	if group_by == "CostCenter+Vendor":
-		fields.insert(1, "vendor")
-		group_fields.append("vendor")
+	from frappe.query_builder.functions import Coalesce, Sum
 
-	rows = frappe.db.sql(
-		f"""
-		SELECT {", ".join(fields)}
-		FROM `tabMPIT Budget Line`
-		WHERE parent = %(budget)s
-		GROUP BY {", ".join(group_fields)}
-		""",
-		{"budget": budget},
-		as_dict=True,
+	BudgetLine = frappe.qb.DocType("MPIT Budget Line")
+
+	# Sum with fallback chain matching original COALESCE logic
+	planned = Sum(
+		Coalesce(
+			BudgetLine.annual_net,
+			BudgetLine.amount_net,
+			BudgetLine.annual_amount,
+			BudgetLine.monthly_amount * 12,
+			0,
+		)
+	).as_("planned")
+
+	query = (
+		frappe.qb.from_(BudgetLine)
+		.select(BudgetLine.cost_center, planned)
+		.where(BudgetLine.parent == budget)
+		.groupby(BudgetLine.cost_center)
 	)
+
+	if group_by == "CostCenter+Vendor":
+		query = query.select(BudgetLine.vendor).groupby(BudgetLine.vendor)
+
+	rows = query.run(as_dict=True)
 
 	result = {}
 	for row in rows:

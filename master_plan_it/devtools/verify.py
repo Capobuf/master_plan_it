@@ -19,6 +19,8 @@ REQUIRED_DOCTYPES = [
     "MPIT Contract",
     "MPIT Budget",
     "MPIT Budget Line",
+    "MPIT Budget Addendum",
+    "MPIT Planned Item",
     "MPIT Actual Entry",
     "MPIT Cost Center",
     "MPIT Project",
@@ -28,17 +30,18 @@ REQUIRED_DOCTYPES = [
 REQUIRED_ROLES = ["vCIO Manager", "Client Editor", "Client Viewer"]
 WORKSPACE_NAME = "Master Plan IT"
 REQUIRED_REPORTS = [
-    "MPIT Baseline vs Exceptions",
-    "MPIT Current Plan vs Exceptions",
     "MPIT Renewals Window",
     "MPIT Projects Planned vs Exceptions",
+    "MPIT Budget Diff",
+    "MPIT Monthly Plan v3",
+    "MPIT Plan vs Cap vs Actual",
 ]
 REQUIRED_PAGE = "mpit-dashboard"
 REQUIRED_DASHBOARD_CHARTS = [
-    "MPIT Baseline vs Exceptions",
-    "MPIT Current Plan vs Exceptions",
-    "MPIT Plan Delta by Cost Center",
     "MPIT Renewals Window (by Month)",
+    "MPIT Plan vs Cap vs Actual",
+    "MPIT Monthly Plan v3",
+    "MPIT Planned Items Coverage",
     "MPIT Projects Planned vs Exceptions",
 ]
 REQUIRED_NUMBER_CARDS = [

@@ -6,7 +6,7 @@ Policy breve:
 - Evitare di duplicare lo stesso collegamento sia in `links` che in `shortcuts` per ridurre drift.
 
 Modifiche effettuate:
-- Aggiornato il primo shortcut verso la nuova pagina `MPIT Dashboard` (`/app/mpit-dashboard`) che sostituisce la vecchia dashboard.
+- Aggiornato il primo shortcut per puntare alla Dashboard standard ("Master Plan IT Overview").
 - Rimossi i riferimenti inline ai charts dal `content` (ora Quick Actions registrano solamente le create action principali).
 - Aggiornati i nomi dei chart per coerenza con i report: `MPIT Budget vs Actual (Approved)` → `MPIT Baseline vs Exceptions`, `MPIT Current Budget vs Actual` → `MPIT Current Plan vs Exceptions`, `MPIT Renewals by Month` → `MPIT Renewals Window (by Month)`.
 

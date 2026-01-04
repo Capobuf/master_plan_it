@@ -46,29 +46,33 @@ def _get_data(filters):
 	rows = []
 	expired_count = 0
 
-	where = ["COALESCE(next_renewal_date, end_date) IS NOT NULL"]
-	if auto_renew_only:
-		where.append("COALESCE(auto_renew, 0) = 1")
-	if allowed_cost_centers:
-		where.append("cost_center IN %(cost_centers)s")
+	from frappe.query_builder.functions import Coalesce
 
-	contracts = frappe.db.sql(
-		f"""
-		SELECT
-			name,
-			description,
-			vendor,
-			cost_center,
-			COALESCE(next_renewal_date, end_date) AS renewal_date,
-			auto_renew,
-			status,
-			end_date
-		FROM `tabMPIT Contract`
-		WHERE {" AND ".join(where)}
-		""",
-		{"cost_centers": tuple(allowed_cost_centers)} if allowed_cost_centers else {},
-		as_dict=True,
+	Contract = frappe.qb.DocType("MPIT Contract")
+	renewal_date = Coalesce(Contract.next_renewal_date, Contract.end_date)
+
+	query = (
+		frappe.qb.from_(Contract)
+		.select(
+			Contract.name,
+			Contract.description,
+			Contract.vendor,
+			Contract.cost_center,
+			renewal_date.as_("renewal_date"),
+			Contract.auto_renew,
+			Contract.status,
+			Contract.end_date,
+		)
+		.where(renewal_date.isnotnull())
 	)
+
+	if auto_renew_only:
+		query = query.where(Coalesce(Contract.auto_renew, 0) == 1)
+
+	if allowed_cost_centers:
+		query = query.where(Contract.cost_center.isin(allowed_cost_centers))
+
+	contracts = query.run(as_dict=True)
 
 	for c in contracts:
 		nrd = getdate(c.renewal_date)

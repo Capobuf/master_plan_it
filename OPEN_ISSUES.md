@@ -1,6 +1,6 @@
 # Open Issues & Technical Debt
 
-Last updated: 2026-01-04T00:30:00+01:00
+Last updated: 2026-01-04T13:00:00+01:00
 
 ---
 
@@ -8,8 +8,8 @@ Last updated: 2026-01-04T00:30:00+01:00
 
 | Status | Count |
 |--------|-------|
-| ✅ Resolved | 15 |
-| 🟡 Open | 44 |
+| ✅ Resolved | 25 |
+| 🟡 Open | 34 |
 
 ---
 
@@ -129,17 +129,7 @@ Last updated: 2026-01-04T00:30:00+01:00
 - **Status**: Either delete empty test files or add minimal validation tests
 - **Root Cause**: **Boilerplate**. Files were auto-created by framework scaffolding ("bench new-doctype") and never populated.
 
-### O-026: Bare 'except Exception' handlers without context logging
-- **Location**: Multiple files (12 occurrences)
-  - `mpit_budget.py` L158, L167, L444, L824, L837
-  - `api/dashboard.py` L281
-  - `budget_refresh_hooks.py` L177
-  - `test_no_forbidden_metadata_paths.py` L32
-- **Issue**: Some bare `except Exception:` blocks swallow errors without logging context
-- **Evidence**: L158, L444, L167 don't log the error traceback
-- **Impact**: MEDIUM — Silent failures make debugging harder
-- **Status**: Review each handler; most already log errors (L824, L837), some need improvement
-- **Root Cause**: **Anti-Pattern**. Catch-all exceptions were likely added for resilience during rapid dev but lack observability.
+
 
 
 
@@ -159,7 +149,7 @@ Last updated: 2026-01-04T00:30:00+01:00
   - L74: `includes_vat` should be `amount_includes_vat`
 - **Evidence**: `mpit_year.json` has `year` not `year_name`; `mpit_budget.json` has `budget_type`; `mpit_budget_line.json` has `amount_includes_vat`
 - **Impact**: HIGH — Script will crash with FieldNotFoundError on first run
-- **Status**: Update field names to match current schema
+- **Status**: Fixed
 - **Root Cause**: **Technical Debt / Stale Code**. Script uses old field names (`year_name`, `includes_vat`) that were renamed in v3 schema.
 
 ### O-030: devtools/rename_documents.py hardcodes year 2025
@@ -167,7 +157,7 @@ Last updated: 2026-01-04T00:30:00+01:00
 - **Issue**: Script has hardcoded `year or "2025"` fallback and `series_name = "BUD-2025-"` — time-sensitive code
 - **Evidence**: L22: `year = doc.year or "2025"`; L45: `series_name = "BUD-2025-"`
 - **Impact**: MEDIUM — Script won't work correctly for future years
-- **Status**: Replace hardcoded year with dynamic current year
+- **Status**: Fixed
 - **Root Cause**: **Implementation Shortcut**. Script was written with a hardcoded year "2025" instead of using `datetime.now().year` or an argument.
 
 
@@ -207,13 +197,7 @@ Last updated: 2026-01-04T00:30:00+01:00
 - **Status**: Rewrite to use `MPIT Planned Item` flow
 - **Root Cause**: **Documentation Rot**. Guide mandates a v2 workflow ("Project Allocations") that was replaced by v3 ("Planned Items").
 
-### O-038: Empty Documentation Directories
-- **Location**: `docs/tutorials/` and `docs/uiux/`
-- **Issue**: Directories exist but are empty
-- **Evidence**: `ls` command returned empty result
-- **Impact**: LOW — Visual clutter
-- **Status**: Delete directories
-- **Root Cause**: **Scaffolding Artifacts**. Created during initial project setup (diátaxis structure) but never populated.
+
 
 
 
@@ -227,10 +211,10 @@ Last updated: 2026-01-04T00:30:00+01:00
 
 ### O-041: Copilot Instructions reference broken tools
 - **Location**: `.github/copilot-instructions.md`
-- **Issue**: References `devtools/verify.py` (O-017/O-027 broken) and `architecture.md` (O-039 drift)
+- **Issue**: References `devtools/verify.py` (Fixed in O-017) and `architecture.md` (O-039 drift)
 - **Evidence**: "Esegui master_plan_it.devtools.verify.run"
 - **Impact**: LOW — Misleads AI agents
-- **Status**: Update after fixing O-017 and O-039
+- **Status**: Update after fixing O-039 (O-017 Fixed)
 - **Root Cause**: **Broken Reference**. Instructions point to broken scripts/docs (`verify.py`, `architecture.md`) identified in O-017/O-010.
 
 ### O-042: Hardcoded secrets in prod.env
@@ -259,13 +243,7 @@ Last updated: 2026-01-04T00:30:00+01:00
  - **Status**: Adopt a single standard (Rich Header for complicated Controllers, Standard for others) and enforce via linter/hook.
  - **Root Cause**: **Style Guide Missing/Ignored**. No enforced standard for file headers during development.
 
-### O-017: devtools/verify.py references v2 reports and charts (Merged O-027)
-- **Location**: `master_plan_it/devtools/verify.py` L30-43
-- **Issue**: `REQUIRED_REPORTS` and `REQUIRED_DASHBOARD_CHARTS` lists contain v2 report names/charts that no longer exist or are unreliable
-- **Evidence**: Reports `MPIT Baseline vs Exceptions` etc. not in codebase; Dashboard page `mpit-dashboard` validation fails
-- **Impact**: HIGH — Verify script is unreliable for deployment validation
-- **Status**: Code fix and full audit required
-- **Root Cause**: **Technical Debt / Incomplete Migration**. Tool was created for v2 and ignored during v3 migration. References obsolete 'Baseline/Forecast' reports.
+
 
 ### O-018: mpit_budget_addendum.py uses 'Baseline' in validation
 - **Location**: `master_plan_it/doctype/mpit_budget_addendum/mpit_budget_addendum.py` L38-48
@@ -274,22 +252,6 @@ Last updated: 2026-01-04T00:30:00+01:00
 - **Impact**: MEDIUM — Works via has_column fallback but adds confusion
 - **Status**: Code cleanup recommended
 - **Root Cause**: **Transitional Logic / Defensive Coding**. fallback logic (`elif has_column budget_kind`) was left to handle a hybrid state during v2->v3 migration but was never removed.
-
-### O-019: demo_data.py uses v2 budget_kind field
-- **Location**: `master_plan_it/devtools/demo_data.py` L233-235
-- **Issue**: Creates budget with `budget_kind='Forecast'` and `is_active_forecast=0` — v2 fields that don't exist in v3
-- **Evidence**: `mpit_budget.json` has `budget_type: Live/Snapshot`, no `budget_kind` or `is_active_forecast`
-- **Impact**: HIGH — Demo data script will fail on v3 codebase
-- **Status**: Code fix required
-- **Root Cause**: **Technical Debt / Incomplete Migration**. Script explicitly targets v2 schema (`budget_kind='Forecast'`) and was not updated for v3.
-
-### O-020: dashboard_defaults.py references v2 reports
-- **Location**: `master_plan_it/master_plan_it/devtools/dashboard_defaults.py` L21-27
-- **Issue**: Seeds filters for v2 report names: `MPIT Plan Delta by Cost Center`, `MPIT Baseline vs Exceptions`, `MPIT Current Plan vs Exceptions`
-- **Evidence**: These reports don't exist in `master_plan_it/report/`
-- **Impact**: HIGH — Script will fail when calling set_filters for nonexistent charts
-- **Status**: Code fix required
-- **Root Cause**: **Technical Debt / Incomplete Migration**. Seeds filters for v2 report names (`MPIT Baseline vs Exceptions`) which no longer exist.
 
 ### O-021: test_budget_engine_v2.py uses v2 terminology
 - **Location**: `master_plan_it/tests/test_budget_engine_v2.py` L73, L173, L196
@@ -334,12 +296,7 @@ Last updated: 2026-01-04T00:30:00+01:00
 - **Impact**: LOW — Documentation gap for developers.
 - **Status**: Add README.md to key data models first.
 
-### O-049: Dashboard persistence uses localStorage instead of User Defaults
-- **Location**: `mpit_dashboard.js` L213 (`localStorage.setItem`)
-- **Issue**: Dashboard filters are saved to browser `localStorage` (`mpit.dashboard.filters`), creating inconsistency across devices and sessions.
-- **Reference**: Frappe Framework Docs -> Desk -> Guides -> Storing User Preferences.
-- **Impact**: MEDIUM — User experience inconsistency.
-- **Status**: Migrate to `frappe.defaults` or `frappe.db.set_value` on MPIT Settings.
+
 
 ### O-050: Inefficient `doc.save()` in loop (Budget Refresh)
 - **Location**: `budget_refresh_hooks.py` L171 (inside `realign_planned_items_horizon`)
@@ -348,12 +305,7 @@ Last updated: 2026-01-04T00:30:00+01:00
 - **Impact**: MEDIUM — Performance bottleneck on refresh if many items need realignment.
 - **Status**: Refactor to use `bulk_update` or move to background job if triggers are essential.
 
-### O-051: Unnecessary Raw SQL for Simple Queries
-- **Location**: `budget_refresh_hooks.py` L73
-- **Issue**: Uses `frappe.db.sql` for a simple `SELECT ... FROM ... WHERE docstatus < 2`.
-- **Reference**: Frappe Framework Docs -> Internal API -> Database (Recommend ORM `frappe.get_all` for simple queries).
-- **Impact**: LOW — Readability / Maintainability.
-- **Status**: Convert to `frappe.get_all`.
+
 
 ### O-052: Empty `public/js` directory
 - **Location**: `master_plan_it/public/js/`
@@ -361,12 +313,7 @@ Last updated: 2026-01-04T00:30:00+01:00
 - **Reference**: Frappe Framework Docs -> Asset Bundling.
 - **Impact**: LOW — Verification needed (is this intentional?).
 
-### O-053: Excessive and Fragile Raw SQL Strings in Reports
-- **Location**: `report/mpit_budget_diff.py` (L64), `report/mpit_renewals_window.py` (L56)
-- **Issue**: Extensive use of f-strings and manual clause building (`{" AND ".join(where)}`) inside `frappe.db.sql`. While parameters like `%(budget)s` are used in some places, the *structure* of the query is built dynamically with python strings, which is a known pattern for SQL Injection if not carefully managed.
-- **Reference**: Frappe Framework Docs -> Database -> Safe Database Calls.
-- **Impact**: HIGH — Security risk and maintenance burden.
-- **Status**: Refactor reports to use Frappe Query Builder (pypika) for safe, dynamic query construction.
+
 
 ### O-054: Redundant N+1 Query in Budget Refresh Hooks (Confirmed)
 - **Location**: Same as O-050 but distinct pattern: `realign_planned_items_horizon` loads doc for every item.
@@ -392,3 +339,14 @@ Last updated: 2026-01-04T00:30:00+01:00
 | O-003 | field-help-text-report.md | File deleted |
 | O-033 | requirements.txt | Invalid - Pytest 9.0.2 verified |
 | O-045 | Workspace ambiguity | Removed 'Planned Items' shortcut from Workspace |
+| O-051 | Unnecessary Raw SQL | Already uses `frappe.get_all` — no `frappe.db.sql` in file |
+| O-053 | Raw SQL in Reports | Refactored to Query Builder (`frappe.qb`) |
+| O-026 | Bare except handlers | Added `frappe.log_error()` to L158, L444 |
+| - | N+1 in _generate_contract_lines | Batch-fetch all contract fields |
+| - | N+1 in enqueue_budget_refresh | Fetch year in initial get_all |
+| - | Raw SQL in whitelisted APIs | Refactored to Query Builder |
+| O-017 | verify.py v3 update | Updated verify.py lists to match v3 |
+| O-019 | demo_data.py uses v2 budget_kind field | File deleted |
+| O-020 | dashboard_defaults.py references v2 reports | File deleted |
+| O-038 | Empty doc dirs | Directories deleted |
+| O-049 | Legacy Dashboard | Deleted dead code (Page/API) |
