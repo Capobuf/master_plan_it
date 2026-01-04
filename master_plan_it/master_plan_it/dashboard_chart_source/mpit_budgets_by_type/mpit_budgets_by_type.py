@@ -10,6 +10,7 @@ import datetime
 
 import frappe
 from frappe import _
+from master_plan_it.master_plan_it.utils.dashboard_utils import normalize_dashboard_filters
 
 
 def get_config():
@@ -37,47 +38,47 @@ def _resolve_year(filters) -> str | None:
 
 
 def get_data(filters=None):
-	if isinstance(filters, list):
-		filters = _normalize_dashboard_filters(filters)
-	filters = frappe._dict(filters or {})
+	filters = normalize_dashboard_filters(filters)
 	year = _resolve_year(filters)
 
-	where = []
-	params = {}
+	# Build ORM filters for MPIT Budget
+	orm_filters = {}
 	if year:
-		where.append("year = %(year)s")
-		params["year"] = year
+		orm_filters["year"] = year
 
-	where_clause = " AND ".join(where) if where else "1=1"
-	rows = frappe.db.sql(
-		f"""
-		SELECT budget_type, COUNT(*) AS total
-		FROM `tabMPIT Budget`
-		WHERE {where_clause}
-		GROUP BY budget_type
-		ORDER BY total DESC
-		""",
-		params,
-		as_dict=True,
+	# Support cost_center filtering if provided by dashboard
+	if filters.get("cost_center"):
+		orm_filters["cost_center"] = filters.get("cost_center")
+
+	# Fetch data using ORM Group By
+	data = frappe.db.get_all(
+		"MPIT Budget",
+		filters=orm_filters,
+		fields=["budget_type", "count(name) as total"],
+		group_by="budget_type",
+		order_by="total desc",
 	)
 
 	labels = []
 	values = []
-	for row in rows:
+	for row in data:
 		label = row.budget_type or _("Unknown")
 		labels.append(label)
-		values.append(int(row.total or 0))
-	
-	if not labels:
+		val = int(row.total or 0)
+		values.append(val)
+
+	# Safety check: Pie/Donut charts crash if all values are 0 or empty
+	if not labels or sum(values) == 0:
 		labels = [_("No Data")]
-		values = [0]
+		values = [1]
 
 	return {
 		"labels": labels,
 		"datasets": [{"name": _("Budgets"), "values": values}],
 		"type": "pie",
-		"colors": ["#5E64FF", "#7CD6FD", "#743ee2", "#ffb86c", "#ff5858"]
+		# Colors removed to use Frappe defaults
 	}
+
 
 @frappe.whitelist()
 def get(
@@ -92,30 +93,4 @@ def get(
 	heatmap_year=None,
 	refresh=None,
 ):
-	# Normalizza filters (puo arrivare dict o JSON-string)
-	if isinstance(filters, str):
-		filters = frappe.parse_json(filters)
-
-	filters = frappe._dict(filters or {})
-
-	# Compatibilita: filtro UI usa cost_center singolo; i tuoi get_data usano cost_centers lista
-	if filters.get("cost_center") and not filters.get("cost_centers"):
-		filters.cost_centers = [filters.cost_center]
-
 	return get_data(filters)
-
-def _normalize_dashboard_filters(filters_list: list) -> dict:
-	"""
-	Dashboard Chart (backend) passes filters as a list and appends a docstatus check.
-	We must convert carefully.
-	Expected format in list: [doctype, fieldname, op, value, ...]
-	"""
-	out = {}
-	for f in filters_list:
-		if isinstance(f, (list, tuple)) and len(f) >= 4:
-			# f[1] is fieldname, f[3] is value
-			fieldname = f[1]
-			value = f[3]
-			if fieldname:
-				out[fieldname] = value
-	return out

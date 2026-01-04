@@ -307,6 +307,5 @@ def _build_chart(data: list[dict]) -> dict:
             ],
         },
         "type": "bar",
-        "colors": ["#7CD6FD", "#5E64FF", "#FF5858"],
         "barOptions": {"stacked": False},
     }

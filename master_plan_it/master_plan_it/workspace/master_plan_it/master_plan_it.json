@@ -195,6 +195,19 @@
             "onboard": 0,
             "report_ref_doctype": "MPIT Contract",
             "type": "Link"
+        },
+        {
+            "dependencies": "",
+            "description": "Overview consolidato con filtri globali",
+            "hidden": 0,
+            "is_query_report": 1,
+            "label": "MPIT Overview",
+            "link_count": 0,
+            "link_to": "MPIT Overview",
+            "link_type": "Report",
+            "onboard": 0,
+            "report_ref_doctype": "MPIT Budget",
+            "type": "Link"
         }
     ],
     "modified": "2026-01-03 00:00:00.000000",
@@ -236,6 +249,15 @@
             "label": "Overview Dashboard",
             "link_to": "Master Plan IT Overview",
             "type": "Dashboard"
+        },
+        {
+            "color": "Green",
+            "doc_view": "",
+            "icon": "chart",
+            "label": "MPIT Overview (Report)",
+            "link_to": "MPIT Overview",
+            "report_ref_doctype": "MPIT Budget",
+            "type": "Report"
         },
         {
             "color": "Blue",

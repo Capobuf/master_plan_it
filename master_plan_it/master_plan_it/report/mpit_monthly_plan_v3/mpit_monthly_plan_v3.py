@@ -315,23 +315,7 @@ def _build_chart(data: list[dict]) -> dict:
 			],
 		},
 		"type": "bar",
-		"colors": ["#5E64FF", "#7CD6FD"],
 		"barOptions": {"stacked": True},
 	}
 
 
-def _normalize_dashboard_filters(filters_list: list) -> dict:
-	"""
-	Dashboard Chart (backend) passes filters as a list and appends a docstatus check.
-	Reports expect a dict. We must convert carefully.
-	Expected format in list: [doctype, fieldname, op, value, ...]
-	"""
-	out = {}
-	for f in filters_list:
-		if isinstance(f, (list, tuple)) and len(f) >= 4:
-			# f[1] is fieldname, f[3] is value
-			fieldname = f[1]
-			value = f[3]
-			if fieldname:
-				out[fieldname] = value
-	return out

@@ -14,6 +14,7 @@ import datetime
 import frappe
 from frappe import _
 from frappe.utils import flt, getdate
+from master_plan_it.master_plan_it.utils.dashboard_utils import normalize_dashboard_filters
 
 
 def get_config():
@@ -25,8 +26,7 @@ def get_config():
 
 
 def get_data(filters=None):
-	if isinstance(filters, list):
-		filters = _normalize_dashboard_filters(filters)
+	filters = normalize_dashboard_filters(filters)
 	filters = frappe._dict(filters or {})
 	today = datetime.date.today()
 	year = str(filters.get("year") or today.year)
@@ -99,7 +99,6 @@ def get_data(filters=None):
 			{"name": _("Actual"), "values": actual_clean},
 		],
 		"type": "line",
-		"colors": ["#5E64FF", "#FF5858"],
 	}
 
 @frappe.whitelist()
@@ -127,18 +126,3 @@ def get(
 
 	return get_data(filters)
 
-def _normalize_dashboard_filters(filters_list: list) -> dict:
-	"""
-	Dashboard Chart (backend) passes filters as a list and appends a docstatus check.
-	We must convert carefully.
-	Expected format in list: [doctype, fieldname, op, value, ...]
-	"""
-	out = {}
-	for f in filters_list:
-		if isinstance(f, (list, tuple)) and len(f) >= 4:
-			# f[1] is fieldname, f[3] is value
-			fieldname = f[1]
-			value = f[3]
-			if fieldname:
-				out[fieldname] = value
-	return out
