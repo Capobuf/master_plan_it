@@ -183,4 +183,23 @@ class MPITActualEntry(Document):
 		if res:
 			return res[0][0]
 
+@frappe.whitelist()
+def get_mpit_year(posting_date):
+	"""Public API to get year from date."""
+	if not posting_date:
 		return None
+	
+	posting = getdate(posting_date)
+	# Reuse the class logic or duplicate simple query? 
+	# Since it's a simple query, duplicating is cleaner than instantiating doc.
+	res = frappe.db.sql(
+		"""
+		SELECT name
+		FROM `tabMPIT Year`
+		WHERE start_date <= %(date)s AND end_date >= %(date)s
+		ORDER BY start_date DESC
+		LIMIT 1
+		""",
+		{"date": posting},
+	)
+	return res[0][0] if res else None

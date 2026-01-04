@@ -692,3 +692,13 @@ Master Plan IT",""
 "Year closed: auto-refresh is OFF. Manual refresh may modify historical data.","Anno chiuso: auto-refresh DISATTIVATO. L'aggiornamento manuale potrebbe modificare i dati storici.",""
 "Year used for budget summary.","Anno usato per il riepilogo budget.",""
 "Years","Anni",""
+"Primary Info","Informazioni Principali",""
+"Calculated Totals","Totali Calcolati",""
+"Context","Contesto",""
+"Planned Item","Voce Pianificata",""
+"Link the Planned Item this covers (excludes it from budget).","Collega la Voce Pianificata che copre (la esclude dal budget).",""
+DocType: MPIT Actual Entry,MPIT Actual Entries,Voce eccezione/varianza,
+Total Entries,Total Entries,Totale Voci,
+Entries by Status,Entries by Status,Voci per Stato,
+Entries by Entry Kind,Entries by Entry Kind,Voci per Tipo,
+Net Amount by Cost Center,Net Amount by Cost Center,Importo Netto per Centro di Costo,

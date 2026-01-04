@@ -35,55 +35,78 @@ master_plan_it.vat.apply_defaults_for_actual =
 		frm.doc.__vat_defaults_applied = true;
 	};
 
+const set_planned_item_query = (frm) => {
+	frm.set_query("planned_item", function () {
+		const filters = {};
+		if (frm.doc.project) {
+			filters.project = frm.doc.project;
+		}
+		return { filters: filters };
+	});
+};
+
+const handle_contract_change = async (frm) => {
+	if (frm.doc.contract) {
+		// Auto-fetch details if contract changes
+		const contract_details = await frappe.db.get_value("MPIT Contract", frm.doc.contract, ["planned_item", "cost_center"]);
+		if (contract_details && contract_details.message) {
+			const { planned_item, cost_center } = contract_details.message;
+			if (planned_item && !frm.doc.planned_item) {
+				frm.set_value("planned_item", planned_item);
+			}
+			// Cost center is auto-fetched by python on save
+		}
+	}
+};
+
 const sync_entry_kind_with_links = async (frm, force = false) => {
 	if (!force && !frm.is_new() && !frm.is_dirty()) {
 		return;
 	}
 
 	const has_link = !!frm.doc.contract || !!frm.doc.project;
-	const target = has_link ? "Delta" : "Allowance Spend";
 	const current = frm.doc.entry_kind;
 
-	if (!current || (has_link && current === "Allowance Spend") || (!has_link && current === "Delta")) {
-		await frm.set_value("entry_kind", target);
+	if (has_link && current === "Allowance Spend") {
+		await frm.set_value("entry_kind", "Delta");
 		return true;
 	}
 	return false;
 };
 
-const toggle_actual_layout = (frm) => {
-	const is_delta = frm.doc.entry_kind === "Delta";
-	const is_allowance = frm.doc.entry_kind === "Allowance Spend";
-
-	frm.toggle_display(["contract", "project"], is_delta);
-	frm.toggle_reqd("cost_center", is_allowance);
-	frm.toggle_display("cost_center", true);
-
-	if (is_delta) {
-		frm.set_intro(__("Select a Contract or a Project (not both)."));
-	} else {
-		frm.set_intro("");
-	}
-};
 
 frappe.ui.form.on("MPIT Actual Entry", {
+	setup(frm) {
+		set_planned_item_query(frm);
+	},
 	async onload(frm) {
 		await master_plan_it.vat.apply_defaults_for_actual(frm);
 	},
 	async refresh(frm) {
 		await master_plan_it.vat.apply_defaults_for_actual(frm);
-		const changed = await sync_entry_kind_with_links(frm, true);
-		if (!changed) {
-			toggle_actual_layout(frm);
-		}
+		await sync_entry_kind_with_links(frm, true);
 	},
 	async contract(frm) {
+		await handle_contract_change(frm);
 		await sync_entry_kind_with_links(frm, true);
 	},
 	async project(frm) {
+		set_planned_item_query(frm);
 		await sync_entry_kind_with_links(frm, true);
 	},
-	entry_kind(frm) {
-		toggle_actual_layout(frm);
+	async posting_date(frm) {
+		if (frm.doc.posting_date) {
+			const r = await frappe.call({
+				method: "master_plan_it.master_plan_it.doctype.mpit_actual_entry.mpit_actual_entry.get_mpit_year",
+				args: { posting_date: frm.doc.posting_date }
+			});
+			if (r && r.message) {
+				frm.set_value("year", r.message);
+			} else {
+				frm.set_value("year", null);
+			}
+		} else {
+			frm.set_value("year", null);
+		}
 	},
 });
