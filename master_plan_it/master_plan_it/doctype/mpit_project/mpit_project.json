@@ -16,6 +16,8 @@
     "end_date",
     "description",
     "document_id",
+    "section_notes",
+    "notes",
     "financial_section",
     "financial_summary",
     "planned_total_net",
@@ -42,7 +44,7 @@
       "default": "Draft",
       "fieldname": "status",
       "fieldtype": "Select",
-      "description": "Status (requires at least one allocation for Approved+).",
+      "description": "Project status. Active statuses (Approved, In Progress, etc.) should have Planned Items to appear in the budget.",
       "in_list_view": 1,
       "in_standard_filter": 1,
       "label": "Status",
@@ -79,6 +81,18 @@
       "fieldtype": "Small Text",
       "description": "Brief notes on scope.",
       "label": "Description"
+    },
+    {
+      "fieldname": "section_notes",
+      "fieldtype": "Section Break",
+      "label": "Notes",
+      "collapsible": 1
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Notes",
+      "description": "Add internal notes about the project."
     },
     {
       "fieldname": "financial_section",

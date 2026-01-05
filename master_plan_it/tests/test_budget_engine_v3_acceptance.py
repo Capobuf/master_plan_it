@@ -231,10 +231,6 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				# v3: only validated project statuses feed the budget
 				"status": "On Hold",
 				"cost_center": self.cost_center.name,
-				# Required by Project validation for On Hold status
-				"allocations": [
-					{"year": year_a, "cost_center": self.cost_center.name, "planned_amount": 1}
-				],
 			}
 		).insert()
 		item = frappe.get_doc(
@@ -270,9 +266,6 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"title": "Planned Dist All",
 				"status": "In Progress",
 				"cost_center": self.cost_center.name,
-				"allocations": [
-					{"year": self.year_current, "cost_center": self.cost_center.name, "planned_amount": 1}
-				],
 			}
 		).insert()
 		item = frappe.get_doc(
@@ -305,9 +298,6 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"title": "Planned Dist Start",
 				"status": "In Progress",
 				"cost_center": self.cost_center.name,
-				"allocations": [
-					{"year": self.year_current, "cost_center": self.cost_center.name, "planned_amount": 1}
-				],
 			}
 		).insert()
 		item = frappe.get_doc(
@@ -340,9 +330,6 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"title": "Planned Spend Date",
 				"status": "In Progress",
 				"cost_center": self.cost_center.name,
-				"allocations": [
-					{"year": self.year_current, "cost_center": self.cost_center.name, "planned_amount": 1}
-				],
 			}
 		).insert()
 		item = frappe.get_doc(

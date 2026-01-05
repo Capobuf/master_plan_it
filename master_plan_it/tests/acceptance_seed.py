@@ -62,7 +62,7 @@ def run_seed() -> dict:
 	cc = _ensure_cc("ACCEPT_CC")
 	ven = _ensure_vendor("ACCEPT_VENDOR")
 
-	# Project con allocation
+	# Project
 	proj = frappe.get_doc(
 		{
 			"doctype": "MPIT Project",
@@ -71,7 +71,6 @@ def run_seed() -> dict:
 			"cost_center": cc.name,
 		}
 	)
-	proj.append("allocations", {"year": year, "cost_center": cc.name, "planned_amount": 1000})
 	proj.insert()
 
 	# Planned Item multi-anno submitted

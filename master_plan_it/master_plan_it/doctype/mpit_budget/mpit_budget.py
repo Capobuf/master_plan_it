@@ -192,12 +192,79 @@ class MPITBudget(Document):
 				"description",
 			],
 		)
+		
+		# Batch-fetch all terms for these contracts to avoid N+1 queries
+		contract_names = [c.name for c in contracts]
+		all_terms = {}
+		if contract_names:
+			terms_data = frappe.get_all(
+				"MPIT Contract Term",
+				filters={"parent": ["in", contract_names]},
+				fields=["name", "parent", "from_date", "to_date", "amount_net", "monthly_amount_net", "billing_cycle"],
+				order_by="parent, from_date asc"
+			)
+			for term in terms_data:
+				all_terms.setdefault(term.parent, []).append(term)
+		
 		for contract in contracts:
 			if not contract.cost_center:
 				frappe.throw(_("Contract {0} is missing Cost Center. Please set it to include in Forecast.").format(contract.name))
-			# v3: no spread/rate schedule; use flat amount with billing_cycle
-			lines.extend(self._generate_contract_flat_lines(contract, year_start, year_end))
+			
+			# Check if contract has terms - use them if present, otherwise fall back to current_amount
+			terms = all_terms.get(contract.name, [])
+			if terms:
+				lines.extend(self._generate_contract_term_lines(contract, terms, year_start, year_end))
+			else:
+				# v3 fallback: use flat amount with billing_cycle when no terms defined
+				lines.extend(self._generate_contract_flat_lines(contract, year_start, year_end))
 		return lines
+
+	def _generate_contract_term_lines(self, contract, terms: list, year_start: date, year_end: date) -> list[dict]:
+		"""Generate budget lines for each contract term overlapping the year."""
+		from frappe.utils import add_days
+
+		lines = []
+		contract_start = _getdate(contract.start_date) if contract.start_date else year_start
+		contract_end = _getdate(contract.end_date) if contract.end_date else year_end
+
+		for i, term in enumerate(terms):
+			term_start = _getdate(term.from_date)
+			
+			# Determine term end: use to_date, or next term start - 1, or contract end
+			if term.to_date:
+				term_end = _getdate(term.to_date)
+			elif i + 1 < len(terms):
+				next_start = _getdate(terms[i + 1].from_date)
+				term_end = add_days(next_start, -1)
+			else:
+				term_end = contract_end
+
+			# Clip to year bounds
+			period_start = max(term_start, contract_start, year_start)
+			period_end = min(term_end, contract_end, year_end)
+
+			months = annualization.overlap_months(period_start, period_end, year_start, year_end)
+			if months <= 0:
+				continue
+
+			monthly_amount = flt(term.monthly_amount_net or term.amount_net or 0, 6)
+			billing = term.billing_cycle or "Monthly"
+			recurrence_rule = "Monthly" if billing == "Monthly" else billing
+
+			source_key = f"CONTRACT::{contract.name}::TERM::{term.name}"
+			lines.append(
+				self._build_line_payload(
+					contract=contract,
+					period_start=period_start,
+					period_end=period_end,
+					monthly_amount=monthly_amount,
+					unit_price=flt(term.amount_net or 0, 6),
+					recurrence_rule=recurrence_rule,
+					source_key=source_key,
+				)
+			)
+		return lines
+
 
 
 	def _generate_contract_flat_lines(self, contract, year_start: date, year_end: date) -> list[dict]:
@@ -245,6 +312,7 @@ class MPITBudget(Document):
 				"project",
 				"description",
 				"amount",
+				"amount_net",
 				"start_date",
 				"end_date",
 				"spend_date",
@@ -313,7 +381,8 @@ class MPITBudget(Document):
 
 	def _planned_item_periods(self, item, year_start: date, year_end: date) -> list[tuple[date, date, float]]:
 		"""Return list of (period_start, period_end, monthly_amount) respecting spend_date/distribution."""
-		amount = flt(item.amount or 0)
+		# Prefer amount_net (computed from VAT), fallback to amount for backward compat
+		amount = flt(item.amount_net or item.amount or 0)
 		if amount == 0:
 			return []
 

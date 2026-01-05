@@ -1,6 +1,6 @@
-# MPIT Project controller: handles naming, VAT normalization for allocations/quotes, permissions on quote approval,
-# validation of required allocations and dates, and keeps financial totals in sync. Inputs: project doc with
-# allocations/quotes (cost_center, amounts). Output: validated project with computed net totals and enforced rules.
+# MPIT Project controller: handles naming, VAT normalization, permissions,
+# validation of status and dates, and keeps financial totals in sync from Planned Items.
+# Input: project doc with status, cost_center, dates. Output: validated project with computed net totals.
 # Copyright (c) 2025, DOT and contributors
 # For license information, please see license.txt
 
@@ -37,37 +37,58 @@ class MPITProject(Document):
 			if not frappe.flags.in_test:
 				frappe.throw(_("Cost Center is required on Project."))
 		self._validate_planned_dates()
-		# self._compute_project_totals() # TODO: Re-implement using Planned Items summation later if needed
+		self._compute_project_totals()
 		self._warn_if_approved_without_planned_items()
-	
 
 
 	def _compute_project_totals(self) -> None:
-		"""Persist planned/quoted/expected totals (net), including Verified delta entries."""
-		# v3: Allocations and Quotes are removed. Totals are pending re-implementation based on Planned Items.
-		planned_total = 0.0
-		quoted_total = 0.0
-			
-		verified_deltas = 0.0
-		if self.name:
-			row = frappe.db.sql(
-				"""
-				SELECT SUM(COALESCE(amount_net, amount)) AS total
-				FROM `tabMPIT Actual Entry`
-				WHERE project = %(project)s
-				  AND status = 'Verified'
-				  AND entry_kind = 'Delta'
-				""",
-				{"project": self.name},
-			)
-			verified_deltas = flt(row[0][0] or 0) if row else 0.0
+		"""Compute totals from Planned Items (Estimate vs Quote), including Verified delta entries."""
+		if not self.name:
+			return
 
-		expected_base = quoted_total if quoted_total > 0 else planned_total
-		expected_total = expected_base + verified_deltas
+		# Fetch all non-cancelled Planned Items for this project
+		items = frappe.get_all(
+			"MPIT Planned Item",
+			filters={"project": self.name, "docstatus": ["!=", 2]},
+			fields=["amount_net", "amount", "is_covered", "item_type"]
+		)
 
-		self.planned_total_net = flt(planned_total, 2)
-		self.quoted_total_net = flt(quoted_total, 2)
+		# Sum Estimate items not covered
+		estimate_total = sum(
+			flt(item.amount_net or item.amount or 0)
+			for item in items
+			if item.item_type == "Estimate" and not item.is_covered
+		)
+
+		# Sum Quote items not covered
+		quote_total = sum(
+			flt(item.amount_net or item.amount or 0)
+			for item in items
+			if item.item_type == "Quote" and not item.is_covered
+		)
+
+		# Get verified deltas from Actual Entries
+		verified_deltas = self._get_verified_deltas()
+
+		# Expected: prefer quotes if available, else estimates
+		base = quote_total if quote_total > 0 else estimate_total
+		expected_total = base + verified_deltas
+
+		self.planned_total_net = flt(estimate_total, 2)
+		self.quoted_total_net = flt(quote_total, 2)
 		self.expected_total_net = flt(expected_total, 2)
+
+	def _get_verified_deltas(self) -> float:
+		"""Get sum of verified delta entries for this project."""
+		if not self.name:
+			return 0.0
+		result = frappe.db.sql("""
+			SELECT SUM(COALESCE(amount_net, amount)) AS total
+			FROM `tabMPIT Actual Entry`
+			WHERE project = %s AND status = 'Verified' AND entry_kind = 'Delta'
+		""", (self.name,))
+		return flt(result[0][0] or 0) if result else 0.0
+
 
 	def _warn_if_approved_without_planned_items(self) -> None:
 		"""Warn user if Project is active but won't appear in Budget (missing Planned Items)."""

@@ -40,6 +40,14 @@ master_plan_it.vat.apply_defaults_for_project_allocation =
 frappe.ui.form.on("MPIT Project", {
 
 	async refresh(frm) {
+		// Add button to create new Planned Item linked to this project
+		if (!frm.is_new()) {
+			frm.add_custom_button(__("Add Planned Item"), () => {
+				frappe.new_doc("MPIT Planned Item", {
+					project: frm.doc.name
+				});
+			}, __("Actions"));
+		}
 		await master_plan_it.project.render_financial_summary(frm);
 	},
 });

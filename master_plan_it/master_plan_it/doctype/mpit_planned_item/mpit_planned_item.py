@@ -1,8 +1,8 @@
 """
 FILE: master_plan_it/doctype/mpit_planned_item/mpit_planned_item.py
-SCOPO: Gestisce i Planned Items standalone (per progetto) con date/distribuzione e flag di copertura deterministico.
-INPUT: Campi documento (project, description, amount, start_date, end_date, spend_date, distribution, covered_by_*) in validate/save.
-OUTPUT/SIDE EFFECTS: Sincronizza is_covered da covered_by_*, blocca edit dei campi chiave dopo submit, registra commenti timeline su cambi copertura.
+SCOPO: Gestisce i Planned Items standalone (per progetto) con date/distribuzione, VAT, e flag di copertura deterministico.
+INPUT: Campi documento (project, description, amount, start_date, end_date, spend_date, distribution, covered_by_*, item_type, vendor) in validate/save.
+OUTPUT/SIDE EFFECTS: Calcola VAT, sincronizza is_covered da covered_by_*, blocca edit dei campi chiave dopo submit, registra commenti timeline su cambi copertura.
 """
 
 from __future__ import annotations
@@ -10,7 +10,9 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.utils import getdate, nowdate
+from frappe.utils import flt, getdate, nowdate
+
+from master_plan_it import mpit_defaults, tax
 
 
 class MPITPlannedItem(Document):
@@ -31,6 +33,7 @@ class MPITPlannedItem(Document):
 		self._enforce_horizon_flag()
 
 	def validate(self):
+		self._compute_vat_amounts()
 		self._validate_dates()
 		self._validate_spend_date()
 		self._validate_distribution()
@@ -88,6 +91,33 @@ class MPITPlannedItem(Document):
 	def _sync_coverage_flag(self) -> None:
 		self.is_covered = 1 if (self.covered_by_type and self.covered_by_name) else 0
 
+	def _compute_vat_amounts(self) -> None:
+		"""Compute net/vat/gross from amount using same logic as Contract/Actual Entry."""
+		default_vat = mpit_defaults.get_default_vat_rate()
+
+		# Apply default VAT if not set
+		if self.vat_rate is None and default_vat is not None:
+			self.vat_rate = default_vat
+
+		# Validate and get final VAT rate
+		final_vat_rate = tax.validate_strict_vat(
+			self.amount,
+			self.vat_rate,
+			default_vat,
+			field_label=_("Planned Item Amount")
+		)
+
+		# Compute split
+		net, vat, gross = tax.split_net_vat_gross(
+			self.amount,
+			final_vat_rate,
+			bool(self.amount_includes_vat)
+		)
+
+		self.amount_net = flt(net, 2)
+		self.amount_vat = flt(vat, 2)
+		self.amount_gross = flt(gross, 2)
+
 	def _maybe_log_coverage_change(self) -> None:
 		prev = getattr(self.flags, "_prev_coverage", (None, None, None))
 		prev_is_covered, prev_type, prev_name = prev
@@ -108,10 +138,14 @@ class MPITPlannedItem(Document):
 			"project",
 			"description",
 			"amount",
+			"amount_includes_vat",
+			"vat_rate",
 			"start_date",
 			"end_date",
 			"spend_date",
 			"distribution",
+			"item_type",
+			"vendor",
 		]
 		for field in immutable_fields:
 			if self.has_value_changed(field):

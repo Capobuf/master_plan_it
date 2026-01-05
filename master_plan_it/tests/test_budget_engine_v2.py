@@ -129,38 +129,24 @@ def test_refresh_skips_draft_and_proposed_projects():
 	_ensure_year(year)
 	cc = _ensure_cost_center("Project Test CC")
 
-	# Draft project with allocation
+	# Draft project
 	draft_proj = frappe.get_doc(
 		{
 			"doctype": "MPIT Project",
 			"title": "Draft Project",
 			"status": "Draft",
-			"allocations": [
-				{
-					"year": str(year),
-					"cost_center": cc,
-					"planned_amount": 1000,
-					"planned_amount_net": 1000,
-				}
-			],
+			"cost_center": cc,
 		}
 	)
 	draft_proj.insert(ignore_permissions=True)
 
-	# Proposed project with allocation
+	# Proposed project
 	prop_proj = frappe.get_doc(
 		{
 			"doctype": "MPIT Project",
 			"title": "Proposed Project",
 			"status": "Proposed",
-			"allocations": [
-				{
-					"year": str(year),
-					"cost_center": cc,
-					"planned_amount": 2000,
-					"planned_amount_net": 2000,
-				}
-			],
+			"cost_center": cc,
 		}
 	)
 	prop_proj.insert(ignore_permissions=True)

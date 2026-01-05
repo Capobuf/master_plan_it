@@ -702,3 +702,23 @@ Total Entries,Total Entries,Totale Voci,
 Entries by Status,Entries by Status,Voci per Stato,
 Entries by Entry Kind,Entries by Entry Kind,Voci per Tipo,
 Net Amount by Cost Center,Net Amount by Cost Center,Importo Netto per Centro di Costo,
+"Pricing Terms","Termini di Prezzo",""
+"Terms","Termini",""
+"Add terms for different pricing periods. If empty, current_amount is used.","Aggiungi termini per diversi periodi di prezzo. Se vuoto, viene usato l'importo corrente.",""
+"From Date","Data Inizio",""
+"To Date","Data Fine",""
+"Billing Cycle","Ciclo di Fatturazione",""
+"Amount (Net)","Importo (Netto)",""
+"Amount (Gross)","Importo (Lordo)",""
+"Monthly Amount (Net)","Importo Mensile (Netto)",""
+"Type","Tipo",""
+"Estimate","Stima",""
+"Quote","Preventivo",""
+"Quote Reference","Riferimento Preventivo",""
+"Attachments","Allegati",""
+"Add Planned Item","Aggiungi Voce Pianificata",""
+"Estimate = initial approximation. Quote = received vendor quotation.","Stima = approssimazione iniziale. Preventivo = quotazione ricevuta dal fornitore.",""
+"Vendor quote number or reference.","Numero o riferimento del preventivo fornitore.",""
+"Attach quote PDFs or supporting documents.","Allega PDF preventivi o documenti di supporto.",""
+"Project status. Active statuses (Approved, In Progress, etc.) should have Planned Items to appear in the budget.","Stato del progetto. Gli stati attivi (Approvato, In Corso, ecc.) dovrebbero avere Voci Pianificate per comparire nel budget.",""
+"Planned Item Amount","Importo Voce Pianificata",""
