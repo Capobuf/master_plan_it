@@ -44,7 +44,7 @@ class MPITBudget(Document):
 			self.name = f"{prefix}{self.year}-LIVE"
 			return
 
-		series_key = f"{prefix}{middle}.####"
+		series_key = f"{prefix}{middle}.{'#' * digits}"
 		sequence = getseries(series_key, digits)
 		self.name = f"{prefix}{middle}{sequence}"
 	

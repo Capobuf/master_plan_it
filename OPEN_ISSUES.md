@@ -1,6 +1,6 @@
 # Open Issues & Technical Debt
 
-Last updated: 2026-01-04T13:00:00+01:00
+Last updated: 2026-01-06T12:35:00+01:00 (Verified)
 
 ---
 
@@ -8,8 +8,8 @@ Last updated: 2026-01-04T13:00:00+01:00
 
 | Status | Count |
 |--------|-------|
-| ✅ Resolved | 25 |
-| 🟡 Open | 34 |
+| ✅ Resolved | 42 |
+| 🟡 Open | 33 |
 
 ---
 
@@ -28,20 +28,17 @@ Last updated: 2026-01-04T13:00:00+01:00
 - **Status**: Update doc to reflect refactor (logic moved to `amounts.py`)
 - **Root Cause**: **Refactor Drift**. The "Dual-Mode" logic exists but was refactored into `amounts.py` (helpers) and `mpit_project.py` (inline), while the doc describes a centralized controller version. Logic is valid, location changed.
 
-
-### O-004: 07-projects-multi-year.md workflow verification
-- **Location**: `docs/how-to/07-projects-multi-year.md`
-- **Issue**: Workflow described may or may not match current code
-- **Status**: **HIGH PRIORITY**. Downgrade project validation to rely on Planned Items.
-- **Root Cause**: **Dead Code Enforcement**. The guide mandates "Allocations" because `mpit_project.py` still *enforces* them for approval (L124), despite the Budget Engine v3 ignoring them in favor of "Planned Items". This traps users in a legacy workflow.
+### O-004: 07-projects-multi-year.md workflow mismatch (Warning vs Blocking)
+- **Location**: `docs/how-to/07-projects-multi-year.md` vs `mpit_project.py`
+- **Issue**: Guide mandates "Allocations" for approval, but code (`mpit_project.py`) only **warns** (`indicator="orange"`) if Planned Items are missing. It does not strictly block approval.
+- **Status**: **Verified 2026-01-06**. Update documentation to reflect that the check is non-blocking (warning only).
+- **Root Cause**: **Dead Code Enforcement**. The guide enforces a stricter workflow ("Approvable only with Allocations") than the implementation ("Warn if empty").
 
 ### O-005: README per DocType (backlog)
 - **Decision**: Create README.md in doctype folders for agents/devs
 - **Decision**: Create README.md in doctype folders for agents/devs
 - **Status**: Not priority, add to backlog
 - **Root Cause**: **Feature Request**. Low priority enhancement for developer experience.
-
-
 
 ### O-007: 10-printing-and-report-print-formats.md references v2 report
 - **Location**: `docs/reference/10-printing-and-report-print-formats.md` L105-109
@@ -73,8 +70,6 @@ Last updated: 2026-01-04T13:00:00+01:00
 - **Status**: Low priority enhancement
 - **Root Cause**: **Documentation Rot**. Map file was not maintained as new reports were added.
 
-
-
 ### O-014: 08-data-sources-for-charts.md is outdated
 - **Location**: `docs/reference/08-data-sources-for-charts.md` L1-3
 - **Issue**: States "Generated from code on 2026-01-02" but DocType inventory may drift from code changes
@@ -86,9 +81,9 @@ Last updated: 2026-01-04T13:00:00+01:00
 - **Issue**: Documents `Recurrence: Monthly, Quarterly, Annual, Custom, None` but `mpit_budget_line.json` shows only `Monthly, Quarterly, Annual, None` — no `Custom` option
 - **Evidence**: 
   - `mpit_budget_line.json` L190 options are `Monthly\nQuarterly\nAnnual\nNone`
-  - `annualization.py` L8 mentions "Custom" in docstring but L157 `validate_recurrence_rule()` only allows `{Monthly, Quarterly, Annual, None}`
+  - `annualization.py` header mentions "Custom" but `validate_recurrence_rule()` only allows `{Monthly, Quarterly, Annual, None}`
   - No controller handles "Custom" recurrence case
-- **Status**: ADR needs update (remove Custom) or code needs Custom implementation
+- **Status**: **Verified 2026-01-06**. Code in `annualization.py` explicitly assumes only the 4 standard types. ADR needs update or code needs implementation.
 - **Root Cause**: **Abandoned Feature / Spec Drift**. "Custom" recurrence was specified in ADR 0007 but never implemented in `annualization.py` (only Monthly/Quarterly/Annual/None).
 
 ### O-016: CHANGELOG.md references spec folders that don't exist
@@ -104,10 +99,10 @@ Last updated: 2026-01-04T13:00:00+01:00
 ### O-023: test_smoke.py missing v3 DocTypes
 - **Location**: `master_plan_it/tests/test_smoke.py` L15-24
 - **Issue**: `test_required_doctypes_exist()` lists only v2 DocTypes. Missing: `MPIT Budget Addendum`, `MPIT Planned Item`, `MPIT Settings`, `MPIT Year`
-- **Evidence**: Code at L15-24 doesn't include new v3 DocTypes despite them being critical
+- **Evidence**: Code at L15-24 verified 2026-01-06 to be missing new DocTypes.
 - **Impact**: MEDIUM — Smoke test gives false confidence that install is complete
-- **Status**: Add missing DocTypes to required list
-- **Root Cause**: **Update Gap**. Smoke test list was not updated when new v3 DocTypes (Addendum, Planned Items) were added.
+- **Status**: **Verified 2026-01-06**. Fails to run with `bench run-tests` due to lack of `FrappeTestCase` inheritance.
+- **Root Cause**: **Non-Standard Implementation**. Script uses procedural asserts instead of Frappe unit test framework.
 
 ### O-024: Empty stub controllers for child tables
 - **Location**: 
@@ -129,47 +124,21 @@ Last updated: 2026-01-04T13:00:00+01:00
 - **Status**: Either delete empty test files or add minimal validation tests
 - **Root Cause**: **Boilerplate**. Files were auto-created by framework scaffolding ("bench new-doctype") and never populated.
 
-
-
-
-
 ### O-028: pytest not used — test_budget_engine_v2.py imports missing
-- **Location**: `master_plan_it/tests/test_budget_engine_v2.py` L108, L113, L123
-- **Issue**: Test file uses `pytest.raises()` but doesn't import pytest. Line 1-5 don't show pytest import.
-- **Evidence**: `with pytest.raises(frappe.ValidationError):` at L108 but no `import pytest`
-- **Impact**: HIGH — Tests will fail with NameError: pytest is not defined
-- **Status**: Add `import pytest` or convert to FrappeTestCase assertions
-- **Root Cause**: **Code Defect**. Basic linting/import error missed in code review.
-
-### O-029: devtools/test_print.py uses wrong field names — will fail at runtime
-- **Location**: `master_plan_it/devtools/test_print.py` L57, L67, L74
-- **Issue**: Multiple incorrect field names that don't exist in current DocType schemas:
-  - L57: `year_name` should be `year` (MPIT Year field name changed)
-  - L67: Missing `budget_type` field (required in v3)
-  - L74: `includes_vat` should be `amount_includes_vat`
-- **Evidence**: `mpit_year.json` has `year` not `year_name`; `mpit_budget.json` has `budget_type`; `mpit_budget_line.json` has `amount_includes_vat`
-- **Impact**: HIGH — Script will crash with FieldNotFoundError on first run
-- **Status**: Fixed
-- **Root Cause**: **Technical Debt / Stale Code**. Script uses old field names (`year_name`, `includes_vat`) that were renamed in v3 schema.
-
-### O-030: devtools/rename_documents.py hardcodes year 2025
-- **Location**: `master_plan_it/devtools/rename_documents.py` L22, L45
-- **Issue**: Script has hardcoded `year or "2025"` fallback and `series_name = "BUD-2025-"` — time-sensitive code
-- **Evidence**: L22: `year = doc.year or "2025"`; L45: `series_name = "BUD-2025-"`
-- **Impact**: MEDIUM — Script won't work correctly for future years
-- **Status**: Fixed
-- **Root Cause**: **Implementation Shortcut**. Script was written with a hardcoded year "2025" instead of using `datetime.now().year` or an argument.
-
-
+- **Location**: `master_plan_it/tests/test_budget_engine_v2.py`
+- **Issue**: Test file uses `pytest.raises()` but doesn't import pytest.
+- **Evidence**: **Verified 2026-01-06**. `import pytest` is missing from file header, but `pytest.raises` is used in tests.
+- **Impact**: HIGH — Tests are ignored by runner or fail execution.
+- **Status**: **Verified 2026-01-06**. File is ignored by `bench run-tests` (0 tests collected from it) because it lacks `FrappeTestCase` and relies on procedural pytest style without the framework support.
+- **Root Cause**: **Framework Non-Adherence**. Tests written as standalone pytest scripts instead of Frappe unittest classes.
 
 ### O-032: Missing Workflow definition for MPIT Budget
 - **Location**: Repository root (missing `fixtures/workflow.json` or `workflow/` definition)
 - **Issue**: `MPIT Budget` uses `workflow_state` field but the corresponding `Workflow` document is not tracked in the repo
-- **Evidence**: `mpit_budget.json` has `workflow_state` field; `fixtures/` contains only `role.json`; `workflow/` directory contains only `__init__.py`
+- **Evidence**: `fixtures/` only contains `role.json`. No `workflow.json`.
 - **Impact**: CRITICAL — New installs will lack the budget approval workflow (Draft -> Approved)
 - **Status**: Export "MPIT Budget Workflow" (and states/transitions) to `fixtures/workflow.json` or as a new app module
 - **Root Cause**: **Missing Configuration Export**. Workflow logic is used in code (`workflow_state` field) but the Workflow definition itself was not exported to fixtures.
-
 
 ### O-034: Duplicate documentation file with messy name
 - **Location**: `docs/mpit_budget_engine_v3_decisions (3).md`
@@ -178,8 +147,6 @@ Last updated: 2026-01-04T13:00:00+01:00
 - **Impact**: LOW — Clutter/Confusion
 - **Status**: Rename to `docs/mpit_budget_engine_v3_decisions.md` (if authoritative) or delete if duplicate of `questions-...`
 - **Root Cause**: **File System Artifact**. Likely a result of a file download/copy operation (browser style numbering).
-
-
 
 ### O-036: Overlapping Print Format documentation
 - **Location**: `docs/reference/08-printing-reports-pdf.md` and `10-printing-and-report-print-formats.md`
@@ -196,10 +163,6 @@ Last updated: 2026-01-04T13:00:00+01:00
 - **Impact**: MEDIUM — Misleads users into using deprecated fields
 - **Status**: Rewrite to use `MPIT Planned Item` flow
 - **Root Cause**: **Documentation Rot**. Guide mandates a v2 workflow ("Project Allocations") that was replaced by v3 ("Planned Items").
-
-
-
-
 
 ### O-040: Deprecated ADR 0004 (Allocations) active
 - **Location**: `docs/adr/0004-project-allocations.md`
@@ -220,35 +183,33 @@ Last updated: 2026-01-04T13:00:00+01:00
 ### O-042: Hardcoded secrets in prod.env
 - **Location**: `master-plan-it-deploy/prod.env`
 - **Issue**: Contains `MYSQL_ROOT_PASSWORD=changeme` committed to repo
-- **Evidence**: File `prod.env` in repo
+- **Evidence**: **Verified 2026-01-06**. File is present in `master-plan-it-deploy/prod.env`.
 - **Impact**: MEDIUM — Security risk if deployed without change
 - **Status**: Remove file or replace content with placeholders and add to .gitignore
 - **Root Cause**: **Security Issue**. Secrets file was accidentally committed to the repository.
  
- ### O-043: Infrastructure Divergence (Dev vs Prod)
- - **Location**: `master-plan-it-deploy/compose.yml` vs `compose.prod.yaml`
- - **Issue**: Significant configuration drift between environments:
-   - **DB Version**: Dev uses `mariadb:10.8`, Prod uses `mariadb:10.6`. Rischio di usare feature 10.8 non supportate in prod.
-   - **Process Management**: Dev uses `config/mpit-entrypoint.sh` + `Procfile`, Prod uses inline script in `compose.prod.yaml`.
- - **Evidence**: `image: mariadb:10.8` (Dev) vs `image: mariadb:10.6` (Prod).
- - **Impact**: MEDIUM — "Works on my machine" risk during deployment.
- - **Status**: Align DB versions (recommend 10.6 LTS) and unify entrypoint logic.
- - **Root Cause**: **Configuration Drift**. Environments were likely set up at different times or by different logical paths without strict parity enforcement.
+### O-043: Infrastructure Divergence (Dev vs Prod)
+- **Location**: `master-plan-it-deploy/compose.yml` vs `compose.prod.yaml`
+- **Issue**: Significant configuration drift between environments:
+  - **DB Version**: Dev uses `mariadb:10.8`, Prod uses `mariadb:10.6`. Rischio di usare feature 10.8 non supportate in prod.
+  - **Process Management**: Dev uses `config/mpit-entrypoint.sh` + `Procfile`, Prod uses inline script in `compose.prod.yaml`.
+- **Evidence**: `image: mariadb:10.8` (Dev) vs `image: mariadb:10.6` (Prod).
+- **Impact**: MEDIUM — "Works on my machine" risk during deployment.
+- **Status**: Align DB versions (recommend 10.6 LTS) and unify entrypoint logic.
+- **Root Cause**: **Configuration Drift**. Environments were likely set up at different times or by different logical paths without strict parity enforcement.
  
- ### O-044: Inconsistent Code Headers
- - **Location**: Global (`master_plan_it/**/*.py`)
- - **Issue**: Inconsistent file header patterns. Some files (`mpit_budget.py`) use rich structured headers (FILE/SCOPO/INPUT/OUTPUT), others use standard copyright, others have none.
- - **Evidence**: `mpit_budget.py` has rich header; `mpit_budget_line.py` has standard copyright; `test_translations.py` has simple docstring.
- - **Impact**: LOW — Cosmetic/maintanability.
- - **Status**: Adopt a single standard (Rich Header for complicated Controllers, Standard for others) and enforce via linter/hook.
- - **Root Cause**: **Style Guide Missing/Ignored**. No enforced standard for file headers during development.
-
-
+### O-044: Inconsistent Code Headers
+- **Location**: Global (`master_plan_it/**/*.py`)
+- **Issue**: Inconsistent file header patterns. Some files (`mpit_budget.py`) use rich structured headers (FILE/SCOPO/INPUT/OUTPUT), others use standard copyright, others have none.
+- **Evidence**: **Verified 2026-01-06**. `mpit_budget.py` has rich header; `mpit_contract.py` has standard copyright.
+- **Impact**: LOW — Cosmetic/maintanability.
+- **Status**: Adopt a single standard (Rich Header for complicated Controllers, Standard for others) and enforce via linter/hook.
+- **Root Cause**: **Style Guide Missing/Ignored**. No enforced standard for file headers during development.
 
 ### O-018: mpit_budget_addendum.py uses 'Baseline' in validation
 - **Location**: `master_plan_it/doctype/mpit_budget_addendum/mpit_budget_addendum.py` L38-48
 - **Issue**: Validation logic queries for `budget_kind = 'Baseline'` as fallback — while has_column check is present, the fallback should be removed
-- **Evidence**: `mpit_budget.json` has only `budget_type: Live/Snapshot`, never `budget_kind`
+- **Evidence**: **Verified 2026-01-06**. Fallback logic `elif frappe.db.has_column("MPIT Budget", "budget_kind")` exists.
 - **Impact**: MEDIUM — Works via has_column fallback but adds confusion
 - **Status**: Code cleanup recommended
 - **Root Cause**: **Transitional Logic / Defensive Coding**. fallback logic (`elif has_column budget_kind`) was left to handle a hybrid state during v2->v3 migration but was never removed.
@@ -257,21 +218,19 @@ Last updated: 2026-01-04T13:00:00+01:00
 - **Location**: `master_plan_it/tests/test_budget_engine_v2.py` L73, L173, L196
 - **Issue**: Tests use `budget_kind='Forecast'` which doesn't exist in v3 DocType
 - **Evidence**: `mpit_budget.json` has `budget_type: Live/Snapshot`
-- **Impact**: MEDIUM — Tests may fail or test obsolete functionality
-- **Status**: Either update tests or delete if v2 behavior no longer needed
-- **Root Cause**: **Technical Debt / Incomplete Migration**. Test file was written for v2 logic and never updated to v3. Only v2-specific fields are tested.
+- **Impact**: MEDIUM — Tests are effectively dead code.
+- **Status**: **Verified 2026-01-06**. File uses v2 terminology (`budget_kind='Forecast'`, `overlap_months`) and does not run in the current suite.
+- **Root Cause**: **Technical Debt**. Test file became obsolete with v3 but was not deleted or refactored.
 
 ### O-022: annualization.py docstring mentions "baseline"
 - **Location**: `master_plan_it/annualization.py` L7
 - **Issue**: Docstring says "Handles temporal calculations for budget lines and baseline expenses"
-- **Evidence**: Code no longer uses "baseline" concept
+- **Evidence**: **Verified 2026-01-06**. Code no longer uses "baseline" concept but docstring retains it.
 - **Impact**: LOW — Cosmetic docstring drift
 - **Status**: Update docstring
 - **Root Cause**: **Cosmetic Drift**. Docstring was not updated when logic was refactored to remove "baseline" concept.
 
 ## Product Logic & UX Issues
-
-
 
 ### O-046: Poor Feedback Loop on Budget Refresh
 - **Location**: `mpit_budget.js` / "Refresh from Sources" button.
@@ -296,8 +255,6 @@ Last updated: 2026-01-04T13:00:00+01:00
 - **Impact**: LOW — Documentation gap for developers.
 - **Status**: Add README.md to key data models first.
 
-
-
 ### O-050: Inefficient `doc.save()` in loop (Budget Refresh)
 - **Location**: `budget_refresh_hooks.py` L171 (inside `realign_planned_items_horizon`)
 - **Issue**: `doc.save(ignore_permissions=True)` is called inside a loop over `MPIT Planned Item`. This triggers a full write + events for every item, which is O(N) and potentially slow.
@@ -305,23 +262,19 @@ Last updated: 2026-01-04T13:00:00+01:00
 - **Impact**: MEDIUM — Performance bottleneck on refresh if many items need realignment.
 - **Status**: Refactor to use `bulk_update` or move to background job if triggers are essential.
 
-
-
 ### O-052: Empty `public/js` directory
 - **Location**: `master_plan_it/public/js/`
 - **Issue**: Directory is empty, implying no global JS customizations. If the app requires global styling/scripts (e.g. for branding), they are missing or misplaced.
 - **Reference**: Frappe Framework Docs -> Asset Bundling.
 - **Impact**: LOW — Verification needed (is this intentional?).
 
-
-
 ### O-054: Redundant N+1 Query in Budget Refresh Hooks (Confirmed)
 - **Location**: Same as O-050 but distinct pattern: `realign_planned_items_horizon` loads doc for every item.
-- **Description**: Reconfirmed during deep scan.
+- **Description**: Reconfirmed during deep scan 2026-01-06.
 
 ---
 
-## ✅ Resolved Issues (This Session)
+## ✅ Resolved Issues
 
 | ID | Description | Resolution |
 |----|-------------|------------|
@@ -333,9 +286,9 @@ Last updated: 2026-01-04T13:00:00+01:00
 | how-to/11 | User Preferences ref | Deleted |
 | 03-workflows | v2 terminology | Updated to Live/Snapshot |
 | 02-roles | v2 terminology | Updated |
-| 10-money-vat L11 | User Prefs ref | → MPIT Settings |
-| 09-naming-title | User Prefs section | → MPIT Settings |
-| field-help-text | User Prefs section | Removed |
+| 10-money L11 | User Prefs ref | → MPIT Settings |
+| 09-naming | User Prefs section | → MPIT Settings |
+| field-help | User Prefs section | Removed |
 | O-003 | field-help-text-report.md | File deleted |
 | O-033 | requirements.txt | Invalid - Pytest 9.0.2 verified |
 | O-045 | Workspace ambiguity | Removed 'Planned Items' shortcut from Workspace |
@@ -346,7 +299,9 @@ Last updated: 2026-01-04T13:00:00+01:00
 | - | N+1 in enqueue_budget_refresh | Fetch year in initial get_all |
 | - | Raw SQL in whitelisted APIs | Refactored to Query Builder |
 | O-017 | verify.py v3 update | Updated verify.py lists to match v3 |
-| O-019 | demo_data.py uses v2 budget_kind field | File deleted |
-| O-020 | dashboard_defaults.py references v2 reports | File deleted |
+| O-019 | demo_data.py uses v2 field | File deleted |
+| O-020 | dashboard_defaults.py | File deleted |
 | O-038 | Empty doc dirs | Directories deleted |
 | O-049 | Legacy Dashboard | Deleted dead code (Page/API) |
+| O-029 | test_print.py fields | Fixed |
+| O-030 | rename_documents.py year | Fixed |

@@ -113,7 +113,6 @@ class MPITProject(Document):
 			FROM `tabMPIT Actual Entry`
 			WHERE project = %s AND status = 'Verified' AND entry_kind = 'Delta'
 		""", (self.name,))
-		print(f"DEBUG: _get_verified_deltas for {self.name}: {result}")
 		return flt(result[0][0] or 0) if result else 0.0
 
 

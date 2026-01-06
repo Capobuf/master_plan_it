@@ -40,7 +40,6 @@ class MPITActualEntry(Document):
 		self._update_project_totals()
 
 	def on_update(self):
-		print(f"DEBUG: on_update for {self.name}")
 		self._sync_planned_item_coverage()
 		self._update_project_totals()
 
@@ -51,7 +50,7 @@ class MPITActualEntry(Document):
 			project_doc = frappe.get_doc("MPIT Project", self.project)
 			project_doc.save(ignore_permissions=True)
 		except Exception as e:
-			print(f"DEBUG: Failed to update project totals: {e}")
+			pass
 
 	def validate(self):
 		self._set_year_from_posting_date()

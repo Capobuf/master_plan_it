@@ -245,6 +245,30 @@ class TestMPITBudget(FrappeTestCase):
 		snapshot = self._create_snapshot_budget()
 		self.assertIn("-APP-", snapshot.name)
 
+	def test_snapshot_deletion_resets_series(self):
+		"""
+		Test: Deleting the latest Snapshot resets the naming series.
+		
+		Failure indicates: on_trash() series reset logic.
+		"""
+		# Create first snapshot (e.g. ...-01)
+		s1 = self._create_snapshot_budget(with_lines=False)
+		s1_name = s1.name
+		
+		# Create second snapshot (e.g. ...-02)
+		s2 = self._create_snapshot_budget(with_lines=False)
+		s2_name = s2.name
+		
+		self.assertNotEqual(s1_name, s2_name)
+		
+		# Delete the second snapshot
+		s2.delete()
+		
+		# Create a new snapshot - should reuse the name of s2
+		s3 = self._create_snapshot_budget(with_lines=False)
+		self.assertEqual(s3.name, s2_name,
+			f"Expected new snapshot to reuse {s2_name}, got {s3.name}")
+
 	# ═══════════════════════════════════════════════════════════════════════════
 	# VALIDATION TESTS (4 tests)
 	# ═══════════════════════════════════════════════════════════════════════════
@@ -397,6 +421,84 @@ class TestMPITBudget(FrappeTestCase):
 		budget.reload()
 		self.assertGreater(budget.total_amount_monthly, initial_monthly)
 
+	def test_totals_calculation_complex_scenario(self):
+		"""
+		Test: Strict mathematical verification of totals with mixed tax/recurrence.
+		
+		Scenario:
+		- Line 1: 1000/month, VAT 22% (excluded)
+		- Line 2: 1200/year (Annual), VAT 0%
+		- Line 3: 500/quarter, VAT 10% (included) -> Gross 500
+		"""
+		budget = frappe.get_doc({
+			"doctype": "MPIT Budget",
+			"year": self.test_year,
+			"budget_type": "Live",
+			"lines": [
+				{
+					"doctype": "MPIT Budget Line",
+					"cost_center": self.test_cost_center,
+					"line_kind": "Manual",
+					"line_name": "L1",
+					"monthly_amount": 1000,
+					"amount_includes_vat": 0,
+					"vat_rate": 22,
+					"recurrence_rule": "Monthly"
+				},
+				{
+					"doctype": "MPIT Budget Line",
+					"cost_center": self.test_cost_center,
+					"line_kind": "Manual",
+					"line_name": "L2",
+					"annual_amount": 1200, # 100/month
+					"amount_includes_vat": 0,
+					"vat_rate": 0,
+					"recurrence_rule": "Annual"
+				},
+				{
+					"doctype": "MPIT Budget Line",
+					"cost_center": self.test_cost_center,
+					"line_kind": "Manual",
+					"line_name": "L3",
+					"monthly_amount": 0, # Calculated from unit_price or entered as annual
+					# If we enter quarterly amount... UI usually sends monthly_amount or unit_price
+					# Let's simulate entering unit_price=500 per Quarter
+					"qty": 1,
+					"unit_price": 500,
+					"amount_includes_vat": 1, # Gross is 500
+					"vat_rate": 10,
+					"recurrence_rule": "Quarterly"
+				}
+			]
+		})
+		budget.insert()
+		budget.reload()
+
+		# EXPECTED CALCULATIONS:
+		
+		# Line 1 (Monthly, 1000 Net, 22% VAT)
+		# Annual Net: 1000 * 12 = 12,000.00
+		# Annual VAT: 12,000 * 0.22 = 2,640.00
+		# Annual Gross: 14,640.00
+		
+		# Line 2 (Annual, 1200 Net, 0% VAT)
+		# Annual Net: 1,200.00
+		# Annual VAT: 0.00
+		# Annual Gross: 1,200.00
+		
+		# Line 3 (Quarterly, 500 Gross, 10% VAT)
+		# Annual Gross: 500 * 4 = 2,000.00
+		# Annual Net: 2000 / 1.10 = 1,818.18
+		# Annual VAT: 2000 - 1818.18 = 181.82
+		
+		expected_net = 12000.00 + 1200.00 + 1818.18  # 15,018.18
+		expected_vat = 2640.00 + 0.00 + 181.82       # 2,821.82
+		expected_gross = 14640.00 + 1200.00 + 2000.00 # 17,840.00
+		
+		self.assertAlmostEqual(budget.total_amount_net, expected_net, places=2)
+		self.assertAlmostEqual(budget.total_amount_vat, expected_vat, places=2)
+		self.assertAlmostEqual(budget.total_amount_gross, expected_gross, places=2)
+
 	# ═══════════════════════════════════════════════════════════════════════════
 	# REFRESH FROM SOURCES TESTS (4 tests)
 	# ═══════════════════════════════════════════════════════════════════════════
@@ -430,11 +532,6 @@ class TestMPITBudget(FrappeTestCase):
 		budget.reload()
 		
 		planned_lines = [l for l in budget.lines if "PLANNED_ITEM::" in (l.source_key or "")]
-		print(f"DEBUG: Planned lines count: {len(planned_lines)}")
-		if len(planned_lines) == 0:
-			print(f"DEBUG: All budget lines: {[l.source_key for l in budget.lines]}")
-			print(f"DEBUG: Planned Item status: {frappe.db.get_value('MPIT Planned Item', {'project': project_name}, ['name', 'docstatus', 'is_covered', 'out_of_horizon'], as_dict=True)}")
-			print(f"DEBUG: Project status: {frappe.db.get_value('MPIT Project', project_name, ['name', 'status', 'cost_center'], as_dict=True)}")
 		
 		self.assertGreaterEqual(len(planned_lines), 1,
 			"Expected at least 1 planned item line")
@@ -682,6 +779,49 @@ class TestMPITBudget(FrappeTestCase):
 		self.assertEqual(snapshot.workflow_state, "Approved")
 		self.assertEqual(snapshot.docstatus, 1)
 
+	def test_snapshot_is_immutable_after_submit(self):
+		"""
+		Test: Submitted Snapshot prevents modifications to lines.
+		
+		Failure indicates: on_update() immutability check failed.
+		"""
+		snapshot = self._create_snapshot_budget()
+		snapshot.submit()
+		snapshot.reload()
+		
+		# Try to modify a value
+		snapshot.lines[0].monthly_amount = 99999
+		
+		# Frappe Document.save() allows saving submitted docs if they have allow_on_submit fields.
+		# But MPIT Budget prevents changes to 'lines' via on_update hook (simulated) or controller logic.
+		# Note: In Frappe, docstatus=1 docs are read-only by default unless fields are allow_on_submit.
+		# Our on_update hook explicitly throws if lines change.
+		
+		with self.assertRaises(frappe.ValidationError) as ctx:
+			snapshot.save()
+		
+		msg = str(ctx.exception).lower()
+		self.assertTrue("not allowed to change" in msg or "immutable" in msg,
+			f"Unexpected error message: {msg}")
+		
+		# Try to add a line
+		# We need to reload because the previous save() might have dirtied the doc state in memory
+		snapshot.reload()
+		snapshot.append("lines", {
+			"doctype": "MPIT Budget Line",
+			"cost_center": self.test_cost_center,
+			"line_kind": "Allowance",
+			"monthly_amount": 50,
+			"recurrence_rule": "Monthly"
+		})
+		
+		with self.assertRaises(frappe.ValidationError) as ctx:
+			snapshot.save()
+			
+		msg = str(ctx.exception).lower()
+		self.assertTrue("not allowed to change" in msg or "immutable" in msg,
+			f"Unexpected error message: {msg}")
+
 	# ═══════════════════════════════════════════════════════════════════════════
 	# GENERATED LINES PROTECTION TESTS (2 tests)
 	# ═══════════════════════════════════════════════════════════════════════════
@@ -697,8 +837,8 @@ class TestMPITBudget(FrappeTestCase):
 		budget.refresh_from_sources(is_manual=1)
 		budget.reload()
 		
-		# Try to modify a generated line
-		budget.lines[0].monthly_amount = 99999
+		# Try to modify a generated line (use description as it is not auto-calculated)
+		budget.lines[0].description = "Hacked Description"
 		budget.flags.skip_generated_guard = False
 		
 		with self.assertRaises(frappe.ValidationError) as ctx:
