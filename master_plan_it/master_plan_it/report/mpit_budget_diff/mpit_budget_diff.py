@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import frappe
 from frappe import _
+from master_plan_it.master_plan_it.utils.dashboard_utils import normalize_dashboard_filters
 
 # Report: Budget Diff between two budgets grouped by Cost Center (and optionally Vendor).
 # Inputs: budget_a, budget_b (required), group_by (CostCenter+Vendor or CostCenter), only_changed flag.
@@ -9,8 +10,7 @@ from frappe import _
 
 
 def execute(filters=None):
-	if isinstance(filters, str):
-		filters = frappe.parse_json(filters)
+	filters = normalize_dashboard_filters(filters)
 	filters = frappe._dict(filters or {})
 
 	_validate_filters(filters)

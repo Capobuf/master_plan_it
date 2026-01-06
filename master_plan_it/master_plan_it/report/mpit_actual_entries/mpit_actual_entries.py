@@ -17,9 +17,11 @@ import datetime
 import frappe
 from frappe import _
 from frappe.utils import flt, getdate
+from master_plan_it.master_plan_it.utils.dashboard_utils import normalize_dashboard_filters
 
 
 def execute(filters=None):
+	filters = normalize_dashboard_filters(filters)
 	filters = frappe._dict(filters or {})
 	
 	columns = get_columns()
