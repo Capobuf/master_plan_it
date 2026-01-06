@@ -122,8 +122,8 @@
     {
       "fieldname": "total_amount_monthly",
       "fieldtype": "Currency",
-      "description": "Calculated automatically as the sum of monthly amounts.",
-      "label": "Total Monthly Amount",
+      "description": "Average monthly burden (NET Total / 12).",
+      "label": "Average Monthly Amount",
       "read_only": 1,
       "columns": 1,
       "css_class": "text-right",

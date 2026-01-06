@@ -655,8 +655,9 @@ class MPITBudget(Document):
 			total_vat += flt(getattr(line, "annual_vat", 0) or 0, 2)
 			total_gross += flt(getattr(line, "annual_gross", 0) or 0, 2)
 
-		self.total_amount_monthly = flt(total_monthly, 2)
 		self.total_amount_annual = flt(total_annual, 2)
+		# Use weighted average (Total Net / 12) to provide a consistent monthly burden.
+		self.total_amount_monthly = flt(total_net / 12.0, 2)
 		self.total_amount_net = flt(total_net, 2)
 		self.total_amount_vat = flt(total_vat, 2)
 		self.total_amount_gross = flt(total_gross, 2)
