@@ -22,7 +22,10 @@
     "financial_summary",
     "planned_total_net",
     "quoted_total_net",
-    "expected_total_net"
+    "expected_total_net",
+    "actual_total_net",
+    "variance_net",
+    "utilization_pct"
   ],
   "fields": [
     {
@@ -125,6 +128,27 @@
       "fieldtype": "Currency",
       "description": "Expected total (quoted if present, otherwise planned).",
       "label": "Expected Total (Net)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "actual_total_net",
+      "fieldtype": "Currency",
+      "description": "Total verified actuals (net).",
+      "label": "Actual Total (Net)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "variance_net",
+      "fieldtype": "Currency",
+      "description": "Actual - Planned (Net). Positive means over budget.",
+      "label": "Variance (Net)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "utilization_pct",
+      "fieldtype": "Percent",
+      "description": "Actual / Planned %.",
+      "label": "% Utilized",
       "read_only": 1
     },
     {

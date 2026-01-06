@@ -47,21 +47,35 @@ class MPITProject(Document):
 			return
 
 		# Fetch all non-cancelled Planned Items for this project
-		items = frappe.get_all(
+		items = frappe.db.get_all(
 			"MPIT Planned Item",
 			filters={"project": self.name, "docstatus": ["!=", 2]},
 			fields=["amount_net", "amount", "is_covered", "item_type"]
 		)
 
-		# Sum Estimate items not covered
-		estimate_total = sum(
+		# Sum ALL Estimate items (baseline)
+		all_estimates = sum(
+			flt(item.amount_net or item.amount or 0)
+			for item in items
+			if item.item_type == "Estimate"
+		)
+
+		# Sum ALL Quote items (baseline)
+		all_quotes = sum(
+			flt(item.amount_net or item.amount or 0)
+			for item in items
+			if item.item_type == "Quote"
+		)
+
+		# Sum Estimate items not covered (for forecast)
+		estimate_uncovered = sum(
 			flt(item.amount_net or item.amount or 0)
 			for item in items
 			if item.item_type == "Estimate" and not item.is_covered
 		)
 
-		# Sum Quote items not covered
-		quote_total = sum(
+		# Sum Quote items not covered (for forecast)
+		quote_uncovered = sum(
 			flt(item.amount_net or item.amount or 0)
 			for item in items
 			if item.item_type == "Quote" and not item.is_covered
@@ -70,13 +84,25 @@ class MPITProject(Document):
 		# Get verified deltas from Actual Entries
 		verified_deltas = self._get_verified_deltas()
 
-		# Expected: prefer quotes if available, else estimates
-		base = quote_total if quote_total > 0 else estimate_total
-		expected_total = base + verified_deltas
+		# Planned Baseline: prefer quotes if available, else estimates
+		planned_base = all_quotes if all_quotes > 0 else all_estimates
 
-		self.planned_total_net = flt(estimate_total, 2)
-		self.quoted_total_net = flt(quote_total, 2)
+		# Expected Forecast: prefer quotes (uncovered) if available, else estimates (uncovered) + Actuals
+		forecast_base = quote_uncovered if quote_uncovered > 0 else estimate_uncovered
+		expected_total = forecast_base + verified_deltas
+
+		self.planned_total_net = flt(planned_base, 2)
+		self.quoted_total_net = flt(all_quotes, 2)
 		self.expected_total_net = flt(expected_total, 2)
+		
+		self.actual_total_net = flt(verified_deltas, 2)
+		# Variance: Planned - Expected (Positive = Savings/Under Budget, Negative = Overrun)
+		self.variance_net = flt(self.planned_total_net - self.expected_total_net, 2)
+		
+		if self.planned_total_net > 0:
+			self.utilization_pct = flt((self.actual_total_net / self.planned_total_net) * 100, 2)
+		else:
+			self.utilization_pct = 0.0
 
 	def _get_verified_deltas(self) -> float:
 		"""Get sum of verified delta entries for this project."""
@@ -87,6 +113,7 @@ class MPITProject(Document):
 			FROM `tabMPIT Actual Entry`
 			WHERE project = %s AND status = 'Verified' AND entry_kind = 'Delta'
 		""", (self.name,))
+		print(f"DEBUG: _get_verified_deltas for {self.name}: {result}")
 		return flt(result[0][0] or 0) if result else 0.0
 
 

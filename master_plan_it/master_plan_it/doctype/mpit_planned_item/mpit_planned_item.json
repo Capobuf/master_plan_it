@@ -86,7 +86,8 @@
             "fieldtype": "Select",
             "label": "Distribution",
             "options": "all\nstart\nend",
-            "reqd": 1
+            "reqd": 1,
+            "description": "How to distribute the amount across the period"
         },
         {
             "fieldname": "section_amount",
@@ -179,28 +180,36 @@
             "fieldname": "is_covered",
             "fieldtype": "Check",
             "label": "Is Covered",
-            "read_only": 1
+            "read_only": 1,
+            "description": "Flag set when amount is already paid by Contract/Actual",
+            "allow_on_submit": 1
         },
         {
             "fieldname": "covered_by_type",
             "fieldtype": "Select",
             "label": "Covered By Type",
-            "options": "\nContract\nActual",
-            "read_only": 1
+            "options": "\nMPIT Contract\nMPIT Actual Entry",
+            "read_only": 1,
+            "description": "Type of document covering this item",
+            "allow_on_submit": 1
         },
         {
             "fieldname": "covered_by_name",
             "fieldtype": "Dynamic Link",
             "label": "Covered By",
             "options": "covered_by_type",
-            "read_only": 1
+            "read_only": 1,
+            "description": "Link to the covering document",
+            "allow_on_submit": 1
         },
         {
             "default": "0",
             "fieldname": "out_of_horizon",
             "fieldtype": "Check",
             "label": "Out of Horizon",
-            "read_only": 1
+            "read_only": 1,
+            "description": "Flag set when outside current+next year",
+            "allow_on_submit": 1
         }
     ],
     "idx": 0,

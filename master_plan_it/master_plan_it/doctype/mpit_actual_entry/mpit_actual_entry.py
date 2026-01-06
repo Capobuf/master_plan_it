@@ -37,6 +37,21 @@ class MPITActualEntry(Document):
 		from master_plan_it.naming_utils import reset_series_on_delete
 		prefix, digits = mpit_defaults.get_actual_entry_series()
 		reset_series_on_delete(self.name, prefix, digits)
+		self._update_project_totals()
+
+	def on_update(self):
+		print(f"DEBUG: on_update for {self.name}")
+		self._sync_planned_item_coverage()
+		self._update_project_totals()
+
+	def _update_project_totals(self) -> None:
+		if not self.project:
+			return
+		try:
+			project_doc = frappe.get_doc("MPIT Project", self.project)
+			project_doc.save(ignore_permissions=True)
+		except Exception as e:
+			print(f"DEBUG: Failed to update project totals: {e}")
 
 	def validate(self):
 		self._set_year_from_posting_date()
@@ -44,7 +59,6 @@ class MPITActualEntry(Document):
 		self._autofill_cost_center()
 		self._enforce_entry_kind_rules()
 		self._enforce_status_rules()
-		self._sync_planned_item_coverage()
 
 	def _autofill_cost_center(self) -> None:
 		"""Copy cost center from contract or project if missing."""
@@ -120,7 +134,7 @@ class MPITActualEntry(Document):
 			mpit_planned_item.set_coverage(prev_planned, None, None)
 
 		if self.planned_item and self.status == "Verified" and self.entry_kind == "Delta":
-			mpit_planned_item.set_coverage(self.planned_item, "Actual", self.name)
+			mpit_planned_item.set_coverage(self.planned_item, "MPIT Actual Entry", self.name)
 	
 	def _compute_vat_split(self):
 		"""Compute net/vat/gross for amount field with strict VAT validation."""

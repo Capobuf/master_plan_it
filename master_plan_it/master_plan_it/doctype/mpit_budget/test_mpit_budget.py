@@ -524,6 +524,53 @@ class TestMPITBudget(FrappeTestCase):
 		self.assertEqual(len(contract_lines), 1)
 		self.assertEqual(contract_lines[0].monthly_amount, flt(100, 6))
 
+	def test_contract_with_future_term_fallback(self):
+		"""
+		Test: Contract with Terms that don't overlap budget year falls back to current_amount.
+		
+		Failure indicates: _generate_contract_lines() Terms fallback issue.
+		
+		Scenario:
+		- Contract start_date in test_year
+		- Term from_date in next year (doesn't overlap)
+		- Expected: uses current_amount, not 0
+		"""
+		next_year = str(int(self.test_year) + 1)
+		contract_name = self._create_test_contract(
+			billing_cycle="Monthly",
+			current_amount=500,
+			start_date=f"{self.test_year}-01-01",
+			end_date=None
+		)
+		
+		# Create the next year for the Term
+		self._create_test_year(int(next_year))
+		
+		# Add a Term that starts next year (doesn't overlap current test_year)
+		frappe.get_doc({
+			"doctype": "MPIT Contract Term",
+			"parent": contract_name,
+			"parenttype": "MPIT Contract",
+			"parentfield": "terms",
+			"from_date": f"{next_year}-01-01",
+			"amount": 800,
+			"amount_includes_vat": 0,
+			"vat_rate": 22,
+			"billing_cycle": "Monthly"
+		}).insert()
+		
+		budget = self._create_live_budget()
+		budget.refresh_from_sources(is_manual=1)
+		budget.reload()
+		
+		# Should have 1 line using current_amount (500), not 0 and not Term amount (800)
+		contract_lines = [l for l in budget.lines if f"CONTRACT::{contract_name}" in (l.source_key or "")]
+		self.assertGreaterEqual(len(contract_lines), 1,
+			"Contract with future Term should generate line via fallback to current_amount")
+		self.assertEqual(contract_lines[0].monthly_amount, flt(500, 6),
+			"Should use current_amount (500), not Term amount (800)")
+
+
 	# ═══════════════════════════════════════════════════════════════════════════
 	# PLANNED ITEM DISTRIBUTION TESTS (3 tests)
 	# ═══════════════════════════════════════════════════════════════════════════

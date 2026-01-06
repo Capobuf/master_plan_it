@@ -40,7 +40,7 @@ master_plan_it.vat.apply_defaults_for_budget_line =
 		row.__vat_defaults_applied = true;
 	};
 
-	frappe.ui.form.on("MPIT Budget", {
+frappe.ui.form.on("MPIT Budget", {
 	refresh(frm) {
 		// Show "Create Snapshot" button only for Live budgets
 		if (frm.doc.budget_type === "Live" && !frm.is_new()) {
@@ -79,6 +79,7 @@ master_plan_it.vat.apply_defaults_for_budget_line =
 		// Show warning banner for year-closed budgets
 		if (frm.doc.budget_type === "Live" && frm.doc.year) {
 			frm.__is_year_closed = false;
+			frm.set_intro(""); // Clear any previous intro to prevent duplicates
 			frappe.call({
 				method: "master_plan_it.annualization.get_year_bounds",
 				args: { year: frm.doc.year },
@@ -88,10 +89,9 @@ master_plan_it.vat.apply_defaults_for_budget_line =
 						const today = frappe.datetime.now_date();
 						if (frappe.datetime.str_to_obj(today) > year_end) {
 							frm.__is_year_closed = true;
-							frm.dashboard.add_comment(
+							frm.set_intro(
 								__("Year closed: auto-refresh is OFF. Manual refresh may modify historical data."),
-								"yellow",
-								true
+								"yellow"
 							);
 						}
 					}
@@ -99,6 +99,7 @@ master_plan_it.vat.apply_defaults_for_budget_line =
 			});
 		} else {
 			frm.__is_year_closed = false;
+			frm.set_intro(""); // Clear intro when not a closed year
 		}
 	},
 	async lines_add(_frm, cdt, cdn) {
@@ -109,34 +110,50 @@ master_plan_it.vat.apply_defaults_for_budget_line =
 		if (frm.is_dirty()) {
 			await frm.save();
 		}
-		const args = { is_manual: 1 };
 
+		// For closed years, require explicit acknowledgment before refresh
 		if (frm.__is_year_closed) {
-			const values = await frappe.prompt(
-				[
-					{
-						fieldname: "ack",
-						fieldtype: "Check",
-						label: __("I understand: manual refresh on a closed year may alter historical data."),
-						reqd: 1,
-					},
-					{
-						fieldname: "reason",
-						fieldtype: "Small Text",
-						label: __("Reason (optional)"),
-					},
-				],
-				__("Refresh manual su anno chiuso")
-			);
+			return new Promise((resolve) => {
+				const d = new frappe.ui.Dialog({
+					title: __("Refresh manual su anno chiuso"),
+					fields: [
+						{
+							fieldname: "ack",
+							fieldtype: "Check",
+							label: __("I understand: manual refresh on a closed year may alter historical data."),
+						},
+						{
+							fieldname: "reason",
+							fieldtype: "Small Text",
+							label: __("Reason (optional)"),
+						},
+					],
+					primary_action_label: __("Proceed"),
+					primary_action: async (values) => {
+						if (!values.ack) {
+							frappe.msgprint(__("Refresh cancelled: confirmation is required."));
+							d.hide();
+							resolve();
+							return;
+						}
+						d.hide();
 
-			if (!values.ack) {
-				frappe.msgprint(__("Refresh cancelled: confirmation is required."));
-				return;
-			}
-			args.reason = values.reason || "";
+						// Execute refresh with reason
+						await frm.call("refresh_from_sources", {
+							is_manual: 1,
+							reason: values.reason || ""
+						});
+						await frm.reload_doc();
+						frappe.msgprint(__("Budget refreshed from sources."));
+						resolve();
+					},
+				});
+				d.show();
+			});
 		}
 
-		await frm.call("refresh_from_sources", args);
+		// For non-closed years, refresh directly
+		await frm.call("refresh_from_sources", { is_manual: 1 });
 		await frm.reload_doc();
 		frappe.msgprint(__("Budget refreshed from sources."));
 	},

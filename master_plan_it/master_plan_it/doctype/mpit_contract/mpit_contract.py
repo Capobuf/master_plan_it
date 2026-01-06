@@ -27,10 +27,75 @@ class MPITContract(Document):
 			self.description = self.name
 
 	def on_trash(self):
-		"""Reset series counter if this was the last Contract in sequence."""
+		"""Clean up linked budget lines and reset series counter.
+		
+		When a contract is deleted:
+		1. Remove all generated budget lines that reference this contract (v3 rule §4.4)
+		2. Recompute totals for affected Live budgets
+		3. Reset the series counter if this was the last in sequence
+		
+		This is idempotent: running multiple times has the same effect.
+		"""
+		self._cleanup_linked_budget_lines()
+		
+		# Reset series counter
 		from master_plan_it.naming_utils import reset_series_on_delete
 		prefix, digits = mpit_defaults.get_contract_series()
 		reset_series_on_delete(self.name, prefix, digits)
+	
+	def _cleanup_linked_budget_lines(self) -> None:
+		"""Remove generated budget lines that reference this contract.
+		
+		Only affects Live budgets (Snapshots should remain immutable).
+		After removing lines, recomputes budget totals.
+		
+		This follows v3 design decision §4.4:
+		"righe generate non più valide vengono cancellate (delete)"
+		"""
+		# Find all budget lines linked to this contract
+		linked_lines = frappe.db.sql("""
+			SELECT 
+				bl.name AS line_name,
+				bl.parent AS budget_name,
+				b.budget_type
+			FROM `tabMPIT Budget Line` bl
+			JOIN `tabMPIT Budget` b ON bl.parent = b.name
+			WHERE bl.contract = %s
+			  AND bl.is_generated = 1
+		""", (self.name,), as_dict=True)
+		
+		if not linked_lines:
+			return
+		
+		# Group by budget for efficient processing
+		budgets_to_update = {}
+		for line in linked_lines:
+			# Only delete from Live budgets - Snapshots are immutable
+			if line.budget_type == "Live":
+				budgets_to_update.setdefault(line.budget_name, []).append(line.line_name)
+		
+		# Delete lines and recompute affected budgets
+		for budget_name, line_names in budgets_to_update.items():
+			# Delete the lines directly from database (child table)
+			for line_name in line_names:
+				frappe.db.sql(
+					"""DELETE FROM `tabMPIT Budget Line` WHERE name = %s""",
+					(line_name,)
+				)
+			
+			# Reload and recompute totals for the budget
+			try:
+				budget_doc = frappe.get_doc("MPIT Budget", budget_name)
+				budget_doc.reload()
+				budget_doc._compute_totals()
+				budget_doc.db_update()
+				frappe.db.commit()
+			except Exception as e:
+				frappe.log_error(
+					f"Failed to recompute totals for {budget_name} after contract {self.name} deletion: {e}",
+					"Contract Deletion Cleanup"
+				)
+
 
 	def validate(self):
 		prev = self.get_doc_before_save()
@@ -121,4 +186,4 @@ class MPITContract(Document):
 
 		# Set coverage when linked and valid
 		if self.planned_item and current_valid:
-			mpit_planned_item.set_coverage(self.planned_item, "Contract", self.name)
+			mpit_planned_item.set_coverage(self.planned_item, "MPIT Contract", self.name)

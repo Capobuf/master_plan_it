@@ -213,9 +213,14 @@ class MPITBudget(Document):
 			# Check if contract has terms - use them if present, otherwise fall back to current_amount
 			terms = all_terms.get(contract.name, [])
 			if terms:
-				lines.extend(self._generate_contract_term_lines(contract, terms, year_start, year_end))
+				term_lines = self._generate_contract_term_lines(contract, terms, year_start, year_end)
+				if term_lines:
+					lines.extend(term_lines)
+				else:
+					# Terms exist but don't cover this year - fallback to current_amount
+					lines.extend(self._generate_contract_flat_lines(contract, year_start, year_end))
 			else:
-				# v3 fallback: use flat amount with billing_cycle when no terms defined
+				# No terms defined - use flat amount with billing_cycle
 				lines.extend(self._generate_contract_flat_lines(contract, year_start, year_end))
 		return lines
 

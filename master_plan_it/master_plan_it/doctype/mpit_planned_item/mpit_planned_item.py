@@ -40,8 +40,21 @@ class MPITPlannedItem(Document):
 		self._validate_coverage_fields()
 		self._enforce_submit_immutability()
 
-	def after_save(self):
+	def on_update(self):
 		self._maybe_log_coverage_change()
+		self._update_project_totals()
+
+	def on_trash(self):
+		self._update_project_totals()
+
+	def _update_project_totals(self) -> None:
+		if not self.project:
+			return
+		try:
+			project_doc = frappe.get_doc("MPIT Project", self.project)
+			project_doc.save(ignore_permissions=True)
+		except frappe.DoesNotExistError:
+			pass
 
 	def _validate_dates(self) -> None:
 		if not self.start_date or not self.end_date:
@@ -119,7 +132,7 @@ class MPITPlannedItem(Document):
 		self.amount_gross = flt(gross, 2)
 
 	def _maybe_log_coverage_change(self) -> None:
-		prev = getattr(self.flags, "_prev_coverage", (None, None, None))
+		prev = getattr(self.flags, "_prev_coverage", None) or (None, None, None)
 		prev_is_covered, prev_type, prev_name = prev
 		if self.is_covered == prev_is_covered:
 			return
