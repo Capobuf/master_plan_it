@@ -78,27 +78,29 @@ master_plan_it.project.render_financial_summary =
 		const delta_vs_quoted = quoted > 0 ? expected - quoted : expected - planned;
 
 		const format_currency = (value) => frappe.format(value || 0, { fieldtype: "Currency" });
+		const show_quoted = quoted > 0;
+
 		const html = `
 			<div class="mpit-project-summary">
 				<table class="table table-bordered" style="margin-bottom: 0">
 					<thead>
 						<tr>
 							<th>${__("Planned")}</th>
-							<th>${__("Quoted (Approved)")}</th>
+							${show_quoted ? `<th>${__("Quoted (Approved)")}</th>` : ""}
 							<th>${__("Verified Exceptions")}</th>
 							<th>${__("Expected (Plan + Exceptions)")}</th>
 							<th>${__("Delta vs Planned")}</th>
-							<th>${__("Delta vs Quoted")}</th>
+							${show_quoted ? `<th>${__("Delta vs Quoted")}</th>` : ""}
 						</tr>
 					</thead>
 					<tbody>
 						<tr>
 							<td>${format_currency(planned)}</td>
-							<td>${format_currency(quoted)}</td>
+							${show_quoted ? `<td>${format_currency(quoted)}</td>` : ""}
 							<td>${format_currency(exceptions)}</td>
 							<td>${format_currency(expected)}</td>
-							<td class="${delta_vs_planned < 0 ? "text-danger" : "text-success"}">${format_currency(delta_vs_planned)}</td>
-							<td class="${delta_vs_quoted < 0 ? "text-danger" : "text-success"}">${format_currency(delta_vs_quoted)}</td>
+							<td class="${delta_vs_planned > 0.01 ? "text-danger" : "text-success"}">${format_currency(delta_vs_planned)}</td>
+							${show_quoted ? `<td class="${delta_vs_quoted > 0.01 ? "text-danger" : "text-success"}">${format_currency(delta_vs_quoted)}</td>` : ""}
 						</tr>
 					</tbody>
 				</table>

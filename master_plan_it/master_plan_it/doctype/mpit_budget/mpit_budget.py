@@ -375,7 +375,7 @@ class MPITBudget(Document):
 						"annual_amount": 0,
 						"amount_includes_vat": 0,
 						"vat_rate": 0,
-						"recurrence_rule": "Monthly",
+						"recurrence_rule": "None" if (item.spend_date or item.distribution in ("start", "end")) else "Monthly",
 						"period_start_date": period_start,
 						"period_end_date": period_end,
 						"is_generated": 1,

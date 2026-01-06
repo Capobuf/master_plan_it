@@ -83,8 +83,13 @@ def compute_amounts(
             # unit_price is per year
             computed_annual = flt(line_total_per_period, 2)
             computed_monthly = flt(computed_annual / 12, 2)
+        elif recurrence_rule == "None":
+            # Flat amount: annual = monthly = total
+            computed_annual = flt(line_total_per_period, 2)
+            computed_monthly = flt(line_total_per_period, 2)
         else:
-            # None or unknown: treat as one-time/annual
+            # Unknown: default to annual/one-time logic (divide by 12)
+            # This keeps backward compatibility for weird values
             computed_annual = flt(line_total_per_period, 2)
             computed_monthly = flt(computed_annual / 12, 2)
         
@@ -96,7 +101,10 @@ def compute_amounts(
     # Priority 2: Bidirectional monthly ↔ annual
     if monthly_amount > 0 and annual_amount == 0:
         # User entered monthly, calculate annual
-        computed_annual = flt(monthly_amount * 12, 2)
+        if recurrence_rule == "None":
+            computed_annual = flt(monthly_amount, 2)
+        else:
+            computed_annual = flt(monthly_amount * 12, 2)
         return {
             "monthly_amount": monthly_amount,
             "annual_amount": computed_annual,
@@ -104,7 +112,10 @@ def compute_amounts(
     
     if annual_amount > 0 and monthly_amount == 0:
         # User entered annual, calculate monthly
-        computed_monthly = flt(annual_amount / 12, 2)
+        if recurrence_rule == "None":
+            computed_monthly = flt(annual_amount, 2)
+        else:
+            computed_monthly = flt(annual_amount / 12, 2)
         return {
             "monthly_amount": computed_monthly,
             "annual_amount": annual_amount,
@@ -112,14 +123,20 @@ def compute_amounts(
     
     # Both set or both empty: use annual as master (or 0 if empty)
     if annual_amount > 0:
-        computed_monthly = flt(annual_amount / 12, 2)
+        if recurrence_rule == "None":
+             computed_monthly = flt(annual_amount, 2)
+        else:
+             computed_monthly = flt(annual_amount / 12, 2)
         return {
             "monthly_amount": computed_monthly,
             "annual_amount": annual_amount,
         }
     
     if monthly_amount > 0:
-        computed_annual = flt(monthly_amount * 12, 2)
+        if recurrence_rule == "None":
+             computed_annual = flt(monthly_amount, 2)
+        else:
+             computed_annual = flt(monthly_amount * 12, 2)
         return {
             "monthly_amount": monthly_amount,
             "annual_amount": computed_annual,
@@ -230,7 +247,11 @@ def compute_line_amounts(
     
     # Step 3: Compute annualized values based on overlap
     # If overlap is less than 12 months, scale the amounts proportionally
-    overlap_ratio = overlap_months / 12.0 if overlap_months else 1.0
+    # EXCEPT if recurrence is "None" (Flat Amount), in which case we take full amount.
+    if recurrence_rule == "None":
+        overlap_ratio = 1.0
+    else:
+        overlap_ratio = overlap_months / 12.0 if overlap_months else 1.0
     
     annual_net = flt(vat_split["amount_net"] * overlap_ratio, 2)
     annual_vat = flt(vat_split["amount_vat"] * overlap_ratio, 2)
