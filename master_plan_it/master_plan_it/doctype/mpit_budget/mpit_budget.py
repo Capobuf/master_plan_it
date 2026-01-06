@@ -311,7 +311,7 @@ class MPITBudget(Document):
 		lines: list[dict] = []
 		items = frappe.get_all(
 			"MPIT Planned Item",
-			filters={"docstatus": 1, "is_covered": 0, "out_of_horizon": 0},
+			filters={"docstatus": 1, "is_covered": 0},
 			fields=[
 				"name",
 				"project",

@@ -9,9 +9,12 @@
   "field_order": [
     "section_overview",
     "line_kind",
-    "source_key",
     "vendor",
+    "contract",
+    "project",
     "description",
+    "is_generated",
+    "source_key",
     "section_pricing",
     "qty",
     "unit_price",
@@ -35,11 +38,8 @@
     "annual_vat",
     "annual_gross",
     "section_links",
-    "contract",
-    "project",
     "cost_center",
-    "section_flags",
-    "is_generated"
+    "section_flags"
   ],
   "fields": [
     {
@@ -52,16 +52,9 @@
       "fieldtype": "Select",
       "description": "Sorgente riga (Contract, Project, Allowance cap, Manual).",
       "in_list_view": 1,
+      "columns": 1,
       "label": "Line Kind",
       "options": "Contract\nPlanned Item\nProject\nAllowance\nManual"
-    },
-    {
-      "fieldname": "source_key",
-      "fieldtype": "Data",
-      "description": "Chiave generata (solo lettura).",
-      "label": "Source Key",
-      "read_only": 1,
-      "bold": 1
     },
     {
       "fieldname": "vendor",
@@ -73,12 +66,48 @@
       "options": "MPIT Vendor"
     },
     {
+      "fieldname": "contract",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "columns": 1,
+      "description": "Solo per line_kind=Contract (read-only se generata).",
+      "label": "Contract",
+      "options": "MPIT Contract"
+    },
+    {
+      "fieldname": "project",
+      "fieldtype": "Link",
+      "in_list_view": 1,
+      "columns": 1,
+      "description": "Solo per line_kind=Project (read-only se generata).",
+      "label": "Project",
+      "options": "MPIT Project"
+    },
+    {
       "fieldname": "description",
       "fieldtype": "Small Text",
       "description": "Descrizione sintetica.",
       "in_list_view": 1,
       "columns": 2,
       "label": "Description"
+    },
+    {
+      "default": "0",
+      "fieldname": "is_generated",
+      "fieldtype": "Check",
+      "description": "If enabled, this line is generated and should be read-only.",
+      "label": "Is Generated",
+      "in_list_view": 1,
+      "columns": 1,
+      "read_only": 1
+    },
+    {
+      "fieldname": "source_key",
+      "fieldtype": "Data",
+      "description": "Chiave generata (solo lettura).",
+      "label": "Source Key",
+      "read_only": 1,
+      "bold": 1
     },
     {
       "fieldname": "section_pricing",
@@ -92,8 +121,7 @@
       "label": "Qty",
       "default": "1",
       "precision": "2",
-      "in_list_view": 1,
-      "columns": 1
+      "in_list_view": 0
     },
     {
       "fieldname": "unit_price",
@@ -151,7 +179,6 @@
       "description": "Calculated automatically: annual amount net of VAT.",
       "label": "Net Amount",
       "read_only": 1,
-      "columns": 1,
       "css_class": "text-right",
       "label_align": "right"
     },
@@ -161,7 +188,6 @@
       "description": "Calculated automatically as the VAT portion.",
       "label": "VAT Amount",
       "read_only": 1,
-      "columns": 1,
       "css_class": "text-right",
       "label_align": "right"
     },
@@ -171,7 +197,6 @@
       "description": "Calculated automatically as the gross amount.",
       "label": "Gross Amount",
       "read_only": 1,
-      "columns": 1,
       "css_class": "text-right",
       "label_align": "right"
     },
@@ -187,6 +212,8 @@
       "fieldtype": "Select",
       "description": "How often this cost recurs. Used with Unit Price to calculate amounts.",
       "label": "Recurrence Rule",
+      "in_list_view": 1,
+      "columns": 1,
       "options": "Monthly\nQuarterly\nAnnual\nNone"
     },
     {
@@ -239,22 +266,6 @@
       "collapsible": 1
     },
     {
-      "fieldname": "contract",
-      "fieldtype": "Link",
-      "in_list_view": 1,
-      "description": "Solo per line_kind=Contract (read-only se generata).",
-      "label": "Contract",
-      "options": "MPIT Contract"
-    },
-    {
-      "fieldname": "project",
-      "fieldtype": "Link",
-      "in_list_view": 1,
-      "description": "Solo per line_kind=Project (read-only se generata).",
-      "label": "Project",
-      "options": "MPIT Project"
-    },
-    {
       "fieldname": "cost_center",
       "fieldtype": "Link",
       "description": "Cost center consigliato (obbligatorio di fatto per allowance caps).",
@@ -269,14 +280,6 @@
       "fieldtype": "Section Break",
       "label": "Flags",
       "collapsible": 1
-    },
-    {
-      "default": "0",
-      "fieldname": "is_generated",
-      "fieldtype": "Check",
-      "description": "If enabled, this line is generated and should be read-only.",
-      "label": "Is Generated",
-      "read_only": 1
     }
   ],
   "grid_page_length": 50,
