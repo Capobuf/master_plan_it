@@ -12,10 +12,34 @@ frappe.query_reports["MPIT Overview"] = {
             reqd: 0
         },
         {
+            fieldname: "budget",
+            label: __("Budget"),
+            fieldtype: "Link",
+            options: "MPIT Budget",
+            get_query: function () {
+                let year = frappe.query_report.get_filter_value("year");
+                let filters = {};
+                if (year) {
+                    filters.year = year;
+                }
+                // Include both Live (docstatus=0) and Snapshot (docstatus=1)
+                filters.docstatus = ["in", [0, 1]];
+                return { filters: filters };
+            },
+            reqd: 0
+        },
+        {
             fieldname: "cost_center",
             label: __("Cost Center"),
             fieldtype: "Link",
             options: "MPIT Cost Center",
+            reqd: 0
+        },
+        {
+            fieldname: "vendor",
+            label: __("Vendor"),
+            fieldtype: "Link",
+            options: "MPIT Vendor",
             reqd: 0
         }
     ],
@@ -58,12 +82,10 @@ frappe.query_reports["MPIT Overview"] = {
                     container.appendChild(col);
 
                     // Render chart using frappe.Chart
-                    new frappe.Chart(chartDiv, {
-                        data: chart_data.data,
-                        type: chart_data.type || "bar",
-                        height: 250,
-                        colors: chart_data.colors || undefined
-                    });
+                    let options = Object.assign({
+                        height: 250
+                    }, chart_data);
+                    new frappe.Chart(chartDiv, options);
                 }
             }
         }

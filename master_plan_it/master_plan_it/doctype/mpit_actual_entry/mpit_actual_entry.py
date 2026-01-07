@@ -120,7 +120,7 @@ class MPITActualEntry(Document):
 
 		# Revert Verified -> Recorded allowed only for vCIO Manager
 		if prev_status == "Verified" and self.status == "Recorded":
-			if not frappe.has_role("vCIO Manager"):
+			if "vCIO Manager" not in frappe.get_roles():
 				frappe.throw(_("Only vCIO Manager can revert a Verified entry to Recorded."))
 
 	def _sync_planned_item_coverage(self) -> None:

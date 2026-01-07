@@ -18,7 +18,7 @@
     "name": "MPIT Plan vs Cap vs Actual",
     "number_of_groups": 0,
     "owner": "Administrator",
-    "report_name": "MPIT Plan vs Cap vs Actual",
+    "report_name": "MPIT Overview",
     "roles": [
         {
             "role": "System Manager"

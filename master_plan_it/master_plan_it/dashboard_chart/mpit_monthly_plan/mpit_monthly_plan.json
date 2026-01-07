@@ -1,5 +1,5 @@
 {
-    "chart_name": "MPIT Monthly Plan v3",
+    "chart_name": "MPIT Monthly Plan",
     "chart_type": "Report",
     "creation": "2026-01-02 23:22:41.306031",
     "currency": "EUR",
@@ -13,10 +13,10 @@
     "modified": "2026-01-04 15:15:00.000000",
     "modified_by": "Administrator",
     "module": "Master Plan IT",
-    "name": "MPIT Monthly Plan v3",
+    "name": "MPIT Monthly Plan",
     "number_of_groups": 0,
     "owner": "Administrator",
-    "report_name": "MPIT Monthly Plan v3",
+    "report_name": "MPIT Monthly Plan",
     "roles": [
         {
             "role": "System Manager"

@@ -288,6 +288,7 @@ def get_extra_charts(filters: frappe._dict, data: list[dict]) -> dict:
 					"labels": list(cc_amounts.keys()),
 					"datasets": [{"values": list(cc_amounts.values())}],
 				},
+				"fieldtype": "Currency",
 			}
 	
 	return {"charts": charts}

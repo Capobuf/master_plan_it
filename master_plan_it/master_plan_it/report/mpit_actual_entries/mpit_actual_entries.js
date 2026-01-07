@@ -96,12 +96,10 @@ frappe.query_reports["MPIT Actual Entries"] = {
                     col.appendChild(card);
                     container.appendChild(col);
 
-                    new frappe.Chart(chartDiv, {
-                        data: chart_data.data,
-                        type: chart_data.type || "bar",
-                        height: 250,
-                        colors: chart_data.colors || undefined
-                    });
+                    let options = Object.assign({
+                        height: 250
+                    }, chart_data);
+                    new frappe.Chart(chartDiv, options);
                 }
             }
         }

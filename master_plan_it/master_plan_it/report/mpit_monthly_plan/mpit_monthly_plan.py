@@ -312,6 +312,7 @@ def _build_chart(data: list[dict]) -> dict:
 		},
 		"type": "bar",
 		"barOptions": {"stacked": True},
+		"fieldtype": "Currency",
 	}
 
 

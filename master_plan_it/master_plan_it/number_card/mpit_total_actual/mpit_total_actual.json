@@ -1,0 +1,23 @@
+{
+    "aggregate_function_based_on": "amount_net",
+    "color": "#ff4d4d",
+    "creation": "2026-01-06 18:00:00.000000",
+    "docstatus": 0,
+    "doctype": "Number Card",
+    "document_type": "MPIT Actual Entry",
+    "dynamic_filters_json": "[[\"MPIT Actual Entry\",\"year\",\"=\",\"year\",false]]",
+    "filters_json": "[[\"MPIT Actual Entry\",\"status\",\"=\",\"Verified\",false]]",
+    "function": "Sum",
+    "idx": 0,
+    "is_public": 1,
+    "is_standard": 1,
+    "label": "Total Actual",
+    "modified": "2026-01-06 18:00:00.000000",
+    "modified_by": "Administrator",
+    "module": "Master Plan IT",
+    "name": "MPIT Total Actual",
+    "owner": "Administrator",
+    "show_percentage_stats": 0,
+    "stats_time_interval": "Monthly",
+    "type": "Document Value"
+}

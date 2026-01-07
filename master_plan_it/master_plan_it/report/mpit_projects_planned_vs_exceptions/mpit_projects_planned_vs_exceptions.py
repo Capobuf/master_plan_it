@@ -295,4 +295,5 @@ def _build_chart(rows: list[dict]) -> dict | None:
         },
         "type": "bar",
         "axis_options": {"x_axis_mode": "tick", "y_axis_mode": "tick"},
+        "fieldtype": "Currency",
     }
