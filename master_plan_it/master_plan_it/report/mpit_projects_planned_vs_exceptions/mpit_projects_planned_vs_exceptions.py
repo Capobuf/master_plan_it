@@ -65,7 +65,7 @@ def _get_data(filters) -> list[dict]:
     year = filters.year
     project_filter = filters.get("project")
     cost_center_filter = filters.get("cost_center")
-    status_filter = filters.get("status")
+    workflow_state_filter = filters.get("status")  # Keep filter name for backward compat
 
     # Get MPIT Year date range for filtering Planned Items
     year_doc = frappe.get_cached_doc("MPIT Year", year)
@@ -73,12 +73,12 @@ def _get_data(filters) -> list[dict]:
     year_end = year_doc.end_date
 
     # Get all projects with activity for this year (Planned Items or Actuals)
-    projects = _get_active_projects(year, year_start, year_end, project_filter, cost_center_filter, status_filter)
+    projects = _get_active_projects(year, year_start, year_end, project_filter, cost_center_filter, workflow_state_filter)
     if not projects:
         return []
 
     # Get Planned Item amounts per project (items overlapping the year)
-    planned_amounts = _get_planned_amounts(year_start, year_end, project_filter, cost_center_filter, status_filter)
+    planned_amounts = _get_planned_amounts(year_start, year_end, project_filter, cost_center_filter, workflow_state_filter)
 
     # Get Actual amounts per project (Delta + Verified)
     actual_amounts = _get_actual_amounts(year, project_filter, cost_center_filter)
@@ -96,7 +96,7 @@ def _get_data(filters) -> list[dict]:
 
         rows.append({
             "project": proj,
-            "project_status": info.get("status", ""),
+            "project_status": info.get("workflow_state", ""),
             "cost_center": info.get("cost_center", ""),
             "planned_amount": planned,
             "actual_amount": actual,
@@ -113,17 +113,17 @@ def _get_active_projects(
     year_end,
     project_filter: str | None,
     cost_center_filter: str | None,
-    status_filter: str | None,
+    workflow_state_filter: str | None,
 ) -> list[str]:
     """Get all projects that have Planned Items or Actuals for this year."""
     projects = set()
 
-    # Build project filters for cost center and status
+    # Build project filters for cost center and workflow_state
     project_filters = {}
     if cost_center_filter:
         project_filters["cost_center"] = cost_center_filter
-    if status_filter:
-        project_filters["status"] = status_filter
+    if workflow_state_filter:
+        project_filters["workflow_state"] = workflow_state_filter
     if project_filter:
         project_filters["name"] = project_filter
 
@@ -177,15 +177,15 @@ def _get_planned_amounts(
     year_end,
     project_filter: str | None,
     cost_center_filter: str | None,
-    status_filter: str | None,
+    workflow_state_filter: str | None,
 ) -> dict[str, float]:
     """Get total planned amount per project from MPIT Planned Items."""
-    # Build filters for projects if cost_center or status filter provided
+    # Build filters for projects if cost_center or workflow_state filter provided
     project_filters = {}
     if cost_center_filter:
         project_filters["cost_center"] = cost_center_filter
-    if status_filter:
-        project_filters["status"] = status_filter
+    if workflow_state_filter:
+        project_filters["workflow_state"] = workflow_state_filter
     if project_filter:
         project_filters["name"] = project_filter
 
@@ -260,17 +260,17 @@ def _get_actual_amounts(year: str, project_filter: str | None, cost_center_filte
 
 
 def _get_project_info(projects: list[str]) -> dict[str, dict]:
-    """Get project status and cost_center."""
+    """Get project workflow_state and cost_center."""
     if not projects:
         return {}
 
     info_list = frappe.get_all(
         "MPIT Project",
         filters={"name": ["in", projects]},
-        fields=["name", "status", "cost_center"],
+        fields=["name", "workflow_state", "cost_center"],
     )
 
-    return {i["name"]: {"status": i.get("status"), "cost_center": i.get("cost_center")} for i in info_list}
+    return {i["name"]: {"workflow_state": i.get("workflow_state"), "cost_center": i.get("cost_center")} for i in info_list}
 
 
 def _build_chart(rows: list[dict]) -> dict | None:

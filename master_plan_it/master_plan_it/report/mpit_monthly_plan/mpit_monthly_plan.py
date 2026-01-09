@@ -199,7 +199,7 @@ def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_
 	if project_names:
 		projects = frappe.get_all(
 			"MPIT Project",
-			filters={"name": ["in", project_names], "status": ["in", ["Approved", "In Progress", "On Hold", "Completed"]]},
+			filters={"name": ["in", project_names], "workflow_state": "Approved"},
 			fields=["name", "cost_center"],
 		)
 		project_ccs = {p.name: p.cost_center for p in projects}

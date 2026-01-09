@@ -9,7 +9,8 @@
   "field_order": [
     "section_overview",
     "title",
-    "status",
+    "workflow_state",
+    "operational_status",
     "overview_col_break",
     "cost_center",
     "start_date",
@@ -45,13 +46,24 @@
     },
     {
       "default": "Draft",
-      "fieldname": "status",
+      "fieldname": "workflow_state",
       "fieldtype": "Select",
-      "description": "Project status. Active statuses (Approved, In Progress, etc.) should have Planned Items to appear in the budget.",
+      "description": "Workflow status. Managed by Frappe Workflow.",
       "in_list_view": 1,
       "in_standard_filter": 1,
       "label": "Status",
-      "options": "Draft\nProposed\nApproved\nIn Progress\nOn Hold\nCompleted\nCancelled"
+      "options": "Draft\nProposed\nApproved\nRejected\nCancelled",
+      "read_only": 1
+    },
+    {
+      "fieldname": "operational_status",
+      "fieldtype": "Select",
+      "description": "Operational status after approval. Freely editable.",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Operational Status",
+      "options": "\nIn Progress\nOn Hold\nCompleted",
+      "depends_on": "eval:doc.workflow_state=='Approved'"
     },
     {
       "fieldname": "overview_col_break",

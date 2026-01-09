@@ -38,7 +38,7 @@ class MPITProject(Document):
 				frappe.throw(_("Cost Center is required on Project."))
 		self._validate_planned_dates()
 		self._compute_project_totals()
-		self._warn_if_approved_without_planned_items()
+		# Warning removed - workflow now blocks Proposed→Approved without Planned Items
 
 
 	def _compute_project_totals(self) -> None:
@@ -117,17 +117,8 @@ class MPITProject(Document):
 
 
 	def _warn_if_approved_without_planned_items(self) -> None:
-		"""Warn user if Project is active but won't appear in Budget (missing Planned Items)."""
-		# Only relevant for statuses that the Budget Engine includes
-		if self.status not in ("Approved", "In Progress", "Completed"):
-			return
-		
-		# Check if any Planned Item exists for this project
-		if not frappe.db.exists("MPIT Planned Item", {"project": self.name}):
-			frappe.msgprint(
-				_("Project is active ({0}) but has no Planned Items. It will not generate lines in the Live Budget.").format(self.status),
-				indicator="orange"
-			)
+		"""Deprecated: Workflow now blocks approval without Planned Items."""
+		pass  # Kept for backward compatibility, logic moved to workflow condition
 
 	def _validate_planned_dates(self) -> None:
 		"""Enforce planned date rules for monthly distribution."""
@@ -160,3 +151,15 @@ def get_project_actuals_totals(project: str) -> dict:
 	)
 	actual_total = flt(row[0][0] or 0) if row else 0.0
 	return {"actual_total_net": actual_total}
+
+
+@frappe.whitelist()
+def has_submitted_planned_items(project: str) -> bool:
+	"""Check if project has at least one submitted Planned Item.
+
+	Used as workflow condition to block Proposed→Approved without Planned Items.
+	"""
+	if not project:
+		return False
+	return bool(frappe.db.exists("MPIT Planned Item", {"project": project, "docstatus": 1}))
+

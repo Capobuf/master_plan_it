@@ -73,7 +73,7 @@ class MPITBudget(Document):
 				line.cost_center = frappe.db.get_value("MPIT Project", line.project, "cost_center")
 
 	def _enforce_budget_type_rules(self) -> None:
-		"""Validate Live/Snapshot semantics and approval constraints."""
+		"""Validate Live/Snapshot semantics."""
 		if not self.budget_type:
 			self.budget_type = "Live"
 
@@ -83,8 +83,9 @@ class MPITBudget(Document):
 			if self.workflow_state == "Approved":
 				frappe.throw(_("Approved status is reserved for Snapshot budgets."))
 		elif self.budget_type == "Snapshot":
-			if self.docstatus == 0 and self.workflow_state == "Approved":
-				frappe.throw(_("Submit the Snapshot to approve it."))
+			# Option B: Snapshot uses workflow_state without submit
+			# Immutability is enforced by _enforce_snapshot_workflow_immutability()
+			pass
 		else:
 			frappe.throw(_("Unsupported Budget Type: {0}").format(self.budget_type))
 	
@@ -332,22 +333,20 @@ class MPITBudget(Document):
 			for p in frappe.get_all(
 				"MPIT Project",
 				filters={"name": ["in", [i.project for i in items if i.project]]},
-				fields=["name", "title", "status", "cost_center"],
+				fields=["name", "title", "workflow_state", "cost_center"],
 			)
 		}
 
-		# v3 inclusion rules (§7.1 decisions doc):
-		# - Approved, In Progress, On Hold: always included
-		# - Completed: included only if it has valid Planned Items (enforced by
-		#   the outer filter on Planned Items: docstatus=1, is_covered=0, out_of_horizon=0)
-		# - Draft, Proposed, Cancelled: excluded
-		allowed_status = {"Approved", "In Progress", "On Hold", "Completed"}
+		# v3 inclusion rules updated for workflow:
+		# - workflow_state == "Approved": included (operational_status is ignored)
+		# - Draft, Proposed, Rejected, Cancelled: excluded
+		allowed_workflow_state = "Approved"
 
 		for item in items:
 			project = project_map.get(item.project)
 			if not project:
 				frappe.throw(_("Planned Item {0}: linked project missing.").format(item.name))
-			if project.status not in allowed_status:
+			if project.workflow_state != allowed_workflow_state:
 				continue
 			if not project.cost_center:
 				frappe.throw(
@@ -608,15 +607,22 @@ class MPITBudget(Document):
 			line.annual_gross = result["annual_gross"]
 
 	def _enforce_status_invariants(self) -> None:
-		"""Keep workflow_state aligned with docstatus and budget type."""
+		"""Keep workflow_state aligned with budget type.
+
+		Option B: Snapshot uses workflow for state management, no submit required.
+		Live uses auto-set Active/Closed based on year.
+		"""
 		if not self.workflow_state:
 			self.workflow_state = "Draft"
 
 		if self.budget_type == "Snapshot":
-			if self.docstatus == 0 and self.workflow_state == "Approved":
-				frappe.throw(_("Submit the Snapshot to approve it."))
-			if self.docstatus == 1 and self.workflow_state != "Approved":
-				self.workflow_state = "Approved"
+			# Workflow manages states: Draft, Proposed, Approved, Rejected
+			# Validate that workflow_state is valid for Snapshot
+			valid_snapshot_states = {"Draft", "Proposed", "Approved", "Rejected"}
+			if self.workflow_state not in valid_snapshot_states:
+				self.workflow_state = "Draft"
+			# Enforce immutability when not in Draft
+			self._enforce_snapshot_workflow_immutability()
 		elif self.budget_type == "Live":
 			if self.workflow_state == "Approved":
 				frappe.throw(_("Approved status is reserved for Snapshot budgets."))
@@ -629,14 +635,36 @@ class MPITBudget(Document):
 			else:
 				self.workflow_state = "Active"
 
+	def _enforce_snapshot_workflow_immutability(self) -> None:
+		"""Block editing Snapshot lines when not in Draft state (Option B)."""
+		if self.budget_type != "Snapshot":
+			return
+		if self.workflow_state == "Draft":
+			return  # Draft is editable
+		if self.is_new():
+			return
+		# Check if lines were modified
+		if self.has_value_changed("lines"):
+			frappe.throw(
+				_("Snapshot in state '{0}' is read-only. Reopen to edit.").format(self.workflow_state)
+			)
+
 	def before_submit(self):
-		"""Allow submit of Snapshots without tripping immutability guard."""
+		"""Allow submit of Snapshots without tripping immutability guard.
+
+		Note: With Option B, submit is optional for Snapshot. Workflow manages states.
+		"""
 		self.flags.skip_immutability = True
 
 	def on_submit(self):
-		# Only Snapshot budgets can be approved/submitted
+		"""Handle submit for Snapshot budgets.
+
+		With Option B, submit is optional. If used, it's a formal approval marker.
+		"""
 		if self.budget_type != "Snapshot":
 			frappe.throw(_("Only Snapshot budgets can be submitted."))
+		# With Option B, submit is optional - workflow manages Approved state
+		# If submitting, ensure workflow_state is Approved
 		if self.workflow_state != "Approved":
 			self.workflow_state = "Approved"
 			self.db_set("workflow_state", "Approved")

@@ -1,0 +1,44 @@
+[
+    {
+        "doctype": "Workflow State",
+        "name": "Draft",
+        "workflow_state_name": "Draft",
+        "style": ""
+    },
+    {
+        "doctype": "Workflow State",
+        "name": "Proposed",
+        "workflow_state_name": "Proposed",
+        "style": "Primary"
+    },
+    {
+        "doctype": "Workflow State",
+        "name": "Approved",
+        "workflow_state_name": "Approved",
+        "style": "Success"
+    },
+    {
+        "doctype": "Workflow State",
+        "name": "Rejected",
+        "workflow_state_name": "Rejected",
+        "style": "Danger"
+    },
+    {
+        "doctype": "Workflow State",
+        "name": "Cancelled",
+        "workflow_state_name": "Cancelled",
+        "style": "Danger"
+    },
+    {
+        "doctype": "Workflow State",
+        "name": "Active",
+        "workflow_state_name": "Active",
+        "style": "Success"
+    },
+    {
+        "doctype": "Workflow State",
+        "name": "Closed",
+        "workflow_state_name": "Closed",
+        "style": ""
+    }
+]
