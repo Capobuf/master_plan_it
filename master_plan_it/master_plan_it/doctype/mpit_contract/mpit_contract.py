@@ -75,6 +75,12 @@ class MPITContract(Document):
 				budgets_to_update.setdefault(line.budget_name, []).append(line.line_name)
 		
 		# Delete lines and recompute affected budgets
+		# NOTE Design Decision: We use raw SQL DELETE because generated lines
+		# (is_generated=1) are protected by _enforce_generated_lines_read_only()
+		# in mpit_budget.py. The normal Document API would block deletion.
+		# Raw SQL bypasses this protection intentionally when the source (contract)
+		# is being deleted. Commit per-budget ensures partial progress is saved
+		# if one budget fails (best-effort cleanup pattern).
 		for budget_name, line_names in budgets_to_update.items():
 			# Delete the lines directly from database (child table)
 			for line_name in line_names:

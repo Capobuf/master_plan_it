@@ -14,7 +14,8 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import getseries
-from frappe.utils import cint, flt, getdate as _getdate, nowdate
+from frappe.utils import add_days, cint, flt, getdate as _getdate, nowdate
+from frappe.query_builder.functions import Coalesce, Sum
 from master_plan_it import amounts, annualization, mpit_defaults
 
 
@@ -82,11 +83,7 @@ class MPITBudget(Document):
 				frappe.throw(_("Live budgets cannot be submitted. Create a Snapshot instead."))
 			if self.workflow_state == "Approved":
 				frappe.throw(_("Approved status is reserved for Snapshot budgets."))
-		elif self.budget_type == "Snapshot":
-			# Option B: Snapshot uses workflow_state without submit
-			# Immutability is enforced by _enforce_snapshot_workflow_immutability()
-			pass
-		else:
+		elif self.budget_type != "Snapshot":
 			frappe.throw(_("Unsupported Budget Type: {0}").format(self.budget_type))
 	
 	def _enforce_live_no_manual_lines(self) -> None:
@@ -227,7 +224,6 @@ class MPITBudget(Document):
 
 	def _generate_contract_term_lines(self, contract, terms: list, year_start: date, year_end: date) -> list[dict]:
 		"""Generate budget lines for each contract term overlapping the year."""
-		from frappe.utils import add_days
 
 		lines = []
 		contract_start = _getdate(contract.start_date) if contract.start_date else year_start
@@ -270,8 +266,6 @@ class MPITBudget(Document):
 				)
 			)
 		return lines
-
-
 
 	def _generate_contract_flat_lines(self, contract, year_start: date, year_end: date) -> list[dict]:
 		lines = []
@@ -628,12 +622,13 @@ class MPITBudget(Document):
 				frappe.throw(_("Approved status is reserved for Snapshot budgets."))
 			if self.docstatus == 1:
 				frappe.throw(_("Live budgets cannot be submitted."))
-			# Auto-set Active/Closed based on year
-			year_start, year_end = annualization.get_year_bounds(self.year)
-			if _getdate(nowdate()) > year_end:
-				self.workflow_state = "Closed"
-			else:
-				self.workflow_state = "Active"
+			
+			# Live budgets do not use Workflow states like Snapshots (Approved/Rejected),
+			# but they must respect the Workflow DocType constraints.
+			# Since 'Active' and 'Closed' are NOT in the Workflow states, we keep them in 'Draft'.
+			# The concept of Active/Closed is implicit based on the year.
+			if self.workflow_state != "Draft":
+				self.workflow_state = "Draft"
 
 	def _enforce_snapshot_workflow_immutability(self) -> None:
 		"""Block editing Snapshot lines when not in Draft state (Option B)."""
@@ -794,7 +789,6 @@ def get_cap_for_cost_center(year: str, cost_center: str) -> dict:
 	snapshot_amount = 0.0
 	if snapshot_name:
 		# Sum Allowance lines for this cost center from the Snapshot (Query Builder)
-		from frappe.query_builder.functions import Coalesce, Sum
 		BudgetLine = frappe.qb.DocType("MPIT Budget Line")
 		result = (
 			frappe.qb.from_(BudgetLine)
@@ -806,7 +800,6 @@ def get_cap_for_cost_center(year: str, cost_center: str) -> dict:
 		snapshot_amount = flt(result[0].total if result else 0, 2)
 
 	# Sum approved Addendums for this year + cost center (Query Builder)
-	from frappe.query_builder.functions import Coalesce, Sum
 	Addendum = frappe.qb.DocType("MPIT Budget Addendum")
 	add_result = (
 		frappe.qb.from_(Addendum)
@@ -844,7 +837,6 @@ def get_cost_center_summary(year: str, cost_center: str) -> dict:
 		"name",
 	)
 	if live_budget:
-		from frappe.query_builder.functions import Coalesce, Sum
 		BudgetLine = frappe.qb.DocType("MPIT Budget Line")
 		plan_result = (
 			frappe.qb.from_(BudgetLine)
@@ -862,7 +854,6 @@ def get_cost_center_summary(year: str, cost_center: str) -> dict:
 		order_by="modified desc",
 	)
 	if snapshot_budget:
-		from frappe.query_builder.functions import Coalesce, Sum
 		BudgetLine = frappe.qb.DocType("MPIT Budget Line")
 		allowance_result = (
 			frappe.qb.from_(BudgetLine)
@@ -873,7 +864,6 @@ def get_cost_center_summary(year: str, cost_center: str) -> dict:
 		).run(as_dict=True)
 		snapshot_amount = flt(allowance_result[0].total if allowance_result else 0)
 
-	from frappe.query_builder.functions import Coalesce, Sum
 	Addendum = frappe.qb.DocType("MPIT Budget Addendum")
 	add_result = (
 		frappe.qb.from_(Addendum)

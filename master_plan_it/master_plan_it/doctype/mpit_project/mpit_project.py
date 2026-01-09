@@ -115,11 +115,6 @@ class MPITProject(Document):
 		""", (self.name,))
 		return flt(result[0][0] or 0) if result else 0.0
 
-
-	def _warn_if_approved_without_planned_items(self) -> None:
-		"""Deprecated: Workflow now blocks approval without Planned Items."""
-		pass  # Kept for backward compatibility, logic moved to workflow condition
-
 	def _validate_planned_dates(self) -> None:
 		"""Enforce planned date rules for monthly distribution."""
 		if self.start_date and not self.end_date:
@@ -129,8 +124,6 @@ class MPITProject(Document):
 		if self.start_date and self.end_date:
 			if getdate(self.end_date) < getdate(self.start_date):
 				frappe.throw(_("Planned end date cannot be before planned start date."))
-
-
 
 
 @frappe.whitelist()

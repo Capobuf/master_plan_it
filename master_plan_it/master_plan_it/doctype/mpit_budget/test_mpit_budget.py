@@ -133,7 +133,7 @@ class TestMPITBudget(FrappeTestCase):
 			"doctype": "MPIT Project",
 			"title": f"Test Project {self._test_uuid}",
 			"cost_center": self.test_cost_center,
-			"status": "In Progress",  # Approved requires Allocations
+			"status": "In Progress",
 		}
 		defaults.update(kwargs)
 		doc = frappe.get_doc(defaults)
@@ -143,8 +143,13 @@ class TestMPITBudget(FrappeTestCase):
 			existing = frappe.get_all("MPIT Project",
 				filters={"title": defaults["title"]}, limit=1, pluck="name")
 			if existing:
+				# Even if existing, ensure it is Approved for tests relying on it
+				frappe.db.set_value("MPIT Project", existing[0], "workflow_state", "Approved")
 				return existing[0]
 			raise
+		
+		# Force workflow state to Approved to allow budget generation
+		frappe.db.set_value("MPIT Project", doc.name, "workflow_state", "Approved")
 		return doc.name
 
 	def _create_test_planned_item(self, project: str, **kwargs) -> str:

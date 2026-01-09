@@ -8,7 +8,6 @@ OUTPUT: Righe aggregate per Cost Center con colonne mensili (gen-dic), totale an
 from __future__ import annotations
 
 import calendar
-import datetime
 from datetime import date
 
 import frappe
@@ -39,7 +38,7 @@ def _resolve_year(filters) -> str | None:
 	if filters.get("year"):
 		return str(filters.year)
 
-	today = datetime.date.today()
+	today = date.today()
 	year_name = frappe.db.get_value(
 		"MPIT Year",
 		{"start_date": ["<=", today], "end_date": [">=", today]},
