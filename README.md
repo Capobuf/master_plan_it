@@ -6,7 +6,7 @@ Frappe Desk app (v15) for budgeting, contracts, and projects. Native file-first 
 
 ```bash
 # Install on existing Frappe bench
-bench get-app https://github.com/Capobuf/Master-Plan-IT.git
+bench get-app https://github.com/Capobuf/master_plan_it.git
 bench --site <your-site> install-app master_plan_it
 bench --site <your-site> migrate
 
@@ -19,6 +19,67 @@ bench --site <your-site> enable-scheduler
 > ```bash
 > pip install -e /path/to/frappe-bench/apps/master_plan_it
 > ```
+
+## Site Management
+
+### Create a new site with the app
+
+```bash
+# Create site (you'll be prompted for admin password)
+bench new-site mysite.example.com --mariadb-root-password <db-root-password>
+
+# Install the app on the site
+bench --site mysite.example.com install-app master_plan_it
+
+# Run migrations
+bench --site mysite.example.com migrate
+
+# Enable scheduler for background jobs
+bench --site mysite.example.com enable-scheduler
+
+# Set as default site (optional)
+bench use mysite.example.com
+```
+
+### List sites
+
+```bash
+bench --site all list-apps    # List all sites with installed apps
+ls sites/                      # Quick list of site directories
+```
+
+### Delete a site
+
+```bash
+# Remove site and its database
+bench drop-site mysite.example.com --mariadb-root-password <db-root-password>
+
+# Or force removal without database cleanup
+bench drop-site mysite.example.com --force
+```
+
+### Other useful commands
+
+```bash
+# Backup a site
+bench --site mysite.example.com backup
+
+# Restore a site from backup
+bench --site mysite.example.com restore <backup-file.sql.gz>
+
+# Clear cache
+bench --site mysite.example.com clear-cache
+
+# Show site config
+bench --site mysite.example.com show-config
+
+# Disable/enable maintenance mode
+bench --site mysite.example.com set-maintenance-mode on
+bench --site mysite.example.com set-maintenance-mode off
+
+# Run bench console (Python shell with Frappe context)
+bench --site mysite.example.com console
+```
 
 ## Documentation
 
