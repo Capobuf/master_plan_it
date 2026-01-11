@@ -1,6 +1,7 @@
 # Master Plan IT
 
 Frappe Desk app (v15) for budgeting, contracts, and projects. Native file-first workflow; no custom JS/CSS or build pipeline.
+
 ## Quick Start
 
 ```bash
@@ -8,7 +9,16 @@ Frappe Desk app (v15) for budgeting, contracts, and projects. Native file-first 
 bench get-app https://github.com/Capobuf/Master-Plan-IT.git
 bench --site <your-site> install-app master_plan_it
 bench --site <your-site> migrate
+
+# Enable scheduler (required for background jobs)
+bench --site <your-site> enable-scheduler
 ```
+
+> **Note:** The repository name (`Master-Plan-IT`) differs from the Python package name (`master_plan_it`). 
+> If `bench get-app` fails to install the Python package automatically, run:
+> ```bash
+> pip install -e /path/to/frappe-bench/apps/master_plan_it
+> ```
 
 ## Documentation
 
