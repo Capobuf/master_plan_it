@@ -18,7 +18,7 @@ Per MPIT usiamo `autoname(self)` perché è:
 - indipendente dalla configurazione UI del tenant
 
 ### 1.1 Implementazione consigliata
-- crea `apps/master_plan_it/master_plan_it/naming.py`
+- crea `master_plan_it/master_plan_it/naming.py`
 - usa `frappe.model.naming.getseries(prefix, digits)`
 
 ### 1.2 Regola Budget (chiusa)
@@ -28,12 +28,12 @@ Per MPIT usiamo `autoname(self)` perché è:
 ### 1.3 Regola Project (chiusa)
 - `name`: `PRJ-{NNNN}`
 
-### 1.4 Preferenze per-utente sul naming (richiesto)
-In `MPIT User Preferences` definisci:
-- `budget_prefix`, `budget_sequence_digits`
-- `project_prefix`, `project_sequence_digits`
+### 1.4 Naming defaults (via MPIT Settings)
+In `MPIT Settings` definisci:
+- `budget_prefix_default`, `budget_digits_default`
+- `project_prefix_default`, `project_digits_default`
 
-Budget mantiene la parte `{year}-` obbligatoria; le preferenze controllano prefix e digits.
+Budget mantiene la parte `{year}-` obbligatoria; i settings controllano prefix e digits.
 
 ---
 

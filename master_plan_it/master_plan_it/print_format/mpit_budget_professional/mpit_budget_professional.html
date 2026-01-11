@@ -1,0 +1,121 @@
+{# MPIT Budget Professional Print Format #}
+{% set settings = frappe.get_single("MPIT Settings") %}
+{% set show_attachments = settings.show_attachments_in_print if settings else 0 %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 10pt; }
+        .header { margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .header h1 { margin: 0; font-size: 24pt; }
+        .header .subtitle { color: #666; font-size: 11pt; margin-top: 5px; }
+        .info-grid { display: table; width: 100%; margin-bottom: 20px; }
+        .info-row { display: table-row; }
+        .info-label { display: table-cell; width: 150px; font-weight: bold; padding: 5px 10px 5px 0; }
+        .info-value { display: table-cell; padding: 5px 0; }
+        .lines-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .lines-table th { background-color: #f0f0f0; border: 1px solid #ccc; padding: 8px; text-align: left; font-weight: bold; }
+        .lines-table td { border: 1px solid #ccc; padding: 8px; }
+        .lines-table tr:nth-child(even) { background-color: #fafafa; }
+        .amount-col { text-align: right; }
+        .totals { margin-top: 20px; float: right; width: 300px; }
+        .totals table { width: 100%; }
+        .totals td { padding: 5px; }
+        .totals .total-label { font-weight: bold; text-align: right; }
+        .totals .total-amount { text-align: right; font-weight: bold; }
+        .totals .grand-total { border-top: 2px solid #333; font-size: 12pt; }
+        .attachments { clear: both; margin-top: 40px; page-break-before: auto; }
+        .attachments h3 { border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+        .attachments ul { list-style: none; padding: 0; }
+        .attachments li { padding: 5px 0; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center; color: #666; font-size: 9pt; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ _("Budget") }} {{ doc.name }}</h1>
+        <div class="subtitle">{{ doc.title or "" }}</div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-row">
+            <div class="info-label">{{ _("Fiscal Year") }}:</div>
+            <div class="info-value">{{ doc.year }}</div>
+        </div>
+        <div class="info-row">
+            <div class="info-label">{{ _("Status") }}:</div>
+            <div class="info-value">
+                {% set status_label = doc.workflow_state or ("Draft" if doc.docstatus == 0 else "Approved" if doc.docstatus == 1 else "Cancelled") %}
+                {{ status_label }}
+            </div>
+        </div>
+    </div>
+
+    <h3>{{ _("Budget Lines") }}</h3>
+    <table class="lines-table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 20%;">{{ _("Cost Center") }}</th>
+                <th style="width: 15%;">{{ _("Vendor") }}</th>
+                <th style="width: 25%;">{{ _("Description") }}</th>
+                <th class="amount-col" style="width: 10%;">{{ _("Net Amount") }}</th>
+                <th class="amount-col" style="width: 8%;">{{ _("VAT %") }}</th>
+                <th class="amount-col" style="width: 10%;">{{ _("Gross Amount") }}</th>
+                <th class="amount-col" style="width: 7%;">{{ _("Recurrence") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for line in doc.lines %}
+            <tr>
+                <td>{{ line.idx }}</td>
+                <td>{{ line.cost_center }}</td>
+                <td>{{ line.vendor or "" }}</td>
+                <td>{{ line.description or "" }}</td>
+                <td class="amount-col">{{ frappe.format(line.amount_net, {"fieldtype": "Currency"}) }}</td>
+                <td class="amount-col">{{ frappe.format(line.vat_rate, {"fieldtype": "Percent"}) if line.vat_rate else "0%" }}</td>
+                <td class="amount-col">{{ frappe.format(line.amount_gross, {"fieldtype": "Currency"}) }}</td>
+                <td>{{ line.recurrence_rule or _("None") }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <table>
+            <tr>
+                <td class="total-label">{{ _("Total Net") }}:</td>
+                <td class="total-amount">{{ frappe.format(doc.lines | sum(attribute='amount_net'), {"fieldtype": "Currency"}) }}</td>
+            </tr>
+            <tr>
+                <td class="total-label">{{ _("Total VAT") }}:</td>
+                <td class="total-amount">{{ frappe.format(doc.lines | sum(attribute='amount_vat'), {"fieldtype": "Currency"}) }}</td>
+            </tr>
+            <tr class="grand-total">
+                <td class="total-label">{{ _("Total Gross") }}:</td>
+                <td class="total-amount">{{ frappe.format(doc.lines | sum(attribute='amount_gross'), {"fieldtype": "Currency"}) }}</td>
+            </tr>
+        </table>
+    </div>
+
+    {% if show_attachments %}
+    {% set attachments = frappe.get_all("File", filters={"attached_to_doctype": doc.doctype, "attached_to_name": doc.name}, fields=["file_name", "file_url"]) %}
+    {% if attachments %}
+    <div class="attachments">
+        <h3>{{ _("Attachments") }}</h3>
+        <ul>
+            {% for attachment in attachments %}
+            <li>{{ attachment.file_name }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <div class="footer">
+        <p>{{ _("Printed on") }} {{ frappe.utils.now_datetime().strftime("%Y-%m-%d %H:%M") }} {{ _("by") }} {{ frappe.session.user }}</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,158 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "autoname": "",
+ "creation": "2026-01-01 23:40:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "section_overview",
+  "year",
+  "cost_center",
+  "reference_snapshot",
+  "section_amount",
+  "delta_amount",
+  "reason",
+  "section_meta",
+  "amended_from"
+ ],
+ "fields": [
+  {
+   "fieldname": "section_overview",
+   "fieldtype": "Section Break",
+   "label": "Overview"
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Year",
+   "options": "MPIT Year",
+   "reqd": 1
+  },
+  {
+   "description": "Cost Center impacted by the cap change.",
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Cost Center",
+   "options": "MPIT Cost Center",
+   "reqd": 1
+  },
+  {
+   "description": "Snapshot (APP) for the same year.",
+   "fieldname": "reference_snapshot",
+   "fieldtype": "Link",
+   "label": "Reference Snapshot",
+   "options": "MPIT Budget",
+   "link_filters": "[[\"MPIT Budget\",\"budget_type\",\"=\",\"Snapshot\"]]",
+   "reqd": 1
+  },
+  {
+   "fieldname": "section_amount",
+   "fieldtype": "Section Break",
+   "label": "Delta"
+  },
+  {
+   "description": "Annual delta (Cap) - can be negative.",
+   "fieldname": "delta_amount",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Delta Amount (Annual)",
+   "reqd": 1
+  },
+  {
+   "description": "Motivation for the addendum.",
+   "fieldname": "reason",
+   "fieldtype": "Small Text",
+   "label": "Reason",
+   "reqd": 1
+  },
+  {
+   "collapsible": 1,
+   "fieldname": "section_meta",
+   "fieldtype": "Section Break",
+   "label": "Meta"
+  },
+  {
+   "fieldname": "amended_from",
+   "fieldtype": "Link",
+   "label": "Amended From",
+   "no_copy": 1,
+   "options": "MPIT Budget Addendum",
+   "print_hide": 1,
+   "read_only": 1,
+   "search_index": 1
+  }
+ ],
+ "idx": 0,
+ "index_web_pages_for_search": 1,
+ "is_submittable": 1,
+ "links": [],
+ "modified": "2026-01-01 23:40:00.000000",
+ "modified_by": "Administrator",
+ "module": "Master Plan IT",
+ "name": "MPIT Budget Addendum",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1,
+   "cancel": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "vCIO Manager",
+   "share": 1,
+   "submit": 1,
+   "write": 1,
+   "cancel": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Client Editor",
+   "share": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Client Viewer",
+   "share": 1
+  }
+ ],
+ "quick_entry": 1,
+ "show_title_field_in_link": 1,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "reason",
+ "track_changes": 1
+}

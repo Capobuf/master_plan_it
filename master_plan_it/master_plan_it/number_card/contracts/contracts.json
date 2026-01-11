@@ -1,0 +1,22 @@
+{
+ "creation": "2026-01-02 23:22:41.306031",
+ "currency": "EUR",
+ "docstatus": 0,
+ "doctype": "Number Card",
+ "filters_json": "{}",
+ "function": "Count",
+ "idx": 0,
+ "is_public": 0,
+ "is_standard": 1,
+ "label": "Contracts",
+ "modified": "2026-01-02 23:22:41.306031",
+ "modified_by": "Administrator",
+ "module": "Master Plan IT",
+ "name": "Contracts",
+ "owner": "Administrator",
+ "show_full_number": 0,
+ "show_percentage_stats": 0,
+ "stats_time_interval": "Daily",
+ "type": "Document Type",
+ "document_type": "MPIT Contract"
+}

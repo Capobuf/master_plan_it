@@ -1,0 +1,43 @@
+{
+    "chart_name": "MPIT Plan vs Cap vs Actual",
+    "chart_type": "Report",
+    "creation": "2026-01-02 23:22:41.306031",
+    "currency": "EUR",
+    "docstatus": 0,
+    "doctype": "Dashboard Chart",
+    "document_type": "MPIT Budget",
+    "based_on": "modified",
+    "filters_json": "{}",
+    "group_by_type": "Count",
+    "idx": 0,
+    "is_public": 1,
+    "is_standard": 1,
+    "modified": "2026-01-04 15:15:00.000000",
+    "modified_by": "Administrator",
+    "module": "Master Plan IT",
+    "name": "MPIT Plan vs Cap vs Actual",
+    "number_of_groups": 0,
+    "owner": "Administrator",
+    "report_name": "MPIT Overview",
+    "roles": [
+        {
+            "role": "System Manager"
+        },
+        {
+            "role": "vCIO Manager"
+        },
+        {
+            "role": "Client Editor"
+        },
+        {
+            "role": "Client Viewer"
+        }
+    ],
+    "show_values_over_chart": 0,
+    "time_interval": "Yearly",
+    "timeseries": 0,
+    "timespan": "Last Year",
+    "type": "Bar",
+    "use_report_chart": 1,
+    "y_axis": []
+}

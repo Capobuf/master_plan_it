@@ -1,42 +1,35 @@
-# Master Plan IT (MPIT) — Documentation
+# Master Plan IT
 
-Version: 0.1 (V1 blueprint)  
-Last updated: 2025-12-21
+Frappe Desk app (v15) for budgeting, contracts, and projects. Native file-first workflow; no custom JS/CSS or build pipeline.
+## Quick Start
 
-This documentation is written in **Diátaxis** format (Tutorials, How‑to Guides, Reference, Explanation) plus **ADR** (Architecture Decision Records).
+```bash
+# Install on existing Frappe bench
+bench get-app https://github.com/Capobuf/Master-Plan-IT.git
+bench --site <your-site> install-app master_plan_it
+bench --site <your-site> migrate
+```
 
-## What this is
-Master Plan IT is a **Frappe Desk** application for vCIO budgeting, contracts/renewals and project governance.
+## Documentation
 
-## Scope (V1)
-- Baseline historical spend (importable) with comments and validation states
-- Annual budget proposal and approval (approved baseline is immutable)
-- Budget amendments (post-approval deltas)
-- Actuals (consuntivi) entry with warnings (no blocking)
-- Vendors and Contracts/Subscriptions with renewals visibility
-- Projects with **mandatory multi-year allocations**
-- Workflow approvals for Budgets and Budget Amendments (vCIO Manager / Client Editor)
-- Reports & dashboards for:
-  - Approved vs Actual
-  - Current (Approved + Amendments) vs Actual
-  - Renewals / expiries window
-  - Projects planned vs actual
+- [Installation Guide](docs/how-to/00-bootstrap-from-scratch.md)
+- [Architecture](docs/explanation/01-architecture.md)
+- [Open Issues](OPEN_ISSUES.md)
+- [Changelog](CHANGELOG.md)
 
-## Constraints
-- **Desk only**: clients are **System Users** (no portal / Website Users).
-- **Native Frappe components only** (no custom JS/CSS, no asset build).
+## Features
 
-## Quick links
-- Tutorials: `docs/tutorials/`
-- How‑to: `docs/how-to/`
-- Reference: `docs/reference/`
-- Explanation: `docs/explanation/`
-- ADR: `docs/adr/`
-- User guide: `docs/how-to/08-user-guide.md`
-- Docker notes: `docs/how-to/09-docker-compose-notes.md`
+- **Budget management** - Live/Snapshot with workflow (Draft → Proposed → Approved)
+- **Contract tracking** - Renewal management with terms and vendors
+- **Project planning** - Allocations with workflow support
+- **Multi-year budget engine** - Annualization and cross-year planning
+- **Dashboard and reports** - 17 number cards, 9 chart sources, 6 custom reports
 
-## For agents (vibe coding)
-Read `AGENT_INSTRUCTIONS.md` first. The project is intentionally structured so that:
-- metadata is versioned on filesystem
-- applying changes is one command (`bench migrate`)
-- tenant provisioning is one idempotent script (`bootstrap.run`)
+## Key Concepts
+- App root: this repo; inside a bench the app lives at `apps/master_plan_it/`.
+- Multi-tenant: 1 site = 1 client.
+- Canonical metadata and controllers: `master_plan_it/master_plan_it/`.
+- Apply changes: edit canonical files, then run standard Frappe commands (`bench --site <site> migrate`, `clear-cache`).
+- Desk policy: treat Desk as read-only for day-to-day metadata; use it only for initial skeletons and Export Customizations for non-owned DocTypes.
+- Install hooks: create MPIT Settings, MPIT Year (current + next), and seed the root Cost Center (“All Cost Centers”). Fixtures ship MPIT roles only.
+- Docs: `docs/reference/06-dev-workflow.md` is the authoritative workflow; see also `docs/reference/05-fixtures-bootstrap.md`.

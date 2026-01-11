@@ -1,10 +1,10 @@
 # Reference: Testing (server + UI)
 
-## Server-side tests (Python)
+## Frappe native tests (Python)
 
-Place tests anywhere in the app, filenames must start with `test_*.py`.
+Place tests anywhere in the app; filenames must start with `test_*.py`.
 
-Run:
+Run the full suite:
 ```bash
 bench --site <site> run-tests --app master_plan_it
 ```
@@ -15,22 +15,9 @@ bench --site <site> run-tests --doctype "MPIT Budget"
 bench --site <site> run-tests --test "test_smoke"
 ```
 
-## UI tests (native approach)
+## UI coverage approach (no Cypress)
 
-Frappe supports UI tests using **Cypress** (integration tests) and also JS tests using **QUnit**.
-
-We keep Cypress tests inside the app folder:
-- `cypress/integration/*.spec.js`
-
-To run Cypress for this app:
-```bash
-cd apps/master_plan_it
-yarn
-yarn cypress:open
-# or: yarn cypress:run
-```
-
-> Note: UI tests require a running site (`bench start`) and a known admin password for the test site.
+We rely only on Frappe's native Python tests (including UI helpers) instead of Cypress. New UI flows should be exercised through server-side tests and page/doctype controllers, keeping fixtures in the app.
 
 ## What we test in V1
 

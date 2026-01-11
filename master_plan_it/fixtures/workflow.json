@@ -1,0 +1,276 @@
+[
+    {
+        "doctype": "Workflow",
+        "name": "MPIT Budget Workflow",
+        "workflow_name": "MPIT Budget Workflow",
+        "document_type": "MPIT Budget",
+        "is_active": 1,
+        "send_email_alert": 0,
+        "workflow_state_field": "workflow_state",
+        "states": [
+            {
+                "state": "Draft",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            },
+            {
+                "state": "Proposed",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            },
+            {
+                "state": "Approved",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            },
+            {
+                "state": "Rejected",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            }
+        ],
+        "transitions": [
+            {
+                "state": "Draft",
+                "action": "Propose",
+                "next_state": "Proposed",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "condition": "doc.budget_type == 'Snapshot'",
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Draft",
+                "action": "Propose",
+                "next_state": "Proposed",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "condition": "doc.budget_type == 'Snapshot'",
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Request Changes",
+                "next_state": "Draft",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Request Changes",
+                "next_state": "Draft",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Approve",
+                "next_state": "Approved",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Approve",
+                "next_state": "Approved",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Reject",
+                "next_state": "Rejected",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Reject",
+                "next_state": "Rejected",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Rejected",
+                "action": "Reopen",
+                "next_state": "Draft",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Rejected",
+                "action": "Reopen",
+                "next_state": "Draft",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Approved",
+                "action": "Reopen",
+                "next_state": "Draft",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Approved",
+                "action": "Reopen",
+                "next_state": "Draft",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            }
+        ]
+    },
+    {
+        "doctype": "Workflow",
+        "name": "MPIT Project Workflow",
+        "workflow_name": "MPIT Project Workflow",
+        "document_type": "MPIT Project",
+        "is_active": 1,
+        "send_email_alert": 0,
+        "workflow_state_field": "workflow_state",
+        "states": [
+            {
+                "state": "Draft",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            },
+            {
+                "state": "Proposed",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            },
+            {
+                "state": "Approved",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            },
+            {
+                "state": "Rejected",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            },
+            {
+                "state": "Cancelled",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            }
+        ],
+        "transitions": [
+            {
+                "state": "Draft",
+                "action": "Propose",
+                "next_state": "Proposed",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Draft",
+                "action": "Propose",
+                "next_state": "Proposed",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Request Changes",
+                "next_state": "Draft",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Request Changes",
+                "next_state": "Draft",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Approve",
+                "next_state": "Approved",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Approve",
+                "next_state": "Approved",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Reject",
+                "next_state": "Rejected",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Proposed",
+                "action": "Reject",
+                "next_state": "Rejected",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Rejected",
+                "action": "Reopen",
+                "next_state": "Draft",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Rejected",
+                "action": "Reopen",
+                "next_state": "Draft",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Approved",
+                "action": "Cancel",
+                "next_state": "Cancelled",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Approved",
+                "action": "Cancel",
+                "next_state": "Cancelled",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            }
+        ]
+    }
+]

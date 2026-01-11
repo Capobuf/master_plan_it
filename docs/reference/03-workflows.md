@@ -1,4 +1,4 @@
-# Reference: Workflows (V1)
+# Reference: Workflows
 
 ## MPIT Budget workflow
 States:
@@ -16,31 +16,10 @@ Actions:
 - Approve → Approved
 
 Notes:
-- Approved state sets docstatus=1 to enforce immutability.
+- Approved sets docstatus=1. Snapshot budgets become immutable after submit. Live budgets are refreshable and never submitted.
 - Client Viewer cannot transition states.
 
-## MPIT Budget Amendment workflow
-States:
-- Draft (0)
-- Proposed (0)
-- In Review (0)
-- Approved (docstatus 1)
-- Rejected (0)
-
-Roles allowed:
-- vCIO Manager, Client Editor
-
-Notes:
-- Rejected can be resubmitted to Proposed via action “Resubmit”.
-Actions:
-- Propose → Proposed
-- Send to Review → In Review
-- Approve → Approved
-- Reject → Rejected
-- Resubmit → Proposed
-
 ## Optional: MPIT Project workflow/policy
-V1 can use a simple `status` Select field without a formal workflow.
-If you need strict approval gates, introduce a workflow later (ADR required).
+Default is a simple `status` Select (Draft → Proposed → Approved → …). No formal workflow shipped; add one only if governance requires it.
 
-Implementation note: workflows live in `spec/workflows/*.json`, field name `workflow_state`, and are applied by `sync_all`.
+Implementation note: workflows live under `master_plan_it/master_plan_it/workflow/` (`workflow_state` field) and sync via standard migrate/clear-cache.

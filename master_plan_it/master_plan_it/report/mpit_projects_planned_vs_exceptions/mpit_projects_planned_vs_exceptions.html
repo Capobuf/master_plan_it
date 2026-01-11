@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    {#
+        MPIT Projects Planned vs Exceptions - Report Print Format
+        Dynamic template supporting print_profile, print_orientation, print_density filters.
+        
+        Profiles:
+        - Standard: project, status, year, planned_amount, expected_amount, actual_amount, variance_expected
+        - Compact: project, year, expected_amount, actual_amount, variance_expected
+        - All: all columns (includes quoted_amount, variance_planned)
+        
+        Note: Uses variance_expected (not "variance" which doesn't exist in data keys)
+    #}
+    {%- set profile = (filters.print_profile or "Standard")|string %}
+    {%- set orientation = (filters.print_orientation or "Auto")|string %}
+    {%- set density = (filters.print_density or "Normal")|string %}
+    
+    {# Define column profiles by fieldname #}
+    {%- set profile_columns = {
+        "Standard": ["project", "status", "year", "planned_amount", "expected_amount", "actual_amount", "variance_expected"],
+        "Compact": ["project", "year", "expected_amount", "actual_amount", "variance_expected"],
+        "All": []
+    } %}
+    
+    {# Filter columns based on profile #}
+    {%- set selected_fieldnames = profile_columns.get(profile, []) %}
+    {%- set visible_columns = [] %}
+    {%- for col in columns %}
+        {%- set fieldname = col.fieldname if col.fieldname else col.get("fieldname", "") %}
+        {%- set is_hidden = col.get("hidden", 0) %}
+        {%- if not is_hidden %}
+            {%- if profile == "All" or fieldname in selected_fieldnames %}
+                {%- set _ = visible_columns.append(col) %}
+            {%- endif %}
+        {%- endif %}
+    {%- endfor %}
+    
+    {%- set col_count = visible_columns|length %}
+    
+    {# Auto orientation logic #}
+    {%- set page_orientation = "portrait" %}
+    {%- if orientation == "Landscape" %}
+        {%- set page_orientation = "landscape" %}
+    {%- elif orientation == "Auto" and col_count >= 8 %}
+        {%- set page_orientation = "landscape" %}
+    {%- endif %}
+    
+    {# Density settings #}
+    {%- set font_size = "10px" %}
+    {%- set cell_padding = "6px" %}
+    {%- if density == "Compact" %}
+        {%- set font_size = "9px" %}
+        {%- set cell_padding = "4px" %}
+    {%- elif density == "Ultra" %}
+        {%- set font_size = "8px" %}
+        {%- set cell_padding = "3px" %}
+    {%- endif %}
+    
+    <style>
+        @page { 
+            size: A4 {{ page_orientation }}; 
+            margin: 10mm; 
+        }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+            font-size: {{ font_size }};
+            padding: 10px; 
+            margin: 0;
+        }
+        .report-header { 
+            margin-bottom: 15px; 
+            border-bottom: 2px solid #333; 
+            padding-bottom: 8px; 
+        }
+        .report-header h2 { 
+            margin: 0; 
+            color: #333; 
+            font-size: 1.4em;
+        }
+        .report-filters { 
+            background-color: #f8f9fa; 
+            padding: 8px; 
+            margin-bottom: 12px; 
+            border-radius: 4px; 
+            font-size: 0.9em; 
+        }
+        .report-filters strong { 
+            color: #495057; 
+        }
+        .warning-banner {
+            background-color: #fff3cd;
+            border: 1px solid #ffc107;
+            color: #856404;
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+        .table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-bottom: 15px; 
+            table-layout: fixed;
+        }
+        .table thead { 
+            display: table-header-group;
+            background-color: #e9ecef; 
+        }
+        .table th { 
+            border: 1px solid #dee2e6; 
+            padding: {{ cell_padding }}; 
+            text-align: left; 
+            font-weight: 600; 
+            color: #495057; 
+            vertical-align: top;
+            overflow-wrap: anywhere;
+            white-space: normal;
+        }
+        .table td { 
+            border: 1px solid #dee2e6; 
+            padding: {{ cell_padding }}; 
+            vertical-align: top;
+            overflow-wrap: anywhere;
+            white-space: normal;
+        }
+        .table tbody tr:nth-child(even) { 
+            background-color: #f8f9fa; 
+        }
+        .text-right { 
+            text-align: right; 
+        }
+        .text-center {
+            text-align: center;
+        }
+        .currency-cell {
+            text-align: right;
+            white-space: nowrap;
+        }
+        .text-danger { 
+            color: #dc3545; 
+        }
+        .text-success { 
+            color: #28a745; 
+        }
+        .badge { 
+            display: inline-block; 
+            padding: 2px 6px; 
+            border-radius: 3px; 
+            font-size: 0.85em; 
+            font-weight: 500; 
+        }
+        .badge-proposed { background-color: #17a2b8; color: #fff; }
+        .badge-planning { background-color: #ffc107; color: #000; }
+        .badge-active { background-color: #28a745; color: #fff; }
+        .badge-completed { background-color: #6c757d; color: #fff; }
+        .badge-cancelled { background-color: #dc3545; color: #fff; }
+        .report-footer { 
+            margin-top: 15px; 
+            padding-top: 8px; 
+            border-top: 1px solid #dee2e6; 
+            text-align: right; 
+            color: #6c757d; 
+            font-size: 0.85em; 
+        }
+        @media print {
+            body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+            .table thead { background-color: #e9ecef !important; }
+            .table tbody tr:nth-child(even) { background-color: #f8f9fa !important; }
+            .badge { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+        }
+    </style>
+</head>
+<body>
+    <div class="report-header">
+        <h2>{{ _("Projects: Planned vs Actual") }}</h2>
+    </div>
+
+    <div class="report-filters">
+        {% if filters.project %}
+            <strong>{{ _("Project") }}:</strong> {{ filters.project }} &nbsp;
+        {% endif %}
+        {% if filters.year %}
+            <strong>{{ _("Year") }}:</strong> {{ filters.year }}
+        {% endif %}
+    </div>
+
+    {# Wide table warning (non-blocking) #}
+    {% if col_count > 10 %}
+    <div class="warning-banner">
+        {{ _("Many columns detected. For better readability, consider using Compact profile, Landscape orientation with Ultra density, or export to Excel/CSV.") }}
+    </div>
+    {% endif %}
+
+    <table class="table">
+        <thead>
+            <tr>
+                {% for col in visible_columns %}
+                    {% set is_currency = col.get("fieldtype") == "Currency" %}
+                    <th class="{{ 'text-right' if is_currency else '' }}">
+                        {{ _(col.get("label", col.get("fieldname", ""))) }}
+                    </th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% if data and data|length > 0 %}
+                {% for row in data %}
+                    <tr>
+                        {% for col in visible_columns %}
+                            {% set fieldname = col.get("fieldname", "") %}
+                            {% set fieldtype = col.get("fieldtype", "Data") %}
+                            {% set value = row.get(fieldname, "") %}
+                            {% set is_currency = fieldtype == "Currency" %}
+                            {% set is_variance = fieldname in ["variance_expected", "variance_planned"] %}
+                            
+                            {% if fieldname == "status" %}
+                                {# Status with badge #}
+                                {% set status_class = "badge-" + (value or "planning")|lower %}
+                                <td><span class="badge {{ status_class }}">{{ value or "" }}</span></td>
+                            {% elif is_currency %}
+                                {% set variance_class = "" %}
+                                {% if is_variance and value is not none %}
+                                    {% set variance_class = "text-success" if value < 0 else "text-danger" if value > 0 else "" %}
+                                {% endif %}
+                                <td class="currency-cell {{ variance_class }}">
+                                    {{ frappe.utils.fmt_money(value) if value is not none else "" }}
+                                </td>
+                            {% elif fieldtype == "Check" %}
+                                <td class="text-center">{{ "✓" if value else "" }}</td>
+                            {% elif fieldtype == "Date" %}
+                                <td>{{ frappe.utils.formatdate(value) if value else "" }}</td>
+                            {% else %}
+                                <td>{{ value if value is not none else "" }}</td>
+                            {% endif %}
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            {% else %}
+                <tr>
+                    <td colspan="{{ col_count }}" style="text-align: center; padding: 20px; color: #6c757d;">
+                        {{ _("No data available") }}
+                    </td>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <div class="report-footer">
+        {{ _("Generated on") }} {{ frappe.utils.now_datetime().strftime("%Y-%m-%d %H:%M") }}
+        &nbsp;|&nbsp; {{ _("Profile") }}: {{ profile }} &nbsp;|&nbsp; {{ _("Orientation") }}: {{ page_orientation|capitalize }}
+    </div>
+</body>
+</html>

@@ -1,0 +1,15 @@
+recursive-include master_plan_it *.py
+recursive-include master_plan_it *.json
+recursive-include master_plan_it *.md
+recursive-include master_plan_it *.txt
+recursive-include master_plan_it *.csv
+recursive-include master_plan_it *.html
+recursive-include master_plan_it *.js
+recursive-include master_plan_it *.css
+recursive-include master_plan_it *.xml
+recursive-include master_plan_it *.svg
+recursive-include master_plan_it *.png
+recursive-include master_plan_it *.gif
+recursive-include master_plan_it *.ico
+recursive-exclude * __pycache__*
+recursive-exclude * *.pyc

@@ -1,0 +1,182 @@
+{# MPIT Project Professional Print Format #}
+{% set settings = frappe.get_single("MPIT Settings") %}
+{% set show_attachments = settings.show_attachments_in_print if settings else 0 %}
+{% set status_map = {
+    "Draft": _("Draft"),
+    "Proposed": _("Proposed"),
+    "Approved": _("Approved"),
+    "In Progress": _("In Progress"),
+    "On Hold": _("On Hold"),
+    "Completed": _("Completed"),
+    "Cancelled": _("Cancelled"),
+} %}
+{% set status_label = status_map.get(doc.status, doc.status) %}
+
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body { font-family: Arial, sans-serif; font-size: 10pt; }
+        .header { margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px; }
+        .header h1 { margin: 0; font-size: 24pt; }
+        .header .subtitle { color: #666; font-size: 11pt; margin-top: 5px; }
+        .info-grid { display: table; width: 100%; margin-bottom: 20px; }
+        .info-row { display: table-row; }
+        .info-label { display: table-cell; width: 150px; font-weight: bold; padding: 5px 10px 5px 0; }
+        .info-value { display: table-cell; padding: 5px 0; }
+        .section-heading { font-size: 14pt; font-weight: bold; margin-top: 25px; margin-bottom: 10px; border-bottom: 1px solid #999; }
+        .table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .table th { background-color: #f0f0f0; border: 1px solid #ccc; padding: 8px; text-align: left; font-weight: bold; }
+        .table td { border: 1px solid #ccc; padding: 8px; }
+        .table tr:nth-child(even) { background-color: #fafafa; }
+        .amount-col { text-align: right; }
+        .totals { margin-top: 10px; float: right; width: 250px; }
+        .totals table { width: 100%; }
+        .totals td { padding: 5px; }
+        .totals .total-label { font-weight: bold; text-align: right; }
+        .totals .total-amount { text-align: right; font-weight: bold; }
+        .totals .grand-total { border-top: 2px solid #333; font-size: 11pt; }
+        .attachments { clear: both; margin-top: 40px; page-break-before: auto; }
+        .attachments h3 { border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+        .attachments ul { list-style: none; padding: 0; }
+        .attachments li { padding: 5px 0; }
+        .footer { margin-top: 40px; padding-top: 20px; border-top: 1px solid #ccc; text-align: center; color: #666; font-size: 9pt; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>{{ _("Project") }} {{ doc.name }}</h1>
+        <div class="subtitle">{{ doc.title or "" }}</div>
+    </div>
+
+    <div class="info-grid">
+        <div class="info-row">
+            <div class="info-label">{{ _("Status") }}:</div>
+            <div class="info-value">{{ status_label }}</div>
+        </div>
+        {% if doc.start_date %}
+        <div class="info-row">
+            <div class="info-label">{{ _("Start Date") }}:</div>
+            <div class="info-value">{{ frappe.format(doc.start_date, {"fieldtype": "Date"}) }}</div>
+        </div>
+        {% endif %}
+        {% if doc.end_date %}
+        <div class="info-row">
+            <div class="info-label">{{ _("End Date") }}:</div>
+            <div class="info-value">{{ frappe.format(doc.end_date, {"fieldtype": "Date"}) }}</div>
+        </div>
+        {% endif %}
+        {% if doc.description %}
+        <div class="info-row">
+            <div class="info-label">{{ _("Description") }}:</div>
+            <div class="info-value">{{ doc.description }}</div>
+        </div>
+        {% endif %}
+    </div>
+
+    {% if doc.allocations %}
+    <h3 class="section-heading">{{ _("Budget Allocations") }}</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 15%;">{{ _("Year") }}</th>
+                <th style="width: 20%;">{{ _("Budget") }}</th>
+                <th class="amount-col" style="width: 15%;">{{ _("Planned Net") }}</th>
+                <th class="amount-col" style="width: 10%;">{{ _("VAT %") }}</th>
+                <th class="amount-col" style="width: 15%;">{{ _("Planned Gross") }}</th>
+                <th style="width: 20%;">{{ _("Notes") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for alloc in doc.allocations %}
+            <tr>
+                <td>{{ alloc.idx }}</td>
+                <td>{{ alloc.year }}</td>
+                <td>{{ alloc.budget or "" }}</td>
+                <td class="amount-col">{{ frappe.format(alloc.planned_amount_net, {"fieldtype": "Currency"}) }}</td>
+                <td class="amount-col">{{ frappe.format(alloc.vat_rate, {"fieldtype": "Percent"}) if alloc.vat_rate else "0%" }}</td>
+                <td class="amount-col">{{ frappe.format(alloc.planned_amount_gross, {"fieldtype": "Currency"}) }}</td>
+                <td>{{ alloc.notes or "" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <table>
+            <tr>
+                <td class="total-label">{{ _("Total Planned Net") }}:</td>
+                <td class="total-amount">{{ frappe.format(doc.allocations | sum(attribute='planned_amount_net'), {"fieldtype": "Currency"}) }}</td>
+            </tr>
+            <tr>
+                <td class="total-label">{{ _("Total VAT") }}:</td>
+                <td class="total-amount">{{ frappe.format(doc.allocations | sum(attribute='planned_amount_vat'), {"fieldtype": "Currency"}) }}</td>
+            </tr>
+            <tr class="grand-total">
+                <td class="total-label">{{ _("Total Gross") }}:</td>
+                <td class="total-amount">{{ frappe.format(doc.allocations | sum(attribute='planned_amount_gross'), {"fieldtype": "Currency"}) }}</td>
+            </tr>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if doc.quotes %}
+    <h3 class="section-heading" style="clear: both;">{{ _("Vendor Quotes") }}</h3>
+    <table class="table">
+        <thead>
+            <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 20%;">{{ _("Vendor") }}</th>
+                <th style="width: 15%;">{{ _("Quote Date") }}</th>
+                <th class="amount-col" style="width: 15%;">{{ _("Net Amount") }}</th>
+                <th class="amount-col" style="width: 10%;">{{ _("VAT %") }}</th>
+                <th class="amount-col" style="width: 15%;">{{ _("Gross Amount") }}</th>
+                <th style="width: 20%;">{{ _("Notes") }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for quote in doc.quotes %}
+            <tr>
+                <td>{{ quote.idx }}</td>
+                <td>{{ quote.vendor }}</td>
+                <td>{{ frappe.format(quote.quote_date, {"fieldtype": "Date"}) if quote.quote_date else "" }}</td>
+                <td class="amount-col">{{ frappe.format(quote.amount_net, {"fieldtype": "Currency"}) }}</td>
+                <td class="amount-col">{{ frappe.format(quote.vat_rate, {"fieldtype": "Percent"}) if quote.vat_rate else "0%" }}</td>
+                <td class="amount-col">{{ frappe.format(quote.amount_gross, {"fieldtype": "Currency"}) }}</td>
+                <td>{{ quote.notes or "" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <table>
+            <tr class="grand-total">
+                <td class="total-label">{{ _("Total Quotes Gross") }}:</td>
+                <td class="total-amount">{{ frappe.format(doc.quotes | sum(attribute='amount_gross'), {"fieldtype": "Currency"}) }}</td>
+            </tr>
+        </table>
+    </div>
+    {% endif %}
+
+    {% if show_attachments %}
+    {% set attachments = frappe.get_all("File", filters={"attached_to_doctype": doc.doctype, "attached_to_name": doc.name}, fields=["file_name", "file_url"]) %}
+    {% if attachments %}
+    <div class="attachments" style="clear: both;">
+        <h3>{{ _("Attachments") }}</h3>
+        <ul>
+            {% for attachment in attachments %}
+            <li>{{ attachment.file_name }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    {% endif %}
+
+    <div class="footer">
+        <p>{{ _("Printed on") }} {{ frappe.utils.now_datetime().strftime("%Y-%m-%d %H:%M") }} {{ _("by") }} {{ frappe.session.user }}</p>
+    </div>
+</body>
+</html>

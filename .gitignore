@@ -14,6 +14,10 @@ __pycache__/
 coverage/
 htmlcov/
 
+# Swap files
+*.swp
+*.swo
+
 # Virtual environments
 .venv/
 venv/
@@ -43,7 +47,11 @@ yarn-error.log*
 /data/logs/
 /data/db/
 /data/redis/
+private/
+sites/
 
 # Docker overrides
 docker-compose.override.yml
 docker-compose.override.yml.local
+
+/tmp

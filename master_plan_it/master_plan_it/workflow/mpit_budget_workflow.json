@@ -1,0 +1,127 @@
+{
+    "creation": "2026-01-09 21:30:00.000000",
+    "docstatus": 0,
+    "doctype": "Workflow",
+    "document_type": "MPIT Budget",
+    "is_active": 1,
+    "modified": "2026-01-09 21:30:00.000000",
+    "modified_by": "Administrator",
+    "name": "MPIT Budget Workflow",
+    "owner": "Administrator",
+    "send_email_alert": 1,
+    "workflow_state_field": "workflow_state",
+    "states": [
+        {
+            "allow_edit": "vCIO Manager",
+            "doc_status": "0",
+            "is_optional_state": 0,
+            "state": "Draft"
+        },
+        {
+            "allow_edit": "vCIO Manager",
+            "doc_status": "0",
+            "is_optional_state": 0,
+            "state": "Proposed"
+        },
+        {
+            "allow_edit": "vCIO Manager",
+            "doc_status": "0",
+            "is_optional_state": 0,
+            "state": "Approved"
+        },
+        {
+            "allow_edit": "vCIO Manager",
+            "doc_status": "0",
+            "is_optional_state": 0,
+            "state": "Rejected"
+        }
+    ],
+    "transitions": [
+        {
+            "action": "Propose",
+            "allow_self_approval": 1,
+            "allowed": "vCIO Manager",
+            "condition": "doc.budget_type == 'Snapshot'",
+            "next_state": "Proposed",
+            "state": "Draft"
+        },
+        {
+            "action": "Propose",
+            "allow_self_approval": 1,
+            "allowed": "Client Editor",
+            "condition": "doc.budget_type == 'Snapshot'",
+            "next_state": "Proposed",
+            "state": "Draft"
+        },
+        {
+            "action": "Request Changes",
+            "allow_self_approval": 1,
+            "allowed": "vCIO Manager",
+            "next_state": "Draft",
+            "state": "Proposed"
+        },
+        {
+            "action": "Request Changes",
+            "allow_self_approval": 1,
+            "allowed": "Client Editor",
+            "next_state": "Draft",
+            "state": "Proposed"
+        },
+        {
+            "action": "Approve",
+            "allow_self_approval": 1,
+            "allowed": "vCIO Manager",
+            "next_state": "Approved",
+            "state": "Proposed"
+        },
+        {
+            "action": "Approve",
+            "allow_self_approval": 1,
+            "allowed": "Client Editor",
+            "next_state": "Approved",
+            "state": "Proposed"
+        },
+        {
+            "action": "Reject",
+            "allow_self_approval": 1,
+            "allowed": "vCIO Manager",
+            "next_state": "Rejected",
+            "state": "Proposed"
+        },
+        {
+            "action": "Reject",
+            "allow_self_approval": 1,
+            "allowed": "Client Editor",
+            "next_state": "Rejected",
+            "state": "Proposed"
+        },
+        {
+            "action": "Reopen",
+            "allow_self_approval": 1,
+            "allowed": "vCIO Manager",
+            "next_state": "Draft",
+            "state": "Rejected"
+        },
+        {
+            "action": "Reopen",
+            "allow_self_approval": 1,
+            "allowed": "Client Editor",
+            "next_state": "Draft",
+            "state": "Rejected"
+        },
+        {
+            "action": "Reopen",
+            "allow_self_approval": 1,
+            "allowed": "vCIO Manager",
+            "next_state": "Draft",
+            "state": "Approved"
+        },
+        {
+            "action": "Reopen",
+            "allow_self_approval": 1,
+            "allowed": "Client Editor",
+            "next_state": "Draft",
+            "state": "Approved"
+        }
+    ]
+}

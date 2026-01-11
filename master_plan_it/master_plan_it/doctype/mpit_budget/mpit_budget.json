@@ -1,0 +1,260 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "allow_rename": 1,
+  "autoname": "",
+  "creation": "2025-12-21 22:34:53.002565",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "section_overview",
+    "year",
+    "title",
+    "overview_col_break",
+    "workflow_state",
+    "budget_type",
+    "actions_col_break",
+    "refresh_from_sources",
+    "section_lines",
+    "lines",
+    "section_totals",
+    "totals_col_break_1",
+    "total_amount_monthly",
+    "total_amount_annual",
+    "total_amount_vat",
+    "total_amount_net",
+    "total_amount_gross",
+    "section_admin",
+    "document_id",
+    "amended_from"
+  ],
+  "fields": [
+    {
+      "fieldname": "section_overview",
+      "fieldtype": "Section Break",
+      "label": "Overview",
+      "collapsible": 0
+    },
+    {
+      "fieldname": "year",
+      "fieldtype": "Link",
+      "description": "Select the budget year.",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Year",
+      "options": "MPIT Year",
+      "reqd": 1
+    },
+    {
+      "fieldname": "title",
+      "fieldtype": "Data",
+      "description": "Short title (e.g. \"2025 Forecast\").",
+      "in_list_view": 1,
+      "label": "Title"
+    },
+    {
+      "fieldname": "overview_col_break",
+      "fieldtype": "Column Break"
+    },
+    {
+      "allow_on_submit": 1,
+      "fieldname": "workflow_state",
+      "fieldtype": "Select",
+      "default": "Draft",
+      "description": "Visible status (Draft/Proposed/In Review/Approved for Snapshot; Active/Closed for Live).",
+      "in_list_view": 0,
+      "label": "Status",
+      "options": "Draft\nProposed\nIn Review\nApproved\nActive\nClosed",
+      "read_only": 0
+    },
+    {
+      "fieldname": "budget_type",
+      "fieldtype": "Select",
+      "description": "Budget type (Live or Snapshot).",
+      "label": "Budget Type",
+      "options": "Live\nSnapshot",
+      "default": "Live",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "reqd": 1
+    },
+    {
+      "fieldname": "actions_col_break",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "section_lines",
+      "fieldtype": "Section Break",
+      "label": "Lines",
+      "collapsible": 0
+    },
+    {
+      "fieldname": "lines",
+      "fieldtype": "Table",
+      "description": "Lines from sources (contracts/projects) + manual (Allowance cap per cost center).",
+      "label": "Lines",
+      "options": "MPIT Budget Line"
+    },
+    {
+      "fieldname": "section_totals",
+      "fieldtype": "Section Break",
+      "label": "Totals",
+      "collapsible": 0
+    },
+    {
+      "fieldname": "section_admin",
+      "fieldtype": "Section Break",
+      "label": "Admin"
+    },
+    {
+      "fieldname": "document_id",
+      "fieldtype": "Read Only",
+      "label": "Document ID",
+      "options": "name",
+      "description": "Unique Document ID (name).",
+      "in_preview": 1
+    },
+    {
+      "fieldname": "totals_col_break_1",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "total_amount_monthly",
+      "fieldtype": "Currency",
+      "description": "Average monthly burden (NET Total / 12).",
+      "label": "Average Monthly Amount",
+      "read_only": 1,
+      "columns": 1,
+      "css_class": "text-right",
+      "label_align": "right"
+    },
+    {
+      "fieldname": "total_amount_annual",
+      "fieldtype": "Currency",
+      "description": "Calculated automatically as the sum of annual amounts.",
+      "label": "Total Annual Amount",
+      "read_only": 1,
+      "columns": 1,
+      "css_class": "text-right",
+      "label_align": "right"
+    },
+    {
+      "fieldname": "total_amount_vat",
+      "fieldtype": "Currency",
+      "description": "Calculated automatically as the sum of line VAT amounts.",
+      "label": "Total VAT Amount",
+      "read_only": 1,
+      "columns": 1,
+      "css_class": "text-right",
+      "label_align": "right"
+    },
+    {
+      "fieldname": "total_amount_net",
+      "fieldtype": "Currency",
+      "description": "Calculated automatically as the sum of net amounts.",
+      "label": "Total Net Amount",
+      "read_only": 1,
+      "columns": 1,
+      "css_class": "text-right",
+      "label_align": "right"
+    },
+    {
+      "fieldname": "total_amount_gross",
+      "fieldtype": "Currency",
+      "description": "Calculated automatically as the sum of gross amounts.",
+      "label": "Total Gross Amount",
+      "read_only": 1,
+      "columns": 1,
+      "css_class": "text-right",
+      "label_align": "right"
+    },
+    {
+      "fieldname": "amended_from",
+      "fieldtype": "Link",
+      "description": "Reference to the original budget this document was amended from.",
+      "label": "Amended From",
+      "no_copy": 1,
+      "options": "MPIT Budget",
+      "print_hide": 1,
+      "read_only": 1,
+      "search_index": 1
+    },
+    {
+      "fieldname": "refresh_from_sources",
+      "fieldtype": "Button",
+      "label": "Refresh from Sources",
+      "depends_on": "eval:doc.budget_type=='Live'"
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "is_submittable": 1,
+  "links": [],
+  "modified": "2025-12-24 20:00:47.368441",
+  "modified_by": "Administrator",
+  "module": "Master Plan IT",
+  "name": "MPIT Budget",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "cancel": 1,
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "import": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "submit": 1,
+      "write": 1
+    },
+    {
+      "cancel": 1,
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "import": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "vCIO Manager",
+      "share": 1,
+      "submit": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Client Editor",
+      "share": 1,
+      "submit": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Client Viewer",
+      "share": 1
+    }
+  ],
+  "row_format": "Dynamic",
+  "rows_threshold_for_grid_search": 20,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "title",
+  "track_changes": 1
+}

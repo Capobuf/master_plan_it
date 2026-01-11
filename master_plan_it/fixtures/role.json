@@ -1,0 +1,20 @@
+[
+ {
+  "doctype": "Role",
+  "name": "vCIO Manager",
+  "role_name": "vCIO Manager",
+  "desk_access": 1
+ },
+ {
+  "doctype": "Role",
+  "name": "Client Editor",
+  "role_name": "Client Editor",
+  "desk_access": 1
+ },
+ {
+  "doctype": "Role",
+  "name": "Client Viewer",
+  "role_name": "Client Viewer",
+  "desk_access": 1
+ }
+]

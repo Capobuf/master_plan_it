@@ -1,0 +1,238 @@
+{
+  "actions": [],
+  "allow_import": 1,
+  "allow_rename": 1,
+  "creation": "2025-12-21 22:34:51.970208",
+  "doctype": "DocType",
+  "editable_grid": 1,
+  "engine": "InnoDB",
+  "field_order": [
+    "section_overview",
+    "title",
+    "workflow_state",
+    "operational_status",
+    "overview_col_break",
+    "cost_center",
+    "start_date",
+    "end_date",
+    "description",
+    "document_id",
+    "section_notes",
+    "notes",
+    "financial_section",
+    "financial_summary",
+    "planned_total_net",
+    "quoted_total_net",
+    "expected_total_net",
+    "actual_total_net",
+    "variance_net",
+    "utilization_pct"
+  ],
+  "fields": [
+    {
+      "fieldname": "section_overview",
+      "fieldtype": "Section Break",
+      "label": "Overview",
+      "collapsible": 0
+    },
+    {
+      "fieldname": "title",
+      "fieldtype": "Data",
+      "description": "Project Title.",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Title",
+      "reqd": 1
+    },
+    {
+      "default": "Draft",
+      "fieldname": "workflow_state",
+      "fieldtype": "Select",
+      "description": "Workflow status. Managed by Frappe Workflow.",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Status",
+      "options": "Draft\nProposed\nApproved\nRejected\nCancelled",
+      "read_only": 1
+    },
+    {
+      "fieldname": "operational_status",
+      "fieldtype": "Select",
+      "description": "Operational status after approval. Freely editable.",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Operational Status",
+      "options": "\nIn Progress\nOn Hold\nCompleted",
+      "depends_on": "eval:doc.workflow_state=='Approved'"
+    },
+    {
+      "fieldname": "overview_col_break",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "cost_center",
+      "fieldtype": "Link",
+      "description": "Main Cost Center (Report/Cap).",
+      "in_list_view": 1,
+      "in_standard_filter": 1,
+      "label": "Cost Center",
+      "options": "MPIT Cost Center",
+      "reqd": 1
+    },
+    {
+      "fieldname": "start_date",
+      "fieldtype": "Date",
+      "description": "Start Date (requires end_date if set).",
+      "label": "Start Date"
+    },
+    {
+      "fieldname": "end_date",
+      "fieldtype": "Date",
+      "description": "End Date (>= start).",
+      "label": "End Date"
+    },
+    {
+      "fieldname": "description",
+      "fieldtype": "Small Text",
+      "description": "Brief notes on scope.",
+      "label": "Description"
+    },
+    {
+      "fieldname": "section_notes",
+      "fieldtype": "Section Break",
+      "label": "Notes",
+      "collapsible": 1
+    },
+    {
+      "fieldname": "notes",
+      "fieldtype": "Small Text",
+      "label": "Notes",
+      "description": "Add internal notes about the project."
+    },
+    {
+      "fieldname": "financial_section",
+      "fieldtype": "Section Break",
+      "label": "Financials",
+      "collapsible": 0
+    },
+    {
+      "fieldname": "financial_summary",
+      "fieldtype": "HTML",
+      "label": "Financial Summary",
+      "read_only": 1
+    },
+    {
+      "fieldname": "planned_total_net",
+      "fieldtype": "Currency",
+      "description": "Total planned net from allocations.",
+      "label": "Planned Total (Net)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "quoted_total_net",
+      "fieldtype": "Currency",
+      "description": "Total quoted net amount.",
+      "label": "Quoted Total (Net)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "expected_total_net",
+      "fieldtype": "Currency",
+      "description": "Expected total (quoted if present, otherwise planned).",
+      "label": "Expected Total (Net)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "actual_total_net",
+      "fieldtype": "Currency",
+      "description": "Total verified actuals (net).",
+      "label": "Actual Total (Net)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "variance_net",
+      "fieldtype": "Currency",
+      "description": "Actual - Planned (Net). Positive means over budget.",
+      "label": "Variance (Net)",
+      "read_only": 1
+    },
+    {
+      "fieldname": "utilization_pct",
+      "fieldtype": "Percent",
+      "description": "Actual / Planned %.",
+      "label": "% Utilized",
+      "read_only": 1
+    },
+    {
+      "fieldname": "document_id",
+      "fieldtype": "Read Only",
+      "label": "Document ID",
+      "options": "name",
+      "description": "Unique Document ID (name).",
+      "in_preview": 1
+    }
+  ],
+  "grid_page_length": 50,
+  "index_web_pages_for_search": 1,
+  "links": [],
+  "modified": "2025-12-24 20:00:45.088553",
+  "modified_by": "Administrator",
+  "module": "Master Plan IT",
+  "name": "MPIT Project",
+  "owner": "Administrator",
+  "permissions": [
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "import": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "System Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "delete": 1,
+      "email": 1,
+      "import": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "vCIO Manager",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "create": 1,
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Client Editor",
+      "share": 1,
+      "write": 1
+    },
+    {
+      "email": 1,
+      "export": 1,
+      "print": 1,
+      "read": 1,
+      "report": 1,
+      "role": "Client Viewer",
+      "share": 1
+    }
+  ],
+  "row_format": "Dynamic",
+  "rows_threshold_for_grid_search": 20,
+  "sort_field": "modified",
+  "sort_order": "DESC",
+  "states": [],
+  "title_field": "title",
+  "track_changes": 1
+}
