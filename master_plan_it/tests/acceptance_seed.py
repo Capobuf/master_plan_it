@@ -67,7 +67,7 @@ def run_seed() -> dict:
 		{
 			"doctype": "MPIT Project",
 			"title": "Acceptance Project",
-			"status": "On Hold",
+			"operational_status": "On Hold",
 			"cost_center": cc.name,
 		}
 	)

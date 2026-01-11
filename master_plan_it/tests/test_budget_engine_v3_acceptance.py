@@ -229,7 +229,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"doctype": "MPIT Project",
 				"title": "Planned Project",
 				# v3: only validated project statuses feed the budget
-				"status": "On Hold",
+				"operational_status": "On Hold",
 				"cost_center": self.cost_center.name,
 			}
 		).insert()
@@ -264,7 +264,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 			{
 				"doctype": "MPIT Project",
 				"title": "Planned Dist All",
-				"status": "In Progress",
+				"operational_status": "In Progress",
 				"cost_center": self.cost_center.name,
 			}
 		).insert()
@@ -296,7 +296,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 			{
 				"doctype": "MPIT Project",
 				"title": "Planned Dist Start",
-				"status": "In Progress",
+				"operational_status": "In Progress",
 				"cost_center": self.cost_center.name,
 			}
 		).insert()
@@ -328,7 +328,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 			{
 				"doctype": "MPIT Project",
 				"title": "Planned Spend Date",
-				"status": "In Progress",
+				"operational_status": "In Progress",
 				"cost_center": self.cost_center.name,
 			}
 		).insert()
@@ -461,7 +461,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 			{
 				"doctype": "MPIT Project",
 				"title": "Covered PI Project",
-				"status": "Draft",
+				"workflow_state": "Draft",
 				"cost_center": self.cost_center.name,
 			}
 		).insert()

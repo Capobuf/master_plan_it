@@ -12,7 +12,7 @@ def verify_project_financials():
     proj = frappe.get_doc({
         "doctype": "MPIT Project",
         "title": "Financial Test Project",
-        "status": "Approved",
+        "workflow_state": "Approved",
         "cost_center": cc.name,
         "start_date": "2026-01-01",
         "end_date": "2026-12-31"

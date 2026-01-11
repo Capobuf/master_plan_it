@@ -17,15 +17,15 @@ class TestMPITProject(FrappeTestCase):
 		doc = frappe.get_doc({
 			"doctype": "MPIT Project",
 			"title": "Test Project v3",
-			"status": "Draft",
+			"workflow_state": "Draft",
 			"cost_center": "Infrastructure CC",
 		}).insert()
 		
 		# Move to Approved without allocations -> Should succeed (no validation error)
-		doc.status = "Approved"
+		doc.workflow_state = "Approved"
 		doc.save()
 		
-		self.assertEqual(doc.status, "Approved")
+		self.assertEqual(doc.workflow_state, "Approved")
 		
 		# Note: We cannot easily assert msgprint in unit tests without mocking,
 		# but the absence of ValidationError proves the fix.

@@ -133,7 +133,7 @@ class TestMPITBudget(FrappeTestCase):
 			"doctype": "MPIT Project",
 			"title": f"Test Project {self._test_uuid}",
 			"cost_center": self.test_cost_center,
-			"status": "In Progress",
+			"operational_status": "In Progress",
 		}
 		defaults.update(kwargs)
 		doc = frappe.get_doc(defaults)

@@ -451,15 +451,15 @@ def get_extra_charts(year: str | None, cost_center: str | None) -> dict:
     project_statuses = frappe.db.get_all(
         "MPIT Project",
         filters={"cost_center": cost_center} if cost_center else {},
-        fields=["status", "count(name) as total"],
-        group_by="status",
+        fields=["workflow_state", "count(name) as total"],
+        group_by="workflow_state",
     )
     if project_statuses:
         charts["projects_by_status"] = {
             "title": _("Projects by Status"),
             "type": "pie",
             "data": {
-                "labels": [row.status or _("Unknown") for row in project_statuses],
+                "labels": [row.workflow_state or _("Unknown") for row in project_statuses],
                 "datasets": [{"values": [cint(row.total) for row in project_statuses]}],
             },
         }

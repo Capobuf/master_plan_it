@@ -29,10 +29,10 @@ def get_data(filters=None):
 
 	rows = frappe.db.sql(
 		f"""
-		SELECT status, COUNT(*) AS total
+		SELECT workflow_state AS status, COUNT(*) AS total
 		FROM `tabMPIT Project`
 		{cc_clause}
-		GROUP BY status
+		GROUP BY workflow_state
 		ORDER BY total DESC
 		""",
 		params,

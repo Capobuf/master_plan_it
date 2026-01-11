@@ -41,6 +41,8 @@ bench --site mysite.example.com enable-scheduler
 bench use mysite.example.com
 ```
 
+> **Docker environments:** When creating a site in Docker, always add `--no-mariadb-socket` to `bench new-site`. This sets the database user host to `%` instead of a specific container IP, preventing "Access denied" errors after container restarts when IPs change.
+
 ### List sites
 
 ```bash

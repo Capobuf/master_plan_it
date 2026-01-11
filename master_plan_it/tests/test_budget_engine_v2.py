@@ -134,7 +134,7 @@ def test_refresh_skips_draft_and_proposed_projects():
 		{
 			"doctype": "MPIT Project",
 			"title": "Draft Project",
-			"status": "Draft",
+			"workflow_state": "Draft",
 			"cost_center": cc,
 		}
 	)
@@ -145,7 +145,7 @@ def test_refresh_skips_draft_and_proposed_projects():
 		{
 			"doctype": "MPIT Project",
 			"title": "Proposed Project",
-			"status": "Proposed",
+			"workflow_state": "Proposed",
 			"cost_center": cc,
 		}
 	)
