@@ -35,9 +35,31 @@ def _ensure_year(year: int) -> None:
 	doc.insert(ignore_permissions=True)
 
 
+def _ensure_root_cost_center() -> None:
+	"""Create root Cost Center 'All Cost Centers' if missing (idempotent).
+
+	This was previously in patches/v2_0/add_cost_center_root.py but moved here
+	to ensure new installations get the root Cost Center via install hooks.
+	"""
+	if not frappe.db.exists("DocType", "MPIT Cost Center"):
+		# DocType not synced yet; will be called again after sync.
+		return
+
+	if frappe.db.exists("MPIT Cost Center", "All Cost Centers"):
+		return
+
+	doc = frappe.get_doc({
+		"doctype": "MPIT Cost Center",
+		"cost_center_name": "All Cost Centers",
+		"is_group": 1,
+	})
+	doc.insert(ignore_permissions=True)
+
+
 def _bootstrap_basics() -> None:
 	"""Bootstrap minimal records required by existing code."""
 	_ensure_settings()
+	_ensure_root_cost_center()
 
 	today = datetime.date.today()
 	_ensure_year(today.year)

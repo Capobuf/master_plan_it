@@ -1,7 +1,31 @@
 # Master Plan IT
 
 Frappe Desk app (v15) for budgeting, contracts, and projects. Native file-first workflow; no custom JS/CSS or build pipeline.
+## Quick Start
 
+```bash
+# Install on existing Frappe bench
+bench get-app https://github.com/Capobuf/Master-Plan-IT.git
+bench --site <your-site> install-app master_plan_it
+bench --site <your-site> migrate
+```
+
+## Documentation
+
+- [Installation Guide](docs/how-to/00-bootstrap-from-scratch.md)
+- [Architecture](docs/explanation/01-architecture.md)
+- [Open Issues](OPEN_ISSUES.md)
+- [Changelog](CHANGELOG.md)
+
+## Features
+
+- **Budget management** - Live/Snapshot with workflow (Draft → Proposed → Approved)
+- **Contract tracking** - Renewal management with terms and vendors
+- **Project planning** - Allocations with workflow support
+- **Multi-year budget engine** - Annualization and cross-year planning
+- **Dashboard and reports** - 17 number cards, 9 chart sources, 6 custom reports
+
+## Key Concepts
 - App root: this repo; inside a bench the app lives at `apps/master_plan_it/`.
 - Multi-tenant: 1 site = 1 client.
 - Canonical metadata and controllers: `master_plan_it/master_plan_it/`.

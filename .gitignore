@@ -53,3 +53,5 @@ sites/
 # Docker overrides
 docker-compose.override.yml
 docker-compose.override.yml.local
+
+/tmp
