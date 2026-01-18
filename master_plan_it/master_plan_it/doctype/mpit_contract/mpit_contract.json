@@ -1,344 +1,336 @@
 {
-  "actions": [],
-  "allow_import": 1,
-  "allow_rename": 1,
-  "autoname": "",
-  "creation": "2025-12-21 22:34:32.098018",
-  "doctype": "DocType",
-  "editable_grid": 1,
-  "engine": "InnoDB",
-  "quick_entry": 1,
-  "show_preview_popup": 1,
-  "field_order": [
-    "tb_overview",
-    "sb_overview_main",
-    "description",
-    "vendor",
-    "cb_overview_right",
-    "status",
-    "cost_center",
-    "tb_renewal",
-    "start_date",
-    "end_date",
-    "auto_renew",
-    "next_renewal_date",
-    "section_current_term",
-    "current_term_amount",
-    "current_term_billing_cycle",
-    "cb_current_term",
-    "current_term_monthly_net",
-    "current_term_from_date",
-    "section_terms",
-    "terms",
-    "section_summary",
-    "annual_amount_current_year",
-    "current_year_label",
-    "cb_summary",
-    "annual_amount_next_year",
-    "next_year_label",
-    "planned_item",
-    "tb_notes",
-    "notes",
-    "attachment",
-    "tb_admin",
-    "document_id"
-  ],
-  "fields": [
-    {
-      "fieldname": "tb_overview",
-      "fieldtype": "Section Break",
-      "label": "Overview"
-    },
-    {
-      "fieldname": "sb_overview_main",
-      "fieldtype": "Section Break",
-      "hidden": 0
-    },
-    {
-      "fieldname": "description",
-      "fieldtype": "Data",
-      "description": "Brief description (optional).",
-      "in_list_view": 1,
-      "label": "Description",
-      "bold": 1,
-      "allow_in_quick_entry": 1,
-      "in_preview": 1
-    },
-    {
-      "fieldname": "vendor",
-      "fieldtype": "Link",
-      "description": "Vendor",
-      "in_list_view": 1,
-      "in_standard_filter": 1,
-      "label": "Vendor",
-      "options": "MPIT Vendor",
-      "reqd": 1,
-      "bold": 1,
-      "allow_in_quick_entry": 1,
-      "in_preview": 1
-    },
-    {
-      "fieldname": "planned_item",
-      "fieldtype": "Link",
-      "label": "Planned Item (coverage)",
-      "options": "MPIT Planned Item",
-      "description": "Link the Planned Item this contract covers (prevents double counting)."
-    },
-    {
-      "fieldname": "cb_overview_right",
-      "fieldtype": "Column Break"
-    },
-    {
-      "default": "Active",
-      "fieldname": "status",
-      "fieldtype": "Select",
-      "description": "Operational status.",
-      "in_standard_filter": 1,
-      "label": "Status",
-      "options": "Draft\nActive\nPending Renewal\nRenewed\nCancelled\nExpired",
-      "allow_in_quick_entry": 1,
-      "in_preview": 1
-    },
-    {
-      "fieldname": "cost_center",
-      "fieldtype": "Link",
-      "description": "Cost Center (Caps/Reporting).",
-      "in_standard_filter": 1,
-      "label": "Cost Center",
-      "options": "MPIT Cost Center",
-      "allow_in_quick_entry": 1,
-      "reqd": 1
-    },
-    {
-      "fieldname": "tb_renewal",
-      "fieldtype": "Section Break",
-      "label": "Renewal & Dates"
-    },
-    {
-      "fieldname": "start_date",
-      "fieldtype": "Date",
-      "description": "From current term (auto-computed).",
-      "label": "Start Date",
-      "read_only": 1,
-      "allow_in_quick_entry": 1,
-      "in_preview": 1
-    },
-    {
-      "fieldname": "end_date",
-      "fieldtype": "Date",
-      "description": "From current term (auto-computed). Empty = open-ended.",
-      "label": "End Date",
-      "read_only": 1,
-      "allow_in_quick_entry": 1,
-      "in_preview": 1
-    },
-    {
-      "default": "1",
-      "fieldname": "auto_renew",
-      "fieldtype": "Check",
-      "description": "Auto-renew with notice.",
-      "label": "Auto Renew",
-      "in_standard_filter": 1,
-      "in_list_view": 1,
-      "allow_in_quick_entry": 1,
-      "in_preview": 1
-    },
-    {
-      "fieldname": "next_renewal_date",
-      "fieldtype": "Date",
-      "description": "Next renewal date (auto if missing).",
-      "in_list_view": 1,
-      "label": "Next Renewal Date",
-      "depends_on": "eval:doc.auto_renew",
-      "bold": 1,
-      "allow_in_quick_entry": 1,
-      "in_preview": 1
-    },
-    {
-      "fieldname": "section_current_term",
-      "fieldtype": "Section Break",
-      "label": "Current Term",
-      "description": "The pricing term currently in effect based on today's date."
-    },
-    {
-      "fieldname": "current_term_amount",
-      "fieldtype": "Currency",
-      "label": "Amount",
-      "read_only": 1,
-      "description": "Amount per billing cycle from the active term.",
-      "depends_on": "eval:doc.terms && doc.terms.length > 0"
-    },
-    {
-      "fieldname": "current_term_billing_cycle",
-      "fieldtype": "Data",
-      "label": "Billing Cycle",
-      "read_only": 1,
-      "depends_on": "eval:doc.terms && doc.terms.length > 0"
-    },
-    {
-      "fieldname": "cb_current_term",
-      "fieldtype": "Column Break"
-    },
-    {
-      "fieldname": "current_term_monthly_net",
-      "fieldtype": "Currency",
-      "label": "Monthly (Net)",
-      "read_only": 1,
-      "description": "Monthly equivalent net amount from the active term.",
-      "depends_on": "eval:doc.terms && doc.terms.length > 0"
-    },
-    {
-      "fieldname": "current_term_from_date",
-      "fieldtype": "Date",
-      "label": "Valid From",
-      "read_only": 1,
-      "depends_on": "eval:doc.terms && doc.terms.length > 0"
-    },
-    {
-      "fieldname": "section_terms",
-      "fieldtype": "Section Break",
-      "label": "Pricing Terms",
-      "description": "At least one term is required. Each term defines pricing for a period."
-    },
-    {
-      "fieldname": "terms",
-      "fieldtype": "Table",
-      "label": "Terms",
-      "options": "MPIT Contract Term",
-      "reqd": 1,
-      "description": "Add terms to manage price changes over time. Each term has a From Date; the system automatically calculates term end dates based on the next term's start."
-    },
-    {
-      "fieldname": "section_summary",
-      "fieldtype": "Section Break",
-      "label": "Annualized Summary",
-      "description": "Computed from terms for current and next fiscal year."
-    },
-    {
-      "fieldname": "annual_amount_current_year",
-      "fieldtype": "Currency",
-      "label": "Annual Amount (Current Year)",
-      "read_only": 1,
-      "depends_on": "eval:doc.terms && doc.terms.length > 0"
-    },
-    {
-      "fieldname": "current_year_label",
-      "fieldtype": "Data",
-      "label": "Year",
-      "read_only": 1,
-      "depends_on": "eval:doc.terms && doc.terms.length > 0"
-    },
-    {
-      "fieldname": "cb_summary",
-      "fieldtype": "Column Break"
-    },
-    {
-      "fieldname": "annual_amount_next_year",
-      "fieldtype": "Currency",
-      "label": "Annual Amount (Next Year)",
-      "read_only": 1,
-      "depends_on": "eval:doc.terms && doc.terms.length > 0"
-    },
-    {
-      "fieldname": "next_year_label",
-      "fieldtype": "Data",
-      "label": "Year",
-      "read_only": 1,
-      "depends_on": "eval:doc.terms && doc.terms.length > 0"
-    },
-    {
-      "fieldname": "tb_notes",
-      "fieldtype": "Section Break",
-      "label": "Notes"
-    },
-    {
-      "fieldname": "notes",
-      "fieldtype": "Small Text",
-      "description": "Add internal notes about the contract.",
-      "label": "Notes"
-    },
-    {
-      "fieldname": "attachment",
-      "fieldtype": "Attach",
-      "description": "Upload the contract file.",
-      "label": "Attachment"
-    },
-    {
-      "fieldname": "tb_admin",
-      "fieldtype": "Section Break",
-      "label": "Admin"
-    },
-    {
-      "fieldname": "document_id",
-      "fieldtype": "Read Only",
-      "label": "Document ID",
-      "options": "name",
-      "description": "Unique Document ID (name).",
-      "in_preview": 1
-    }
-  ],
-  "grid_page_length": 50,
-  "index_web_pages_for_search": 1,
-  "links": [],
-  "modified": "2025-12-24 20:00:43.898411",
-  "modified_by": "Administrator",
-  "module": "Master Plan IT",
-  "name": "MPIT Contract",
-  "owner": "Administrator",
-  "permissions": [
-    {
-      "create": 1,
-      "delete": 1,
-      "email": 1,
-      "import": 1,
-      "export": 1,
-      "print": 1,
-      "read": 1,
-      "report": 1,
-      "role": "System Manager",
-      "share": 1,
-      "write": 1
-    },
-    {
-      "create": 1,
-      "delete": 1,
-      "email": 1,
-      "import": 1,
-      "export": 1,
-      "print": 1,
-      "read": 1,
-      "report": 1,
-      "role": "vCIO Manager",
-      "share": 1,
-      "write": 1
-    },
-    {
-      "create": 1,
-      "delete": 1,
-      "email": 1,
-      "export": 1,
-      "print": 1,
-      "read": 1,
-      "report": 1,
-      "role": "Client Editor",
-      "share": 1,
-      "write": 1
-    },
-    {
-      "email": 1,
-      "export": 1,
-      "print": 1,
-      "read": 1,
-      "report": 1,
-      "role": "Client Viewer",
-      "share": 1
-    }
-  ],
-  "row_format": "Dynamic",
-  "rows_threshold_for_grid_search": 20,
-  "sort_field": "modified",
-  "sort_order": "DESC",
-  "states": [],
-  "title_field": "description",
-  "track_changes": 1
+    "actions": [],
+    "allow_import": 1,
+    "allow_rename": 1,
+    "autoname": "",
+    "creation": "2025-12-21 22:34:32.098018",
+    "doctype": "DocType",
+    "editable_grid": 1,
+    "engine": "InnoDB",
+    "field_order": [
+        "sb_overview_main",
+        "description",
+        "vendor",
+        "cb_overview_right",
+        "status",
+        "cost_center",
+        "tb_renewal",
+        "start_date",
+        "end_date",
+        "auto_renew",
+        "next_renewal_date",
+        "section_current_term",
+        "current_term_amount",
+        "current_term_billing_cycle",
+        "cb_current_term",
+        "current_term_monthly_net",
+        "current_term_from_date",
+        "section_terms",
+        "terms",
+        "section_summary",
+        "annual_amount_current_year",
+        "current_year_label",
+        "cb_summary",
+        "annual_amount_next_year",
+        "next_year_label",
+        "planned_item",
+        "tb_notes",
+        "notes",
+        "attachment",
+        "tb_admin",
+        "document_id"
+    ],
+    "fields": [
+        {
+            "fieldname": "sb_overview_main",
+            "fieldtype": "Section Break"
+        },
+        {
+            "allow_in_quick_entry": 1,
+            "bold": 1,
+            "description": "Brief description (optional).",
+            "fieldname": "description",
+            "fieldtype": "Data",
+            "in_list_view": 1,
+            "in_preview": 1,
+            "label": "Description"
+        },
+        {
+            "allow_in_quick_entry": 1,
+            "bold": 1,
+            "description": "Vendor",
+            "fieldname": "vendor",
+            "fieldtype": "Link",
+            "in_list_view": 1,
+            "in_preview": 1,
+            "in_standard_filter": 1,
+            "label": "Vendor",
+            "options": "MPIT Vendor",
+            "reqd": 1
+        },
+        {
+            "description": "Link the Planned Item this contract covers (prevents double counting).",
+            "fieldname": "planned_item",
+            "fieldtype": "Link",
+            "label": "Planned Item (coverage)",
+            "options": "MPIT Planned Item"
+        },
+        {
+            "fieldname": "cb_overview_right",
+            "fieldtype": "Column Break"
+        },
+        {
+            "allow_in_quick_entry": 1,
+            "default": "Active",
+            "description": "Operational status.",
+            "fieldname": "status",
+            "fieldtype": "Select",
+            "in_preview": 1,
+            "in_standard_filter": 1,
+            "label": "Status",
+            "options": "Draft\nActive\nPending Renewal\nRenewed\nCancelled\nExpired"
+        },
+        {
+            "allow_in_quick_entry": 1,
+            "description": "Cost Center (Caps/Reporting).",
+            "fieldname": "cost_center",
+            "fieldtype": "Link",
+            "in_standard_filter": 1,
+            "label": "Cost Center",
+            "options": "MPIT Cost Center",
+            "reqd": 1
+        },
+        {
+            "fieldname": "tb_renewal",
+            "fieldtype": "Section Break",
+            "label": "Renewal & Dates"
+        },
+        {
+            "allow_in_quick_entry": 1,
+            "description": "From current term (auto-computed).",
+            "fieldname": "start_date",
+            "fieldtype": "Date",
+            "in_preview": 1,
+            "label": "Start Date",
+            "read_only": 1
+        },
+        {
+            "allow_in_quick_entry": 1,
+            "description": "From current term (auto-computed). Empty = open-ended.",
+            "fieldname": "end_date",
+            "fieldtype": "Date",
+            "in_preview": 1,
+            "label": "End Date",
+            "read_only": 1
+        },
+        {
+            "allow_in_quick_entry": 1,
+            "default": "1",
+            "description": "Auto-renew with notice.",
+            "fieldname": "auto_renew",
+            "fieldtype": "Check",
+            "in_filter": 1,
+            "in_preview": 1,
+            "in_standard_filter": 1,
+            "label": "Auto Renew"
+        },
+        {
+            "allow_in_quick_entry": 1,
+            "bold": 1,
+            "depends_on": "eval:doc.auto_renew",
+            "description": "Next renewal date (auto if missing).",
+            "fieldname": "next_renewal_date",
+            "fieldtype": "Date",
+            "in_preview": 1,
+            "label": "Next Renewal Date"
+        },
+        {
+            "description": "The pricing term currently in effect based on today's date.",
+            "fieldname": "section_current_term",
+            "fieldtype": "Section Break",
+            "label": "Current Term"
+        },
+        {
+            "depends_on": "eval:doc.terms && doc.terms.length > 0",
+            "description": "Amount per billing cycle from the active term.",
+            "fieldname": "current_term_amount",
+            "fieldtype": "Currency",
+            "label": "Amount",
+            "read_only": 1
+        },
+        {
+            "depends_on": "eval:doc.terms && doc.terms.length > 0",
+            "fieldname": "current_term_billing_cycle",
+            "fieldtype": "Data",
+            "label": "Billing Cycle",
+            "read_only": 1
+        },
+        {
+            "fieldname": "cb_current_term",
+            "fieldtype": "Column Break"
+        },
+        {
+            "depends_on": "eval:doc.terms && doc.terms.length > 0",
+            "description": "Monthly equivalent net amount from the active term.",
+            "fieldname": "current_term_monthly_net",
+            "fieldtype": "Currency",
+            "label": "Monthly (Net)",
+            "read_only": 1
+        },
+        {
+            "depends_on": "eval:doc.terms && doc.terms.length > 0",
+            "fieldname": "current_term_from_date",
+            "fieldtype": "Date",
+            "label": "Valid From",
+            "read_only": 1
+        },
+        {
+            "description": "At least one term is required. Each term defines pricing for a period.",
+            "fieldname": "section_terms",
+            "fieldtype": "Section Break",
+            "label": "Pricing Terms"
+        },
+        {
+            "description": "Add terms to manage price changes over time. Each term has a From Date; the system automatically calculates term end dates based on the next term's start.",
+            "fieldname": "terms",
+            "fieldtype": "Table",
+            "label": "Terms",
+            "options": "MPIT Contract Term",
+            "reqd": 1
+        },
+        {
+            "description": "Computed from terms for current and next fiscal year.",
+            "fieldname": "section_summary",
+            "fieldtype": "Section Break",
+            "label": "Annualized Summary"
+        },
+        {
+            "depends_on": "eval:doc.terms && doc.terms.length > 0",
+            "fieldname": "annual_amount_current_year",
+            "fieldtype": "Currency",
+            "label": "Annual Amount (Current Year)",
+            "read_only": 1
+        },
+        {
+            "depends_on": "eval:doc.terms && doc.terms.length > 0",
+            "fieldname": "current_year_label",
+            "fieldtype": "Data",
+            "label": "Year",
+            "read_only": 1
+        },
+        {
+            "fieldname": "cb_summary",
+            "fieldtype": "Column Break"
+        },
+        {
+            "depends_on": "eval:doc.terms && doc.terms.length > 0",
+            "fieldname": "annual_amount_next_year",
+            "fieldtype": "Currency",
+            "label": "Annual Amount (Next Year)",
+            "read_only": 1
+        },
+        {
+            "depends_on": "eval:doc.terms && doc.terms.length > 0",
+            "fieldname": "next_year_label",
+            "fieldtype": "Data",
+            "label": "Year",
+            "read_only": 1
+        },
+        {
+            "fieldname": "tb_notes",
+            "fieldtype": "Section Break",
+            "label": "Notes"
+        },
+        {
+            "description": "Add internal notes about the contract.",
+            "fieldname": "notes",
+            "fieldtype": "Small Text",
+            "label": "Notes"
+        },
+        {
+            "description": "Upload the contract file.",
+            "fieldname": "attachment",
+            "fieldtype": "Attach",
+            "label": "Attachment"
+        },
+        {
+            "fieldname": "tb_admin",
+            "fieldtype": "Section Break",
+            "label": "Admin"
+        },
+        {
+            "description": "Unique Document ID (name).",
+            "fieldname": "document_id",
+            "fieldtype": "Read Only",
+            "in_preview": 1,
+            "label": "Document ID",
+            "options": "name"
+        }
+    ],
+    "grid_page_length": 50,
+    "index_web_pages_for_search": 1,
+    "links": [],
+    "modified": "2026-01-18 23:47:43.695021",
+    "modified_by": "Administrator",
+    "module": "Master Plan IT",
+    "name": "MPIT Contract",
+    "owner": "Administrator",
+    "permissions": [
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "import": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "System Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "import": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "vCIO Manager",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "create": 1,
+            "delete": 1,
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Client Editor",
+            "share": 1,
+            "write": 1
+        },
+        {
+            "email": 1,
+            "export": 1,
+            "print": 1,
+            "read": 1,
+            "report": 1,
+            "role": "Client Viewer",
+            "share": 1
+        }
+    ],
+    "quick_entry": 1,
+    "row_format": "Dynamic",
+    "rows_threshold_for_grid_search": 20,
+    "show_preview_popup": 1,
+    "sort_field": "modified",
+    "sort_order": "DESC",
+    "states": [],
+    "title_field": "description",
+    "track_changes": 1
 }
