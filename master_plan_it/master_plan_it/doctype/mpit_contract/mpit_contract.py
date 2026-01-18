@@ -109,6 +109,11 @@ class MPITContract(Document):
 		if not self.cost_center:
 			frappe.throw(_("Cost Center is required for contracts."))
 
+		# CRITICAL: Frappe does not auto-call validate() on child tables.
+		# We must explicitly invoke it to compute amount_net, monthly_amount_net, VAT split.
+		for term in self.terms:
+			term.validate()
+
 		# Terms validation (skip during migration patch)
 		if not getattr(self.flags, "skip_terms_validation", False):
 			self._validate_terms_required()

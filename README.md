@@ -32,22 +32,22 @@ docker exec -it -u 1000:1000 mpit-backend bash
 cd /home/frappe/frappe-bench
 ```
 
-Update the app:
+Switch branch if needed, then pull and migrate:
 
 ```bash
-# Update from main branch (default)
+# Switch to main branch
 bench switch-to-branch main master_plan_it
-bench update --apps master_plan_it
 
-# Update from develop branch
+# Or switch to develop branch
 bench switch-to-branch develop master_plan_it
-bench update --apps master_plan_it
+
+# Pull latest changes and apply migrations
+cd apps/master_plan_it && git pull && cd ../..
+bench --site <your-site> migrate
+bench --site <your-site> clear-cache
 ```
 
-> **Note:** If `bench update` fails with a git error, ensure the remote is set correctly:
-> ```bash
-> bench remote-set-url master_plan_it https://github.com/Capobuf/master-plan-it.git
-> ```
+> **Note:** `bench update --apps` may fail in Docker environments where frappe/erpnext are installed without git history. The manual git pull + migrate approach above always works.
 
 ---
 
