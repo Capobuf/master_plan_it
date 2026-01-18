@@ -25,6 +25,7 @@ def _ensure_cost_center(name: str = "All Cost Centers"):
 
 
 def _ensure_contract(label: str = "CT-TEST"):
+	"""Create a contract with a single term (terms are the source of truth)."""
 	cc = _ensure_cost_center()
 	if not frappe.db.exists("MPIT Vendor", "Vendor-X"):
 		frappe.get_doc({"doctype": "MPIT Vendor", "vendor_name": "Vendor-X"}).insert(ignore_permissions=True)
@@ -34,11 +35,16 @@ def _ensure_contract(label: str = "CT-TEST"):
 			"description": label,
 			"vendor": "Vendor-X",
 			"cost_center": cc,
-			"current_amount": 100,
-			"current_amount_includes_vat": 0,
-			"vat_rate": 0,
 			"start_date": "2025-01-01",
-			"billing_cycle": "Monthly",
+			"terms": [
+				{
+					"from_date": "2025-01-01",
+					"amount": 100,
+					"amount_includes_vat": 0,
+					"vat_rate": 0,
+					"billing_cycle": "Monthly",
+				}
+			],
 		}
 	)
 	doc.insert(ignore_permissions=True)

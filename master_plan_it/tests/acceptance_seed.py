@@ -91,7 +91,7 @@ def run_seed() -> dict:
 	pi.insert()
 	pi.submit()
 
-	# Contract Active
+	# Contract Active (terms are the source of truth for pricing)
 	contract = frappe.get_doc(
 		{
 			"doctype": "MPIT Contract",
@@ -99,10 +99,16 @@ def run_seed() -> dict:
 			"vendor": ven.name,
 			"cost_center": cc.name,
 			"status": "Active",
-			"current_amount": 600,
-			"current_amount_includes_vat": 0,
-			"vat_rate": 0,
-			"billing_cycle": "Monthly",
+			"start_date": f"{year}-01-01",
+			"terms": [
+				{
+					"from_date": f"{year}-01-01",
+					"amount": 600,
+					"amount_includes_vat": 0,
+					"vat_rate": 0,
+					"billing_cycle": "Monthly",
+				}
+			],
 		}
 	)
 	contract.insert()

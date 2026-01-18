@@ -3,58 +3,48 @@
 
 frappe.provide("master_plan_it.vat");
 
+// Fetch VAT defaults once per session (cached promise)
 master_plan_it.vat.defaults_promise =
 	master_plan_it.vat.defaults_promise ||
 	frappe.call({ method: "master_plan_it.mpit_defaults.get_vat_defaults" }).then((r) => r.message || {});
 
-master_plan_it.vat.apply_defaults_for_contract =
-	master_plan_it.vat.apply_defaults_for_contract ||
-	async function (frm) {
-		if (!frm.is_new() || frm.doc.__vat_defaults_applied) {
-			return;
-		}
-
-		const defaults = await master_plan_it.vat.defaults_promise;
-		const updates = {};
-
-		if (defaults.default_includes_vat !== undefined && defaults.default_includes_vat !== null) {
-			updates.current_amount_includes_vat = defaults.default_includes_vat ? 1 : 0;
-		}
-
-		if (
-			(defaults.default_vat_rate || defaults.default_vat_rate === 0) &&
-			(frm.doc.vat_rate === undefined || frm.doc.vat_rate === null || frm.doc.vat_rate === "")
-		) {
-			updates.vat_rate = defaults.default_vat_rate;
-		}
-
-		if (Object.keys(updates).length) {
-			await frm.set_value(updates);
-		}
-
-		frm.doc.__vat_defaults_applied = true;
-	};
-
 const maybe_autofill_next_renewal_date = async (frm) => {
-	if (!frm.doc.auto_renew) {
-		return;
-	}
-	if (frm.doc.next_renewal_date) {
-		return;
-	}
-	if (!frm.doc.end_date) {
+	if (!frm.doc.auto_renew || frm.doc.next_renewal_date || !frm.doc.end_date) {
 		return;
 	}
 	await frm.set_value("next_renewal_date", frm.doc.end_date);
 };
 
+// Apply VAT defaults to new term rows
+const apply_term_defaults = async (frm, cdt, cdn) => {
+	const defaults = await master_plan_it.vat.defaults_promise;
+	const row = locals[cdt][cdn];
+
+	if (!row.__vat_defaults_applied) {
+		if (defaults.default_includes_vat !== undefined) {
+			frappe.model.set_value(cdt, cdn, "amount_includes_vat", defaults.default_includes_vat ? 1 : 0);
+		}
+		if (defaults.default_vat_rate !== undefined && !row.vat_rate) {
+			frappe.model.set_value(cdt, cdn, "vat_rate", defaults.default_vat_rate);
+		}
+		row.__vat_defaults_applied = true;
+	}
+};
+
+// Suggest from_date from contract start_date for the first term
+const suggest_first_term_date = (frm) => {
+	if (frm.doc.terms?.length === 1 && !frm.doc.terms[0].from_date && frm.doc.start_date) {
+		frappe.model.set_value(
+			frm.doc.terms[0].doctype,
+			frm.doc.terms[0].name,
+			"from_date",
+			frm.doc.start_date
+		);
+	}
+};
+
 frappe.ui.form.on("MPIT Contract", {
-	async onload(frm) {
-		await master_plan_it.vat.apply_defaults_for_contract(frm);
-		await maybe_autofill_next_renewal_date(frm);
-	},
 	async refresh(frm) {
-		await master_plan_it.vat.apply_defaults_for_contract(frm);
 		await maybe_autofill_next_renewal_date(frm);
 	},
 	async auto_renew(frm) {
@@ -62,5 +52,15 @@ frappe.ui.form.on("MPIT Contract", {
 	},
 	async end_date(frm) {
 		await maybe_autofill_next_renewal_date(frm);
+	},
+	start_date(frm) {
+		suggest_first_term_date(frm);
+	},
+});
+
+frappe.ui.form.on("MPIT Contract Term", {
+	async terms_add(frm, cdt, cdn) {
+		await apply_term_defaults(frm, cdt, cdn);
+		suggest_first_term_date(frm);
 	},
 });

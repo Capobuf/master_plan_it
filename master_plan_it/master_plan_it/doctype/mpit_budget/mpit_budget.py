@@ -170,9 +170,14 @@ class MPITBudget(Document):
 			frappe.log_error(frappe.get_traceback(), "MPIT Budget refresh timeline comment failed")
 
 	def _generate_contract_lines(self, year_start: date, year_end: date) -> list[dict]:
+		"""Generate budget lines from contracts with valid status.
+
+		Terms are the single source of truth for pricing. Contracts without terms
+		are logged and skipped (should not happen after migration).
+		"""
 		lines: list[dict] = []
 		allowed_status = {"Active", "Pending Renewal", "Renewed"}
-		# Batch-fetch all needed fields to avoid N+1 queries
+
 		contracts = frappe.get_all(
 			"MPIT Contract",
 			filters={"status": ["in", list(allowed_status)]},
@@ -182,15 +187,11 @@ class MPITBudget(Document):
 				"cost_center",
 				"start_date",
 				"end_date",
-				"billing_cycle",
-				"current_amount",
-				"current_amount_includes_vat",
-				"vat_rate",
 				"vendor",
 				"description",
 			],
 		)
-		
+
 		# Batch-fetch all terms for these contracts to avoid N+1 queries
 		contract_names = [c.name for c in contracts]
 		all_terms = {}
@@ -198,40 +199,45 @@ class MPITBudget(Document):
 			terms_data = frappe.get_all(
 				"MPIT Contract Term",
 				filters={"parent": ["in", contract_names]},
-				fields=["name", "parent", "from_date", "to_date", "amount_net", "monthly_amount_net", "billing_cycle"],
+				fields=[
+					"name", "parent", "from_date", "to_date",
+					"amount_net", "monthly_amount_net", "billing_cycle",
+					"amount_includes_vat", "vat_rate"
+				],
 				order_by="parent, from_date asc"
 			)
 			for term in terms_data:
 				all_terms.setdefault(term.parent, []).append(term)
-		
+
 		for contract in contracts:
 			if not contract.cost_center:
-				frappe.throw(_("Contract {0} is missing Cost Center. Please set it to include in Forecast.").format(contract.name))
-			
-			# Check if contract has terms - use them if present, otherwise fall back to current_amount
+				frappe.throw(
+					_("Contract {0} is missing Cost Center.").format(contract.name)
+				)
+
 			terms = all_terms.get(contract.name, [])
-			if terms:
-				term_lines = self._generate_contract_term_lines(contract, terms, year_start, year_end)
-				if term_lines:
-					lines.extend(term_lines)
-				else:
-					# Terms exist but don't cover this year - fallback to current_amount
-					lines.extend(self._generate_contract_flat_lines(contract, year_start, year_end))
-			else:
-				# No terms defined - use flat amount with billing_cycle
-				lines.extend(self._generate_contract_flat_lines(contract, year_start, year_end))
+			if not terms:
+				# After migration this should not happen; log and skip
+				frappe.log_error(
+					f"Contract {contract.name} has no terms - skipping budget generation",
+					"Budget Engine Warning"
+				)
+				continue
+
+			term_lines = self._generate_contract_term_lines(contract, terms, year_start, year_end)
+			lines.extend(term_lines)
+
 		return lines
 
 	def _generate_contract_term_lines(self, contract, terms: list, year_start: date, year_end: date) -> list[dict]:
 		"""Generate budget lines for each contract term overlapping the year."""
-
 		lines = []
 		contract_start = _getdate(contract.start_date) if contract.start_date else year_start
 		contract_end = _getdate(contract.end_date) if contract.end_date else year_end
 
 		for i, term in enumerate(terms):
 			term_start = _getdate(term.from_date)
-			
+
 			# Determine term end: use to_date, or next term start - 1, or contract end
 			if term.to_date:
 				term_end = _getdate(term.to_date)
@@ -257,6 +263,7 @@ class MPITBudget(Document):
 			lines.append(
 				self._build_line_payload(
 					contract=contract,
+					term=term,
 					period_start=period_start,
 					period_end=period_end,
 					monthly_amount=monthly_amount,
@@ -265,41 +272,6 @@ class MPITBudget(Document):
 					source_key=source_key,
 				)
 			)
-		return lines
-
-	def _generate_contract_flat_lines(self, contract, year_start: date, year_end: date) -> list[dict]:
-		lines = []
-		period_start = max(_getdate(contract.start_date) if contract.start_date else year_start, year_start)
-		period_end = min(_getdate(contract.end_date) if contract.end_date else year_end, year_end)
-		months = annualization.overlap_months(period_start, period_end, year_start, year_end)
-		if months <= 0:
-			return lines
-
-		billing = contract.billing_cycle or "Monthly"
-		base_amount = flt(contract.current_amount or 0, 6)
-		monthly_amount = flt(base_amount, 6)
-		recurrence_rule = "Monthly"
-		unit_price = flt(base_amount, 6)
-		if billing == "Quarterly":
-			monthly_amount = flt((base_amount) * 4 / 12, 6)
-			recurrence_rule = "Quarterly"
-		elif billing == "Annual":
-			monthly_amount = flt((base_amount) / 12, 6)
-			recurrence_rule = "Annual"
-		# Other -> treat as monthly, recurrence_rule stays Monthly
-
-		source_key = f"CONTRACT::{contract.name}"
-		lines.append(
-			self._build_line_payload(
-				contract=contract,
-				period_start=period_start,
-				period_end=period_end,
-				monthly_amount=monthly_amount,
-				unit_price=unit_price,
-				recurrence_rule=recurrence_rule,
-				source_key=source_key,
-			)
-		)
 		return lines
 
 	def _generate_planned_item_lines(self, year_start: date, year_end: date) -> list[dict]:
@@ -429,7 +401,14 @@ class MPITBudget(Document):
 		month_end = date(dt.year, dt.month, last_day)
 		return month_start, month_end
 
-	def _build_line_payload(self, contract, period_start: date, period_end: date, monthly_amount: float, unit_price: float, recurrence_rule: str, source_key: str) -> dict:
+	def _build_line_payload(
+		self, contract, term, period_start: date, period_end: date,
+		monthly_amount: float, unit_price: float, recurrence_rule: str, source_key: str
+	) -> dict:
+		"""Build payload for a contract budget line.
+
+		VAT info is taken from the term (the single source of truth for pricing).
+		"""
 		return {
 			"line_kind": "Contract",
 			"source_key": source_key,
@@ -441,8 +420,8 @@ class MPITBudget(Document):
 			"monthly_amount": monthly_amount,
 			"annual_amount": 0,
 			"unit_price": unit_price,
-			"amount_includes_vat": contract.current_amount_includes_vat,
-			"vat_rate": contract.vat_rate,
+			"amount_includes_vat": term.amount_includes_vat if term else 0,
+			"vat_rate": term.vat_rate if term else 0,
 			"recurrence_rule": recurrence_rule,
 			"period_start_date": period_start,
 			"period_end_date": period_end,

@@ -17,7 +17,8 @@
         "amount_vat",
         "amount_gross",
         "monthly_amount_net",
-        "notes"
+        "notes",
+        "attachment"
     ],
     "fields": [
         {
@@ -101,6 +102,12 @@
             "fieldtype": "Small Text",
             "label": "Notes",
             "description": "Reason for price change, etc."
+        },
+        {
+            "fieldname": "attachment",
+            "fieldtype": "Attach",
+            "label": "Attachment",
+            "description": "Document for this price variation (amendment, addendum, etc.)."
         }
     ],
     "istable": 1,

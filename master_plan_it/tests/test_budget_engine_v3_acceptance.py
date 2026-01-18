@@ -64,22 +64,45 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 			}
 		).insert()
 
+	def _make_contract(
+		self, description: str, vendor_name: str, cost_center: str,
+		amount: float, billing_cycle: str = "Monthly",
+		amount_includes_vat: int = 0, vat_rate: float = 0,
+		status: str = "Active", start_date: str | None = None
+	) -> frappe.Document:
+		"""Create contract with a single term (terms are the source of truth)."""
+		if start_date is None:
+			start_date = f"{self.year_current}-01-01"
+		return frappe.get_doc(
+			{
+				"doctype": "MPIT Contract",
+				"description": description,
+				"vendor": self._ensure_vendor(vendor_name).name,
+				"cost_center": cost_center,
+				"status": status,
+				"start_date": start_date,
+				"terms": [
+					{
+						"from_date": start_date,
+						"amount": amount,
+						"amount_includes_vat": amount_includes_vat,
+						"vat_rate": vat_rate,
+						"billing_cycle": billing_cycle,
+					}
+				],
+			}
+		).insert()
+
 	def test_draft_contract_excluded_from_budget(self):
 		cc = self._ensure_cost_center(f"CC-Draft-{frappe.generate_hash(length=6)}")
 		budget = self._make_live_budget(self.year_current)
-		contract = frappe.get_doc(
-			{
-				"doctype": "MPIT Contract",
-				"description": "Draft Contract",
-				"vendor": self._ensure_vendor("Vendor Draft").name,
-				"cost_center": cc.name,
-				"status": "Draft",
-				"current_amount": 100,
-				"current_amount_includes_vat": 0,
-				"vat_rate": 0,
-				"billing_cycle": "Monthly",
-			}
-		).insert()
+		contract = self._make_contract(
+			description="Draft Contract",
+			vendor_name="Vendor Draft",
+			cost_center=cc.name,
+			amount=100,
+			status="Draft",
+		)
 
 		budget.refresh_from_sources()
 		budget.reload()
@@ -91,19 +114,12 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 	def test_regression_status_removes_budget_lines(self):
 		cc = self._ensure_cost_center(f"CC-Active-{frappe.generate_hash(length=6)}")
 		budget = self._make_live_budget(self.year_current)
-		contract = frappe.get_doc(
-			{
-				"doctype": "MPIT Contract",
-				"description": "Active Contract",
-				"vendor": self._ensure_vendor("Vendor Active").name,
-				"cost_center": cc.name,
-				"status": "Active",
-				"current_amount": 100,
-				"current_amount_includes_vat": 0,
-				"vat_rate": 0,
-				"billing_cycle": "Monthly",
-			}
-		).insert()
+		contract = self._make_contract(
+			description="Active Contract",
+			vendor_name="Vendor Active",
+			cost_center=cc.name,
+			amount=100,
+		)
 
 		budget.refresh_from_sources()
 		budget.reload()
@@ -121,19 +137,13 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 	def test_contract_annual_amount_preserves_total(self):
 		cc = self._ensure_cost_center(f"CC-Annual-{frappe.generate_hash(length=6)}")
 		budget = self._make_live_budget(self.year_current)
-		contract = frappe.get_doc(
-			{
-				"doctype": "MPIT Contract",
-				"description": "Annual Contract",
-				"vendor": self._ensure_vendor("Vendor Annual").name,
-				"cost_center": cc.name,
-				"status": "Active",
-				"current_amount": 1000,
-				"current_amount_includes_vat": 0,
-				"vat_rate": 0,
-				"billing_cycle": "Annual",
-			}
-		).insert()
+		contract = self._make_contract(
+			description="Annual Contract",
+			vendor_name="Vendor Annual",
+			cost_center=cc.name,
+			amount=1000,
+			billing_cycle="Annual",
+		)
 
 		budget.refresh_from_sources()
 		budget.reload()
@@ -147,19 +157,15 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 	def test_contract_annual_amount_with_vat_preserves_net_and_gross(self):
 		cc = self._ensure_cost_center(f"CC-Annual-VAT-{frappe.generate_hash(length=6)}")
 		budget = self._make_live_budget(self.year_current)
-		contract = frappe.get_doc(
-			{
-				"doctype": "MPIT Contract",
-				"description": "Annual Contract VAT",
-				"vendor": self._ensure_vendor("Vendor Annual VAT").name,
-				"cost_center": cc.name,
-				"status": "Active",
-				"current_amount": 1220,
-				"current_amount_includes_vat": 1,
-				"vat_rate": 22,
-				"billing_cycle": "Annual",
-			}
-		).insert()
+		contract = self._make_contract(
+			description="Annual Contract VAT",
+			vendor_name="Vendor Annual VAT",
+			cost_center=cc.name,
+			amount=1220,
+			amount_includes_vat=1,
+			vat_rate=22,
+			billing_cycle="Annual",
+		)
 
 		budget.refresh_from_sources()
 		budget.reload()
@@ -173,19 +179,12 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 	def test_contract_monthly_amounts_are_consistent(self):
 		cc = self._ensure_cost_center(f"CC-Monthly-{frappe.generate_hash(length=6)}")
 		budget = self._make_live_budget(self.year_current)
-		contract = frappe.get_doc(
-			{
-				"doctype": "MPIT Contract",
-				"description": "Monthly Contract",
-				"vendor": self._ensure_vendor("Vendor Monthly").name,
-				"cost_center": cc.name,
-				"status": "Active",
-				"current_amount": 100,
-				"current_amount_includes_vat": 0,
-				"vat_rate": 0,
-				"billing_cycle": "Monthly",
-			}
-		).insert()
+		contract = self._make_contract(
+			description="Monthly Contract",
+			vendor_name="Vendor Monthly",
+			cost_center=cc.name,
+			amount=100,
+		)
 
 		budget.refresh_from_sources()
 		budget.reload()
@@ -196,19 +195,13 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 	def test_contract_quarterly_amounts_are_consistent(self):
 		cc = self._ensure_cost_center(f"CC-Quarterly-{frappe.generate_hash(length=6)}")
 		budget = self._make_live_budget(self.year_current)
-		contract = frappe.get_doc(
-			{
-				"doctype": "MPIT Contract",
-				"description": "Quarterly Contract",
-				"vendor": self._ensure_vendor("Vendor Quarterly").name,
-				"cost_center": cc.name,
-				"status": "Active",
-				"current_amount": 300,
-				"current_amount_includes_vat": 0,
-				"vat_rate": 0,
-				"billing_cycle": "Quarterly",
-			}
-		).insert()
+		contract = self._make_contract(
+			description="Quarterly Contract",
+			vendor_name="Vendor Quarterly",
+			cost_center=cc.name,
+			amount=300,
+			billing_cycle="Quarterly",
+		)
 
 		budget.refresh_from_sources()
 		budget.reload()

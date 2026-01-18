@@ -98,21 +98,36 @@ class TestMPITBudget(FrappeTestCase):
 	def _create_test_contract(self, **kwargs) -> str:
 		"""
 		Create MPIT Contract for testing. Auto-generates unique name.
-		
+
+		Terms are the single source of truth for pricing. Use billing_cycle and
+		amount kwargs to set the first term's values.
+
 		Returns: Contract name
 		"""
+		# Extract term-specific kwargs
+		billing_cycle = kwargs.pop("billing_cycle", "Monthly")
+		amount = kwargs.pop("amount", kwargs.pop("current_amount", 1000))
+		amount_includes_vat = kwargs.pop("amount_includes_vat", kwargs.pop("current_amount_includes_vat", 0))
+		vat_rate = kwargs.pop("vat_rate", 22)
+		start_date = kwargs.get("start_date", f"{self.test_year}-01-01")
+
 		defaults = {
 			"doctype": "MPIT Contract",
 			"description": f"Test Contract {self._test_uuid}",
 			"vendor": self.test_vendor,
 			"cost_center": self.test_cost_center,
 			"status": "Active",
-			"start_date": f"{self.test_year}-01-01",
+			"start_date": start_date,
 			"end_date": f"{self.test_year}-12-31",
-			"billing_cycle": "Monthly",
-			"current_amount": 1000,
-			"current_amount_includes_vat": 0,
-			"vat_rate": 22,
+			"terms": [
+				{
+					"from_date": start_date,
+					"amount": amount,
+					"amount_includes_vat": amount_includes_vat,
+					"vat_rate": vat_rate,
+					"billing_cycle": billing_cycle,
+				}
+			],
 		}
 		defaults.update(kwargs)
 		doc = frappe.get_doc(defaults)
@@ -120,7 +135,7 @@ class TestMPITBudget(FrappeTestCase):
 			doc.insert()
 		except frappe.DuplicateEntryError:
 			# Contract already exists from previous test run, reuse it
-			existing = frappe.get_all("MPIT Contract", 
+			existing = frappe.get_all("MPIT Contract",
 				filters={"description": defaults["description"]}, limit=1, pluck="name")
 			if existing:
 				return existing[0]
@@ -579,76 +594,75 @@ class TestMPITBudget(FrappeTestCase):
 	def test_contract_monthly_billing(self):
 		"""
 		Test: Monthly billing uses amount directly as monthly_amount.
-		
-		Failure indicates: _generate_contract_flat_lines() billing logic.
+
+		Failure indicates: _generate_contract_term_lines() billing logic.
 		"""
-		contract_name = self._create_test_contract(billing_cycle="Monthly", current_amount=1200)
+		contract_name = self._create_test_contract(billing_cycle="Monthly", amount=1200)
 		contract = frappe.get_doc("MPIT Contract", contract_name)
 		budget = self._create_live_budget()
 		budget.refresh_from_sources(is_manual=1)
 		budget.reload()
-		
-		contract_lines = [l for l in budget.lines if l.source_key == f"CONTRACT::{contract.name}"]
+
+		# source_key now includes TERM:: suffix
+		contract_lines = [l for l in budget.lines if f"CONTRACT::{contract.name}" in (l.source_key or "")]
 		self.assertEqual(len(contract_lines), 1)
 		self.assertEqual(contract_lines[0].monthly_amount, flt(1200, 6))
 
 	def test_contract_quarterly_billing(self):
 		"""
 		Test: Quarterly billing converts to monthly: amount * 4 / 12.
-		
-		Failure indicates: _generate_contract_flat_lines() quarterly logic.
+
+		Failure indicates: _generate_contract_term_lines() quarterly logic.
 		"""
-		contract_name = self._create_test_contract(billing_cycle="Quarterly", current_amount=300)
+		contract_name = self._create_test_contract(billing_cycle="Quarterly", amount=300)
 		contract = frappe.get_doc("MPIT Contract", contract_name)
 		budget = self._create_live_budget()
 		budget.refresh_from_sources(is_manual=1)
 		budget.reload()
-		
+
 		# 300 * 4 / 12 = 100
-		contract_lines = [l for l in budget.lines if l.source_key == f"CONTRACT::{contract.name}"]
+		contract_lines = [l for l in budget.lines if f"CONTRACT::{contract.name}" in (l.source_key or "")]
 		self.assertEqual(len(contract_lines), 1)
 		self.assertEqual(contract_lines[0].monthly_amount, flt(100, 6))
 
 	def test_contract_annual_billing(self):
 		"""
 		Test: Annual billing converts to monthly: amount / 12.
-		
-		Failure indicates: _generate_contract_flat_lines() annual logic.
+
+		Failure indicates: _generate_contract_term_lines() annual logic.
 		"""
-		contract_name = self._create_test_contract(billing_cycle="Annual", current_amount=1200)
+		contract_name = self._create_test_contract(billing_cycle="Annual", amount=1200)
 		contract = frappe.get_doc("MPIT Contract", contract_name)
 		budget = self._create_live_budget()
 		budget.refresh_from_sources(is_manual=1)
 		budget.reload()
-		
+
 		# 1200 / 12 = 100
-		contract_lines = [l for l in budget.lines if l.source_key == f"CONTRACT::{contract.name}"]
+		contract_lines = [l for l in budget.lines if f"CONTRACT::{contract.name}" in (l.source_key or "")]
 		self.assertEqual(len(contract_lines), 1)
 		self.assertEqual(contract_lines[0].monthly_amount, flt(100, 6))
 
-	def test_contract_with_future_term_fallback(self):
+	def test_contract_with_multi_year_terms(self):
 		"""
-		Test: Contract with Terms that don't overlap budget year falls back to current_amount.
-		
-		Failure indicates: _generate_contract_lines() Terms fallback issue.
-		
+		Test: Contract with terms spanning multiple years generates correct budget lines.
+
 		Scenario:
-		- Contract start_date in test_year
-		- Term from_date in next year (doesn't overlap)
-		- Expected: uses current_amount, not 0
+		- Contract start_date in test_year with term covering test_year
+		- Second term starts next year
+		- Budget for test_year should use first term only
 		"""
 		next_year = str(int(self.test_year) + 1)
 		contract_name = self._create_test_contract(
 			billing_cycle="Monthly",
-			current_amount=500,
+			amount=500,
 			start_date=f"{self.test_year}-01-01",
 			end_date=None
 		)
-		
-		# Create the next year for the Term
+
+		# Create the next year for the second Term
 		self._create_test_year(int(next_year))
-		
-		# Add a Term that starts next year (doesn't overlap current test_year)
+
+		# Add a second Term that starts next year
 		frappe.get_doc({
 			"doctype": "MPIT Contract Term",
 			"parent": contract_name,
@@ -660,17 +674,17 @@ class TestMPITBudget(FrappeTestCase):
 			"vat_rate": 22,
 			"billing_cycle": "Monthly"
 		}).insert()
-		
+
 		budget = self._create_live_budget()
 		budget.refresh_from_sources(is_manual=1)
 		budget.reload()
-		
-		# Should have 1 line using current_amount (500), not 0 and not Term amount (800)
+
+		# Should have 1 line using first term (500) for test_year
 		contract_lines = [l for l in budget.lines if f"CONTRACT::{contract_name}" in (l.source_key or "")]
-		self.assertGreaterEqual(len(contract_lines), 1,
-			"Contract with future Term should generate line via fallback to current_amount")
+		self.assertEqual(len(contract_lines), 1,
+			"Contract should generate one line for the term covering test_year")
 		self.assertEqual(contract_lines[0].monthly_amount, flt(500, 6),
-			"Should use current_amount (500), not Term amount (800)")
+			"Should use first term amount (500), not second term amount (800)")
 
 
 	# ═══════════════════════════════════════════════════════════════════════════

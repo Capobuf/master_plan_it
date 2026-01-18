@@ -22,19 +22,20 @@
     "end_date",
     "auto_renew",
     "next_renewal_date",
-    "tb_billing",
-    "section_pricing",
-    "current_amount",
-    "current_amount_includes_vat",
-    "vat_rate",
-    "billing_cycle",
-    "cb_pricing_right",
-    "monthly_amount_net",
-    "current_amount_net",
-    "current_amount_vat",
-    "current_amount_gross",
+    "section_current_term",
+    "current_term_amount",
+    "current_term_billing_cycle",
+    "cb_current_term",
+    "current_term_monthly_net",
+    "current_term_from_date",
     "section_terms",
     "terms",
+    "section_summary",
+    "annual_amount_current_year",
+    "current_year_label",
+    "cb_summary",
+    "annual_amount_next_year",
+    "next_year_label",
     "planned_item",
     "tb_notes",
     "notes",
@@ -152,98 +153,96 @@
       "in_preview": 1
     },
     {
-      "fieldname": "tb_billing",
+      "fieldname": "section_current_term",
       "fieldtype": "Section Break",
-      "label": "Billing"
+      "label": "Current Term",
+      "description": "The pricing term currently in effect based on today's date."
     },
     {
-      "fieldname": "section_pricing",
-      "fieldtype": "Section Break",
-      "label": "Pricing",
-      "description": "Recurring amount and billing cycle."
-    },
-    {
-      "fieldname": "current_amount",
+      "fieldname": "current_term_amount",
       "fieldtype": "Currency",
-      "description": "Current amount for the chosen cycle (net or gross per VAT flag).",
-      "label": "Current Amount",
-      "in_list_view": 1,
-      "allow_in_quick_entry": 1,
-      "in_preview": 1
+      "label": "Amount",
+      "read_only": 1,
+      "description": "Amount per billing cycle from the active term.",
+      "depends_on": "eval:doc.terms && doc.terms.length > 0"
     },
     {
-      "default": "0",
-      "fieldname": "current_amount_includes_vat",
-      "fieldtype": "Check",
-      "description": "If enabled, amount includes VAT (net/calcs adjusted automatically).",
-      "label": "Current Amount Includes VAT"
-    },
-    {
-      "fieldname": "vat_rate",
-      "fieldtype": "Percent",
-      "description": "VAT Rate applied to current amount (uses user default if empty).",
-      "label": "VAT Rate",
-      "depends_on": "eval:doc.current_amount_includes_vat || doc.current_amount",
-      "precision": "2"
-    },
-    {
-      "fieldname": "billing_cycle",
-      "fieldtype": "Select",
-      "description": "Billing cycle for the current amount.",
+      "fieldname": "current_term_billing_cycle",
+      "fieldtype": "Data",
       "label": "Billing Cycle",
-      "options": "Monthly\nQuarterly\nAnnual\nOther",
-      "in_list_view": 1,
-      "allow_in_quick_entry": 1
+      "read_only": 1,
+      "depends_on": "eval:doc.terms && doc.terms.length > 0"
     },
     {
-      "fieldname": "cb_pricing_right",
+      "fieldname": "cb_current_term",
       "fieldtype": "Column Break"
     },
     {
-      "fieldname": "monthly_amount_net",
+      "fieldname": "current_term_monthly_net",
       "fieldtype": "Currency",
-      "description": "Monthly (Net) equivalent calculated based on amount/cycle or spread. Empty if using rate schedule.",
-      "label": "Monthly Amount (Net)",
+      "label": "Monthly (Net)",
       "read_only": 1,
-      "depends_on": "eval:doc.current_amount"
+      "description": "Monthly equivalent net amount from the active term.",
+      "depends_on": "eval:doc.terms && doc.terms.length > 0"
     },
     {
-      "fieldname": "current_amount_net",
-      "fieldtype": "Currency",
-      "description": "Auto-calculated (Net).",
-      "label": "Net Amount",
+      "fieldname": "current_term_from_date",
+      "fieldtype": "Date",
+      "label": "Valid From",
       "read_only": 1,
-      "depends_on": "eval:doc.current_amount"
-    },
-    {
-      "fieldname": "current_amount_vat",
-      "fieldtype": "Currency",
-      "description": "Auto-calculated VAT.",
-      "label": "VAT Amount",
-      "read_only": 1,
-      "depends_on": "eval:doc.current_amount"
-    },
-    {
-      "fieldname": "current_amount_gross",
-      "fieldtype": "Currency",
-      "description": "Auto-calculated Gross.",
-      "label": "Gross Amount",
-      "read_only": 1,
-      "depends_on": "eval:doc.current_amount"
+      "depends_on": "eval:doc.terms && doc.terms.length > 0"
     },
     {
       "fieldname": "section_terms",
       "fieldtype": "Section Break",
       "label": "Pricing Terms",
-      "collapsible": 1,
-      "description": "Add terms for different pricing periods. If empty, the current amount above is used."
+      "description": "At least one term is required. Each term defines pricing for a period."
     },
     {
       "fieldname": "terms",
       "fieldtype": "Table",
       "label": "Terms",
       "options": "MPIT Contract Term",
-      "description": "Add terms to manage price changes over time. Each term has a From Date; the budget engine uses terms if present, otherwise falls back to current_amount."
+      "reqd": 1,
+      "description": "Add terms to manage price changes over time. Each term has a From Date; the system automatically calculates term end dates based on the next term's start."
+    },
+    {
+      "fieldname": "section_summary",
+      "fieldtype": "Section Break",
+      "label": "Annualized Summary",
+      "description": "Computed from terms for current and next fiscal year."
+    },
+    {
+      "fieldname": "annual_amount_current_year",
+      "fieldtype": "Currency",
+      "label": "Annual Amount (Current Year)",
+      "read_only": 1,
+      "depends_on": "eval:doc.terms && doc.terms.length > 0"
+    },
+    {
+      "fieldname": "current_year_label",
+      "fieldtype": "Data",
+      "label": "Year",
+      "read_only": 1,
+      "depends_on": "eval:doc.terms && doc.terms.length > 0"
+    },
+    {
+      "fieldname": "cb_summary",
+      "fieldtype": "Column Break"
+    },
+    {
+      "fieldname": "annual_amount_next_year",
+      "fieldtype": "Currency",
+      "label": "Annual Amount (Next Year)",
+      "read_only": 1,
+      "depends_on": "eval:doc.terms && doc.terms.length > 0"
+    },
+    {
+      "fieldname": "next_year_label",
+      "fieldtype": "Data",
+      "label": "Year",
+      "read_only": 1,
+      "depends_on": "eval:doc.terms && doc.terms.length > 0"
     },
     {
       "fieldname": "tb_notes",
