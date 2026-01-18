@@ -109,7 +109,7 @@ class TestMPITBudget(FrappeTestCase):
 		amount = kwargs.pop("amount", kwargs.pop("current_amount", 1000))
 		amount_includes_vat = kwargs.pop("amount_includes_vat", kwargs.pop("current_amount_includes_vat", 0))
 		vat_rate = kwargs.pop("vat_rate", 22)
-		start_date = kwargs.get("start_date", f"{self.test_year}-01-01")
+		from_date = kwargs.get("start_date", f"{self.test_year}-01-01") # Support legacy kwarg for tests
 
 		defaults = {
 			"doctype": "MPIT Contract",
@@ -117,11 +117,11 @@ class TestMPITBudget(FrappeTestCase):
 			"vendor": self.test_vendor,
 			"cost_center": self.test_cost_center,
 			"status": "Active",
-			"start_date": start_date,
+			# start_date is read-only and derived from terms
 			"end_date": f"{self.test_year}-12-31",
 			"terms": [
 				{
-					"from_date": start_date,
+					"from_date": from_date,
 					"amount": amount,
 					"amount_includes_vat": amount_includes_vat,
 					"vat_rate": vat_rate,
@@ -534,7 +534,8 @@ class TestMPITBudget(FrappeTestCase):
 		budget.refresh_from_sources(is_manual=1)
 		budget.reload()
 		
-		contract_lines = [l for l in budget.lines if l.source_key == f"CONTRACT::{contract_name}"]
+		# source_key includes ::TERM::{term_name}, so use startswith
+		contract_lines = [l for l in budget.lines if (l.source_key or "").startswith(f"CONTRACT::{contract_name}")]
 		self.assertEqual(len(contract_lines), 1,
 			f"Expected 1 contract line, found {len(contract_lines)}")
 

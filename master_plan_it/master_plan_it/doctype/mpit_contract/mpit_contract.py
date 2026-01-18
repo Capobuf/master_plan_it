@@ -118,7 +118,6 @@ class MPITContract(Document):
 		if not getattr(self.flags, "skip_terms_validation", False):
 			self._validate_terms_required()
 			self._validate_terms_no_overlap()
-			self._validate_first_term_date()
 
 		# Compute current term and annual summaries
 		self._compute_current_term()
@@ -167,42 +166,28 @@ class MPITContract(Document):
 					)
 				)
 
-	def _validate_first_term_date(self) -> None:
-		"""Warning if first term from_date does not match contract start_date."""
-		if not self.terms or not self.start_date:
-			return
 
-		first_term = min(
-			[t for t in self.terms if t.from_date],
-			key=lambda t: getdate(t.from_date),
-			default=None
-		)
-
-		if first_term and getdate(first_term.from_date) != getdate(self.start_date):
-			frappe.msgprint(
-				_("Note: First term starts on {0} but contract start date is {1}. Consider aligning them.").format(
-					first_term.from_date, self.start_date
-				),
-				indicator="orange"
-			)
 
 	# ─────────────────────────────────────────────────────────────────────────────
 	# Current Term Computation
 	# ─────────────────────────────────────────────────────────────────────────────
 
 	def _compute_current_term(self) -> None:
-		"""Identify and populate fields for the term currently in effect (based on today's date).
+		"""Identify current term and derive contract dates from it.
 
 		The "current term" is the one where today falls between from_date and the computed end date.
-		If no term covers today (contract not started or already ended), fields are set to None.
+		Both start_date and end_date are derived from this term (single source of truth).
+		If no term covers today, all derived fields are set to None.
 		"""
 		today = date.today()
 
-		# Reset fields
+		# Reset all derived fields
 		self.current_term_amount = None
 		self.current_term_billing_cycle = None
 		self.current_term_monthly_net = None
 		self.current_term_from_date = None
+		self.start_date = None
+		self.end_date = None
 
 		if not self.terms:
 			return
@@ -215,22 +200,19 @@ class MPITContract(Document):
 		if not terms_sorted:
 			return
 
-		# Determine contract end date (fallback to far future if open-ended)
-		contract_end = getdate(self.end_date) if self.end_date else date(2099, 12, 31)
-
 		for i, term in enumerate(terms_sorted):
 			term_start = getdate(term.from_date)
 
 			# Determine term end date:
 			# 1. Use explicit to_date if set
 			# 2. Otherwise, day before next term starts
-			# 3. If last term, use contract end date
+			# 3. If last term, open-ended (far future for comparison)
 			if term.to_date:
 				term_end = getdate(term.to_date)
 			elif i + 1 < len(terms_sorted):
 				term_end = add_days(getdate(terms_sorted[i + 1].from_date), -1)
 			else:
-				term_end = contract_end
+				term_end = date(2099, 12, 31)  # Open-ended
 
 			# Check if today falls within this term's range
 			if term_start <= today <= term_end:
@@ -238,7 +220,16 @@ class MPITContract(Document):
 				self.current_term_billing_cycle = term.billing_cycle
 				self.current_term_monthly_net = term.monthly_amount_net
 				self.current_term_from_date = term.from_date
+				# Derive contract dates from current term
+				self.start_date = term.from_date
+				self.end_date = term.to_date  # None if open-ended
 				break
+
+		# Fallback: If no term is currently active (e.g. future or past),
+		# use the first term's dates to provide context (e.g. for Budget Engine planning).
+		if not self.start_date and terms_sorted:
+			self.start_date = terms_sorted[0].from_date
+			self.end_date = terms_sorted[0].to_date
 
 	# ─────────────────────────────────────────────────────────────────────────────
 	# Annual Summary Computation

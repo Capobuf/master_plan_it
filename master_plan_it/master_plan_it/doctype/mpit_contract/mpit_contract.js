@@ -31,18 +31,6 @@ const apply_term_defaults = async (frm, cdt, cdn) => {
 	}
 };
 
-// Suggest from_date from contract start_date for the first term
-const suggest_first_term_date = (frm) => {
-	if (frm.doc.terms?.length === 1 && !frm.doc.terms[0].from_date && frm.doc.start_date) {
-		frappe.model.set_value(
-			frm.doc.terms[0].doctype,
-			frm.doc.terms[0].name,
-			"from_date",
-			frm.doc.start_date
-		);
-	}
-};
-
 frappe.ui.form.on("MPIT Contract", {
 	async refresh(frm) {
 		await maybe_autofill_next_renewal_date(frm);
@@ -53,14 +41,10 @@ frappe.ui.form.on("MPIT Contract", {
 	async end_date(frm) {
 		await maybe_autofill_next_renewal_date(frm);
 	},
-	start_date(frm) {
-		suggest_first_term_date(frm);
-	},
 });
 
 frappe.ui.form.on("MPIT Contract Term", {
 	async terms_add(frm, cdt, cdn) {
 		await apply_term_defaults(frm, cdt, cdn);
-		suggest_first_term_date(frm);
 	},
 });
