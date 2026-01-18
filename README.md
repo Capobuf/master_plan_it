@@ -5,20 +5,51 @@ Frappe Desk app (v15) for budgeting, contracts, and projects. Native file-first 
 ## Quick Start
 
 ```bash
-# Install on existing Frappe bench
-bench get-app https://github.com/Capobuf/master_plan_it.git
+# Install on existing Frappe bench (from main branch)
+bench get-app https://github.com/Capobuf/master-plan-it.git
 bench --site <your-site> install-app master_plan_it
 bench --site <your-site> migrate
+
+# Or install from a specific branch (e.g., develop)
+bench get-app --branch develop https://github.com/Capobuf/master-plan-it.git
 
 # Enable scheduler (required for background jobs)
 bench --site <your-site> enable-scheduler
 ```
 
-> **Note:** The repository name (`Master-Plan-IT`) differs from the Python package name (`master_plan_it`). 
+> **Note:** The repository name (`master-plan-it`) differs from the Python package name (`master_plan_it`). 
 > If `bench get-app` fails to install the Python package automatically, run:
 > ```bash
 > pip install -e /path/to/frappe-bench/apps/master_plan_it
 > ```
+
+## Updating Existing Sites (Docker)
+
+Enter the container and navigate to bench directory:
+
+```bash
+docker exec -it -u 1000:1000 mpit-backend bash
+cd /home/frappe/frappe-bench
+```
+
+Update the app:
+
+```bash
+# Update from main branch (default)
+bench switch-to-branch main master_plan_it
+bench update --apps master_plan_it
+
+# Update from develop branch
+bench switch-to-branch develop master_plan_it
+bench update --apps master_plan_it
+```
+
+> **Note:** If `bench update` fails with a git error, ensure the remote is set correctly:
+> ```bash
+> bench remote-set-url master_plan_it https://github.com/Capobuf/master-plan-it.git
+> ```
+
+---
 
 ## Site Management
 
