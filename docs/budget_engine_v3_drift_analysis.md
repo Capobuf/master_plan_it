@@ -11,7 +11,7 @@ Il product owner ha confermato che tutti i gap identificati sono reali e vanno r
 
 | # | Gap | Priorità | Stato |
 |---|-----|:--------:|:-----:|
-| 1 | Contract Terms child table | **ALTA** | Da implementare |
+| 1 | Contract Terms child table | **ALTA** | ✅ COMPLETATO |
 | 2 | Planned Item VAT fields | **ALTA** | Da aggiungere |
 | 3 | Project → Planned Items inline | **MEDIA** | Da implementare |
 | 4 | Project totals da Planned Items | **MEDIA** | Da implementare |
@@ -27,53 +27,30 @@ Il product owner ha confermato che tutti i gap identificati sono reali e vanno r
 > 
 > "Un cambio prezzo = nuovo Termine con nuova `from_date`"
 
-### 2.2 Codice Attuale
+### 2.2 Stato Attuale — IMPLEMENTATO ✅
 
-**File: `mpit_budget.py` L203-236**
-```python
-def _generate_contract_flat_lines(self, contract, year_start, year_end):
-    # v3: no spread/rate schedule; use flat amount with billing_cycle
-    base_amount = flt(contract.current_amount or 0, 6)  # ← UN SOLO PREZZO
-    monthly_amount = flt(base_amount, 6)
-    ...
-```
+**DocType**: `MPIT Contract Term` (child table) creato 2026-01-05
 
-**Analisi:**
-- ❌ Nessuna child table `MPIT Contract Term`
-- ❌ Nessuna logica per iterare sui termini
-- ❌ Nessun supporto per `from_date` diverso da `start_date` del contratto
-- ❌ Un solo `source_key` per contratto (non per termine)
+**Schema implementato**:
+- `from_date` (Date, reqd) - Inizio validità termine
+- `to_date` (Date) - Fine validità (auto-calcolato se vuoto: +1 anno -1 giorno, oppure giorno prima del prossimo termine)
+- `amount` (Currency, reqd) - Importo per ciclo billing
+- `amount_includes_vat` (Check) - Flag IVA inclusa
+- `vat_rate` (Percent) - Aliquota IVA
+- `billing_cycle` (Select) - Monthly/Quarterly/Annual/Other
+- Campi computed: `amount_net`, `amount_vat`, `amount_gross`, `monthly_amount_net`
+- `notes` (Small Text) - Motivo cambio prezzo
+- `attachment` (Attach) - Documento variazione
 
-### 2.3 Cosa va implementato
+**Budget Engine**: `_generate_contract_term_lines()` in mpit_budget.py L232-275
+- Itera su tutti i termini del contratto
+- Calcola overlap con anno fiscale per ogni termine
+- Genera `source_key = "CONTRACT::{contract.name}::TERM::{term.name}"`
 
-**1. Nuovo DocType: `MPIT Contract Term` (child table)**
-
-| Campo | Tipo | Note |
-|-------|------|------|
-| `from_date` | Date, reqd | Inizio validità termine |
-| `to_date` | Date | Fine validità (optional, usa next term.from_date - 1) |
-| `amount` | Currency, reqd | Importo per il ciclo |
-| `amount_includes_vat` | Check | Come altri DocTypes |
-| `vat_rate` | Percent | |
-| `billing_cycle` | Select | Monthly/Quarterly/Annual/Other |
-| `notes` | Text | Motivo cambio prezzo |
-
-**2. Modifica `_generate_contract_lines`**
-
-```python
-def _generate_contract_lines(self, year_start, year_end):
-    for contract in contracts:
-        terms = frappe.get_all("MPIT Contract Term", 
-            filters={"parent": contract.name},
-            order_by="from_date asc"
-        )
-        for term in terms:
-            # Per ogni termine, calcola overlap con anno
-            term_start = term.from_date
-            term_end = term.to_date or next_term.from_date - 1 or contract.end_date
-            # Genera budget line con source_key per termine
-            source_key = f"CONTRACT::{contract.name}::TERM::{term.name}"
-```
+**Auto-calcolo to_date**: `_auto_compute_term_end_dates()` in mpit_contract.py
+- Termini non ultimi: `to_date = next.from_date - 1 giorno`
+- Ultimo termine: `to_date = from_date + 1 anno - 1 giorno` (se vuoto)
+- Client-side JS con `frappe.confirm()` per sovrascrittura manuale
 
 ---
 
@@ -289,14 +266,14 @@ def _compute_project_totals(self) -> None:
 
 ### 7.1 Fase 1: Schema (Priorità Alta)
 
-1. **Creare DocType `MPIT Contract Term`** (child table)
+1. ~~**Creare DocType `MPIT Contract Term`** (child table)~~ ✅ COMPLETATO
 2. **Aggiungere campi VAT** a `MPIT Planned Item`
 3. **Creare `mpit_planned_item.js`**
 4. **Fix description obsoleta** in `mpit_project.json`
 
 ### 7.2 Fase 2: Budget Engine (Priorità Alta)
 
-5. **Refactor `_generate_contract_lines`** per usare Terms
+5. ~~**Refactor `_generate_contract_lines`** per usare Terms~~ ✅ COMPLETATO
 6. **Aggiornare `_generate_planned_item_lines`** per usare `amount_net`
 
 ### 7.3 Fase 3: UX Progetto (Priorità Media)
@@ -316,8 +293,8 @@ def _compute_project_totals(self) -> None:
 
 | Sezione Doc | Contenuto | Stato Implementazione |
 |-------------|-----------|:---------------------:|
-| §4.5 Contract Termini | Child table per cambi prezzo | ❌ |
-| §6.1 Contratti | Un cambio prezzo = nuovo Termine | ❌ |
+| §4.5 Contract Termini | Child table per cambi prezzo | ✅ |
+| §6.1 Contratti | Un cambio prezzo = nuovo Termine | ✅ |
 | §6.2.1 Stato iniziale | Voce generica stimata | ⚠️ Parziale |
 | §6.2.2 Dettaglio Quote | Collegare Quote a Planned Items | ❌ Quote rimosso |
 | §6.2.3 Esecuzione | Conferma spend_date, genera Actual | ✅ |

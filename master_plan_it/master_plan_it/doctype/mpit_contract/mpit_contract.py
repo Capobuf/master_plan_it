@@ -11,7 +11,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname
-from frappe.utils import add_days, flt, getdate
+from frappe.utils import add_days, add_years, flt, getdate
 
 from master_plan_it.master_plan_it.doctype.mpit_planned_item import mpit_planned_item
 from master_plan_it import mpit_defaults
@@ -114,6 +114,10 @@ class MPITContract(Document):
 		for term in self.terms:
 			term.validate()
 
+		# Auto-compute term end dates before validation (unless skipped for migration)
+		if not getattr(self.flags, "skip_terms_auto_compute", False):
+			self._auto_compute_term_end_dates()
+
 		# Terms validation (skip during migration patch)
 		if not getattr(self.flags, "skip_terms_validation", False):
 			self._validate_terms_required()
@@ -127,6 +131,55 @@ class MPITContract(Document):
 		self._default_next_renewal_date()
 		self._normalize_status()
 		self._sync_planned_item_coverage(prev)
+
+	# ─────────────────────────────────────────────────────────────────────────────
+	# Terms Auto-Computation
+	# ─────────────────────────────────────────────────────────────────────────────
+
+	def _auto_compute_term_end_dates(self) -> None:
+		"""
+		Auto-compute to_date for contract terms based on next term's from_date.
+
+		This ensures term periods are visually explicit in the UI while maintaining
+		the existing budget engine logic that already handles implicit term boundaries.
+
+		Rules:
+		1. If a term is followed by another term, set to_date = next.from_date - 1 day
+		   (only if to_date is currently empty)
+		2. If a term is the last one and has no to_date, set to_date = from_date + 1 year - 1 day
+		   (default annual contract assumption)
+		3. Never overwrite an explicitly set to_date (user may have intentional gaps or overlaps
+		   to be caught by validation)
+
+		The JS client-side handles prompting the user for confirmation when to_date was
+		manually set and would need to change due to a new term being added.
+		"""
+		if not self.terms:
+			return
+
+		# Sort terms by from_date, filtering out any without a from_date
+		terms_with_dates = [t for t in self.terms if t.from_date]
+		if not terms_with_dates:
+			return
+
+		terms_sorted = sorted(terms_with_dates, key=lambda t: getdate(t.from_date))
+
+		for i, term in enumerate(terms_sorted):
+			is_last_term = (i + 1 >= len(terms_sorted))
+
+			if not is_last_term:
+				# Not the last term: to_date should be day before next term starts
+				next_from = getdate(terms_sorted[i + 1].from_date)
+				computed_end = add_days(next_from, -1)
+
+				# Only auto-set if to_date is empty (respect manual entries)
+				if not term.to_date:
+					term.to_date = computed_end
+			else:
+				# Last term: if to_date is empty, default to +1 year - 1 day
+				# This assumes annual contract terms as the default duration
+				if not term.to_date:
+					term.to_date = add_days(add_years(getdate(term.from_date), 1), -1)
 
 	# ─────────────────────────────────────────────────────────────────────────────
 	# Terms Validation
