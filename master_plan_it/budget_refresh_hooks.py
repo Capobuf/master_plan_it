@@ -27,6 +27,21 @@ def _extract_years_from_dates(start_date, end_date) -> list[str]:
     return list(years)
 
 
+def _extract_years_from_contract(doc) -> list[str]:
+    """Extract ALL years covered by contract terms.
+
+    Terms are the single source of truth for pricing and dates.
+    Contracts must have at least one term (validated by mpit_contract.py).
+    """
+    years = set()
+    for term in (doc.terms or []):
+        if term.from_date:
+            years.add(str(getdate(term.from_date).year))
+        if term.to_date:
+            years.add(str(getdate(term.to_date).year))
+    return list(years)
+
+
 def _trigger_refresh(years: list[str]) -> None:
     """Enqueue budget refresh for specified years if within horizon."""
     if not years:
@@ -60,7 +75,7 @@ def on_contract_change(doc, method: str) -> None:
 	# Draft: trigger only on regression from a valid status, else skip
 	if doc.status == "Draft":
 		if prev_status in VALID_CONTRACT_STATUSES:
-			years = _extract_years_from_dates(doc.start_date, doc.end_date) or _get_horizon_years()
+			years = _extract_years_from_contract(doc) or list(_get_horizon_years())
 			_trigger_refresh(years)
 		return
 
@@ -70,10 +85,10 @@ def on_contract_change(doc, method: str) -> None:
 		if not prev_status or prev_status not in VALID_CONTRACT_STATUSES:
 			return
 
-	# Extract years from contract period
-	years = _extract_years_from_dates(doc.start_date, doc.end_date)
+	# Extract years from contract terms (source of truth)
+	years = _extract_years_from_contract(doc)
 
-	# If no dates, use current year as fallback
+	# If no terms with dates, use current year as fallback
 	if not years:
 		horizon = _get_horizon_years()
 		years = list(horizon)

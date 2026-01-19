@@ -230,26 +230,29 @@ class MPITBudget(Document):
 		return lines
 
 	def _generate_contract_term_lines(self, contract, terms: list, year_start: date, year_end: date) -> list[dict]:
-		"""Generate budget lines for each contract term overlapping the year."""
+		"""Generate budget lines for each contract term overlapping the year.
+
+		Terms are the single source of truth for pricing and dates.
+		Each term defines its own period; we only clip to fiscal year bounds.
+		"""
 		lines = []
-		contract_start = _getdate(contract.start_date) if contract.start_date else year_start
-		contract_end = _getdate(contract.end_date) if contract.end_date else year_end
 
 		for i, term in enumerate(terms):
 			term_start = _getdate(term.from_date)
 
-			# Determine term end: use to_date, or next term start - 1, or contract end
+			# Determine term end: use to_date, or next term start - 1, or open-ended (year_end)
 			if term.to_date:
 				term_end = _getdate(term.to_date)
 			elif i + 1 < len(terms):
 				next_start = _getdate(terms[i + 1].from_date)
 				term_end = add_days(next_start, -1)
 			else:
-				term_end = contract_end
+				# Open-ended term: use year_end as upper bound
+				term_end = year_end
 
-			# Clip to year bounds
-			period_start = max(term_start, contract_start, year_start)
-			period_end = min(term_end, contract_end, year_end)
+			# Clip to year bounds only (terms define their own periods)
+			period_start = max(term_start, year_start)
+			period_end = min(term_end, year_end)
 
 			months = annualization.overlap_months(period_start, period_end, year_start, year_end)
 			if months <= 0:
