@@ -115,13 +115,17 @@ class MPITBudget(Document):
 	@frappe.whitelist()
 	def refresh_from_sources(self, is_manual: int = 0, reason: str | None = None) -> None:
 		"""Generate/refresh Live budget lines from contracts/projects (idempotent).
-		
+
 		Args:
 			is_manual: 1 if triggered by user action (allows refresh on closed years)
 			reason: optional reason provided by the user for manual refresh
 		"""
 		if self.budget_type != "Live":
 			frappe.throw(_("Only Live budgets can be refreshed."))
+
+		# Reload to ensure we have the latest document version before modifying
+		# (avoids TimestampMismatchError when called shortly after other modifications)
+		self.reload()
 
 		year_start, year_end = annualization.get_year_bounds(self.year)
 		year_closed = self._is_year_closed(year_end)
@@ -147,8 +151,14 @@ class MPITBudget(Document):
 
 		self._upsert_generated_lines(generated_lines)
 		self.flags.skip_generated_guard = True
-		self.flags.ignore_version = True
-		self.save(ignore_permissions=True, ignore_version=True)
+
+		# Reload again just before save to get absolute latest version
+		# This minimizes the window for concurrent modification errors
+		current_lines = list(self.lines)  # Preserve our computed lines
+		self.reload()
+		self.lines = current_lines  # Restore the lines we just computed
+
+		self.save(ignore_permissions=True)
 		self._add_timeline_comment(_("Budget refreshed from sources."))
 
 	def _within_horizon(self) -> bool:
@@ -288,6 +298,7 @@ class MPITBudget(Document):
 				"description",
 				"amount",
 				"amount_net",
+				"vat_rate",
 				"start_date",
 				"end_date",
 				"spend_date",
@@ -341,8 +352,10 @@ class MPITBudget(Document):
 						"cost_center": project.cost_center,
 						"monthly_amount": monthly_amount,
 						"annual_amount": 0,
+						# amount_net is already NET - don't apply VAT extraction again
 						"amount_includes_vat": 0,
-						"vat_rate": 0,
+						# Use item's VAT rate for gross/VAT calculation
+						"vat_rate": flt(item.vat_rate or 0),
 						"recurrence_rule": "None" if (item.spend_date or item.distribution in ("start", "end")) else "Monthly",
 						"period_start_date": period_start,
 						"period_end_date": period_end,
@@ -411,6 +424,9 @@ class MPITBudget(Document):
 		"""Build payload for a contract budget line.
 
 		VAT info is taken from the term (the single source of truth for pricing).
+		Note: monthly_amount and unit_price are already NET values from the term
+		(term.monthly_amount_net and term.amount_net), so amount_includes_vat
+		must be 0 to avoid double VAT extraction in compute_line_amounts().
 		"""
 		return {
 			"line_kind": "Contract",
@@ -423,7 +439,8 @@ class MPITBudget(Document):
 			"monthly_amount": monthly_amount,
 			"annual_amount": 0,
 			"unit_price": unit_price,
-			"amount_includes_vat": term.amount_includes_vat if term else 0,
+			# Values from term are already NET - don't apply VAT extraction again
+			"amount_includes_vat": 0,
 			"vat_rate": term.vat_rate if term else 0,
 			"recurrence_rule": recurrence_rule,
 			"period_start_date": period_start,

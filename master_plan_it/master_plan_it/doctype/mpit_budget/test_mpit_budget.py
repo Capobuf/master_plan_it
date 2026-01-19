@@ -190,11 +190,23 @@ class TestMPITBudget(FrappeTestCase):
 
 	def _create_live_budget(self) -> "frappe.Document":
 		"""
-		Create a Live budget for testing.
-		
+		Create or get a Live budget for testing.
+
+		Returns existing Live budget if one already exists for test_year,
+		otherwise creates a new one.
+
 		NOTE: FrappeTestCase auto-rollback handles cleanup.
 		No force delete needed.
 		"""
+		existing = frappe.db.get_value(
+			"MPIT Budget",
+			{"year": self.test_year, "budget_type": "Live"},
+			"name"
+		)
+		if existing:
+			doc = frappe.get_doc("MPIT Budget", existing)
+			doc.reload()
+			return doc
 		doc = frappe.get_doc({
 			"doctype": "MPIT Budget",
 			"year": self.test_year,

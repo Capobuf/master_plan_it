@@ -54,7 +54,10 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 	def _make_live_budget(self, year: str) -> frappe.Document:
 		name = frappe.db.get_value("MPIT Budget", {"year": year, "budget_type": "Live"}, "name")
 		if name:
-			return frappe.get_doc("MPIT Budget", name)
+			doc = frappe.get_doc("MPIT Budget", name)
+			# Reload to get latest version (avoid TimestampMismatchError from bg jobs)
+			doc.reload()
+			return doc
 		return frappe.get_doc(
 			{
 				"doctype": "MPIT Budget",
@@ -257,10 +260,11 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 			{
 				"doctype": "MPIT Project",
 				"title": "Planned Dist All",
-				"operational_status": "In Progress",
 				"cost_center": self.cost_center.name,
 			}
 		).insert()
+		# Bypass workflow to set Approved state directly (test only)
+		frappe.db.set_value("MPIT Project", project.name, "workflow_state", "Approved")
 		item = frappe.get_doc(
 			{
 				"doctype": "MPIT Planned Item",
@@ -289,10 +293,11 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 			{
 				"doctype": "MPIT Project",
 				"title": "Planned Dist Start",
-				"operational_status": "In Progress",
 				"cost_center": self.cost_center.name,
 			}
 		).insert()
+		# Bypass workflow to set Approved state directly (test only)
+		frappe.db.set_value("MPIT Project", project.name, "workflow_state", "Approved")
 		item = frappe.get_doc(
 			{
 				"doctype": "MPIT Planned Item",
@@ -321,10 +326,11 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 			{
 				"doctype": "MPIT Project",
 				"title": "Planned Spend Date",
-				"operational_status": "In Progress",
 				"cost_center": self.cost_center.name,
 			}
 		).insert()
+		# Bypass workflow to set Approved state directly (test only)
+		frappe.db.set_value("MPIT Project", project.name, "workflow_state", "Approved")
 		item = frappe.get_doc(
 			{
 				"doctype": "MPIT Planned Item",
