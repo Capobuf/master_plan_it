@@ -19,9 +19,9 @@ class MPITProject(Document):
 		"""Generate name: PRJ-{NNNN} based on Settings."""
 		prefix, digits = mpit_defaults.get_project_series()
 		
-		# Generate name: PRJ-0001, PRJ-0002, etc.
-		# getseries returns only the number part, we need to add prefix
-		series_key = f"{prefix}.####"
+		# Build series key dynamically using configured digits.
+		# Must match the key format used by reset_series_on_delete in on_trash.
+		series_key = f"{prefix}.{'#' * digits}"
 		sequence = getseries(series_key, digits)
 		self.name = f"{prefix}{sequence}"
 

@@ -19,7 +19,9 @@ class MPITActualEntry(Document):
 	def autoname(self):
 		"""Generate name using Settings."""
 		prefix, digits = mpit_defaults.get_actual_entry_series()
-		series_key = f"{prefix}.####"
+		# Build series key dynamically using configured digits.
+		# Must match the key format used by reset_series_on_delete in on_trash.
+		series_key = f"{prefix}.{'#' * digits}"
 		seq = getseries(series_key, digits)
 		self.name = f"{prefix}{seq}"
 
@@ -28,7 +30,8 @@ class MPITActualEntry(Document):
 		prefix, digits = mpit_defaults.get_actual_entry_series()
 		if self.name and self.name.startswith(prefix):
 			return
-		series_key = f"{prefix}.####"
+		# Use dynamic digits for consistency with autoname
+		series_key = f"{prefix}.{'#' * digits}"
 		seq = getseries(series_key, digits)
 		self.name = f"{prefix}{seq}"
 

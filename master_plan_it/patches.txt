@@ -2,3 +2,4 @@
 
 [post_model_sync]
 master_plan_it.patches.v1_0.migrate_current_amount_to_terms
+master_plan_it.patches.v1_0.migrate_series_keys
