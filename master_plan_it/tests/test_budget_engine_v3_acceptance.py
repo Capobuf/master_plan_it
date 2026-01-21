@@ -237,7 +237,6 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"amount": 1200,
 				"start_date": f"{year_a}-01-01",
 				"end_date": f"{year_b}-12-31",
-				"distribution": "all",
 				"docstatus": 1,
 				"covered_by_type": "",
 				"covered_by_name": "",
@@ -254,12 +253,12 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		self.assertGreater(len(budget_current.lines), 0, "Current year budget should have planned item lines")
 		self.assertGreater(len(budget_next.lines), 0, "Next year budget should have planned item lines")
 
-	def test_planned_item_distribution_all_splits_evenly(self):
+	def test_planned_item_spreads_evenly(self):
 		budget = self._make_live_budget(self.year_current)
 		project = frappe.get_doc(
 			{
 				"doctype": "MPIT Project",
-				"title": "Planned Dist All",
+				"title": "Planned Spread",
 				"cost_center": self.cost_center.name,
 			}
 		).insert()
@@ -269,11 +268,10 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 			{
 				"doctype": "MPIT Planned Item",
 				"project": project.name,
-				"description": "Dist all",
+				"description": "Spread evenly",
 				"amount": 1200,
 				"start_date": f"{self.year_current}-01-01",
 				"end_date": f"{self.year_current}-12-31",
-				"distribution": "all",
 				"docstatus": 1,
 				"is_covered": 0,
 				"covered_by_type": "",
@@ -287,12 +285,12 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		self.assertAlmostEqual(float(line.monthly_amount), 100.0, places=2)
 		self.assertAlmostEqual(float(line.annual_net), 1200.0, places=2)
 
-	def test_planned_item_distribution_start_single_month(self):
+	def test_planned_item_spend_date_first_month(self):
 		budget = self._make_live_budget(self.year_current)
 		project = frappe.get_doc(
 			{
 				"doctype": "MPIT Project",
-				"title": "Planned Dist Start",
+				"title": "Planned Spend First",
 				"cost_center": self.cost_center.name,
 			}
 		).insert()
@@ -302,17 +300,17 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 			{
 				"doctype": "MPIT Planned Item",
 				"project": project.name,
-				"description": "Dist start",
+				"description": "Spend first month",
 				"amount": 1200,
-				"start_date": f"{self.year_current}-01-01",
-				"end_date": f"{self.year_current}-12-31",
-				"distribution": "start",
+				"spend_date": f"{self.year_current}-01-15",
 				"docstatus": 1,
 				"is_covered": 0,
 				"covered_by_type": "",
 				"covered_by_name": "",
 			}
-		).insert()
+		)
+		item.flags.ignore_validate = True
+		item.insert()
 
 		budget.refresh_from_sources()
 		budget.reload()
@@ -472,7 +470,6 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"amount": 500,
 				"start_date": f"{self.year_current}-01-01",
 				"end_date": f"{self.year_current}-12-31",
-				"distribution": "all",
 				"docstatus": 0,
 			}
 		)

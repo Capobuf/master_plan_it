@@ -1,6 +1,6 @@
 """
-FILE: master_plan_it/report/mpit_monthly_plan_v3/mpit_monthly_plan_v3.py
-SCOPO: Report v3 mensile che rispetta spend_date e distribution (all/start/end) per Planned Items.
+FILE: master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py
+SCOPO: Report mensile che rispetta spend_date per Planned Items.
 INPUT: Filtri (year obbligatorio, cost_center opzionale).
 OUTPUT: Righe aggregate per Cost Center con colonne mensili (gen-dic), totale annuale.
 """
@@ -185,7 +185,6 @@ def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_
 			"start_date",
 			"end_date",
 			"spend_date",
-			"distribution",
 		],
 	)
 
@@ -220,8 +219,6 @@ def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_
 		if amount == 0:
 			continue
 
-		distribution = (item.distribution or "all").lower()
-
 		start = getdate(item.start_date) if item.start_date else year_start
 		end = getdate(item.end_date) if item.end_date else year_end
 
@@ -235,17 +232,7 @@ def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_
 				result[cc][spend.month] += amount
 			continue
 
-		# Case 2: distribution based on period
-		if distribution == "start":
-			if year_start <= start <= year_end:
-				result[cc][start.month] += amount
-			continue
-
-		if distribution == "end":
-			if year_start <= end <= year_end:
-				result[cc][end.month] += amount
-			continue
-
+		# Case 2: spread across period
 		period_start = max(start, year_start)
 		period_end = min(end, year_end)
 

@@ -82,7 +82,6 @@ def run_seed() -> dict:
 			"amount": 1200,
 			"start_date": f"{year}-01-01",
 			"end_date": f"{next_year}-12-31",
-			"distribution": "all",
 			"covered_by_type": "",
 			"covered_by_name": "",
 		}

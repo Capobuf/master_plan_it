@@ -1,7 +1,7 @@
 """
 FILE: master_plan_it/doctype/mpit_planned_item/mpit_planned_item.py
-SCOPO: Gestisce i Planned Items standalone (per progetto) con date/distribuzione, VAT, e flag di copertura deterministico.
-INPUT: Campi documento (project, description, amount, start_date, end_date, spend_date, distribution, covered_by_*, item_type, vendor) in validate/save.
+SCOPO: Gestisce i Planned Items standalone (per progetto) con date, VAT, e flag di copertura deterministico.
+INPUT: Campi documento (project, description, amount, start_date, end_date, spend_date, covered_by_*, item_type, vendor) in validate/save.
 OUTPUT/SIDE EFFECTS: Calcola VAT, sincronizza is_covered da covered_by_*, blocca edit dei campi chiave dopo submit, registra commenti timeline su cambi copertura.
 """
 
@@ -37,7 +37,6 @@ class MPITPlannedItem(Document):
 	def validate(self):
 		self._validate_dates()
 		self._validate_spend_date()
-		self._validate_distribution()
 		self._validate_coverage_fields()
 		self._enforce_submit_immutability()
 
@@ -77,12 +76,6 @@ class MPITPlannedItem(Document):
 		if end < start:
 			frappe.throw(_("End Date cannot be before Start Date."))
 
-	def _validate_distribution(self) -> None:
-		"""Validate distribution field. Only required if spend_date is not set."""
-		if self.spend_date:
-			return  # Distribution is irrelevant when spend_date is set
-		if self.distribution and self.distribution not in {"all", "start", "end"}:
-			frappe.throw(_("Distribution must be one of: all, start, end."))
 
 	def _validate_spend_date(self) -> None:
 		"""Enforce spend_date recency and set horizon flag."""
@@ -172,8 +165,6 @@ class MPITPlannedItem(Document):
 			"description",
 			"start_date",
 			"end_date",
-			"spend_date",
-			"distribution",
 			"item_type",
 			"vendor",
 		]

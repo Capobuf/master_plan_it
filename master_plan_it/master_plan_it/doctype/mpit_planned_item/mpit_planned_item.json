@@ -15,7 +15,6 @@
         "start_date",
         "end_date",
         "spend_date",
-        "distribution",
         "section_amount",
         "amount",
         "amount_includes_vat",
@@ -75,19 +74,10 @@
             "mandatory_depends_on": "eval:!doc.spend_date"
         },
         {
-            "description": "If set, overrides distribution placing the amount in spend_date month.",
+            "description": "If set, allocates the entire amount to this specific month instead of spreading across the period.",
             "fieldname": "spend_date",
             "fieldtype": "Date",
             "label": "Spend Date"
-        },
-        {
-            "default": "all",
-            "description": "How to distribute the amount across the period",
-            "fieldname": "distribution",
-            "fieldtype": "Select",
-            "label": "Distribution",
-            "mandatory_depends_on": "eval:!doc.spend_date",
-            "options": "all\nstart\nend"
         },
         {
             "fieldname": "section_amount",

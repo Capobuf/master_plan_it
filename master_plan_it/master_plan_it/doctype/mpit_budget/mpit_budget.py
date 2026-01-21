@@ -302,7 +302,6 @@ class MPITBudget(Document):
 				"start_date",
 				"end_date",
 				"spend_date",
-				"distribution",
 			],
 		)
 		if not items:
@@ -356,7 +355,7 @@ class MPITBudget(Document):
 						"amount_includes_vat": 0,
 						# Use item's VAT rate for gross/VAT calculation
 						"vat_rate": flt(item.vat_rate or 0),
-						"recurrence_rule": "None" if (item.spend_date or item.distribution in ("start", "end")) else "Monthly",
+						"recurrence_rule": "None" if item.spend_date else "Monthly",
 						"period_start_date": period_start,
 						"period_end_date": period_end,
 						"is_generated": 1,
@@ -366,14 +365,18 @@ class MPITBudget(Document):
 		return lines
 
 	def _planned_item_periods(self, item, year_start: date, year_end: date) -> list[tuple[date, date, float]]:
-		"""Return list of (period_start, period_end, monthly_amount) respecting spend_date/distribution."""
+		"""Return list of (period_start, period_end, monthly_amount) respecting spend_date.
+
+		Logic:
+		- With spend_date: entire amount allocated to that single month
+		- Without spend_date: amount spread evenly across start_date to end_date
+		"""
 		# Prefer amount_net (computed from VAT), fallback to amount for backward compat
 		amount = flt(item.amount_net or item.amount or 0)
 		if amount == 0:
 			return []
 
-		distribution = (item.distribution or "all").lower()
-
+		# Case 1: spend_date = single month allocation
 		if item.spend_date:
 			spend = _getdate(item.spend_date)
 			if spend < year_start or spend > year_end:
@@ -381,8 +384,7 @@ class MPITBudget(Document):
 			month_start, month_end = self._month_bounds(spend)
 			return [(month_start, month_end, amount)]
 
-		# Fallback: use start_date/end_date for distribution
-		# Guard: if dates are missing, cannot generate budget line
+		# Case 2: spread across period (start_date → end_date)
 		if not item.start_date or not item.end_date:
 			return []
 
@@ -396,17 +398,6 @@ class MPITBudget(Document):
 		period_end = min(end, year_end)
 		if period_end < period_start:
 			return []
-
-		if distribution == "start":
-			first_month_start, first_month_end = self._month_bounds(start)
-			if first_month_end < year_start or first_month_start > year_end:
-				return []
-			return [(first_month_start, first_month_end, amount)]
-		if distribution == "end":
-			last_month_start, last_month_end = self._month_bounds(end)
-			if last_month_end < year_start or last_month_start > year_end:
-				return []
-			return [(last_month_start, last_month_end, amount)]
 
 		months_in_year = annualization.overlap_months(period_start, period_end, year_start, year_end)
 		if months_in_year <= 0:

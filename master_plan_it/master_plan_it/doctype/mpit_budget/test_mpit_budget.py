@@ -176,7 +176,6 @@ class TestMPITBudget(FrappeTestCase):
 			"amount": 5000,
 			"start_date": f"{self.test_year}-01-01",
 			"end_date": f"{self.test_year}-12-31",
-			"distribution": "all",
 			"is_covered": 0,
 			"out_of_horizon": 0,
 		}
@@ -704,14 +703,14 @@ class TestMPITBudget(FrappeTestCase):
 	# PLANNED ITEM DISTRIBUTION TESTS (3 tests)
 	# ═══════════════════════════════════════════════════════════════════════════
 
-	def test_planned_item_distribution_all(self):
+	def test_planned_item_spreads_evenly(self):
 		"""
-		Test: Distribution 'all' spreads amount across all months.
+		Test: Without spend_date, amount spreads across all months evenly.
 		
-		Failure indicates: _planned_item_periods() all distribution.
+		Failure indicates: _planned_item_periods() spread logic.
 		"""
 		project_name = self._create_test_project()
-		self._create_test_planned_item(project_name, amount=1200, distribution="all")
+		self._create_test_planned_item(project_name, amount=1200)
 		
 		budget = self._create_live_budget()
 		budget.refresh_from_sources(is_manual=1)
@@ -722,14 +721,18 @@ class TestMPITBudget(FrappeTestCase):
 		# 1200 / 12 months = 100 per month
 		self.assertEqual(planned_lines[0].monthly_amount, flt(100, 6))
 
-	def test_planned_item_distribution_start(self):
+	def test_planned_item_spend_date_first_month(self):
 		"""
-		Test: Distribution 'start' places full amount in first month.
+		Test: With spend_date set to first month, full amount placed in that month.
 		
-		Failure indicates: _planned_item_periods() start distribution.
+		Failure indicates: _planned_item_periods() spend_date logic.
 		"""
 		project_name = self._create_test_project()
-		self._create_test_planned_item(project_name, amount=1200, distribution="start")
+		self._create_test_planned_item(
+			project_name, 
+			amount=1200, 
+			spend_date=f"{self.test_year}-01-15"
+		)
 		
 		budget = self._create_live_budget()
 		budget.refresh_from_sources(is_manual=1)
@@ -739,14 +742,18 @@ class TestMPITBudget(FrappeTestCase):
 		self.assertEqual(len(planned_lines), 1)
 		self.assertEqual(planned_lines[0].monthly_amount, flt(1200, 6))
 
-	def test_planned_item_distribution_end(self):
+	def test_planned_item_spend_date_last_month(self):
 		"""
-		Test: Distribution 'end' places full amount in last month.
+		Test: With spend_date set to last month, full amount placed in that month.
 		
-		Failure indicates: _planned_item_periods() end distribution.
+		Failure indicates: _planned_item_periods() spend_date logic.
 		"""
 		project_name = self._create_test_project()
-		self._create_test_planned_item(project_name, amount=1200, distribution="end")
+		self._create_test_planned_item(
+			project_name, 
+			amount=1200, 
+			spend_date=f"{self.test_year}-12-15"
+		)
 		
 		budget = self._create_live_budget()
 		budget.refresh_from_sources(is_manual=1)
