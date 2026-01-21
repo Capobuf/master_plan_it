@@ -66,13 +66,13 @@
             "fieldtype": "Date",
             "in_list_view": 1,
             "label": "Start Date",
-            "reqd": 1
+            "mandatory_depends_on": "eval:!doc.spend_date"
         },
         {
             "fieldname": "end_date",
             "fieldtype": "Date",
             "label": "End Date",
-            "reqd": 1
+            "mandatory_depends_on": "eval:!doc.spend_date"
         },
         {
             "description": "If set, overrides distribution placing the amount in spend_date month.",
@@ -82,12 +82,12 @@
         },
         {
             "default": "all",
+            "description": "How to distribute the amount across the period",
             "fieldname": "distribution",
             "fieldtype": "Select",
             "label": "Distribution",
-            "options": "all\nstart\nend",
-            "reqd": 1,
-            "description": "How to distribute the amount across the period"
+            "mandatory_depends_on": "eval:!doc.spend_date",
+            "options": "all\nstart\nend"
         },
         {
             "fieldname": "section_amount",
@@ -99,19 +99,22 @@
             "fieldtype": "Currency",
             "in_list_view": 1,
             "label": "Amount",
-            "reqd": 1
+            "reqd": 1,
+            "allow_on_submit": 1
         },
         {
             "default": "0",
             "fieldname": "amount_includes_vat",
             "fieldtype": "Check",
-            "label": "Amount Includes VAT"
+            "label": "Amount Includes VAT",
+            "allow_on_submit": 1
         },
         {
             "fieldname": "vat_rate",
             "fieldtype": "Percent",
             "label": "VAT Rate",
-            "precision": "2"
+            "precision": "2",
+            "allow_on_submit": 1
         },
         {
             "fieldname": "amount_col_break",
@@ -121,19 +124,22 @@
             "fieldname": "amount_net",
             "fieldtype": "Currency",
             "label": "Amount (Net)",
-            "read_only": 1
+            "read_only": 1,
+            "allow_on_submit": 1
         },
         {
             "fieldname": "amount_vat",
             "fieldtype": "Currency",
             "label": "VAT Amount",
-            "read_only": 1
+            "read_only": 1,
+            "allow_on_submit": 1
         },
         {
             "fieldname": "amount_gross",
             "fieldtype": "Currency",
             "label": "Amount (Gross)",
-            "read_only": 1
+            "read_only": 1,
+            "allow_on_submit": 1
         },
         {
             "fieldname": "section_source",

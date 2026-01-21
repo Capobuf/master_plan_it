@@ -31,9 +31,10 @@ class MPITPlannedItem(Document):
 		self.flags._prev_coverage = (prev_is_covered, prev_type, prev_name)
 		self._sync_coverage_flag()
 		self._enforce_horizon_flag()
+		# Compute VAT amounts in before_save to ensure recalculation on submitted docs
+		self._compute_vat_amounts()
 
 	def validate(self):
-		self._compute_vat_amounts()
 		self._validate_dates()
 		self._validate_spend_date()
 		self._validate_distribution()
@@ -47,6 +48,14 @@ class MPITPlannedItem(Document):
 	def on_trash(self):
 		self._update_project_totals()
 
+	def before_update_after_submit(self):
+		"""Recalculate VAT amounts when amount is edited on submitted document."""
+		self._compute_vat_amounts()
+
+	def on_update_after_submit(self):
+		"""Update project totals when amount is edited on submitted document."""
+		self._update_project_totals()
+
 	def _update_project_totals(self) -> None:
 		if not self.project:
 			return
@@ -57,19 +66,26 @@ class MPITPlannedItem(Document):
 			pass
 
 	def _validate_dates(self) -> None:
+		"""Validate date fields. Dates are optional if spend_date is set."""
+		# If spend_date is present, start_date/end_date are not required
+		if self.spend_date:
+			return
 		if not self.start_date or not self.end_date:
-			frappe.throw(_("Start Date and End Date are required."))
+			frappe.throw(_("Start Date and End Date are required when Spend Date is not set."))
 		start = getdate(self.start_date)
 		end = getdate(self.end_date)
 		if end < start:
 			frappe.throw(_("End Date cannot be before Start Date."))
 
 	def _validate_distribution(self) -> None:
-		if self.distribution not in {"all", "start", "end"}:
+		"""Validate distribution field. Only required if spend_date is not set."""
+		if self.spend_date:
+			return  # Distribution is irrelevant when spend_date is set
+		if self.distribution and self.distribution not in {"all", "start", "end"}:
 			frappe.throw(_("Distribution must be one of: all, start, end."))
 
 	def _validate_spend_date(self) -> None:
-		"""Enforce spend_date recency and coherence with horizon and period."""
+		"""Enforce spend_date recency and set horizon flag."""
 		today = getdate(nowdate())
 		horizon_years = {today.year, today.year + 1}
 
@@ -77,23 +93,24 @@ class MPITPlannedItem(Document):
 			spend = getdate(self.spend_date)
 			if spend < today:
 				frappe.throw(_("Spend Date cannot be in the past."))
-			if spend.year not in horizon_years:
-				self.out_of_horizon = 1
-			else:
-				self.out_of_horizon = 0
-			# coherence with period
-			start = getdate(self.start_date)
-			end = getdate(self.end_date)
-			if spend < start or spend > end:
-				frappe.throw(_("Spend Date must fall between Start Date and End Date."))
+			# Set horizon flag based on spend_date year
+			self.out_of_horizon = 0 if spend.year in horizon_years else 1
+			# Note: No longer validating coherence with start_date/end_date
+			# since those fields are now optional when spend_date is present
+			return
+
+		# No spend_date: check horizon based on period (if dates exist)
+		if not self.start_date or not self.end_date:
+			# No dates at all - default to in-horizon (will be validated when dates are set)
+			self.out_of_horizon = 0
+			return
+
+		start = getdate(self.start_date)
+		end = getdate(self.end_date)
+		if start.year not in horizon_years and end.year not in horizon_years:
+			self.out_of_horizon = 1
 		else:
-			# Mark horizon based on period overlap with current/next year
-			start = getdate(self.start_date)
-			end = getdate(self.end_date)
-			if start.year not in horizon_years and end.year not in horizon_years:
-				self.out_of_horizon = 1
-			else:
-				self.out_of_horizon = 0
+			self.out_of_horizon = 0
 
 	def _validate_coverage_fields(self) -> None:
 		if self.covered_by_type and not self.covered_by_name:
@@ -147,12 +164,12 @@ class MPITPlannedItem(Document):
 		if self.docstatus != 1 or self.is_new():
 			return
 
+		# Amount fields (amount, amount_includes_vat, vat_rate) are editable on submit
+		# to allow corrections without creating new document versions (-1, -2).
+		# Changes are tracked via Version log (track_changes: 1).
 		immutable_fields = [
 			"project",
 			"description",
-			"amount",
-			"amount_includes_vat",
-			"vat_rate",
 			"start_date",
 			"end_date",
 			"spend_date",

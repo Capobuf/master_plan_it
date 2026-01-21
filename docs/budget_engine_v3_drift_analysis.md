@@ -12,10 +12,11 @@ Il product owner ha confermato che tutti i gap identificati sono reali e vanno r
 | # | Gap | Priorità | Stato |
 |---|-----|:--------:|:-----:|
 | 1 | Contract Terms child table | **ALTA** | ✅ COMPLETATO |
-| 2 | Planned Item VAT fields | **ALTA** | Da aggiungere |
+| 2 | Planned Item VAT fields | **ALTA** | ✅ COMPLETATO |
 | 3 | Project → Planned Items inline | **MEDIA** | Da implementare |
-| 4 | Project totals da Planned Items | **MEDIA** | Da implementare |
+| 4 | Project totals da Planned Items | **MEDIA** | ✅ COMPLETATO |
 | 5 | Project lifecycle estimation → quotes | **ALTA** | Da progettare |
+| 6 | Amount editable on submitted Planned Item | **MEDIA** | ✅ COMPLETATO |
 
 ---
 
@@ -54,26 +55,15 @@ Il product owner ha confermato che tutti i gap identificati sono reali e vanno r
 
 ---
 
-## 3. Planned Item — Schema Mancante
+## 3. Planned Item — Schema VAT ✅ COMPLETATO
 
 ### 3.1 Decisione Originale
 
 Non specificato esplicitamente, ma coerenza con resto del sistema richiede gestione VAT.
 
-### 3.2 Stato Attuale
+### 3.2 Stato Attuale — IMPLEMENTATO ✅
 
-**File: `mpit_planned_item.json`**
-```json
-{
-    "fieldname": "amount",
-    "fieldtype": "Currency",
-    "label": "Amount",
-    "reqd": 1
-}
-// ← NESSUN campo VAT
-```
-
-### 3.3 Campi da Aggiungere
+**Campi VAT implementati in `mpit_planned_item.json`:**
 
 | Campo | Tipo | Note |
 |-------|------|------|
@@ -83,22 +73,19 @@ Non specificato esplicitamente, ma coerenza con resto del sistema richiede gesti
 | `amount_vat` | Currency, read_only | Calcolato |
 | `amount_gross` | Currency, read_only | Calcolato |
 
-**Logica:** Riutilizzare `master_plan_it.amounts` già usato per Contract e Actual Entry.
+**Caratteristiche:**
+- Logica VAT condivisa con Contract/Actual Entry via `master_plan_it.tax`
+- Defaults applicati via `mpit_planned_item.js` con `apply_defaults_for_planned_item()`
+- Ricalcolo automatico in `_compute_vat_amounts()`
 
-**File JS da creare: `mpit_planned_item.js`**
-```javascript
-frappe.ui.form.on("MPIT Planned Item", {
-    onload(frm) {
-        await master_plan_it.vat.apply_defaults_for_planned_item(frm);
-    },
-    amount(frm) { frm.trigger("calc_vat"); },
-    vat_rate(frm) { frm.trigger("calc_vat"); },
-    amount_includes_vat(frm) { frm.trigger("calc_vat"); },
-    async calc_vat(frm) {
-        // Logica simile a Contract/Actual Entry
-    }
-});
-```
+### 3.3 Amount Editable su Documenti Submitted ✅
+
+I campi `amount`, `amount_includes_vat`, `vat_rate` sono ora editabili anche dopo il submit:
+- `allow_on_submit: 1` nel JSON per tutti i campi amount-related
+- Hook `before_update_after_submit` ricalcola automaticamente i campi VAT
+- Hook `on_update_after_submit` aggiorna i totali del progetto
+- Audit trail via Version log (`track_changes: 1`)
+- Campi immutabili: `project`, `description`, `dates`, `distribution`, `item_type`, `vendor`
 
 ---
 
@@ -267,19 +254,19 @@ def _compute_project_totals(self) -> None:
 ### 7.1 Fase 1: Schema (Priorità Alta)
 
 1. ~~**Creare DocType `MPIT Contract Term`** (child table)~~ ✅ COMPLETATO
-2. **Aggiungere campi VAT** a `MPIT Planned Item`
-3. **Creare `mpit_planned_item.js`**
+2. ~~**Aggiungere campi VAT** a `MPIT Planned Item`~~ ✅ COMPLETATO
+3. ~~**Creare `mpit_planned_item.js`**~~ ✅ COMPLETATO
 4. **Fix description obsoleta** in `mpit_project.json`
 
 ### 7.2 Fase 2: Budget Engine (Priorità Alta)
 
 5. ~~**Refactor `_generate_contract_lines`** per usare Terms~~ ✅ COMPLETATO
-6. **Aggiornare `_generate_planned_item_lines`** per usare `amount_net`
+6. ~~**Aggiornare `_generate_planned_item_lines`** per usare `amount_net`~~ ✅ COMPLETATO
 
 ### 7.3 Fase 3: UX Progetto (Priorità Media)
 
 7. **Aggiungere sezione inline** Planned Items nel form Progetto
-8. **Implementare `_compute_project_totals`** da Planned Items
+8. ~~**Implementare `_compute_project_totals`** da Planned Items~~ ✅ COMPLETATO
 9. **Decidere design** per Stima/Preventivo/Actual
 
 ### 7.4 Fase 4: Migrazione (Se dati esistenti)

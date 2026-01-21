@@ -423,6 +423,23 @@ def _sync_planned_item_coverage(self, prev: Document | None) -> None:
 | `covered_by_name` | Dynamic Link, readonly | Riferimento documento |
 | `out_of_horizon` | Check, readonly | Fuori dall'orizzonte rolling |
 
+**Campi Editabili su Documento Submitted** (`allow_on_submit`):
+
+| Campo | Note |
+|-------|------|
+| `amount` | Importo base (netto o lordo in base a `amount_includes_vat`) |
+| `amount_includes_vat` | Flag se l'importo include IVA |
+| `vat_rate` | Aliquota IVA |
+| `amount_net`, `amount_vat`, `amount_gross` | Ricalcolati automaticamente |
+
+Le modifiche sono tracciate nel Version log (`track_changes: 1`). Quando l'importo viene modificato su un documento submitted:
+- I campi VAT si ricalcolano automaticamente (`before_update_after_submit`)
+- I totali del progetto si aggiornano (`on_update_after_submit`)
+- Il budget refresh viene triggerato via hooks
+
+**Campi Immutabili dopo Submit**:
+`project`, `description`, `start_date`, `end_date`, `spend_date`, `distribution`, `item_type`, `vendor`
+
 **Distribution Options**:
 - `all`: Distribuzione uniforme sui mesi overlap
 - `start`: 100% al primo mese

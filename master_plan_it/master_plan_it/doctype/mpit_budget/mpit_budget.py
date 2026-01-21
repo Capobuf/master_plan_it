@@ -340,7 +340,7 @@ class MPITBudget(Document):
 				continue
 
 			for period_start, period_end, monthly_amount in periods:
-				source_key = f"PLANNED_ITEM::{item.name}::{period_start.isoformat()}"
+				source_key = f"PLANNED_ITEM::{item.name}"
 				lines.append(
 					{
 						"line_kind": "Planned Item",
@@ -380,6 +380,11 @@ class MPITBudget(Document):
 				return []
 			month_start, month_end = self._month_bounds(spend)
 			return [(month_start, month_end, amount)]
+
+		# Fallback: use start_date/end_date for distribution
+		# Guard: if dates are missing, cannot generate budget line
+		if not item.start_date or not item.end_date:
+			return []
 
 		start = _getdate(item.start_date)
 		end = _getdate(item.end_date)
