@@ -2,7 +2,8 @@
 FILE: master_plan_it/doctype/mpit_planned_item/mpit_planned_item.py
 SCOPO: Gestisce i Planned Items standalone (per progetto) con date, VAT, e flag di copertura deterministico.
 INPUT: Campi documento (project, description, amount, start_date, end_date, spend_date, covered_by_*, item_type, vendor) in validate/save.
-OUTPUT/SIDE EFFECTS: Calcola VAT, sincronizza is_covered da covered_by_*, blocca edit dei campi chiave dopo submit, registra commenti timeline su cambi copertura.
+OUTPUT/SIDE EFFECTS: Calcola VAT, sincronizza is_covered da covered_by_*, registra commenti timeline su cambi copertura.
+                     Tutti i campi sono modificabili dopo submit (allow_on_submit), modifiche tracciate in Version log.
 """
 
 from __future__ import annotations
@@ -38,7 +39,6 @@ class MPITPlannedItem(Document):
 		self._validate_dates()
 		self._validate_spend_date()
 		self._validate_coverage_fields()
-		self._enforce_submit_immutability()
 
 	def on_update(self):
 		self._maybe_log_coverage_change()
@@ -52,8 +52,18 @@ class MPITPlannedItem(Document):
 		self._compute_vat_amounts()
 
 	def on_update_after_submit(self):
-		"""Update project totals when amount is edited on submitted document."""
+		"""Update project totals when any field is edited on submitted document."""
 		self._update_project_totals()
+
+		# If project changed, also update OLD project totals
+		if self.has_value_changed("project"):
+			prev = self.get_doc_before_save()
+			if prev and prev.project:
+				try:
+					old_proj = frappe.get_doc("MPIT Project", prev.project)
+					old_proj.save(ignore_permissions=True)
+				except frappe.DoesNotExistError:
+					pass
 
 	def _update_project_totals(self) -> None:
 		if not self.project:
@@ -152,25 +162,6 @@ class MPITPlannedItem(Document):
 		else:
 			msg = _("Uncovered (cleared covered_by)")
 		self.add_comment("Comment", msg)
-
-	def _enforce_submit_immutability(self) -> None:
-		if self.docstatus != 1 or self.is_new():
-			return
-
-		# Amount fields (amount, amount_includes_vat, vat_rate) are editable on submit
-		# to allow corrections without creating new document versions (-1, -2).
-		# Changes are tracked via Version log (track_changes: 1).
-		immutable_fields = [
-			"project",
-			"description",
-			"start_date",
-			"end_date",
-			"item_type",
-			"vendor",
-		]
-		for field in immutable_fields:
-			if self.has_value_changed(field):
-				frappe.throw(_("Submitted Planned Items are read-only (field {0}).").format(field))
 
 	def _enforce_horizon_flag(self) -> None:
 		"""Flag items whose spend_date/period are outside current year + 1."""

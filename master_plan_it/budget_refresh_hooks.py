@@ -102,10 +102,11 @@ def on_contract_change(doc, method: str) -> None:
 
 
 def on_planned_item_change(doc, method: str) -> None:
-	"""Handle Planned Item changes: trigger refresh when submitted items change.
-	
+	"""Handle Planned Item changes: trigger refresh for BOTH old and new years.
+
 	Only submitted (docstatus=1) and not covered items affect budget.
 	on_update also fires for draft edits - skip those.
+	When dates change, both old and new years must be refreshed to avoid stale data.
 	"""
 	prev = doc.get_doc_before_save()
 	coverage_changed = bool(prev) and prev.is_covered != doc.is_covered
@@ -122,14 +123,29 @@ def on_planned_item_change(doc, method: str) -> None:
 	if doc.out_of_horizon:
 		return
 
-	# Extract years from spend_date or period
-	years = []
-	if doc.spend_date:
-		years = [str(getdate(doc.spend_date).year)]
-	else:
-		years = _extract_years_from_dates(doc.start_date, doc.end_date)
+	# Extract years from BOTH old AND new dates
+	years = set()
 
-	_trigger_refresh(years)
+	# NEW dates
+	if doc.spend_date:
+		years.add(str(getdate(doc.spend_date).year))
+	else:
+		if doc.start_date:
+			years.add(str(getdate(doc.start_date).year))
+		if doc.end_date:
+			years.add(str(getdate(doc.end_date).year))
+
+	# OLD dates (to clean up stale budget lines when dates change)
+	if prev:
+		if prev.spend_date:
+			years.add(str(getdate(prev.spend_date).year))
+		else:
+			if prev.start_date:
+				years.add(str(getdate(prev.start_date).year))
+			if prev.end_date:
+				years.add(str(getdate(prev.end_date).year))
+
+	_trigger_refresh(list(years))
 
 
 # ─────────────────────────────────────────────────────────────────────────────

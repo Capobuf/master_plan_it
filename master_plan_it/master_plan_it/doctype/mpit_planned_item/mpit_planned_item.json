@@ -47,14 +47,16 @@
             "in_standard_filter": 1,
             "label": "Project",
             "options": "MPIT Project",
-            "reqd": 1
+            "reqd": 1,
+            "allow_on_submit": 1
         },
         {
             "fieldname": "description",
             "fieldtype": "Text",
             "in_list_view": 1,
             "label": "Description",
-            "reqd": 1
+            "reqd": 1,
+            "allow_on_submit": 1
         },
         {
             "fieldname": "dates_col_break",
@@ -65,19 +67,22 @@
             "fieldtype": "Date",
             "in_list_view": 1,
             "label": "Start Date",
-            "mandatory_depends_on": "eval:!doc.spend_date"
+            "mandatory_depends_on": "eval:!doc.spend_date",
+            "allow_on_submit": 1
         },
         {
             "fieldname": "end_date",
             "fieldtype": "Date",
             "label": "End Date",
-            "mandatory_depends_on": "eval:!doc.spend_date"
+            "mandatory_depends_on": "eval:!doc.spend_date",
+            "allow_on_submit": 1
         },
         {
             "description": "If set, allocates the entire amount to this specific month instead of spreading across the period.",
             "fieldname": "spend_date",
             "fieldtype": "Date",
-            "label": "Spend Date"
+            "label": "Spend Date",
+            "allow_on_submit": 1
         },
         {
             "fieldname": "section_amount",
@@ -143,27 +148,31 @@
             "label": "Type",
             "options": "Estimate\nQuote",
             "reqd": 1,
-            "description": "Estimate = initial approximation. Quote = received vendor quotation."
+            "description": "Estimate = initial approximation. Quote = received vendor quotation.",
+            "allow_on_submit": 1
         },
         {
             "fieldname": "vendor",
             "fieldtype": "Link",
             "label": "Vendor",
             "options": "MPIT Vendor",
-            "depends_on": "eval:doc.item_type=='Quote'"
+            "depends_on": "eval:doc.item_type=='Quote'",
+            "allow_on_submit": 1
         },
         {
             "fieldname": "quote_reference",
             "fieldtype": "Data",
             "label": "Quote Reference",
             "depends_on": "eval:doc.item_type=='Quote'",
-            "description": "Vendor quote number or reference."
+            "description": "Vendor quote number or reference.",
+            "allow_on_submit": 1
         },
         {
             "fieldname": "attachments",
             "fieldtype": "Attach",
             "label": "Attachments",
-            "description": "Attach quote PDFs or supporting documents."
+            "description": "Attach quote PDFs or supporting documents.",
+            "allow_on_submit": 1
         },
         {
             "collapsible": 1,
@@ -212,7 +221,7 @@
     "index_web_pages_for_search": 1,
     "is_submittable": 1,
     "links": [],
-    "modified": "2026-01-05 07:50:00.000000",
+    "modified": "2026-01-22 15:00:00.000000",
     "modified_by": "Administrator",
     "module": "Master Plan IT",
     "name": "MPIT Planned Item",
