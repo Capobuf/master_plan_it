@@ -20,7 +20,7 @@ after_migrate = "master_plan_it.setup.install.after_migrate"
 fixtures = [
     {"dt": "Role", "filters": [["name", "in", ["vCIO Manager", "Client Editor", "Client Viewer"]]]},
     # Workflow components - order matters: Actions and States before Workflows
-    {"dt": "Workflow Action Master", "filters": [["name", "in", ["Propose", "Request Changes", "Approve", "Reject", "Reopen", "Cancel"]]]},
+    {"dt": "Workflow Action Master", "filters": [["name", "in", ["Submit", "Propose", "Request Changes", "Approve", "Reject", "Reopen", "Cancel"]]]},
     {"dt": "Workflow State", "filters": [["name", "in", ["Draft", "Proposed", "Approved", "Rejected", "Cancelled", "Submitted"]]]},
     {"dt": "Workflow", "filters": [["name", "in", ["MPIT Budget Workflow", "MPIT Project Workflow", "MPIT Planned Item Workflow"]]]},
 ]

@@ -1,6 +1,11 @@
 [
     {
         "doctype": "Workflow Action Master",
+        "name": "Submit",
+        "workflow_action_name": "Submit"
+    },
+    {
+        "doctype": "Workflow Action Master",
         "name": "Propose",
         "workflow_action_name": "Propose"
     },

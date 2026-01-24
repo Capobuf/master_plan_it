@@ -47,10 +47,52 @@ frappe.ui.form.on("MPIT Project", {
 					project: frm.doc.name
 				});
 			}, __("Actions"));
+
+			// Add button to recalculate financial totals
+			frm.add_custom_button(__("Recalculate Totals"), async () => {
+				frappe.show_alert({ message: __("Recalculating..."), indicator: "blue" });
+				await frm.save();
+				frappe.show_alert({ message: __("Totals recalculated"), indicator: "green" });
+			}, __("Actions"));
 		}
+
+		// Show approval hint when in Proposed state
+		if (frm.doc.workflow_state === "Proposed" && !frm.is_new()) {
+			await master_plan_it.project.show_approval_hint(frm);
+		}
+
 		await master_plan_it.project.render_financial_summary(frm);
 	},
 });
+
+master_plan_it.project.show_approval_hint =
+	master_plan_it.project.show_approval_hint ||
+	async function (frm) {
+		const res = await frappe.call({
+			method: "frappe.client.get_count",
+			args: {
+				doctype: "MPIT Planned Item",
+				filters: {
+					project: frm.doc.name,
+					workflow_state: "Submitted"
+				}
+			}
+		});
+
+		const submitted_count = res.message || 0;
+
+		if (submitted_count === 0) {
+			frm.set_intro(
+				__("Per approvare questo progetto, è necessario avere almeno una Voce Pianificata in stato <b>Submitted</b>. Usa il pulsante \"Add Planned Item\" per creare una nuova voce."),
+				"yellow"
+			);
+		} else {
+			frm.set_intro(
+				__("Progetto pronto per l'approvazione: {0} Voce/i Pianificata/e in stato Submitted.", [submitted_count]),
+				"green"
+			);
+		}
+	};
 
 master_plan_it.project.render_financial_summary =
 	master_plan_it.project.render_financial_summary ||
