@@ -5,7 +5,7 @@
    "label": "Stato Live"
   }
  ],
- "content": "[{\"id\":\"un1ogtb4a4\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Master Plan IT</span>\",\"col\":12}},{\"id\":\"_kEkWdrQZO\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"PoTHDgQO03\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Stato Live\",\"col\":12}},{\"id\":\"LMGHDp6LKv\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"jVtU_atg_A\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Azioni Rapide</span>\",\"col\":12}},{\"id\":\"_NceOw61tL\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Nuova Spesa\",\"col\":2}},{\"id\":\"Tb4tnM8aVo\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Nuovo Progetto\",\"col\":2}},{\"id\":\"gwY0gYS_bW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Nuovo Contratto\",\"col\":2}},{\"id\":\"jDaEmQ47n_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Panoramica\",\"col\":2}},{\"id\":\"S0VjzArpbm\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Piano Mensile\",\"col\":2}},{\"id\":\"75rVqXLh80\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Rinnovi\",\"col\":2}},{\"id\":\"L5Q_abUo86\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"0K1wMaU_Vp\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Navigazione</span>\",\"col\":12}},{\"id\":\"MyaCZTPFo-\",\"type\":\"card\",\"data\":{\"card_name\":\"Budget & Pianificazione\",\"col\":3}},{\"id\":\"cEnRzGZlAN\",\"type\":\"card\",\"data\":{\"card_name\":\"Analisi & Report\",\"col\":3}},{\"id\":\"S3WRZlP8WZ\",\"type\":\"card\",\"data\":{\"card_name\":\"Contratti\",\"col\":3}},{\"id\":\"KnqlZlph5i\",\"type\":\"card\",\"data\":{\"card_name\":\"Dati Anagrafici\",\"col\":3}},{\"id\":\"r2buxMBDVb\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"_tCNEjKEL-\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Ultime Spese\",\"col\":4}},{\"id\":\"DNd4rgUZLf\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Contratti Recenti\",\"col\":4}},{\"id\":\"i8xfEvZT8t\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Progetti Recenti\",\"col\":4}}]",
+ "content": "[{\"id\":\"un1ogtb4a4\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Master Plan IT</span>\",\"col\":12}},{\"id\":\"_kEkWdrQZO\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"PoTHDgQO03\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Stato Live\",\"col\":12}},{\"id\":\"LMGHDp6LKv\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"jVtU_atg_A\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Azioni Rapide</span>\",\"col\":12}},{\"id\":\"_NceOw61tL\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Nuova Spesa\",\"col\":2}},{\"id\":\"Tb4tnM8aVo\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Nuovo Progetto\",\"col\":2}},{\"id\":\"gwY0gYS_bW\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Nuovo Contratto\",\"col\":2}},{\"id\":\"jDaEmQ47n_\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Panoramica\",\"col\":2}},{\"id\":\"S0VjzArpbm\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Piano Mensile\",\"col\":2}},{\"id\":\"75rVqXLh80\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Rinnovi\",\"col\":2}},{\"id\":\"WhatIfBtn01\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"What-If\",\"col\":2}},{\"id\":\"L5Q_abUo86\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"0K1wMaU_Vp\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Navigazione</span>\",\"col\":12}},{\"id\":\"MyaCZTPFo-\",\"type\":\"card\",\"data\":{\"card_name\":\"Budget & Pianificazione\",\"col\":3}},{\"id\":\"cEnRzGZlAN\",\"type\":\"card\",\"data\":{\"card_name\":\"Analisi & Report\",\"col\":3}},{\"id\":\"S3WRZlP8WZ\",\"type\":\"card\",\"data\":{\"card_name\":\"Contratti\",\"col\":3}},{\"id\":\"KnqlZlph5i\",\"type\":\"card\",\"data\":{\"card_name\":\"Dati Anagrafici\",\"col\":3}},{\"id\":\"r2buxMBDVb\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"_tCNEjKEL-\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Ultime Spese\",\"col\":4}},{\"id\":\"DNd4rgUZLf\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Contratti Recenti\",\"col\":4}},{\"id\":\"i8xfEvZT8t\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Progetti Recenti\",\"col\":4}}]",
  "creation": "2025-12-31 05:34:40.229880",
  "custom_blocks": [],
  "docstatus": 0,
@@ -208,6 +208,17 @@
    "onboard": 0,
    "report_ref_doctype": "MPIT Project",
    "type": "Link"
+  },
+  {
+   "hidden": 0,
+   "is_query_report": 1,
+   "label": "What-If Budget",
+   "link_count": 0,
+   "link_to": "MPIT Budget What-If",
+   "link_type": "Report",
+   "onboard": 0,
+   "report_ref_doctype": "MPIT Budget",
+   "type": "Link"
   }
  ],
  "modified": "2026-01-18 23:51:08.035168",
@@ -292,6 +303,14 @@
    "label": "Rinnovi",
    "link_to": "MPIT Renewals Window",
    "report_ref_doctype": "MPIT Contract",
+   "type": "Report"
+  },
+  {
+   "doc_view": "",
+   "icon": "git-branch",
+   "label": "What-If",
+   "link_to": "MPIT Budget What-If",
+   "report_ref_doctype": "MPIT Budget",
    "type": "Report"
   }
  ],
