@@ -939,7 +939,6 @@ def enqueue_budget_refresh(years: list[str] | None = None) -> None:
 			doc = frappe.new_doc("MPIT Budget")
 			doc.budget_type = "Live"
 			doc.year = year
-			doc.workflow_state = "Active"
 			doc.insert(ignore_permissions=True)
 			live_budgets.append(doc.name)
 			doc.add_comment("Comment", _("Auto-created Live budget for year {0} (auto-refresh event).").format(year))

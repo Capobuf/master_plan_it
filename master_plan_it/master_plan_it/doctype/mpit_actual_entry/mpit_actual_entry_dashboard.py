@@ -6,7 +6,11 @@ from frappe import _
 
 def get_data():
 	return {
-		"fieldname": "name",
+		"internal_links": {
+			"MPIT Contract": "contract",
+			"MPIT Project": "project",
+			"MPIT Planned Item": "planned_item",
+		},
 		"transactions": [
 			{
 				"label": _("References"),

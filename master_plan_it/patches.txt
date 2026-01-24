@@ -5,3 +5,4 @@ master_plan_it.patches.v1_0.migrate_distribution_to_spend_date
 master_plan_it.patches.v1_0.migrate_current_amount_to_terms
 master_plan_it.patches.v1_0.migrate_series_keys #2026-01-20-fix-fresh-install
 master_plan_it.patches.v1_0.simplify_planned_item_source_keys
+master_plan_it.patches.v1_0.cleanup_orphan_workflow_states

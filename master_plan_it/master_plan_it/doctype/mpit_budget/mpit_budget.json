@@ -62,10 +62,10 @@
       "fieldname": "workflow_state",
       "fieldtype": "Select",
       "default": "Draft",
-      "description": "Visible status (Draft/Proposed/In Review/Approved for Snapshot; Active/Closed for Live).",
+      "description": "Visible status (Draft/Proposed/Approved/Rejected for Snapshot; Active/Closed for Live).",
       "in_list_view": 0,
       "label": "Status",
-      "options": "Draft\nProposed\nIn Review\nApproved\nActive\nClosed",
+      "options": "Draft\nProposed\nApproved\nRejected\nActive\nClosed",
       "read_only": 0
     },
     {

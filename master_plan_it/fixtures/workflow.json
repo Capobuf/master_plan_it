@@ -213,6 +213,7 @@
                 "next_state": "Approved",
                 "allowed": "vCIO Manager",
                 "allow_self_approval": 1,
+                "condition": "frappe.db.get_value('MPIT Planned Item', {'project': doc.name, 'docstatus': 1}, 'name')",
                 "doctype": "Workflow Transition"
             },
             {
@@ -221,6 +222,7 @@
                 "next_state": "Approved",
                 "allowed": "Client Editor",
                 "allow_self_approval": 1,
+                "condition": "frappe.db.get_value('MPIT Planned Item', {'project': doc.name, 'docstatus': 1}, 'name')",
                 "doctype": "Workflow Transition"
             },
             {
@@ -249,6 +251,22 @@
             },
             {
                 "state": "Rejected",
+                "action": "Reopen",
+                "next_state": "Draft",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Cancelled",
+                "action": "Reopen",
+                "next_state": "Draft",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Cancelled",
                 "action": "Reopen",
                 "next_state": "Draft",
                 "allowed": "Client Editor",
