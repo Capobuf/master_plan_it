@@ -48,7 +48,7 @@ def get_data(filters=None):
 		if not cost_centers:
 			return {"labels": [], "datasets": [], "type": "pie"}
 
-	where = ["docstatus = 1"]
+	where = ["workflow_state = 'Submitted'"]
 	params = {}
 	if year:
 		year_start, year_end = annualization.get_year_bounds(year)

@@ -104,15 +104,16 @@ def on_contract_change(doc, method: str) -> None:
 def on_planned_item_change(doc, method: str) -> None:
 	"""Handle Planned Item changes: trigger refresh for BOTH old and new years.
 
-	Only submitted (docstatus=1) and not covered items affect budget.
+	Only submitted (workflow_state='Submitted') and not covered items affect budget.
 	on_update also fires for draft edits - skip those.
 	When dates change, both old and new years must be refreshed to avoid stale data.
 	"""
 	prev = doc.get_doc_before_save()
 	coverage_changed = bool(prev) and prev.is_covered != doc.is_covered
 
-	# Skip draft items (docstatus=0) on update - they don't affect budget yet
-	if method == "on_update" and doc.docstatus == 0 and not coverage_changed:
+	# Skip draft items on update - they don't affect budget yet
+	workflow_state = getattr(doc, 'workflow_state', 'Draft')
+	if method == "on_update" and workflow_state == 'Draft' and not coverage_changed:
 		return
 
 	# Skip covered items - they're excluded from budget calculation, unless coverage just flipped
@@ -178,7 +179,7 @@ def realign_planned_items_horizon() -> None:
 	horizon = _get_horizon_years()
 	items = frappe.get_all(
 		"MPIT Planned Item",
-		filters={"docstatus": 1, "out_of_horizon": 1},
+		filters={"workflow_state": "Submitted", "out_of_horizon": 1},
 		fields=["name", "spend_date", "start_date", "end_date"],
 	)
 

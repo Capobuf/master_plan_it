@@ -237,12 +237,13 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"amount": 1200,
 				"start_date": f"{year_a}-01-01",
 				"end_date": f"{year_b}-12-31",
-				"docstatus": 1,
 				"covered_by_type": "",
 				"covered_by_name": "",
 			}
 		)
 		item.insert()
+		# Bypass workflow to set Submitted state directly (test only)
+		frappe.db.set_value("MPIT Planned Item", item.name, "workflow_state", "Submitted")
 
 		# Reload budgets just before refresh to avoid timestamp mismatch from other hooks
 		frappe.call("master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget.refresh_from_sources", budget=budget_current.name)
@@ -272,12 +273,13 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"amount": 1200,
 				"start_date": f"{self.year_current}-01-01",
 				"end_date": f"{self.year_current}-12-31",
-				"docstatus": 1,
 				"is_covered": 0,
 				"covered_by_type": "",
 				"covered_by_name": "",
 			}
 		).insert()
+		# Bypass workflow to set Submitted state directly (test only)
+		frappe.db.set_value("MPIT Planned Item", item.name, "workflow_state", "Submitted")
 
 		budget.refresh_from_sources()
 		budget.reload()
@@ -303,7 +305,6 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"description": "Spend first month",
 				"amount": 1200,
 				"spend_date": f"{self.year_current}-01-15",
-				"docstatus": 1,
 				"is_covered": 0,
 				"covered_by_type": "",
 				"covered_by_name": "",
@@ -311,6 +312,8 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		)
 		item.flags.ignore_validate = True
 		item.insert()
+		# Bypass workflow to set Submitted state directly (test only)
+		frappe.db.set_value("MPIT Planned Item", item.name, "workflow_state", "Submitted")
 
 		budget.refresh_from_sources()
 		budget.reload()
@@ -338,12 +341,13 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"start_date": f"{self.year_current}-10-01",
 				"end_date": f"{self.year_current}-10-31",
 				"spend_date": f"{self.year_current}-10-15",
-				"docstatus": 1,
 				"is_covered": 0,
 				"covered_by_type": "",
 				"covered_by_name": "",
 			}
 		).insert()
+		# Bypass workflow to set Submitted state directly (test only)
+		frappe.db.set_value("MPIT Planned Item", item.name, "workflow_state", "Submitted")
 
 		budget.refresh_from_sources()
 		budget.reload()
@@ -470,7 +474,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 				"amount": 500,
 				"start_date": f"{self.year_current}-01-01",
 				"end_date": f"{self.year_current}-12-31",
-				"docstatus": 0,
+				"workflow_state": "Draft",
 			}
 		)
 		item.flags.ignore_validate = True
@@ -478,7 +482,7 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		frappe.db.set_value(
 			"MPIT Planned Item",
 			item.name,
-			{"is_covered": 1, "docstatus": 1, "covered_by_type": "", "covered_by_name": ""},
+			{"is_covered": 1, "workflow_state": "Submitted", "covered_by_type": "", "covered_by_name": ""},
 		)
 
 		budget.refresh_from_sources()

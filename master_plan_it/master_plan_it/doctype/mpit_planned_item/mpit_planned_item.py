@@ -186,11 +186,20 @@ def set_coverage(planned_item: str, covered_by_type: str | None, covered_by_name
 		planned_item: MPIT Planned Item name
 		covered_by_type: "Contract" | "Actual" or None to clear
 		covered_by_name: linked document name or None to clear
+		
+	Note:
+		Silently skips cancelled documents since coverage tracking
+		is meaningless for cancelled items.
 	"""
 	if not planned_item:
 		return
 
 	doc = frappe.get_doc("MPIT Planned Item", planned_item)
+
+	# Skip cancelled documents - check both workflow_state (new) and docstatus (legacy)
+	# This ensures safety during migration and on fresh installs
+	if getattr(doc, 'workflow_state', '') == 'Cancelled' or doc.docstatus == 2:
+		return
 
 	new_type = covered_by_type or None
 	new_name = covered_by_name or None
@@ -205,3 +214,4 @@ def set_coverage(planned_item: str, covered_by_type: str | None, covered_by_name
 
 	# Save without altering immutable fields
 	doc.save(ignore_permissions=True)
+

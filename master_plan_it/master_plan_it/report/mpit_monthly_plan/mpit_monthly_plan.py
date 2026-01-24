@@ -177,7 +177,7 @@ def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_
 	"""Get monthly amounts per cost center from Planned Items respecting spend_date/distribution and overlap."""
 	items = frappe.get_all(
 		"MPIT Planned Item",
-		filters={"docstatus": 1, "is_covered": 0, "out_of_horizon": 0},
+		filters={"workflow_state": "Submitted", "is_covered": 0, "out_of_horizon": 0},
 		fields=[
 			"name",
 			"project",

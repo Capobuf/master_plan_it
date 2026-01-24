@@ -213,7 +213,7 @@
                 "next_state": "Approved",
                 "allowed": "vCIO Manager",
                 "allow_self_approval": 1,
-                "condition": "frappe.db.get_value('MPIT Planned Item', {'project': doc.name, 'docstatus': 1}, 'name')",
+                "condition": "frappe.db.get_value('MPIT Planned Item', {'project': doc.name, 'workflow_state': 'Submitted'}, 'name')",
                 "doctype": "Workflow Transition"
             },
             {
@@ -222,7 +222,7 @@
                 "next_state": "Approved",
                 "allowed": "Client Editor",
                 "allow_self_approval": 1,
-                "condition": "frappe.db.get_value('MPIT Planned Item', {'project': doc.name, 'docstatus': 1}, 'name')",
+                "condition": "frappe.db.get_value('MPIT Planned Item', {'project': doc.name, 'workflow_state': 'Submitted'}, 'name')",
                 "doctype": "Workflow Transition"
             },
             {
@@ -285,6 +285,85 @@
                 "state": "Approved",
                 "action": "Cancel",
                 "next_state": "Cancelled",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            }
+        ]
+    },
+    {
+        "doctype": "Workflow",
+        "name": "MPIT Planned Item Workflow",
+        "workflow_name": "MPIT Planned Item Workflow",
+        "document_type": "MPIT Planned Item",
+        "is_active": 1,
+        "send_email_alert": 0,
+        "workflow_state_field": "workflow_state",
+        "states": [
+            {
+                "state": "Draft",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            },
+            {
+                "state": "Submitted",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            },
+            {
+                "state": "Cancelled",
+                "doc_status": "0",
+                "allow_edit": "vCIO Manager",
+                "doctype": "Workflow Document State"
+            }
+        ],
+        "transitions": [
+            {
+                "state": "Draft",
+                "action": "Submit",
+                "next_state": "Submitted",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Draft",
+                "action": "Submit",
+                "next_state": "Submitted",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Submitted",
+                "action": "Cancel",
+                "next_state": "Cancelled",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Submitted",
+                "action": "Cancel",
+                "next_state": "Cancelled",
+                "allowed": "Client Editor",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Cancelled",
+                "action": "Reopen",
+                "next_state": "Draft",
+                "allowed": "vCIO Manager",
+                "allow_self_approval": 1,
+                "doctype": "Workflow Transition"
+            },
+            {
+                "state": "Cancelled",
+                "action": "Reopen",
+                "next_state": "Draft",
                 "allowed": "Client Editor",
                 "allow_self_approval": 1,
                 "doctype": "Workflow Transition"

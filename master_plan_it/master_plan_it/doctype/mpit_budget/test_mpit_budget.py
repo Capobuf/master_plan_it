@@ -182,7 +182,8 @@ class TestMPITBudget(FrappeTestCase):
 		defaults.update(kwargs)
 		doc = frappe.get_doc(defaults)
 		doc.insert()
-		doc.submit()
+		# Bypass workflow to set Submitted state directly (test only)
+		frappe.db.set_value("MPIT Planned Item", doc.name, "workflow_state", "Submitted")
 		# Force out_of_horizon=0 because test uses future years which logic flags as out of horizon
 		frappe.db.set_value("MPIT Planned Item", doc.name, "out_of_horizon", 0)
 		return doc.name

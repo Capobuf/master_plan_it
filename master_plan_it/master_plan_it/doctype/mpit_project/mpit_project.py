@@ -49,7 +49,7 @@ class MPITProject(Document):
 		# Fetch all non-cancelled Planned Items for this project
 		items = frappe.db.get_all(
 			"MPIT Planned Item",
-			filters={"project": self.name, "docstatus": ["!=", 2]},
+			filters={"project": self.name, "workflow_state": ["!=", "Cancelled"]},
 			fields=["amount_net", "amount", "is_covered", "item_type"]
 		)
 
@@ -154,5 +154,5 @@ def has_submitted_planned_items(project: str) -> bool:
 	"""
 	if not project:
 		return False
-	return bool(frappe.db.exists("MPIT Planned Item", {"project": project, "docstatus": 1}))
+	return bool(frappe.db.exists("MPIT Planned Item", {"project": project, "workflow_state": "Submitted"}))
 

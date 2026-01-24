@@ -136,7 +136,7 @@ def _get_active_projects(
 
     # From Planned Items (submitted, overlap year range)
     pi_filters = {
-        "docstatus": 1,
+        "workflow_state": "Submitted",
         "start_date": ["<=", year_end],
         "end_date": [">=", year_start],
     }
@@ -198,7 +198,7 @@ def _get_planned_amounts(
 
     # Get Planned Items for year overlap
     pi_filters = {
-        "docstatus": 1,
+        "workflow_state": "Submitted",
         "start_date": ["<=", year_end],
         "end_date": [">=", year_start],
     }

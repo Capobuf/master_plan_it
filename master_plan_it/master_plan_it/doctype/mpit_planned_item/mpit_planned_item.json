@@ -10,6 +10,7 @@
     "field_order": [
         "section_overview",
         "project",
+        "workflow_state",
         "description",
         "dates_col_break",
         "start_date",
@@ -47,16 +48,24 @@
             "in_standard_filter": 1,
             "label": "Project",
             "options": "MPIT Project",
-            "reqd": 1,
-            "allow_on_submit": 1
+            "reqd": 1
+        },
+        {
+            "default": "Draft",
+            "fieldname": "workflow_state",
+            "fieldtype": "Select",
+            "in_list_view": 1,
+            "in_standard_filter": 1,
+            "label": "Status",
+            "options": "Draft\nSubmitted\nCancelled",
+            "read_only": 1
         },
         {
             "fieldname": "description",
             "fieldtype": "Text",
             "in_list_view": 1,
             "label": "Description",
-            "reqd": 1,
-            "allow_on_submit": 1
+            "reqd": 1
         },
         {
             "fieldname": "dates_col_break",
@@ -67,22 +76,19 @@
             "fieldtype": "Date",
             "in_list_view": 1,
             "label": "Start Date",
-            "mandatory_depends_on": "eval:!doc.spend_date",
-            "allow_on_submit": 1
+            "mandatory_depends_on": "eval:!doc.spend_date"
         },
         {
             "fieldname": "end_date",
             "fieldtype": "Date",
             "label": "End Date",
-            "mandatory_depends_on": "eval:!doc.spend_date",
-            "allow_on_submit": 1
+            "mandatory_depends_on": "eval:!doc.spend_date"
         },
         {
             "description": "If set, allocates the entire amount to this specific month instead of spreading across the period.",
             "fieldname": "spend_date",
             "fieldtype": "Date",
-            "label": "Spend Date",
-            "allow_on_submit": 1
+            "label": "Spend Date"
         },
         {
             "fieldname": "section_amount",
@@ -94,22 +100,19 @@
             "fieldtype": "Currency",
             "in_list_view": 1,
             "label": "Amount",
-            "reqd": 1,
-            "allow_on_submit": 1
+            "reqd": 1
         },
         {
             "default": "0",
             "fieldname": "amount_includes_vat",
             "fieldtype": "Check",
-            "label": "Amount Includes VAT",
-            "allow_on_submit": 1
+            "label": "Amount Includes VAT"
         },
         {
             "fieldname": "vat_rate",
             "fieldtype": "Percent",
             "label": "VAT Rate",
-            "precision": "2",
-            "allow_on_submit": 1
+            "precision": "2"
         },
         {
             "fieldname": "amount_col_break",
@@ -119,22 +122,19 @@
             "fieldname": "amount_net",
             "fieldtype": "Currency",
             "label": "Amount (Net)",
-            "read_only": 1,
-            "allow_on_submit": 1
+            "read_only": 1
         },
         {
             "fieldname": "amount_vat",
             "fieldtype": "Currency",
             "label": "VAT Amount",
-            "read_only": 1,
-            "allow_on_submit": 1
+            "read_only": 1
         },
         {
             "fieldname": "amount_gross",
             "fieldtype": "Currency",
             "label": "Amount (Gross)",
-            "read_only": 1,
-            "allow_on_submit": 1
+            "read_only": 1
         },
         {
             "fieldname": "section_source",
@@ -148,31 +148,27 @@
             "label": "Type",
             "options": "Estimate\nQuote",
             "reqd": 1,
-            "description": "Estimate = initial approximation. Quote = received vendor quotation.",
-            "allow_on_submit": 1
+            "description": "Estimate = initial approximation. Quote = received vendor quotation."
         },
         {
             "fieldname": "vendor",
             "fieldtype": "Link",
             "label": "Vendor",
             "options": "MPIT Vendor",
-            "depends_on": "eval:doc.item_type=='Quote'",
-            "allow_on_submit": 1
+            "depends_on": "eval:doc.item_type=='Quote'"
         },
         {
             "fieldname": "quote_reference",
             "fieldtype": "Data",
             "label": "Quote Reference",
             "depends_on": "eval:doc.item_type=='Quote'",
-            "description": "Vendor quote number or reference.",
-            "allow_on_submit": 1
+            "description": "Vendor quote number or reference."
         },
         {
             "fieldname": "attachments",
             "fieldtype": "Attach",
             "label": "Attachments",
-            "description": "Attach quote PDFs or supporting documents.",
-            "allow_on_submit": 1
+            "description": "Attach quote PDFs or supporting documents."
         },
         {
             "collapsible": 1,
@@ -186,8 +182,7 @@
             "fieldtype": "Check",
             "label": "Is Covered",
             "read_only": 1,
-            "description": "Flag set when amount is already paid by Contract/Actual",
-            "allow_on_submit": 1
+            "description": "Flag set when amount is already paid by Contract/Actual"
         },
         {
             "fieldname": "covered_by_type",
@@ -195,8 +190,7 @@
             "label": "Covered By Type",
             "options": "\nMPIT Contract\nMPIT Actual Entry",
             "read_only": 1,
-            "description": "Type of document covering this item",
-            "allow_on_submit": 1
+            "description": "Type of document covering this item"
         },
         {
             "fieldname": "covered_by_name",
@@ -204,8 +198,7 @@
             "label": "Covered By",
             "options": "covered_by_type",
             "read_only": 1,
-            "description": "Link to the covering document",
-            "allow_on_submit": 1
+            "description": "Link to the covering document"
         },
         {
             "default": "0",
@@ -213,13 +206,11 @@
             "fieldtype": "Check",
             "label": "Out of Horizon",
             "read_only": 1,
-            "description": "Flag set when outside current+next year",
-            "allow_on_submit": 1
+            "description": "Flag set when outside current+next year"
         }
     ],
     "idx": 0,
     "index_web_pages_for_search": 1,
-    "is_submittable": 1,
     "links": [],
     "modified": "2026-01-22 15:00:00.000000",
     "modified_by": "Administrator",
