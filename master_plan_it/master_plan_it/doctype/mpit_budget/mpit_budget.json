@@ -65,7 +65,7 @@
       "description": "Visible status (Draft/Proposed/Approved/Rejected for Snapshot; Active/Closed for Live).",
       "in_list_view": 0,
       "label": "Status",
-      "options": "Draft\nProposed\nApproved\nRejected\nActive\nClosed",
+      "options": "Draft\nProposed\nApproved\nRejected",
       "read_only": 0
     },
     {

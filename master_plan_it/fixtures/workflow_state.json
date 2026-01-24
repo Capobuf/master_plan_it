@@ -31,14 +31,8 @@
     },
     {
         "doctype": "Workflow State",
-        "name": "Active",
-        "workflow_state_name": "Active",
-        "style": "Success"
-    },
-    {
-        "doctype": "Workflow State",
-        "name": "Closed",
-        "workflow_state_name": "Closed",
-        "style": ""
+        "name": "Submitted",
+        "workflow_state_name": "Submitted",
+        "style": "Primary"
     }
 ]
