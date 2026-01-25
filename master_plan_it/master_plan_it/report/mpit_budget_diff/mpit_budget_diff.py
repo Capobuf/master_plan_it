@@ -5,14 +5,15 @@ import json
 import frappe
 from frappe import _
 from frappe.query_builder.functions import Coalesce, Sum
+from frappe.query_builder import Case
 from master_plan_it.master_plan_it.utils.dashboard_utils import normalize_dashboard_filters
 
-# Report: Budget Diff - Compare two budgets with flexible exclusions.
+# Report: Budget Diff - Compare two budgets with detailed breakdown by line_kind.
 #
-# Exclusion options:
-# - Global: exclude by line_kind (Contract, Planned Item, Allowance)
-# - Specific: exclude specific vendors, cost centers, or contracts
-# - Per-budget: apply exclusions to Budget A only, Budget B only, or both
+# Shows for each Cost Center:
+# - Budget A: Total, Contracts, Projects, Allowance
+# - Budget B: Total, Contracts, Projects, Allowance
+# - Delta between totals
 
 
 def execute(filters=None):
@@ -30,13 +31,13 @@ def execute(filters=None):
 	exclude_line_kinds = _parse_exclude_line_kinds(filters)
 	exclusions = _parse_exclusions(filters)
 
-	# Load data with exclusions applied per-budget
-	budget_a_data = _load_budget_totals(
+	# Load detailed data with exclusions applied per-budget
+	budget_a_data = _load_budget_details(
 		filters.budget_a,
 		exclude_line_kinds,
 		exclusions.get("a", {}),
 	)
-	budget_b_data = _load_budget_totals(
+	budget_b_data = _load_budget_details(
 		filters.budget_b,
 		exclude_line_kinds,
 		exclusions.get("b", {}),
@@ -91,28 +92,17 @@ def _parse_multi_select(value) -> list:
 			if isinstance(parsed, list):
 				return parsed
 		except (json.JSONDecodeError, TypeError):
-			# Single value as string
 			return [value] if value else []
 	return []
 
 
 def _parse_exclusions(filters) -> dict:
-	"""
-	Parse specific exclusions and determine which budget(s) they apply to.
-
-	Returns dict with keys 'a' and 'b', each containing:
-	- vendors: list of vendor names to exclude
-	- cost_centers: list of cost center names to exclude
-	- contracts: list of contract names to exclude
-	- projects: list of project names to exclude
-	"""
-	# Get exclusion values
+	"""Parse specific exclusions and determine which budget(s) they apply to."""
 	exclude_vendors = _parse_multi_select(filters.get("exclude_vendors"))
 	exclude_cost_centers = _parse_multi_select(filters.get("exclude_cost_centers"))
 	exclude_contracts = _parse_multi_select(filters.get("exclude_contracts_list"))
 	exclude_projects = _parse_multi_select(filters.get("exclude_projects"))
 
-	# Get apply_to setting from Italian labels
 	apply_to_raw = filters.get("exclusion_applies_to") or "Entrambi"
 	if apply_to_raw in ("Entrambi", "both"):
 		apply_to = "both"
@@ -123,85 +113,109 @@ def _parse_exclusions(filters) -> dict:
 	else:
 		apply_to = "both"
 
-	# Build exclusion dicts per budget
 	exclusions = {
 		"a": {"vendors": [], "cost_centers": [], "contracts": [], "projects": []},
 		"b": {"vendors": [], "cost_centers": [], "contracts": [], "projects": []},
 	}
 
 	if apply_to in ("both", "a"):
-		exclusions["a"]["vendors"] = exclude_vendors
-		exclusions["a"]["cost_centers"] = exclude_cost_centers
-		exclusions["a"]["contracts"] = exclude_contracts
-		exclusions["a"]["projects"] = exclude_projects
+		exclusions["a"] = {
+			"vendors": exclude_vendors,
+			"cost_centers": exclude_cost_centers,
+			"contracts": exclude_contracts,
+			"projects": exclude_projects,
+		}
 
 	if apply_to in ("both", "b"):
-		exclusions["b"]["vendors"] = exclude_vendors
-		exclusions["b"]["cost_centers"] = exclude_cost_centers
-		exclusions["b"]["contracts"] = exclude_contracts
-		exclusions["b"]["projects"] = exclude_projects
+		exclusions["b"] = {
+			"vendors": exclude_vendors,
+			"cost_centers": exclude_cost_centers,
+			"contracts": exclude_contracts,
+			"projects": exclude_projects,
+		}
 
 	return exclusions
 
 
 def _build_columns() -> list[dict]:
+	"""Build report columns with detailed breakdown."""
 	return [
-		{"label": _("Cost Center"), "fieldname": "cost_center", "fieldtype": "Link", "options": "MPIT Cost Center", "width": 200},
-		{"label": _("Budget A"), "fieldname": "budget_a_annual_net", "fieldtype": "Currency", "width": 130},
-		{"label": _("Budget B"), "fieldname": "budget_b_annual_net", "fieldtype": "Currency", "width": 130},
-		{"label": _("Delta (B-A)"), "fieldname": "delta_annual", "fieldtype": "Currency", "width": 130},
-		{"label": _("Delta %"), "fieldname": "delta_percent", "fieldtype": "Percent", "width": 100},
+		# Cost Center
+		{"label": _("Cost Center"), "fieldname": "cost_center", "fieldtype": "Link", "options": "MPIT Cost Center", "width": 180},
+		# Budget A breakdown
+		{"label": _("A Totale"), "fieldname": "a_total", "fieldtype": "Currency", "width": 110},
+		{"label": _("A Contratti"), "fieldname": "a_contracts", "fieldtype": "Currency", "width": 100},
+		{"label": _("A Progetti"), "fieldname": "a_projects", "fieldtype": "Currency", "width": 100},
+		{"label": _("A Allowance"), "fieldname": "a_allowance", "fieldtype": "Currency", "width": 100},
+		# Budget B breakdown
+		{"label": _("B Totale"), "fieldname": "b_total", "fieldtype": "Currency", "width": 110},
+		{"label": _("B Contratti"), "fieldname": "b_contracts", "fieldtype": "Currency", "width": 100},
+		{"label": _("B Progetti"), "fieldname": "b_projects", "fieldtype": "Currency", "width": 100},
+		{"label": _("B Allowance"), "fieldname": "b_allowance", "fieldtype": "Currency", "width": 100},
+		# Delta
+		{"label": _("Delta"), "fieldname": "delta", "fieldtype": "Currency", "width": 110},
+		{"label": _("Delta %"), "fieldname": "delta_pct", "fieldtype": "Percent", "width": 80},
 	]
 
 
-def _load_budget_totals(budget: str, exclude_line_kinds: set, exclusions: dict) -> dict:
+def _load_budget_details(budget: str, exclude_line_kinds: set, exclusions: dict) -> dict:
 	"""
-	Load budget line totals grouped by cost center.
+	Load budget line totals grouped by cost center with breakdown by line_kind.
 
-	Args:
-		budget: Budget document name
-		exclude_line_kinds: Set of line_kind values to exclude globally
-		exclusions: Dict with 'vendors', 'cost_centers', 'contracts' lists
+	Returns dict: {cost_center: {"total": x, "Contract": y, "Planned Item": z, "Allowance": w}}
 	"""
 	BudgetLine = frappe.qb.DocType("MPIT Budget Line")
 
-	planned = Sum(
-		Coalesce(
-			BudgetLine.annual_net,
-			BudgetLine.amount_net,
-			BudgetLine.annual_amount,
-			BudgetLine.monthly_amount * 12,
-			0,
-		)
-	).as_("planned")
+	# Amount calculation
+	amount_expr = Coalesce(
+		BudgetLine.annual_net,
+		BudgetLine.amount_net,
+		BudgetLine.annual_amount,
+		BudgetLine.monthly_amount * 12,
+		0,
+	)
+
+	# Conditional sums per line_kind
+	total_sum = Sum(amount_expr).as_("total")
+	contract_sum = Sum(
+		Case().when(BudgetLine.line_kind == "Contract", amount_expr).else_(0)
+	).as_("contracts")
+	project_sum = Sum(
+		Case().when(BudgetLine.line_kind == "Planned Item", amount_expr).else_(0)
+	).as_("projects")
+	allowance_sum = Sum(
+		Case().when(BudgetLine.line_kind == "Allowance", amount_expr).else_(0)
+	).as_("allowance")
 
 	query = (
 		frappe.qb.from_(BudgetLine)
-		.select(BudgetLine.cost_center, planned)
+		.select(
+			BudgetLine.cost_center,
+			total_sum,
+			contract_sum,
+			project_sum,
+			allowance_sum,
+		)
 		.where(BudgetLine.parent == budget)
 		.groupby(BudgetLine.cost_center)
 	)
 
-	# Exclude line kinds (global)
+	# Apply exclusions
 	for lk in exclude_line_kinds:
 		query = query.where(BudgetLine.line_kind != lk)
 
-	# Exclude specific vendors
 	for vendor in exclusions.get("vendors", []):
 		if vendor:
 			query = query.where(BudgetLine.vendor != vendor)
 
-	# Exclude specific cost centers
 	for cc in exclusions.get("cost_centers", []):
 		if cc:
 			query = query.where(BudgetLine.cost_center != cc)
 
-	# Exclude specific contracts
 	for contract in exclusions.get("contracts", []):
 		if contract:
 			query = query.where(BudgetLine.contract != contract)
 
-	# Exclude specific projects
 	for project in exclusions.get("projects", []):
 		if project:
 			query = query.where(BudgetLine.project != project)
@@ -212,67 +226,87 @@ def _load_budget_totals(budget: str, exclude_line_kinds: set, exclusions: dict) 
 	for row in rows:
 		cc = row.get("cost_center")
 		if cc:
-			result[cc] = float(row.get("planned") or 0)
+			result[cc] = {
+				"total": float(row.get("total") or 0),
+				"contracts": float(row.get("contracts") or 0),
+				"projects": float(row.get("projects") or 0),
+				"allowance": float(row.get("allowance") or 0),
+			}
 	return result
 
 
 def _build_rows(a_map: dict, b_map: dict, only_changed: bool) -> tuple[list[dict], dict]:
-	"""Build report rows comparing two budgets."""
+	"""Build report rows comparing two budgets with detailed breakdown."""
 	all_cost_centers = set(a_map.keys()) | set(b_map.keys())
 
 	rows: list[dict] = []
-	total_a = 0.0
-	total_b = 0.0
+	totals_a = {"total": 0.0, "contracts": 0.0, "projects": 0.0, "allowance": 0.0}
+	totals_b = {"total": 0.0, "contracts": 0.0, "projects": 0.0, "allowance": 0.0}
 
 	for cc in sorted(all_cost_centers):
-		val_a = a_map.get(cc, 0.0)
-		val_b = b_map.get(cc, 0.0)
-		delta = val_b - val_a
+		a = a_map.get(cc, {"total": 0, "contracts": 0, "projects": 0, "allowance": 0})
+		b = b_map.get(cc, {"total": 0, "contracts": 0, "projects": 0, "allowance": 0})
 
-		total_a += val_a
-		total_b += val_b
+		delta = b["total"] - a["total"]
+
+		# Accumulate totals
+		for key in totals_a:
+			totals_a[key] += a.get(key, 0)
+			totals_b[key] += b.get(key, 0)
 
 		# Skip unchanged rows if only_changed is True
 		if only_changed and abs(delta) < 0.01:
 			continue
 
 		# Calculate percentage change
-		if val_a > 0:
-			delta_pct = (delta / val_a) * 100
-		elif val_b > 0:
-			delta_pct = 100.0  # New item
+		if a["total"] > 0:
+			delta_pct = (delta / a["total"]) * 100
+		elif b["total"] > 0:
+			delta_pct = 100.0
 		else:
 			delta_pct = 0.0
 
 		rows.append({
 			"cost_center": cc,
-			"budget_a_annual_net": val_a,
-			"budget_b_annual_net": val_b,
-			"delta_annual": delta,
-			"delta_percent": delta_pct,
+			"a_total": a["total"],
+			"a_contracts": a["contracts"],
+			"a_projects": a["projects"],
+			"a_allowance": a["allowance"],
+			"b_total": b["total"],
+			"b_contracts": b["contracts"],
+			"b_projects": b["projects"],
+			"b_allowance": b["allowance"],
+			"delta": delta,
+			"delta_pct": delta_pct,
 		})
 
 	# Add total row
-	delta_total = total_b - total_a
-	if total_a > 0:
-		delta_total_pct = (delta_total / total_a) * 100
-	elif total_b > 0:
+	delta_total = totals_b["total"] - totals_a["total"]
+	if totals_a["total"] > 0:
+		delta_total_pct = (delta_total / totals_a["total"]) * 100
+	elif totals_b["total"] > 0:
 		delta_total_pct = 100.0
 	else:
 		delta_total_pct = 0.0
 
 	rows.append({
-		"cost_center": _("TOTAL"),
-		"budget_a_annual_net": total_a,
-		"budget_b_annual_net": total_b,
-		"delta_annual": delta_total,
-		"delta_percent": delta_total_pct,
+		"cost_center": _("TOTALE"),
+		"a_total": totals_a["total"],
+		"a_contracts": totals_a["contracts"],
+		"a_projects": totals_a["projects"],
+		"a_allowance": totals_a["allowance"],
+		"b_total": totals_b["total"],
+		"b_contracts": totals_b["contracts"],
+		"b_projects": totals_b["projects"],
+		"b_allowance": totals_b["allowance"],
+		"delta": delta_total,
+		"delta_pct": delta_total_pct,
 		"is_total_row": 1,
 	})
 
 	totals = {
-		"budget_a": total_a,
-		"budget_b": total_b,
+		"budget_a": totals_a["total"],
+		"budget_b": totals_b["total"],
 		"delta": delta_total,
 	}
 
@@ -284,7 +318,6 @@ def _build_summary(totals: dict, filters: dict) -> list[dict]:
 	budget_a_name = filters.get("budget_a", "A")
 	budget_b_name = filters.get("budget_b", "B")
 
-	# Get budget titles for display
 	title_a = frappe.db.get_value("MPIT Budget", budget_a_name, "title") or budget_a_name
 	title_b = frappe.db.get_value("MPIT Budget", budget_b_name, "title") or budget_b_name
 
@@ -320,8 +353,8 @@ def _get_chart_data(a_map: dict, b_map: dict) -> dict | None:
 	all_cc = set(a_map.keys()) | set(b_map.keys())
 	cc_data = []
 	for cc in all_cc:
-		val_a = a_map.get(cc, 0)
-		val_b = b_map.get(cc, 0)
+		val_a = a_map.get(cc, {}).get("total", 0)
+		val_b = b_map.get(cc, {}).get("total", 0)
 		cc_data.append((cc, val_a, val_b, max(val_a, val_b)))
 
 	cc_data.sort(key=lambda x: x[3], reverse=True)
@@ -344,4 +377,10 @@ def _get_chart_data(a_map: dict, b_map: dict) -> dict | None:
 		},
 		"type": "bar",
 		"colors": ["#318AD8", "#F5A623"],
+		"axisOptions": {
+			"xIsSeries": False,
+		},
+		"tooltipOptions": {
+			"formatTooltipY": None,  # Disable auto currency formatting
+		},
 	}

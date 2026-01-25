@@ -382,7 +382,6 @@ def get_chart(data: list[dict], budget_type: str | None = None) -> dict:
             },
             "type": "bar",
             "colors": ["#5e64ff"],
-            "fieldtype": "Currency",
         }
     else:
         # Year comparison mode - Plan vs Snapshot vs Actual
@@ -402,7 +401,6 @@ def get_chart(data: list[dict], budget_type: str | None = None) -> dict:
             },
             "type": "bar",
             "colors": ["#7cd6fd", "#5e64ff", "#ffa00a"],
-            "fieldtype": "Currency",
         }
 
 
