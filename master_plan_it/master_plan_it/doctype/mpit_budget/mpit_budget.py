@@ -201,6 +201,7 @@ class MPITBudget(Document):
 				"vendor",
 				"description",
 			],
+			limit=None,
 		)
 
 		# Batch-fetch all terms for these contracts to avoid N+1 queries
@@ -304,6 +305,7 @@ class MPITBudget(Document):
 				"end_date",
 				"spend_date",
 			],
+			limit=None,
 		)
 		if not items:
 			return lines
