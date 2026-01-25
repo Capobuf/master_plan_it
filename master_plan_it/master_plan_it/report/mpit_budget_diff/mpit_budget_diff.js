@@ -19,6 +19,24 @@ frappe.query_reports["MPIT Budget Diff"] = {
 			reqd: 1
 		},
 		{
+			fieldname: "project",
+			label: __("Project"),
+			fieldtype: "Link",
+			options: "MPIT Project"
+		},
+		{
+			fieldname: "cost_center",
+			label: __("Cost Center"),
+			fieldtype: "Link",
+			options: "MPIT Cost Center"
+		},
+		{
+			fieldname: "vendor",
+			label: __("Vendor"),
+			fieldtype: "Link",
+			options: "MPIT Vendor"
+		},
+		{
 			fieldname: "group_by",
 			label: __("Group By"),
 			fieldtype: "Select",
