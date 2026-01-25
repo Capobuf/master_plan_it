@@ -246,8 +246,8 @@ class TestBudgetEngineV3Acceptance(FrappeTestCase):
 		frappe.db.set_value("MPIT Planned Item", item.name, "workflow_state", "Submitted")
 
 		# Reload budgets just before refresh to avoid timestamp mismatch from other hooks
-		frappe.call("master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget.refresh_from_sources", budget=budget_current.name)
-		frappe.call("master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget.refresh_from_sources", budget=budget_next.name)
+		frappe.call("master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget.trigger_budget_refresh", budget=budget_current.name)
+		frappe.call("master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget.trigger_budget_refresh", budget=budget_next.name)
 		budget_current.reload()
 		budget_next.reload()
 

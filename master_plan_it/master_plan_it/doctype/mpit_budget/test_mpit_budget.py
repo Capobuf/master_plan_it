@@ -1008,18 +1008,18 @@ class TestMPITBudget(FrappeTestCase):
 		self.assertIn("cap_total", result)
 		self.assertIn("actual", result)
 
-	def test_refresh_from_sources_api(self):
+	def test_trigger_budget_refresh_api(self):
 		"""
-		Test: Whitelisted refresh_from_sources() API works.
+		Test: Whitelisted trigger_budget_refresh() API works.
 		
 		Failure indicates: API wrapper issue.
 		"""
-		from master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget import refresh_from_sources
+		from master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget import trigger_budget_refresh
 		
 		budget = self._create_live_budget()
 		
 		# Should not raise
-		refresh_from_sources(budget.name)
+		trigger_budget_refresh(budget.name)
 
 	# ═══════════════════════════════════════════════════════════════════════════
 	# EDGE CASE TESTS (2 tests)

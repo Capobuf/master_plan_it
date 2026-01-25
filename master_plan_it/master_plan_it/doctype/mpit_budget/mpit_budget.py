@@ -216,7 +216,8 @@ class MPITBudget(Document):
 					"amount_net", "monthly_amount_net", "billing_cycle",
 					"amount_includes_vat", "vat_rate"
 				],
-				order_by="parent, from_date asc"
+				order_by="parent, from_date asc",
+				limit=None,
 			)
 			for term in terms_data:
 				all_terms.setdefault(term.parent, []).append(term)
@@ -702,7 +703,7 @@ def update_budget_totals(budget_name: str) -> None:
 
 
 @frappe.whitelist()
-def refresh_from_sources(budget: str) -> None:
+def trigger_budget_refresh(budget: str) -> None:
 	"""Public API to refresh a budget from sources."""
 	if not budget:
 		frappe.throw(_("Budget name is required"))
@@ -949,7 +950,7 @@ def enqueue_budget_refresh(years: list[str] | None = None) -> None:
 	for budget_name in live_budgets:
 		try:
 			frappe.enqueue(
-				"master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget.refresh_from_sources",
+				"master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget.trigger_budget_refresh",
 				budget=budget_name,
 				queue="short",
 				# job_id required when deduplicate=True to avoid duplicate jobs per budget
