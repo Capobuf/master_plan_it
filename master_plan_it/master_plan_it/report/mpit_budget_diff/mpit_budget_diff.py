@@ -169,20 +169,17 @@ def _build_summary(totals: dict) -> list[dict]:
 	return [
 		{
 			"label": _("Budget A"),
-			"value": totals.get("budget_a_annual_net", 0),
-			"datatype": "Currency",
+			"value": frappe.utils.fmt_money(totals.get("budget_a_annual_net", 0)),
 			"indicator": "blue",
 		},
 		{
 			"label": _("Budget B"),
-			"value": totals.get("budget_b_annual_net", 0),
-			"datatype": "Currency",
+			"value": frappe.utils.fmt_money(totals.get("budget_b_annual_net", 0)),
 			"indicator": "blue",
 		},
 		{
 			"label": _("Delta (B - A)"),
-			"value": totals.get("delta_annual", 0),
-			"datatype": "Currency",
+			"value": frappe.utils.fmt_money(totals.get("delta_annual", 0)),
 			"indicator": "green" if (totals.get("delta_annual", 0) or 0) >= 0 else "red",
 		},
 	]
