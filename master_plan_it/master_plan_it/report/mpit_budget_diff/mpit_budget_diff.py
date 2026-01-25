@@ -74,7 +74,6 @@ def _load_budget_totals(budget: str, group_by: str, filters: dict) -> dict:
 		frappe.qb.from_(BudgetLine)
 		.select(BudgetLine.cost_center, planned)
 		.where(BudgetLine.parent == budget)
-		.groupby(BudgetLine.cost_center)
 	)
 
 	# Apply optional filters
@@ -85,8 +84,12 @@ def _load_budget_totals(budget: str, group_by: str, filters: dict) -> dict:
 	if filters.get("vendor"):
 		query = query.where(BudgetLine.vendor == filters.vendor)
 
+	# CRITICAL FIX: Group by MUST be called once with all columns
+	# Multiple .groupby() calls in QB REPLACE the previous grouping!
 	if group_by == "CostCenter+Vendor":
-		query = query.select(BudgetLine.vendor).groupby(BudgetLine.vendor)
+		query = query.select(BudgetLine.vendor).groupby(BudgetLine.cost_center, BudgetLine.vendor)
+	else:
+		query = query.groupby(BudgetLine.cost_center)
 
 	rows = query.run(as_dict=True)
 
@@ -107,7 +110,13 @@ def _build_rows(a_map: dict, b_map: dict, group_by: str, only_changed: int, filt
 	# If we have specific line-level filters, we MUST sum the filtered lines (a_map/b_map)
 	# If we have NO line-level filters, we should prefer the Document Total from the Budget Header
 	# to ensure 100% consistency with the Budget View.
-	has_filters = any(filters.get(k) for k in ["project", "cost_center", "vendor"])
+	
+	# Robust truthiness check for business filters
+	has_filters = any([
+		filters.get("project") not in (None, "", 0),
+		filters.get("cost_center") not in (None, "", 0),
+		filters.get("vendor") not in (None, "", 0)
+	])
 	
 	if has_filters:
 		total_a = sum(a_map.values())
@@ -123,7 +132,8 @@ def _build_rows(a_map: dict, b_map: dict, group_by: str, only_changed: int, filt
 		planned_b = float(b_map.get(key, 0) or 0)
 		delta_annual = planned_b - planned_a
 
-		if only_changed and abs(delta_annual) < 0.0001:
+		# Robust check for only_changed
+		if only_changed and abs(delta_annual) < 0.001:
 			continue
 
 		monthly_a = planned_a / 12.0
@@ -143,7 +153,7 @@ def _build_rows(a_map: dict, b_map: dict, group_by: str, only_changed: int, filt
 
 	# Total Row
 	delta_total = total_b - total_a
-	if rows or (not only_changed): # Show total if we have rows OR if we are showing everything
+	if rows or (not only_changed) or (not has_filters): 
 		rows.append({
 			"cost_center": _("Total"),
 			"vendor": "",
@@ -169,17 +179,20 @@ def _build_summary(totals: dict) -> list[dict]:
 	return [
 		{
 			"label": _("Budget A"),
-			"value": frappe.utils.fmt_money(totals.get("budget_a_annual_net", 0)),
+			"value": totals.get("budget_a_annual_net", 0),
+			"datatype": "Currency",
 			"indicator": "blue",
 		},
 		{
 			"label": _("Budget B"),
-			"value": frappe.utils.fmt_money(totals.get("budget_b_annual_net", 0)),
+			"value": totals.get("budget_b_annual_net", 0),
+			"datatype": "Currency",
 			"indicator": "blue",
 		},
 		{
 			"label": _("Delta (B - A)"),
-			"value": frappe.utils.fmt_money(totals.get("delta_annual", 0)),
+			"value": totals.get("delta_annual", 0),
+			"datatype": "Currency",
 			"indicator": "green" if (totals.get("delta_annual", 0) or 0) >= 0 else "red",
 		},
 	]

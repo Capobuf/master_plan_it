@@ -31,7 +31,9 @@ def normalize_dashboard_filters(filters_list: list | dict | str | None) -> dict:
 			if isinstance(f, (list, tuple)) and len(f) >= 4:
 				fieldname = f[1]
 				value = f[3]
-				if fieldname:
+				# Only include if value is not empty/None/Zero (except for valid 0 numeric filters if needed)
+				# For most links/strings in reports, blank means 'no filter'
+				if fieldname and value not in (None, "", [], {}):
 					out[fieldname] = value
 	
 	return out
