@@ -14,8 +14,12 @@ def execute(filters=None):
 	filters = normalize_dashboard_filters(filters)
 	filters = frappe._dict(filters or {})
 
+	# Return empty if required filters missing (prevents JS errors)
+	if not filters.get("budget_a") or not filters.get("budget_b"):
+		return [], [], None, None, []
+
 	_validate_filters(filters)
-	group_by = (filters.get("group_by") or "CostCenter+Vendor").strip()
+	group_by = (filters.get("group_by") or "CostCenter").strip()
 	only_changed = frappe.utils.cint(filters.get("only_changed", 1))
 
 	# 1. Load data with business filters applied

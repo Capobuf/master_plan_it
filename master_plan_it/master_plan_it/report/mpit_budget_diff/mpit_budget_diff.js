@@ -3,52 +3,64 @@
 
 frappe.query_reports["MPIT Budget Diff"] = {
 	filters: [
-		// Business filters (from JSON, consolidated here)
 		{
 			fieldname: "budget_a",
 			label: __("Budget A"),
 			fieldtype: "Link",
 			options: "MPIT Budget",
-			reqd: 1
+			reqd: 1,
+			get_query: function() {
+				return {
+					filters: { docstatus: ["in", [0, 1]] }
+				};
+			}
 		},
 		{
 			fieldname: "budget_b",
 			label: __("Budget B"),
 			fieldtype: "Link",
 			options: "MPIT Budget",
-			reqd: 1
-		},
-		{
-			fieldname: "project",
-			label: __("Project"),
-			fieldtype: "Link",
-			options: "MPIT Project"
-		},
-		{
-			fieldname: "cost_center",
-			label: __("Cost Center"),
-			fieldtype: "Link",
-			options: "MPIT Cost Center"
-		},
-		{
-			fieldname: "vendor",
-			label: __("Vendor"),
-			fieldtype: "Link",
-			options: "MPIT Vendor"
+			reqd: 1,
+			get_query: function() {
+				let budget_a = frappe.query_report.get_filter_value("budget_a");
+				let filters = { docstatus: ["in", [0, 1]] };
+				// Exclude budget_a from options to prevent comparing same budget
+				if (budget_a) {
+					filters.name = ["!=", budget_a];
+				}
+				return { filters: filters };
+			}
 		},
 		{
 			fieldname: "group_by",
 			label: __("Group By"),
 			fieldtype: "Select",
 			options: "CostCenter+Vendor\nCostCenter",
-			default: "CostCenter+Vendor"
+			default: "CostCenter"
 		},
 		{
 			fieldname: "only_changed",
 			label: __("Only Changed"),
 			fieldtype: "Check",
 			default: 1
-		},
+		}
+	],
 
-	]
+	// Prevent report from running without required filters
+	onload: function(report) {
+		report.page.set_primary_action(__("Refresh"), function() {
+			let budget_a = frappe.query_report.get_filter_value("budget_a");
+			let budget_b = frappe.query_report.get_filter_value("budget_b");
+
+			if (!budget_a || !budget_b) {
+				frappe.msgprint(__("Please select both Budget A and Budget B"));
+				return;
+			}
+			if (budget_a === budget_b) {
+				frappe.msgprint(__("Budget A and Budget B must be different"));
+				return;
+			}
+			report.refresh();
+		});
+	}
 };
