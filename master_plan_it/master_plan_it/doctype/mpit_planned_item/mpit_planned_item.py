@@ -90,30 +90,13 @@ class MPITPlannedItem(Document):
 	def _validate_spend_date(self) -> None:
 		"""Enforce spend_date recency and set horizon flag."""
 		today = getdate(nowdate())
-		horizon_years = {today.year, today.year + 1}
-
 		if self.spend_date:
 			spend = getdate(self.spend_date)
 			if spend < today:
 				frappe.throw(_("Spend Date cannot be in the past."))
-			# Set horizon flag based on spend_date year
-			self.out_of_horizon = 0 if spend.year in horizon_years else 1
-			# Note: No longer validating coherence with start_date/end_date
-			# since those fields are now optional when spend_date is present
-			return
+			# Note: start/end dates are optional when spend_date is present.
 
-		# No spend_date: check horizon based on period (if dates exist)
-		if not self.start_date or not self.end_date:
-			# No dates at all - default to in-horizon (will be validated when dates are set)
-			self.out_of_horizon = 0
-			return
-
-		start = getdate(self.start_date)
-		end = getdate(self.end_date)
-		if start.year not in horizon_years and end.year not in horizon_years:
-			self.out_of_horizon = 1
-		else:
-			self.out_of_horizon = 0
+		self.out_of_horizon = self._compute_out_of_horizon()
 
 	def _validate_coverage_fields(self) -> None:
 		if self.covered_by_type and not self.covered_by_name:
@@ -165,18 +148,25 @@ class MPITPlannedItem(Document):
 
 	def _enforce_horizon_flag(self) -> None:
 		"""Flag items whose spend_date/period are outside current year + 1."""
+		self.out_of_horizon = self._compute_out_of_horizon()
+
+	def _compute_out_of_horizon(self) -> int:
+		"""Return 1 if outside current/next year, else 0 (no side effects)."""
 		today = getdate(nowdate())
 		allowed_years = {today.year, today.year + 1}
 
 		if self.spend_date:
 			spend = getdate(self.spend_date)
-			self.out_of_horizon = 0 if spend.year in allowed_years else 1
-			return
+			return 0 if spend.year in allowed_years else 1
+
+		# Guard against incomplete dates; validate() enforces requiredness.
+		if not self.start_date or not self.end_date:
+			return 0
 
 		start = getdate(self.start_date)
 		end = getdate(self.end_date)
 		period_years = {start.year, end.year}
-		self.out_of_horizon = 0 if allowed_years & period_years else 1
+		return 0 if allowed_years & period_years else 1
 
 
 def set_coverage(planned_item: str, covered_by_type: str | None, covered_by_name: str | None) -> None:
@@ -214,4 +204,3 @@ def set_coverage(planned_item: str, covered_by_type: str | None, covered_by_name
 
 	# Save without altering immutable fields
 	doc.save(ignore_permissions=True)
-

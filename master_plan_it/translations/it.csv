@@ -803,3 +803,4 @@ Net Amount by Cost Center,Net Amount by Cost Center,Importo Netto per Centro di 
 "Workflow status. Managed by Frappe Workflow.","Stato workflow. Gestito da Frappe Workflow.",""
 "covered_by_type","tipo_coperto_da",""
 "name","nome",""
+"Operational status. Open-ended terms are active only for Active/Pending Renewal/Renewed.","Stato operativo. I termini senza fine sono attivi solo per Attivo/Pendente Rinnovo/Rinnovato.",""

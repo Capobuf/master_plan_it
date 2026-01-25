@@ -82,7 +82,7 @@
         {
             "allow_in_quick_entry": 1,
             "default": "Active",
-            "description": "Operational status.",
+            "description": "Operational status. Open-ended terms are active only for Active/Pending Renewal/Renewed.",
             "fieldname": "status",
             "fieldtype": "Select",
             "in_preview": 1,

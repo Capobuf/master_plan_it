@@ -15,6 +15,7 @@ The priority logic:
 from __future__ import annotations
 
 from frappe.utils import flt
+from master_plan_it import tax
 
 
 def get_recurrence_multiplier(recurrence_rule: str) -> int:
@@ -166,35 +167,14 @@ def compute_vat_split(
     """
     amount = flt(amount, 2)
     vat_rate = flt(vat_rate, 2)
-    
-    if not amount:
-        return {
-            "amount_net": 0.0,
-            "amount_vat": 0.0,
-            "amount_gross": 0.0,
-        }
-    
-    if not vat_rate:
-        # No VAT: net = gross = amount
-        return {
-            "amount_net": amount,
-            "amount_vat": 0.0,
-            "amount_gross": amount,
-        }
-    
-    vat_multiplier = vat_rate / 100.0
-    
-    if amount_includes_vat:
-        # Amount is gross, calculate net
-        gross = amount
-        net = flt(gross / (1 + vat_multiplier), 2)
-        vat = flt(gross - net, 2)
-    else:
-        # Amount is net, calculate gross
-        net = amount
-        vat = flt(net * vat_multiplier, 2)
-        gross = flt(net + vat, 2)
-    
+
+    net, vat, gross = tax.split_net_vat_gross(
+        amount=amount,
+        vat_rate_pct=vat_rate,
+        includes_vat=bool(amount_includes_vat),
+        precision=2,
+    )
+
     return {
         "amount_net": net,
         "amount_vat": vat,

@@ -122,7 +122,7 @@
     {
       "fieldname": "total_amount_monthly",
       "fieldtype": "Currency",
-      "description": "Average monthly burden (NET Total / 12).",
+      "description": "Average monthly burden for the year (NET Total / 12). Stable month-to-month.",
       "label": "Average Monthly Amount",
       "read_only": 1,
       "columns": 1,

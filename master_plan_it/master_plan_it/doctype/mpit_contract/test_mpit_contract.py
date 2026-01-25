@@ -104,6 +104,24 @@ class TestMPITContract(FrappeTestCase):
 				}
 			).insert()
 
+	def test_contract_requires_vendor(self):
+		"""Contract without vendor should fail validation."""
+		with self.assertRaises(frappe.ValidationError):
+			frappe.get_doc(
+				{
+					"doctype": "MPIT Contract",
+					"cost_center": self.cost_center.name,
+					"terms": [
+						{
+							"from_date": "2025-01-01",
+							"amount": 100,
+							"billing_cycle": "Monthly",
+							"vat_rate": 0,
+						}
+					],
+				}
+			).insert()
+
 	def test_overlapping_terms_rejected(self):
 		"""Overlapping date ranges should fail validation."""
 		with self.assertRaises(frappe.ValidationError):
@@ -179,3 +197,27 @@ class TestMPITContract(FrappeTestCase):
 		# If we are in the current year, the active term is the first one
 		self.assertEqual(contract.current_term_amount, 100)
 		self.assertEqual(contract.current_term_billing_cycle, "Monthly")
+
+	def test_open_ended_term_respects_status(self):
+		"""Open-ended terms should not be treated as active when status is inactive."""
+		current_year = date.today().year
+		contract = frappe.get_doc(
+			{
+				"doctype": "MPIT Contract",
+				"vendor": self.vendor.name,
+				"cost_center": self.cost_center.name,
+				"status": "Cancelled",
+				"auto_renew": 0,
+				"terms": [
+					{
+						"from_date": f"{current_year}-01-01",
+						"amount": 100,
+						"billing_cycle": "Monthly",
+						"vat_rate": 0,
+					}
+				],
+			}
+		)
+		contract.flags.skip_terms_auto_compute = True
+		contract.insert()
+		self.assertIsNone(contract.current_term_amount)

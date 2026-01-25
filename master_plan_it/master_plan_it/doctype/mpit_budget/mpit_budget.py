@@ -144,21 +144,22 @@ class MPITBudget(Document):
 				_("Manual refresh on closed year by {0}. Reason: {1}").format(frappe.session.user, note)
 			)
 
-		generated_lines: list[dict] = []
+		def _apply_refresh() -> None:
+			generated_lines: list[dict] = []
+			generated_lines.extend(self._generate_contract_lines(year_start, year_end))
+			generated_lines.extend(self._generate_planned_item_lines(year_start, year_end))
 
-		generated_lines.extend(self._generate_contract_lines(year_start, year_end))
-		generated_lines.extend(self._generate_planned_item_lines(year_start, year_end))
+			self._upsert_generated_lines(generated_lines)
+			self.flags.skip_generated_guard = True
+			self.save(ignore_permissions=True)
 
-		self._upsert_generated_lines(generated_lines)
-		self.flags.skip_generated_guard = True
+		try:
+			_apply_refresh()
+		except frappe.TimestampMismatchError:
+			# Reload and retry once to avoid overwriting concurrent updates.
+			self.reload()
+			_apply_refresh()
 
-		# Reload again just before save to get absolute latest version
-		# This minimizes the window for concurrent modification errors
-		current_lines = list(self.lines)  # Preserve our computed lines
-		self.reload()
-		self.lines = current_lines  # Restore the lines we just computed
-
-		self.save(ignore_permissions=True)
 		self._add_timeline_comment(_("Budget refreshed from sources."))
 
 	def _within_horizon(self) -> bool:
@@ -660,14 +661,12 @@ class MPITBudget(Document):
 			self.db_set("workflow_state", "Approved")
 
 	def _compute_totals(self):
-		total_monthly = 0.0
 		total_annual = 0.0
 		total_net = 0.0
 		total_vat = 0.0
 		total_gross = 0.0
 
 		for line in (self.lines or []):
-			total_monthly += flt(getattr(line, "monthly_amount", 0) or 0, 2)
 			total_annual += flt(getattr(line, "annual_amount", 0) or 0, 2)
 			total_net += flt(getattr(line, "annual_net", 0) or 0, 2)
 			total_vat += flt(getattr(line, "annual_vat", 0) or 0, 2)

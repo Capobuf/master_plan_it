@@ -106,6 +106,8 @@ class MPITContract(Document):
 
 	def validate(self):
 		prev = self.get_doc_before_save()
+		if not self.vendor:
+			frappe.throw(_("Vendor is required for contracts."))
 		if not self.cost_center:
 			frappe.throw(_("Cost Center is required for contracts."))
 
@@ -233,6 +235,7 @@ class MPITContract(Document):
 		If no term covers today, all derived fields are set to None.
 		"""
 		today = date.today()
+		active_for_current = self._is_active_for_current_term()
 
 		# Reset all derived fields
 		self.current_term_amount = None
@@ -259,16 +262,28 @@ class MPITContract(Document):
 			# Determine term end date:
 			# 1. Use explicit to_date if set
 			# 2. Otherwise, day before next term starts
-			# 3. If last term, open-ended (far future for comparison)
+			# 3. If last term, treat as open-ended (no fake dates)
 			if term.to_date:
 				term_end = getdate(term.to_date)
 			elif i + 1 < len(terms_sorted):
 				term_end = add_days(getdate(terms_sorted[i + 1].from_date), -1)
 			else:
-				term_end = date(2099, 12, 31)  # Open-ended
+				term_end = None  # Open-ended
 
 			# Check if today falls within this term's range
-			if term_start <= today <= term_end:
+			if not active_for_current:
+				continue
+
+			if term_end and term_start <= today <= term_end:
+				self.current_term_amount = term.amount
+				self.current_term_billing_cycle = term.billing_cycle
+				self.current_term_monthly_net = term.monthly_amount_net
+				self.current_term_from_date = term.from_date
+				# Derive contract dates from current term
+				self.start_date = term.from_date
+				self.end_date = term.to_date  # None if open-ended
+				break
+			if not term_end and today >= term_start:
 				self.current_term_amount = term.amount
 				self.current_term_billing_cycle = term.billing_cycle
 				self.current_term_monthly_net = term.monthly_amount_net
@@ -283,6 +298,16 @@ class MPITContract(Document):
 		if not self.start_date and terms_sorted:
 			self.start_date = terms_sorted[0].from_date
 			self.end_date = terms_sorted[0].to_date
+
+	def _is_active_for_current_term(self) -> bool:
+		"""Return True if contract status indicates it should be considered active."""
+		status = (self.status or "").strip()
+		valid_statuses = {"Active", "Pending Renewal", "Renewed"}
+		if status in valid_statuses:
+			return True
+		if self.auto_renew and status not in {"Cancelled", "Expired", "Draft"}:
+			return True
+		return False
 
 	# ─────────────────────────────────────────────────────────────────────────────
 	# Annual Summary Computation

@@ -52,8 +52,12 @@ class MPITActualEntry(Document):
 		try:
 			project_doc = frappe.get_doc("MPIT Project", self.project)
 			project_doc.save(ignore_permissions=True)
-		except Exception as e:
-			pass
+		except Exception:
+			# Best-effort: do not block save if project totals fail to refresh.
+			frappe.log_error(
+				frappe.get_traceback(),
+				f"MPIT Actual Entry: failed to update project totals for {self.project} (entry {self.name})",
+			)
 
 	def validate(self):
 		self._set_year_from_posting_date()

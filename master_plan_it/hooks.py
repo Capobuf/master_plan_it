@@ -41,7 +41,6 @@ doc_events = {
     },
     "MPIT Planned Item": {
         "on_update": "master_plan_it.budget_refresh_hooks.on_planned_item_change",
-        "after_submit": "master_plan_it.budget_refresh_hooks.on_planned_item_change",
         "on_cancel": "master_plan_it.budget_refresh_hooks.on_planned_item_change",
         "on_trash": "master_plan_it.budget_refresh_hooks.on_planned_item_change",
     },

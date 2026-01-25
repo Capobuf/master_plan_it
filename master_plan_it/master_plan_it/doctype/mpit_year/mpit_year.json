@@ -26,14 +26,14 @@
   {
    "fieldname": "start_date",
    "fieldtype": "Date",
-   "description": "Date when the year period starts.",
+   "description": "Date when the year period starts. Must not overlap other years.",
    "label": "Start Date",
    "reqd": 1
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Date",
-   "description": "Date when the year period ends.",
+   "description": "Date when the year period ends. Must not overlap other years.",
    "label": "End Date",
    "reqd": 1
   },

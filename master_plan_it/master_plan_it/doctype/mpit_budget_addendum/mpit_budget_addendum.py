@@ -42,21 +42,23 @@ class MPITBudgetAddendum(Document):
 		self._validate_allowance_exists()
 
 	def _validate_reference_snapshot(self) -> None:
-		"""Ensure reference_snapshot is an approved Snapshot/Baseline for the same year."""
+		"""Ensure reference_snapshot is an approved Snapshot for the same year."""
 		if not self.reference_snapshot or not self.year:
 			frappe.throw(_("Reference Snapshot and Year are required."))
 
-		conditions = ["name = %(name)s", "year = %(year)s", "docstatus = 1"]
-		params = {"name": self.reference_snapshot, "year": self.year}
+		if not frappe.db.has_column("MPIT Budget", "budget_type"):
+			frappe.throw(
+				_("MPIT Budget is missing budget_type. Run migrate to update the schema.")
+			)
 
-		if frappe.db.has_column("MPIT Budget", "budget_type"):
-			conditions.append("budget_type = 'Snapshot'")
-		elif frappe.db.has_column("MPIT Budget", "budget_kind"):
-			conditions.append("budget_kind = 'Baseline'")
-
-		if not frappe.db.sql(
-			f"select name from `tabMPIT Budget` where {' and '.join(conditions)} limit 1",
-			params,
+		if not frappe.db.exists(
+			"MPIT Budget",
+			{
+				"name": self.reference_snapshot,
+				"year": self.year,
+				"docstatus": 1,
+				"budget_type": "Snapshot",
+			},
 		):
 			frappe.throw(
 				_("Reference Snapshot must be an approved Snapshot for year {0}.").format(self.year)
