@@ -90,6 +90,7 @@ def _get_projects_data(project_names: list[str]) -> dict:
             "start_date",
             "end_date",
         ],
+        limit=None,
     )
 
     return {p.name: p for p in projects}
@@ -214,6 +215,7 @@ def _build_cost_center_breakdown(budget: str, project_details: list[dict]) -> li
         "MPIT Budget Line",
         filters={"parent": budget},
         fields=["cost_center", "annual_net"],
+        limit=None,
     )
     for line in lines:
         cc = line.cost_center
@@ -379,6 +381,7 @@ def _get_budget_monthly(budget: str, year_start: date, year_end: date) -> dict[i
         "MPIT Budget Line",
         filters={"parent": budget},
         fields=["monthly_amount", "period_start_date", "period_end_date"],
+        limit=None,
     )
 
     result = {m: 0.0 for m in range(1, 13)}

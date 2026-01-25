@@ -145,6 +145,7 @@ def _get_contract_monthly(year: str, year_start: date, year_end: date, cost_cent
 		"MPIT Budget Line",
 		filters=filters,
 		fields=["cost_center", "monthly_amount", "period_start_date", "period_end_date"],
+		limit=None,
 	)
 
 	result: dict[str, dict[int, float]] = {}
@@ -186,6 +187,7 @@ def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_
 			"end_date",
 			"spend_date",
 		],
+		limit=None,
 	)
 
 	if not items:
@@ -199,6 +201,7 @@ def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_
 			"MPIT Project",
 			filters={"name": ["in", project_names], "workflow_state": "Approved"},
 			fields=["name", "cost_center"],
+			limit=None,
 		)
 		project_ccs = {p.name: p.cost_center for p in projects}
 

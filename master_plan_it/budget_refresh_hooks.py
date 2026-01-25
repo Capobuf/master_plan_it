@@ -181,6 +181,7 @@ def realign_planned_items_horizon() -> None:
 		"MPIT Planned Item",
 		filters={"workflow_state": "Submitted", "out_of_horizon": 1},
 		fields=["name", "spend_date", "start_date", "end_date"],
+		limit=None,
 	)
 
 	if not items:

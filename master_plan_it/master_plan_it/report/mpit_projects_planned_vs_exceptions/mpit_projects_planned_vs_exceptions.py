@@ -132,6 +132,7 @@ def _get_active_projects(
         "MPIT Project",
         filters=project_filters,
         pluck="name",
+        limit=None,
     ) if project_filters else None
 
     # From Planned Items (submitted, overlap year range)
@@ -148,6 +149,7 @@ def _get_active_projects(
         filters=pi_filters,
         pluck="project",
         distinct=True,
+        limit=None,
     )
     projects.update(planned_projects)
 
@@ -166,6 +168,7 @@ def _get_active_projects(
         filters=actual_filters,
         pluck="project",
         distinct=True,
+        limit=None,
     )
     projects.update(actual_projects)
 
@@ -192,7 +195,7 @@ def _get_planned_amounts(
     # Get project names that match filters
     project_names = None
     if project_filters:
-        project_names = frappe.get_all("MPIT Project", filters=project_filters, pluck="name")
+        project_names = frappe.get_all("MPIT Project", filters=project_filters, pluck="name", limit=None)
         if not project_names:
             return {}
 
@@ -209,6 +212,7 @@ def _get_planned_amounts(
         "MPIT Planned Item",
         filters=pi_filters,
         fields=["project", "amount"],
+        limit=None,
     )
 
     # Aggregate by project
@@ -238,6 +242,7 @@ def _get_actual_amounts(year: str, project_filter: str | None, cost_center_filte
             "MPIT Project",
             filters={"cost_center": cost_center_filter},
             pluck="name",
+            limit=None,
         )
         if not proj_names:
             return {}
@@ -247,6 +252,7 @@ def _get_actual_amounts(year: str, project_filter: str | None, cost_center_filte
         "MPIT Actual Entry",
         filters=filters,
         fields=["project", "amount_net"],
+        limit=None,
     )
 
     # Aggregate by project
@@ -268,6 +274,7 @@ def _get_project_info(projects: list[str]) -> dict[str, dict]:
         "MPIT Project",
         filters={"name": ["in", projects]},
         fields=["name", "workflow_state", "cost_center"],
+        limit=None,
     )
 
     return {i["name"]: {"workflow_state": i.get("workflow_state"), "cost_center": i.get("cost_center")} for i in info_list}

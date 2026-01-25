@@ -60,6 +60,7 @@ def get_data(filters=None):
 			"MPIT Project",
 			filters={"cost_center": ["in", cost_centers]},
 			pluck="name",
+			limit=None,
 		)
 		if not projects:
 			return {

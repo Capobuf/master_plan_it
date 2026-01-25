@@ -9,7 +9,7 @@ def apply_chart_filters(site: str = None):
 	frappe.conf.developer_mode = 1
 
 	# Choose latest year as default if present
-	years = frappe.get_all("MPIT Year", pluck="name", order_by="name desc")
+	years = frappe.get_all("MPIT Year", pluck="name", order_by="name desc", limit=None)
 	default_year = years[0] if years else None
 
 	def set_filters(chart_name, filters):
