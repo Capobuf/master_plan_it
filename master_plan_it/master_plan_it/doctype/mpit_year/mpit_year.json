@@ -17,7 +17,7 @@
   {
    "fieldname": "year",
    "fieldtype": "Int",
-   "description": "Enter the year identifier (e.g. 2025).",
+   "description": "Enter the year identifier (e.g., 2025).",
    "in_list_view": 1,
    "label": "Year",
    "reqd": 1,
@@ -26,14 +26,14 @@
   {
    "fieldname": "start_date",
    "fieldtype": "Date",
-   "description": "Date when the year period starts. Must not overlap other years.",
+   "description": "Start date of the year period. Must not overlap with other years.",
    "label": "Start Date",
    "reqd": 1
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Date",
-   "description": "Date when the year period ends. Must not overlap other years.",
+   "description": "End date of the year period. Must not overlap with other years.",
    "label": "End Date",
    "reqd": 1
   },
@@ -41,7 +41,7 @@
    "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
-   "description": "If enabled, the year is active for planning.",
+   "description": "Enable to make this year available for planning.",
    "label": "Is Active"
   }
  ],

@@ -35,21 +35,21 @@
   {
    "fieldname": "contact_email",
    "fieldtype": "Data",
-   "description": "Enter the main contact email.",
+   "description": "Enter the main contact email (optional).",
    "label": "Contact Email",
    "in_list_view": 1
   },
   {
    "fieldname": "contact_phone",
    "fieldtype": "Data",
-   "description": "Enter the main contact phone number.",
+   "description": "Enter the main contact phone number (optional).",
    "label": "Contact Phone",
    "in_list_view": 1
   },
   {
    "fieldname": "notes",
    "fieldtype": "Small Text",
-   "description": "Add internal notes about the vendor.",
+   "description": "Add internal notes (optional).",
    "label": "Notes",
    "in_list_view": 1
   },
@@ -57,7 +57,7 @@
    "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
-   "description": "If enabled, the vendor is active for selection.",
+   "description": "Enable to make this vendor available for selection.",
    "label": "Is Active"
   }
  ],

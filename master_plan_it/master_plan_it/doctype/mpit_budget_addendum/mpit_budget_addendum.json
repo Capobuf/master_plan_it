@@ -34,7 +34,7 @@
    "reqd": 1
   },
   {
-   "description": "Cost Center impacted by the cap change (must exist in Snapshot).",
+   "description": "Select the Cost Center affected by this cap change. It must exist in the reference Snapshot.",
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -44,7 +44,7 @@
    "reqd": 1
   },
   {
-   "description": "Approved Snapshot for same year; must include Allowance for Cost Center.",
+   "description": "Select an Approved Snapshot for the same year. It must include an Allowance for this Cost Center.",
    "fieldname": "reference_snapshot",
    "fieldtype": "Link",
    "label": "Reference Snapshot",
@@ -58,7 +58,7 @@
    "label": "Delta"
   },
   {
-   "description": "Annual delta (Cap) - can be negative.",
+   "description": "Annual cap delta. Can be negative.",
    "fieldname": "delta_amount",
    "fieldtype": "Currency",
    "in_list_view": 1,
@@ -66,7 +66,7 @@
    "reqd": 1
   },
   {
-   "description": "Motivation for the addendum.",
+   "description": "Explain why this addendum is needed.",
    "fieldname": "reason",
    "fieldtype": "Small Text",
    "label": "Reason",
