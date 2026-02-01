@@ -147,11 +147,13 @@ def _build_columns() -> list[dict]:
 		{"label": _("A Contratti"), "fieldname": "a_contracts", "fieldtype": "Currency", "width": 100},
 		{"label": _("A Progetti"), "fieldname": "a_projects", "fieldtype": "Currency", "width": 100},
 		{"label": _("A Allowance"), "fieldname": "a_allowance", "fieldtype": "Currency", "width": 100},
+		{"label": _("A Altro"), "fieldname": "a_other", "fieldtype": "Currency", "width": 100},
 		# Budget B breakdown
 		{"label": _("B Totale"), "fieldname": "b_total", "fieldtype": "Currency", "width": 110},
 		{"label": _("B Contratti"), "fieldname": "b_contracts", "fieldtype": "Currency", "width": 100},
 		{"label": _("B Progetti"), "fieldname": "b_projects", "fieldtype": "Currency", "width": 100},
 		{"label": _("B Allowance"), "fieldname": "b_allowance", "fieldtype": "Currency", "width": 100},
+		{"label": _("B Altro"), "fieldname": "b_other", "fieldtype": "Currency", "width": 100},
 		# Delta
 		{"label": _("Delta"), "fieldname": "delta", "fieldtype": "Currency", "width": 110},
 		{"label": _("Delta %"), "fieldname": "delta_pct", "fieldtype": "Percent", "width": 80},
@@ -177,6 +179,7 @@ def _load_budget_details(budget: str, exclude_line_kinds: set, exclusions: dict)
 
 	# Conditional sums per line_kind
 	# Note: "projects" includes both "Planned Item" and "Project" line_kinds
+	# Note: "other" includes "One-off" and "Manual" line_kinds
 	total_sum = Sum(amount_expr).as_("total")
 	contract_sum = Sum(
 		Case().when(BudgetLine.line_kind == "Contract", amount_expr).else_(0)
@@ -189,6 +192,11 @@ def _load_budget_details(budget: str, exclude_line_kinds: set, exclusions: dict)
 	allowance_sum = Sum(
 		Case().when(BudgetLine.line_kind == "Allowance", amount_expr).else_(0)
 	).as_("allowance")
+	other_sum = Sum(
+		Case().when(
+			BudgetLine.line_kind.isin(["One-off", "Manual"]), amount_expr
+		).else_(0)
+	).as_("other")
 
 	query = (
 		frappe.qb.from_(BudgetLine)
@@ -198,6 +206,7 @@ def _load_budget_details(budget: str, exclude_line_kinds: set, exclusions: dict)
 			contract_sum,
 			project_sum,
 			allowance_sum,
+			other_sum,
 		)
 		.where(BudgetLine.parent == budget)
 		.groupby(BudgetLine.cost_center)
@@ -244,6 +253,7 @@ def _load_budget_details(budget: str, exclude_line_kinds: set, exclusions: dict)
 				"contracts": float(row.get("contracts") or 0),
 				"projects": float(row.get("projects") or 0),
 				"allowance": float(row.get("allowance") or 0),
+				"other": float(row.get("other") or 0),
 			}
 	return result
 
@@ -253,12 +263,13 @@ def _build_rows(a_map: dict, b_map: dict, only_changed: bool) -> tuple[list[dict
 	all_cost_centers = set(a_map.keys()) | set(b_map.keys())
 
 	rows: list[dict] = []
-	totals_a = {"total": 0.0, "contracts": 0.0, "projects": 0.0, "allowance": 0.0}
-	totals_b = {"total": 0.0, "contracts": 0.0, "projects": 0.0, "allowance": 0.0}
+	default_values = {"total": 0, "contracts": 0, "projects": 0, "allowance": 0, "other": 0}
+	totals_a = {"total": 0.0, "contracts": 0.0, "projects": 0.0, "allowance": 0.0, "other": 0.0}
+	totals_b = {"total": 0.0, "contracts": 0.0, "projects": 0.0, "allowance": 0.0, "other": 0.0}
 
 	for cc in sorted(all_cost_centers):
-		a = a_map.get(cc, {"total": 0, "contracts": 0, "projects": 0, "allowance": 0})
-		b = b_map.get(cc, {"total": 0, "contracts": 0, "projects": 0, "allowance": 0})
+		a = a_map.get(cc, default_values)
+		b = b_map.get(cc, default_values)
 
 		delta = b["total"] - a["total"]
 
@@ -285,10 +296,12 @@ def _build_rows(a_map: dict, b_map: dict, only_changed: bool) -> tuple[list[dict
 			"a_contracts": a["contracts"],
 			"a_projects": a["projects"],
 			"a_allowance": a["allowance"],
+			"a_other": a["other"],
 			"b_total": b["total"],
 			"b_contracts": b["contracts"],
 			"b_projects": b["projects"],
 			"b_allowance": b["allowance"],
+			"b_other": b["other"],
 			"delta": delta,
 			"delta_pct": delta_pct,
 		})
@@ -308,10 +321,12 @@ def _build_rows(a_map: dict, b_map: dict, only_changed: bool) -> tuple[list[dict
 		"a_contracts": totals_a["contracts"],
 		"a_projects": totals_a["projects"],
 		"a_allowance": totals_a["allowance"],
+		"a_other": totals_a["other"],
 		"b_total": totals_b["total"],
 		"b_contracts": totals_b["contracts"],
 		"b_projects": totals_b["projects"],
 		"b_allowance": totals_b["allowance"],
+		"b_other": totals_b["other"],
 		"delta": delta_total,
 		"delta_pct": delta_total_pct,
 		"is_total_row": 1,
