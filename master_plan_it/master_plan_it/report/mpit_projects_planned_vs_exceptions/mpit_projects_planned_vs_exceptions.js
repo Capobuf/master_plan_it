@@ -16,6 +16,18 @@ frappe.query_reports["MPIT Projects Planned vs Exceptions"] = {
 			fieldtype: "Link",
 			options: "MPIT Year"
 		},
+		{
+			fieldname: "cost_center",
+			label: __("Cost Center"),
+			fieldtype: "Link",
+			options: "MPIT Cost Center"
+		},
+		{
+			fieldname: "status",
+			label: __("Project Status"),
+			fieldtype: "Select",
+			options: "\nDraft\nPending Approval\nApproved\nRejected\nCancelled"
+		},
 		// Print filters
 		{
 			fieldname: "print_profile",

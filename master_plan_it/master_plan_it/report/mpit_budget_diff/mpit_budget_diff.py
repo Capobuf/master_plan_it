@@ -176,12 +176,15 @@ def _load_budget_details(budget: str, exclude_line_kinds: set, exclusions: dict)
 	)
 
 	# Conditional sums per line_kind
+	# Note: "projects" includes both "Planned Item" and "Project" line_kinds
 	total_sum = Sum(amount_expr).as_("total")
 	contract_sum = Sum(
 		Case().when(BudgetLine.line_kind == "Contract", amount_expr).else_(0)
 	).as_("contracts")
 	project_sum = Sum(
-		Case().when(BudgetLine.line_kind == "Planned Item", amount_expr).else_(0)
+		Case().when(
+			BudgetLine.line_kind.isin(["Planned Item", "Project"]), amount_expr
+		).else_(0)
 	).as_("projects")
 	allowance_sum = Sum(
 		Case().when(BudgetLine.line_kind == "Allowance", amount_expr).else_(0)
@@ -200,25 +203,35 @@ def _load_budget_details(budget: str, exclude_line_kinds: set, exclusions: dict)
 		.groupby(BudgetLine.cost_center)
 	)
 
-	# Apply exclusions
+	# Apply line_kind exclusions (line_kind is never NULL, so != is safe)
 	for lk in exclude_line_kinds:
 		query = query.where(BudgetLine.line_kind != lk)
 
+	# Apply specific exclusions with NULL-safe logic:
+	# field != value excludes NULLs in SQL, so we use (field != value OR field IS NULL)
 	for vendor in exclusions.get("vendors", []):
 		if vendor:
-			query = query.where(BudgetLine.vendor != vendor)
+			query = query.where(
+				(BudgetLine.vendor != vendor) | BudgetLine.vendor.isnull()
+			)
 
 	for cc in exclusions.get("cost_centers", []):
 		if cc:
-			query = query.where(BudgetLine.cost_center != cc)
+			query = query.where(
+				(BudgetLine.cost_center != cc) | BudgetLine.cost_center.isnull()
+			)
 
 	for contract in exclusions.get("contracts", []):
 		if contract:
-			query = query.where(BudgetLine.contract != contract)
+			query = query.where(
+				(BudgetLine.contract != contract) | BudgetLine.contract.isnull()
+			)
 
 	for project in exclusions.get("projects", []):
 		if project:
-			query = query.where(BudgetLine.project != project)
+			query = query.where(
+				(BudgetLine.project != project) | BudgetLine.project.isnull()
+			)
 
 	rows = query.run(as_dict=True)
 

@@ -3,7 +3,20 @@
 
 frappe.query_reports["MPIT Renewals Window"] = {
 	filters: [
-		// Business filters (from JSON, consolidated here)
+		// Business filters
+		{
+			fieldname: "cost_center",
+			label: __("Cost Center"),
+			fieldtype: "Link",
+			options: "MPIT Cost Center"
+		},
+		{
+			fieldname: "include_children",
+			label: __("Include Child Cost Centers"),
+			fieldtype: "Check",
+			default: 0,
+			depends_on: "cost_center"
+		},
 		{
 			fieldname: "days",
 			label: __("Next N Days"),
