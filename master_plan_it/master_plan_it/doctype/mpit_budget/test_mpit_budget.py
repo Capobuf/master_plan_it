@@ -352,11 +352,36 @@ class TestMPITBudget(FrappeTestCase):
 		
 		self.assertIn("system-managed", str(ctx.exception).lower())
 
-	def test_snapshot_allows_only_allowance_manual_lines(self):
+	def test_snapshot_allows_manual_lines_of_any_kind(self):
 		"""
-		Test: Snapshot manual lines must be of type 'Allowance'.
+		Test: Snapshot budgets allow manual lines of any line_kind.
 		
-		Failure indicates: _enforce_snapshot_manual_line_rules() not enforcing.
+		Failure indicates: _enforce_snapshot_manual_line_rules() blocking valid lines.
+		"""
+		snapshot = frappe.get_doc({
+			"doctype": "MPIT Budget",
+			"year": self.test_year,
+			"budget_type": "Snapshot",
+			"workflow_state": "Draft",
+			"lines": [{
+				"doctype": "MPIT Budget Line",
+				"cost_center": self.test_cost_center,
+				"line_kind": "Contract",  # Was blocked before
+				"monthly_amount": 100,
+				"recurrence_rule": "Monthly",
+				"is_generated": 0,
+			}]
+		})
+		snapshot.insert()  # Should not raise
+		self.assertEqual(snapshot.budget_type, "Snapshot")
+		self.assertEqual(len(snapshot.lines), 1)
+		self.assertEqual(snapshot.lines[0].line_kind, "Contract")
+
+	def test_snapshot_allowance_requires_cost_center(self):
+		"""
+		Test: Snapshot manual Allowance lines still require cost_center.
+		
+		Failure indicates: _enforce_snapshot_manual_line_rules() not validating Allowance.
 		"""
 		with self.assertRaises(frappe.ValidationError) as ctx:
 			frappe.get_doc({
@@ -366,15 +391,43 @@ class TestMPITBudget(FrappeTestCase):
 				"workflow_state": "Draft",
 				"lines": [{
 					"doctype": "MPIT Budget Line",
-					"cost_center": self.test_cost_center,
-					"line_kind": "Contract",
+					"line_kind": "Allowance",
 					"monthly_amount": 100,
 					"recurrence_rule": "Monthly",
 					"is_generated": 0,
+					# cost_center intentionally omitted
 				}]
 			}).insert()
 		
-		self.assertIn("allowance", str(ctx.exception).lower())
+		self.assertIn("cost center", str(ctx.exception).lower())
+
+	def test_autofill_cost_center_from_project(self):
+		"""
+		Test: Cost center is auto-filled from project when not provided.
+		
+		Failure indicates: _autofill_cost_centers() not working.
+		"""
+		project_name = self._create_test_project()
+		snapshot = frappe.get_doc({
+			"doctype": "MPIT Budget",
+			"year": self.test_year,
+			"budget_type": "Snapshot",
+			"workflow_state": "Draft",
+			"lines": [{
+				"doctype": "MPIT Budget Line",
+				"project": project_name,
+				"line_kind": "Manual",
+				"monthly_amount": 100,
+				"recurrence_rule": "Monthly",
+				"is_generated": 0,
+				# cost_center intentionally omitted
+			}]
+		})
+		snapshot.insert()
+		snapshot.reload()
+		# _autofill_cost_centers should have populated it
+		self.assertEqual(snapshot.lines[0].cost_center, self.test_cost_center)
+
 
 	# ═══════════════════════════════════════════════════════════════════════════
 	# TOTALS COMPUTATION TESTS (2 tests)

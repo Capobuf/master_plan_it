@@ -1,0 +1,221 @@
+Implementation Plan: Linee flessibili negli Snapshot Budget
+Obiettivo
+Permettere l'inserimento di tutti i tipi di linee budget (Contract, Project, Planned Item, Allowance, One-off, Manual) negli Snapshot in stato Draft, con auto-popolamento dei dati (Cost Center, etc.) dal documento sorgente.
+
+Contesto e motivazione
+L'utente ha bisogno di inserire progetti e contratti non ancora approvati in uno Snapshot per poter usare il report Budget Diff come strumento di proposta al cliente. Il design attuale blocca questa possibilità perché:
+
+_enforce_snapshot_manual_line_rules
+ permette solo linee Allowance
+Manca fetch_from: "project.cost_center" nel campo 
+cost_center
+_copy_manual_allowance_lines
+ copia solo linee Allowance tra Snapshot
+Analisi impatto
+✅ Nessun impatto negativo
+Componente	Stato	Note
+Report 
+mpit_budget_diff
+✅ OK	Già gestisce tutti i 
+line_kind
+Report mpit_overview	✅ OK	Mostra 
+line_kind
+ senza filtrare
+Report mpit_monthly_plan	✅ OK	Filtra su Contract ma non dipende da Snapshot
+Calcolo totali (
+_compute_totals
+)	✅ OK	Somma tutte le linee indipendentemente dal tipo
+Cap calculation	✅ OK	Considera solo linee Allowance in Snapshot approvati
+create_snapshot
+✅ OK	Copia tutte le linee, impostando is_generated=1
+⚠️ Richiede modifica
+Componente	Impatto	Azione
+_enforce_snapshot_manual_line_rules
+Blocca linee non-Allowance	Rimuovere restrizione tipo, mantenere check cost_center
+fetch_from per project	Cost Center non popolato lato UI	Aggiungere logica di fetch
+_copy_manual_allowance_lines
+Copia solo Allowance	Rinominare ed estendere a tutti i tipi
+Test 
+test_snapshot_allows_only_allowance_manual_lines
+Fallirà	Rimuovere o convertire in test positivo
+Proposed Changes
+Backend - mpit_budget.py
+[MODIFY] 
+mpit_budget.py
+1. Modifica 
+_enforce_snapshot_manual_line_rules
+ (linee 101-113)
+
+Rimuovere la restrizione su 
+line_kind
+. Mantenere solo il check su 
+cost_center
+ per le linee Allowance (necessario per i Caps):
+
+def _enforce_snapshot_manual_line_rules(self) -> None:
+    """Validate manual lines in Snapshot budgets."""
+    if self.budget_type != "Snapshot":
+        return
+    for line in self.lines:
+        if getattr(line, "is_generated", 0):
+            continue
+        # Cost Center is required for Allowance lines (used for Cap calculation)
+        if line.line_kind == "Allowance" and not line.cost_center:
+            frappe.throw(_("Snapshot budget line {0}: Cost Center is required for Allowance.").format(line.idx))
+2. Rinominare e modificare 
+_copy_manual_allowance_lines
+ → _copy_manual_lines (linee 876-923)
+
+Estendere per copiare tutte le linee manuali, non solo Allowance:
+
+def _copy_manual_lines(snapshot: "Document", year: str) -> None:
+    """Copy manual lines from the latest approved Snapshot for the same year.
+    
+    Condition: is_generated == 0 (any line_kind)
+    Avoids duplicates by checking source_key and cost_center+line_kind combo.
+    """
+    # ... (logic updated to copy all manual lines)
+Schema - mpit_budget_line.json
+[MODIFY] 
+mpit_budget_line.json
+Aggiungere fetch_from per project.cost_center. Poiché Frappe supporta un solo fetch_from per campo, useremo uno script per gestire entrambi i casi.
+
+Alternativa: Mantenere il backend 
+_autofill_cost_centers
+ (già funzionante) e aggiungere un client script per migliorare la UX.
+
+Client Script - mpit_budget.js
+[MODIFY] 
+mpit_budget.js
+Aggiungere handler per auto-populate 
+cost_center
+ quando si seleziona un 
+project
+:
+
+frappe.ui.form.on("MPIT Budget Line", {
+    project: function(frm, cdt, cdn) {
+        let row = locals[cdt][cdn];
+        if (row.project && !row.cost_center) {
+            frappe.db.get_value("MPIT Project", row.project, "cost_center", (r) => {
+                if (r && r.cost_center) {
+                    frappe.model.set_value(cdt, cdn, "cost_center", r.cost_center);
+                }
+            });
+        }
+    }
+});
+Test - test_mpit_budget.py
+[MODIFY] 
+test_mpit_budget.py
+1. Rimuovere/modificare 
+test_snapshot_allows_only_allowance_manual_lines
+ (linee 355-377)
+
+Convertire in test positivo che verifica che tutti i tipi di linea sono permessi:
+
+def test_snapshot_allows_manual_lines_of_any_kind(self):
+    """
+    Test: Snapshot budgets allow manual lines of any line_kind.
+    """
+    snapshot = frappe.get_doc({
+        "doctype": "MPIT Budget",
+        "year": self.test_year,
+        "budget_type": "Snapshot",
+        "workflow_state": "Draft",
+        "lines": [{
+            "doctype": "MPIT Budget Line",
+            "cost_center": self.test_cost_center,
+            "line_kind": "Contract",  # Was blocked before
+            "monthly_amount": 100,
+            "recurrence_rule": "Monthly",
+            "is_generated": 0,
+        }]
+    })
+    snapshot.insert()  # Should not raise
+    self.assertEqual(snapshot.budget_type, "Snapshot")
+    self.assertEqual(len(snapshot.lines), 1)
+2. Aggiungere test per cost_center auto-fill da project
+
+def test_autofill_cost_center_from_project(self):
+    """
+    Test: Cost center is auto-filled from project when not provided.
+    """
+    project_name = self._create_test_project()
+    snapshot = frappe.get_doc({
+        "doctype": "MPIT Budget",
+        "year": self.test_year,
+        "budget_type": "Snapshot",
+        "workflow_state": "Draft",
+        "lines": [{
+            "doctype": "MPIT Budget Line",
+            "project": project_name,
+            "line_kind": "Manual",
+            "monthly_amount": 100,
+            "recurrence_rule": "Monthly",
+            "is_generated": 0,
+            # cost_center intentionally omitted
+        }]
+    })
+    snapshot.insert()
+    snapshot.reload()
+    # _autofill_cost_centers should have populated it
+    self.assertEqual(snapshot.lines[0].cost_center, self.test_cost_center)
+Verification Plan
+1. Test automatici esistenti
+Eseguire la test suite completa per verificare nessuna regressione:
+
+docker exec -u frappe container_name bench --site site_name run-tests \
+    --module master_plan_it.master_plan_it.doctype.mpit_budget.test_mpit_budget
+2. Test specifici da eseguire
+Dopo le modifiche, verificare:
+
+# Test singolo per snapshot con linee di vari tipi
+docker exec -u frappe container_name bench --site site_name run-tests \
+    --module master_plan_it.master_plan_it.doctype.mpit_budget.test_mpit_budget \
+    --test test_snapshot_allows_manual_lines_of_any_kind
+# Test per auto-fill cost center
+docker exec -u frappe container_name bench --site site_name run-tests \
+    --module master_plan_it.master_plan_it.doctype.mpit_budget.test_mpit_budget \
+    --test test_autofill_cost_center_from_project
+3. Verifica manuale
+Creare Snapshot Draft
+
+Vai a Budget → Nuovo Budget → Tipo: Snapshot
+Aggiungi linea con line_kind = Contract → Deve essere permesso
+Aggiungi linea con line_kind = Project → Seleziona un progetto → Il Cost Center deve auto-popolarsi
+Salva → Deve salvare senza errori
+Verificare Budget Diff Report
+
+Crea uno Snapshot A con alcune linee
+Crea uno Snapshot B con linee diverse (incluse linee Contract e Project manuali)
+Vai al report Budget Diff → Seleziona A e B → Deve mostrare le differenze correttamente
+Rischi e mitigazioni
+Rischio	Mitigazione
+Linee manuali non sincronizzate con sorgenti	Le linee manuali sono "snapshot" del momento, non si aggiornano. Documentare questo comportamento.
+Doppio conteggio	Le linee manuali con 
+project
+ o 
+contract
+ non sono collegate alla logica di is_covered. L'utente è responsabile della coerenza.
+_copy_manual_lines troppo permissivo	Aggiungere deduplicazione basata su source_key o combinazione cost_center + line_kind + description.
+Checklist implementazione
+ Modificare 
+_enforce_snapshot_manual_line_rules
+ in 
+mpit_budget.py
+ Rinominare e modificare 
+_copy_manual_allowance_lines
+ → _copy_manual_lines
+ Aggiornare la chiamata da 
+create_snapshot
+ alla nuova funzione
+ Aggiungere client script in 
+mpit_budget.js
+ per auto-populate cost_center da project
+ Modificare test 
+test_snapshot_allows_only_allowance_manual_lines
+ Aggiungere test 
+test_autofill_cost_center_from_project
+ Eseguire test suite completa
+ Test manuale nella UI

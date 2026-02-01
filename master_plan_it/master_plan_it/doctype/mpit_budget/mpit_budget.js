@@ -158,3 +158,40 @@ frappe.ui.form.on("MPIT Budget", {
 		frappe.msgprint(__("Budget refreshed from sources."));
 	},
 });
+
+/**
+ * Event handlers for MPIT Budget Line child table.
+ * Auto-populate cost_center when project or contract is selected.
+ */
+frappe.ui.form.on("MPIT Budget Line", {
+	project: function (frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (row.project) {
+			frappe.db.get_value("MPIT Project", row.project, ["cost_center", "title"], (r) => {
+				if (r) {
+					if (r.cost_center && !row.cost_center) {
+						frappe.model.set_value(cdt, cdn, "cost_center", r.cost_center);
+					}
+					if (r.title && !row.description) {
+						frappe.model.set_value(cdt, cdn, "description", r.title);
+					}
+				}
+			});
+		}
+	},
+	contract: function (frm, cdt, cdn) {
+		const row = locals[cdt][cdn];
+		if (row.contract) {
+			frappe.db.get_value("MPIT Contract", row.contract, ["cost_center", "title"], (r) => {
+				if (r) {
+					if (r.cost_center && !row.cost_center) {
+						frappe.model.set_value(cdt, cdn, "cost_center", r.cost_center);
+					}
+					if (r.title && !row.description) {
+						frappe.model.set_value(cdt, cdn, "description", r.title);
+					}
+				}
+			});
+		}
+	},
+});

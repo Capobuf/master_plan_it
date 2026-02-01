@@ -98,19 +98,22 @@ class MPITBudget(Document):
 					_("Live budgets are system-managed. Remove manual line at position {0}.").format(line.idx)
 				)
 
+
 	def _enforce_snapshot_manual_line_rules(self) -> None:
-		"""Snapshot budgets allow manual lines only for Allowance while in Draft."""
+		"""Validate manual lines in Snapshot budgets.
+		
+		All line_kinds are now allowed in Snapshot Draft budgets.
+		Cost Center is only required for Allowance lines (used for Cap calculation).
+		"""
 		if self.budget_type != "Snapshot":
 			return
 		for line in self.lines:
 			if getattr(line, "is_generated", 0):
 				continue
-			if line.line_kind != "Allowance":
-				frappe.throw(
-					_("Snapshot budgets allow only Allowance manual lines (row {0}).").format(line.idx)
-				)
-			if not line.cost_center:
-				frappe.throw(_("Snapshot budget line {0}: Cost Center is required.").format(line.idx))
+			# Cost Center is required for Allowance lines (used for Cap calculation)
+			if line.line_kind == "Allowance" and not line.cost_center:
+				frappe.throw(_("Snapshot budget line {0}: Cost Center is required for Allowance.").format(line.idx))
+
 
 	@frappe.whitelist()
 	def refresh_from_sources(self, is_manual: int = 0, reason: str | None = None) -> None:

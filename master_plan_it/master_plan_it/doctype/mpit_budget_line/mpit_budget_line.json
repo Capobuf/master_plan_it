@@ -268,12 +268,12 @@
         {
             "fieldname": "cost_center",
             "fieldtype": "Link",
-            "description": "Cost center used for reporting and caps. Required for Allowance caps.",
+            "description": "Cost center used for reporting and caps. Required for Allowance caps, auto-filled for Contract/Project.",
             "fetch_from": "contract.cost_center",
             "fetch_if_empty": 1,
             "label": "Cost Center",
             "options": "MPIT Cost Center",
-            "reqd": 1
+            "mandatory_depends_on": "eval:doc.line_kind=='Allowance'"
         },
         {
             "fieldname": "section_flags",
