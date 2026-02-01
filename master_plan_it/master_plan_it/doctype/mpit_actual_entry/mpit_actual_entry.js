@@ -66,9 +66,12 @@ const sync_entry_kind_with_links = async (frm, force = false) => {
 
 	const has_link = !!frm.doc.contract || !!frm.doc.project;
 	const current = frm.doc.entry_kind;
+	// Standalone kinds (no links allowed): Allowance Spend, One-off
+	const standalone_kinds = ["Allowance Spend", "One-off"];
 
-	if (has_link && current === "Allowance Spend") {
+	if (has_link && standalone_kinds.includes(current)) {
 		await frm.set_value("entry_kind", "Delta");
+		frappe.show_alert(__("Entry kind set to Delta (linked document present)"));
 		return true;
 	}
 	return false;

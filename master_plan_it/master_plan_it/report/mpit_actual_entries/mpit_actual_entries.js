@@ -22,7 +22,7 @@ frappe.query_reports["MPIT Actual Entries"] = {
             fieldname: "entry_kind",
             label: __("Entry Kind"),
             fieldtype: "Select",
-            options: "\nDelta\nAllowance Spend",
+            options: "\nDelta\nAllowance Spend\nOne-off",
             reqd: 0
         },
         {
@@ -61,6 +61,11 @@ frappe.query_reports["MPIT Actual Entries"] = {
     ],
 
     onload: function (report) {
+        // Add "New One-off" button
+        report.page.add_inner_button(__("New One-off"), function () {
+            frappe.new_doc("MPIT Actual Entry", { entry_kind: "One-off" });
+        }, __("Actions"));
+
         // Create container for extra charts below report
         if (!document.getElementById("mpit-actual-extra-charts")) {
             let container = document.createElement("div");

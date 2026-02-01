@@ -76,7 +76,7 @@ class MPITActualEntry(Document):
 			self.cost_center = frappe.db.get_value("MPIT Project", self.project, "cost_center")
 
 	def _enforce_entry_kind_rules(self) -> None:
-		"""Validate entry_kind semantics (Delta vs Allowance Spend)."""
+		"""Validate entry_kind semantics (Delta, Allowance Spend, One-off)."""
 		has_contract = bool(self.contract)
 		has_project = bool(self.project)
 		has_link = has_contract or has_project
@@ -97,8 +97,16 @@ class MPITActualEntry(Document):
 				frappe.throw(_("Cost Center is required for Allowance Spend."))
 			if flt(self.amount) < 0 and not self.description:
 				frappe.throw(_("Description is required for negative allowance spend entries."))
+		elif self.entry_kind == "One-off":
+			if has_link:
+				frappe.throw(
+					_("One-off entries cannot be linked to a Contract or Project. Use 'Delta' instead."),
+					title=_("Invalid Entry Kind")
+				)
+			if not self.cost_center:
+				frappe.throw(_("Cost Center is required for One-off entries."))
 		else:
-			frappe.throw(_("Entry Kind must be Delta or Allowance Spend."))
+			frappe.throw(_("Entry Kind must be Delta, Allowance Spend, or One-off."))
 
 	def _enforce_status_rules(self) -> None:
 		"""Ensure Verified entries are locked; only vCIO Manager can revert."""

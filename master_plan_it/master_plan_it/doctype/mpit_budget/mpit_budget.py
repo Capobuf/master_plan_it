@@ -200,6 +200,7 @@ class MPITBudget(Document):
 				"end_date",
 				"vendor",
 				"description",
+				"auto_renew",
 			],
 			limit=None,
 		)
@@ -247,9 +248,14 @@ class MPITBudget(Document):
 
 		Terms are the single source of truth for pricing and dates.
 		Each term defines its own period; we only clip to fiscal year bounds.
+		
+		Auto-renew logic: If no term overlaps the year AND contract.auto_renew=1,
+		use the latest term (by from_date <= year_end) as pricing for the entire year.
 		"""
 		lines = []
 
+		# First pass: find overlapping terms and track if any produces lines
+		overlapping_lines = []
 		for i, term in enumerate(terms):
 			term_start = _getdate(term.from_date)
 
@@ -276,7 +282,7 @@ class MPITBudget(Document):
 			recurrence_rule = "Monthly" if billing == "Monthly" else billing
 
 			source_key = f"CONTRACT::{contract.name}::TERM::{term.name}"
-			lines.append(
+			overlapping_lines.append(
 				self._build_line_payload(
 					contract=contract,
 					term=term,
@@ -288,6 +294,43 @@ class MPITBudget(Document):
 					source_key=source_key,
 				)
 			)
+
+		if overlapping_lines:
+			return overlapping_lines
+
+		# No overlapping terms found: check auto_renew
+		if not contract.get("auto_renew"):
+			return []
+
+		# Find the latest term with from_date <= year_end (most recent known pricing)
+		latest_term = None
+		for term in terms:
+			term_start = _getdate(term.from_date)
+			if term_start <= year_end:
+				if latest_term is None or term_start > _getdate(latest_term.from_date):
+					latest_term = term
+
+		if not latest_term:
+			return []
+
+		# Use latest term's pricing for the entire budget year
+		monthly_amount = flt(latest_term.monthly_amount_net or latest_term.amount_net or 0, 6)
+		billing = latest_term.billing_cycle or "Monthly"
+		recurrence_rule = "Monthly" if billing == "Monthly" else billing
+
+		source_key = f"CONTRACT::{contract.name}::TERM::{latest_term.name}::AUTO_RENEW"
+		lines.append(
+			self._build_line_payload(
+				contract=contract,
+				term=latest_term,
+				period_start=year_start,
+				period_end=year_end,
+				monthly_amount=monthly_amount,
+				unit_price=flt(latest_term.amount_net or 0, 6),
+				recurrence_rule=recurrence_rule,
+				source_key=source_key,
+			)
+		)
 		return lines
 
 	def _generate_planned_item_lines(self, year_start: date, year_end: date) -> list[dict]:
@@ -715,6 +758,9 @@ def trigger_budget_refresh(budget: str) -> None:
 def create_snapshot(source_budget: str) -> str:
 	"""Create an immutable Snapshot (APP) from a Live budget.
 	
+	Also copies manual Allowance lines (is_generated=0, line_kind='Allowance') from the
+	latest approved Snapshot for the same year, preserving allowance caps across regenerations.
+	
 	Args:
 		source_budget: Name of the source Live budget
 		
@@ -745,6 +791,9 @@ def create_snapshot(source_budget: str) -> str:
 		# Mark as generated to preserve immutability
 		new_line.is_generated = 1
 
+	# Copy manual Allowance lines from previous approved Snapshot (non-destructive regeneration)
+	_copy_manual_allowance_lines(snapshot, source.year)
+
 	snapshot.flags.skip_generated_guard = True
 	snapshot.flags.skip_immutability = True
 	snapshot.insert(ignore_permissions=True)
@@ -755,6 +804,56 @@ def create_snapshot(source_budget: str) -> str:
 
 	frappe.msgprint(_("Snapshot {0} created successfully.").format(snapshot.name))
 	return snapshot.name
+
+
+def _copy_manual_allowance_lines(snapshot: "Document", year: str) -> None:
+	"""Copy manual Allowance lines from the latest approved Snapshot for the same year.
+	
+	Condition: is_generated == 0 AND line_kind == 'Allowance'
+	Avoids duplicates by checking if cost_center already has an Allowance line in the new snapshot.
+	"""
+	# Find the latest approved Snapshot for this year
+	prev_snapshot_name = frappe.db.get_value(
+		"MPIT Budget",
+		{"year": year, "budget_type": "Snapshot", "docstatus": 1},
+		"name",
+		order_by="creation desc"
+	)
+	if not prev_snapshot_name:
+		return
+
+	# Get manual Allowance lines (is_generated=0, line_kind=Allowance)
+	prev_lines = frappe.get_all(
+		"MPIT Budget Line",
+		filters={
+			"parent": prev_snapshot_name,
+			"parenttype": "MPIT Budget",
+			"is_generated": 0,
+			"line_kind": "Allowance"
+		},
+		fields=["*"]
+	)
+
+	# Existing cost centers with Allowance lines in the new snapshot
+	existing_ccs = {
+		l.cost_center for l in snapshot.lines
+		if l.line_kind == "Allowance" and not l.is_generated
+	}
+
+	for line in prev_lines:
+		# Skip if this cost center already has a manual Allowance line
+		if line.get("cost_center") in existing_ccs:
+			continue
+		
+		new_line = snapshot.append("lines", {})
+		skip_fields = ("name", "parent", "parentfield", "parenttype", "idx", 
+		               "creation", "modified", "modified_by", "owner", "docstatus")
+		for field in line:
+			if field not in skip_fields:
+				new_line.set(field, line[field])
+		# Keep is_generated=0 to indicate manual line
+		new_line.is_generated = 0
+		existing_ccs.add(line.get("cost_center"))
 
 
 @frappe.whitelist()
@@ -916,6 +1015,15 @@ def enqueue_budget_refresh(years: list[str] | None = None) -> None:
 		years_to_refresh = [y for y in years if str(y) in horizon_years]
 	else:
 		years_to_refresh = list(horizon_years)
+
+	if not years_to_refresh:
+		return
+
+	# Filter to only years that exist in MPIT Year table (avoid creating ghost budgets)
+	existing_mpit_years = {
+		str(r.year) for r in frappe.get_all("MPIT Year", fields=["year"], limit=None)
+	}
+	years_to_refresh = [y for y in years_to_refresh if str(y) in existing_mpit_years]
 
 	if not years_to_refresh:
 		return

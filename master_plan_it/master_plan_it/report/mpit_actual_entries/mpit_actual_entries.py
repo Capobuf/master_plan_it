@@ -152,6 +152,7 @@ def get_report_summary(filters: frappe._dict, data: list[dict]) -> list[dict]:
 	# Count by entry kind
 	delta_count = sum(1 for row in data if row.get("entry_kind") == "Delta")
 	allowance_count = sum(1 for row in data if row.get("entry_kind") == "Allowance Spend")
+	oneoff_count = sum(1 for row in data if row.get("entry_kind") == "One-off")
 	
 	summary.append({
 		"label": _("Delta"),
@@ -165,6 +166,13 @@ def get_report_summary(filters: frappe._dict, data: list[dict]) -> list[dict]:
 		"value": allowance_count,
 		"datatype": "Int",
 		"indicator": "purple",
+	})
+	
+	summary.append({
+		"label": _("One-off"),
+		"value": oneoff_count,
+		"datatype": "Int",
+		"indicator": "gray",
 	})
 	
 	# Total amounts

@@ -91,13 +91,13 @@
     },
     {
       "default": "Delta",
-      "description": "Delta = contract/project, Allowance Spend = cost center (no link).",
+      "description": "Delta = contract/project variance, Allowance Spend = cost center (no link), One-off = standalone expense (no link).",
       "fieldname": "entry_kind",
       "fieldtype": "Select",
       "in_list_view": 1,
       "in_standard_filter": 1,
       "label": "Entry Kind",
-      "options": "Delta\nAllowance Spend",
+      "options": "Delta\nAllowance Spend\nOne-off",
       "reqd": 1
     },
     {
@@ -142,15 +142,15 @@
       "depends_on": "eval:doc.entry_kind=='Delta'"
     },
     {
-      "description": "For Allowance Spend: choose cost center (auto from Contract/Project if present).",
+      "description": "For Allowance Spend / One-off: choose cost center (auto from Contract/Project if present).",
       "fieldname": "cost_center",
       "fieldtype": "Link",
       "in_list_view": 1,
       "in_standard_filter": 1,
       "label": "Cost Center",
       "options": "MPIT Cost Center",
-      "mandatory_depends_on": "eval:doc.entry_kind=='Allowance Spend'",
-      "depends_on": "eval:doc.entry_kind=='Allowance Spend'"
+      "mandatory_depends_on": "eval:['Allowance Spend','One-off'].includes(doc.entry_kind)",
+      "depends_on": "eval:['Allowance Spend','One-off'].includes(doc.entry_kind)"
     },
     {
       "fieldname": "cb_ref_mid",
