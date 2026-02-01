@@ -148,6 +148,7 @@ class MPITBudget(Document):
 			generated_lines: list[dict] = []
 			generated_lines.extend(self._generate_contract_lines(year_start, year_end))
 			generated_lines.extend(self._generate_planned_item_lines(year_start, year_end))
+			generated_lines.extend(self._generate_oneoff_lines(year_start, year_end))
 
 			self._upsert_generated_lines(generated_lines)
 			self.flags.skip_generated_guard = True
@@ -459,6 +460,72 @@ class MPITBudget(Document):
 		month_start = date(dt.year, dt.month, 1)
 		month_end = date(dt.year, dt.month, last_day)
 		return month_start, month_end
+
+	def _generate_oneoff_lines(self, year_start: date, year_end: date) -> list[dict]:
+		"""Generate budget lines from One-off Actual Entries.
+
+		One-off entries are standalone expenses (no contract/project link).
+		Only Verified entries are included in the budget.
+		"""
+		lines: list[dict] = []
+		entries = frappe.get_all(
+			"MPIT Actual Entry",
+			filters={
+				"entry_kind": "One-off",
+				"status": "Verified",
+				"year": str(self.year),
+			},
+			fields=[
+				"name",
+				"description",
+				"posting_date",
+				"amount",
+				"amount_net",
+				"amount_includes_vat",
+				"vat_rate",
+				"cost_center",
+				"vendor",  # One-off entries can have a vendor
+			],
+			limit=None,
+		)
+		if not entries:
+			return lines
+
+		for entry in entries:
+			posting = _getdate(entry.posting_date)
+			if posting < year_start or posting > year_end:
+				continue
+
+			amount_net = flt(entry.amount_net or entry.amount or 0)
+			if amount_net == 0:
+				continue
+
+			# One-off is a single-month expense at the posting date
+			month_start, month_end = self._month_bounds(posting)
+
+			source_key = f"ONEOFF::{entry.name}"
+			lines.append({
+				"source_key": source_key,
+				"line_kind": "One-off",
+				# Copy description from the Actual Entry to the budget line
+				"description": entry.description or "",
+				# Vendor from One-off entry (optional)
+				"vendor": entry.vendor or None,
+				"contract": None,
+				"project": None,
+				"cost_center": entry.cost_center,
+				"monthly_amount": amount_net,
+				"annual_amount": amount_net,  # Single expense, no annualization
+				"unit_price": amount_net,
+				"amount_includes_vat": entry.amount_includes_vat or 0,
+				"vat_rate": entry.vat_rate or 0,
+				# One-off expenses have no recurrence - use string "None" for display
+				"recurrence_rule": "None",
+				"period_start_date": month_start,
+				"period_end_date": month_end,
+				"is_generated": 1,
+			})
+		return lines
 
 	def _build_line_payload(
 		self, contract, term, period_start: date, period_end: date,

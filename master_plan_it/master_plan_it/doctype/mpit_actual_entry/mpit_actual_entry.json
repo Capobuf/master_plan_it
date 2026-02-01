@@ -23,6 +23,7 @@
     "sb_references",
     "contract",
     "cost_center",
+    "vendor",
     "cb_ref_mid",
     "planned_item",
     "cb_ref_right",
@@ -151,6 +152,14 @@
       "options": "MPIT Cost Center",
       "mandatory_depends_on": "eval:['Allowance Spend','One-off'].includes(doc.entry_kind)",
       "depends_on": "eval:['Allowance Spend','One-off'].includes(doc.entry_kind)"
+    },
+    {
+      "description": "Vendor for One-off expenses (optional).",
+      "fieldname": "vendor",
+      "fieldtype": "Link",
+      "label": "Vendor",
+      "options": "MPIT Vendor",
+      "depends_on": "eval:doc.entry_kind=='One-off'"
     },
     {
       "fieldname": "cb_ref_mid",
