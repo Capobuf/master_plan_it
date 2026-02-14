@@ -9,27 +9,27 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.model.naming import getseries
+from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import cint, flt, getdate
 from master_plan_it import amounts, mpit_defaults, tax
+from master_plan_it.naming_utils import sync_series_to_max
 
 
 class MPITProject(Document):
 	def autoname(self):
 		"""Generate name: PRJ-{NNNN} based on Settings."""
 		prefix, digits = mpit_defaults.get_project_series()
-		
-		# Build series key dynamically using configured digits.
-		# Must match the key format used by reset_series_on_delete in on_trash.
 		series_key = f"{prefix}.{'#' * digits}"
-		sequence = getseries(series_key, digits)
-		self.name = f"{prefix}{sequence}"
+
+		# Ensure counter >= max existing so manual names/renames don't cause collisions.
+		sync_series_to_max(self.doctype, prefix, digits)
+		self.name = make_autoname(series_key, doc=self)
 
 	def on_trash(self):
 		"""Reset series counter if this was the last Project in sequence."""
-		from master_plan_it.naming_utils import reset_series_on_delete
 		prefix, digits = mpit_defaults.get_project_series()
-		reset_series_on_delete(self.name, prefix, digits)
+		series_key = f"{prefix}.{'#' * digits}"
+		revert_series_if_last(series_key, self.name, doc=self)
 	
 	def validate(self):
 		if not self.cost_center:
@@ -155,4 +155,3 @@ def has_submitted_planned_items(project: str) -> bool:
 	if not project:
 		return False
 	return bool(frappe.db.exists("MPIT Planned Item", {"project": project, "workflow_state": "Submitted"}))
-
