@@ -12,7 +12,8 @@ import re
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.model.naming import getseries
+from frappe.model.naming import make_autoname, revert_series_if_last
+from master_plan_it.naming_utils import sync_series_to_max
 
 
 class MPITBudgetAddendum(Document):
@@ -22,16 +23,17 @@ class MPITBudgetAddendum(Document):
 			frappe.throw(_("Year and Cost Center are required to name the Addendum."))
 
 		abbr = self._get_cost_center_abbr()
-		series_key = f"ADD-{self.year}-{abbr}-" + ".####"
-		seq = getseries(series_key, 4)
-		self.name = f"ADD-{self.year}-{abbr}-{seq}"
+		series_prefix = f"ADD-{self.year}-{abbr}-"
+		series_key = f"{series_prefix}.####"
+		sync_series_to_max(self.doctype, series_prefix, 4)
+		self.name = make_autoname(series_key, doc=self)
 
 	def on_trash(self):
 		"""Reset series counter if this was the last Addendum in sequence."""
-		from master_plan_it.naming_utils import reset_series_on_delete
 		abbr = self._get_cost_center_abbr()
 		series_prefix = f"ADD-{self.year}-{abbr}-"
-		reset_series_on_delete(self.name, series_prefix, 4)
+		series_key = f"{series_prefix}.####"
+		revert_series_if_last(series_key, self.name, doc=self)
 
 	def validate(self):
 		if not self.reason:

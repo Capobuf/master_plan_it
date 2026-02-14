@@ -10,11 +10,12 @@ from datetime import date
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.model.naming import make_autoname
+from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import add_days, add_years, flt, getdate
 
 from master_plan_it.master_plan_it.doctype.mpit_planned_item import mpit_planned_item
 from master_plan_it import mpit_defaults
+from master_plan_it.naming_utils import sync_series_to_max
 
 
 class MPITContract(Document):
@@ -22,6 +23,7 @@ class MPITContract(Document):
 		"""Name contracts using series from settings (no manual titles)."""
 		prefix, digits = mpit_defaults.get_contract_series()
 		series = f"{prefix}.{'#' * digits}"
+		sync_series_to_max(self.doctype, prefix, digits)
 		self.name = make_autoname(series)
 
 		if not self.description:
@@ -40,9 +42,9 @@ class MPITContract(Document):
 		self._cleanup_linked_budget_lines()
 
 		# Reset series counter
-		from master_plan_it.naming_utils import reset_series_on_delete
 		prefix, digits = mpit_defaults.get_contract_series()
-		reset_series_on_delete(self.name, prefix, digits)
+		series_key = f"{prefix}.{'#' * digits}"
+		revert_series_if_last(series_key, self.name, doc=self)
 
 	def _cleanup_linked_budget_lines(self) -> None:
 		"""Remove generated budget lines that reference this contract.

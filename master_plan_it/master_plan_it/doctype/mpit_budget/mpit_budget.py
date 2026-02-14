@@ -13,10 +13,11 @@ import calendar
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.model.naming import getseries
+from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import add_days, cint, flt, getdate as _getdate, nowdate
 from frappe.query_builder.functions import Coalesce, Sum
 from master_plan_it import amounts, annualization, mpit_defaults
+from master_plan_it.naming_utils import sync_series_to_max
 
 
 class MPITBudget(Document):
@@ -45,9 +46,10 @@ class MPITBudget(Document):
 			self.name = f"{prefix}{self.year}-LIVE"
 			return
 
-		series_key = f"{prefix}{middle}.{'#' * digits}"
-		sequence = getseries(series_key, digits)
-		self.name = f"{prefix}{middle}{sequence}"
+		series_prefix = f"{prefix}{middle}"
+		series_key = f"{series_prefix}.{'#' * digits}"
+		sync_series_to_max(self.doctype, series_prefix, digits)
+		self.name = make_autoname(series_key, doc=self)
 	
 	def before_validate(self):
 		"""Auto-set values before validation runs."""
@@ -599,12 +601,12 @@ class MPITBudget(Document):
 		"""Reset series counter if this was the last Snapshot in sequence."""
 		if self.budget_type != "Snapshot":
 			return
-		from master_plan_it.naming_utils import reset_series_on_delete
 		prefix, digits, middle = mpit_defaults.get_budget_series(
 			year=self.year, budget_type="Snapshot"
 		)
 		series_prefix = f"{prefix}{middle}"
-		reset_series_on_delete(self.name, series_prefix, digits)
+		series_key = f"{series_prefix}.{'#' * digits}"
+		revert_series_if_last(series_key, self.name, doc=self)
 
 	def _enforce_generated_lines_read_only(self) -> None:
 		"""Prevent editing generated lines."""

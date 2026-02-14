@@ -9,9 +9,10 @@ from __future__ import annotations
 import frappe
 from frappe import _
 from frappe.model.document import Document
-from frappe.model.naming import getseries
+from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import flt, getdate
 from master_plan_it import mpit_defaults, tax
+from master_plan_it.naming_utils import sync_series_to_max
 from master_plan_it.master_plan_it.doctype.mpit_planned_item import mpit_planned_item
 
 
@@ -19,27 +20,24 @@ class MPITActualEntry(Document):
 	def autoname(self):
 		"""Generate name using Settings."""
 		prefix, digits = mpit_defaults.get_actual_entry_series()
-		# Build series key dynamically using configured digits.
-		# Must match the key format used by reset_series_on_delete in on_trash.
 		series_key = f"{prefix}.{'#' * digits}"
-		seq = getseries(series_key, digits)
-		self.name = f"{prefix}{seq}"
+		sync_series_to_max(self.doctype, prefix, digits)
+		self.name = make_autoname(series_key, doc=self)
 
 	def before_insert(self):
 		"""Ensure name follows Settings (covers cases where a random hash was set)."""
 		prefix, digits = mpit_defaults.get_actual_entry_series()
 		if self.name and self.name.startswith(prefix):
 			return
-		# Use dynamic digits for consistency with autoname
 		series_key = f"{prefix}.{'#' * digits}"
-		seq = getseries(series_key, digits)
-		self.name = f"{prefix}{seq}"
+		sync_series_to_max(self.doctype, prefix, digits)
+		self.name = make_autoname(series_key, doc=self)
 
 	def on_trash(self):
 		"""Reset series counter if this was the last Actual Entry in sequence."""
-		from master_plan_it.naming_utils import reset_series_on_delete
 		prefix, digits = mpit_defaults.get_actual_entry_series()
-		reset_series_on_delete(self.name, prefix, digits)
+		series_key = f"{prefix}.{'#' * digits}"
+		revert_series_if_last(series_key, self.name, doc=self)
 		self._update_project_totals()
 
 	def on_update(self):

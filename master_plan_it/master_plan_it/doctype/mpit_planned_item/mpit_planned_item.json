@@ -85,7 +85,7 @@
    "mandatory_depends_on": "eval:!doc.spend_date"
   },
   {
-   "description": "If set, the full amount is allocated to this month. Otherwise, it is spread across the period.",
+   "description": "If set, the amount is one-off in that month; if empty, it is spread across the period.",
    "fieldname": "spend_date",
    "fieldtype": "Date",
    "label": "Spend Date"
