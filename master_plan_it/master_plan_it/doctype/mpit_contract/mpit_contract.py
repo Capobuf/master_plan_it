@@ -17,6 +17,26 @@ from master_plan_it.master_plan_it.doctype.mpit_planned_item import mpit_planned
 from master_plan_it import mpit_defaults
 from master_plan_it.naming_utils import sync_series_to_max
 
+def resolve_term_end(term, terms_sorted: list, idx: int, fallback_end=None):
+	"""Determine effective end date for a contract term.
+
+	Logic:
+	1. Use explicit to_date if set on the term
+	2. Otherwise, day before next term starts
+	3. Otherwise, use fallback_end (or None for open-ended)
+
+	Args:
+		term: Contract term row
+		terms_sorted: All terms sorted by from_date
+		idx: Index of this term in terms_sorted
+		fallback_end: Date to use if no to_date and no next term
+	"""
+	if term.to_date:
+		return getdate(term.to_date)
+	if idx + 1 < len(terms_sorted):
+		return add_days(getdate(terms_sorted[idx + 1].from_date), -1)
+	return fallback_end
+
 
 class MPITContract(Document):
 	def autoname(self):
@@ -191,7 +211,7 @@ class MPITContract(Document):
 
 	def _validate_terms_required(self) -> None:
 		"""Ensure at least one pricing term exists."""
-		if not self.terms or len(self.terms) == 0:
+		if not self.terms:
 			frappe.throw(
 				_("At least one pricing term is required. Add a term with the contract's initial pricing.")
 			)
@@ -261,31 +281,18 @@ class MPITContract(Document):
 		for i, term in enumerate(terms_sorted):
 			term_start = getdate(term.from_date)
 
-			# Determine term end date:
-			# 1. Use explicit to_date if set
-			# 2. Otherwise, day before next term starts
-			# 3. If last term, treat as open-ended (no fake dates)
-			if term.to_date:
-				term_end = getdate(term.to_date)
-			elif i + 1 < len(terms_sorted):
-				term_end = add_days(getdate(terms_sorted[i + 1].from_date), -1)
-			else:
-				term_end = None  # Open-ended
+			# Determine term end date
+			term_end = resolve_term_end(term, terms_sorted, i, fallback_end=None)
 
 			# Check if today falls within this term's range
 			if not active_for_current:
 				continue
 
-			if term_end and term_start <= today <= term_end:
-				self.current_term_amount = term.amount
-				self.current_term_billing_cycle = term.billing_cycle
-				self.current_term_monthly_net = term.monthly_amount_net
-				self.current_term_from_date = term.from_date
-				# Derive contract dates from current term
-				self.start_date = term.from_date
-				self.end_date = term.to_date  # None if open-ended
-				break
-			if not term_end and today >= term_start:
+			in_range = (
+				(term_end and term_start <= today <= term_end) or
+				(not term_end and today >= term_start)
+			)
+			if in_range:
 				self.current_term_amount = term.amount
 				self.current_term_billing_cycle = term.billing_cycle
 				self.current_term_monthly_net = term.monthly_amount_net
@@ -358,12 +365,7 @@ class MPITContract(Document):
 			term_start = getdate(term.from_date)
 
 			# Determine term end date (same logic as _compute_current_term)
-			if term.to_date:
-				term_end = getdate(term.to_date)
-			elif i + 1 < len(terms_sorted):
-				term_end = add_days(getdate(terms_sorted[i + 1].from_date), -1)
-			else:
-				term_end = contract_end
+			term_end = resolve_term_end(term, terms_sorted, i, fallback_end=contract_end)
 
 			# Clip to year bounds and contract bounds
 			period_start = max(term_start, contract_start, year_start)

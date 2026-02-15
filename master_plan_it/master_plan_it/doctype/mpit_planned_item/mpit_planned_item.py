@@ -152,8 +152,8 @@ class MPITPlannedItem(Document):
 
 	def _compute_out_of_horizon(self) -> int:
 		"""Return 1 if outside current/next year, else 0 (no side effects)."""
-		today = getdate(nowdate())
-		allowed_years = {today.year, today.year + 1}
+		from master_plan_it.annualization import get_horizon_years
+		allowed_years = get_horizon_years()
 
 		if self.spend_date:
 			spend = getdate(self.spend_date)

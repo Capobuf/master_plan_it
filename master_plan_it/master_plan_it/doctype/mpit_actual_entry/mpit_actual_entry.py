@@ -181,10 +181,10 @@ class MPITActualEntry(Document):
 		if not self.posting_date:
 			frappe.throw(_("Posting Date is required to derive MPIT Year."))
 
-		posting = getdate(self.posting_date)
-		year_name = self._lookup_year_for_date(posting)
+		year_name = get_mpit_year(self.posting_date)
 
 		if not year_name:
+			posting = getdate(self.posting_date)
 			frappe.throw(
 				_("No MPIT Year covers posting date {0}. Create year {1} or set start/end dates that include the date.")
 				.format(posting.isoformat(), posting.year)
@@ -193,31 +193,18 @@ class MPITActualEntry(Document):
 		# Always override to keep data consistent with the posting date.
 		self.year = year_name
 
-	def _lookup_year_for_date(self, posting_date) -> str | None:
-		"""Find the MPIT Year covering a date using strict date ranges."""
-		# Since start_date and end_date are mandatory in MPIT Year, we can rely on them.
-		res = frappe.db.sql(
-			"""
-			SELECT name
-			FROM `tabMPIT Year`
-			WHERE start_date <= %(date)s AND end_date >= %(date)s
-			ORDER BY start_date DESC
-			LIMIT 1
-			""",
-			{"date": posting_date},
-		)
-		if res:
-			return res[0][0]
-
 @frappe.whitelist()
 def get_mpit_year(posting_date):
-	"""Public API to get year from date."""
+	"""Public API to get MPIT Year from a date.
+
+	Used by:
+	- JS form scripts (whitelisted)
+	- _set_year_from_posting_date (internal)
+	"""
 	if not posting_date:
 		return None
-	
+
 	posting = getdate(posting_date)
-	# Reuse the class logic or duplicate simple query? 
-	# Since it's a simple query, duplicating is cleaner than instantiating doc.
 	res = frappe.db.sql(
 		"""
 		SELECT name

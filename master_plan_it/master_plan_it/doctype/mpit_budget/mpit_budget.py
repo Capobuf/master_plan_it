@@ -76,16 +76,15 @@ class MPITBudget(Document):
 				line.cost_center = frappe.db.get_value("MPIT Project", line.project, "cost_center")
 
 	def _enforce_budget_type_rules(self) -> None:
-		"""Validate Live/Snapshot semantics."""
+		"""Validate Live/Snapshot semantics.
+		
+		Note: Live-specific invariants (no submit, no Approved) are enforced
+		in _enforce_status_invariants to avoid duplication.
+		"""
 		if not self.budget_type:
 			self.budget_type = "Live"
 
-		if self.budget_type == "Live":
-			if self.docstatus == 1:
-				frappe.throw(_("Live budgets cannot be submitted. Create a Snapshot instead."))
-			if self.workflow_state == "Approved":
-				frappe.throw(_("Approved status is reserved for Snapshot budgets."))
-		elif self.budget_type != "Snapshot":
+		if self.budget_type not in ("Live", "Snapshot"):
 			frappe.throw(_("Unsupported Budget Type: {0}").format(self.budget_type))
 	
 	def _enforce_live_no_manual_lines(self) -> None:
@@ -169,8 +168,7 @@ class MPITBudget(Document):
 		self._add_timeline_comment(_("Budget refreshed from sources."))
 
 	def _within_horizon(self) -> bool:
-		today = _getdate(nowdate())
-		allowed_years = {today.year, today.year + 1}
+		allowed_years = annualization.get_horizon_years()
 		try:
 			return int(self.year) in allowed_years
 		except Exception:
@@ -266,14 +264,8 @@ class MPITBudget(Document):
 			term_start = _getdate(term.from_date)
 
 			# Determine term end: use to_date, or next term start - 1, or open-ended (year_end)
-			if term.to_date:
-				term_end = _getdate(term.to_date)
-			elif i + 1 < len(terms):
-				next_start = _getdate(terms[i + 1].from_date)
-				term_end = add_days(next_start, -1)
-			else:
-				# Open-ended term: use year_end as upper bound
-				term_end = year_end
+			from master_plan_it.master_plan_it.doctype.mpit_contract.mpit_contract import resolve_term_end
+			term_end = resolve_term_end(term, terms, i, fallback_end=year_end)
 
 			# Clip to year bounds only (terms define their own periods)
 			period_start = max(term_start, year_start)
@@ -1078,10 +1070,7 @@ def enqueue_budget_refresh(years: list[str] | None = None) -> None:
 	Called by doc_events handlers when sources change.
 	Skips years outside rolling horizon (current + next).
 	"""
-	from frappe.utils import nowdate as _nowdate
-
-	today = _getdate(_nowdate())
-	horizon_years = {str(today.year), str(today.year + 1)}
+	horizon_years = {str(y) for y in annualization.get_horizon_years()}
 
 	if years:
 		years_to_refresh = [y for y in years if str(y) in horizon_years]

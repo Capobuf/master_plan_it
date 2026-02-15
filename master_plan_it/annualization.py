@@ -17,11 +17,21 @@ import datetime
 from typing import Literal
 
 import frappe
-from frappe.utils import flt, getdate
+from frappe.utils import flt, getdate, nowdate
 
 
 # Used by client (JS) to fetch year bounds; must be whitelisted
 RecurrenceRule = Literal["Monthly", "Quarterly", "Annual", "None"]
+
+
+def get_horizon_years() -> set[int]:
+	"""Return the set of years in the planning horizon (current year + next year).
+
+	This is the single source of truth for the horizon window.
+	All code that needs to determine if a year is "in horizon" should use this.
+	"""
+	today = getdate(nowdate())
+	return {today.year, today.year + 1}
 
 
 @frappe.whitelist()

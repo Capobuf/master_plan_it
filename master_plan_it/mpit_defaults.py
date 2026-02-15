@@ -124,22 +124,6 @@ def get_contract_series() -> tuple[str, int]:
 
     return prefix, digits
 
-
-# =============================================================================
-# Print Settings
-# =============================================================================
-
-def get_show_attachments_in_print() -> bool:
-    """
-    Get setting for showing attachments in print formats.
-    
-    Returns:
-        bool: True if attachments should be shown in prints.
-    """
-    settings = _get_settings()
-    return bool(settings.show_attachments_in_print)
-
-
 # =============================================================================
 # Whitelisted API for JS
 # =============================================================================

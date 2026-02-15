@@ -10,11 +10,12 @@ from __future__ import annotations
 import frappe
 from frappe.utils import getdate, nowdate
 
+from master_plan_it.annualization import get_horizon_years
 
-def _get_horizon_years() -> set[str]:
-    """Return set of year strings within rolling horizon (current year + next)."""
-    today = getdate(nowdate())
-    return {str(today.year), str(today.year + 1)}
+
+def _get_horizon_years_str() -> set[str]:
+    """Return horizon years as strings for comparison with year strings."""
+    return {str(y) for y in get_horizon_years()}
 
 
 def _extract_years_from_dates(start_date, end_date) -> list[str]:
@@ -49,7 +50,7 @@ def _trigger_refresh(years: list[str]) -> None:
 
     from master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget import enqueue_budget_refresh
 
-    horizon = _get_horizon_years()
+    horizon = _get_horizon_years_str()
     years_in_horizon = [y for y in years if y in horizon]
 
     if years_in_horizon:
@@ -75,7 +76,7 @@ def on_contract_change(doc, method: str) -> None:
 	# Draft: trigger only on regression from a valid status, else skip
 	if doc.status == "Draft":
 		if prev_status in VALID_CONTRACT_STATUSES:
-			years = _extract_years_from_contract(doc) or list(_get_horizon_years())
+			years = _extract_years_from_contract(doc) or list(_get_horizon_years_str())
 			_trigger_refresh(years)
 		return
 
@@ -90,7 +91,7 @@ def on_contract_change(doc, method: str) -> None:
 
 	# If no terms with dates, use current year as fallback
 	if not years:
-		horizon = _get_horizon_years()
+		horizon = _get_horizon_years_str()
 		years = list(horizon)
 
 	_trigger_refresh(years)
@@ -176,7 +177,7 @@ def on_addendum_change(doc, method: str) -> None:
 
 def realign_planned_items_horizon() -> None:
 	"""Daily job: bring Planned Items back into budget when they re-enter horizon."""
-	horizon = _get_horizon_years()
+	horizon = _get_horizon_years_str()
 	items = frappe.get_all(
 		"MPIT Planned Item",
 		filters={"workflow_state": "Submitted", "out_of_horizon": 1},

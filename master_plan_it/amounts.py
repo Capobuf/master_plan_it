@@ -18,25 +18,6 @@ from frappe.utils import flt
 from master_plan_it import tax
 
 
-def get_recurrence_multiplier(recurrence_rule: str) -> int:
-    """Return the number of periods per year for a given recurrence rule.
-    
-    Args:
-        recurrence_rule: Monthly, Quarterly, Annual, None
-    
-    Returns:
-        Number of periods per year (e.g., 12 for Monthly, 4 for Quarterly)
-    """
-    if recurrence_rule == "Monthly":
-        return 12
-    elif recurrence_rule == "Quarterly":
-        return 4
-    elif recurrence_rule == "Annual":
-        return 1
-    else:  # None or unrecognized
-        return 1
-
-
 def compute_amounts(
     qty: float | None,
     unit_price: float | None,
@@ -65,8 +46,6 @@ def compute_amounts(
     unit_price = flt(unit_price)
     monthly_amount = flt(monthly_amount)
     annual_amount = flt(annual_amount)
-    
-    multiplier = get_recurrence_multiplier(recurrence_rule)
     
     # Priority 1: Calculate from qty × unit_price
     if unit_price > 0:

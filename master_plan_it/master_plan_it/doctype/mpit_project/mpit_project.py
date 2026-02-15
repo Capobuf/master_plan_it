@@ -132,18 +132,8 @@ def get_project_actuals_totals(project: str) -> dict:
 	if not project:
 		return {"actual_total_net": 0.0}
 
-	row = frappe.db.sql(
-		"""
-		SELECT SUM(COALESCE(amount_net, amount)) AS actual_total
-		FROM `tabMPIT Actual Entry`
-		WHERE project = %(project)s
-		  AND status = 'Verified'
-		  AND entry_kind = 'Delta'
-		""",
-		{"project": project},
-	)
-	actual_total = flt(row[0][0] or 0) if row else 0.0
-	return {"actual_total_net": actual_total}
+	doc = frappe.get_doc("MPIT Project", project)
+	return {"actual_total_net": doc._get_verified_deltas()}
 
 
 @frappe.whitelist()
