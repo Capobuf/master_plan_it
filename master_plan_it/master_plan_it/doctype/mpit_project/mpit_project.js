@@ -115,7 +115,7 @@ master_plan_it.project.render_financial_summary =
 			exceptions = (res.message && res.message.actual_total_net) || 0;
 		}
 
-		const expected = frm.doc.expected_total_net || expected_base + exceptions;
+		const expected = (frm.doc.expected_total_net != null) ? frm.doc.expected_total_net : expected_base + exceptions;
 		const delta_vs_planned = expected - planned;
 		const delta_vs_quoted = quoted > 0 ? expected - quoted : expected - planned;
 

@@ -155,7 +155,7 @@ frappe.ui.form.on("MPIT Budget", {
 						frappe.model.set_value(line.doctype, line.name, {
 							cost_center: r.cost_center || line.cost_center,
 							description: r.title || line.description,
-							monthly_amount: r.expected_total_net || line.monthly_amount,
+							monthly_amount: (r.expected_total_net != null) ? r.expected_total_net : line.monthly_amount,
 							recurrence_rule: "None"
 						});
 						synced++;
@@ -298,25 +298,25 @@ frappe.ui.form.on("MPIT Budget Line", {
 		if (row.contract) {
 			frappe.db.get_value("MPIT Contract", row.contract,
 				["cost_center", "description", "current_term_monthly_net", "current_term_billing_cycle"],
-			(r) => {
-				if (r) {
-					if (r.cost_center && !row.cost_center) {
-						frappe.model.set_value(cdt, cdn, "cost_center", r.cost_center);
+				(r) => {
+					if (r) {
+						if (r.cost_center && !row.cost_center) {
+							frappe.model.set_value(cdt, cdn, "cost_center", r.cost_center);
+						}
+						if (r.description && !row.description) {
+							frappe.model.set_value(cdt, cdn, "description", r.description);
+						}
+						// Auto-populate amount from Contract's current term
+						if (r.current_term_monthly_net && !row.monthly_amount) {
+							frappe.model.set_value(cdt, cdn, "monthly_amount", r.current_term_monthly_net);
+							// Map billing_cycle to recurrence_rule (Other → None for flat amounts)
+							const recurrence = (r.current_term_billing_cycle === "Other")
+								? "None"
+								: (r.current_term_billing_cycle || "Monthly");
+							frappe.model.set_value(cdt, cdn, "recurrence_rule", recurrence);
+						}
 					}
-					if (r.description && !row.description) {
-						frappe.model.set_value(cdt, cdn, "description", r.description);
-					}
-					// Auto-populate amount from Contract's current term
-					if (r.current_term_monthly_net && !row.monthly_amount) {
-						frappe.model.set_value(cdt, cdn, "monthly_amount", r.current_term_monthly_net);
-						// Map billing_cycle to recurrence_rule (Other → None for flat amounts)
-						const recurrence = (r.current_term_billing_cycle === "Other")
-							? "None"
-							: (r.current_term_billing_cycle || "Monthly");
-						frappe.model.set_value(cdt, cdn, "recurrence_rule", recurrence);
-					}
-				}
-			});
+				});
 		}
 	},
 });

@@ -177,6 +177,7 @@
    "label": "Coverage"
   },
   {
+   "allow_on_submit": 1,
    "default": "0",
    "fieldname": "is_covered",
    "fieldtype": "Check",
@@ -185,6 +186,7 @@
    "description": "Set when this item is already covered by a Contract or Actual entry."
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "covered_by_type",
    "fieldtype": "Select",
    "label": "Covered By Type",
@@ -193,6 +195,7 @@
    "description": "Type of document covering this item."
   },
   {
+   "allow_on_submit": 1,
    "fieldname": "covered_by_name",
    "fieldtype": "Dynamic Link",
    "label": "Covered By",
