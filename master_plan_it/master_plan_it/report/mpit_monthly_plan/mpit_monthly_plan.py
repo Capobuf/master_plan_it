@@ -183,6 +183,7 @@ def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_
 			"name",
 			"project",
 			"amount",
+			"amount_net",
 			"start_date",
 			"end_date",
 			"spend_date",
@@ -218,7 +219,7 @@ def _get_planned_item_monthly(year: str, year_start: date, year_end: date, cost_
 		if cc not in result:
 			result[cc] = {m: 0 for m in range(1, 13)}
 
-		amount = flt(item.amount or 0)
+		amount = flt(item.amount_net or item.amount or 0)
 		if amount == 0:
 			continue
 

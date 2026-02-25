@@ -153,6 +153,24 @@ def _get_active_projects(
     )
     projects.update(planned_projects)
 
+    # Also include spend_date-only items (no start_date/end_date)
+    sd_filters = {
+        "workflow_state": "Submitted",
+        "start_date": ["is", "not set"],
+        "spend_date": ["between", [year_start, year_end]],
+    }
+    if matching_projects is not None:
+        sd_filters["project"] = ["in", matching_projects]
+
+    sd_projects = frappe.get_all(
+        "MPIT Planned Item",
+        filters=sd_filters,
+        pluck="project",
+        distinct=True,
+        limit=None,
+    )
+    projects.update(sd_projects)
+
     # From Actual Entries (Delta, Verified)
     actual_filters = {
         "year": year,
@@ -211,18 +229,34 @@ def _get_planned_amounts(
     planned_items = frappe.get_all(
         "MPIT Planned Item",
         filters=pi_filters,
-        fields=["project", "amount"],
+        fields=["project", "amount_net", "amount"],
         limit=None,
     )
 
-    # Aggregate by project
-    amounts = {}
-    for item in planned_items:
-        proj = item.get("project")
-        amt = flt(item.get("amount"), 2)
-        amounts[proj] = amounts.get(proj, 0) + amt
+    # Also include spend_date-only items (no start_date/end_date)
+    sd_filters = {
+        "workflow_state": "Submitted",
+        "start_date": ["is", "not set"],
+        "spend_date": ["between", [year_start, year_end]],
+    }
+    if project_names:
+        sd_filters["project"] = ["in", project_names]
 
-    return amounts
+    sd_items = frappe.get_all(
+        "MPIT Planned Item",
+        filters=sd_filters,
+        fields=["project", "amount_net", "amount"],
+        limit=None,
+    )
+
+    # Aggregate by project (use amount_net, fallback to amount for backward compat)
+    result = {}
+    for item in planned_items + sd_items:
+        proj = item.get("project")
+        amt = flt(item.get("amount_net") or item.get("amount"), 2)
+        result[proj] = result.get(proj, 0) + amt
+
+    return result
 
 
 def _get_actual_amounts(year: str, project_filter: str | None, cost_center_filter: str | None) -> dict[str, float]:
