@@ -3,6 +3,7 @@
 
 import frappe
 from frappe.tests.utils import FrappeTestCase
+from master_plan_it.master_plan_it.doctype.mpit_project.mpit_project import get_project_actuals_totals
 
 
 class TestMPITProject(FrappeTestCase):
@@ -47,3 +48,11 @@ class TestMPITProject(FrappeTestCase):
 		# Reload and verify final state
 		project.reload()
 		self.assertEqual(project.workflow_state, "Approved")
+
+	def test_get_project_actuals_totals_ignores_unsaved_name(self):
+		result = get_project_actuals_totals("new-mpit-project-abcdef")
+		self.assertEqual(result.get("actual_total_net"), 0.0)
+
+	def test_get_project_actuals_totals_missing_project_returns_zero(self):
+		result = get_project_actuals_totals("PRJ-DOES-NOT-EXIST")
+		self.assertEqual(result.get("actual_total_net"), 0.0)

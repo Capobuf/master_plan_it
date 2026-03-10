@@ -131,6 +131,11 @@ def get_project_actuals_totals(project: str) -> dict:
 	"""Return verified delta totals for a project (net) without persisting on the Project doc."""
 	if not project:
 		return {"actual_total_net": 0.0}
+	# New (unsaved) docs in Desk use temporary names like `new-mpit-project-xxxx`.
+	if project.startswith("new-"):
+		return {"actual_total_net": 0.0}
+	if not frappe.db.exists("MPIT Project", project):
+		return {"actual_total_net": 0.0}
 
 	doc = frappe.get_doc("MPIT Project", project)
 	return {"actual_total_net": doc._get_verified_deltas()}

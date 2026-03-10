@@ -107,7 +107,12 @@ master_plan_it.project.render_financial_summary =
 		const expected_base = quoted > 0 ? quoted : planned;
 
 		let exceptions = 0;
-		if (frm.doc.name) {
+		const can_fetch_actuals =
+			frm.doc.name &&
+			!frm.is_new() &&
+			!frm.doc.__islocal &&
+			!String(frm.doc.name).startsWith("new-");
+		if (can_fetch_actuals) {
 			const res = await frappe.call({
 				method: "master_plan_it.master_plan_it.doctype.mpit_project.mpit_project.get_project_actuals_totals",
 				args: { project: frm.doc.name },
