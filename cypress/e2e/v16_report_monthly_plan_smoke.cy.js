@@ -7,9 +7,10 @@
  *   - Report page not resolving (report not registered in v16 migration)
  *   - mpit_monthly_plan.js failing to load or execute
  *   - Filter form not rendered (would indicate broken report JS wiring)
+ *   - onload crashing on fresh install (no fiscal_year user default)
  *
  * Filters defined in mpit_monthly_plan.js:
- *   - year        (Link → MPIT Year, required)
+ *   - year        (Link → MPIT Year, required) — default resolved async in onload
  *   - cost_center (Link → MPIT Cost Center)
  *
  * Asserting [data-fieldname] inputs exist confirms the report JS was fetched,
@@ -22,15 +23,6 @@ const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || "admin";
 describe("v16 — Report: MPIT Monthly Plan", () => {
   beforeEach(() => {
     cy.frappeLogin("Administrator", ADMIN_PASSWORD);
-    // Suppress Frappe's "Filter missing" uncaught exception thrown when the
-    // Administrator user has no fiscal_year default set. This is a real v16
-    // regression finding (reqd:1 filter with missing user default), but we still
-    // want to assert the UI state — the filter inputs must render despite the error.
-    cy.on("uncaught:exception", (err) => {
-      // cy.* commands are not allowed inside event callbacks — use console only
-      console.error("App uncaught exception:", err.message);
-      return false;
-    });
   });
 
   it("report page loads and displays correct title", () => {
