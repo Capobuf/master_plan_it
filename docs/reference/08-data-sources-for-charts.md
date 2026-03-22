@@ -478,10 +478,10 @@ Filters in JS:
 | print_orientation | Select | Auto\nPortrait\nLandscape |  | "Auto" |
 | print_density | Select | Normal\nCompact\nUltra |  | "Normal" |
 
-### MPIT Monthly Plan v3
-- JSON: `master_plan_it/master_plan_it/report/mpit_monthly_plan_v3/mpit_monthly_plan_v3.json`
-- JS: `master_plan_it/master_plan_it/report/mpit_monthly_plan_v3/mpit_monthly_plan_v3.js`
-- Python: `master_plan_it/master_plan_it/report/mpit_monthly_plan_v3/mpit_monthly_plan_v3.py`
+### MPIT Monthly Plan
+- JSON: `master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.json`
+- JS: `master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js`
+- Python: `master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py`
 - Report type: Script Report
 - Reference DocType: MPIT Budget
 Filters in JS:
@@ -491,16 +491,9 @@ Filters in JS:
 | cost_center | Link | MPIT Cost Center |  |  |
 
 ### MPIT Plan vs Cap vs Actual
-- JSON: `master_plan_it/master_plan_it/report/mpit_plan_vs_cap_vs_actual/mpit_plan_vs_cap_vs_actual.json`
-- JS: `master_plan_it/master_plan_it/report/mpit_plan_vs_cap_vs_actual/mpit_plan_vs_cap_vs_actual.js`
-- Python: `master_plan_it/master_plan_it/report/mpit_plan_vs_cap_vs_actual/mpit_plan_vs_cap_vs_actual.py`
-- Report type: Script Report
-- Reference DocType: MPIT Budget
-Filters in JS:
-| fieldname | fieldtype | options | reqd | default |
-| --- | --- | --- | --- | --- |
-| year | Link | MPIT Year | 1 | frappe.defaults.get_user_default("fiscal_year") |
-| cost_center | Link | MPIT Cost Center |  |  |
+- Type: **Dashboard Chart** (chart_type: Report, backed by MPIT Overview report)
+- JSON: `master_plan_it/master_plan_it/dashboard_chart/mpit_plan_vs_cap_vs_actual/mpit_plan_vs_cap_vs_actual.json`
+- Renders data from the MPIT Overview script report; no standalone report file exists for this chart.
 
 ### MPIT Projects Planned vs Exceptions
 - JSON: `master_plan_it/master_plan_it/report/mpit_projects_planned_vs_exceptions/mpit_projects_planned_vs_exceptions.json`

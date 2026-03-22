@@ -4,10 +4,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-**Master Plan IT (MPIT)** is a Frappe v15 ERP application for business budgeting, contract management, and project allocation designed for vCIO (Virtual CIO) operations. It's a multi-tenant SaaS application with hard data isolation.
+**Master Plan IT (MPIT)** is a Frappe v16 ERP application for business budgeting, contract management, and project allocation designed for vCIO (Virtual CIO) operations. It's a multi-tenant SaaS application with hard data isolation.
 
 **Technology Stack:**
-- Backend: Frappe Framework v15 (Python 3)
+- Backend: Frappe Framework v16 (Python 3)
 - Database: MariaDB 10.8
 - Cache/Queue: Redis 6.2
 - Frontend: Native Frappe Desk only (no custom JS/CSS/build pipeline)

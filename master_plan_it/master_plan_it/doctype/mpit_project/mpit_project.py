@@ -34,7 +34,7 @@ class MPITProject(Document):
 	def validate(self):
 		if not self.cost_center:
 			# In tests we skip the strict check to keep fixtures light
-			if not frappe.flags.in_test:
+			if not frappe.in_test:
 				frappe.throw(_("Cost Center is required on Project."))
 		self._validate_planned_dates()
 		self._compute_project_totals()

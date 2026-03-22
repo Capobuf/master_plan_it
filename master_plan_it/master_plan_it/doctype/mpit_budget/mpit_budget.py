@@ -91,7 +91,7 @@ class MPITBudget(Document):
 		"""Live budgets are system-managed: block manual lines."""
 		if self.budget_type != "Live":
 			return
-		if frappe.flags.in_test and getattr(frappe.flags, "allow_live_manual_lines", False):
+		if frappe.in_test and getattr(frappe.flags, "allow_live_manual_lines", False):
 			return
 		for line in self.lines:
 			if not getattr(line, "is_generated", 0):

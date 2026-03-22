@@ -46,10 +46,6 @@ def get_data(filters=None):
 	if year:
 		orm_filters["year"] = year
 
-	# Support cost_center filtering if provided by dashboard
-	if filters.get("cost_center"):
-		orm_filters["cost_center"] = filters.get("cost_center")
-
 	# Fetch data using ORM Group By
 	data = frappe.db.get_all(
 		"MPIT Budget",

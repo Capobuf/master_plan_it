@@ -1,6 +1,6 @@
 # Master Plan IT
 
-Frappe Desk app (v15) for budgeting, contracts, and projects. Native file-first workflow; no custom JS/CSS or build pipeline.
+Frappe Desk app (v16) for budgeting, contracts, and projects. Native file-first workflow; no custom JS/CSS or build pipeline.
 
 ## Quick Start
 

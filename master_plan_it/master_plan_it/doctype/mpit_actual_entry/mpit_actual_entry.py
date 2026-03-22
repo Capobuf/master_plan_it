@@ -51,7 +51,15 @@ class MPITActualEntry(Document):
 			project_doc = frappe.get_doc("MPIT Project", self.project)
 			project_doc.save(ignore_permissions=True)
 		except Exception:
-			# Best-effort: do not block save if project totals fail to refresh.
+			# INTENTIONAL EVENTUAL CONSISTENCY — do not promote to strong consistency.
+			# Project fields (expected_total_net, actual_total_net, etc.) are derived
+			# caches computed by aggregating actual-entry records. The actual-entry
+			# record itself is the financial source of truth. A failure here leaves
+			# project totals stale until the next project open/save, which is a
+			# display inconvenience, not a financial integrity failure.
+			# Contrast with contract cleanup (mpit_contract._cleanup_linked_budget_lines),
+			# where we intentionally DO NOT catch exceptions because partial budget-line
+			# deletions without updated totals would be genuinely inconsistent.
 			frappe.log_error(
 				frappe.get_traceback(),
 				f"MPIT Actual Entry: failed to update project totals for {self.project} (entry {self.name})",

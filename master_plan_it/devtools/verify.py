@@ -31,14 +31,15 @@ REQUIRED_REPORTS = [
     "MPIT Renewals Window",
     "MPIT Projects Planned vs Exceptions",
     "MPIT Budget Diff",
-    "MPIT Monthly Plan v3",
-    "MPIT Plan vs Cap vs Actual",
+    "MPIT Monthly Plan",
+    "MPIT Overview",
+    "MPIT Actual Entries",
+    "MPIT Budget What-If",
 ]
-REQUIRED_PAGE = "mpit-dashboard"
 REQUIRED_DASHBOARD_CHARTS = [
     "MPIT Renewals Window (by Month)",
     "MPIT Plan vs Cap vs Actual",
-    "MPIT Monthly Plan v3",
+    "MPIT Monthly Plan",
     "MPIT Planned Items Coverage",
     "MPIT Projects Planned vs Exceptions",
 ]
@@ -68,7 +69,6 @@ def run() -> Dict[str, List[str]]:
         workspace_roles_missing = sorted(desired_roles - current_roles)
 
     ok: List[str] = []
-    page_missing = not frappe.db.exists("Page", REQUIRED_PAGE)
 
     if not any([
         missing_doctypes,
@@ -79,7 +79,6 @@ def run() -> Dict[str, List[str]]:
         workspace_missing,
         workspace_public,
         workspace_roles_missing,
-        page_missing,
     ]):
         ok.append("all_required_entities_present")
 
@@ -92,6 +91,5 @@ def run() -> Dict[str, List[str]]:
         "workspace_missing": workspace_missing,
         "workspace_public": workspace_public,
         "workspace_roles_missing": workspace_roles_missing,
-        "page_missing": page_missing,
         "ok": ok,
     }

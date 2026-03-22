@@ -97,33 +97,33 @@ class MPITContract(Document):
 			if line.budget_type == "Live":
 				budgets_to_update.setdefault(line.budget_name, []).append(line.line_name)
 
-		# Delete lines and recompute affected budgets
+		# Delete lines and recompute affected budgets.
 		# NOTE Design Decision: We use raw SQL DELETE because generated lines
 		# (is_generated=1) are protected by _enforce_generated_lines_read_only()
 		# in mpit_budget.py. The normal Document API would block deletion.
-		# Raw SQL bypasses this protection intentionally when the source (contract)
-		# is being deleted. Commit per-budget ensures partial progress is saved
-		# if one budget fails (best-effort cleanup pattern).
+		# Raw SQL bypasses that protection intentionally when the source (contract)
+		# is being deleted.
+		#
+		# TRANSACTION SEMANTICS: this entire method runs inside the on_trash
+		# transaction owned by Frappe. We must NOT swallow exceptions here.
+		# If any budget recompute fails, the exception propagates to on_trash,
+		# Frappe aborts the transaction, and ALL writes — the SQL deletes, the
+		# budget totals, and the contract deletion itself — are rolled back.
+		# Strong consistency: either everything succeeds or nothing is committed.
 		for budget_name, line_names in budgets_to_update.items():
-			# Delete the lines directly from database (child table)
+			# Delete the generated lines directly from the child table
 			for line_name in line_names:
 				frappe.db.sql(
 					"""DELETE FROM `tabMPIT Budget Line` WHERE name = %s""",
 					(line_name,)
 				)
 
-			# Reload and recompute totals for the budget
-			try:
-				budget_doc = frappe.get_doc("MPIT Budget", budget_name)
-				budget_doc.reload()
-				budget_doc._compute_totals()
-				budget_doc.db_update()
-				frappe.db.commit()
-			except Exception as e:
-				frappe.log_error(
-					f"Failed to recompute totals for {budget_name} after contract {self.name} deletion: {e}",
-					"Contract Deletion Cleanup"
-				)
+			# Reload picks up the now-absent lines; _compute_totals produces
+			# correct totals. Any exception propagates — do not catch here.
+			budget_doc = frappe.get_doc("MPIT Budget", budget_name)
+			budget_doc.reload()
+			budget_doc._compute_totals()
+			budget_doc.db_update()
 
 
 	def validate(self):

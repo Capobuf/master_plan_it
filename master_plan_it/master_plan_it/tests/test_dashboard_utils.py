@@ -1,6 +1,7 @@
 from frappe.tests.utils import FrappeTestCase
 from master_plan_it.master_plan_it.utils.dashboard_utils import normalize_dashboard_filters
 
+
 class TestDashboardUtils(FrappeTestCase):
 	def test_normalize_list_filters(self):
 		filters = [['MPIT Budget', 'year', '=', '2025']]
@@ -26,10 +27,38 @@ class TestDashboardUtils(FrappeTestCase):
 		# Filter that might look like standard list but has docstatus or extra fields
 		filters = [
 			['MPIT Budget', 'year', '=', '2023', 'extra'],
-			['MPIT Budget', 'docstatus', '!=', 2] # Should skip docstatus if we only want kv pairs? 
-			# Actually the implementation extracts 'docstatus' as key. 
-			# Let's verify behavior. If we want global filters for charts, usually just fields.
+			['MPIT Budget', 'docstatus', '!=', 2],
 		]
 		normalized = normalize_dashboard_filters(filters)
 		self.assertEqual(normalized.get('year'), '2023')
 		self.assertEqual(normalized.get('docstatus'), 2)
+
+
+class TestBudgetsByTypeChartSource(FrappeTestCase):
+	"""Regression test: mpit_budgets_by_type must not filter MPIT Budget by cost_center.
+
+	MPIT Budget does not have a cost_center field. Passing cost_center through
+	to the ORM query would raise a FieldNotFound error.
+	"""
+
+	def test_get_data_with_cost_center_filter_does_not_crash(self):
+		"""Passing a cost_center filter must not raise an error."""
+		from master_plan_it.master_plan_it.dashboard_chart_source.mpit_budgets_by_type.mpit_budgets_by_type import (
+			get_data,
+		)
+		# This previously crashed because MPIT Budget has no cost_center field.
+		# The fix removes the dead cost_center branch from the chart source.
+		result = get_data(filters={"cost_center": "CC-DOES-NOT-EXIST"})
+		self.assertIn("labels", result)
+		self.assertIn("datasets", result)
+
+	def test_get_data_returns_valid_structure(self):
+		"""Chart source must always return a non-empty labels+datasets structure."""
+		from master_plan_it.master_plan_it.dashboard_chart_source.mpit_budgets_by_type.mpit_budgets_by_type import (
+			get_data,
+		)
+		result = get_data(filters={})
+		self.assertIn("labels", result)
+		self.assertIn("datasets", result)
+		self.assertGreater(len(result["labels"]), 0)
+		self.assertGreater(sum(result["datasets"][0]["values"]), 0)

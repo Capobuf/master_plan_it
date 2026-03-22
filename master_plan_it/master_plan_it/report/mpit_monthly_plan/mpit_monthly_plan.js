@@ -1,7 +1,7 @@
 // Copyright (c) 2026, DOT and contributors
 // For license information, please see license.txt
 
-frappe.query_reports["MPIT Monthly Plan v3"] = {
+frappe.query_reports["MPIT Monthly Plan"] = {
     filters: [
         {
             fieldname: "year",
