@@ -74,3 +74,13 @@ Cypress.Commands.add("setField", (fieldname, value) => {
     .clear()
     .type(String(value));
 });
+
+/**
+ * Open a Frappe query-report page by its exact report name.
+ * Frappe v16 report route: /app/query-report/{encoded-name}
+ */
+Cypress.Commands.add("openReport", (reportName) => {
+  cy.visit(`/app/query-report/${encodeURIComponent(reportName)}`);
+  // Wait for the page wrapper rendered by Frappe before filter form is wired
+  cy.get(".page-head, .page-wrapper", { timeout: 20000 }).should("exist");
+});

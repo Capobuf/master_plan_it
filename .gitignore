@@ -38,6 +38,7 @@ yarn-error.log*
 .vscode/
 .idea/
 .cache/
+.copilot/
 
 # Database / data
 *.sqlite3
