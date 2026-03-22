@@ -94,6 +94,9 @@ def _reload_doc_folder(folder: str) -> None:
 
 def after_install() -> None:
 	_bootstrap_basics()
+	# Explicitly sync fixtures to guarantee workflows are loaded on every
+	# fresh install, even if Frappe's automatic sync_fixtures call fails silently.
+	frappe.utils.fixtures.sync_fixtures("master_plan_it")
 
 
 def after_sync() -> None:
