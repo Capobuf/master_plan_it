@@ -166,7 +166,7 @@ def get_year_comparison_data(year: str | None, cost_center: str | None = None) -
         lines = frappe.db.get_all(
             "MPIT Budget Line",
             filters={"parent": live_budget_name, **({"cost_center": cost_center} if cost_center else {})},
-            fields=["cost_center", "sum(annual_net) as total"],
+            fields=["cost_center", {"SUM": "annual_net", "as": "total"}],
             group_by="cost_center",
         )
         for row in lines:
@@ -180,7 +180,7 @@ def get_year_comparison_data(year: str | None, cost_center: str | None = None) -
         lines = frappe.db.get_all(
             "MPIT Budget Line",
             filters={"parent": snapshot_budget_name, **({"cost_center": cost_center} if cost_center else {})},
-            fields=["cost_center", "sum(annual_net) as total"],
+            fields=["cost_center", {"SUM": "annual_net", "as": "total"}],
             group_by="cost_center",
         )
         for row in lines:
@@ -195,7 +195,7 @@ def get_year_comparison_data(year: str | None, cost_center: str | None = None) -
     addendum_data = frappe.db.get_all(
         "MPIT Budget Addendum",
         filters=addendum_filters,
-        fields=["cost_center", "sum(delta_amount) as total"],
+        fields=["cost_center", {"SUM": "delta_amount", "as": "total"}],
         group_by="cost_center",
     )
     addendum_map = {}
@@ -211,7 +211,7 @@ def get_year_comparison_data(year: str | None, cost_center: str | None = None) -
     actual_data = frappe.db.get_all(
         "MPIT Actual Entry",
         filters=actual_filters,
-        fields=["cost_center", "sum(amount_net) as total"],
+        fields=["cost_center", {"SUM": "amount_net", "as": "total"}],
         group_by="cost_center",
     )
     actual_map = {}
@@ -417,7 +417,7 @@ def get_extra_charts(year: str | None, cost_center: str | None) -> dict:
     budget_types = frappe.db.get_all(
         "MPIT Budget",
         filters={"year": year} if year else {},
-        fields=["budget_type", "count(name) as total"],
+        fields=["budget_type", {"COUNT": "name", "as": "total"}],
         group_by="budget_type",
     )
     if budget_types:
@@ -434,7 +434,7 @@ def get_extra_charts(year: str | None, cost_center: str | None) -> dict:
     contract_statuses = frappe.db.get_all(
         "MPIT Contract",
         filters={"cost_center": cost_center} if cost_center else {},
-        fields=["status", "count(name) as total"],
+        fields=["status", {"COUNT": "name", "as": "total"}],
         group_by="status",
     )
     if contract_statuses:
@@ -451,7 +451,7 @@ def get_extra_charts(year: str | None, cost_center: str | None) -> dict:
     project_statuses = frappe.db.get_all(
         "MPIT Project",
         filters={"cost_center": cost_center} if cost_center else {},
-        fields=["workflow_state", "count(name) as total"],
+        fields=["workflow_state", {"COUNT": "name", "as": "total"}],
         group_by="workflow_state",
     )
     if project_statuses:
@@ -471,7 +471,7 @@ def get_extra_charts(year: str | None, cost_center: str | None) -> dict:
     actual_statuses = frappe.db.get_all(
         "MPIT Actual Entry",
         filters=actual_filters,
-        fields=["status", "count(name) as total"],
+        fields=["status", {"COUNT": "name", "as": "total"}],
         group_by="status",
     )
     if actual_statuses:

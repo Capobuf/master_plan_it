@@ -54,7 +54,7 @@ def get_data(filters=None):
 	data = frappe.db.get_all(
 		"MPIT Budget",
 		filters=orm_filters,
-		fields=["budget_type", "count(name) as total"],
+		fields=["budget_type", {"COUNT": "name", "as": "total"}],
 		group_by="budget_type",
 		order_by="total desc",
 	)

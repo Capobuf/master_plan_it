@@ -17,6 +17,17 @@ after_install = "master_plan_it.setup.install.after_install"
 after_sync = "master_plan_it.setup.install.after_sync"
 after_migrate = "master_plan_it.setup.install.after_migrate"
 
+# v16: required for the desktop/apps screen to discover this app.
+# Route uses /desk prefix (v16 moved Desk from /app to /desk).
+add_to_apps_screen = [
+    {
+        "name": "master_plan_it",
+        "logo": "",
+        "title": "Master Plan IT",
+        "route": "/desk/master-plan-it",
+    }
+]
+
 fixtures = [
     {"dt": "Role", "filters": [["name", "in", ["vCIO Manager", "Client Editor", "Client Viewer"]]]},
     # Workflow components - order matters: Actions and States before Workflows
