@@ -70,16 +70,16 @@ updated: 2026-01-25
 
 | ID | Issue | Evidence |
 | --- | --- | --- |
-| D-01 | Decisions doc cita doctypes rimossi | `docs/questions-mpit_budget_engine_v3_decisions.md` |
-| D-02 | File duplicato con nome sporco | `docs/mpit_budget_engine_v3_decisions (3).md` |
+| D-01 | Decisions doc cita doctypes rimossi | ~~`docs/questions-mpit_budget_engine_v3_decisions.md`~~ (eliminato) |
+| D-02 | File duplicato con nome sporco | ~~`docs/mpit_budget_engine_v3_decisions (3).md`~~ (eliminato) |
 | D-03 | Allocations/baseline in guide + architecture + ADR | `docs/how-to/07-projects-multi-year.md`, `docs/explanation/01-architecture.md`, `docs/adr/0004-project-allocations.md` |
 | D-04 | ADR 0007 include Custom recurrence assente | `docs/adr/0007-money-naming-printing.md`, `master_plan_it/annualization.py` |
 | D-05 | 10-money-vat-annualization: section 5 outdated | `docs/reference/10-money-vat-annualization.md` |
-| D-06 | Printing docs duplicate + example report assente | `docs/reference/08-printing-reports-pdf.md`, `docs/reference/10-printing-and-report-print-formats.md` |
+| D-06 | Printing docs duplicate | `docs/reference/08-printing-reports-pdf.md`, `docs/reference/11-printing-and-report-print-formats.md` |
 | D-07 | Data sources chart doc drift (fields/options) | `docs/reference/08-data-sources-for-charts.md`, `master_plan_it/doctype/mpit_budget/mpit_budget.json` |
 | D-08 | Terminologia Allocation in UI/print | `master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html`, `master_plan_it/doctype/mpit_project/mpit_project.json` |
 | D-09 | Copilot instructions + changelog fuori sync | `.github/copilot-instructions.md`, `CHANGELOG.md` |
-| D-10 | OPEN_ISSUES resolved list non coerente | `OPEN_ISSUES.md`, `master_plan_it/devtools/dashboard_defaults.py` |
+| D-10 | OPEN_ISSUES resolved list non coerente | ~~`OPEN_ISSUES.md`~~ (non esiste; rimosso da CLAUDE.md) |
 
 ### Infra & Repo Hygiene
 
@@ -119,12 +119,12 @@ updated: 2026-01-25
 
 ### Frappe docs: migliori approcci applicabili
 
-| Topic | Doc |
+| Topic | Frappe v16 docs |
 | --- | --- |
-| Query Builder per SQL raw | → see [docs/_vendor/frappev15/desk/scripting/script-api.md] |
-| Logger per info vs log_error | → see [docs/_vendor/frappev15/api/logging.md] |
-| Rate limiting via site_config | → see [docs/_vendor/frappev15/rate-limiting.md] |
-| Cache e invalidazione settings | → see [docs/_vendor/frappev15/guides/caching.md] |
-| Test structure e bench run-tests | → see [docs/_vendor/frappev15/testing.md] |
-| Pipeline traduzioni ufficiale | → see [docs/_vendor/frappev15/translations.md] |
-| Paginazione get_list/get_all | → see [docs/_vendor/frappev15/api/database.md] |
+| Query Builder per SQL raw | https://frappeframework.com/docs/v2/user/en/api/query-builder |
+| Logger per info vs log_error | `frappe.logger()` / `frappe.log_error()` in Frappe source |
+| Rate limiting via site_config | site_config.json → `rate_limit` key |
+| Cache e invalidazione settings | `frappe.cache().get_value()` / `frappe.clear_cache()` |
+| Test structure e bench run-tests | `bench --site <site> run-tests --app master_plan_it` |
+| Pipeline traduzioni ufficiale | `docs/reference/12-i18n.md` |
+| Paginazione get_list/get_all | `frappe.get_all(..., limit_page_length=N, limit_start=M)` |

@@ -1,4 +1,4 @@
-# Reference: Technical dev workflow (Frappe v15)
+# Reference: Technical dev workflow
 
 This document defines the **native file-first** workflow for Master Plan IT.
 

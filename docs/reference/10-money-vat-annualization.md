@@ -1,4 +1,4 @@
-# Reference: Money Rules (VAT + Normalizzazione + Annualizzazione) — MPIT (Frappe v15)
+# Reference: Money Rules (VAT + Normalizzazione + Annualizzazione)
 
 Fonte di verità per calcoli, report e stampa.
 

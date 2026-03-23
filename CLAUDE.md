@@ -75,8 +75,8 @@ bench --site <site> enable-scheduler
 
 # Docker development environment
 cd master-plan-it-deploy
-docker compose -f compose.yml up -d
-docker compose -f compose.yml logs -f
+docker compose -f compose.dev.yml up -d
+docker compose -f compose.dev.yml logs -f
 
 # Create new site (Docker)
 docker compose exec frappe bash -lc \
@@ -296,27 +296,23 @@ Budget refresh is automatically triggered when source documents change:
 ## Docker Environment
 
 ### Development Setup
-- **File:** `master-plan-it-deploy/compose.yml`
-- **App mount:** `../master-plan-it` → `/home/frappe/frappe-bench/apps/master_plan_it`
+- **File:** `master-plan-it-deploy/compose.dev.yml`
+- **App mount:** `../master_plan_it` → `/home/frappe/frappe-bench/apps/master_plan_it`
 - **Data volumes:** `./data/db`, `./data/redis`, `./data/sites`, `./data/logs`
 - **Services:** frappe (web+socketio+worker+scheduler), db (MariaDB), redis, frontend (nginx)
 
-### Environment Variables
-- `SITE_NAME` - Site domain
-- `ADMIN_PASSWORD` - Admin password
+### Environment Variables (dev)
 - `DB_ROOT_PASSWORD` - Database root password
-- `INSTALL_APPS=master_plan_it` - Auto-install on bootstrap
-- `RUN_MIGRATE_ON_START` - Run migrate on container start
 - `HTTP_PORT` - Exposed port (default: 9797)
 
 ### Quick Reset (Development)
 ```bash
 cd master-plan-it-deploy
-docker compose down
+docker compose -f compose.dev.yml down
 rm -rf data/db data/sites
 mkdir -p data/sites
 chown -R 1000:1000 data/sites
-docker compose up -d
+docker compose -f compose.dev.yml up -d
 ```
 
 ## Troubleshooting
@@ -344,5 +340,4 @@ docker compose up -d
 - Apply changes workflow: `docs/how-to/01-apply-changes.md`
 - Dev workflow reference: `docs/reference/06-dev-workflow.md`
 - Architectural decisions: `docs/adr/*.md`
-- Open issues: `OPEN_ISSUES.md`
 - Changelog: `CHANGELOG.md`

@@ -1,4 +1,4 @@
-# ADR 0007 — Money rules + Naming + Printing (MPIT v1, Frappe v15)
+# ADR 0007 — Money rules + Naming + Printing
 
 - Status: **Accepted**
 - Date: 2025-12-22

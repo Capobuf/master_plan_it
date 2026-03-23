@@ -1,4 +1,4 @@
-# Reference: Naming + Title Field (Frappe v15)
+# Reference: Naming + Title Field
 
 Questa reference definisce **come** implementare naming deterministico e UX migliore senza frontend custom.
 

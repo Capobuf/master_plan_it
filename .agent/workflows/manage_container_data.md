@@ -99,6 +99,6 @@ cat delete_script.py | docker exec -i -u ${HOST_UID}:${HOST_GID} mpit-backend be
 
 ## References
 
-- [Bench Commands](file:///usr/docker/masterplan-project/master-plan-it/docs/_vendor/frappev15/bench/frappe-commands.md) (`console`)
-- [Document API](file:///usr/docker/masterplan-project/master-plan-it/docs/_vendor/frappev15/api/document.md) (`new_doc`, `save`, `delete`)
-- [Database API](file:///usr/docker/masterplan-project/master-plan-it/docs/_vendor/frappev15/api/database.md) (`frappe.db.commit`, `frappe.get_all`)
+- Bench CLI: `bench --site <site> console`, `bench --site <site> execute`
+- Document API: `frappe.new_doc()`, `doc.save()`, `frappe.delete_doc()`
+- Database API: `frappe.db.commit()`, `frappe.get_all()`

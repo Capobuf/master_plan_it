@@ -50,5 +50,5 @@ cat internal_script.py | docker exec -i -u ${HOST_UID}:${HOST_GID} mpit-backend 
 
 ## References
 
-- [Bench Commands](file:///usr/docker/masterplan-project/master-plan-it/docs/_vendor/frappev15/bench/frappe-commands.md) (`execute`, `console`)
-- [Database API](file:///usr/docker/masterplan-project/master-plan-it/docs/_vendor/frappev15/api/database.md) (`frappe.get_all`)
+- Bench CLI: `bench --site <site> execute`, `bench --site <site> console`
+- Database API: `frappe.get_all()`, `frappe.db.get_value()`

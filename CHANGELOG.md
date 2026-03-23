@@ -114,17 +114,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 #### Updated Documents
 - **README.md:** Added EPIC E01 completion summary, version bump to 0.1
-- **docs/how-to/10-epic-e01-money-naming-printing.md:** 
-  - Added Phase 6 completion section with implementation details
-  - Added test results and file structure
-  - Added compliance notes with ADR 0006
-- **docs/reference/11-printing-v15.md:**
-  - Added Section 3: Implementazione MPIT (Dec 2025)
-  - Documented Jinja template structure for print formats
-  - Documented microtemplating patterns for report HTML
-  - Added import/sync procedures
-  - Added styling guidelines and allowed Bootstrap classes
-  - Added testing strategy
+- **docs/reference/11-printing-and-report-print-formats.md:** Added Section 3: Implementazione MPIT (Dec 2025)
 - **docs/reference/10-money-vat-annualization.md:**
   - Added Section 5: Dual-Mode Controller (Phase 6 Implementation)
   - Documented dual-flow VAT calculation logic
@@ -230,5 +220,5 @@ None. All features fully implemented and tested.
 
 ---
 
-[0.1.0]: https://github.com/YOUR_ORG/master-plan-it/compare/v0.0.1...v0.1.0
-[0.0.1]: https://github.com/YOUR_ORG/master-plan-it/releases/tag/v0.0.1
+[0.1.0]: https://github.com/Capobuf/master-plan-it/compare/v0.0.1...v0.1.0
+[0.0.1]: https://github.com/Capobuf/master-plan-it/releases/tag/v0.0.1

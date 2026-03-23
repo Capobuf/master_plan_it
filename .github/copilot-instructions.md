@@ -3,7 +3,7 @@
 Breve: MPIT è un'app Frappe Desk multi-tenant (1 sito = 1 cliente). Tutte le modifiche a metadata (DocType, Workflow, Report, Dashboard) sono tracciate su filesystem con il workflow nativo **file-first**; nessun pipeline custom di sync/import.
 
 ## Big picture (why & topology) 🔧
-- Architettura: app Frappe (backend bench) + nginx frontend (vedi `compose.yml`). Tenant = sito Frappe (vCIO lavora su molti siti). (docs: `docs/explanation/01-architecture.md`)
+- Architettura: app Frappe (backend bench) + nginx frontend (vedi `compose.dev.yml`). Tenant = sito Frappe (vCIO lavora su molti siti). (docs: `docs/explanation/01-architecture.md`)
 - Policy: **Solo Desk** (nessun sito pubblicato come portal/Website Users). Nessuna build JS/CSS personalizzata - **non** aggiungere pipeline di asset.
 
 ## Dove cercare le sorgenti di verità 📁
@@ -15,7 +15,7 @@ Breve: MPIT è un'app Frappe Desk multi-tenant (1 sito = 1 cliente). Tutte le mo
 - Devtools/entrypoint: `master_plan_it/master_plan_it/devtools/` (`verify.py`); install hooks in `setup/install.py`.
 - Hooks: `master_plan_it/master_plan_it/hooks.py` (after_install/after_sync)
 - Fixtures: `master_plan_it/master_plan_it/fixtures/role.json` (solo ruoli MPIT).
-- Docs operative: `docs/how-to/09-docker-compose-notes.md`, `docs/how-to/08-user-guide.md`
+- Docs operative: `docs/how-to/00-bootstrap-from-scratch.md`, `docs/how-to/01-apply-changes.md`
 
 ## Comandi essenziali (esempi concreti) ✅
 - Applicare metadata/versioning al sito (standard Frappe):
@@ -29,12 +29,12 @@ Breve: MPIT è un'app Frappe Desk multi-tenant (1 sito = 1 cliente). Tutte le mo
   - `bench --site <site> run-tests --app master_plan_it` (es. `master_plan_it/master_plan_it/tests/test_smoke.py`)
 
 ## Docker / ambiente locale 🐳
-- File principale: `../master-plan-it-deploy/compose.yml` (usa `Dockerfile.frappe` nello stesso repo deploy).
+- File principale: `../master-plan-it-deploy/compose.dev.yml` (usa `Dockerfile.frappe` nello stesso repo deploy).
 - Note importanti:
   - Impostare `INSTALL_APPS=master_plan_it` per installare automaticamente l'app in bootstrap.
   - Monta il repo app (`../master-plan-it`) su `/home/frappe/frappe-bench/apps/master_plan_it`; i bind data/config restano in `../master-plan-it-deploy` (non montare `./data/apps` vuoto).
   - `config/mpit-entrypoint.sh` (repo deploy) crea il site se mancante, forza `developer_mode=1` e può eseguire `migrate` se `RUN_MIGRATE_ON_START=1`.
-- Reset rapido (da repo deploy): `docker compose down && rm -rf data/db data/sites && mkdir -p data/sites && chown -R 1000:1000 data/sites && docker compose up -d` (vedi `docs/how-to/09-docker-compose-notes.md`).
+- Reset rapido (da repo deploy): `docker compose -f compose.dev.yml down && rm -rf data/db data/sites && mkdir -p data/sites && chown -R 1000:1000 data/sites && docker compose -f compose.dev.yml up -d` (vedi `docs/how-to/00-bootstrap-from-scratch.md`).
 
 ## Convezioni di sviluppo e sicurezza ⚠️
 - Non aggiungere custom JS/CSS o pipeline frontend.

@@ -1,4 +1,4 @@
-# Reference: Printing (DocType Print Formats + Report Print Formats) — Frappe v15
+# Reference: Printing (DocType Print Formats + Report Print Formats)
 
 This reference explains how to produce **professional, consistent PDFs** using only Frappe framework tools,
 with **no custom CSS** and no frontend build.
