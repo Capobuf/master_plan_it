@@ -20,7 +20,6 @@ import frappe
 from frappe.utils import flt, getdate, nowdate
 
 
-# Used by client (JS) to fetch year bounds; must be whitelisted
 RecurrenceRule = Literal["Monthly", "Quarterly", "Annual", "None"]
 
 

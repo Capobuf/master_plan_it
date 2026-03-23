@@ -104,19 +104,19 @@ def compute_amounts(
     # Both set or both empty: use annual as master (or 0 if empty)
     if annual_amount > 0:
         if recurrence_rule == "None":
-             computed_monthly = flt(annual_amount, 2)
+            computed_monthly = flt(annual_amount, 2)
         else:
-             computed_monthly = flt(annual_amount / 12, 2)
+            computed_monthly = flt(annual_amount / 12, 2)
         return {
             "monthly_amount": computed_monthly,
             "annual_amount": annual_amount,
         }
-    
+
     if monthly_amount > 0:
         if recurrence_rule == "None":
-             computed_annual = flt(monthly_amount, 2)
+            computed_annual = flt(monthly_amount, 2)
         else:
-             computed_annual = flt(monthly_amount * 12, 2)
+            computed_annual = flt(monthly_amount * 12, 2)
         return {
             "monthly_amount": monthly_amount,
             "annual_amount": computed_annual,

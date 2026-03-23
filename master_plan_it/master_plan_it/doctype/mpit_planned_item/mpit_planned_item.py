@@ -88,15 +88,12 @@ class MPITPlannedItem(Document):
 
 
 	def _validate_spend_date(self) -> None:
-		"""Enforce spend_date recency and set horizon flag."""
-		today = getdate(nowdate())
+		"""Enforce spend_date recency."""
 		if self.spend_date:
+			today = getdate(nowdate())
 			spend = getdate(self.spend_date)
 			if spend < today:
 				frappe.throw(_("Spend Date cannot be in the past."))
-			# Note: start/end dates are optional when spend_date is present.
-
-		self.out_of_horizon = self._compute_out_of_horizon()
 
 	def _validate_coverage_fields(self) -> None:
 		if self.covered_by_type and not self.covered_by_name:

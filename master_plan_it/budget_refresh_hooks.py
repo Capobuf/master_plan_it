@@ -8,65 +8,54 @@ OUTPUT/SIDE EFFECTS: Enqueue refresh per budget LIVE degli anni nell'orizzonte (
 from __future__ import annotations
 
 import frappe
-from frappe.utils import getdate, nowdate
+from frappe.utils import getdate
 
 from master_plan_it.annualization import get_horizon_years
+from master_plan_it.master_plan_it.doctype.mpit_contract.mpit_contract import VALID_CONTRACT_STATUSES
 
 
 def _get_horizon_years_str() -> set[str]:
-    """Return horizon years as strings for comparison with year strings."""
-    return {str(y) for y in get_horizon_years()}
-
-
-def _extract_years_from_dates(start_date, end_date) -> list[str]:
-    """Extract year(s) covered by a date range."""
-    years = set()
-    if start_date:
-        years.add(str(getdate(start_date).year))
-    if end_date:
-        years.add(str(getdate(end_date).year))
-    return list(years)
+	"""Return horizon years as strings for comparison with year strings."""
+	return {str(y) for y in get_horizon_years()}
 
 
 def _extract_years_from_contract(doc) -> list[str]:
-    """Extract ALL years covered by contract terms.
+	"""Extract ALL years covered by contract terms.
 
-    Terms are the single source of truth for pricing and dates.
-    Contracts must have at least one term (validated by mpit_contract.py).
-    """
-    years = set()
-    for term in (doc.terms or []):
-        if term.from_date:
-            years.add(str(getdate(term.from_date).year))
-        if term.to_date:
-            years.add(str(getdate(term.to_date).year))
-    return list(years)
+	Terms are the single source of truth for pricing and dates.
+	Contracts must have at least one term (validated by mpit_contract.py).
+	"""
+	years = set()
+	for term in (doc.terms or []):
+		if term.from_date:
+			years.add(str(getdate(term.from_date).year))
+		if term.to_date:
+			years.add(str(getdate(term.to_date).year))
+	return list(years)
 
 
 def _trigger_refresh(years: list[str]) -> None:
-    """Enqueue budget refresh for specified years if within horizon."""
-    if not years:
-        return
+	"""Enqueue budget refresh for specified years if within horizon."""
+	if not years:
+		return
 
-    from master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget import enqueue_budget_refresh
+	from master_plan_it.master_plan_it.doctype.mpit_budget.mpit_budget import enqueue_budget_refresh
 
-    horizon = _get_horizon_years_str()
-    years_in_horizon = [y for y in years if y in horizon]
+	horizon = _get_horizon_years_str()
+	years_in_horizon = [y for y in years if y in horizon]
 
-    if years_in_horizon:
-        enqueue_budget_refresh(years_in_horizon)
+	if years_in_horizon:
+		enqueue_budget_refresh(years_in_horizon)
 
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Contract handlers
 # ─────────────────────────────────────────────────────────────────────────────
 
-VALID_CONTRACT_STATUSES = {"Active", "Pending Renewal", "Renewed"}
-
 
 def on_contract_change(doc, method: str) -> None:
 	"""Handle contract changes: trigger refresh only for validated statuses.
-	
+
 	Draft/Cancelled/Expired contracts do not trigger refresh (per v3 spec).
 	When a contract transitions to/from valid status, refresh removes/adds lines.
 	"""
@@ -82,7 +71,6 @@ def on_contract_change(doc, method: str) -> None:
 
 	# Skip Cancelled/Expired unless they were previously valid (transition case)
 	if doc.status in ("Cancelled", "Expired"):
-		# Check if was previously in valid status (to remove from budget)
 		if not prev_status or prev_status not in VALID_CONTRACT_STATUSES:
 			return
 
@@ -91,8 +79,7 @@ def on_contract_change(doc, method: str) -> None:
 
 	# If no terms with dates, use current year as fallback
 	if not years:
-		horizon = _get_horizon_years_str()
-		years = list(horizon)
+		years = list(_get_horizon_years_str())
 
 	_trigger_refresh(years)
 
@@ -113,11 +100,11 @@ def on_planned_item_change(doc, method: str) -> None:
 	coverage_changed = bool(prev) and prev.is_covered != doc.is_covered
 
 	# Skip draft items on update - they don't affect budget yet
-	workflow_state = getattr(doc, 'workflow_state', 'Draft')
-	if method == "on_update" and workflow_state == 'Draft' and not coverage_changed:
+	workflow_state = getattr(doc, "workflow_state", "Draft")
+	if method == "on_update" and workflow_state == "Draft" and not coverage_changed:
 		return
 
-	# Skip covered items - they're excluded from budget calculation, unless coverage just flipped
+	# Skip covered items unless coverage just flipped
 	if doc.is_covered and not coverage_changed:
 		return
 
@@ -125,10 +112,9 @@ def on_planned_item_change(doc, method: str) -> None:
 	if doc.out_of_horizon:
 		return
 
-	# Extract years from BOTH old AND new dates
+	# Collect years from BOTH new and old dates to clean up stale budget lines
 	years = set()
 
-	# NEW dates
 	if doc.spend_date:
 		years.add(str(getdate(doc.spend_date).year))
 	else:
@@ -137,7 +123,6 @@ def on_planned_item_change(doc, method: str) -> None:
 		if doc.end_date:
 			years.add(str(getdate(doc.end_date).year))
 
-	# OLD dates (to clean up stale budget lines when dates change)
 	if prev:
 		if prev.spend_date:
 			years.add(str(getdate(prev.spend_date).year))
@@ -156,18 +141,14 @@ def on_planned_item_change(doc, method: str) -> None:
 
 
 def on_addendum_change(doc, method: str) -> None:
-    """Handle Budget Addendum submit/cancel: trigger refresh for affected year.
-    
-    Addendum affects Cap calculation, not Live lines directly.
-    But refreshing ensures consistency and re-validates caps.
-    """
-    if not doc.year:
-        return
+	"""Handle Budget Addendum submit/cancel: trigger refresh for affected year.
 
-    # Get year string from Link field
-    year_str = str(doc.year)
-
-    _trigger_refresh([year_str])
+	Addendum affects Cap calculation, not Live lines directly.
+	But refreshing ensures consistency and re-validates caps.
+	"""
+	if not doc.year:
+		return
+	_trigger_refresh([str(doc.year)])
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -213,3 +194,4 @@ def realign_planned_items_horizon() -> None:
 
 	if affected_years:
 		_trigger_refresh(list(affected_years))
+

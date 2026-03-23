@@ -14,8 +14,11 @@ from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import add_days, add_years, flt, getdate
 
 from master_plan_it.master_plan_it.doctype.mpit_planned_item import mpit_planned_item
-from master_plan_it import mpit_defaults
+from master_plan_it import annualization, mpit_defaults
 from master_plan_it.naming_utils import sync_series_to_max
+
+# Contract statuses that are valid for budget inclusion and coverage tracking.
+VALID_CONTRACT_STATUSES = {"Active", "Pending Renewal", "Renewed"}
 
 def resolve_term_end(term, terms_sorted: list, idx: int, fallback_end=None):
 	"""Determine effective end date for a contract term.
@@ -311,8 +314,7 @@ class MPITContract(Document):
 	def _is_active_for_current_term(self) -> bool:
 		"""Return True if contract status indicates it should be considered active."""
 		status = (self.status or "").strip()
-		valid_statuses = {"Active", "Pending Renewal", "Renewed"}
-		if status in valid_statuses:
+		if status in VALID_CONTRACT_STATUSES:
 			return True
 		if self.auto_renew and status not in {"Cancelled", "Expired", "Draft"}:
 			return True
@@ -346,8 +348,6 @@ class MPITContract(Document):
 		Returns:
 			Total annualized net amount for the year
 		"""
-		from master_plan_it import annualization
-
 		if not self.terms:
 			return 0.0
 
@@ -413,9 +413,8 @@ class MPITContract(Document):
 		prev_planned = getattr(prev, "planned_item", None) if prev else None
 		prev_status = getattr(prev, "status", None) if prev else None
 
-		valid_statuses = {"Active", "Pending Renewal", "Renewed"}
-		current_valid = self.status in valid_statuses
-		prev_valid = prev_status in valid_statuses
+		current_valid = self.status in VALID_CONTRACT_STATUSES
+		prev_valid = prev_status in VALID_CONTRACT_STATUSES
 
 		# Clear previous coverage if unlinked or no longer valid
 		if prev_planned and (prev_planned != self.planned_item or (prev_valid and not current_valid)):

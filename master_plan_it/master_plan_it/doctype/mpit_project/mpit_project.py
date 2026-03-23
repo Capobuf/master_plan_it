@@ -38,7 +38,6 @@ class MPITProject(Document):
 				frappe.throw(_("Cost Center is required on Project."))
 		self._validate_planned_dates()
 		self._compute_project_totals()
-		# Warning removed - workflow now blocks Proposed→Approved without Planned Items
 
 
 	def _compute_project_totals(self) -> None:

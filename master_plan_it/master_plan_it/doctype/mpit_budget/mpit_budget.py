@@ -18,6 +18,10 @@ from frappe.utils import add_days, cint, flt, getdate as _getdate, nowdate
 from frappe.query_builder.functions import Coalesce, Sum
 from master_plan_it import amounts, annualization, mpit_defaults
 from master_plan_it.naming_utils import sync_series_to_max
+from master_plan_it.master_plan_it.doctype.mpit_contract.mpit_contract import (
+	resolve_term_end,
+	VALID_CONTRACT_STATUSES,
+)
 
 
 class MPITBudget(Document):
@@ -191,11 +195,10 @@ class MPITBudget(Document):
 		are logged and skipped (should not happen after migration).
 		"""
 		lines: list[dict] = []
-		allowed_status = {"Active", "Pending Renewal", "Renewed"}
 
 		contracts = frappe.get_all(
 			"MPIT Contract",
-			filters={"status": ["in", list(allowed_status)]},
+			filters={"status": ["in", list(VALID_CONTRACT_STATUSES)]},
 			fields=[
 				"name",
 				"status",
@@ -264,7 +267,6 @@ class MPITBudget(Document):
 			term_start = _getdate(term.from_date)
 
 			# Determine term end: use to_date, or next term start - 1, or open-ended (year_end)
-			from master_plan_it.master_plan_it.doctype.mpit_contract.mpit_contract import resolve_term_end
 			term_end = resolve_term_end(term, terms, i, fallback_end=year_end)
 
 			# Clip to year bounds only (terms define their own periods)
