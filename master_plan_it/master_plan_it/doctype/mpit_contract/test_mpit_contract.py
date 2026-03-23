@@ -298,8 +298,10 @@ class TestMPITContract(FrappeTestCase):
 
 		contract = self._make_contract("PropagateTest", amount=100)
 
+		# frappe.db.sql(..., as_dict=True) returns frappe._dict objects, not plain dicts.
+		# Attribute access (line.budget_type) used in _cleanup_linked_budget_lines requires this.
 		fake_lines = [
-			{"line_name": "FAKE-BL-001", "budget_name": "FAKE-BUD-001", "budget_type": "Live"}
+			frappe._dict({"line_name": "FAKE-BL-001", "budget_name": "FAKE-BUD-001", "budget_type": "Live"})
 		]
 
 		mock_budget = MagicMock()

@@ -1,38 +1,38 @@
 [
-    {
-        "condition": "doc.auto_renew != 1 and doc.status in (\"Active\", \"Pending Renewal\")",
-        "date_changed": 0,
-        "days_in_advance": 90,
-        "doctype": "Notification",
-        "document_type": "MPIT Contract",
-        "enabled": 1,
-        "event": "Days Before",
-        "message": "Gentile utente,\n\nIl contratto <b>{{ doc.title }}</b> (fornitore: {{ doc.vendor }}, categoria: {{ doc.category }}) scadr\u00e0 il <b>{{ doc.end_date }}</b> (notifica {{ notification.days_in_advance }} giorni prima).<br>\n<a href=\"{{ get_url_to_form(doc.doctype, doc.name) }}\">Apri contratto</a>\n\nCordiali saluti,\nMaster Plan IT",
-        "name": "MPIT Contract Expiry (Non Auto Renew)",
-        "recipients": [
-            {
-                "receiver_by_role": "vCIO Manager"
-            }
-        ],
-        "reference_date_field": "end_date",
-        "subject": "Scadenza contratto: {{ doc.title }} ({{ doc.vendor }})"
-    },
-    {
-        "condition": "doc.auto_renew == 1 and doc.status in (\"Active\", \"Pending Renewal\")",
-        "date_changed": 0,
-        "days_in_advance": 90,
-        "doctype": "Notification",
-        "document_type": "MPIT Contract",
-        "enabled": 1,
-        "event": "Days Before",
-        "message": "Gentile utente,\n\nIl contratto <b>{{ doc.title }}</b> (fornitore: {{ doc.vendor }}, categoria: {{ doc.category }}) sar\u00e0 rinnovato automaticamente il <b>{{ doc.next_renewal_date }}</b> (notifica {{ notification.days_in_advance }} giorni prima).<br>\n<a href=\"{{ get_url_to_form(doc.doctype, doc.name) }}\">Apri contratto</a>\n\nCordiali saluti,\nMaster Plan IT",
-        "name": "MPIT Contract Renewal (Auto Renew)",
-        "recipients": [
-            {
-                "receiver_by_role": "vCIO Manager"
-            }
-        ],
-        "reference_date_field": "next_renewal_date",
-        "subject": "Rinnovo automatico contratto: {{ doc.title }} ({{ doc.vendor }})"
-    }
+ {
+  "condition": "doc.auto_renew != 1 and doc.status in (\"Active\", \"Pending Renewal\")",
+  "date_changed": "end_date",
+  "days_in_advance": 90,
+  "doctype": "Notification",
+  "document_type": "MPIT Contract",
+  "enabled": 1,
+  "event": "Days Before",
+  "message": "Gentile utente,\n\nIl contratto <b>{{ doc.title }}</b> (fornitore: {{ doc.vendor }}, categoria: {{ doc.category }}) scadrà il <b>{{ doc.end_date }}</b> (notifica {{ notification.days_in_advance }} giorni prima).<br>\n<a href=\"{{ get_url_to_form(doc.doctype, doc.name) }}\">Apri contratto</a>\n\nCordiali saluti,\nMaster Plan IT",
+  "name": "MPIT Contract Expiry (Non Auto Renew)",
+  "recipients": [
+   {
+    "receiver_by_role": "vCIO Manager"
+   }
+  ],
+  "subject": "Scadenza contratto: {{ doc.title }} ({{ doc.vendor }})",
+  "channel": "Email"
+ },
+ {
+  "condition": "doc.auto_renew == 1 and doc.status in (\"Active\", \"Pending Renewal\")",
+  "date_changed": "next_renewal_date",
+  "days_in_advance": 90,
+  "doctype": "Notification",
+  "document_type": "MPIT Contract",
+  "enabled": 1,
+  "event": "Days Before",
+  "message": "Gentile utente,\n\nIl contratto <b>{{ doc.title }}</b> (fornitore: {{ doc.vendor }}, categoria: {{ doc.category }}) sarà rinnovato automaticamente il <b>{{ doc.next_renewal_date }}</b> (notifica {{ notification.days_in_advance }} giorni prima).<br>\n<a href=\"{{ get_url_to_form(doc.doctype, doc.name) }}\">Apri contratto</a>\n\nCordiali saluti,\nMaster Plan IT",
+  "name": "MPIT Contract Renewal (Auto Renew)",
+  "recipients": [
+   {
+    "receiver_by_role": "vCIO Manager"
+   }
+  ],
+  "subject": "Rinnovo automatico contratto: {{ doc.title }} ({{ doc.vendor }})",
+  "channel": "Email"
+ }
 ]

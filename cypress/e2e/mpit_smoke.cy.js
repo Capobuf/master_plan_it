@@ -103,10 +103,7 @@ describe("3. New Contract form — UI validation errors", () => {
         }
 
         // Create contract directly via API (avoids slow form interaction for this data-prep step)
-        cy.request({
-          method: "POST",
-          url: "/api/resource/MPIT Contract",
-          body: {
+        cy.frappePost("/api/resource/MPIT Contract", {
             doctype: "MPIT Contract",
             description: "Cypress Test Contract",
             vendor: vendorName,
@@ -119,7 +116,6 @@ describe("3. New Contract form — UI validation errors", () => {
               vat_rate: 0,
               billing_cycle: "Monthly",
             }],
-          },
         }).then((saveRes) => {
           expect(saveRes.status).to.eq(200);
           const contractName = saveRes.body?.data?.name;
@@ -190,10 +186,7 @@ describe("5. Key monetary amounts visible in Contract form", () => {
         if (!ccName) { cy.log("No CC — skip"); return; }
 
         // Create via API: 1000 net at 22% VAT
-        cy.request({
-          method: "POST",
-          url: "/api/resource/MPIT Contract",
-          body: {
+        cy.frappePost("/api/resource/MPIT Contract", {
             doctype: "MPIT Contract",
             description: "Cypress VAT Amount Test",
             vendor: vendorName,
@@ -206,7 +199,6 @@ describe("5. Key monetary amounts visible in Contract form", () => {
               vat_rate: 22,
               billing_cycle: "Monthly",
             }],
-          },
         }).then((saveRes) => {
           expect(saveRes.status).to.eq(200);
           const contractName = saveRes.body?.data?.name;
@@ -253,11 +245,18 @@ describe("6. Actual Entry — validation visible in UI", () => {
       const projectName = res.body?.data?.[0]?.name;
       if (!projectName) { cy.log("No project — skip"); return; }
 
+      // Ensure MPIT Year 2040 exists so the year validation doesn't fire first.
+      // The entry_kind validation fires AFTER the year check, so the year must cover the date.
+      cy.frappePost(
+        "/api/resource/MPIT Year",
+        { doctype: "MPIT Year", year: 2040, start_date: "2040-01-01", end_date: "2040-12-31" },
+        { failOnStatusCode: false }
+      );
+
       // Attempt to save an invalid One-off entry with a project link
-      cy.request({
-        method: "POST",
-        url: "/api/resource/MPIT Actual Entry",
-        body: {
+      cy.frappePost(
+        "/api/resource/MPIT Actual Entry",
+        {
           doctype: "MPIT Actual Entry",
           posting_date: "2040-06-15",
           entry_kind: "One-off",
@@ -265,9 +264,10 @@ describe("6. Actual Entry — validation visible in UI", () => {
           amount: 100,
           vat_rate: 0,
         },
-        failOnStatusCode: false,
-      }).then((r) => {
-        // Frappe returns 417 or 409 for ValidationError
+        { failOnStatusCode: false }
+      ).then((r) => {
+        // Frappe v16 returns 417 for ValidationError; 409 for duplicate; 422 also seen in some versions.
+        // 400 would mean a request-level error (e.g. CSRF) — after fix it must not appear.
         expect(r.status).to.be.oneOf([409, 417, 422]);
         // The error message must mention the rule
         const errMsg = JSON.stringify(r.body);

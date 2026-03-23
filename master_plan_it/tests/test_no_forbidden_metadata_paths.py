@@ -245,3 +245,38 @@ def test_no_frappe_flags_in_test_reads_in_app_source():
         "frappe.flags.in_test found in app source (use frappe.in_test instead):\n"
         + "\n".join(violations)
     )
+
+
+def test_notification_fixtures_have_required_v16_fields():
+    """Notification fixtures must have 'channel' and 'date_changed' set for Frappe v16.
+
+    Frappe v16 made 'channel' mandatory on all Notification records, and replaced
+    the old 'reference_date_field' key with 'date_changed' for date-based events
+    ('Days Before' / 'Days After').  Fixtures missing these fields cause
+    frappe.MandatoryError / ValidationError during bench migrate and are silently
+    skipped, leaving stale notification rules in the database.
+    """
+    repo_root = Path(__file__).resolve().parents[2]
+    fixture_path = repo_root / "master_plan_it/master_plan_it/fixtures/notification.json"
+
+    if not fixture_path.exists():
+        return  # No notification fixture — nothing to check.
+
+    notifications = json.loads(fixture_path.read_text())
+    violations = []
+
+    date_based_events = {"Days Before", "Days After"}
+
+    for n in notifications:
+        name = n.get("name", "<unnamed>")
+        if not n.get("channel"):
+            violations.append(f"{name}: missing 'channel' (required in Frappe v16)")
+        if n.get("event") in date_based_events and not n.get("date_changed"):
+            violations.append(
+                f"{name}: event='{n['event']}' requires 'date_changed' field name "
+                f"(old 'reference_date_field' key is no longer used in Frappe v16)"
+            )
+
+    assert not violations, (
+        "Notification fixture incompatibilities with Frappe v16:\n" + "\n".join(violations)
+    )
