@@ -5,19 +5,22 @@
     {#
         MPIT Renewals Window - Report Print Format
         Dynamic template supporting print_profile, print_orientation, print_density filters.
-        
+
+        Python columns: contract, title, vendor, cost_center, next_renewal_date, days_to_renewal,
+                        auto_renew, status, end_date, count (hidden), expired_count (hidden)
+
         Profiles:
-        - Standard: contract, title, vendor, category, next_renewal_date, days_to_renewal, auto_renew, status
+        - Standard: contract, title, vendor, cost_center, next_renewal_date, days_to_renewal, auto_renew, status
         - Compact: contract, vendor, next_renewal_date, days_to_renewal, status
-        - All: all columns (includes end_date)
+        - All: all columns (includes end_date; count/expired_count always hidden)
     #}
     {%- set profile = (filters.print_profile or "Standard")|string %}
     {%- set orientation = (filters.print_orientation or "Auto")|string %}
     {%- set density = (filters.print_density or "Normal")|string %}
-    
+
     {# Define column profiles by fieldname #}
     {%- set profile_columns = {
-        "Standard": ["contract", "title", "vendor", "category", "next_renewal_date", "days_to_renewal", "auto_renew", "status"],
+        "Standard": ["contract", "title", "vendor", "cost_center", "next_renewal_date", "days_to_renewal", "auto_renew", "status"],
         "Compact": ["contract", "vendor", "next_renewal_date", "days_to_renewal", "status"],
         "All": []
     } %}

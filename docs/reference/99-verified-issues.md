@@ -75,7 +75,7 @@ updated: 2026-01-25
 | D-03 | Allocations/baseline in guide + architecture + ADR | `docs/how-to/07-projects-multi-year.md`, `docs/explanation/01-architecture.md`, `docs/adr/0004-project-allocations.md` |
 | D-04 | ADR 0007 include Custom recurrence assente | `docs/adr/0007-money-naming-printing.md`, `master_plan_it/annualization.py` |
 | D-05 | 10-money-vat-annualization: section 5 outdated | `docs/reference/10-money-vat-annualization.md` |
-| D-06 | Printing docs duplicate | `docs/reference/08-printing-reports-pdf.md`, `docs/reference/11-printing-and-report-print-formats.md` |
+| D-06 | Printing docs duplicate | Resolved: doc 08 deleted, doc 11 rewritten with accurate content (Jinja2, correct fieldnames, correct report list). Refs in ADR-0007/0010/doc-04 updated. |
 | D-07 | Data sources chart doc drift (fields/options) | `docs/reference/08-data-sources-for-charts.md`, `master_plan_it/doctype/mpit_budget/mpit_budget.json` |
 | D-08 | Terminologia Allocation in UI/print | `master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html`, `master_plan_it/doctype/mpit_project/mpit_project.json` |
 | D-09 | Copilot instructions + changelog fuori sync | `.github/copilot-instructions.md`, `CHANGELOG.md` |

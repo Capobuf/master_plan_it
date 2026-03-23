@@ -7,7 +7,7 @@
 
 ## Context
 
-MPIT includes 6 Script Reports that users need to print or export as PDF. The main challenge is that several reports have many columns (8-12), which causes:
+MPIT includes 7 Script Reports that users need to print or export as PDF. The main challenge is that several reports have many columns (8-12), which causes:
 
 1. **PDF cutoff**: columns get cut off on the right side when printing on A4
 2. **Illegible output**: text becomes too small when trying to fit all columns
@@ -21,7 +21,7 @@ Users requested a way to:
 
 ## Decision
 
-We implement **Report Print Formats** (Jinja2 HTML templates) for all 6 MPIT reports with:
+We implement **Report Print Formats** (Jinja2 HTML templates) for MPIT reports with:
 
 ### 1. Dynamic Column Rendering
 
@@ -97,7 +97,7 @@ Export remains available as a fallback.
 
 ### Positive
 
-1. **Consistent experience**: All 6 reports use the same print filter pattern
+1. **Consistent experience**: The 3 implemented reports use the same print filter pattern
 2. **File-first**: Templates are in version control, deployable without UI configuration
 3. **Predictable output**: Profile names (Standard/Compact/All) are self-documenting
 4. **Graceful degradation**: Warning helps users before they waste paper/time
@@ -109,6 +109,7 @@ Export remains available as a fallback.
 1. **Profile maintenance**: Adding columns to a report may require updating profile definitions
 2. **Limited customization**: Users can't create custom column selections (must use predefined profiles)
 3. **wkhtmltopdf limitations**: Some CSS features don't work perfectly in wkhtmltopdf
+4. **Partial implementation**: 4 of the 7 reports (Overview, Monthly Plan, Actual Entries, Budget What-If) do not yet have HTML print templates and fall back to Frappe's default print layout. These are a known gap to be addressed.
 
 ### Neutral
 
@@ -119,7 +120,7 @@ Export remains available as a fallback.
 
 ### Files Changed
 
-For each of the 6 reports:
+For each of the 3 reports with templates (Budget Diff, Projects Planned vs Exceptions, Renewals Window):
 - `.py`: Columns normalized to dict format with explicit `fieldname` (3 reports converted)
 - `.js`: Filters added/updated (6 reports)
 - `.html`: Template created/rewritten with dynamic rendering (6 templates)
@@ -161,5 +162,5 @@ All templates follow this structure:
 
 ## References
 
-- [Reference: Printing Reports PDF](../reference/08-printing-reports-pdf.md)
+- [Reference: Printing and Report Print Formats](../reference/11-printing-and-report-print-formats.md)
 - [Frappe Report Print Format Documentation](https://frappeframework.com/docs/user/en/desk/reports/report-builder#print-format)

@@ -52,9 +52,9 @@ Recurrence: `Monthly, Quarterly, Annual, Custom, None`
 Normalizzare net/vat/gross prima di annualizzare.
 
 ### 5) Printing
-- Doc Print Formats: Jinja + bootstrap classes, versionate come Standard (file in repo)
+- Doc Print Formats: Jinja + inline CSS, versionate come Standard (file in repo)
 - Allegati: lista di file (no preview PDF come immagini)
-- Report Print Formats: `{report}.html` (microtemplating), no single quotes
+- Report Print Formats: `{report}.html` — Jinja2 server-side (see ADR-0010); no single quotes in string literals
 
 ---
 

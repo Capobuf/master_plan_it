@@ -5,20 +5,23 @@
     {#
         MPIT Budget Diff - Report Print Format
         Dynamic template supporting print_profile, print_orientation, print_density filters.
-        
+
+        Python columns: cost_center | a_total, a_contracts, a_projects, a_allowance, a_other
+                        | b_total, b_contracts, b_projects, b_allowance, b_other | delta, delta_pct
+
         Profiles:
-        - Standard: cost_center, vendor, budget_a_annual_net, budget_b_annual_net, delta_annual
-        - Compact: cost_center, budget_a_annual_net, budget_b_annual_net, delta_annual
-        - All: all columns (includes monthly equivalents)
+        - Standard: cost_center, a_total, b_total, delta, delta_pct
+        - Compact: cost_center, a_total, b_total, delta
+        - All: all columns
     #}
     {%- set profile = (filters.print_profile or "Standard")|string %}
     {%- set orientation = (filters.print_orientation or "Auto")|string %}
     {%- set density = (filters.print_density or "Normal")|string %}
-    
+
     {# Define column profiles by fieldname #}
     {%- set profile_columns = {
-        "Standard": ["cost_center", "vendor", "budget_a_annual_net", "budget_b_annual_net", "delta_annual"],
-        "Compact": ["cost_center", "budget_a_annual_net", "budget_b_annual_net", "delta_annual"],
+        "Standard": ["cost_center", "a_total", "b_total", "delta", "delta_pct"],
+        "Compact": ["cost_center", "a_total", "b_total", "delta"],
         "All": []
     } %}
     
@@ -171,9 +174,6 @@
         {% if filters.budget_b %}
             <strong>{{ _("Budget B") }}:</strong> {{ filters.budget_b }} &nbsp;
         {% endif %}
-        {% if filters.group_by %}
-            <strong>{{ _("Group By") }}:</strong> {{ filters.group_by }} &nbsp;
-        {% endif %}
         {% if filters.only_changed %}
             <strong>{{ _("Only Changed") }}:</strong> {{ _("Yes") }}
         {% endif %}
@@ -207,7 +207,7 @@
                             {% set fieldtype = col.get("fieldtype", "Data") %}
                             {% set value = row.get(fieldname, "") %}
                             {% set is_currency = fieldtype == "Currency" %}
-                            {% set is_delta = fieldname in ["delta_annual", "delta_monthly"] %}
+                            {% set is_delta = fieldname == "delta" %}
                             
                             {% if is_currency %}
                                 {% set delta_class = "" %}

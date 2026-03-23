@@ -9,7 +9,7 @@
 6) **MPIT Actual Entries** — List of actual entries with filters.
 7) **MPIT Budget What-If** — What-if scenario analysis for budget lines.
 
-Print: HTML templates live next to each report; no custom JS/CSS; use microtemplating (`<%= ... %>`) with bootstrap classes.
+Print: Jinja2 HTML templates live next to each report (server-side). 3 of 7 reports have templates; 4 fall back to Frappe default. See `docs/reference/11-printing-and-report-print-formats.md`.
 
 ## Dashboard
 The app uses the native Frappe **Workspace** (`Master Plan IT`) as the primary Desk entry point:
