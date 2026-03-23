@@ -5,44 +5,24 @@ Frappe Desk app (v16) for budgeting, contracts, and projects. Native file-first 
 ## Quick Start
 
 ```bash
-# Install on existing Frappe bench (from main branch)
-bench get-app https://github.com/Capobuf/master-plan-it.git
+# Install on existing Frappe bench (from main branch).
+# Passing the app name explicitly ensures bench clones to apps/master_plan_it/
+# (the repo is named master-plan-it with a dash; the Python package uses an underscore).
+bench get-app master_plan_it https://github.com/Capobuf/master-plan-it.git
 bench --site <your-site> install-app master_plan_it
 bench --site <your-site> migrate
 
 # Or install from a specific branch (e.g., develop)
-bench get-app --branch develop https://github.com/Capobuf/master-plan-it.git
+bench get-app master_plan_it --branch develop https://github.com/Capobuf/master-plan-it.git
 
 # Enable scheduler (required for background jobs)
 bench --site <your-site> enable-scheduler
 ```
 
-> **Note:** The repository name (`master-plan-it`) differs from the Python package name (`master_plan_it`). 
-> If `bench get-app` fails to install the Python package automatically, run:
-> ```bash
-> pip install -e /path/to/frappe-bench/apps/master_plan_it
-> ```
-
-## Updating Existing Sites (Docker)
-
-Pull the new pre-built image, recreate the containers, then migrate:
-
-```bash
-cd master-plan-it-deploy
-
-# 1. Update CUSTOM_TAG in prod.env, then pull
-docker pull $(grep CUSTOM_IMAGE prod.env | cut -d= -f2):$(grep CUSTOM_TAG prod.env | cut -d= -f2)
-
-# 2. Recreate containers
-docker compose -f compose.prod.yml --env-file prod.env up -d --force-recreate backend frontend
-
-# 3. Migrate each site
-docker compose -f compose.prod.yml --env-file prod.env \
-  exec backend bash -lc "bench --site <your-site> migrate"
-```
-
-> **Note:** Do not `git pull` or `pip install` inside a running prod container.  
-> App code is baked into the image at build time. Upgrade = new image tag → recreate → migrate.
+> **Upgrade (Docker production):** Pull the new pre-built image, recreate containers, then run
+> `bench --site <site> migrate`. See the deploy repository README for the full procedure.
+> App code is baked into the image at build time — do not `git pull` or `pip install` inside a
+> running production container.
 
 ---
 
@@ -113,7 +93,6 @@ bench --site mysite.example.com console
 
 - [Installation Guide](docs/how-to/00-bootstrap-from-scratch.md)
 - [Architecture](docs/explanation/01-architecture.md)
-- [Open Issues](OPEN_ISSUES.md)
 - [Changelog](CHANGELOG.md)
 
 ## Features
