@@ -25,29 +25,24 @@ bench --site <your-site> enable-scheduler
 
 ## Updating Existing Sites (Docker)
 
-Enter the container and navigate to bench directory:
+Pull the new pre-built image, recreate the containers, then migrate:
 
 ```bash
-docker exec -it -u 1000:1000 mpit-backend bash
-cd /home/frappe/frappe-bench
+cd master-plan-it-deploy
+
+# 1. Update CUSTOM_TAG in prod.env, then pull
+docker pull $(grep CUSTOM_IMAGE prod.env | cut -d= -f2):$(grep CUSTOM_TAG prod.env | cut -d= -f2)
+
+# 2. Recreate containers
+docker compose -f compose.prod.yml --env-file prod.env up -d --force-recreate backend frontend
+
+# 3. Migrate each site
+docker compose -f compose.prod.yml --env-file prod.env \
+  exec backend bash -lc "bench --site <your-site> migrate"
 ```
 
-Switch branch if needed, then pull and migrate:
-
-```bash
-# Switch to main branch
-bench switch-to-branch main master_plan_it
-
-# Or switch to develop branch
-bench switch-to-branch develop master_plan_it
-
-# Pull latest changes and apply migrations
-cd apps/master_plan_it && git pull && cd ../..
-bench --site <your-site> migrate
-bench --site <your-site> clear-cache
-```
-
-> **Note:** `bench update --apps` may fail in Docker environments where frappe/erpnext are installed without git history. The manual git pull + migrate approach above always works.
+> **Note:** Do not `git pull` or `pip install` inside a running prod container.  
+> App code is baked into the image at build time. Upgrade = new image tag → recreate → migrate.
 
 ---
 

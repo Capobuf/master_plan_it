@@ -83,10 +83,10 @@ updated: 2026-01-25
 
 ### Infra & Repo Hygiene
 
-| ID | Issue | Evidence |
-| --- | --- | --- |
-| I-01 | prod.env con password root di default | `master-plan-it-deploy/prod.env` |
-| I-02 | Dev/Prod drift (DB version, entrypoint) | `master-plan-it-deploy/compose.yml`, `master-plan-it-deploy/compose.prod.yaml` |
+| ID | Issue | Evidence | Status |
+| --- | --- | --- | --- |
+| I-01 | prod.env con password root committata | `master-plan-it-deploy/prod.env` (rimosso) | Risolto: prod.env eliminato, aggiunto a .gitignore |
+| I-02 | Dev/Prod drift: 3 compose con approcci diversi | `compose.yml`, `compose.prod.yaml`, `compose.yml.prod` (rimossi) | Risolto: 1 compose.dev.yml + 1 compose.prod.yml |
 | I-03 | Script audit_translations con path hardcoded | `audit_translations.py` |
 | I-04 | dashboard_defaults.py non referenziato | `master_plan_it/devtools/dashboard_defaults.py` |
 | I-05 | public/js vuoto (verificare intenzione) | `master_plan_it/public/js/` |
