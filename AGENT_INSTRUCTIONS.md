@@ -1,74 +1,116 @@
-# Agent Instructions (Master Plan IT)
+# Agent Instructions — Master Plan IT (MPIT)
 
-These rules exist to prevent drift and avoid “terminal copy/paste chaos”.
+Single source of truth for LLM agent rules. Read this file in full before any task.
 
-## Non‑negotiables
-- Do **not** add custom JS/CSS or any frontend build pipeline.
-- Keep everything **native Frappe Desk**.
-- Keep changes **idempotent** where applicable.
-- Never overwrite standard fixtures or export/import standard system records.
-- Do **not** build or use any custom spec-import / `sync_all` pipeline; stay native.
-- Metadata lives only under `master_plan_it/master_plan_it/` — do not create duplicates elsewhere. The Git repo root is the app root; inside a bench the path remains `apps/master_plan_it/` after `bench get-app`.
+## Non-negotiables
 
-## Development workflow (single source of truth)
+- No custom JS/CSS or frontend build pipeline. Native Frappe Desk only.
+- Metadata lives only in `master_plan_it/master_plan_it/` — never in the parent folder. `test_no_forbidden_metadata_paths.py` enforces this.
+- No custom sync/import pipeline. Use standard `bench migrate`.
+- Changes must be idempotent where applicable.
+- Never overwrite standard Frappe fixtures or export/import standard system records.
+- Never `git pull` or `pip install` inside a running production container. App code is baked into the image at build time.
 
-For applying changes to a site, see `docs/how-to/01-apply-changes.md`.
+## Source of truth
 
-### Location of source files
-- **Metadata (source of truth):** `master_plan_it/master_plan_it/{doctype,report,workflow,dashboard,dashboard_chart,number_card,master_plan_it_dashboard,workspace,print_format}/`
-- **Python logic:** `master_plan_it/master_plan_it/doctype/*/mpit_*.py`
-- **Install hooks & fixtures:** `master_plan_it/setup/install.py` and `master_plan_it/fixtures/role.json` handle bootstrap (settings/years) and ship MPIT roles.
+| Type | Path |
+|------|------|
+| Metadata (DocType, Workflow, Report, Dashboard, Workspace, Print Format) | `master_plan_it/master_plan_it/{doctype,report,workflow,dashboard,dashboard_chart,number_card,workspace,print_format}/` |
+| Python controllers | `master_plan_it/master_plan_it/doctype/*/mpit_*.py` |
+| Hooks | `master_plan_it/hooks.py` |
+| Bootstrap | `master_plan_it/setup/install.py` (after_install/after_sync) |
+| Fixtures | `master_plan_it/fixtures/` (filtered exports only; roles shipped) |
+| Translations | `master_plan_it/master_plan_it/translations/it.csv` |
 
-### The correct flow (native file-first)
-1) Edit exported metadata JSON directly in the canonical module folder.
-2) If you use Desk for skeleton/non-owned DocTypes, immediately **Export Customizations** back into the canonical path.
-3) Edit Python logic alongside metadata as needed.
-4) Apply with standard Frappe commands (`bench --site <site> migrate`, `clear-cache`) when required. No custom import pipeline.
+## Development model
 
-### Steps to apply changes
-1) Edit metadata JSON under `master_plan_it/master_plan_it/...` (or export from Desk into that path).
-2) Edit Python logic in `doctype/*/mpit_*.py` if needed.
-3) Apply to database with standard Frappe commands as needed (`bench --site <site> migrate`, `clear-cache`).
-4) Commit the canonical metadata and code. Install hooks will create MPIT Settings + current/next year, and fixtures ship MPIT roles.
+Dev uses Docker with a bind-mount of the app repo:
 
-## What to change where
+```bash
+# From master-plan-it-deploy/
+docker compose -f compose.dev.yml up -d
+```
 
-### Always edit these (source of truth)
-- **Metadata JSON:** `master_plan_it/master_plan_it/{doctype,report,workflow,dashboard,dashboard_chart,number_card,master_plan_it_dashboard,workspace,print_format}/...`
-- **Python logic:** `master_plan_it/master_plan_it/doctype/*/mpit_*.py`
-- **Install/bootstrap:** `master_plan_it/setup/install.py` (after_install/after_sync)
-- **Fixtures:** `master_plan_it/fixtures/` (filtered exports only; roles already provided)
-- **Hooks:** `master_plan_it/hooks.py`
+App repo must be a sibling directory (`../master_plan_it`). Host edits appear in the container immediately.
 
-### Anti-patterns (do not duplicate)
-Do not create metadata in these paths (the inner `master_plan_it/` folder is the correct location):
-- `master_plan_it/doctype/`
-- `master_plan_it/report/`
-- `master_plan_it/workflow/`
-- `master_plan_it/workspace/`
-- `master_plan_it/dashboard/`
-- `master_plan_it/dashboard_chart/`
-- `master_plan_it/number_card/`
-- `master_plan_it/master_plan_it_dashboard/`
-- `master_plan_it/print_format/`
+## Production model
 
-A regression test (`test_no_forbidden_metadata_paths.py`) enforces this.
+Prod uses a pre-built image with the app baked in at build time. No source mounts.
+
+```bash
+# Upgrade: pull new image → recreate containers → migrate
+docker compose -f compose.prod.yml --env-file prod.env pull
+docker compose -f compose.prod.yml --env-file prod.env up -d --force-recreate
+docker compose -f compose.prod.yml exec backend bench --site <site> migrate
+```
+
+See `master-plan-it-deploy/README.md` for build and first-run instructions.
+
+## Apply changes (development)
+
+```bash
+bench --site <site> migrate      # schema, fixtures, patches
+bench --site <site> clear-cache  # always after migrate
+# Hard refresh browser: Ctrl+F5
+```
+
+| Change type | Command |
+|-------------|---------|
+| DocType / Workflow / Workspace JSON | `migrate` + `clear-cache` |
+| Python logic | `clear-cache` (+ restart web worker if needed) |
+| Translations (`it.csv`) | `clear-cache` only |
+| Fixtures | `migrate` + `clear-cache` |
+
+## Standard task flow
+
+1. Read all relevant source files in full before making any change.
+2. Edit canonical JSON under `master_plan_it/master_plan_it/...` and/or Python controllers.
+3. If you used Desk for a skeleton or non-owned DocType customization: immediately Export Customizations to the canonical path.
+4. Apply: `bench --site <site> migrate && bench --site <site> clear-cache`.
+5. Verify (see below).
+6. Commit canonical files.
+7. Update docs or add an ADR only if an architectural decision changed.
+
+## Required outputs for each task
+
+- Exact diff of changed files (path + content delta).
+- Apply command specific to the change type.
+- Verification step: what to check in DB or test output.
+- ADR if and only if an architectural decision was made.
+
+## Verification
+
+```bash
+# Confirm object exists in DB
+bench --site <site> console
+>>> frappe.db.get_value("DocType", "<Name>", "modified")
+
+# Run tests (must pass, especially path regression)
+pytest master_plan_it/tests/
+pytest master_plan_it/tests/test_no_forbidden_metadata_paths.py
+```
+
+## Safety checks
+
+- Do not rename DocTypes or modules after creation (breaks file paths and fixtures).
+- Export fixtures with filters only; never export unfiltered Frappe standard objects.
+- In Docker dev, verify the bind mount is active before assuming edits are visible.
+- Always use `--no-mariadb-socket` when creating a new site in Docker.
 
 ## Translations (i18n)
 
-→ See `docs/reference/12-i18n.md` for complete translation rules.
+Source: `master_plan_it/master_plan_it/translations/it.csv`
+Usage: Python `_("text")` · JS `__("text")` · Jinja `{{ _("text") }}`
+See `docs/reference/12-i18n.md` for full rules.
 
-**Quick ref:**
-- Source: `master_plan_it/master_plan_it/translations/it.csv`
-- Python: `_("text")` | JS: `__("text")` | Jinja: `{{ _("text") }}`
+## Template prompt for new tasks
 
-
-## Required outputs for each task
-- If you change metadata: ensure `bench migrate` is the apply step and update the relevant docs.
-- Add or update an ADR if the change is an architectural decision (multi-tenant model, workflow semantics, immutability rules).
-- Provide a `verify()` command/output plan: what should exist in DB after apply.
-
-## Safety checks
-- Avoid changing object/module names once created (keeps file paths stable).
-- Never export fixtures without filters; ensure only MPIT objects are included.
-- If unsure whether an object is “standard sync”: prefer to create it in dev mode via UI and commit its files.
+```
+Role: operational agent on the MPIT codebase.
+Read AGENT_INSTRUCTIONS.md in full first.
+Read all files relevant to this task before making any change.
+Do not invent. Do not assume. If something is not proven by the code, say so.
+Output: exact diff, apply command, verification step.
+Keep changes minimal and native Frappe.
+Task: <describe task here>
+```

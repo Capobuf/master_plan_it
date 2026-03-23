@@ -23,6 +23,8 @@ fixtures = [
     {"dt": "Workflow Action Master", "filters": [["name", "in", ["Submit", "Propose", "Request Changes", "Approve", "Reject", "Reopen", "Cancel"]]]},
     {"dt": "Workflow State", "filters": [["name", "in", ["Draft", "Proposed", "Approved", "Rejected", "Cancelled", "Submitted"]]]},
     {"dt": "Workflow", "filters": [["name", "in", ["MPIT Budget Workflow", "MPIT Project Workflow", "MPIT Planned Item Workflow"]]]},
+    # Scheduled contract notifications (event-driven, Days Before)
+    {"dt": "Notification", "filters": [["name", "in", ["MPIT Contract Expiry (Non Auto Renew)", "MPIT Contract Renewal (Auto Renew)"]]]},
 ]
 
 # Scheduled jobs

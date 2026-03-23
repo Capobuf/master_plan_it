@@ -6,7 +6,7 @@ def get_data():
         {
             "module_name": "Master Plan IT",
             "color": "blue",
-            "icon": "octicon octicon-graph",
+            "icon": "bar-chart",
             "type": "module",
             "label": _("Master Plan IT"),
         }

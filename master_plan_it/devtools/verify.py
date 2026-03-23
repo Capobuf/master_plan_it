@@ -59,11 +59,11 @@ def run() -> Dict[str, List[str]]:
     missing_number_cards = [c for c in REQUIRED_NUMBER_CARDS if not frappe.db.exists("Number Card", c)]
 
     workspace_missing = not frappe.db.exists("Workspace", WORKSPACE_NAME)
-    workspace_public = None
+    workspace_not_public = None
     workspace_roles_missing: List[str] = []
     if not workspace_missing:
         ws = frappe.get_doc("Workspace", WORKSPACE_NAME)
-        workspace_public = bool(ws.public)
+        workspace_not_public = not bool(ws.public)
         desired_roles = set(REQUIRED_ROLES + ["System Manager"])
         current_roles = {r.role for r in ws.get("roles", [])}
         workspace_roles_missing = sorted(desired_roles - current_roles)
@@ -77,7 +77,7 @@ def run() -> Dict[str, List[str]]:
         missing_dashboard_charts,
         missing_number_cards,
         workspace_missing,
-        workspace_public,
+        workspace_not_public,
         workspace_roles_missing,
     ]):
         ok.append("all_required_entities_present")
@@ -89,7 +89,7 @@ def run() -> Dict[str, List[str]]:
         "missing_dashboard_charts": missing_dashboard_charts,
         "missing_number_cards": missing_number_cards,
         "workspace_missing": workspace_missing,
-        "workspace_public": workspace_public,
+        "workspace_not_public": workspace_not_public,
         "workspace_roles_missing": workspace_roles_missing,
         "ok": ok,
     }

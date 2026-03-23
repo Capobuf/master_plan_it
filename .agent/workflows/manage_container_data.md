@@ -1,104 +1,74 @@
 ---
-description: How to Create, Read, Update, and Delete data in the MPIT container using bench console.
+description: Create, read, update, and delete data in the MPIT container using bench console
 ---
 
-This workflow explains how to manage data (CRUD operations) directly on the running container using `bench console`. This method is useful for debugging, data fixing, or scripted updates.
+# Manage Container Data (CRUD)
+
+Use `bench console` for debugging, data fixes, or scripted updates.
 
 ## Prerequisites
 
-- Ensure you are in the deploy directory: `/usr/docker/masterplan-project/master-plan-it-deploy`
-- Ensure the container `mpit-backend` is running.
-- **IMPORTANT**: For any Write/Update/Delete operation, you must explicitly call `frappe.db.commit()`, otherwise changes will be rolled back when the console exits.
-
-## Setup: Environment Variables
-
-First, load the environment variables to avoid hardcoding:
+Load environment variables from the deploy repo's `.env` or `prod.env`:
 
 ```bash
-# Load variables
-export $(grep -v '^#' /usr/docker/masterplan-project/master-plan-it-deploy/.env | xargs)
+export $(grep -v '^#' /path/to/master-plan-it-deploy/.env | xargs)
+# Expected: HOST_UID, HOST_GID, SITE_NAME, BACKEND_CONTAINER (e.g. mpit-backend)
 ```
 
-## 1. Read Data (Select)
+**IMPORTANT:** Any write/update/delete operation requires an explicit `frappe.db.commit()` at the end, or the transaction is rolled back when the console exits.
 
-To read data, you can use `frappe.get_all` or `frappe.get_doc`.
+## Pattern: pipe a script into bench console
 
 ```bash
-echo "import frappe; print(frappe.get_all('MPIT Project', fields=['name', 'title']))" | docker exec -i -u ${HOST_UID}:${HOST_GID} mpit-backend bench --site ${SITE_NAME} console
+cat script.py | docker exec -i -u "${HOST_UID}:${HOST_GID}" "${BACKEND_CONTAINER}" \
+  bench --site "${SITE_NAME}" console
 ```
 
-## 2. Create Data (Insert)
+## 1. Read
 
-To create a new document:
-1.  Initialize with `new_doc`.
-2.  Set mandatory fields.
-3.  Call `insert()`.
-4.  **Call `frappe.db.commit()`**.
+```python
+import frappe
+print(frappe.get_all('MPIT Project', fields=['name', 'title']))
+```
 
-```bash
-# create_script.py
+## 2. Create
+
+```python
 import frappe
 doc = frappe.new_doc('MPIT Project')
 doc.title = 'New Project'
-doc.cost_center = 'Spese Interne' # Ensure this foreign key valid
+doc.cost_center = 'All Cost Centers'
 doc.status = 'Draft'
 doc.insert()
-frappe.db.commit() # CRITICAL
+frappe.db.commit()  # required
 print(f"Created: {doc.name}")
 ```
 
-**Execute:**
-```bash
-cat create_script.py | docker exec -i -u ${HOST_UID}:${HOST_GID} mpit-backend bench --site ${SITE_NAME} console
-```
+## 3. Update
 
-## 3. Update Data (Save)
-
-To update an existing document:
-1.  Fetch with `get_doc`.
-2.  Modify fields.
-3.  Call `save()`.
-4.  **Call `frappe.db.commit()`**.
-
-```bash
-# update_script.py
+```python
 import frappe
 try:
     doc = frappe.get_doc('MPIT Project', 'PRJ-1')
-    doc.description = 'Updated Description'
+    doc.description = 'Updated description'
     doc.save()
-    frappe.db.commit() # CRITICAL
+    frappe.db.commit()  # required
     print(f"Updated: {doc.name}")
 except frappe.DoesNotExistError:
     print("Doc not found")
 ```
 
-**Execute:**
-```bash
-cat update_script.py | docker exec -i -u ${HOST_UID}:${HOST_GID} mpit-backend bench --site ${SITE_NAME} console
-```
+## 4. Delete
 
-## 4. Delete Data
-
-To delete a document:
-1.  Call `frappe.delete_doc`.
-2.  **Call `frappe.db.commit()`**.
-
-```bash
-# delete_script.py
+```python
 import frappe
 frappe.delete_doc('MPIT Project', 'PRJ-X')
-frappe.db.commit() # CRITICAL
+frappe.db.commit()  # required
 print("Deleted")
-```
-
-**Execute:**
-```bash
-cat delete_script.py | docker exec -i -u ${HOST_UID}:${HOST_GID} mpit-backend bench --site ${SITE_NAME} console
 ```
 
 ## References
 
-- Bench CLI: `bench --site <site> console`, `bench --site <site> execute`
-- Document API: `frappe.new_doc()`, `doc.save()`, `frappe.delete_doc()`
-- Database API: `frappe.db.commit()`, `frappe.get_all()`
+- `bench --site <site> console` — interactive Python shell
+- `frappe.new_doc()`, `doc.save()`, `frappe.delete_doc()` — document API
+- `frappe.db.commit()` — always required after writes

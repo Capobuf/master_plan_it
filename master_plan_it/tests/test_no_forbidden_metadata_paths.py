@@ -10,15 +10,59 @@ def test_no_forbidden_metadata_paths():
         repo_root / "master_plan_it/report",
         repo_root / "master_plan_it/workflow",
         repo_root / "master_plan_it/workspace",
+        repo_root / "master_plan_it/workspace_sidebar",
         repo_root / "master_plan_it/dashboard",
         repo_root / "master_plan_it/dashboard_chart",
         repo_root / "master_plan_it/number_card",
         repo_root / "master_plan_it/master_plan_it_dashboard",
         repo_root / "master_plan_it/print_format",
+        repo_root / "master_plan_it/notification",
     ]
 
     for path in forbidden:
         assert not path.exists(), f"Forbidden metadata path exists: {path}"
+
+
+def test_workspace_sidebar_in_canonical_path():
+    """Workspace Sidebar JSON must be at {module}/workspace_sidebar/{name}/{name}.json.
+
+    A flat file at workspace_sidebar/{name}.json is NOT picked up by frappe.reload_doc
+    and will not be loaded during bench migrate.
+    """
+    repo_root = Path(__file__).resolve().parents[2]
+    ws_sidebar_root = repo_root / "master_plan_it/master_plan_it/workspace_sidebar"
+
+    flat_json = list(ws_sidebar_root.glob("*.json"))
+    assert not flat_json, (
+        "Workspace Sidebar JSON files must not be at workspace_sidebar/*.json (flat). "
+        "Move each to workspace_sidebar/{name}/{name}.json: "
+        + ", ".join(str(f) for f in flat_json)
+    )
+
+    # At least one valid nested file must exist
+    nested_json = list(ws_sidebar_root.glob("*/*.json"))
+    assert nested_json, "Expected at least one Workspace Sidebar JSON at workspace_sidebar/{name}/{name}.json"
+
+
+def test_number_card_dirs_have_init():
+    """Every number_card subdirectory must have an __init__.py.
+
+    Missing __init__.py creates an inconsistency in the Python package structure
+    relative to all other number_card subdirectories in this app.
+    """
+    repo_root = Path(__file__).resolve().parents[2]
+    nc_root = repo_root / "master_plan_it/master_plan_it/number_card"
+    violations = []
+
+    for entry in nc_root.iterdir():
+        if not entry.is_dir() or entry.name.startswith("_"):
+            continue
+        if not (entry / "__init__.py").exists():
+            violations.append(str(entry.relative_to(repo_root)))
+
+    assert not violations, (
+        "number_card subdirectories missing __init__.py:\n" + "\n".join(violations)
+    )
 
 
 def test_dashboards_are_only_in_canonical_path():

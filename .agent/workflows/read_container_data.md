@@ -1,54 +1,44 @@
 ---
-description: How to read data from the MPIT container using dynamic configuration from .env
+description: Read data from the MPIT container using bench console or bench execute
 ---
 
-This workflow explains how to execute Frappe commands (like `frappe.get_all` or `frappe.get_meta`) directly on the running container, using the configuration defined in the local `.env` file.
+# Read Container Data
+
+Execute Frappe queries on the running container.
 
 ## Prerequisites
 
-- Ensure you are in the deploy directory or know its path: `/usr/docker/masterplan-project/master-plan-it-deploy`
-- Ensure the container `mpit-backend` is running.
-
-## Steps
-
-1.  **Load Environment Variables**: Read the `.env` file to get the `HOST_UID`, `HOST_GID`, and `SITE_NAME`.
-    ```bash
-    # Example command to extract variables (for reference)
-    export $(grep -v '^#' /usr/docker/masterplan-project/master-plan-it-deploy/.env | xargs)
-    ```
-
-2.  **Construct the Command**: Use the variables to build the `docker exec` command.
-    - **User**: `$HOST_UID:$HOST_GID` (e.g., `1000:1000`)
-    - **Site**: `$SITE_NAME` (e.g., `budget.zeroloop.it`)
-    - **Container**: `mpit-backend` (Standard container name)
-
-3.  **Execute the Command**: Run the command using `bench execute`.
-
-    **Example: Get Metadata (Schema)**
-    ```bash
-    docker exec -u ${HOST_UID}:${HOST_GID} mpit-backend bench --site ${SITE_NAME} execute frappe.get_meta --args "('MPIT Project',)"
-    ```
-
-    **Example: Get Data (List Records)**
-    ```bash
-    docker exec -u ${HOST_UID}:${HOST_GID} mpit-backend bench --site ${SITE_NAME} execute frappe.get_all --args "('MPIT Project',)" --kwargs "{'fields': ['name', 'title']}"
-    ```
-
-## Python Script Example (for complex queries)
-
-If you need to run complex logic, you can pipe a python script:
+Load environment variables from the deploy repo's `.env` or `prod.env`:
 
 ```bash
-# internal_script.py
-import frappe
-print(frappe.get_all('MPIT Project', fields=['name', 'title']))
+export $(grep -v '^#' /path/to/master-plan-it-deploy/.env | xargs)
+# Expected: HOST_UID, HOST_GID, SITE_NAME, BACKEND_CONTAINER (e.g. mpit-backend)
 ```
 
+## Execute a query
+
 ```bash
-cat internal_script.py | docker exec -i -u ${HOST_UID}:${HOST_GID} mpit-backend bench --site ${SITE_NAME} console
+# Get metadata (schema)
+docker exec -u "${HOST_UID}:${HOST_GID}" "${BACKEND_CONTAINER}" \
+  bench --site "${SITE_NAME}" execute frappe.get_meta --args "('MPIT Project',)"
+
+# Get data (list records)
+docker exec -u "${HOST_UID}:${HOST_GID}" "${BACKEND_CONTAINER}" \
+  bench --site "${SITE_NAME}" execute frappe.get_all \
+  --args "('MPIT Project',)" --kwargs "{'fields': ['name', 'title']}"
+```
+
+## Python script for complex queries
+
+```bash
+# Pipe a script into bench console
+echo "import frappe; print(frappe.get_all('MPIT Project', fields=['name', 'title']))" \
+  | docker exec -i -u "${HOST_UID}:${HOST_GID}" "${BACKEND_CONTAINER}" \
+    bench --site "${SITE_NAME}" console
 ```
 
 ## References
 
-- Bench CLI: `bench --site <site> execute`, `bench --site <site> console`
-- Database API: `frappe.get_all()`, `frappe.db.get_value()`
+- `bench --site <site> execute` — run a single Python expression
+- `bench --site <site> console` — interactive Python shell with Frappe context
+- `frappe.get_all()`, `frappe.db.get_value()` — read API

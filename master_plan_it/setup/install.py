@@ -36,11 +36,7 @@ def _ensure_year(year: int) -> None:
 
 
 def _ensure_root_cost_center() -> None:
-	"""Create root Cost Center 'All Cost Centers' if missing (idempotent).
-
-	This was previously in patches/v2_0/add_cost_center_root.py but moved here
-	to ensure new installations get the root Cost Center via install hooks.
-	"""
+	"""Create root Cost Center 'All Cost Centers' if missing (idempotent)."""
 	if not frappe.db.exists("DocType", "MPIT Cost Center"):
 		# DocType not synced yet; will be called again after sync.
 		return
@@ -71,6 +67,7 @@ def _reload_standard_assets() -> None:
 	"""Ensure dashboards/workspaces/chart sources are synced on new sites."""
 	frappe.reload_doc("master_plan_it", "dashboard", "master_plan_it_overview", force=1)
 	frappe.reload_doc("master_plan_it", "workspace", "master_plan_it", force=1)
+	frappe.reload_doc("master_plan_it", "workspace_sidebar", "master_plan_it", force=1)
 	_reload_doc_folder("dashboard_chart_source")
 	_reload_doc_folder("dashboard_chart")
 

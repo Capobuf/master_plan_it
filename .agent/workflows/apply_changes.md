@@ -1,32 +1,29 @@
 ---
-description: Apply changes to Frappe site (migrate + clear-cache)
+description: Apply changes to Frappe site in dev Docker environment (migrate + clear-cache)
 ---
 
-# Apply Changes Workflow
+# Apply Changes (development)
 
-Deploy code changes to the Frappe development environment.
+Run after editing metadata JSON or Python controllers in the app repo.
 
 ## Steps
 
 // turbo-all
-1. Navigate to deploy directory:
+1. Run migrate to apply schema and code changes:
    ```bash
-   cd /usr/docker/masterplan-project/master-plan-it-deploy
+   docker exec -u "${HOST_UID:-1000}:${HOST_GID:-1000}" "${BACKEND_CONTAINER}" \
+     bench --site "${SITE_NAME}" migrate
    ```
 
-2. Run migrate to apply schema and code changes:
+2. Clear cache:
    ```bash
-   docker exec -u 1000:1000 mpit-backend bench --site budget.zeroloop.it migrate
-   ```
-
-3. Clear cache to ensure fresh assets are loaded:
-   ```bash
-   docker exec -u 1000:1000 mpit-backend bench --site budget.zeroloop.it clear-cache
+   docker exec -u "${HOST_UID:-1000}:${HOST_GID:-1000}" "${BACKEND_CONTAINER}" \
+     bench --site "${SITE_NAME}" clear-cache
    ```
 
 ## Notes
 
-- **Container**: `mpit-backend`
-- **Site**: `budget.zeroloop.it` (from `.env` file)
-- **User**: `1000:1000` (matches HOST_UID/HOST_GID in `.env`)
-- The `// turbo-all` annotation allows agents to auto-run all steps
+- Load `HOST_UID`, `HOST_GID`, `SITE_NAME`, and `BACKEND_CONTAINER` from the deploy repo's `.env` or `prod.env`.
+- Default container name: `mpit-backend` (dev); check `docker ps` if unsure.
+- Hard refresh browser after cache clear: Ctrl+F5.
+- This workflow is for the **development** environment. Production upgrades require pulling a new image first — see `master-plan-it-deploy/README.md`.
