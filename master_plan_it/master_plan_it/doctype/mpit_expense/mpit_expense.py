@@ -8,7 +8,7 @@ from frappe.model.document import Document
 from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import flt, getdate
 
-from master_plan_it import annualization, mpit_defaults
+from master_plan_it import annualization, mpit_defaults, tax
 from master_plan_it.master_plan_it.financial_engine import get_plafond_document_totals
 from master_plan_it.naming_utils import sync_series_to_max
 
@@ -123,9 +123,12 @@ class MPITExpense(Document):
         if row.row_state not in {"Active", "Replaced", "Cancelled"}:
             frappe.throw(_("Row State must be Active, Replaced, or Cancelled."))
 
+        amount_net = self._sync_row_amounts(row)
+
         if self.expense_kind == "Plafond":
-            if row.start_date or row.end_date or row.distribution:
+            if row.start_date or row.end_date:
                 frappe.throw(_("Plafond rows cannot use period distribution fields."))
+            row.distribution = None
             if row.spend_date and not (year_start <= getdate(row.spend_date) <= year_end):
                 frappe.throw(_("Plafond Spend Date must be inside the selected year."))
             return
@@ -133,16 +136,19 @@ class MPITExpense(Document):
         if row.row_phase not in {"Estimate", "Quote", "Actual"}:
             frappe.throw(_("Ordinary rows require a valid phase: Estimate, Quote, or Actual."))
 
-        if row.row_phase in {"Estimate", "Quote"} and flt(row.amount_net, 2) < 0:
+        if row.row_phase in {"Estimate", "Quote"} and amount_net < 0:
             frappe.throw(_("Negative amounts are not allowed for Estimate or Quote rows."))
 
         has_spend_date = bool(row.spend_date)
-        has_period_data = bool(row.start_date or row.end_date or row.distribution)
+        has_period_dates = bool(row.start_date or row.end_date)
 
-        if has_spend_date and has_period_data:
-            frappe.throw(_("Use either Spend Date or period fields on the same row, not both."))
-
-        if not has_spend_date:
+        if has_spend_date:
+            if has_period_dates:
+                frappe.throw(_("Use either Spend Date or period fields on the same row, not both."))
+            row.start_date = None
+            row.end_date = None
+            row.distribution = None
+        else:
             if not (row.start_date and row.end_date and row.distribution):
                 frappe.throw(_("Rows without Spend Date require Start Date, End Date, and Distribution."))
 
@@ -156,6 +162,31 @@ class MPITExpense(Document):
         }.items():
             if value and not (year_start <= getdate(value) <= year_end):
                 frappe.throw(_("{0} must be inside the selected year.").format(label))
+
+    def _sync_row_amounts(self, row) -> float:
+        amount = flt(row.amount or 0, 2)
+        row.amount = amount
+
+        default_vat = mpit_defaults.get_default_vat_rate()
+        if row.vat_rate is None and default_vat is not None:
+            row.vat_rate = default_vat
+
+        final_vat_rate = tax.validate_strict_vat(
+            amount,
+            row.vat_rate,
+            default_vat,
+            field_label=_("Expense Row Amount"),
+        )
+        net, vat, gross = tax.split_net_vat_gross(
+            amount,
+            final_vat_rate,
+            bool(row.amount_includes_vat),
+        )
+
+        row.amount_net = flt(net, 2)
+        row.amount_vat = flt(vat, 2)
+        row.amount_gross = flt(gross, 2)
+        return row.amount_net
 
     def _compute_totals(self) -> None:
         estimate_total = 0.0
