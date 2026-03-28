@@ -3,7 +3,7 @@ from __future__ import annotations
 import datetime
 
 import frappe
-from frappe import _
+from frappe import _, validate_and_sanitize_search_inputs
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import flt, getdate
@@ -115,6 +115,56 @@ class MPITExpense(Document):
         year_start, year_end = annualization.get_year_bounds(self.year)
         for row in self.rows:
             self._validate_row(row, year_start, year_end)
+        self._validate_row_replacements()
+
+    def _validate_row_replacements(self) -> None:
+        current_row_names = {row.name for row in self.rows if row.name}
+        referenced_targets: list[tuple] = []
+
+        for row in self.rows:
+            target_row_name = (row.replaces_row_name or "").strip()
+            row.replaces_row_name = target_row_name or None
+            if not target_row_name:
+                continue
+
+            if row.name and target_row_name == row.name:
+                frappe.throw(_("Row #{0} cannot replace itself.").format(row.idx))
+
+            referenced_targets.append((row, target_row_name))
+
+        if not referenced_targets:
+            return
+
+        unresolved_targets = sorted(
+            {target for _row, target in referenced_targets if target not in current_row_names}
+        )
+        unresolved_rows = {}
+        if unresolved_targets:
+            unresolved_rows = {
+                row.name: row
+                for row in frappe.get_all(
+                    "MPIT Expense Row",
+                    filters={"name": ["in", unresolved_targets]},
+                    fields=["name", "parent", "parenttype", "parentfield"],
+                )
+            }
+
+        for _row, target_row_name in referenced_targets:
+            if target_row_name in current_row_names:
+                continue
+
+            target_row = unresolved_rows.get(target_row_name)
+            if not target_row:
+                frappe.throw(_("Referenced row {0} does not exist.").format(target_row_name))
+
+            if (
+                target_row.parent != self.name
+                or target_row.parenttype != self.doctype
+                or target_row.parentfield != "rows"
+            ):
+                frappe.throw(
+                    _("Referenced row {0} must belong to the same Expense document.").format(target_row_name)
+                )
 
     def _validate_row(self, row, year_start: datetime.date, year_end: datetime.date) -> None:
         if not row.row_state:
@@ -237,6 +287,68 @@ def get_available_plafonds(year: str, cost_center: str) -> list[str]:
         order_by="modified desc",
         pluck="name",
     )
+
+
+@frappe.whitelist()
+@validate_and_sanitize_search_inputs
+def get_expense_row_replacement_options(
+    doctype: str,
+    txt: str,
+    searchfield: str,
+    start: int,
+    page_len: int,
+    filters: dict | None = None,
+) -> list[tuple[str, str, str]]:
+    del doctype, searchfield
+
+    filters = filters or {}
+    parent_expense = (filters.get("parent_expense") or "").strip()
+    current_row_name = (filters.get("current_row_name") or "").strip()
+    if not parent_expense:
+        return []
+
+    if not frappe.db.exists("MPIT Expense", parent_expense):
+        return []
+    if not frappe.has_permission("MPIT Expense", doc=parent_expense, ptype="read"):
+        return []
+
+    db_filters: dict = {
+        "parent": parent_expense,
+        "parenttype": "MPIT Expense",
+        "parentfield": "rows",
+    }
+    if current_row_name:
+        db_filters["name"] = ["!=", current_row_name]
+
+    or_filters = None
+    if txt:
+        search_text = f"%{txt}%"
+        or_filters = [
+            ["MPIT Expense Row", "name", "like", search_text],
+            ["MPIT Expense Row", "row_description", "like", search_text],
+            ["MPIT Expense Row", "row_phase", "like", search_text],
+        ]
+
+    rows = frappe.get_all(
+        "MPIT Expense Row",
+        filters=db_filters,
+        or_filters=or_filters,
+        fields=["name", "idx", "row_phase", "row_description"],
+        order_by="idx asc",
+        limit_start=max(int(start or 0), 0),
+        limit_page_length=max(int(page_len or 20), 1),
+    )
+
+    results = []
+    for row in rows:
+        label = "#{0} · {1} · {2}".format(
+            row.get("idx") or "?",
+            row.get("row_phase") or "-",
+            row.get("row_description") or row.get("name"),
+        )
+        results.append((row.get("name"), label, row.get("name")))
+
+    return results
 
 
 @frappe.whitelist()

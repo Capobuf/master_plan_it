@@ -145,4 +145,15 @@ function set_link_queries(frm) {
 
         return { filters };
     });
+
+    frm.set_query("replaces_row_name", "rows", (doc, cdt, cdn) => {
+        const row = locals[cdt] && locals[cdt][cdn] ? locals[cdt][cdn] : {};
+        return {
+            query: "master_plan_it.master_plan_it.doctype.mpit_expense.mpit_expense.get_expense_row_replacement_options",
+            filters: {
+                parent_expense: doc.name || "",
+                current_row_name: row.name || "",
+            },
+        };
+    });
 }

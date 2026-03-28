@@ -4,6 +4,10 @@ import frappe
 from frappe.tests.utils import FrappeTestCase
 from frappe.utils import add_days
 
+from master_plan_it.master_plan_it.doctype.mpit_expense.mpit_expense import (
+    get_expense_row_replacement_options,
+)
+
 
 class TestMPITExpense(FrappeTestCase):
     def setUp(self):
@@ -102,6 +106,77 @@ class TestMPITExpense(FrappeTestCase):
         self.assertEqual(doc.total_quote_net, 0)
         self.assertEqual(doc.total_actual_net, 0)
 
+    def test_row_can_reference_sibling_in_same_expense(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        doc.append("rows", base_row(phase="Estimate", amount=100, spend_date="2026-01-10"))
+        doc.append("rows", base_row(phase="Quote", amount=120, spend_date="2026-02-10"))
+        doc.insert()
+
+        target = doc.rows[0].name
+        doc.rows[1].replaces_row_name = target
+        doc.save()
+
+        self.assertEqual(doc.rows[1].replaces_row_name, target)
+
+    def test_row_cannot_reference_itself(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        doc.append("rows", base_row(phase="Estimate", amount=100, spend_date="2026-01-10"))
+        doc.insert()
+
+        doc.rows[0].replaces_row_name = doc.rows[0].name
+        with self.assertRaises(frappe.ValidationError):
+            doc.save()
+
+    def test_row_reference_must_exist(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        doc.append("rows", base_row(phase="Estimate", amount=100, spend_date="2026-01-10"))
+        doc.append("rows", base_row(phase="Quote", amount=120, spend_date="2026-02-10"))
+        doc.insert()
+
+        doc.rows[1].replaces_row_name = "DOES-NOT-EXIST"
+        with self.assertRaises(frappe.ValidationError):
+            doc.save()
+
+    def test_row_cannot_reference_other_expense_row(self):
+        source = base_expense(self.year_name, self.cost_center, self.project)
+        source.append("rows", base_row(phase="Estimate", amount=100, spend_date="2026-01-10"))
+        source.insert()
+
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        doc.append("rows", base_row(phase="Estimate", amount=100, spend_date="2026-03-10"))
+        doc.append("rows", base_row(phase="Quote", amount=120, spend_date="2026-04-10"))
+        doc.insert()
+
+        doc.rows[1].replaces_row_name = source.rows[0].name
+        with self.assertRaises(frappe.ValidationError):
+            doc.save()
+
+    def test_row_reference_query_returns_only_siblings(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        doc.append("rows", base_row(phase="Estimate", amount=100, spend_date="2026-01-10"))
+        doc.append("rows", base_row(phase="Quote", amount=120, spend_date="2026-02-10"))
+        doc.append("rows", base_row(phase="Actual", amount=140, spend_date="2026-03-10"))
+        doc.insert()
+
+        other = base_expense(self.year_name, self.cost_center, self.project)
+        other.append("rows", base_row(phase="Estimate", amount=100, spend_date="2026-05-10"))
+        other.insert()
+
+        options = get_expense_row_replacement_options(
+            "MPIT Expense Row",
+            "",
+            "name",
+            0,
+            20,
+            {"parent_expense": doc.name, "current_row_name": doc.rows[2].name},
+        )
+        names = [row[0] for row in options]
+
+        self.assertIn(doc.rows[0].name, names)
+        self.assertIn(doc.rows[1].name, names)
+        self.assertNotIn(doc.rows[2].name, names)
+        self.assertNotIn(other.rows[0].name, names)
+
 
 def base_expense(
     year_name: str,
@@ -134,6 +209,7 @@ def base_row(
     start_date: str | None = None,
     end_date: str | None = None,
     distribution: str | None = None,
+    replaces_row_name: str | None = None,
 ):
     return {
         "doctype": "MPIT Expense Row",
@@ -147,6 +223,7 @@ def base_row(
         "start_date": start_date,
         "end_date": end_date,
         "distribution": distribution,
+        "replaces_row_name": replaces_row_name,
     }
 
 

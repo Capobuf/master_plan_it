@@ -144,8 +144,9 @@
   },
   {
    "fieldname": "replaces_row_name",
-   "fieldtype": "Data",
-   "label": "Replaces Row"
+   "fieldtype": "Link",
+   "label": "Replaces Row",
+   "options": "MPIT Expense Row"
   },
   {
    "fieldname": "row_notes",
@@ -164,5 +165,7 @@
  "sort_field": "modified",
  "sort_order": "DESC",
  "states": [],
+ "show_title_field_in_link": 1,
+ "title_field": "row_description",
  "track_changes": 1
 }
