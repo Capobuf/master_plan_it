@@ -76,16 +76,16 @@
     </div>
 
     {% if doc.allocations %}
-    <h3 class="section-heading">{{ _("Budget Allocations") }}</h3>
+    <h3 class="section-heading">{{ _("Financial Allocations") }}</h3>
     <table class="table">
         <thead>
             <tr>
                 <th style="width: 5%;">#</th>
                 <th style="width: 15%;">{{ _("Year") }}</th>
-                <th style="width: 20%;">{{ _("Budget") }}</th>
-                <th class="amount-col" style="width: 15%;">{{ _("Planned Net") }}</th>
+                <th style="width: 20%;">{{ _("Reference") }}</th>
+                <th class="amount-col" style="width: 15%;">{{ _("Forecast Net") }}</th>
                 <th class="amount-col" style="width: 10%;">{{ _("VAT %") }}</th>
-                <th class="amount-col" style="width: 15%;">{{ _("Planned Gross") }}</th>
+                <th class="amount-col" style="width: 15%;">{{ _("Forecast Gross") }}</th>
                 <th style="width: 20%;">{{ _("Notes") }}</th>
             </tr>
         </thead>
@@ -107,7 +107,7 @@
     <div class="totals">
         <table>
             <tr>
-                <td class="total-label">{{ _("Total Planned Net") }}:</td>
+                <td class="total-label">{{ _("Total Forecast Net") }}:</td>
                 <td class="total-amount">{{ frappe.format(doc.allocations | sum(attribute='planned_amount_net'), {"fieldtype": "Currency"}) }}</td>
             </tr>
             <tr>

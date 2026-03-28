@@ -20,25 +20,17 @@
   "section_notes",
   "notes",
   "financial_section",
-  "financial_summary",
-  "planned_total_net",
-  "quoted_total_net",
-  "expected_total_net",
-  "actual_total_net",
-  "variance_net",
-  "utilization_pct"
+  "financial_summary"
  ],
  "fields": [
   {
    "fieldname": "section_overview",
    "fieldtype": "Section Break",
-   "label": "Overview",
-   "collapsible": 0
+   "label": "Overview"
   },
   {
    "fieldname": "title",
    "fieldtype": "Data",
-   "description": "Enter the project title.",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Title",
@@ -48,7 +40,6 @@
    "default": "Draft",
    "fieldname": "workflow_state",
    "fieldtype": "Select",
-   "description": "Workflow status (managed by Frappe Workflow).",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
@@ -56,14 +47,13 @@
    "read_only": 1
   },
   {
+   "depends_on": "eval:doc.workflow_state=='Approved'",
    "fieldname": "operational_status",
    "fieldtype": "Select",
-   "description": "Operational status after approval (editable).",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Operational Status",
-   "options": "\nIn Progress\nOn Hold\nCompleted",
-   "depends_on": "eval:doc.workflow_state=='Approved'"
+   "options": "\nIn Progress\nOn Hold\nCompleted"
   },
   {
    "fieldname": "overview_col_break",
@@ -72,7 +62,6 @@
   {
    "fieldname": "cost_center",
    "fieldtype": "Link",
-   "description": "Main cost center used for reporting and caps.",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Cost Center",
@@ -82,100 +71,51 @@
   {
    "fieldname": "start_date",
    "fieldtype": "Date",
-   "description": "Set the start date. Requires an end date.",
    "label": "Start Date"
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Date",
-   "description": "Set the end date (must be on or after the start date).",
    "label": "End Date"
   },
   {
    "fieldname": "description",
    "fieldtype": "Small Text",
-   "description": "Brief notes on scope (optional).",
    "label": "Description"
-  },
-  {
-   "fieldname": "section_notes",
-   "fieldtype": "Section Break",
-   "label": "Notes",
-   "collapsible": 1
-  },
-  {
-   "fieldname": "notes",
-   "fieldtype": "Small Text",
-   "label": "Notes",
-   "description": "Add internal notes (optional)."
-  },
-  {
-   "fieldname": "financial_section",
-   "fieldtype": "Section Break",
-   "label": "Financials",
-   "collapsible": 0
-  },
-  {
-   "fieldname": "financial_summary",
-   "fieldtype": "HTML",
-   "label": "Financial Summary",
-   "read_only": 1
-  },
-  {
-   "fieldname": "planned_total_net",
-   "fieldtype": "Currency",
-   "description": "Total planned net from allocations.",
-   "label": "Planned Total (Net)",
-   "read_only": 1
-  },
-  {
-   "fieldname": "quoted_total_net",
-   "fieldtype": "Currency",
-   "description": "Total quoted net amount.",
-   "label": "Quoted Total (Net)",
-   "read_only": 1
-  },
-  {
-   "fieldname": "expected_total_net",
-   "fieldtype": "Currency",
-   "description": "Expected total (quoted if present, otherwise planned).",
-   "label": "Expected Total (Net)",
-   "read_only": 1
-  },
-  {
-   "fieldname": "actual_total_net",
-   "fieldtype": "Currency",
-   "description": "Total verified actuals (net).",
-   "label": "Actual Total (Net)",
-   "read_only": 1
-  },
-  {
-   "fieldname": "variance_net",
-   "fieldtype": "Currency",
-   "description": "Actual minus Planned (net). Positive means over budget.",
-   "label": "Variance (Net)",
-   "read_only": 1
-  },
-  {
-   "fieldname": "utilization_pct",
-   "fieldtype": "Percent",
-   "description": "Actual / Planned (%).",
-   "label": "% Utilized",
-   "read_only": 1
   },
   {
    "fieldname": "document_id",
    "fieldtype": "Read Only",
+   "in_preview": 1,
    "label": "Document ID",
-   "options": "name",
-   "description": "Unique document ID (name).",
-   "in_preview": 1
+   "options": "name"
+  },
+  {
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "financial_section",
+   "fieldtype": "Section Break",
+   "label": "Financial Summary"
+  },
+  {
+   "fieldname": "financial_summary",
+   "fieldtype": "HTML",
+   "label": "Summary",
+   "read_only": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2025-12-24 20:00:45.088553",
+ "modified": "2026-03-28 14:30:00.000000",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Project",

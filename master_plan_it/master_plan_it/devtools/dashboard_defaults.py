@@ -5,13 +5,11 @@ import frappe
 
 # Charts that accept a year filter — keep in sync with dashboard_chart/ JSON names.
 _YEAR_FILTER_CHARTS = [
-    "MPIT Projects Planned vs Exceptions",
+    "MPIT Forecast vs Actual by Cost Center",
+    "MPIT Monthly Forecast vs Actual",
+    "MPIT Plafond Usage by Cost Center",
     "MPIT Renewals Window (by Month)",
     "MPIT Monthly Plan",
-    "MPIT Monthly Plan vs Actual",
-    "MPIT Plan vs Cap vs Actual",
-    "MPIT Planned Items Coverage",
-    "MPIT Cap vs Actual by Cost Center",
 ]
 
 

@@ -1,177 +1,67 @@
-# Reference: Money Rules (VAT + Normalizzazione + Annualizzazione)
+# Reference: Money Rules (VAT + Annualization)
 
-Fonte di verità per calcoli, report e stampa.
+Single reference for money normalization used by contracts, expenses, reports, and the financial engine.
 
----
+## 1) Strict VAT mode
 
-## 1) Strict VAT mode (CHIUSO)
+If `amount != 0`:
 
-Se `amount != 0`:
-- `vat_rate` è obbligatorio (0 valido)
-- se manca sulla riga e manca anche in `MPIT Settings.default_vat_rate` → blocco salvataggio
+- `vat_rate` is mandatory (0 is valid).
+- If `vat_rate` is missing on the row and missing in `MPIT Settings.default_vat_rate`, save is blocked.
 
-Se `amount == 0`:
-- `vat_rate` può essere vuoto (ma consigliato 0).
+If `amount == 0`:
 
-Nessun default IVA tenant: i default sono solo per-utente.
+- `vat_rate` can stay empty.
 
----
+## 2) Net / VAT / Gross normalization
 
-## 2) Normalizzazione net/vat/gross
+Let `r = vat_rate / 100`.
 
-Sia:
-- `r = vat_rate / 100`
+Input as net (`includes_vat = 0`):
 
-Caso A: input netto (`includes_vat = 0`)
-- net = amount
-- gross = net * (1 + r)
-- vat = gross - net
+- `net = amount`
+- `gross = net * (1 + r)`
+- `vat = gross - net`
 
-Caso B: input lordo (`includes_vat = 1`)
-- gross = amount
-- net = gross / (1 + r)
-- vat = gross - net
+Input as gross (`includes_vat = 1`):
 
-Arrotondamento:
-- `frappe.utils.flt(value, 2)` (salvo diversa precisione decisa)
+- `gross = amount`
+- `net = gross / (1 + r)`
+- `vat = gross - net`
 
-### Totali Budget (form MPIT Budget)
-- Il DocType MPIT Budget espone i campi `total_amount_input`, `total_amount_net`, `total_amount_vat`, `total_amount_gross`.
-- I valori sono calcolati nel controller server-side sommando le righe della tabella `lines` (MPIT Budget Line), senza JavaScript.
-- Ogni somma usa `frappe.utils.flt(..., 2)` per garantire arrotondamento a 2 decimali coerente con split net/vat/gross.
+Rounding: `frappe.utils.flt(value, 2)`.
 
----
+## 3) Contract annualization
 
-## 3) Annualizzazione (CHIUSO)
+Contracts can span multiple years. Forecast for a selected year is allocated by overlap months:
 
-Recurrence: `Monthly, Quarterly, Annual, None`
+- If contract terms exist, forecast comes only from overlapping terms.
+- If no terms exist, fallback uses header (`current_amount` + `billing_cycle`).
+- If terms exist but none overlap the year, yearly forecast is `0`.
 
-Overlap:
-- calcolare mesi di overlap tra anno del Budget.year (MPIT Year start/end) e range riga (mesi toccati, non solo completi)
-- se overlap = 0 → blocco salvataggio (regola A)
+Billing cycle monthly equivalent:
 
-Regole:
-- Monthly: annual = amount * overlap_months
-- Quarterly: annual = amount * (overlap_months / 3)
-- Annual: annual = amount * (overlap_months / 12)
-- None: one-off → annual = amount (se overlap > 0)
+- Monthly: `monthly = amount`
+- Quarterly: `monthly = amount * 4 / 12`
+- Annual: `monthly = amount / 12`
 
-Applicazione:
-- normalizzare net/vat/gross prima
-- annualizzare net/vat/gross separatamente
+Year amount: `monthly * overlap_months`.
 
----
+## 4) Expense annualization
 
-## 4) Backfill (anti-regressione)
+`MPIT Expense` is strictly annual:
 
-Per dati storici senza VAT:
-- set `vat_rate=0`, `includes_vat=0`
-- net/gross=amount, vat=0
-Non si “inventa” IVA storica.
----
+- Document belongs to one `year`.
+- Expense rows must stay inside document year.
+- Cross-year expense cases must be split into multiple annual expenses.
 
-## 5) Dual-Mode Controller (Phase 6 Implementation) ✅
+Row time mode:
 
-**Problema:** Transizione da campo legacy `amount` a nuovo triple `amount_net/vat/gross`.
+- Point mode: `spend_date` only.
+- Period mode: `start_date + end_date + distribution`.
 
-**Soluzione:** Controller intelligente che supporta entrambi i flussi.
+## 5) Negative amounts
 
-### 5.1 Budget Line VAT Calculation (_compute_vat_split)
-
-```python
-def _compute_vat_split(self):
-    """Compute amount_net/_vat/_gross from input fields using user defaults."""
-    default_vat = mpit_user_prefs.get_default_vat_rate(frappe.session.user)
-    default_includes = mpit_user_prefs.get_default_includes_vat(frappe.session.user)
-    
-    for line in self.lines:
-        # Determine source amount: prefer amount_net (new field), fallback to amount (legacy)
-        if line.amount_net:
-            # NEW FLOW: amount_net is source of truth
-            # Apply VAT defaults if not specified
-            if line.vat_rate is None and default_vat is not None:
-                line.vat_rate = default_vat
-            
-            # Compute VAT and gross from net
-            if line.vat_rate:
-                vat_rate_decimal = line.vat_rate / 100.0
-                line.amount_vat = line.amount_net * vat_rate_decimal
-                line.amount_gross = line.amount_net + line.amount_vat
-            else:
-                line.amount_vat = 0.0
-                line.amount_gross = line.amount_net
-                
-        elif line.amount:
-            # LEGACY FLOW: amount is source, split based on includes_vat flag
-            # Apply defaults if field is empty
-            if line.vat_rate is None and default_vat is not None:
-                line.vat_rate = default_vat
-            if not line.amount_includes_vat and default_includes:
-                line.amount_includes_vat = 1
-            
-            # Strict VAT validation
-            final_vat_rate = tax.validate_strict_vat(
-                line.amount,
-                line.vat_rate,
-                default_vat,
-                field_label=f"Line {line.idx} Amount"
-            )
-            
-            # Compute split
-            net, vat, gross = tax.split_net_vat_gross(
-                line.amount,
-                final_vat_rate,
-                bool(line.amount_includes_vat)
-            )
-            
-            line.amount_net = net
-            line.amount_vat = vat
-            line.amount_gross = gross
-```
-
-### 5.2 Campo Legacy Hidden
-
-In exported DocTypes (Budget Line, Actual Entry, Project Quote):
-```json
-{
-  "fieldname": "amount",
-  "fieldtype": "Currency",
-  "label": "Amount",
-  "read_only": 1,
-  "hidden": 1
-}
-```
-
-**Risultato:**
-- UI mostra solo `amount_net/vat/gross` (campi moderni)
-- Controller accetta entrambi i flussi
-- Dati legacy continuano a funzionare (backfill già applicato)
-- Nuovo codice usa `amount_net` direttamente
-
-### 5.3 Annualization Source Fix
-
-`_compute_lines_annualization()` usa `line.amount_net` dopo VAT split:
-```python
-# Calculate annualized amounts
-annual_net = annualization.annualize(
-    line.amount_net,  # ← Sempre popolato dal dual-mode controller
-    line.recurrence_rule or "None",
-    overlap_months_count
-)
-```
-
-**CRITICAL:** VAT split (`_compute_vat_split()`) DEVE essere chiamato PRIMA di annualization (`_compute_lines_annualization()`) nella sequenza `validate()`.
-
-### 5.4 Report Anti-Regression Pattern
-
-Per compatibilità con dati storici, i report usano COALESCE:
-```sql
-SELECT
-    COALESCE(annual_net, amount) AS budget_net,
-    COALESCE(amount_net, amount) AS actual_net
-FROM ...
-```
-
-Questo garantisce:
-- Record nuovi: usano `annual_net`/`amount_net`
-- Record legacy (pre-Phase 4): usano `amount` come fallback
+- Ordinary rows: negative values allowed only on `Actual`.
+- Ordinary `Estimate` and `Quote`: negative not allowed.
+- Plafond rows: negative values allowed for reduction/adjustment.

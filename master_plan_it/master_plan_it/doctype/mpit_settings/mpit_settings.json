@@ -12,31 +12,28 @@
   "default_vat_rate",
   "default_amount_includes_vat",
   "section_naming",
-  "budget_prefix_default",
-  "budget_digits_default",
-  "column_break_naming",
   "project_prefix_default",
   "project_digits_default",
+  "column_break_naming",
   "contract_prefix_default",
   "contract_digits_default",
-  "column_break_actual",
-  "actual_prefix_default",
-  "actual_digits_default",
+  "expense_prefix_default",
+  "expense_digits_default",
   "section_print",
   "show_attachments_in_print"
  ],
  "fields": [
   {
-   "default": "90",
-   "fieldname": "renewal_window_days",
-   "fieldtype": "Int",
-   "description": "Number of days before a renewal date considered the renewal window.",
-   "label": "Renewal Window Days"
-  },
-  {
    "fieldname": "section_defaults",
    "fieldtype": "Section Break",
    "label": "General Defaults"
+  },
+  {
+   "default": "90",
+   "description": "Number of days before a renewal date considered the renewal window.",
+   "fieldname": "renewal_window_days",
+   "fieldtype": "Int",
+   "label": "Renewal Window Days"
   },
   {
    "fieldname": "section_vat",
@@ -44,7 +41,7 @@
    "label": "VAT Defaults"
   },
   {
-   "description": "Default VAT rate for new entries. Leave empty for no default (0 is valid).",
+   "description": "Default VAT rate for new rows. Leave empty for no default (0 is valid).",
    "fieldname": "default_vat_rate",
    "fieldtype": "Percent",
    "label": "Default VAT Rate",
@@ -63,18 +60,18 @@
    "label": "Document Naming"
   },
   {
-   "default": "BUD-",
-   "fieldname": "budget_prefix_default",
+   "default": "PRJ-",
+   "description": "Prefix for Project document naming series.",
+   "fieldname": "project_prefix_default",
    "fieldtype": "Data",
-   "description": "Prefix for Budget document naming series.",
-   "label": "Budget Prefix"
+   "label": "Project Prefix"
   },
   {
    "default": "1",
-   "fieldname": "budget_digits_default",
+   "description": "Number of digits for Project naming series.",
+   "fieldname": "project_digits_default",
    "fieldtype": "Int",
-   "description": "Number of digits for Budget naming series.",
-   "label": "Budget Digits"
+   "label": "Project Digits"
   },
   {
    "fieldname": "column_break_naming",
@@ -82,49 +79,31 @@
   },
   {
    "default": "CONTR-",
+   "description": "Prefix for Contract document naming series.",
    "fieldname": "contract_prefix_default",
    "fieldtype": "Data",
-   "description": "Prefix for Contract document naming series.",
    "label": "Contract Prefix"
   },
   {
    "default": "1",
+   "description": "Number of digits for Contract naming series.",
    "fieldname": "contract_digits_default",
    "fieldtype": "Int",
-   "description": "Number of digits for Contract naming series.",
    "label": "Contract Digits"
   },
   {
-   "default": "PRJ-",
-   "fieldname": "project_prefix_default",
+   "default": "EXP-",
+   "description": "Prefix for Expense document naming series.",
+   "fieldname": "expense_prefix_default",
    "fieldtype": "Data",
-   "description": "Prefix for Project document naming series.",
-   "label": "Project Prefix"
+   "label": "Expense Prefix"
   },
   {
    "default": "1",
-   "fieldname": "project_digits_default",
+   "description": "Number of digits for Expense naming series.",
+   "fieldname": "expense_digits_default",
    "fieldtype": "Int",
-   "description": "Number of digits for Project naming series.",
-   "label": "Project Digits"
-  },
-  {
-   "fieldname": "column_break_actual",
-   "fieldtype": "Column Break"
-  },
-  {
-   "default": "AE-",
-   "fieldname": "actual_prefix_default",
-   "fieldtype": "Data",
-   "description": "Prefix for Exceptions / Allowance Entry document naming series.",
-   "label": "Exceptions / Allowance Prefix"
-  },
-  {
-   "default": "1",
-   "fieldname": "actual_digits_default",
-   "fieldtype": "Int",
-   "description": "Number of digits for Exceptions / Allowance naming series.",
-   "label": "Exceptions / Allowance Digits"
+   "label": "Expense Digits"
   },
   {
    "fieldname": "section_print",
@@ -143,7 +122,7 @@
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-12-24 20:00:39.432578",
+ "modified": "2026-03-28 14:10:00.000000",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Settings",

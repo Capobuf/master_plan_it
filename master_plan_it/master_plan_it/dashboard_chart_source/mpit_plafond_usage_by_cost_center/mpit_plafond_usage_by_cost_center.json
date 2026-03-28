@@ -1,0 +1,14 @@
+{
+ "chart_source_name": "MPIT Plafond Usage by Cost Center",
+ "doctype": "Dashboard Chart Source",
+ "filters_json": "[]",
+ "idx": 0,
+ "is_standard": 1,
+ "method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_plafond_usage_by_cost_center.mpit_plafond_usage_by_cost_center.get",
+ "modified": "2026-03-28 15:15:00.000000",
+ "module": "Master Plan IT",
+ "name": "MPIT Plafond Usage by Cost Center",
+ "owner": "Administrator",
+ "reference_doctype": "MPIT Expense",
+ "type": "Custom"
+}

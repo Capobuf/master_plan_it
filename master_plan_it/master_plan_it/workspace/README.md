@@ -1,55 +1,36 @@
 # Workspace Master Plan IT
 
-## Principi di information architecture
+## Information Architecture
 
-### `shortcuts` — sole azioni rapide di creazione
+The workspace is aligned with the expense-based model and exposes only active domain concepts:
 
-I `shortcuts` contengono **esclusivamente** le azioni di creazione rapida (DocType, `doc_view: New`).
-Non devono contenere link a report o destinazioni analitiche.
+- Expenses
+- Plafonds
+- Contracts
+- Projects
+- Overview
+- Monthly Plan
 
-Shortcuts attivi:
-- **Nuova Spesa** → MPIT Actual Entry (New)
-- **Nuovo Progetto** → MPIT Project (New)
-- **Nuovo Contratto** → MPIT Contract (New)
+## Shortcuts
 
-### `links` / `cards` — navigazione strutturata
+Shortcuts are creation-first plus entry points to the two main analytical reports:
 
-La navigazione è organizzata in 4 card tematiche visibili nella sezione "Navigazione":
+- **Nuova Spesa** -> MPIT Expense (New)
+- **Nuovo Plafond** -> MPIT Expense (New)
+- **Nuovo Contratto** -> MPIT Contract (New)
+- **Nuovo Progetto** -> MPIT Project (New)
+- **Panoramica** -> MPIT Overview
+- **Piano Mensile** -> MPIT Monthly Plan
 
-| Card | Voci |
-|---|---|
-| Budget & Pianificazione | Budget, Addendum, Voci Pianificate, Progetti, Spese |
-| Analisi & Report | Panoramica Budget, Piano Mensile, Confronto Budget, Progetti vs Eccezioni, What-If Budget |
-| Contratti | Contratti, Finestra Rinnovi |
-| Dati Anagrafici | Centri di Costo, Anni Fiscali, Fornitori, Impostazioni |
+## Navigation Groups
 
-### Label
-
-- Tutte le label sono in **italiano**.
-- Non usare label inglesi se esiste già un equivalente italiano chiaro.
-- Non duplicare lo stesso collegamento sia in `shortcuts` che in `links`.
-
-### Nessun custom JS/CSS
-
-Il layout è interamente definito tramite configurazione nativa Frappe:
-- campo `col` nel JSON `content` per la larghezza dei blocchi
-- `type: "Card Break"` nei `links` per separare le card
-- `shortcuts`, `links`, `quick_lists`, `charts` nativi Workspace
+- **Operations**: Expenses, Plafonds, Contracts, Projects
+- **Analysis**: Overview, Monthly Plan, Expenses Report, Project Forecast vs Actual, Renewals Window
+- **Master Data**: Cost Centers, Years, Vendors, Settings
 
 ## Apply
 
 ```bash
 bench --site <site> migrate
 bench --site <site> clear-cache
-# hard refresh browser (Ctrl+F5)
-```
-
-## Verifica DB
-
-```bash
-# In bench console:
-import frappe
-ws = frappe.get_doc("Workspace", "Master Plan IT")
-print(ws.modified)
-print([s.label for s in ws.shortcuts])  # atteso: 3 voci create
 ```

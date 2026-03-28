@@ -1,0 +1,280 @@
+{
+ "actions": [],
+ "allow_import": 1,
+ "allow_rename": 1,
+ "creation": "2026-03-28 14:21:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "tab_context",
+  "expense_kind",
+  "expense_title",
+  "workflow_state",
+  "context_col",
+  "year",
+  "cost_center",
+  "project",
+  "contract",
+  "vendor",
+  "tab_classification",
+  "uses_plafond",
+  "plafond_expense",
+  "is_extra",
+  "tab_rows",
+  "rows",
+  "tab_summary",
+  "total_estimate_net",
+  "total_quote_net",
+  "total_forecast_net",
+  "summary_col",
+  "total_actual_net",
+  "total_actual_on_plafond_net",
+  "total_actual_extra_net",
+  "tab_notes",
+  "notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "tab_context",
+   "fieldtype": "Tab Break",
+   "label": "Context"
+  },
+  {
+   "default": "Ordinary",
+   "fieldname": "expense_kind",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Kind",
+   "options": "Ordinary\nPlafond",
+   "reqd": 1
+  },
+  {
+   "fieldname": "expense_title",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Title",
+   "reqd": 1
+  },
+  {
+   "default": "Open",
+   "fieldname": "workflow_state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Workflow State",
+   "options": "Open\nClosed\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "context_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "year",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Year",
+   "options": "MPIT Year",
+   "reqd": 1
+  },
+  {
+   "fieldname": "cost_center",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Cost Center",
+   "options": "MPIT Cost Center",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Project",
+   "options": "MPIT Project"
+  },
+  {
+   "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "fieldname": "contract",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Contract",
+   "options": "MPIT Contract"
+  },
+  {
+   "fieldname": "vendor",
+   "fieldtype": "Link",
+   "label": "Vendor",
+   "options": "MPIT Vendor"
+  },
+  {
+   "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "fieldname": "tab_classification",
+   "fieldtype": "Tab Break",
+   "label": "Funding"
+  },
+  {
+   "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "fieldname": "uses_plafond",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "On Plafond"
+  },
+  {
+   "depends_on": "eval:doc.expense_kind=='Ordinary' && doc.uses_plafond",
+   "fieldname": "plafond_expense",
+   "fieldtype": "Link",
+   "label": "Plafond Reference",
+   "options": "MPIT Expense"
+  },
+  {
+   "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "fieldname": "is_extra",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Extra"
+  },
+  {
+   "fieldname": "tab_rows",
+   "fieldtype": "Tab Break",
+   "label": "Rows"
+  },
+  {
+   "fieldname": "rows",
+   "fieldtype": "Table",
+   "label": "Rows",
+   "options": "MPIT Expense Row",
+   "reqd": 1
+  },
+  {
+   "fieldname": "tab_summary",
+   "fieldtype": "Tab Break",
+   "label": "Summary"
+  },
+  {
+   "fieldname": "total_estimate_net",
+   "fieldtype": "Currency",
+   "label": "Total Estimate Net",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_quote_net",
+   "fieldtype": "Currency",
+   "label": "Total Quote Net",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_forecast_net",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Forecast Net",
+   "read_only": 1
+  },
+  {
+   "fieldname": "summary_col",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "total_actual_net",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Total Actual Net",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_actual_on_plafond_net",
+   "fieldtype": "Currency",
+   "label": "Actual On Plafond Net",
+   "read_only": 1
+  },
+  {
+   "fieldname": "total_actual_extra_net",
+   "fieldtype": "Currency",
+   "label": "Actual Extra Net",
+   "read_only": 1
+  },
+  {
+   "fieldname": "tab_notes",
+   "fieldtype": "Tab Break",
+   "label": "Notes"
+  },
+  {
+   "fieldname": "notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "links": [],
+ "modified": "2026-03-28 14:21:00.000000",
+ "modified_by": "Administrator",
+ "module": "Master Plan IT",
+ "name": "MPIT Expense",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "export": 1,
+   "import": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "vCIO Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "create": 1,
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Client Editor",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "email": 1,
+   "export": 1,
+   "print": 1,
+   "read": 1,
+   "report": 1,
+   "role": "Client Viewer",
+   "share": 1
+  }
+ ],
+ "quick_entry": 1,
+ "row_format": "Dynamic",
+ "rows_threshold_for_grid_search": 20,
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "title_field": "expense_title",
+ "track_changes": 1
+}

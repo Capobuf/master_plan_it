@@ -1,0 +1,168 @@
+{
+ "actions": [],
+ "creation": "2026-03-28 14:20:00.000000",
+ "doctype": "DocType",
+ "editable_grid": 1,
+ "engine": "InnoDB",
+ "field_order": [
+  "row_description",
+  "row_phase",
+  "row_state",
+  "vendor",
+  "external_reference",
+  "qty",
+  "unit_price",
+  "amount",
+  "amount_includes_vat",
+  "vat_rate",
+  "section_amounts",
+  "amount_net",
+  "amount_vat",
+  "amount_gross",
+  "spend_date",
+  "start_date",
+  "end_date",
+  "distribution",
+  "replaces_row_name",
+  "row_notes"
+ ],
+ "fields": [
+  {
+   "fieldname": "row_description",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Description",
+   "reqd": 1
+  },
+  {
+   "depends_on": "eval:parent.expense_kind!='Plafond'",
+   "fieldname": "row_phase",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Phase",
+   "options": "Estimate\nQuote\nActual"
+  },
+  {
+   "default": "Active",
+   "fieldname": "row_state",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Row State",
+   "options": "Active\nReplaced\nCancelled",
+   "reqd": 1
+  },
+  {
+   "fieldname": "vendor",
+   "fieldtype": "Link",
+   "label": "Vendor",
+   "options": "MPIT Vendor"
+  },
+  {
+   "fieldname": "external_reference",
+   "fieldtype": "Data",
+   "label": "External Reference"
+  },
+  {
+   "default": "1",
+   "fieldname": "qty",
+   "fieldtype": "Float",
+   "label": "Qty"
+  },
+  {
+   "fieldname": "unit_price",
+   "fieldtype": "Currency",
+   "label": "Unit Price"
+  },
+  {
+   "fieldname": "amount",
+   "fieldtype": "Currency",
+   "label": "Amount",
+   "reqd": 1
+  },
+  {
+   "default": "0",
+   "fieldname": "amount_includes_vat",
+   "fieldtype": "Check",
+   "label": "Amount Includes VAT"
+  },
+  {
+   "fieldname": "vat_rate",
+   "fieldtype": "Percent",
+   "label": "VAT Rate",
+   "precision": "2"
+  },
+  {
+   "fieldname": "section_amounts",
+   "fieldtype": "Section Break",
+   "label": "Computed Amounts"
+  },
+  {
+   "fieldname": "amount_net",
+   "fieldtype": "Currency",
+   "in_list_view": 1,
+   "label": "Amount Net",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_vat",
+   "fieldtype": "Currency",
+   "label": "Amount VAT",
+   "read_only": 1
+  },
+  {
+   "fieldname": "amount_gross",
+   "fieldtype": "Currency",
+   "label": "Amount Gross",
+   "read_only": 1
+  },
+  {
+   "fieldname": "spend_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Spend Date"
+  },
+  {
+   "depends_on": "eval:parent.expense_kind!='Plafond'",
+   "fieldname": "start_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "Start Date"
+  },
+  {
+   "depends_on": "eval:parent.expense_kind!='Plafond'",
+   "fieldname": "end_date",
+   "fieldtype": "Date",
+   "in_list_view": 1,
+   "label": "End Date"
+  },
+  {
+   "depends_on": "eval:parent.expense_kind!='Plafond'",
+   "fieldname": "distribution",
+   "fieldtype": "Select",
+   "label": "Distribution",
+   "options": "all\nstart\nend"
+  },
+  {
+   "fieldname": "replaces_row_name",
+   "fieldtype": "Data",
+   "label": "Replaces Row"
+  },
+  {
+   "fieldname": "row_notes",
+   "fieldtype": "Small Text",
+   "label": "Notes"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-03-28 14:20:00.000000",
+ "modified_by": "Administrator",
+ "module": "Master Plan IT",
+ "name": "MPIT Expense Row",
+ "owner": "Administrator",
+ "permissions": [],
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": [],
+ "track_changes": 1
+}

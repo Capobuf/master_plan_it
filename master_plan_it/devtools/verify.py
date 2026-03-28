@@ -17,33 +17,31 @@ REQUIRED_DOCTYPES = [
     "MPIT Year",
     "MPIT Vendor",
     "MPIT Contract",
-    "MPIT Budget",
-    "MPIT Budget Line",
-    "MPIT Budget Addendum",
-    "MPIT Planned Item",
-    "MPIT Actual Entry",
+    "MPIT Expense",
+    "MPIT Expense Row",
     "MPIT Cost Center",
     "MPIT Project",
 ]
 REQUIRED_ROLES = ["vCIO Manager", "Client Editor", "Client Viewer"]
 WORKSPACE_NAME = "Master Plan IT"
 REQUIRED_REPORTS = [
-    "MPIT Renewals Window",
-    "MPIT Projects Planned vs Exceptions",
-    "MPIT Budget Diff",
-    "MPIT Monthly Plan",
     "MPIT Overview",
-    "MPIT Actual Entries",
-    "MPIT Budget What-If",
+    "MPIT Monthly Plan",
+    "MPIT Expenses",
+    "MPIT Project Forecast vs Actual",
+    "MPIT Renewals Window",
 ]
 REQUIRED_DASHBOARD_CHARTS = [
+    "MPIT Forecast vs Actual by Cost Center",
+    "MPIT Monthly Forecast vs Actual",
+    "MPIT Plafond Usage by Cost Center",
     "MPIT Renewals Window (by Month)",
-    "MPIT Plan vs Cap vs Actual",
-    "MPIT Monthly Plan",
-    "MPIT Planned Items Coverage",
-    "MPIT Projects Planned vs Exceptions",
 ]
 REQUIRED_NUMBER_CARDS = [
+    "MPIT Forecast Total",
+    "MPIT Actual Total",
+    "MPIT Active Plafonds",
+    "MPIT Remaining Plafond",
     "Renewals 30d",
     "Renewals 60d",
     "Renewals 90d",

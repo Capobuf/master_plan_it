@@ -24,6 +24,7 @@
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
+   "description": "Term start date used by yearly contract forecast.",
    "in_list_view": 1,
    "label": "From Date",
    "reqd": 1
@@ -32,7 +33,7 @@
    "fieldname": "to_date",
    "fieldtype": "Date",
    "label": "To Date",
-   "description": "Leave empty if the term continues until the next term or contract end."
+   "description": "Leave empty to end the term on the day before the next term starts."
   },
   {
    "fieldname": "cb_term_right",
@@ -44,7 +45,7 @@
    "in_list_view": 1,
    "label": "Amount",
    "reqd": 1,
-   "description": "Amount per billing cycle (net or gross based on VAT-inclusive setting)."
+   "description": "Amount per billing cycle used when this term overlaps the selected year."
   },
   {
    "default": "0",

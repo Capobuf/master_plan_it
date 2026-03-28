@@ -1,0 +1,14 @@
+{
+ "chart_source_name": "MPIT Forecast vs Actual by Cost Center",
+ "doctype": "Dashboard Chart Source",
+ "filters_json": "[]",
+ "idx": 0,
+ "is_standard": 1,
+ "method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_forecast_vs_actual_by_cost_center.mpit_forecast_vs_actual_by_cost_center.get",
+ "modified": "2026-03-28 14:45:00.000000",
+ "module": "Master Plan IT",
+ "name": "MPIT Forecast vs Actual by Cost Center",
+ "owner": "Administrator",
+ "reference_doctype": "MPIT Expense",
+ "type": "Custom"
+}

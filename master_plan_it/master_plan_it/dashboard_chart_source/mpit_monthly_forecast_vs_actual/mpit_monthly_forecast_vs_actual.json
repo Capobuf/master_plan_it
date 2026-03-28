@@ -1,0 +1,14 @@
+{
+ "chart_source_name": "MPIT Monthly Forecast vs Actual",
+ "doctype": "Dashboard Chart Source",
+ "filters_json": "[]",
+ "idx": 0,
+ "is_standard": 1,
+ "method": "master_plan_it.master_plan_it.dashboard_chart_source.mpit_monthly_forecast_vs_actual.mpit_monthly_forecast_vs_actual.get",
+ "modified": "2026-03-28 15:15:00.000000",
+ "module": "Master Plan IT",
+ "name": "MPIT Monthly Forecast vs Actual",
+ "owner": "Administrator",
+ "reference_doctype": "MPIT Expense",
+ "type": "Custom"
+}

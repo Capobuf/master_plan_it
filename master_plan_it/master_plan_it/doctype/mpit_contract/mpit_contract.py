@@ -1,11 +1,6 @@
-# MPIT Contract controller: validates contract terms, naming invariants,
-# and keeps renewal/status coherence. Terms are the single source of truth for pricing.
-# Copyright (c) 2025, DOT and contributors
-# For license information, please see license.txt
-
 from __future__ import annotations
 
-from datetime import date
+import datetime
 
 import frappe
 from frappe import _
@@ -13,413 +8,219 @@ from frappe.model.document import Document
 from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import add_days, add_years, flt, getdate
 
-from master_plan_it.master_plan_it.doctype.mpit_planned_item import mpit_planned_item
-from master_plan_it import annualization, mpit_defaults
+from master_plan_it import annualization, mpit_defaults, tax
 from master_plan_it.naming_utils import sync_series_to_max
 
-# Contract statuses that are valid for budget inclusion and coverage tracking.
 VALID_CONTRACT_STATUSES = {"Active", "Pending Renewal", "Renewed"}
-
-def resolve_term_end(term, terms_sorted: list, idx: int, fallback_end=None):
-	"""Determine effective end date for a contract term.
-
-	Logic:
-	1. Use explicit to_date if set on the term
-	2. Otherwise, day before next term starts
-	3. Otherwise, use fallback_end (or None for open-ended)
-
-	Args:
-		term: Contract term row
-		terms_sorted: All terms sorted by from_date
-		idx: Index of this term in terms_sorted
-		fallback_end: Date to use if no to_date and no next term
-	"""
-	if term.to_date:
-		return getdate(term.to_date)
-	if idx + 1 < len(terms_sorted):
-		return add_days(getdate(terms_sorted[idx + 1].from_date), -1)
-	return fallback_end
 
 
 class MPITContract(Document):
-	def autoname(self):
-		"""Name contracts using series from settings (no manual titles)."""
-		prefix, digits = mpit_defaults.get_contract_series()
-		series = f"{prefix}.{'#' * digits}"
-		sync_series_to_max(self.doctype, prefix, digits)
-		self.name = make_autoname(series)
-
-		if not self.description:
-			self.description = self.name
-
-	def on_trash(self):
-		"""Clean up linked budget lines and reset series counter.
-
-		When a contract is deleted:
-		1. Remove all generated budget lines that reference this contract (v3 rule §4.4)
-		2. Recompute totals for affected Live budgets
-		3. Reset the series counter if this was the last in sequence
-
-		This is idempotent: running multiple times has the same effect.
-		"""
-		self._cleanup_linked_budget_lines()
-
-		# Reset series counter
-		prefix, digits = mpit_defaults.get_contract_series()
-		series_key = f"{prefix}.{'#' * digits}"
-		revert_series_if_last(series_key, self.name, doc=self)
-
-	def _cleanup_linked_budget_lines(self) -> None:
-		"""Remove generated budget lines that reference this contract.
-
-		Only affects Live budgets (Snapshots should remain immutable).
-		After removing lines, recomputes budget totals.
-
-		This follows v3 design decision §4.4:
-		"righe generate non più valide vengono cancellate (delete)"
-		"""
-		# Find all budget lines linked to this contract
-		linked_lines = frappe.db.sql("""
-			SELECT
-				bl.name AS line_name,
-				bl.parent AS budget_name,
-				b.budget_type
-			FROM `tabMPIT Budget Line` bl
-			JOIN `tabMPIT Budget` b ON bl.parent = b.name
-			WHERE bl.contract = %s
-			  AND bl.is_generated = 1
-		""", (self.name,), as_dict=True)
-
-		if not linked_lines:
-			return
-
-		# Group by budget for efficient processing
-		budgets_to_update = {}
-		for line in linked_lines:
-			# Only delete from Live budgets - Snapshots are immutable
-			if line.budget_type == "Live":
-				budgets_to_update.setdefault(line.budget_name, []).append(line.line_name)
-
-		# Delete lines and recompute affected budgets.
-		# NOTE Design Decision: We use raw SQL DELETE because generated lines
-		# (is_generated=1) are protected by _enforce_generated_lines_read_only()
-		# in mpit_budget.py. The normal Document API would block deletion.
-		# Raw SQL bypasses that protection intentionally when the source (contract)
-		# is being deleted.
-		#
-		# TRANSACTION SEMANTICS: this entire method runs inside the on_trash
-		# transaction owned by Frappe. We must NOT swallow exceptions here.
-		# If any budget recompute fails, the exception propagates to on_trash,
-		# Frappe aborts the transaction, and ALL writes — the SQL deletes, the
-		# budget totals, and the contract deletion itself — are rolled back.
-		# Strong consistency: either everything succeeds or nothing is committed.
-		for budget_name, line_names in budgets_to_update.items():
-			# Delete the generated lines directly from the child table
-			for line_name in line_names:
-				frappe.db.sql(
-					"""DELETE FROM `tabMPIT Budget Line` WHERE name = %s""",
-					(line_name,)
-				)
-
-			# Reload picks up the now-absent lines; _compute_totals produces
-			# correct totals. Any exception propagates — do not catch here.
-			budget_doc = frappe.get_doc("MPIT Budget", budget_name)
-			budget_doc.reload()
-			budget_doc._compute_totals()
-			budget_doc.db_update()
-
-
-	def validate(self):
-		prev = self.get_doc_before_save()
-		if not self.vendor:
-			frappe.throw(_("Vendor is required for contracts."))
-		if not self.cost_center:
-			frappe.throw(_("Cost Center is required for contracts."))
-
-		# CRITICAL: Frappe does not auto-call validate() on child tables.
-		# We must explicitly invoke it to compute amount_net, monthly_amount_net, VAT split.
-		for term in self.terms:
-			term.validate()
-
-		# Auto-compute term end dates before validation (unless skipped for migration)
-		if not getattr(self.flags, "skip_terms_auto_compute", False):
-			self._auto_compute_term_end_dates()
-
-		# Terms validation (skip during migration patch)
-		if not getattr(self.flags, "skip_terms_validation", False):
-			self._validate_terms_required()
-			self._validate_terms_no_overlap()
-
-		# Compute current term and annual summaries
-		self._compute_current_term()
-		self._compute_annual_summaries()
-
-		# Existing methods
-		self._default_next_renewal_date()
-		self._normalize_status()
-		self._sync_planned_item_coverage(prev)
-
-	# ─────────────────────────────────────────────────────────────────────────────
-	# Terms Auto-Computation
-	# ─────────────────────────────────────────────────────────────────────────────
-
-	def _auto_compute_term_end_dates(self) -> None:
-		"""
-		Auto-compute to_date for contract terms based on next term's from_date.
-
-		This ensures term periods are visually explicit in the UI while maintaining
-		the existing budget engine logic that already handles implicit term boundaries.
-
-		Rules:
-		1. If a term is followed by another term, set to_date = next.from_date - 1 day
-		   (only if to_date is currently empty)
-		2. If a term is the last one and has no to_date, set to_date = from_date + 1 year - 1 day
-		   (default annual contract assumption)
-		3. Never overwrite an explicitly set to_date (user may have intentional gaps or overlaps
-		   to be caught by validation)
-
-		The JS client-side handles prompting the user for confirmation when to_date was
-		manually set and would need to change due to a new term being added.
-		"""
-		if not self.terms:
-			return
-
-		# Sort terms by from_date, filtering out any without a from_date
-		terms_with_dates = [t for t in self.terms if t.from_date]
-		if not terms_with_dates:
-			return
-
-		terms_sorted = sorted(terms_with_dates, key=lambda t: getdate(t.from_date))
-
-		for i, term in enumerate(terms_sorted):
-			is_last_term = (i + 1 >= len(terms_sorted))
-
-			if not is_last_term:
-				# Not the last term: to_date should be day before next term starts
-				next_from = getdate(terms_sorted[i + 1].from_date)
-				computed_end = add_days(next_from, -1)
-
-				# Only auto-set if to_date is empty (respect manual entries)
-				if not term.to_date:
-					term.to_date = computed_end
-			else:
-				# Last term: if to_date is empty, default to +1 year - 1 day
-				# This assumes annual contract terms as the default duration
-				if not term.to_date:
-					term.to_date = add_days(add_years(getdate(term.from_date), 1), -1)
-
-	# ─────────────────────────────────────────────────────────────────────────────
-	# Terms Validation
-	# ─────────────────────────────────────────────────────────────────────────────
-
-	def _validate_terms_required(self) -> None:
-		"""Ensure at least one pricing term exists."""
-		if not self.terms:
-			frappe.throw(
-				_("At least one pricing term is required. Add a term with the contract's initial pricing.")
-			)
-
-	def _validate_terms_no_overlap(self) -> None:
-		"""Validate that terms do not have overlapping date ranges.
-
-		Two terms overlap if term[i].to_date >= term[i+1].from_date.
-		Terms without to_date are handled by the system (auto-end before next term).
-		"""
-		if not self.terms or len(self.terms) < 2:
-			return
-
-		terms_sorted = sorted(
-			[t for t in self.terms if t.from_date],
-			key=lambda t: getdate(t.from_date)
-		)
-
-		for i, term in enumerate(terms_sorted[:-1]):
-			next_term = terms_sorted[i + 1]
-			term_end = getdate(term.to_date) if term.to_date else None
-			next_start = getdate(next_term.from_date)
-
-			# If term has explicit to_date and it overlaps with next term's start
-			if term_end and term_end >= next_start:
-				frappe.throw(
-					_("Term {0} (ending {1}) overlaps with Term {2} (starting {3}). Please fix the date ranges.").format(
-						i + 1, term_end, i + 2, next_start
-					)
-				)
-
-
-
-	# ─────────────────────────────────────────────────────────────────────────────
-	# Current Term Computation
-	# ─────────────────────────────────────────────────────────────────────────────
-
-	def _compute_current_term(self) -> None:
-		"""Identify current term and derive contract dates from it.
-
-		The "current term" is the one where today falls between from_date and the computed end date.
-		Both start_date and end_date are derived from this term (single source of truth).
-		If no term covers today, all derived fields are set to None.
-		"""
-		today = date.today()
-		active_for_current = self._is_active_for_current_term()
-
-		# Reset all derived fields
-		self.current_term_amount = None
-		self.current_term_billing_cycle = None
-		self.current_term_monthly_net = None
-		self.current_term_from_date = None
-		self.start_date = None
-		self.end_date = None
-
-		if not self.terms:
-			return
-
-		terms_sorted = sorted(
-			[t for t in self.terms if t.from_date],
-			key=lambda t: getdate(t.from_date)
-		)
-
-		if not terms_sorted:
-			return
-
-		for i, term in enumerate(terms_sorted):
-			term_start = getdate(term.from_date)
-
-			# Determine term end date
-			term_end = resolve_term_end(term, terms_sorted, i, fallback_end=None)
-
-			# Check if today falls within this term's range
-			if not active_for_current:
-				continue
-
-			in_range = (
-				(term_end and term_start <= today <= term_end) or
-				(not term_end and today >= term_start)
-			)
-			if in_range:
-				self.current_term_amount = term.amount
-				self.current_term_billing_cycle = term.billing_cycle
-				self.current_term_monthly_net = term.monthly_amount_net
-				self.current_term_from_date = term.from_date
-				# Derive contract dates from current term
-				self.start_date = term.from_date
-				self.end_date = term.to_date  # None if open-ended
-				break
-
-		# Fallback: If no term is currently active (e.g. future or past),
-		# use the first term's dates to provide context (e.g. for Budget Engine planning).
-		if not self.start_date and terms_sorted:
-			self.start_date = terms_sorted[0].from_date
-			self.end_date = terms_sorted[0].to_date
-
-	def _is_active_for_current_term(self) -> bool:
-		"""Return True if contract status indicates it should be considered active."""
-		status = (self.status or "").strip()
-		if status in VALID_CONTRACT_STATUSES:
-			return True
-		if self.auto_renew and status not in {"Cancelled", "Expired", "Draft"}:
-			return True
-		return False
-
-	# ─────────────────────────────────────────────────────────────────────────────
-	# Annual Summary Computation
-	# ─────────────────────────────────────────────────────────────────────────────
-
-	def _compute_annual_summaries(self) -> None:
-		"""Calculate annualized amounts for current and next fiscal year.
-
-		These fields provide a quick view of the contract's total cost impact
-		for the current year and next year, accounting for term changes.
-		"""
-		today = date.today()
-		self.current_year_label = str(today.year)
-		self.next_year_label = str(today.year + 1)
-		self.annual_amount_current_year = self._calculate_annual_for_year(today.year)
-		self.annual_amount_next_year = self._calculate_annual_for_year(today.year + 1)
-
-	def _calculate_annual_for_year(self, year: int) -> float:
-		"""Calculate total annualized net amount for a specific year.
-
-		This method iterates through all terms and calculates the pro-rata
-		contribution of each term to the specified year based on overlap months.
-
-		Args:
-			year: The fiscal year to calculate for
-
-		Returns:
-			Total annualized net amount for the year
-		"""
-		if not self.terms:
-			return 0.0
-
-		year_start, year_end = annualization.get_year_bounds(year)
-		contract_start = getdate(self.start_date) if self.start_date else year_start
-		contract_end = getdate(self.end_date) if self.end_date else year_end
-
-		total = 0.0
-		terms_sorted = sorted(
-			[t for t in self.terms if t.from_date],
-			key=lambda t: getdate(t.from_date)
-		)
-
-		for i, term in enumerate(terms_sorted):
-			term_start = getdate(term.from_date)
-
-			# Determine term end date (same logic as _compute_current_term)
-			term_end = resolve_term_end(term, terms_sorted, i, fallback_end=contract_end)
-
-			# Clip to year bounds and contract bounds
-			period_start = max(term_start, contract_start, year_start)
-			period_end = min(term_end, contract_end, year_end)
-
-			if period_start > period_end:
-				continue
-
-			months = annualization.overlap_months(period_start, period_end, year_start, year_end)
-			if months <= 0:
-				continue
-
-			monthly_net = flt(term.monthly_amount_net or 0, 2)
-			total += flt(monthly_net * months, 2)
-
-		return flt(total, 2)
-
-	# ─────────────────────────────────────────────────────────────────────────────
-	# Existing Methods (unchanged)
-	# ─────────────────────────────────────────────────────────────────────────────
-
-	def _default_next_renewal_date(self) -> None:
-		"""Auto-fill next_renewal_date from end_date when possible.
-
-		Note: next_renewal_date must not be mandatory client-side because it is auto-filled here.
-		"""
-		if not self.auto_renew:
-			return
-		if self.next_renewal_date:
-			return
-		if self.end_date:
-			self.next_renewal_date = self.end_date
-
-	def _normalize_status(self) -> None:
-		"""Keep auto-renew contracts coherent without promoting Draft into Active."""
-		if not self.auto_renew:
-			return
-		if self.status in (None, ""):
-			self.status = "Active"
-		elif self.status == "Pending Renewal":
-			self.status = "Active"
-
-	def _sync_planned_item_coverage(self, prev: Document | None) -> None:
-		"""Set/clear Planned Item coverage when linked contract is valid/removed."""
-		prev_planned = getattr(prev, "planned_item", None) if prev else None
-		prev_status = getattr(prev, "status", None) if prev else None
-
-		current_valid = self.status in VALID_CONTRACT_STATUSES
-		prev_valid = prev_status in VALID_CONTRACT_STATUSES
-
-		# Clear previous coverage if unlinked or no longer valid
-		if prev_planned and (prev_planned != self.planned_item or (prev_valid and not current_valid)):
-			mpit_planned_item.set_coverage(prev_planned, None, None)
-
-		# Set coverage when linked and valid
-		if self.planned_item and current_valid:
-			mpit_planned_item.set_coverage(self.planned_item, "MPIT Contract", self.name)
+    def autoname(self):
+        prefix, digits = mpit_defaults.get_contract_series()
+        series = f"{prefix}.{'#' * digits}"
+        sync_series_to_max(self.doctype, prefix, digits)
+        self.name = make_autoname(series)
+
+        if not self.description:
+            self.description = self.name
+
+    def on_trash(self):
+        prefix, digits = mpit_defaults.get_contract_series()
+        series_key = f"{prefix}.{'#' * digits}"
+        revert_series_if_last(series_key, self.name, doc=self)
+
+    def validate(self):
+        if not self.vendor:
+            frappe.throw(_("Vendor is required for contracts."))
+        if not self.cost_center:
+            frappe.throw(_("Cost Center is required for contracts."))
+
+        for term in self.terms:
+            term.validate()
+
+        self._auto_compute_term_end_dates()
+        self._validate_terms_no_overlap()
+        self._validate_fallback_amount_rules()
+
+        self._compute_header_amounts()
+        self._compute_current_term()
+        self._compute_annual_summaries()
+        self._default_next_renewal_date()
+        self._normalize_status()
+
+    def _validate_fallback_amount_rules(self) -> None:
+        if self.terms:
+            return
+
+        if not self.current_amount:
+            frappe.throw(_("When no Contract Terms are set, Current Amount is required."))
+
+        if not self.billing_cycle:
+            frappe.throw(_("When no Contract Terms are set, Billing Cycle is required."))
+
+    def _auto_compute_term_end_dates(self) -> None:
+        terms = [t for t in self.terms if t.from_date]
+        if not terms:
+            return
+
+        terms_sorted = sorted(terms, key=lambda t: getdate(t.from_date))
+
+        for idx, term in enumerate(terms_sorted):
+            is_last = idx + 1 == len(terms_sorted)
+            if not is_last and not term.to_date:
+                term.to_date = add_days(getdate(terms_sorted[idx + 1].from_date), -1)
+            elif is_last and not term.to_date:
+                term.to_date = add_days(add_years(getdate(term.from_date), 1), -1)
+
+    def _validate_terms_no_overlap(self) -> None:
+        terms = [t for t in self.terms if t.from_date]
+        if len(terms) < 2:
+            return
+
+        terms_sorted = sorted(terms, key=lambda t: getdate(t.from_date))
+        for idx, term in enumerate(terms_sorted[:-1]):
+            if not term.to_date:
+                continue
+            next_term = terms_sorted[idx + 1]
+            if getdate(term.to_date) >= getdate(next_term.from_date):
+                frappe.throw(
+                    _("Term {0} overlaps with the next term. Review term dates.").format(idx + 1)
+                )
+
+    def _compute_header_amounts(self) -> None:
+        amount = flt(self.current_amount or 0, 2)
+        if amount == 0:
+            self.current_amount_net = 0
+            self.current_amount_vat = 0
+            self.current_amount_gross = 0
+            self.current_monthly_net = 0
+            return
+
+        default_vat = mpit_defaults.get_default_vat_rate()
+        if self.vat_rate is None and default_vat is not None:
+            self.vat_rate = default_vat
+
+        final_vat_rate = tax.validate_strict_vat(
+            amount,
+            self.vat_rate,
+            default_vat,
+            field_label=_("Current Amount"),
+        )
+
+        net, vat, gross = tax.split_net_vat_gross(
+            amount,
+            final_vat_rate,
+            bool(self.current_amount_includes_vat),
+        )
+
+        self.current_amount_net = flt(net, 2)
+        self.current_amount_vat = flt(vat, 2)
+        self.current_amount_gross = flt(gross, 2)
+        self.current_monthly_net = self._monthly_from_cycle(self.current_amount_net, self.billing_cycle)
+
+    def _compute_current_term(self) -> None:
+        self.current_term_amount = None
+        self.current_term_billing_cycle = None
+        self.current_term_monthly_net = None
+        self.current_term_from_date = None
+
+        terms = [t for t in self.terms if t.from_date]
+        if not terms:
+            self.start_date = self.start_date or None
+            self.end_date = self.end_date or None
+            return
+
+        today = datetime.date.today()
+        terms_sorted = sorted(terms, key=lambda t: getdate(t.from_date))
+
+        self.start_date = terms_sorted[0].from_date
+        self.end_date = terms_sorted[-1].to_date or None
+
+        for idx, term in enumerate(terms_sorted):
+            term_start = getdate(term.from_date)
+            term_end = resolve_term_end(terms_sorted, idx, fallback_end=None)
+            in_range = (term_end and term_start <= today <= term_end) or (not term_end and today >= term_start)
+
+            if in_range:
+                self.current_term_amount = term.amount
+                self.current_term_billing_cycle = term.billing_cycle
+                self.current_term_monthly_net = term.monthly_amount_net
+                self.current_term_from_date = term.from_date
+                self.start_date = term.from_date
+                self.end_date = term.to_date or None
+                break
+
+    def _compute_annual_summaries(self) -> None:
+        today = datetime.date.today()
+        self.current_year_label = str(today.year)
+        self.next_year_label = str(today.year + 1)
+        self.annual_amount_current_year = self._calculate_annual_for_year(today.year)
+        self.annual_amount_next_year = self._calculate_annual_for_year(today.year + 1)
+
+    def _calculate_annual_for_year(self, year: int) -> float:
+        year_start, year_end = annualization.get_year_bounds(year)
+
+        terms = [t for t in self.terms if t.from_date]
+        if terms:
+            total = 0.0
+            terms_sorted = sorted(terms, key=lambda t: getdate(t.from_date))
+
+            for idx, term in enumerate(terms_sorted):
+                term_start = getdate(term.from_date)
+                term_end = resolve_term_end(terms_sorted, idx, fallback_end=year_end)
+
+                period_start = max(term_start, year_start)
+                period_end = min(term_end, year_end)
+                if period_start > period_end:
+                    continue
+
+                overlap_months = annualization.overlap_months(period_start, period_end, year_start, year_end)
+                if overlap_months <= 0:
+                    continue
+
+                monthly_net = self._monthly_from_cycle(flt(term.amount_net or term.amount, 2), term.billing_cycle)
+                total += flt(monthly_net * overlap_months, 2)
+
+            return flt(total, 2)
+
+        if not self.current_amount_net:
+            return 0.0
+
+        period_start = getdate(self.start_date) if self.start_date else year_start
+        period_end = getdate(self.end_date) if self.end_date else year_end
+        if period_start > period_end:
+            return 0.0
+
+        overlap_months = annualization.overlap_months(period_start, period_end, year_start, year_end)
+        if overlap_months <= 0:
+            return 0.0
+
+        return flt(self.current_monthly_net * overlap_months, 2)
+
+    def _default_next_renewal_date(self) -> None:
+        if self.auto_renew and not self.next_renewal_date and self.end_date:
+            self.next_renewal_date = self.end_date
+
+    def _normalize_status(self) -> None:
+        if not self.status:
+            self.status = "Active"
+        if self.auto_renew and self.status == "Pending Renewal":
+            self.status = "Active"
+
+    @staticmethod
+    def _monthly_from_cycle(amount_net: float, billing_cycle: str | None) -> float:
+        cycle = (billing_cycle or "Monthly").strip()
+        if cycle == "Quarterly":
+            return flt(amount_net * 4 / 12, 2)
+        if cycle == "Annual":
+            return flt(amount_net / 12, 2)
+        return flt(amount_net, 2)
+
+
+def resolve_term_end(terms_sorted: list, idx: int, fallback_end=None):
+    term = terms_sorted[idx]
+    if term.to_date:
+        return getdate(term.to_date)
+    if idx + 1 < len(terms_sorted):
+        return add_days(getdate(terms_sorted[idx + 1].from_date), -1)
+    return fallback_end
