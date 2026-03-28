@@ -10,7 +10,6 @@
   "section_overview",
   "title",
   "workflow_state",
-  "operational_status",
   "overview_col_break",
   "cost_center",
   "start_date",
@@ -20,6 +19,7 @@
   "section_notes",
   "notes",
   "financial_section",
+  "summary_year",
   "financial_summary"
  ],
  "fields": [
@@ -37,23 +37,13 @@
    "reqd": 1
   },
   {
-   "default": "Draft",
+   "default": "Open",
    "fieldname": "workflow_state",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Status",
-   "options": "Draft\nProposed\nApproved\nRejected\nCancelled",
-   "read_only": 1
-  },
-  {
-   "depends_on": "eval:doc.workflow_state=='Approved'",
-   "fieldname": "operational_status",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Operational Status",
-   "options": "\nIn Progress\nOn Hold\nCompleted"
+   "options": "Open\nOn Hold\nCompleted\nCancelled"
   },
   {
    "fieldname": "overview_col_break",
@@ -104,6 +94,13 @@
    "fieldname": "financial_section",
    "fieldtype": "Section Break",
    "label": "Financial Summary"
+  },
+  {
+   "fieldname": "summary_year",
+   "fieldtype": "Link",
+   "label": "Summary Year",
+   "options": "MPIT Year",
+   "read_only": 1
   },
   {
    "fieldname": "financial_summary",

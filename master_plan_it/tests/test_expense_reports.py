@@ -126,7 +126,7 @@ def ensure_project(title: str, cost_center: str) -> str:
         {
             "doctype": "MPIT Project",
             "title": title,
-            "workflow_state": "Draft",
+            "workflow_state": "Open",
             "cost_center": cost_center,
         }
     )

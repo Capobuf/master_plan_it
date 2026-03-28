@@ -6,7 +6,7 @@ import frappe
 from frappe import _
 from frappe.model.document import Document
 from frappe.model.naming import make_autoname, revert_series_if_last
-from frappe.utils import add_days, add_years, flt, getdate
+from frappe.utils import add_days, flt, getdate
 
 from master_plan_it import annualization, mpit_defaults, tax
 from master_plan_it.naming_utils import sync_series_to_max
@@ -69,8 +69,6 @@ class MPITContract(Document):
             is_last = idx + 1 == len(terms_sorted)
             if not is_last and not term.to_date:
                 term.to_date = add_days(getdate(terms_sorted[idx + 1].from_date), -1)
-            elif is_last and not term.to_date:
-                term.to_date = add_days(add_years(getdate(term.from_date), 1), -1)
 
     def _validate_terms_no_overlap(self) -> None:
         terms = [t for t in self.terms if t.from_date]

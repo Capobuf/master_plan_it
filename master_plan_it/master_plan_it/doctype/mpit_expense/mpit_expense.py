@@ -9,10 +9,9 @@ from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import flt, getdate
 
 from master_plan_it import annualization, mpit_defaults
-from master_plan_it.master_plan_it.financial_engine import get_plafond_totals
+from master_plan_it.master_plan_it.financial_engine import get_plafond_document_totals
 from master_plan_it.naming_utils import sync_series_to_max
 
-ACTIVE_DOC_STATES = {"Open", "Closed"}
 ACTIVE_ROW_STATES = {"Active"}
 
 
@@ -54,14 +53,14 @@ class MPITExpense(Document):
                 frappe.throw(_("Plafond cannot be flagged as On Plafond or Extra."))
             if self.plafond_expense:
                 frappe.throw(_("Plafond cannot reference another Plafond."))
-            if self.workflow_state == "Open":
-                self._validate_single_open_plafond()
+            if self.workflow_state != "Cancelled":
+                self._validate_single_non_cancelled_plafond()
             return
 
         has_project = bool(self.project)
         has_contract = bool(self.contract)
-        if has_project == has_contract:
-            frappe.throw(_("Ordinary expense requires exactly one context: Project or Contract."))
+        if has_project and has_contract:
+            frappe.throw(_("Ordinary expense allows at most one context: Project or Contract."))
 
         uses_plafond = bool(self.uses_plafond)
         is_extra = bool(self.is_extra)
@@ -76,17 +75,19 @@ class MPITExpense(Document):
             if self.plafond_expense:
                 frappe.throw(_("Plafond reference must be empty when Extra is enabled."))
 
-    def _validate_single_open_plafond(self) -> None:
+    def _validate_single_non_cancelled_plafond(self) -> None:
         filters = {
             "expense_kind": "Plafond",
-            "workflow_state": "Open",
+            "workflow_state": ["!=", "Cancelled"],
             "year": self.year,
             "cost_center": self.cost_center,
         }
         existing = frappe.db.get_value("MPIT Expense", filters, "name")
         if existing and existing != self.name:
             frappe.throw(
-                _("Only one Open Plafond is allowed for this Year and Cost Center. Existing: {0}").format(existing)
+                _("Only one non-Cancelled Plafond is allowed for this Year and Cost Center. Existing: {0}").format(
+                    existing
+                )
             )
 
     def _validate_plafond_reference(self) -> None:
@@ -127,8 +128,6 @@ class MPITExpense(Document):
                 frappe.throw(_("Plafond rows cannot use period distribution fields."))
             if row.spend_date and not (year_start <= getdate(row.spend_date) <= year_end):
                 frappe.throw(_("Plafond Spend Date must be inside the selected year."))
-            if not row.row_phase:
-                row.row_phase = "Actual"
             return
 
         if row.row_phase not in {"Estimate", "Quote", "Actual"}:
@@ -215,7 +214,7 @@ def get_plafond_snapshot(expense_name: str) -> dict:
     if doc.expense_kind != "Plafond":
         return {}
 
-    totals = get_plafond_totals(doc.year, cost_center=doc.cost_center)
+    totals = get_plafond_document_totals(doc.name)
     return {
         "plafond_total": flt(totals.get("plafond_total", 0), 2),
         "plafond_consumed": flt(totals.get("plafond_consumed", 0), 2),

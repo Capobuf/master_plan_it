@@ -92,6 +92,7 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "description": "Optional context. Leave empty for standalone cost center expenses.",
    "fieldname": "project",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -101,6 +102,7 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "description": "Optional context. Leave empty for standalone cost center expenses.",
    "fieldname": "contract",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -122,6 +124,7 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "description": "If enabled, this expense consumes the selected plafond.",
    "fieldname": "uses_plafond",
    "fieldtype": "Check",
    "in_list_view": 1,
@@ -130,6 +133,7 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary' && doc.uses_plafond",
+   "description": "Select a non-cancelled plafond for the same year and cost center.",
    "fieldname": "plafond_expense",
    "fieldtype": "Link",
    "label": "Plafond Reference",
@@ -137,6 +141,7 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "description": "If enabled, this expense does not consume any plafond.",
    "fieldname": "is_extra",
    "fieldtype": "Check",
    "in_list_view": 1,

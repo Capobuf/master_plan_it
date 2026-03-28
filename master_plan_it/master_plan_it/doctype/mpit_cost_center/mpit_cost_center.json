@@ -82,8 +82,9 @@
   },
   {
    "fieldname": "summary_year",
-   "fieldtype": "Data",
+   "fieldtype": "Link",
    "label": "Year",
+   "options": "MPIT Year",
    "read_only": 1
   },
   {

@@ -12,7 +12,8 @@ frappe.ui.form.on("MPIT Cost Center", {
             const r = await frappe.prompt(
                 {
                     fieldname: "year",
-                    fieldtype: "Data",
+                    fieldtype: "Link",
+                    options: "MPIT Year",
                     label: __("Year"),
                     reqd: 1,
                     default: frm.__mpit_summary_year,

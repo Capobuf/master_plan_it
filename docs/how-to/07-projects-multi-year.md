@@ -1,22 +1,20 @@
 # How to run multi-year projects
 
 ## Rule
-Before a project can be approved, it must have at least one `MPIT Project Allocation` row.
-Allocations are per-year planned amounts. La validazione blocca gli stati da `Approved` in poi se mancano allocazioni.
+`MPIT Project` is operational context, not an approval workflow container.
+Economic data is yearly and comes from `MPIT Expense` documents linked to the project.
 
 ## Steps
-1) Create `MPIT Project` (Draft).
-2) Add yearly allocations (mandatory for approval):
-   - 2026: 10,000
-   - 2027: 5,000
-3) Add quotes (optional) and milestones (optional) as child rows.
-4) Approve the project (if you use a project workflow/state policy).
-5) Include the project in budgets:
-   - Either add budget lines that reference the project,
-   - Or use a CLI helper to generate lines from allocations (optional V1.1).
-6) Record actual entries linking to the project.
+1) Create `MPIT Project` with status `Open`.
+2) For each year, create one or more `MPIT Expense` documents linked to the project.
+3) Keep each expense inside one year (`MPIT Expense` is annual).
+4) Classify each ordinary expense as:
+   - `On Plafond` with `Plafond Reference`, or
+   - `Extra`
+5) Use reports (`MPIT Overview`, `MPIT Monthly Plan`, `MPIT Project Forecast vs Actual`) to read yearly totals.
 
 ## Reporting
-- Projects planned vs actual is computed using:
-  - planned allocations per year
-  - actual entries linked to the project within the year
+Project yearly totals are derived from the financial engine:
+- Forecast from active `Estimate` + `Quote` rows
+- Actual from active `Actual` rows
+- Variance = Forecast - Actual

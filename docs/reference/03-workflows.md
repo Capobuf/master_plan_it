@@ -1,25 +1,27 @@
 # Reference: Workflows
 
-## MPIT Budget workflow
-States:
-- Draft (docstatus 0)
-- Proposed (0)
-- In Review (0)
-- Approved (docstatus 1)
+## Active state model
+The app does not ship Frappe Workflow fixtures for the economic domain.
+State is managed with native Select fields on doctypes.
 
-Roles allowed to progress:
-- vCIO Manager, Client Editor
+## MPIT Expense
+`workflow_state` values:
+- `Open`
+- `Closed`
+- `Cancelled`
 
-Actions:
-- Propose → Proposed
-- Send to Review → In Review
-- Approve → Approved
+Rules:
+- `Open` and `Closed` are included in economic totals.
+- `Cancelled` is excluded from totals.
 
-Notes:
-- Approved sets docstatus=1. Snapshot budgets become immutable after submit. Live budgets are refreshable and never submitted.
-- Client Viewer cannot transition states.
+## MPIT Project
+`workflow_state` values:
+- `Open`
+- `On Hold`
+- `Completed`
+- `Cancelled`
 
-## Optional: MPIT Project workflow/policy
-Default is a simple `status` Select (Draft → Proposed → Approved → …). No formal workflow shipped; add one only if governance requires it.
+These values are operational statuses (not a legacy approval workflow).
 
-Implementation note: workflows live under `master_plan_it/master_plan_it/workflow/` (`workflow_state` field) and sync via standard migrate/clear-cache.
+## Notes
+If governance requires a formal Frappe Workflow in the future, define it explicitly and update this document.

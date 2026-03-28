@@ -96,10 +96,12 @@ Confirm:
 
 ---
 
-## Verification example: “MPIT Budget totals to the right”
+## Verification example: “MPIT Expense funding layout”
 
-- File edited: `<bench>/apps/master_plan_it/.../doctype/mpit_budget/mpit_budget.json`
+- File edited: `<bench>/apps/master_plan_it/.../doctype/mpit_expense/mpit_expense.json`
 - Apply:
   - Option A: `bench --site <site> migrate` → `bench --site <site> clear-cache`
-  - Option B (layout-only): `bench --site <site> reload-doctype "MPIT Budget"` → `bench --site <site> clear-cache`
-- Hard refresh Desk and confirm the Totals block renders on the right.
+  - Option B (layout-only): `bench --site <site> reload-doctype "MPIT Expense"` → `bench --site <site> clear-cache`
+- Hard refresh Desk and confirm:
+  - `On Plafond` / `Extra` fields are visible only for `Ordinary`
+  - `Plafond Reference` appears only when `On Plafond` is enabled

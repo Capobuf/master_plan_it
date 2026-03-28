@@ -46,6 +46,41 @@ class TestMPITContract(FrappeTestCase):
         doc.insert()
         self.assertGreaterEqual(doc.annual_amount_current_year, 0)
 
+    def test_last_open_term_is_not_closed_automatically(self):
+        doc = frappe.get_doc(
+            {
+                "doctype": "MPIT Contract",
+                "description": "Contract Open Last Term",
+                "vendor": self.vendor,
+                "cost_center": self.cost_center,
+                "terms": [
+                    {
+                        "doctype": "MPIT Contract Term",
+                        "from_date": "2026-01-01",
+                        "to_date": None,
+                        "amount": 100,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "billing_cycle": "Monthly",
+                    },
+                    {
+                        "doctype": "MPIT Contract Term",
+                        "from_date": "2026-07-01",
+                        "to_date": None,
+                        "amount": 120,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "billing_cycle": "Monthly",
+                    },
+                ],
+            }
+        )
+        doc.insert()
+
+        terms = sorted(doc.terms, key=lambda t: t.from_date)
+        self.assertEqual(str(terms[0].to_date), "2026-06-30")
+        self.assertIsNone(terms[1].to_date)
+
 
 def ensure_vendor(name: str) -> str:
     existing = frappe.db.get_value("MPIT Vendor", {"vendor_name": name}, "name")

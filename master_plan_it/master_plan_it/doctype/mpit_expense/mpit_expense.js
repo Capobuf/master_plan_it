@@ -1,8 +1,11 @@
 frappe.ui.form.on("MPIT Expense", {
+    setup(frm) {
+        set_link_queries(frm);
+    },
+
     refresh(frm) {
         apply_kind_visibility(frm);
         apply_funding_rules(frm);
-        set_plafond_query(frm);
     },
 
     expense_kind(frm) {
@@ -33,11 +36,23 @@ frappe.ui.form.on("MPIT Expense", {
     },
 
     year(frm) {
-        set_plafond_query(frm);
+        set_link_queries(frm);
     },
 
     cost_center(frm) {
-        set_plafond_query(frm);
+        set_link_queries(frm);
+    },
+
+    project(frm) {
+        if (frm.doc.project && frm.doc.contract) {
+            frm.set_value("contract", "");
+        }
+    },
+
+    contract(frm) {
+        if (frm.doc.contract && frm.doc.project) {
+            frm.set_value("project", "");
+        }
     },
 });
 
@@ -76,19 +91,49 @@ frappe.ui.form.on("MPIT Expense Row", {
 function apply_kind_visibility(frm) {
     const ordinary = frm.doc.expense_kind === "Ordinary";
     frm.toggle_display(["project", "contract", "uses_plafond", "plafond_expense", "is_extra", "tab_classification"], ordinary);
+
+    const grid = frm.fields_dict && frm.fields_dict.rows && frm.fields_dict.rows.grid;
+    if (grid) {
+        if (typeof grid.toggle_display === "function") {
+            grid.toggle_display("row_phase", ordinary);
+            grid.toggle_display("start_date", ordinary);
+            grid.toggle_display("end_date", ordinary);
+        } else if (typeof grid.update_docfield_property === "function") {
+            grid.update_docfield_property("row_phase", "hidden", !ordinary);
+            grid.update_docfield_property("start_date", "hidden", !ordinary);
+            grid.update_docfield_property("end_date", "hidden", !ordinary);
+        }
+    }
 }
 
 function apply_funding_rules(frm) {
     const ordinary = frm.doc.expense_kind === "Ordinary";
     const uses_plafond = ordinary && !!frm.doc.uses_plafond;
     frm.toggle_display("plafond_expense", uses_plafond);
+    frm.toggle_reqd("plafond_expense", uses_plafond);
 }
 
-function set_plafond_query(frm) {
+function set_link_queries(frm) {
+    frm.set_query("project", () => {
+        const filters = {};
+        if (frm.doc.cost_center) {
+            filters.cost_center = frm.doc.cost_center;
+        }
+        return { filters };
+    });
+
+    frm.set_query("contract", () => {
+        const filters = {};
+        if (frm.doc.cost_center) {
+            filters.cost_center = frm.doc.cost_center;
+        }
+        return { filters };
+    });
+
     frm.set_query("plafond_expense", () => {
         const filters = {
             expense_kind: "Plafond",
-            workflow_state: "Open",
+            workflow_state: ["!=", "Cancelled"],
         };
 
         if (frm.doc.year) {

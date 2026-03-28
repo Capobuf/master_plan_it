@@ -8,8 +8,11 @@ from frappe.tests.utils import FrappeTestCase
 from master_plan_it.master_plan_it.financial_engine import (
     get_actual_totals,
     get_contract_forecast_totals,
+    get_cost_center_financial_summary,
     get_expense_forecast_totals,
     get_monthly_forecast_vs_actual,
+    get_overview_dataset,
+    get_plafond_document_totals,
     get_plafond_totals,
     get_project_financial_summary,
 )
@@ -173,6 +176,58 @@ class TestFinancialEngine(FrappeTestCase):
         self.assertEqual(monthly["totals"]["forecast_total"], project_summary["forecast_total_net"])
         self.assertEqual(monthly["totals"]["actual_total"], project_summary["actual_total_net"])
 
+    def test_standalone_extra_is_included_in_cost_center_and_overview_totals(self):
+        make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            is_extra=1,
+            rows=[expense_row("Actual", 60, "Active", spend_date="2030-03-15")],
+        )
+
+        cost_center_summary = get_cost_center_financial_summary(self.year, self.cost_center)
+        overview = get_overview_dataset(self.year, cost_center=self.cost_center)
+
+        self.assertEqual(cost_center_summary["actual_extra"], 60)
+        self.assertEqual(cost_center_summary["actual_total"], 60)
+        self.assertEqual(overview["summary"]["actual_extra"], 60)
+        self.assertEqual(overview["summary"]["actual_total"], 60)
+
+    def test_standalone_uses_plafond_consumes_only_selected_document(self):
+        plafond_a = make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            expense_kind="Plafond",
+            rows=[expense_row("Actual", 400, "Active", spend_date="2030-01-05")],
+        )
+        plafond_b = make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            expense_kind="Plafond",
+            workflow_state="Cancelled",
+            rows=[expense_row("Actual", 700, "Active", spend_date="2030-01-06")],
+        )
+        self.assertIsNotNone(plafond_b.name)
+
+        make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            uses_plafond=1,
+            is_extra=0,
+            plafond_expense=plafond_a.name,
+            rows=[expense_row("Actual", 125, "Active", spend_date="2030-02-05")],
+        )
+
+        totals_a = get_plafond_document_totals(plafond_a.name)
+        totals_b = get_plafond_document_totals(plafond_b.name)
+        aggregate = get_plafond_totals(self.year, cost_center=self.cost_center)
+
+        self.assertEqual(totals_a["plafond_total"], 400)
+        self.assertEqual(totals_a["plafond_consumed"], 125)
+        self.assertEqual(totals_a["plafond_remaining"], 275)
+        self.assertEqual(totals_b["plafond_consumed"], 0)
+        self.assertEqual(aggregate["plafond_total"], 400)
+        self.assertEqual(aggregate["plafond_consumed"], 125)
+
 
 def term_row(from_date: str, to_date: str, amount: float, billing_cycle: str) -> dict:
     return {
@@ -204,6 +259,7 @@ def make_expense(
     year: str,
     cost_center: str,
     project: str | None = None,
+    contract: str | None = None,
     expense_kind: str = "Ordinary",
     workflow_state: str = "Open",
     uses_plafond: int = 0,
@@ -219,6 +275,7 @@ def make_expense(
         "year": year,
         "cost_center": cost_center,
         "project": project if expense_kind == "Ordinary" else None,
+        "contract": contract if expense_kind == "Ordinary" else None,
         "uses_plafond": uses_plafond if expense_kind == "Ordinary" else 0,
         "is_extra": is_extra if expense_kind == "Ordinary" else 0,
         "plafond_expense": plafond_expense if expense_kind == "Ordinary" else None,
@@ -304,7 +361,7 @@ def ensure_project(title: str, cost_center: str) -> str:
         {
             "doctype": "MPIT Project",
             "title": title,
-            "workflow_state": "Draft",
+            "workflow_state": "Open",
             "cost_center": cost_center,
         }
     )

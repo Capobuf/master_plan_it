@@ -195,33 +195,86 @@ def get_plafond_totals(year: str | int, cost_center: str | None = None) -> dict:
     filters: dict = {
         "year": str(year_int),
         "expense_kind": "Plafond",
-        "workflow_state": ["in", list(ACTIVE_EXPENSE_STATES)],
+        "workflow_state": ["!=", "Cancelled"],
     }
     if cost_center:
         filters["cost_center"] = cost_center
 
     plafonds = frappe.get_all("MPIT Expense", filters=filters, pluck="name", limit=None)
     plafond_total = 0.0
-    if plafonds:
-        rows = frappe.get_all(
-            "MPIT Expense Row",
-            filters={"parent": ["in", plafonds], "row_state": "Active"},
-            fields=["amount_net"],
-            limit=None,
-        )
-        plafond_total = sum(flt(row.amount_net, 2) for row in rows)
-
-    actual_totals = get_actual_totals(year, cost_center=cost_center)
-    plafond_consumed = flt(actual_totals.get("actual_on_plafond"), 2)
-
-    remaining = flt(plafond_total - plafond_consumed, 2)
-    over = flt(max(plafond_consumed - plafond_total, 0), 2)
+    plafond_consumed = 0.0
+    for plafond_name in plafonds:
+        document_totals = get_plafond_document_totals(plafond_name)
+        plafond_total += flt(document_totals.get("plafond_total"), 2)
+        plafond_consumed += flt(document_totals.get("plafond_consumed"), 2)
 
     return {
         "plafond_total": flt(plafond_total, 2),
+        "plafond_consumed": flt(plafond_consumed, 2),
+        "plafond_remaining": flt(plafond_total - plafond_consumed, 2),
+        "plafond_over": flt(max(plafond_consumed - plafond_total, 0), 2),
+    }
+
+
+def get_plafond_document_totals(plafond_expense: str) -> dict:
+    if not plafond_expense:
+        return {
+            "plafond_total": 0.0,
+            "plafond_consumed": 0.0,
+            "plafond_remaining": 0.0,
+            "plafond_over": 0.0,
+        }
+
+    plafond_doc = frappe.db.get_value(
+        "MPIT Expense",
+        plafond_expense,
+        ["name", "expense_kind"],
+        as_dict=True,
+    )
+    if not plafond_doc or plafond_doc.expense_kind != "Plafond":
+        return {
+            "plafond_total": 0.0,
+            "plafond_consumed": 0.0,
+            "plafond_remaining": 0.0,
+            "plafond_over": 0.0,
+        }
+
+    plafond_total = flt(
+        frappe.db.sql(
+            """
+            SELECT COALESCE(SUM(r.amount_net), 0)
+            FROM `tabMPIT Expense Row` r
+            WHERE r.parent = %(plafond_expense)s
+              AND r.row_state = 'Active'
+            """,
+            {"plafond_expense": plafond_expense},
+        )[0][0],
+        2,
+    )
+
+    plafond_consumed = flt(
+        frappe.db.sql(
+            """
+            SELECT COALESCE(SUM(r.amount_net), 0)
+            FROM `tabMPIT Expense Row` r
+            INNER JOIN `tabMPIT Expense` e ON e.name = r.parent
+            WHERE e.expense_kind = 'Ordinary'
+              AND e.workflow_state IN ('Open', 'Closed')
+              AND e.uses_plafond = 1
+              AND e.plafond_expense = %(plafond_expense)s
+              AND r.row_state = 'Active'
+              AND r.row_phase = 'Actual'
+            """,
+            {"plafond_expense": plafond_expense},
+        )[0][0],
+        2,
+    )
+
+    return {
+        "plafond_total": plafond_total,
         "plafond_consumed": plafond_consumed,
-        "plafond_remaining": remaining,
-        "plafond_over": over,
+        "plafond_remaining": flt(plafond_total - plafond_consumed, 2),
+        "plafond_over": flt(max(plafond_consumed - plafond_total, 0), 2),
     }
 
 

@@ -1,6 +1,6 @@
 # Master Plan IT
 
-Frappe Desk app (v16) for budgeting, contracts, and projects. Native file-first workflow; no custom JS/CSS or build pipeline.
+Frappe Desk app (v16) for expense/plafond, contracts, and projects. Native file-first workflow; no custom JS/CSS or build pipeline.
 
 ## Quick Start
 
@@ -97,11 +97,11 @@ bench --site mysite.example.com console
 
 ## Features
 
-- **Budget management** - Live/Snapshot with workflow (Draft → Proposed → Approved)
-- **Contract tracking** - Renewal management with terms and vendors
-- **Project planning** - Allocations with workflow support
-- **Multi-year budget engine** - Annualization and cross-year planning
-- **Dashboard and reports** - 17 number cards, 9 chart sources, 6 custom reports
+- **Expense + Plafond model** - Ordinary and Plafond documents in one economic model
+- **Contract forecast** - Terms-first yearly forecast with header fallback
+- **Project context** - Projects as operational dimension with derived summary
+- **Single financial engine** - Forecast/Actual/Plafond totals from one server-side module
+- **Dashboard and reports** - Overview, Monthly Plan, Expenses, Project Forecast vs Actual
 
 ## Key Concepts
 - App root: this repo; inside a bench the app lives at `apps/master_plan_it/`.

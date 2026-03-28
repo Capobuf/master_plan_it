@@ -1,22 +1,30 @@
 # Explanation: Architecture
 
 ## Tenant model
-One client equals one Frappe site. This yields hard data segregation and simplifies permissions.
-The vCIO works across many sites.
+One client equals one Frappe site. This keeps data physically separated and permissions simple.
 
-## Why Desk users for clients
-Desk provides the full native experience: lists, forms, reports, dashboards, workflows.
-Portal/Website Users would require custom pages for comparable analytics.
+## Economic model
+The active economic domain is based on:
+- `MPIT Contract` for contract forecast
+- `MPIT Expense` for ordinary expenses and plafond documents
 
-## Immutability model
-Budgets approved at the start of the year become immutable to ensure consistent comparisons.
-In-year changes are modeled as amendments with delta lines.
+`MPIT Expense` is annual and cost-center based.
+Ordinary expenses can be standalone on cost center, linked to project, or linked to contract (never both project and contract).
+Funding mode is mandatory and exclusive: `On Plafond` XOR `Extra`.
 
-## Contract governance
-Historical spend is imported into baseline.
-Contracts/subscriptions are curated records that drive renewals and ongoing governance.
+## Plafond model
+`Plafond` is an `MPIT Expense` kind.
+For each `(year, cost_center)` there can be at most one non-cancelled plafond document.
+Plafond totals are document-specific:
+- total = active rows of that plafond document
+- consumed = active `Actual` rows from ordinary expenses referencing that exact plafond
+- remaining = total - consumed
 
-## Projects
-Projects are standalone objects and can span multiple years.
-To keep annual reporting consistent, per-year allocations are mandatory before approval.
+## Project model
+`MPIT Project` is an operational dimension and filter.
+Project economic numbers are derived from the single financial engine for a selected year.
+No legacy workflow states are used.
 
+## Single financial engine
+Reports, overview, dashboards, and doctype summaries use one server-side module: `financial_engine.py`.
+This avoids duplicate calculations across controllers and UI.

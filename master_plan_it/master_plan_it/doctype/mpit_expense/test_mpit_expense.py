@@ -12,6 +12,20 @@ class TestMPITExpense(FrappeTestCase):
         self.cost_center = ensure_cost_center("CC-EXPENSE-TEST")
         self.vendor = ensure_vendor("Vendor Expense Test")
         self.project = ensure_project("Project Expense Test", self.cost_center)
+        self.contract = ensure_contract("Contract Expense Test", self.vendor, self.cost_center)
+
+    def test_ordinary_allows_standalone_cost_center_context(self):
+        doc = base_expense(self.year_name, self.cost_center)
+        doc.append("rows", base_row(phase="Actual", amount=100, spend_date="2026-01-10"))
+        doc.insert()
+        self.assertFalse(doc.project)
+        self.assertFalse(doc.contract)
+
+    def test_ordinary_rejects_project_and_contract_together(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project, self.contract)
+        doc.append("rows", base_row(phase="Actual", amount=100, spend_date="2026-01-10"))
+        with self.assertRaises(frappe.ValidationError):
+            doc.insert()
 
     def test_ordinary_requires_exclusive_funding(self):
         doc = base_expense(self.year_name, self.cost_center, self.project)
@@ -55,7 +69,7 @@ class TestMPITExpense(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_kind": "Plafond",
                 "expense_title": "Main Plafond",
-                "workflow_state": "Open",
+                "workflow_state": "Closed",
                 "year": self.year_name,
                 "cost_center": self.cost_center,
                 "rows": [base_row(phase="Actual", amount=1000, spend_date="2026-01-10")],
@@ -89,7 +103,12 @@ class TestMPITExpense(FrappeTestCase):
         self.assertEqual(doc.total_actual_net, 0)
 
 
-def base_expense(year_name: str, cost_center: str, project: str):
+def base_expense(
+    year_name: str,
+    cost_center: str,
+    project: str | None = None,
+    contract: str | None = None,
+):
     return frappe.get_doc(
         {
             "doctype": "MPIT Expense",
@@ -99,6 +118,7 @@ def base_expense(year_name: str, cost_center: str, project: str):
             "year": year_name,
             "cost_center": cost_center,
             "project": project,
+            "contract": contract,
             "uses_plafond": 0,
             "is_extra": 1,
             "rows": [],
@@ -181,8 +201,29 @@ def ensure_project(title: str, cost_center: str) -> str:
         {
             "doctype": "MPIT Project",
             "title": title,
-            "workflow_state": "Draft",
+            "workflow_state": "Open",
             "cost_center": cost_center,
+        }
+    )
+    doc.insert(ignore_permissions=True)
+    return doc.name
+
+
+def ensure_contract(description: str, vendor: str, cost_center: str) -> str:
+    existing = frappe.db.get_value("MPIT Contract", {"description": description}, "name")
+    if existing:
+        return existing
+
+    doc = frappe.get_doc(
+        {
+            "doctype": "MPIT Contract",
+            "description": description,
+            "vendor": vendor,
+            "cost_center": cost_center,
+            "current_amount": 100,
+            "current_amount_includes_vat": 0,
+            "vat_rate": 22,
+            "billing_cycle": "Monthly",
         }
     )
     doc.insert(ignore_permissions=True)
