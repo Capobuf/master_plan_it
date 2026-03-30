@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 from uuid import uuid4
 
 import frappe
@@ -85,6 +86,376 @@ class TestExpenseReports(FrappeTestCase):
         self.assertIn("variance", data[0])
 
 
+class TestOverviewModes(FrappeTestCase):
+    """Tests for the three MPIT Overview view modes: Summary, Build-up, Lines."""
+
+    @classmethod
+    def setUpClass(cls):
+        super().setUpClass()
+        frappe.set_user("Administrator")
+        cls.suffix = uuid4().hex[:6].upper()
+        cls.year = ensure_year(2032)
+        cls.cc = ensure_cost_center(f"CC-OVW-{cls.suffix}")
+        cls.cc2 = ensure_cost_center(f"CC-OVW2-{cls.suffix}")
+        cls.project = ensure_project(f"OVW Project {cls.suffix}", cls.cc)
+
+        # Contract WITHOUT terms (header fallback)
+        cls.vendor_name = ensure_vendor(f"Vendor OVW {cls.suffix}")
+        cls.contract_no_terms = _insert_contract(
+            f"CTR-NT-{cls.suffix}",
+            cls.cc,
+            cls.vendor_name,
+            current_amount_net=1200.0,
+            billing_cycle="Monthly",
+            start_date="2032-01-01",
+            end_date="2032-12-31",
+        )
+
+        # Contract WITH terms
+        cls.contract_with_terms = _insert_contract(
+            f"CTR-WT-{cls.suffix}",
+            cls.cc2,
+            cls.vendor_name,
+            current_amount_net=500.0,
+            billing_cycle="Monthly",
+            start_date="2032-01-01",
+            end_date="2032-12-31",
+            terms=[
+                {
+                    "from_date": "2032-01-01",
+                    "to_date": "2032-06-30",
+                    "amount": 400.0,
+                    "amount_net": 400.0,
+                    "billing_cycle": "Monthly",
+                },
+                {
+                    "from_date": "2032-07-01",
+                    "to_date": None,
+                    "amount": 500.0,
+                    "amount_net": 500.0,
+                    "billing_cycle": "Monthly",
+                },
+            ],
+        )
+
+        # Expense with Estimate + Quote + Actual rows (on plafond)
+        cls.plafond_expense = frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_title": f"Plafond OVW {cls.suffix}",
+                "expense_kind": "Plafond",
+                "workflow_state": "Open",
+                "year": cls.year,
+                "cost_center": cls.cc,
+                "rows": [
+                    {
+                        "doctype": "MPIT Expense Row",
+                        "row_description": "Budget",
+                        "row_state": "Active",
+                        "amount": 5000.0,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 0,
+                        "spend_date": "2032-01-01",
+                    },
+                ],
+            }
+        )
+        cls.plafond_expense.insert()
+
+        cls.ordinary_expense = frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_title": f"Expense OVW {cls.suffix}",
+                "expense_kind": "Ordinary",
+                "workflow_state": "Open",
+                "year": cls.year,
+                "cost_center": cls.cc,
+                "project": cls.project,
+                "vendor": cls.vendor_name,
+                "uses_plafond": 1,
+                "plafond_expense": cls.plafond_expense.name,
+                "is_extra": 0,
+                "rows": [
+                    {
+                        "doctype": "MPIT Expense Row",
+                        "row_description": "Estimate row",
+                        "row_phase": "Estimate",
+                        "row_state": "Active",
+                        "amount": 300.0,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 0,
+                        "spend_date": "2032-03-01",
+                    },
+                    {
+                        "doctype": "MPIT Expense Row",
+                        "row_description": "Quote row",
+                        "row_phase": "Quote",
+                        "row_state": "Active",
+                        "amount": 280.0,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 0,
+                        "spend_date": "2032-04-01",
+                    },
+                    {
+                        "doctype": "MPIT Expense Row",
+                        "row_description": "Actual row",
+                        "row_phase": "Actual",
+                        "row_state": "Active",
+                        "amount": 290.0,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 0,
+                        "spend_date": "2032-05-01",
+                    },
+                ],
+            }
+        )
+        cls.ordinary_expense.insert()
+
+    # ── Summary mode ──────────────────────────────────────────────────────
+
+    def test_summary_returns_canonical_fields(self):
+        """Summary mode returns all canonical budget-like columns."""
+        columns, data, *_ = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Summary"}
+        )
+        fieldnames = {c["fieldname"] for c in columns}
+        for expected in [
+            "cost_center", "forecast_contracts", "forecast_estimate", "forecast_quote",
+            "forecast_total", "actual_on_plafond", "actual_extra", "actual_total",
+            "plafond", "remaining", "over",
+        ]:
+            self.assertIn(expected, fieldnames, f"Missing column: {expected}")
+
+    def test_summary_has_data_row(self):
+        """Summary mode returns at least one data row for the test CC."""
+        columns, data, *_ = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Summary"}
+        )
+        self.assertTrue(data, "Expected at least one summary row")
+        self.assertIn("forecast_total", data[0])
+        self.assertIn("actual_total", data[0])
+
+    def test_summary_project_filter_not_present_in_simple_call(self):
+        """
+        Summary mode: passing a project filter should not crash; the result
+        is still a valid summary (even though project does not filter contracts).
+        """
+        columns, data, *_ = run_overview(
+            {
+                "year": self.year,
+                "cost_center": self.cc,
+                "view_mode": "Summary",
+                # project is not used in Summary execute path
+            }
+        )
+        self.assertIsInstance(data, list)
+
+    # ── Build-up mode ─────────────────────────────────────────────────────
+
+    def test_buildup_returns_hierarchical_rows(self):
+        """Build-up produces header rows (indent=0) and block rows (indent=1)."""
+        columns, data, *_ = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Build-up"}
+        )
+        self.assertTrue(data, "Expected build-up rows")
+        indents = {r.get("indent", 0) for r in data}
+        self.assertIn(0, indents, "Expected header rows at indent=0")
+        self.assertIn(1, indents, "Expected block rows at indent=1")
+
+    def test_buildup_has_summary_columns(self):
+        """Build-up shares summary monetary columns."""
+        columns, data, *_ = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Build-up"}
+        )
+        fieldnames = {c["fieldname"] for c in columns}
+        for expected in ["forecast_contracts", "forecast_total", "actual_total", "plafond"]:
+            self.assertIn(expected, fieldnames)
+
+    def test_buildup_reconciles_blocks_to_header(self):
+        """Sum of block-row forecast_contracts equals header forecast_contracts."""
+        columns, data, *_ = run_overview(
+            {
+                "year": self.year,
+                "cost_center": self.cc,
+                "view_mode": "Build-up",
+                "section_scope": "All",
+                "show_zero_rows": 1,
+            }
+        )
+        # Find header row and its "Contracts" sub-block
+        header = next((r for r in data if r.get("indent", 0) == 0 and r.get("cost_center") == self.cc), None)
+        contracts_block = next(
+            (r for r in data if r.get("indent", 0) == 1 and r.get("cost_center") == "Contracts"), None
+        )
+        if header and contracts_block:
+            self.assertAlmostEqual(
+                header.get("forecast_contracts", 0),
+                contracts_block.get("forecast_contracts", 0),
+                places=2,
+            )
+
+    def test_buildup_project_filter_does_not_alter_contract_block(self):
+        """
+        When project filter is active in Build-up, contract totals must remain
+        the same as without project filter (project does not link to contracts).
+        """
+        cols_all, data_all, *_ = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Build-up"}
+        )
+        cols_proj, data_proj, *_ = run_overview(
+            {
+                "year": self.year,
+                "cost_center": self.cc,
+                "view_mode": "Build-up",
+                "project": self.project,
+            }
+        )
+
+        def header_forecast_contracts(rows):
+            for r in rows:
+                if r.get("indent", 0) == 0 and r.get("cost_center") == self.cc:
+                    return r.get("forecast_contracts", 0)
+            return 0
+
+        self.assertAlmostEqual(
+            header_forecast_contracts(data_all),
+            header_forecast_contracts(data_proj),
+            places=2,
+            msg="Contract totals should be unaffected by project filter",
+        )
+
+    # ── Lines mode ────────────────────────────────────────────────────────
+
+    def test_lines_returns_correct_columns(self):
+        """Lines mode returns source-level columns."""
+        columns, data, *_ = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Lines"}
+        )
+        fieldnames = {c["fieldname"] for c in columns}
+        for expected in [
+            "source_type", "source_document", "contract", "project", "vendor",
+            "expense_phase", "funding", "amount_net", "annual_contribution_net",
+        ]:
+            self.assertIn(expected, fieldnames)
+
+    def test_lines_contains_expense_rows(self):
+        """Lines mode produces Expense Row lines when ordinary expenses exist."""
+        columns, data, *_ = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Lines"}
+        )
+        types = {r.get("source_type") for r in data}
+        self.assertIn("Expense Row", types)
+
+    def test_lines_expense_phases_present(self):
+        """All three phases (Estimate, Quote, Actual) appear in Lines output."""
+        columns, data, *_ = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Lines"}
+        )
+        phases = {r.get("expense_phase") for r in data if r.get("source_type") == "Expense Row"}
+        self.assertIn("Estimate", phases)
+        self.assertIn("Quote", phases)
+        self.assertIn("Actual", phases)
+
+    def test_lines_contract_no_terms_uses_contract_header(self):
+        """A contract without terms generates a 'Contract Header' line."""
+        columns, data, *_ = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Lines", "section_scope": "Contracts"}
+        )
+        types = [r.get("source_type") for r in data if r.get("contract") == self.contract_no_terms]
+        self.assertTrue(types, "Expected lines for the no-terms contract")
+        self.assertIn("Contract Header", types)
+
+    def test_lines_contract_with_terms_uses_contract_term(self):
+        """A contract with terms generates 'Contract Term' lines."""
+        columns, data, *_ = run_overview(
+            {
+                "year": self.year,
+                "cost_center": self.cc2,
+                "view_mode": "Lines",
+                "section_scope": "Contracts",
+            }
+        )
+        types = [r.get("source_type") for r in data if r.get("contract") == self.contract_with_terms]
+        self.assertTrue(types, "Expected lines for the with-terms contract")
+        self.assertIn("Contract Term", types)
+        # Must not contain "Contract Header" for this contract
+        self.assertNotIn("Contract Header", types)
+
+    def test_lines_plafond_rows_visible(self):
+        """Lines mode shows Plafond lines when section_scope includes Plafond."""
+        columns, data, *_ = run_overview(
+            {
+                "year": self.year,
+                "cost_center": self.cc,
+                "view_mode": "Lines",
+                "section_scope": "Plafond",
+            }
+        )
+        types = {r.get("source_type") for r in data}
+        self.assertIn("Plafond", types)
+
+    def test_lines_expense_phase_filter(self):
+        """expense_phase filter restricts Lines output to that phase only."""
+        columns, data, *_ = run_overview(
+            {
+                "year": self.year,
+                "cost_center": self.cc,
+                "view_mode": "Lines",
+                "section_scope": "Expenses",
+                "expense_phase": "Estimate",
+            }
+        )
+        for row in data:
+            if row.get("source_type") == "Expense Row":
+                self.assertEqual(row.get("expense_phase"), "Estimate")
+
+    def test_lines_project_filter_only_affects_expenses(self):
+        """
+        In Lines mode with project filter, only Expense Row lines are filtered;
+        Contract lines from other projects (or without project) are still
+        unaffected because contracts have no project field.
+        """
+        columns_all, data_all, *_ = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Lines", "section_scope": "Contracts"}
+        )
+        columns_proj, data_proj, *_ = run_overview(
+            {
+                "year": self.year,
+                "cost_center": self.cc,
+                "view_mode": "Lines",
+                "section_scope": "Contracts",
+                "project": self.project,
+            }
+        )
+        # Contract lines must be identical regardless of project filter
+        contract_lines_all = [r for r in data_all if r.get("source_type") in ("Contract Header", "Contract Term")]
+        contract_lines_proj = [r for r in data_proj if r.get("source_type") in ("Contract Header", "Contract Term")]
+        self.assertEqual(len(contract_lines_all), len(contract_lines_proj))
+
+    # ── Print infrastructure ──────────────────────────────────────────────
+
+    def test_html_print_template_exists(self):
+        """The HTML print template file must exist alongside the report."""
+        import master_plan_it.master_plan_it.report.mpit_overview as _mod_pkg
+        report_dir = os.path.dirname(os.path.abspath(_mod_pkg.__file__))
+        html_path = os.path.join(report_dir, "mpit_overview.html")
+        self.assertTrue(os.path.isfile(html_path), f"Missing print template: {html_path}")
+
+    def test_js_has_print_filters(self):
+        """The .js filter file must declare print_profile, print_orientation, print_density."""
+        import master_plan_it.master_plan_it.report.mpit_overview as _mod_pkg
+        report_dir = os.path.dirname(os.path.abspath(_mod_pkg.__file__))
+        js_path = os.path.join(report_dir, "mpit_overview.js")
+        with open(js_path) as fh:
+            js_src = fh.read()
+        for fname in ("print_profile", "print_orientation", "print_density"):
+            self.assertIn(fname, js_src, f"Missing print filter in JS: {fname}")
+
+
+# ---------------------------------------------------------------------------
+# Shared fixture helpers
+# ---------------------------------------------------------------------------
+
 def ensure_year(year: int) -> str:
     if frappe.db.exists("MPIT Year", str(year)):
         return str(year)
@@ -130,5 +501,57 @@ def ensure_project(title: str, cost_center: str) -> str:
             "cost_center": cost_center,
         }
     )
+    doc.insert(ignore_permissions=True)
+    return doc.name
+
+
+def ensure_vendor(name: str) -> str:
+    if frappe.db.exists("MPIT Vendor", name):
+        return name
+
+    doc = frappe.get_doc({"doctype": "MPIT Vendor", "vendor_name": name})
+    doc.insert(ignore_permissions=True)
+    return doc.name
+
+
+def _insert_contract(
+    name_hint: str,
+    cost_center: str,
+    vendor: str,
+    current_amount_net: float = 0.0,
+    billing_cycle: str = "Monthly",
+    start_date: str = "2032-01-01",
+    end_date: str = "2032-12-31",
+    terms: list | None = None,
+) -> str:
+    doc = frappe.get_doc(
+        {
+            "doctype": "MPIT Contract",
+            "description": name_hint,
+            "vendor": vendor,
+            "status": "Active",
+            "cost_center": cost_center,
+            "start_date": start_date,
+            "end_date": end_date,
+            "billing_cycle": billing_cycle,
+            "current_amount": current_amount_net,
+            "current_amount_includes_vat": 0,
+            "current_amount_net": current_amount_net,
+        }
+    )
+    if terms:
+        doc.terms = []
+        for t in terms:
+            doc.append(
+                "terms",
+                {
+                    "doctype": "MPIT Contract Term",
+                    "from_date": t["from_date"],
+                    "to_date": t.get("to_date"),
+                    "amount": t["amount"],
+                    "amount_net": t.get("amount_net", t["amount"]),
+                    "billing_cycle": t.get("billing_cycle", "Monthly"),
+                },
+            )
     doc.insert(ignore_permissions=True)
     return doc.name

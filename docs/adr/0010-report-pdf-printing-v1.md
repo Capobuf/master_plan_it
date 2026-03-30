@@ -109,7 +109,7 @@ Export remains available as a fallback.
 1. **Profile maintenance**: Adding columns to a report may require updating profile definitions
 2. **Limited customization**: Users can't create custom column selections (must use predefined profiles)
 3. **wkhtmltopdf limitations**: Some CSS features don't work perfectly in wkhtmltopdf
-4. **Partial implementation**: 4 of the 7 reports (Overview, Monthly Plan, Actual Entries, Budget What-If) do not yet have HTML print templates and fall back to Frappe's default print layout. These are a known gap to be addressed.
+4. **Partial implementation**: 3 of the 7 reports (Monthly Plan, Actual Entries, Budget What-If) do not yet have HTML print templates and fall back to Frappe's default print layout. These are a known gap to be addressed. MPIT Overview template was added in this revision.
 
 ### Neutral
 

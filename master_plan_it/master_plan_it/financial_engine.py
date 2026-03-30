@@ -76,7 +76,12 @@ def allocate_expense_row_to_months(row: dict, year_start: datetime.date, year_en
     return out
 
 
-def get_contract_forecast_totals(year: str | int, cost_center: str | None = None, contract: str | None = None) -> dict:
+def get_contract_forecast_totals(
+    year: str | int,
+    cost_center: str | None = None,
+    contract: str | None = None,
+    vendor: str | None = None,
+) -> dict:
     year_int = _resolve_year_int(year)
     year_start, year_end = annualization.get_year_bounds(year_int)
 
@@ -85,6 +90,8 @@ def get_contract_forecast_totals(year: str | int, cost_center: str | None = None
         filters["cost_center"] = cost_center
     if contract:
         filters["name"] = contract
+    if vendor:
+        filters["vendor"] = vendor
 
     contracts = frappe.get_all(
         "MPIT Contract",
@@ -129,12 +136,14 @@ def get_expense_forecast_totals(
     cost_center: str | None = None,
     project: str | None = None,
     contract: str | None = None,
+    vendor: str | None = None,
 ) -> dict:
     rows = _get_active_rows(
         year,
         cost_center=cost_center,
         project=project,
         contract=contract,
+        vendor=vendor,
         expense_kind="Ordinary",
         row_phases=("Estimate", "Quote"),
     )
@@ -160,12 +169,14 @@ def get_actual_totals(
     cost_center: str | None = None,
     project: str | None = None,
     contract: str | None = None,
+    vendor: str | None = None,
 ) -> dict:
     rows = _get_active_rows(
         year,
         cost_center=cost_center,
         project=project,
         contract=contract,
+        vendor=vendor,
         expense_kind="Ordinary",
         row_phases=("Actual",),
     )
@@ -362,6 +373,508 @@ def get_overview_dataset(year: str | int, cost_center: str | None = None) -> dic
     }
 
     return {"year": str(year_int), "rows": rows, "summary": summary}
+
+
+def get_overview_buildup_dataset(
+    year: str | int,
+    cost_center: str | None = None,
+    section_scope: str | None = None,
+    contract: str | None = None,
+    project: str | None = None,
+    vendor: str | None = None,
+    show_zero_rows: bool = False,
+) -> dict:
+    """
+    Returns hierarchical (build-up) rows for the MPIT Overview report.
+
+    Each cost center produces a header row (indent=0) followed by block rows
+    (indent=1) that explain which components compose the total.
+
+    NOTE: ``project`` applies only to expense blocks.  Contract blocks are
+    always fetched unfiltered by project because MPIT Contract has no project
+    link.  When ``project`` is active the summary header values for the
+    expense side are project-scoped; contract values remain full.
+    """
+    year_int = _resolve_year_int(year)
+    year_start, year_end = annualization.get_year_bounds(year_int)
+    scope = (section_scope or "All").strip()
+    include_contracts = scope in ("All", "Contracts")
+    include_expenses = scope in ("All", "Expenses")
+    include_plafond = scope in ("All", "Plafond")
+
+    cost_centers = _resolve_cost_centers_for_year(year_int, cost_center)
+
+    rows: list[dict] = []
+    grand = _zero_summary()
+
+    for cc in cost_centers:
+        # --- contract block ---
+        fc_contracts = 0.0
+        if include_contracts:
+            ct = get_contract_forecast_totals(
+                year_int,
+                cost_center=cc,
+                contract=contract,
+                vendor=vendor,
+            )
+            fc_contracts = flt(ct.get("contract_forecast_total", 0), 2)
+
+        # --- expense forecast blocks ---
+        fc_estimate = 0.0
+        fc_quote = 0.0
+        if include_expenses:
+            ef = get_expense_forecast_totals(
+                year_int,
+                cost_center=cc,
+                project=project,
+                contract=contract,
+                vendor=vendor,
+            )
+            fc_estimate = flt(ef.get("estimate_total", 0), 2)
+            fc_quote = flt(ef.get("quote_total", 0), 2)
+
+        # --- actual blocks ---
+        actual_on_plafond = 0.0
+        actual_extra = 0.0
+        actual_total = 0.0
+        if include_expenses:
+            at = get_actual_totals(
+                year_int,
+                cost_center=cc,
+                project=project,
+                contract=contract,
+                vendor=vendor,
+            )
+            actual_on_plafond = flt(at.get("actual_on_plafond", 0), 2)
+            actual_extra = flt(at.get("actual_extra", 0), 2)
+            actual_total = flt(at.get("actual_total", 0), 2)
+
+        # --- plafond block ---
+        plafond = 0.0
+        remaining = 0.0
+        over = 0.0
+        if include_plafond:
+            pt = get_plafond_totals(year_int, cost_center=cc)
+            plafond = flt(pt.get("plafond_total", 0), 2)
+            remaining = flt(pt.get("plafond_remaining", 0), 2)
+            over = flt(pt.get("plafond_over", 0), 2)
+
+        fc_total = flt(fc_contracts + fc_estimate + fc_quote, 2)
+
+        # Skip empty CC when show_zero_rows is False
+        if not show_zero_rows and fc_total == 0 and actual_total == 0 and plafond == 0:
+            continue
+
+        # CC header row (indent=0, bold)
+        header = _make_summary_row(
+            cc,
+            fc_contracts, fc_estimate, fc_quote, fc_total,
+            actual_on_plafond, actual_extra, actual_total,
+            plafond, remaining, over,
+        )
+        header.update({"indent": 0, "bold": 1})
+        rows.append(header)
+
+        # --- block rows (indent=1) ---
+        if include_contracts and (show_zero_rows or fc_contracts):
+            rows.append(_block_row(cc, "Contracts", forecast_contracts=fc_contracts, indent=1))
+
+        if include_expenses:
+            if show_zero_rows or fc_estimate:
+                rows.append(_block_row(cc, "Expenses / Estimate", forecast_estimate=fc_estimate, indent=1))
+            if show_zero_rows or fc_quote:
+                rows.append(_block_row(cc, "Expenses / Quote", forecast_quote=fc_quote, indent=1))
+            if show_zero_rows or actual_on_plafond:
+                rows.append(
+                    _block_row(cc, "Actual / On Plafond", actual_on_plafond=actual_on_plafond, indent=1)
+                )
+            if show_zero_rows or actual_extra:
+                rows.append(_block_row(cc, "Actual / Extra", actual_extra=actual_extra, indent=1))
+
+        if include_plafond and (show_zero_rows or plafond):
+            rows.append(
+                _block_row(cc, "Plafond", plafond=plafond, remaining=remaining, over=over, indent=1)
+            )
+
+        # Accumulate grand summary
+        grand["forecast_contracts"] = flt(grand["forecast_contracts"] + fc_contracts, 2)
+        grand["forecast_estimate"] = flt(grand["forecast_estimate"] + fc_estimate, 2)
+        grand["forecast_quote"] = flt(grand["forecast_quote"] + fc_quote, 2)
+        grand["forecast_total"] = flt(grand["forecast_total"] + fc_total, 2)
+        grand["actual_on_plafond"] = flt(grand["actual_on_plafond"] + actual_on_plafond, 2)
+        grand["actual_extra"] = flt(grand["actual_extra"] + actual_extra, 2)
+        grand["actual_total"] = flt(grand["actual_total"] + actual_total, 2)
+        grand["plafond"] = flt(grand["plafond"] + plafond, 2)
+        grand["remaining"] = flt(grand["remaining"] + remaining, 2)
+        grand["over"] = flt(grand["over"] + over, 2)
+
+    return {
+        "year": str(year_int),
+        "rows": rows,
+        "summary": grand,
+        "project_filter_active": bool(project),
+    }
+
+
+def get_overview_lines_dataset(
+    year: str | int,
+    cost_center: str | None = None,
+    section_scope: str | None = None,
+    expense_phase: str | None = None,
+    contract: str | None = None,
+    project: str | None = None,
+    vendor: str | None = None,
+    show_zero_rows: bool = False,
+) -> dict:
+    """
+    Returns individual contribution lines for the MPIT Overview Lines mode.
+
+    Line types:
+    - Contract Term  : one row per contract term that overlaps the year
+    - Contract Header: one row for contracts with no terms
+    - Expense Row    : one row per active MPIT Expense Row (Estimate/Quote/Actual)
+    - Plafond        : one row per active MPIT Expense Row in a Plafond document
+
+    ``project`` applies only to Expense Row lines.  Contract lines are never
+    filtered by project because MPIT Contract has no project link.
+    """
+    year_int = _resolve_year_int(year)
+    year_start, year_end = annualization.get_year_bounds(year_int)
+    scope = (section_scope or "All").strip()
+    include_contracts = scope in ("All", "Contracts")
+    include_expenses = scope in ("All", "Expenses")
+    include_plafond = scope in ("All", "Plafond")
+
+    rows: list[dict] = []
+
+    # ------------------------------------------------------------------
+    # Contract lines
+    # ------------------------------------------------------------------
+    if include_contracts:
+        contract_filters: dict = {"status": ["in", list(ACTIVE_CONTRACT_STATUSES)]}
+        if cost_center:
+            contract_filters["cost_center"] = cost_center
+        if contract:
+            contract_filters["name"] = contract
+        if vendor:
+            contract_filters["vendor"] = vendor
+
+        contracts = frappe.get_all(
+            "MPIT Contract",
+            filters=contract_filters,
+            fields=[
+                "name",
+                "description",
+                "vendor",
+                "cost_center",
+                "start_date",
+                "end_date",
+                "billing_cycle",
+                "current_amount",
+                "current_amount_net",
+                "current_amount_includes_vat",
+                "vat_rate",
+                "status",
+            ],
+            order_by="cost_center asc, name asc",
+            limit=None,
+        )
+
+        for c in contracts:
+            terms = _get_contract_terms(c.name)
+            if terms:
+                for idx, term in enumerate(terms):
+                    term_end = _resolve_term_end(terms, idx, year_end)
+                    period_start = max(getdate(term.from_date), year_start)
+                    period_end = min(term_end, year_end)
+                    if c.start_date:
+                        period_start = max(period_start, getdate(c.start_date))
+                    if c.end_date:
+                        period_end = min(period_end, getdate(c.end_date))
+                    if period_start > period_end:
+                        continue
+
+                    term_amount_net = flt(
+                        term.amount_net if term.amount_net is not None else term.amount, 2
+                    )
+                    annual_contrib = allocate_contract_amount_to_year(
+                        term_amount_net,
+                        term.billing_cycle,
+                        getdate(term.from_date),
+                        term_end,
+                        year_start,
+                        year_end,
+                    )
+                    if not show_zero_rows and annual_contrib == 0:
+                        continue
+
+                    rows.append({
+                        "cost_center": c.cost_center,
+                        "source_type": "Contract Term",
+                        "source_document": c.name,
+                        "source_row": term.name,
+                        "contract": c.name,
+                        "project": None,
+                        "vendor": c.vendor,
+                        "expense_phase": None,
+                        "funding": "-",
+                        "period_start": getdate(term.from_date),
+                        "period_end": term_end,
+                        "spend_date": None,
+                        "amount_net": term_amount_net,
+                        "annual_contribution_net": flt(annual_contrib, 2),
+                        "logical_state": c.status,
+                    })
+            else:
+                header_net = _contract_header_amount_net(c)
+                contract_start = getdate(c.start_date) if c.start_date else year_start
+                contract_end = getdate(c.end_date) if c.end_date else year_end
+                annual_contrib = allocate_contract_amount_to_year(
+                    header_net,
+                    c.billing_cycle,
+                    contract_start,
+                    contract_end,
+                    year_start,
+                    year_end,
+                )
+                if not show_zero_rows and annual_contrib == 0:
+                    continue
+
+                rows.append({
+                    "cost_center": c.cost_center,
+                    "source_type": "Contract Header",
+                    "source_document": c.name,
+                    "source_row": None,
+                    "contract": c.name,
+                    "project": None,
+                    "vendor": c.vendor,
+                    "expense_phase": None,
+                    "funding": "-",
+                    "period_start": contract_start,
+                    "period_end": contract_end,
+                    "spend_date": None,
+                    "amount_net": header_net,
+                    "annual_contribution_net": flt(annual_contrib, 2),
+                    "logical_state": c.status,
+                })
+
+    # ------------------------------------------------------------------
+    # Expense rows (Estimate / Quote / Actual)
+    # ------------------------------------------------------------------
+    if include_expenses:
+        row_phases: tuple[str, ...] | None = None
+        if expense_phase and expense_phase != "All":
+            row_phases = (expense_phase,)
+        else:
+            row_phases = ("Estimate", "Quote", "Actual")
+
+        expense_rows = _get_active_rows(
+            year_int,
+            cost_center=cost_center,
+            project=project,
+            contract=contract,
+            vendor=vendor,
+            expense_kind="Ordinary",
+            row_phases=row_phases,
+        )
+
+        for row in expense_rows:
+            amount = flt(row.get("amount_net"), 2)
+            if not show_zero_rows and amount == 0:
+                continue
+
+            funding = "-"
+            if row.get("uses_plafond"):
+                funding = "On Plafond"
+            elif row.get("is_extra"):
+                funding = "Extra"
+
+            rows.append({
+                "cost_center": row.get("cost_center"),
+                "source_type": "Expense Row",
+                "source_document": row.get("expense"),
+                "source_row": row.get("row_name"),
+                "contract": row.get("contract"),
+                "project": row.get("project"),
+                "vendor": row.get("vendor"),
+                "expense_phase": row.get("row_phase"),
+                "funding": funding,
+                "period_start": getdate(row.get("start_date")) if row.get("start_date") else None,
+                "period_end": getdate(row.get("end_date")) if row.get("end_date") else None,
+                "spend_date": row.get("spend_date"),
+                "amount_net": amount,
+                "annual_contribution_net": amount,
+                "logical_state": row.get("workflow_state") or "Open",
+            })
+
+    # ------------------------------------------------------------------
+    # Plafond rows
+    # ------------------------------------------------------------------
+    if include_plafond:
+        plafond_filters: dict = {
+            "year": str(year_int),
+            "expense_kind": "Plafond",
+            "workflow_state": ["!=", "Cancelled"],
+        }
+        if cost_center:
+            plafond_filters["cost_center"] = cost_center
+
+        plafonds = frappe.get_all(
+            "MPIT Expense",
+            filters=plafond_filters,
+            fields=["name", "cost_center", "vendor", "workflow_state", "expense_title"],
+            order_by="cost_center asc, name asc",
+            limit=None,
+        )
+
+        for plafond_doc in plafonds:
+            plafond_rows_raw = frappe.db.sql(
+                """
+                SELECT r.name, r.amount_net, r.spend_date, r.row_description
+                FROM `tabMPIT Expense Row` r
+                WHERE r.parent = %(plafond)s
+                  AND r.row_state = 'Active'
+                ORDER BY r.idx
+                """,
+                {"plafond": plafond_doc.name},
+                as_dict=True,
+            )
+            for row in plafond_rows_raw:
+                amount = flt(row.amount_net, 2)
+                if not show_zero_rows and amount == 0:
+                    continue
+
+                rows.append({
+                    "cost_center": plafond_doc.cost_center,
+                    "source_type": "Plafond",
+                    "source_document": plafond_doc.name,
+                    "source_row": row.name,
+                    "contract": None,
+                    "project": None,
+                    "vendor": plafond_doc.vendor,
+                    "expense_phase": None,
+                    "funding": "On Plafond",
+                    "period_start": None,
+                    "period_end": None,
+                    "spend_date": row.spend_date,
+                    "amount_net": amount,
+                    "annual_contribution_net": amount,
+                    "logical_state": plafond_doc.workflow_state,
+                })
+
+    # Sort final rows: cost_center → source_type → source_document
+    rows.sort(key=lambda r: (r.get("cost_center") or "", r.get("source_type") or "", r.get("source_document") or ""))
+
+    # Aggregate summary
+    summary = {
+        "total_lines": len(rows),
+        "annual_total": flt(sum(r.get("annual_contribution_net", 0) for r in rows), 2),
+    }
+
+    return {
+        "year": str(year_int),
+        "rows": rows,
+        "summary": summary,
+        "project_filter_active": bool(project),
+    }
+
+
+# ---------------------------------------------------------------------------
+# Private helpers for overview datasets
+# ---------------------------------------------------------------------------
+
+def _resolve_cost_centers_for_year(year_int: int, cost_center: str | None) -> list[str]:
+    if cost_center:
+        return [cost_center]
+
+    from_contracts = frappe.get_all(
+        "MPIT Contract",
+        filters={"status": ["in", list(ACTIVE_CONTRACT_STATUSES)]},
+        pluck="cost_center",
+        limit=None,
+    )
+    from_expenses = frappe.get_all(
+        "MPIT Expense",
+        filters={"year": str(year_int), "workflow_state": ["in", list(ACTIVE_EXPENSE_STATES)]},
+        pluck="cost_center",
+        limit=None,
+    )
+    return sorted({cc for cc in (from_contracts + from_expenses) if cc})
+
+
+def _zero_summary() -> dict:
+    return {
+        "forecast_contracts": 0.0,
+        "forecast_estimate": 0.0,
+        "forecast_quote": 0.0,
+        "forecast_total": 0.0,
+        "actual_on_plafond": 0.0,
+        "actual_extra": 0.0,
+        "actual_total": 0.0,
+        "plafond": 0.0,
+        "remaining": 0.0,
+        "over": 0.0,
+    }
+
+
+def _make_summary_row(
+    label: str,
+    forecast_contracts: float,
+    forecast_estimate: float,
+    forecast_quote: float,
+    forecast_total: float,
+    actual_on_plafond: float,
+    actual_extra: float,
+    actual_total: float,
+    plafond: float,
+    remaining: float,
+    over: float,
+) -> dict:
+    return {
+        "cost_center": label,
+        "forecast_contracts": forecast_contracts,
+        "forecast_estimate": forecast_estimate,
+        "forecast_quote": forecast_quote,
+        "forecast_total": forecast_total,
+        "actual_on_plafond": actual_on_plafond,
+        "actual_extra": actual_extra,
+        "actual_total": actual_total,
+        "plafond": plafond,
+        "remaining": remaining,
+        "over": over,
+    }
+
+
+def _block_row(
+    cost_center: str,
+    label: str,
+    *,
+    forecast_contracts: float = 0.0,
+    forecast_estimate: float = 0.0,
+    forecast_quote: float = 0.0,
+    actual_on_plafond: float = 0.0,
+    actual_extra: float = 0.0,
+    plafond: float = 0.0,
+    remaining: float = 0.0,
+    over: float = 0.0,
+    indent: int = 1,
+) -> dict:
+    fc_total = flt(forecast_contracts + forecast_estimate + forecast_quote, 2)
+    actual_total = flt(actual_on_plafond + actual_extra, 2)
+    return {
+        "cost_center": label,
+        "forecast_contracts": forecast_contracts,
+        "forecast_estimate": forecast_estimate,
+        "forecast_quote": forecast_quote,
+        "forecast_total": fc_total,
+        "actual_on_plafond": actual_on_plafond,
+        "actual_extra": actual_extra,
+        "actual_total": actual_total,
+        "plafond": plafond,
+        "remaining": remaining,
+        "over": over,
+        "indent": indent,
+    }
 
 
 def get_monthly_forecast_vs_actual(
@@ -630,6 +1143,7 @@ def _get_active_rows(
     cost_center: str | None = None,
     project: str | None = None,
     contract: str | None = None,
+    vendor: str | None = None,
     expense_kind: str = "Ordinary",
     row_phases: tuple[str, ...] | None = None,
 ) -> list[dict]:
@@ -645,13 +1159,17 @@ def _get_active_rows(
             e.expense_kind,
             e.uses_plafond,
             e.is_extra,
+            e.vendor,
+            e.workflow_state,
             r.name AS row_name,
             r.row_phase,
+            r.row_description,
             r.amount_net,
             r.spend_date,
             r.start_date,
             r.end_date,
-            r.distribution
+            r.distribution,
+            r.vendor AS row_vendor
         FROM `tabMPIT Expense Row` r
         INNER JOIN `tabMPIT Expense` e ON e.name = r.parent
         WHERE e.year = %(year)s
@@ -678,6 +1196,10 @@ def _get_active_rows(
     if contract:
         sql.append("AND e.contract = %(contract)s")
         params["contract"] = contract
+
+    if vendor:
+        sql.append("AND e.vendor = %(vendor)s")
+        params["vendor"] = vendor
 
     sql.append("ORDER BY e.name, r.idx")
 

@@ -55,7 +55,7 @@ All three report HTML templates use **Jinja2** (server-side, `{%- ... %}` / `{{ 
 
 | Report | HTML template | Print filters in JS |
 |---|---|---|
-| MPIT Overview | ✗ missing | ✗ |
+| MPIT Overview | ✓ `mpit_overview.html` | ✓ |
 | MPIT Monthly Plan | ✗ missing | ✗ |
 | MPIT Actual Entries | ✗ missing | ✗ |
 | MPIT Budget What-If | ✗ missing | ✗ |
@@ -63,7 +63,7 @@ All three report HTML templates use **Jinja2** (server-side, `{%- ... %}` / `{{ 
 | MPIT Projects Planned vs Exceptions | ✓ `mpit_projects_planned_vs_exceptions.html` | ✓ |
 | MPIT Renewals Window | ✓ `mpit_renewals_window.html` | ✓ |
 
-The 4 missing templates are a known gap (see ADR-0010). Those reports fall back to Frappe's default print layout.
+The 3 remaining missing templates are a known gap (see ADR-0010). Those reports fall back to Frappe's default print layout.
 
 ### Print filters (reports that have templates)
 
@@ -74,6 +74,24 @@ The 4 missing templates are a known gap (see ADR-0010). Those reports fall back 
 | `print_density` | Normal, Compact, Ultra | Normal | Font/padding: 10px/6px · 9px/4px · 8px/3px |
 
 ### Column profiles per report
+
+**MPIT Overview** — adapts per `view_mode` filter (Summary/Build-up/Lines)
+
+*Summary / Build-up:*
+
+| Profile | Columns |
+|---|---|
+| Standard | cost_center, forecast_contracts, forecast_total, actual_total, plafond, remaining, over |
+| Compact | cost_center, forecast_total, actual_total, remaining |
+| All | all columns |
+
+*Lines:*
+
+| Profile | Columns |
+|---|---|
+| Standard | cost_center, source_type, source_document, contract, project, vendor, expense_phase, funding, annual_contribution_net, logical_state |
+| Compact | cost_center, source_type, source_document, expense_phase, funding, annual_contribution_net |
+| All | all non-hidden columns |
 
 **MPIT Budget Diff** — all columns: `cost_center | a_total, a_contracts, a_projects, a_allowance, a_other | b_total, b_contracts, b_projects, b_allowance, b_other | delta, delta_pct`
 
@@ -134,3 +152,5 @@ After changing any print format:
 3. Open MPIT Budget Diff → set both budgets → Menu → Print → table shows columns, footer shows profile/orientation.
 4. Open MPIT Renewals Window → Menu → Print → Standard profile shows 8 columns.
 5. Open MPIT Projects Planned vs Exceptions → Menu → Print → Standard profile shows 6 columns.
+6. Open MPIT Overview → set Year + View Mode (Summary) → Menu → Print → Standard profile shows 7 columns.
+7. Open MPIT Overview → set View Mode (Lines) → Menu → Print → Standard profile shows 10 columns.
