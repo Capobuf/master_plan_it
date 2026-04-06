@@ -13,12 +13,8 @@
         var density = String(f.print_density || "Normal");
 
         var profile_columns = {
-            Standard: [
-                "contract", "title", "vendor", "cost_center", "next_renewal_date", "days_to_renewal", "auto_renew", "status"
-            ],
-            Compact: [
-                "contract", "vendor", "next_renewal_date", "days_to_renewal", "status"
-            ],
+            Standard: ["project", "title", "cost_center", "forecast", "actual", "variance", "variance_pct"],
+            Compact: ["project", "title", "forecast", "actual", "variance"],
             All: []
         };
 
@@ -73,49 +69,10 @@
             }
         }
 
-        function toNumber(value) {
-            var n = parseFloat(value);
-            return isNaN(n) ? null : n;
-        }
-
-        function getRenewalBadge(daysValue) {
-            var days = toNumber(daysValue);
-            if (days === null) {
-                return { label: __("Normal"), css: "badge badge-normal" };
-            }
-            if (days < 0) {
-                return { label: __("Expired"), css: "badge badge-expired" };
-            }
-            if (days <= 30) {
-                return { label: __("Urgent"), css: "badge badge-urgent" };
-            }
-            if (days <= 60) {
-                return { label: __("Soon"), css: "badge badge-soon" };
-            }
-            return { label: __("Normal"), css: "badge badge-normal" };
-        }
-
         function formatCellValue(row, col) {
             var fieldname = col.fieldname || "";
             var fieldtype = col.fieldtype || "Data";
             var value = row[fieldname];
-
-            if (fieldname === "days_to_renewal") {
-                var days = toNumber(value);
-                if (days === null) return "";
-                var daysClass = "";
-                if (days < 0) {
-                    daysClass = "text-danger";
-                } else if (days <= 30) {
-                    daysClass = "text-warning";
-                }
-                return '<span class="' + daysClass + '">' + esc(days) + "</span>";
-            }
-
-            if (fieldname === "status") {
-                var badge = getRenewalBadge(row.days_to_renewal);
-                return '<span class="' + badge.css + '">' + esc(badge.label) + "</span>";
-            }
 
             if (value === null || value === undefined || value === "") {
                 return "";
@@ -126,7 +83,7 @@
             }
 
             if (fieldtype === "Check") {
-                return value ? "✓" : "";
+                return value ? __("Yes") : __("No");
             }
 
             if (isNumericField(fieldtype)) {
@@ -140,22 +97,9 @@
             return esc(value);
         }
 
-        function formatFilterValue(fieldname, value) {
-            if (value === null || value === undefined || value === "") return "";
-            if (fieldname === "from_date") return formatDate(value);
-            if (fieldname === "include_past" || fieldname === "auto_renew_only" || fieldname === "include_children") {
-                return value ? __("Yes") : __("No");
-            }
-            return esc(value);
-        }
-
         var filter_fields = [
-            { fieldname: "cost_center", label: __("Cost Center") },
-            { fieldname: "include_children", label: __("Include Child Cost Centers") },
-            { fieldname: "days", label: __("Next N Days") },
-            { fieldname: "from_date", label: __("From Date") },
-            { fieldname: "include_past", label: __("Include Past") },
-            { fieldname: "auto_renew_only", label: __("Auto Renew Only") }
+            { fieldname: "year", label: __("Year") },
+            { fieldname: "cost_center", label: __("Cost Center") }
         ];
     %}
 
@@ -293,46 +237,6 @@
             text-align: center;
         }
 
-        .text-danger {
-            color: #991b1b;
-            font-weight: 700;
-        }
-
-        .text-warning {
-            color: #92400e;
-            font-weight: 700;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 2px 7px;
-            border-radius: 999px;
-            font-size: 10px;
-            font-weight: 700;
-            line-height: 1.4;
-            white-space: nowrap;
-        }
-
-        .badge-expired {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-
-        .badge-urgent {
-            background: #ffedd5;
-            color: #9a3412;
-        }
-
-        .badge-soon {
-            background: #fef3c7;
-            color: #92400e;
-        }
-
-        .badge-normal {
-            background: #dbeafe;
-            color: #1d4ed8;
-        }
-
         .footer {
             margin-top: 12px;
             padding-top: 8px;
@@ -347,8 +251,8 @@
     <div class="report-shell">
         <div class="report-header">
             <div>
-                <h1 class="report-title">{%= __("MPIT Renewals Window") %}</h1>
-                <div class="report-subtitle">{%= __("Contract renewals by time window") %}</div>
+                <h1 class="report-title">{%= __("MPIT Project Forecast vs Actual") %}</h1>
+                <div class="report-subtitle">{%= __("Project variance overview") %}</div>
             </div>
             <div class="report-meta">
                 <div><strong>{%= __("Generated") %}:</strong> {%= frappe.datetime.str_to_user(frappe.datetime.get_today()) %}</div>
@@ -363,7 +267,7 @@
             <div class="filter-list">
                 {% for (var i = 0; i < filter_fields.length; i++) { var def = filter_fields[i]; var v = f[def.fieldname]; %}
                     {% if (v !== undefined && v !== null && v !== "") { %}
-                        <div class="filter-item"><strong>{%= esc(def.label) %}:</strong> {%= formatFilterValue(def.fieldname, v) %}</div>
+                        <div class="filter-item"><strong>{%= esc(def.label) %}:</strong> {%= esc(v) %}</div>
                     {% } %}
                 {% } %}
             </div>
@@ -394,7 +298,7 @@
                     {% } %}
                 {% } else { %}
                     <tr>
-                        <td colspan="{%= visible_columns.length || 1 %}" class="text-center">{%= __("No renewals in this window") %}</td>
+                        <td colspan="{%= visible_columns.length || 1 %}" class="text-center">{%= __("No data available") %}</td>
                     </tr>
                 {% } %}
             </tbody>
