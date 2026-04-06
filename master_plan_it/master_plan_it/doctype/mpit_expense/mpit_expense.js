@@ -90,7 +90,10 @@ frappe.ui.form.on("MPIT Expense Row", {
 
 function apply_kind_visibility(frm) {
     const ordinary = frm.doc.expense_kind === "Ordinary";
-    frm.toggle_display(["project", "contract", "uses_plafond", "plafond_expense", "is_extra", "tab_classification"], ordinary);
+    frm.toggle_display(
+        ["section_context", "project", "contract", "section_funding", "uses_plafond", "plafond_expense", "is_extra"],
+        ordinary
+    );
 
     const grid = frm.fields_dict && frm.fields_dict.rows && frm.fields_dict.rows.grid;
     if (grid) {

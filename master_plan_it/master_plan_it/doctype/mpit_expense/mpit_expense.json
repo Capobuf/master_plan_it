@@ -7,23 +7,25 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "tab_context",
+  "section_main",
   "expense_kind",
   "expense_title",
   "workflow_state",
-  "context_col",
+  "main_col_break",
   "year",
   "cost_center",
-  "project",
-  "contract",
   "vendor",
-  "tab_classification",
+  "section_context",
+  "project",
+  "context_col_break",
+  "contract",
+  "section_funding",
   "uses_plafond",
   "plafond_expense",
   "is_extra",
-  "tab_rows",
+  "section_rows",
   "rows",
-  "tab_summary",
+  "section_summary",
   "total_estimate_net",
   "total_quote_net",
   "total_forecast_net",
@@ -31,14 +33,14 @@
   "total_actual_net",
   "total_actual_on_plafond_net",
   "total_actual_extra_net",
-  "tab_notes",
+  "section_notes",
   "notes"
  ],
  "fields": [
   {
-   "fieldname": "tab_context",
-   "fieldtype": "Tab Break",
-   "label": "Context"
+   "fieldname": "section_main",
+   "fieldtype": "Section Break",
+   "label": "Main"
   },
   {
    "default": "Ordinary",
@@ -69,7 +71,7 @@
    "reqd": 1
   },
   {
-   "fieldname": "context_col",
+   "fieldname": "main_col_break",
    "fieldtype": "Column Break"
   },
   {
@@ -91,26 +93,6 @@
    "reqd": 1
   },
   {
-   "depends_on": "eval:doc.expense_kind=='Ordinary'",
-   "description": "Optional context. Leave empty for standalone cost center expenses.",
-   "fieldname": "project",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Project",
-   "options": "MPIT Project"
-  },
-  {
-   "depends_on": "eval:doc.expense_kind=='Ordinary'",
-   "description": "Optional context. Leave empty for standalone cost center expenses.",
-   "fieldname": "contract",
-   "fieldtype": "Link",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Contract",
-   "options": "MPIT Contract"
-  },
-  {
    "fieldname": "vendor",
    "fieldtype": "Link",
    "label": "Vendor",
@@ -118,8 +100,37 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
-   "fieldname": "tab_classification",
-   "fieldtype": "Tab Break",
+   "fieldname": "section_context",
+   "fieldtype": "Section Break",
+   "label": "Context"
+  },
+  {
+   "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "description": "Optional context. Leave empty for standalone cost center expenses.",
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Project",
+   "options": "MPIT Project"
+  },
+  {
+   "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "fieldname": "context_col_break",
+   "fieldtype": "Column Break"
+  },
+  {
+   "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "description": "Optional context. Leave empty for standalone cost center expenses.",
+   "fieldname": "contract",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Contract",
+   "options": "MPIT Contract"
+  },
+  {
+   "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "fieldname": "section_funding",
+   "fieldtype": "Section Break",
    "label": "Funding"
   },
   {
@@ -127,7 +138,6 @@
    "description": "If enabled, this expense consumes the selected plafond.",
    "fieldname": "uses_plafond",
    "fieldtype": "Check",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "On Plafond"
   },
@@ -144,13 +154,12 @@
    "description": "If enabled, this expense does not consume any plafond.",
    "fieldname": "is_extra",
    "fieldtype": "Check",
-   "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Extra"
   },
   {
-   "fieldname": "tab_rows",
-   "fieldtype": "Tab Break",
+   "fieldname": "section_rows",
+   "fieldtype": "Section Break",
    "label": "Rows"
   },
   {
@@ -161,8 +170,8 @@
    "reqd": 1
   },
   {
-   "fieldname": "tab_summary",
-   "fieldtype": "Tab Break",
+   "fieldname": "section_summary",
+   "fieldtype": "Section Break",
    "label": "Summary"
   },
   {
@@ -208,8 +217,8 @@
    "read_only": 1
   },
   {
-   "fieldname": "tab_notes",
-   "fieldtype": "Tab Break",
+   "fieldname": "section_notes",
+   "fieldtype": "Section Break",
    "label": "Notes"
   },
   {

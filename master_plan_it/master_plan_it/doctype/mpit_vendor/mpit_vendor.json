@@ -50,14 +50,14 @@
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "description": "Add internal notes (optional).",
-   "label": "Notes",
-   "in_list_view": 1
+   "label": "Notes"
   },
   {
    "default": "1",
    "fieldname": "is_active",
    "fieldtype": "Check",
    "description": "Enable to make this vendor available for selection.",
+   "in_list_view": 1,
    "label": "Is Active"
   }
  ],
