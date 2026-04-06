@@ -9,6 +9,16 @@ app_publisher = "DOT"
 app_description = "vCIO contract and expense management (MPIT)."
 app_email = "n/a"
 app_license = "MIT"
+app_home = "/app/master-plan-it"
+
+add_to_apps_screen = [
+    {
+        "name": app_name,
+        "logo": "",
+        "title": app_title,
+        "route": app_home,
+    }
+]
 
 after_install = "master_plan_it.setup.install.after_install"
 after_sync = "master_plan_it.setup.install.after_sync"

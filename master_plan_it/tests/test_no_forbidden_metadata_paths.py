@@ -10,7 +10,6 @@ def test_no_forbidden_metadata_paths():
         repo_root / "master_plan_it/report",
         repo_root / "master_plan_it/workflow",
         repo_root / "master_plan_it/workspace",
-        repo_root / "master_plan_it/workspace_sidebar",
         repo_root / "master_plan_it/dashboard",
         repo_root / "master_plan_it/dashboard_chart",
         repo_root / "master_plan_it/number_card",
@@ -24,24 +23,24 @@ def test_no_forbidden_metadata_paths():
 
 
 def test_workspace_sidebar_in_canonical_path():
-    """Workspace Sidebar JSON must be at {module}/workspace_sidebar/{name}/{name}.json.
+    """Workspace Sidebar JSON must use flat app-level v16 path.
 
-    A flat file at workspace_sidebar/{name}.json is NOT picked up by frappe.reload_doc
-    and will not be loaded during bench migrate.
+    Frappe v16 sync imports app-level records from
+    {app_package}/workspace_sidebar/{name}.json.
+    Nested workspace_sidebar/{name}/{name}.json is not canonical for this entity.
     """
     repo_root = Path(__file__).resolve().parents[2]
-    ws_sidebar_root = repo_root / "master_plan_it/master_plan_it/workspace_sidebar"
+    ws_sidebar_root = repo_root / "master_plan_it/workspace_sidebar"
 
-    flat_json = list(ws_sidebar_root.glob("*.json"))
-    assert not flat_json, (
-        "Workspace Sidebar JSON files must not be at workspace_sidebar/*.json (flat). "
-        "Move each to workspace_sidebar/{name}/{name}.json: "
-        + ", ".join(str(f) for f in flat_json)
+    nested_json = list(ws_sidebar_root.glob("*/*.json"))
+    assert not nested_json, (
+        "Workspace Sidebar JSON files must not use nested path "
+        "workspace_sidebar/{name}/{name}.json. Use flat workspace_sidebar/{name}.json: "
+        + ", ".join(str(f) for f in nested_json)
     )
 
-    # At least one valid nested file must exist
-    nested_json = list(ws_sidebar_root.glob("*/*.json"))
-    assert nested_json, "Expected at least one Workspace Sidebar JSON at workspace_sidebar/{name}/{name}.json"
+    flat_json = list(ws_sidebar_root.glob("*.json"))
+    assert flat_json, "Expected at least one Workspace Sidebar JSON at workspace_sidebar/{name}.json"
 
 
 def test_number_card_dirs_have_init():

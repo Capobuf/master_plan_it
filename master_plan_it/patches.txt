@@ -1,1 +1,2 @@
-# No runtime patches are required after the expense/plafond greenfield refactor.
+# Runtime patches
+master_plan_it.patches.v1_0.remove_legacy_mpit_navigation_records
