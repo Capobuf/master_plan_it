@@ -374,7 +374,8 @@ master_plan_it/tests/test_workspace_smoke.py
 Aggiornare:
 
 ```text
-master_plan_it/master_plan_it/translations/it.csv
+master_plan_it/master_plan_it/locale/main.pot
+master_plan_it/master_plan_it/locale/it.po
 ```
 
 Rimuovere tutte le stringhe legacy non più usate.

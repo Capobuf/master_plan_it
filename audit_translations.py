@@ -1,148 +1,173 @@
+#!/usr/bin/env python3
 
+from __future__ import annotations
+
+import ast
+import json
 import os
 import re
-import csv
-import ast
+from pathlib import Path
 
-APP_DIR = "/usr/docker/masterplan-project/master-plan-it/master_plan_it"
-TRANSLATION_FILE = "/usr/docker/masterplan-project/master-plan-it/master_plan_it/translations/it.csv"
+REPO_ROOT = Path(__file__).resolve().parent
+APP_DIR = REPO_ROOT / "master_plan_it"
+TRANSLATION_FILE = APP_DIR / "locale" / "it.po"
 
-def get_codebase_strings(app_dir):
-    strings = {}  # "string": ["file:line", ...]
-    
-    # Regex for JS: __("string") or __('string')
-    # Simple regex, might miss complex cases but good enough for audit
+
+def _po_unquote(value: str) -> str:
+    return ast.literal_eval(value)
+
+
+def get_po_strings(po_path: Path) -> dict[str, str]:
+    data: dict[str, str] = {}
+    if not po_path.exists():
+        return data
+
+    current_msgid: list[str] = []
+    current_msgstr: list[str] = []
+    mode: str | None = None
+
+    def flush() -> None:
+        msgid = "".join(current_msgid)
+        msgstr = "".join(current_msgstr)
+        if msgid:
+            data[msgid] = msgstr
+
+    for raw_line in po_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+
+        if line.startswith("#"):
+            continue
+
+        if line.startswith("msgid "):
+            if current_msgid or current_msgstr:
+                flush()
+            current_msgid = [_po_unquote(line[5:].strip())]
+            current_msgstr = []
+            mode = "msgid"
+            continue
+
+        if line.startswith("msgstr "):
+            current_msgstr = [_po_unquote(line[6:].strip())]
+            mode = "msgstr"
+            continue
+
+        if line.startswith('"'):
+            if mode == "msgid":
+                current_msgid.append(_po_unquote(line))
+            elif mode == "msgstr":
+                current_msgstr.append(_po_unquote(line))
+            continue
+
+        if not line:
+            if current_msgid or current_msgstr:
+                flush()
+            current_msgid = []
+            current_msgstr = []
+            mode = None
+
+    if current_msgid or current_msgstr:
+        flush()
+
+    return data
+
+
+def get_codebase_strings(app_dir: Path) -> dict[str, list[str]]:
+    strings: dict[str, list[str]] = {}
     js_pattern = re.compile(r'__\s*\(\s*(["\'])(.*?)\1')
-    
-    for root, dirs, files in os.walk(app_dir):
-        if "node_modules" in root or ".git" in root:
+
+    for root, _, files in os.walk(app_dir):
+        if "node_modules" in root or ".git" in root or "/locale/" in root:
             continue
-            
-        for file in files:
-            path = os.path.join(root, file)
-            rel_path = os.path.relpath(path, app_dir)
-            
-            if file.endswith(".py"):
-                with open(path, "r", encoding="utf-8") as f:
+
+        for filename in files:
+            path = Path(root) / filename
+            rel_path = path.relative_to(app_dir)
+
+            if filename.endswith(".py"):
+                with path.open("r", encoding="utf-8") as handle:
                     try:
-                        tree = ast.parse(f.read())
-                        for node in ast.walk(tree):
-                            if isinstance(node, ast.Call):
-                                if isinstance(node.func, ast.Name) and node.func.id == "_":
-                                    if node.args and isinstance(node.args[0], ast.Constant):
-                                        s = node.args[0].value
-                                        if isinstance(s, str):
-                                            if s not in strings: strings[s] = []
-                                            strings[s].append(f"{rel_path}:{node.lineno}")
-                    except Exception as e:
-                        # Fallback to regex if AST fails (e.g. syntax error or python2 compat issues, unlikely here)
-                         pass
+                        tree = ast.parse(handle.read())
+                    except Exception:
+                        continue
+                for node in ast.walk(tree):
+                    if not isinstance(node, ast.Call):
+                        continue
+                    if not isinstance(node.func, ast.Name) or node.func.id != "_":
+                        continue
+                    if not node.args or not isinstance(node.args[0], ast.Constant):
+                        continue
+                    text = node.args[0].value
+                    if isinstance(text, str):
+                        strings.setdefault(text, []).append(f"{rel_path}:{node.lineno}")
 
-            elif file.endswith(".js"):
-                with open(path, "r", encoding="utf-8") as f:
-                    content = f.read()
-                    for i, line in enumerate(content.splitlines(), 1):
-                        matches = js_pattern.findall(line)
-                        for quote, s in matches:
-                            if s not in strings: strings[s] = []
-                            strings[s].append(f"{rel_path}:{i}")
+            elif filename.endswith(".js"):
+                content = path.read_text(encoding="utf-8")
+                for index, line in enumerate(content.splitlines(), 1):
+                    for _, text in js_pattern.findall(line):
+                        strings.setdefault(text, []).append(f"{rel_path}:{index}")
 
-    # Scan JSON files for labels and descriptions
-    for root, dirs, files in os.walk(app_dir):
-        if "node_modules" in root or ".git" in root:
-            continue
-        for file in files:
-            if file.endswith(".json"):
-                 path = os.path.join(root, file)
-                 rel_path = os.path.relpath(path, app_dir)
-                 try:
-                     import json
-                     with open(path, "r", encoding="utf-8") as f:
-                         data = json.load(f)
-                     
-                     def extract_json_strings(obj, loc):
-                         if isinstance(obj, dict):
-                             for k, v in obj.items():
-                                 if k in ["label", "description", "message", "title", "subject"] and isinstance(v, str):
-                                     if v not in strings: strings[v] = []
-                                     strings[v].append(f"{loc}:{k}")
-                                 elif k == "options" and isinstance(v, str):
-                                      # Options can be translatable if they are select lists, but usually handled via other means.
-                                      # But often "options" are just links to other doctypes which are NOT translatable strings in this context.
-                                      # However, for Select fields, they are. 
-                                      # Let's be conservative and only include them if they look like human text, but maybe skipped for now to avoid false positives (like "User", "Project" which are DocType names).
-                                      pass
-                                 else:
-                                     extract_json_strings(v, loc)
-                         elif isinstance(obj, list):
-                             for item in obj:
-                                 extract_json_strings(item, loc)
+            elif filename.endswith(".json"):
+                try:
+                    data = json.loads(path.read_text(encoding="utf-8"))
+                except Exception:
+                    continue
 
-                     extract_json_strings(data, rel_path)
-                 except:
-                     pass
+                def extract_json_strings(obj):
+                    if isinstance(obj, dict):
+                        for key, value in obj.items():
+                            if (
+                                key in ["label", "description", "message", "title", "subject"]
+                                and isinstance(value, str)
+                            ):
+                                strings.setdefault(value, []).append(f"{rel_path}:{key}")
+                            elif key == "options" and isinstance(value, str):
+                                continue
+                            else:
+                                extract_json_strings(value)
+                    elif isinstance(obj, list):
+                        for item in obj:
+                            extract_json_strings(item)
+
+                extract_json_strings(data)
+
     return strings
 
 
-def get_csv_strings(csv_path):
-    data = {}
-    if not os.path.exists(csv_path):
-        return data
-        
-    with open(csv_path, "r", encoding="utf-8") as f:
-        reader = csv.reader(f)
-        try:
-            next(reader) # header
-        except StopIteration:
-            return data
-            
-        for row in reader:
-            if not row: continue
-            source = row[0]
-            translated = row[1] if len(row) > 1 else ""
-            data[source] = translated
-    return data
-
-def main():
+def main() -> None:
     code_strings = get_codebase_strings(APP_DIR)
-    csv_strings = get_csv_strings(TRANSLATION_FILE)
-    
-    missing_in_csv = []
-    stale_in_csv = []
+    po_strings = get_po_strings(TRANSLATION_FILE)
+
+    missing_in_po = []
+    stale_in_po = []
     untranslated = []
-    
-    # Check for missing
-    for s, locs in code_strings.items():
-        if s not in csv_strings:
-            missing_in_csv.append((s, locs))
-    
-    # Check for stale and untranslated
-    for s, trans in csv_strings.items():
-        if s not in code_strings:
-            # Maybe it's a dynamic string or from a file we missed? 
-            # Or maybe checking strictly against code_strings is too harsh if I missed some patterns.
-            # But let's report it as potentially stale.
-            stale_in_csv.append(s)
-        
-        if not trans or trans == s:
-             untranslated.append(s)
 
-    print("=== MISSING TRANSLATIONS (In code, not in CSV) ===")
-    for s, locs in sorted(missing_in_csv):
-        print(f"STRING: {s}")
-        for l in locs[:3]: # show first 3 locs
-            print(f"  - {l}")
-        if len(locs) > 3:
-            print(f"  ... and {len(locs)-3} more")
-    
-    print("\n=== UNTRANSLATED (In CSV, but same as source or empty) ===")
-    for s in sorted(untranslated):
-        print(f"- {s}")
+    for text, locations in code_strings.items():
+        if text not in po_strings:
+            missing_in_po.append((text, locations))
 
-    print("\n=== POTENTIALLY STALE (In CSV, not found in code) ===")
+    for text, translation in po_strings.items():
+        if text not in code_strings:
+            stale_in_po.append(text)
+        if not translation or translation == text:
+            untranslated.append(text)
+
+    print("=== MISSING TRANSLATIONS (In code, not in PO) ===")
+    for text, locations in sorted(missing_in_po):
+        print(f"STRING: {text}")
+        for location in locations[:3]:
+            print(f"  - {location}")
+        if len(locations) > 3:
+            print(f"  ... and {len(locations) - 3} more")
+
+    print("\n=== UNTRANSLATED (In PO, but same as source or empty) ===")
+    for text in sorted(untranslated):
+        print(f"- {text}")
+
+    print("\n=== POTENTIALLY STALE (In PO, not found in code) ===")
     print("(Note: regex/AST parsing might miss some dynamic strings)")
-    for s in sorted(stale_in_csv):
-         print(f"- {s}")
+    for text in sorted(stale_in_po):
+        print(f"- {text}")
+
 
 if __name__ == "__main__":
     main()

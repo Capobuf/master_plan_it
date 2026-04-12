@@ -3,6 +3,8 @@ recursive-include master_plan_it *.json
 recursive-include master_plan_it *.md
 recursive-include master_plan_it *.txt
 recursive-include master_plan_it *.csv
+recursive-include master_plan_it *.po
+recursive-include master_plan_it *.pot
 recursive-include master_plan_it *.html
 recursive-include master_plan_it *.js
 recursive-include master_plan_it *.css

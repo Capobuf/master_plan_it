@@ -610,7 +610,7 @@ Esempi:
 - `Contract Terms`
   - `If terms exist, yearly contract forecast is computed from matching terms.`
 
-Ricordare: help text in JSON in inglese, traduzioni in `it.csv`.
+Ricordare: help text in JSON in inglese, traduzioni in `locale/it.po`.
 
 ---
 

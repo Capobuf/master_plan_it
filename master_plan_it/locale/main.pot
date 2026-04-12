@@ -1,0 +1,1999 @@
+# Translations template for Master Plan IT.
+# Copyright (C) 2026 DOT
+# This file is distributed under the same license as the Master Plan IT project.
+# FIRST AUTHOR <EMAIL@ADDRESS>, 2026.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: Master Plan IT VERSION\n"
+"Report-Msgid-Bugs-To: n/a\n"
+"POT-Creation-Date: 2026-04-12 17:23+0050\n"
+"PO-Revision-Date: 2026-04-12 17:23+0050\n"
+"Last-Translator: n/a\n"
+"Language-Team: n/a\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=utf-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: Babel 2.16.0\n"
+
+#. Label of the abbr (Data) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Abbreviation"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
+#. Option for the 'Row State' (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Active"
+msgstr ""
+
+#. Label of a number card in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Active Plafonds"
+msgstr ""
+
+#. Option for the 'Phase' (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:66
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:51
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:29
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:38
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:47
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:361
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:33
+msgid "Actual"
+msgstr ""
+
+#. Label of the actual_extra (Currency) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:89
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:180
+msgid "Actual Extra"
+msgstr ""
+
+#. Label of the total_actual_extra_net (Currency) field in DocType 'MPIT
+#. Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Actual Extra Net"
+msgstr ""
+
+#. Label of the actual_on_plafond (Currency) field in DocType 'MPIT Cost
+#. Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:83
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:174
+msgid "Actual On Plafond"
+msgstr ""
+
+#. Label of the total_actual_on_plafond_net (Currency) field in DocType 'MPIT
+#. Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Actual On Plafond Net"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:96
+msgid "Actual On Plafond: {0}"
+msgstr ""
+
+#. Label of the actual_total (Currency) field in DocType 'MPIT Cost Center'
+#. Label of a number card in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:260
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:95
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:186
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Actual Total"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:88
+msgid "Actual: {0}"
+msgstr ""
+
+#. Description of the 'Notes' (Small Text) field in DocType 'MPIT Vendor'
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+msgid "Add internal notes (optional)."
+msgstr ""
+
+#. Label of the admin_section (Section Break) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Admin"
+msgstr ""
+
+#. Label of the section_advanced (Section Break) field in DocType 'MPIT Cost
+#. Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Advanced"
+msgstr ""
+
+#. Label of the amount (Currency) field in DocType 'MPIT Contract Term'
+#. Label of the amount (Currency) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Amount"
+msgstr ""
+
+#. Label of the amount_gross (Currency) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Amount (Gross)"
+msgstr ""
+
+#. Label of the amount_net (Currency) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Amount (Net)"
+msgstr ""
+
+#. Label of the amount_gross (Currency) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Amount Gross"
+msgstr ""
+
+#. Label of the amount_includes_vat (Check) field in DocType 'MPIT Contract
+#. Term'
+#. Label of the amount_includes_vat (Check) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Amount Includes VAT"
+msgstr ""
+
+#. Label of the amount_net (Currency) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:312
+msgid "Amount Net"
+msgstr ""
+
+#. Label of the amount_vat (Currency) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Amount VAT"
+msgstr ""
+
+#. Description of the 'Amount' (Currency) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Amount per billing cycle used when this term overlaps the selected year."
+msgstr ""
+
+#. Label of a Card Break in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Analysis"
+msgstr ""
+
+#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract'
+#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract
+#. Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Annual"
+msgstr ""
+
+#. Label of the annual_amount_current_year (Currency) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Annual Amount (Current Year)"
+msgstr ""
+
+#. Label of the annual_amount_next_year (Currency) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Annual Amount (Next Year)"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:318
+msgid "Annual Contribution"
+msgstr ""
+
+#. Label of the summary_section (Section Break) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Annual Summary"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:237
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:339
+msgid "Annual Total"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:280
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:268
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:547
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:266
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:362
+msgid "Applied Filters"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:113
+msgid "At least one Expense Row is required."
+msgstr ""
+
+#. Label of the attachment (Attach) field in DocType 'MPIT Contract'
+#. Label of the attachment (Attach) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Attachment"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:165
+msgid "Attachments"
+msgstr ""
+
+#. Label of the auto_renew (Check) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:26
+msgid "Auto Renew"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:158
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:35
+msgid "Auto Renew Only"
+msgstr ""
+
+#. Label of the billing_cycle (Select) field in DocType 'MPIT Contract'
+#. Label of the billing_cycle (Select) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Billing Cycle"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:535
+msgid "Budget-like annual overview"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
+#. Option for the 'Workflow State' (Select) field in DocType 'MPIT Expense'
+#. Option for the 'Row State' (Select) field in DocType 'MPIT Expense Row'
+#. Option for the 'Status' (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:8
+msgid "Cancelled"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:11
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:5
+msgid "Change Year"
+msgstr ""
+
+#. Name of a role
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+msgid "Client Editor"
+msgstr ""
+
+#. Name of a role
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+msgid "Client Viewer"
+msgstr ""
+
+#. Option for the 'Workflow State' (Select) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Closed"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:7
+msgid "Completed"
+msgstr ""
+
+#. Label of the section_computed (Section Break) field in DocType 'MPIT
+#. Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Computed"
+msgstr ""
+
+#. Label of the section_amounts (Section Break) field in DocType 'MPIT Expense
+#. Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Computed Amounts"
+msgstr ""
+
+#. Label of the contact_email (Data) field in DocType 'MPIT Vendor'
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+msgid "Contact Email"
+msgstr ""
+
+#. Label of the contact_phone (Data) field in DocType 'MPIT Vendor'
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+msgid "Contact Phone"
+msgstr ""
+
+#. Label of the section_context (Section Break) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Context"
+msgstr ""
+
+#. Label of the contract (Link) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:116
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:35
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:48
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:104
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:23
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:553
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:52
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:261
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:20
+msgid "Contract"
+msgstr ""
+
+#. Label of the contract_digits_default (Int) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Contract Digits"
+msgstr ""
+
+#. Label of the contract_prefix_default (Data) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Contract Prefix"
+msgstr ""
+
+#. Label of the term_section (Section Break) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Contract Terms"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:351
+msgid "Contract renewals by time window"
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_contracts_by_status/mpit_contracts_by_status.py:51
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project_dashboard.py:13
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Contracts"
+msgstr ""
+
+#. Label of the cost_center (Link) field in DocType 'MPIT Contract'
+#. Label of the cost_center (Link) field in DocType 'MPIT Expense'
+#. Label of the cost_center (Link) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/dashboard/master_plan_it_overview/master_plan_it_overview.js:14
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_contracts_by_status/mpit_contracts_by_status.js:16
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_projects_by_status/mpit_projects_by_status.js:16
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:112
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:11
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:46
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:102
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:11
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:550
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:25
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:52
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:235
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:102
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:11
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:31
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:153
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:5
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:23
+msgid "Cost Center"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:144
+msgid "Cost Center / Item"
+msgstr ""
+
+#. Label of the cost_center_name (Data) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Cost Center Name"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:36
+msgid "Cost Center is required for contracts."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:32
+msgid "Cost Center is required on Project."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:40
+msgid "Cost Center is required."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.py:48
+msgid "Cost Center {0} does not exist."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:126
+msgid "Cost Center {0} is missing tree bounds (lft/rgt)."
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:245
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:287
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Cost Centers"
+msgstr ""
+
+#. Label of the current_amount (Currency) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:105
+msgid "Current Amount"
+msgstr ""
+
+#. Label of the current_amount_gross (Currency) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Current Amount Gross"
+msgstr ""
+
+#. Label of the current_amount_includes_vat (Check) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Current Amount Includes VAT"
+msgstr ""
+
+#. Label of the current_amount_net (Currency) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Current Amount Net"
+msgstr ""
+
+#. Label of the current_amount_vat (Currency) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Current Amount VAT"
+msgstr ""
+
+#. Label of the current_monthly_net (Currency) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Current Monthly Net"
+msgstr ""
+
+#. Label of the current_term_section (Section Break) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Current Term"
+msgstr ""
+
+#. Label of the current_term_amount (Currency) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Current Term Amount"
+msgstr ""
+
+#. Label of the current_term_billing_cycle (Data) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Current Term Billing Cycle"
+msgstr ""
+
+#. Label of the current_term_from_date (Date) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Current Term From Date"
+msgstr ""
+
+#. Label of the current_term_monthly_net (Currency) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Current Term Monthly Net"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:25
+msgid "Days To Renewal"
+msgstr ""
+
+#. Label of the default_amount_includes_vat (Check) field in DocType 'MPIT
+#. Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Default Amount Includes VAT"
+msgstr ""
+
+#. Label of the default_vat_rate (Percent) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Default VAT Rate"
+msgstr ""
+
+#. Description of the 'Default VAT Rate' (Percent) field in DocType 'MPIT
+#. Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Default VAT rate for new rows. Leave empty for no default (0 is valid)."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:30
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:48
+msgid "Delta"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:275
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:263
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:542
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:261
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:357
+msgid "Density"
+msgstr ""
+
+#. Label of the description (Data) field in DocType 'MPIT Contract'
+#. Label of the row_description (Data) field in DocType 'MPIT Expense Row'
+#. Label of the description (Small Text) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:69
+msgid "Description"
+msgstr ""
+
+#. Label of the distribution (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Distribution"
+msgstr ""
+
+#. Label of the document_id (Read Only) field in DocType 'MPIT Contract'
+#. Label of the document_id (Read Only) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Document ID"
+msgstr ""
+
+#. Label of the section_naming (Section Break) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Document Naming"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Draft"
+msgstr ""
+
+#. Description of the 'Default Amount Includes VAT' (Check) field in DocType
+#. 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Enable to default new amounts to VAT-inclusive."
+msgstr ""
+
+#. Description of the 'Show Attachments in Print' (Check) field in DocType
+#. 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Enable to include attachments in print formats."
+msgstr ""
+
+#. Description of the 'Is Active' (Check) field in DocType 'MPIT Vendor'
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+msgid "Enable to make this vendor available for selection."
+msgstr ""
+
+#. Description of the 'Is Active' (Check) field in DocType 'MPIT Year'
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+msgid "Enable to make this year available for planning."
+msgstr ""
+
+#. Label of the end_date (Date) field in DocType 'MPIT Contract'
+#. Label of the end_date (Date) field in DocType 'MPIT Expense Row'
+#. Label of the end_date (Date) field in DocType 'MPIT Project'
+#. Label of the end_date (Date) field in DocType 'MPIT Year'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:63
+msgid "End Date"
+msgstr ""
+
+#. Description of the 'End Date' (Date) field in DocType 'MPIT Year'
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+msgid "End date of the year period. Must not overlap with other years."
+msgstr ""
+
+#. Description of the 'Contact Email' (Data) field in DocType 'MPIT Vendor'
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+msgid "Enter the main contact email (optional)."
+msgstr ""
+
+#. Description of the 'Contact Phone' (Data) field in DocType 'MPIT Vendor'
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+msgid "Enter the main contact phone number (optional)."
+msgstr ""
+
+#. Description of the 'VAT ID' (Data) field in DocType 'MPIT Vendor'
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+msgid "Enter the vendor VAT ID."
+msgstr ""
+
+#. Description of the 'Vendor Name' (Data) field in DocType 'MPIT Vendor'
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+msgid "Enter the vendor name."
+msgstr ""
+
+#. Description of the 'Year' (Int) field in DocType 'MPIT Year'
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+msgid "Enter the year identifier (e.g., 2025)."
+msgstr ""
+
+#. Option for the 'Phase' (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Estimate"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:42
+msgid "Expense"
+msgstr ""
+
+#. Label of the expense_digits_default (Int) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Expense Digits"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:47
+msgid "Expense Kind must be Ordinary or Plafond."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:552
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:41
+msgid "Expense Phase"
+msgstr ""
+
+#. Label of the expense_prefix_default (Data) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Expense Prefix"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:228
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.py:35
+msgid "Expense Row Amount"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:269
+msgid "Expense list"
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Expenses"
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Expenses Report"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:87
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:92
+msgid "Expired"
+msgstr ""
+
+#. Description of the 'Notes' (Small Text) field in DocType 'MPIT Contract
+#. Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Explain the reason for the price change (optional)."
+msgstr ""
+
+#. Label of the external_reference (Data) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "External Reference"
+msgstr ""
+
+#. Label of the is_extra (Check) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:62
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:385
+msgid "Extra"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:100
+msgid "Extra: {0}"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:65
+msgid "Filters expense lines only. Contract lines are not linked to projects."
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:76
+msgid "Financial Allocations"
+msgstr ""
+
+#. Label of the section_financial_summary (Section Break) field in DocType
+#. 'MPIT Cost Center'
+#. Label of the financial_section (Section Break) field in DocType 'MPIT
+#. Project'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Financial Summary"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:73
+msgid "Financial Summary - Year {0}"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:65
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:50
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:28
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:37
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:46
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:355
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:32
+msgid "Forecast"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:59
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:150
+msgid "Forecast Contracts"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:65
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:156
+msgid "Forecast Estimate"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:85
+msgid "Forecast Gross"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:83
+msgid "Forecast Net"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:71
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:162
+msgid "Forecast Quote"
+msgstr ""
+
+#. Label of the forecast_total (Currency) field in DocType 'MPIT Cost Center'
+#. Label of a number card in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:253
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:77
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:168
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Forecast Total"
+msgstr ""
+
+#. Label of a chart in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Forecast vs Actual by Cost Center"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:84
+msgid "Forecast: {0}"
+msgstr ""
+
+#. Label of the from_date (Date) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:156
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:24
+msgid "From Date"
+msgstr ""
+
+#. Label of the section_funding (Section Break) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:49
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:288
+msgid "Funding"
+msgstr ""
+
+#. Label of the section_defaults (Section Break) field in DocType 'MPIT
+#. Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "General Defaults"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:272
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:260
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:539
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:258
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:354
+msgid "Generated"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:132
+msgid "Gross Amount"
+msgstr ""
+
+#. Label of the fallback_section (Section Break) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Header Fallback (No Terms)"
+msgstr ""
+
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Home"
+msgstr ""
+
+#. Description of the 'On Plafond' (Check) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "If enabled, this expense consumes the selected plafond."
+msgstr ""
+
+#. Description of the 'Extra' (Check) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "If enabled, this expense does not consume any plafond."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:154
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:11
+msgid "Include Child Cost Centers"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:157
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:29
+msgid "Include Past"
+msgstr ""
+
+#. Label of the is_active (Check) field in DocType 'MPIT Vendor'
+#. Label of the is_active (Check) field in DocType 'MPIT Year'
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+msgid "Is Active"
+msgstr ""
+
+#. Label of the is_group (Check) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Is Group"
+msgstr ""
+
+#. Label of the expense_kind (Select) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:113
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:17
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:44
+msgid "Kind"
+msgstr ""
+
+#. Description of the 'To Date' (Date) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Leave empty to end the term on the day before the next term starts."
+msgstr ""
+
+#. Label of the lft (Int) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Left"
+msgstr ""
+
+#. Name of a DocType
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "MPIT Contract"
+msgstr ""
+
+#. Name of a DocType
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "MPIT Contract Term"
+msgstr ""
+
+#. Name of a DocType
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "MPIT Cost Center"
+msgstr ""
+
+#. Name of a DocType
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "MPIT Expense"
+msgstr ""
+
+#. Name of a DocType
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "MPIT Expense Row"
+msgstr ""
+
+#. Name of a report
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:268
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.json
+msgid "MPIT Expenses"
+msgstr ""
+
+#. Name of a report
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:256
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.json
+msgid "MPIT Monthly Plan"
+msgstr ""
+
+#. Name of a report
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:533
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.json
+msgid "MPIT Overview"
+msgstr ""
+
+#. Name of a DocType
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "MPIT Project"
+msgstr ""
+
+#. Name of a report
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:254
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.json
+msgid "MPIT Project Forecast vs Actual"
+msgstr ""
+
+#. Name of a report
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:350
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.json
+msgid "MPIT Renewals Window"
+msgstr ""
+
+#. Name of a DocType
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "MPIT Settings"
+msgstr ""
+
+#. Name of a DocType
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+msgid "MPIT Vendor"
+msgstr ""
+
+#. Name of a DocType
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+msgid "MPIT Year"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.py:40
+msgid "MPIT Year dates overlap with existing year: {0}."
+msgstr ""
+
+#. Label of the section_main (Section Break) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Main"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:292
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:280
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:573
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:278
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:374
+msgid "Many columns detected. For better readability, consider using Compact profile, Landscape orientation, or export to Excel/CSV."
+msgstr ""
+
+#. Label of a Card Break in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Master Data"
+msgstr ""
+
+#. Label of a Desktop Icon
+#. Name of a Workspace
+#. Header text in the Master Plan IT Workspace
+#. Title of a Workspace Sidebar
+#: master_plan_it/config/desktop.py:11
+#: master_plan_it/desktop_icon/master_plan_it.json
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Master Plan IT"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:27
+msgid "Month"
+msgstr ""
+
+#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract'
+#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract
+#. Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Monthly"
+msgstr ""
+
+#. Label of the monthly_amount_net (Currency) field in DocType 'MPIT Contract
+#. Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Monthly Amount (Net)"
+msgstr ""
+
+#. Label of a chart in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Monthly Forecast vs Actual"
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a shortcut in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Monthly Plan"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:257
+msgid "Monthly forecast vs actual"
+msgstr ""
+
+#. Header text in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Navigation"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:190
+msgid "Negative amounts are not allowed for Estimate or Quote rows."
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:130
+msgid "Net Amount"
+msgstr ""
+
+#. Label of a shortcut in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "New Contract"
+msgstr ""
+
+#. Label of a shortcut in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "New Expense"
+msgstr ""
+
+#. Label of a shortcut in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "New Plafond"
+msgstr ""
+
+#. Label of a shortcut in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "New Project"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:155
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:18
+msgid "Next N Days"
+msgstr ""
+
+#. Label of the next_renewal_date (Date) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:24
+msgid "Next Renewal Date"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:90
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:86
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:145
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:86
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:147
+msgid "No"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:315
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:303
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:601
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:301
+msgid "No data available"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:397
+msgid "No renewals in this window"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:84
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:95
+msgid "Normal"
+msgstr ""
+
+#. Label of the notes_section (Section Break) field in DocType 'MPIT Contract'
+#. Label of the notes (Small Text) field in DocType 'MPIT Contract'
+#. Label of the notes (Small Text) field in DocType 'MPIT Contract Term'
+#. Label of the section_notes (Section Break) field in DocType 'MPIT Expense'
+#. Label of the notes (Small Text) field in DocType 'MPIT Expense'
+#. Label of the row_notes (Small Text) field in DocType 'MPIT Expense Row'
+#. Label of the section_notes (Section Break) field in DocType 'MPIT Project'
+#. Label of the notes (Small Text) field in DocType 'MPIT Project'
+#. Label of the notes (Small Text) field in DocType 'MPIT Vendor'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:86
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:133
+msgid "Notes"
+msgstr ""
+
+#. Description of the 'Renewal Window Days' (Int) field in DocType 'MPIT
+#. Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Number of days before a renewal date considered the renewal window."
+msgstr ""
+
+#. Description of the 'Contract Digits' (Int) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Number of digits for Contract naming series."
+msgstr ""
+
+#. Description of the 'Expense Digits' (Int) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Number of digits for Expense naming series."
+msgstr ""
+
+#. Description of the 'Project Digits' (Int) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Number of digits for Project naming series."
+msgstr ""
+
+#. Label of the old_parent (Link) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Old Parent"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:6
+msgid "On Hold"
+msgstr ""
+
+#. Label of the uses_plafond (Check) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:60
+msgid "On Plafond"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:88
+msgid "Only one non-Cancelled Plafond is allowed for this Year and Cost Center. Existing: {0}"
+msgstr ""
+
+#. Option for the 'Workflow State' (Select) field in DocType 'MPIT Expense'
+#. Option for the 'Status' (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:5
+msgid "Open"
+msgstr ""
+
+#. Label of a Card Break in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project_dashboard.py:9
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Operations"
+msgstr ""
+
+#. Description of the 'Project' (Link) field in DocType 'MPIT Expense'
+#. Description of the 'Contract' (Link) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Optional context. Leave empty for standalone cost center expenses."
+msgstr ""
+
+#. Option for the 'Kind' (Select) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Ordinary"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:63
+msgid "Ordinary expense allows at most one context: Project or Contract."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:68
+msgid "Ordinary expense requires exactly one funding mode: On Plafond or Extra."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:187
+msgid "Ordinary rows require a valid phase: Estimate, Quote, or Actual."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:274
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:262
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:541
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:260
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:356
+msgid "Orientation"
+msgstr ""
+
+#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract'
+#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract
+#. Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Other"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:281
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:113
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:204
+msgid "Over"
+msgstr ""
+
+#. Label of the plafond_over (Currency) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:379
+msgid "Over Plafond"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:112
+msgid "Over Plafond: {0}"
+msgstr ""
+
+#. Label of the section_overview (Section Break) field in DocType 'MPIT
+#. Project'
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a shortcut in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Overview"
+msgstr ""
+
+#. Label of the parent_mpit_cost_center (Link) field in DocType 'MPIT Cost
+#. Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Parent Cost Center"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Pending Renewal"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:300
+msgid "Period End"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:294
+msgid "Period Start"
+msgstr ""
+
+#. Label of the row_phase (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:282
+msgid "Phase"
+msgstr ""
+
+#. Option for the 'Kind' (Select) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:267
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:101
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:192
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:367
+msgid "Plafond"
+msgstr ""
+
+#. Label of the plafond_expense (Link) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Plafond Reference"
+msgstr ""
+
+#. Label of the plafond_remaining (Currency) field in DocType 'MPIT Cost
+#. Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Plafond Remaining"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:183
+msgid "Plafond Spend Date must be inside the selected year."
+msgstr ""
+
+#. Label of the plafond_total (Currency) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Plafond Total"
+msgstr ""
+
+#. Label of a chart in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Plafond Usage by Cost Center"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:53
+msgid "Plafond cannot be flagged as On Plafond or Extra."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:51
+msgid "Plafond cannot be linked to Project or Contract."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:55
+msgid "Plafond cannot reference another Plafond."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:72
+msgid "Plafond reference is required when On Plafond is enabled."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:76
+msgid "Plafond reference must be empty when Extra is enabled."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:180
+msgid "Plafond rows cannot use period distribution fields."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:92
+msgid "Plafond: {0}"
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Plafonds"
+msgstr ""
+
+#. Description of the 'Contract Prefix' (Data) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Prefix for Contract document naming series."
+msgstr ""
+
+#. Description of the 'Expense Prefix' (Data) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Prefix for Expense document naming series."
+msgstr ""
+
+#. Description of the 'Project Prefix' (Data) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Prefix for Project document naming series."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:55
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:43
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:98
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:31
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:55
+msgid "Print Density"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:48
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:36
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:91
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:24
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:48
+msgid "Print Orientation"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:41
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:29
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:84
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:17
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:41
+msgid "Print Profile"
+msgstr ""
+
+#. Label of the section_print (Section Break) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Print Settings"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:176
+msgid "Printed on"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:273
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:261
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:540
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:259
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:355
+msgid "Profile"
+msgstr ""
+
+#. Label of the project (Link) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:46
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:115
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:29
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:47
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:103
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:17
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:554
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:61
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:268
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:29
+msgid "Project"
+msgstr ""
+
+#. Label of the project_digits_default (Int) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Project Digits"
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Project Forecast vs Actual"
+msgstr ""
+
+#. Label of the project_prefix_default (Data) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Project Prefix"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:41
+msgid "Project Status must be one of: Open, On Hold, Completed, Cancelled."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:50
+msgid "Project end date cannot be before start date."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:255
+msgid "Project variance overview"
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_projects_by_status/mpit_projects_by_status.py:51
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Projects"
+msgstr ""
+
+#. Label of the qty (Float) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Qty"
+msgstr ""
+
+#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract'
+#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract
+#. Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Quarterly"
+msgstr ""
+
+#. Header text in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Quick Actions"
+msgstr ""
+
+#. Option for the 'Phase' (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Quote"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:129
+msgid "Quote Date"
+msgstr ""
+
+#. Label of a quick_list in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Recent Contracts"
+msgstr ""
+
+#. Label of a quick_list in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Recent Expenses"
+msgstr ""
+
+#. Label of a quick_list in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Recent Projects"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:82
+msgid "Reference"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:105
+msgid "Referenced Plafond cannot be Cancelled."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:101
+msgid "Referenced Plafond does not exist."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:109
+msgid "Referenced Plafond must belong to the same cost center."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:107
+msgid "Referenced Plafond must belong to the same year."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:103
+msgid "Referenced document must be a Plafond."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:158
+msgid "Referenced row {0} does not exist."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:166
+msgid "Referenced row {0} must belong to the same Expense document."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:274
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:107
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:198
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:373
+msgid "Remaining"
+msgstr ""
+
+#. Label of a number card in the Master Plan IT Workspace
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+msgid "Remaining Plafond"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:106
+msgid "Remaining Plafond: {0}"
+msgstr ""
+
+#. Label of the renewal_section (Section Break) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Renewal & Dates"
+msgstr ""
+
+#. Label of the renewal_window_days (Int) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Renewal Window Days"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:111
+msgid "Renewals"
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Renewals Window"
+msgstr ""
+
+#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Renewed"
+msgstr ""
+
+#. Option for the 'Row State' (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Replaced"
+msgstr ""
+
+#. Label of the replaces_row_name (Link) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Replaces Row"
+msgstr ""
+
+#. Label of the rgt (Int) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Right"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:131
+msgid "Row #{0} cannot replace itself."
+msgstr ""
+
+#. Label of the row_state (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Row State"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:174
+msgid "Row State must be Active, Replaced, or Cancelled."
+msgstr ""
+
+#. Label of the section_rows (Section Break) field in DocType 'MPIT Expense'
+#. Label of the rows (Table) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:321
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:309
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:609
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:307
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:403
+msgid "Rows"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:203
+msgid "Rows without Spend Date require Start Date, End Date, and Distribution."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:551
+msgid "Section"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:33
+msgid "Section Scope"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:22
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:16
+msgid "Select Year"
+msgstr ""
+
+#. Description of the 'Plafond Reference' (Link) field in DocType 'MPIT
+#. Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Select a non-cancelled plafond for the same year and cost center."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:46
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:48
+msgid "Set both start and end date, or clear both."
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Settings"
+msgstr ""
+
+#. Label of the show_attachments_in_print (Check) field in DocType 'MPIT
+#. Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "Show Attachments in Print"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:556
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:76
+msgid "Show Zero Rows"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:93
+msgid "Soon"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:248
+msgid "Source Document"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:254
+msgid "Source Row"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:242
+msgid "Source Type"
+msgstr ""
+
+#. Label of the spend_date (Date) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:306
+msgid "Spend Date"
+msgstr ""
+
+#. Label of the start_date (Date) field in DocType 'MPIT Contract'
+#. Label of the start_date (Date) field in DocType 'MPIT Expense Row'
+#. Label of the start_date (Date) field in DocType 'MPIT Project'
+#. Label of the start_date (Date) field in DocType 'MPIT Year'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:57
+msgid "Start Date"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.py:18
+msgid "Start Date cannot be after End Date"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:206
+msgid "Start Date cannot be after End Date."
+msgstr ""
+
+#. Description of the 'Start Date' (Date) field in DocType 'MPIT Year'
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+msgid "Start date of the year period. Must not overlap with other years."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:324
+msgid "State"
+msgstr ""
+
+#. Label of the status (Select) field in DocType 'MPIT Contract'
+#. Label of the workflow_state (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:52
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:27
+msgid "Status"
+msgstr ""
+
+#. Label of the section_summary (Section Break) field in DocType 'MPIT Expense'
+#. Label of the financial_summary (HTML) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Summary"
+msgstr ""
+
+#. Label of the summary_year (Link) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Summary Year"
+msgstr ""
+
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "System"
+msgstr ""
+
+#. Name of a role
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+msgid "System Manager"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.py:43
+msgid "Term Amount"
+msgstr ""
+
+#. Description of the 'From Date' (Date) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Term start date used by yearly contract forecast."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:85
+msgid "Term {0} overlaps with the next term. Review term dates."
+msgstr ""
+
+#. Label of the terms (Table) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Terms"
+msgstr ""
+
+#. Label of the expense_title (Data) field in DocType 'MPIT Expense'
+#. Label of the title (Data) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:43
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:30
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:21
+msgid "Title"
+msgstr ""
+
+#. Label of the to_date (Date) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "To Date"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.py:28
+msgid "To Date cannot be before From Date."
+msgstr ""
+
+#. Label of the total_actual_net (Currency) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Total Actual Net"
+msgstr ""
+
+#. Label of the total_estimate_net (Currency) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Total Estimate Net"
+msgstr ""
+
+#. Label of the total_forecast_net (Currency) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:107
+msgid "Total Forecast Net"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:115
+msgid "Total Gross"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:230
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:333
+msgid "Total Lines"
+msgstr ""
+
+#. Label of the total_quote_net (Currency) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Total Quote Net"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:154
+msgid "Total Quotes Gross"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:111
+msgid "Total VAT"
+msgstr ""
+
+#. Label of the unit_price (Currency) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Unit Price"
+msgstr ""
+
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_contracts_by_status/mpit_contracts_by_status.py:45
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_projects_by_status/mpit_projects_by_status.py:45
+msgid "Unknown"
+msgstr ""
+
+#: master_plan_it/annualization.py:168
+msgid "Unsupported recurrence rule: {0}"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:91
+msgid "Upcoming (<= {0} days)"
+msgstr ""
+
+#. Description of the 'Attachment' (Attach) field in DocType 'MPIT Contract
+#. Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Upload supporting documents for this variation (optional)."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:90
+msgid "Urgent"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:197
+msgid "Use either Spend Date or period fields on the same row, not both."
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:84
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:131
+msgid "VAT %"
+msgstr ""
+
+#. Label of the amount_vat (Currency) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "VAT Amount"
+msgstr ""
+
+#. Label of the section_vat (Section Break) field in DocType 'MPIT Settings'
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+msgid "VAT Defaults"
+msgstr ""
+
+#. Label of the vat_id (Data) field in DocType 'MPIT Vendor'
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+msgid "VAT ID"
+msgstr ""
+
+#. Label of the vat_rate (Percent) field in DocType 'MPIT Contract'
+#. Label of the vat_rate (Percent) field in DocType 'MPIT Contract Term'
+#. Label of the vat_rate (Percent) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "VAT Rate"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:67
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:34
+msgid "Variance"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:35
+msgid "Variance %"
+msgstr ""
+
+#. Label of the vendor (Link) field in DocType 'MPIT Contract'
+#. Label of the vendor (Link) field in DocType 'MPIT Expense'
+#. Label of the vendor (Link) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:128
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:555
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:69
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:275
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:22
+msgid "Vendor"
+msgstr ""
+
+#. Label of the vendor_name (Data) field in DocType 'MPIT Vendor'
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+msgid "Vendor Name"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:123
+msgid "Vendor Quotes"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:34
+msgid "Vendor is required for contracts."
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Vendors"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:13
+msgid "View Mode"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:59
+msgid "When no Contract Terms are set, Billing Cycle is required."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:56
+msgid "When no Contract Terms are set, Current Amount is required."
+msgstr ""
+
+#. Label of the workflow_state (Select) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:114
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:23
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:52
+msgid "Workflow State"
+msgstr ""
+
+#. Label of the current_year_label (Data) field in DocType 'MPIT Contract'
+#. Label of the next_year_label (Data) field in DocType 'MPIT Contract'
+#. Label of the summary_year (Link) field in DocType 'MPIT Cost Center'
+#. Label of the year (Link) field in DocType 'MPIT Expense'
+#. Label of the year (Int) field in DocType 'MPIT Year'
+#: master_plan_it/master_plan_it/dashboard/master_plan_it_overview/master_plan_it_overview.js:7
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_contracts_by_status/mpit_contracts_by_status.js:9
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_projects_by_status/mpit_projects_by_status.js:9
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:17
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:11
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:61
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:81
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:111
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:5
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:45
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:101
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:5
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:549
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:6
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:101
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:5
+msgid "Year"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:38
+msgid "Year is required."
+msgstr ""
+
+#. Label of a Link in the Master Plan IT Workspace
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Years"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:90
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:86
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:145
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:556
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:86
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:147
+msgid "Yes"
+msgstr ""
+
+#. Option for the 'Distribution' (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "all"
+msgstr ""
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:176
+msgid "by"
+msgstr ""
+
+#. Option for the 'Distribution' (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "end"
+msgstr ""
+
+#. Option for the 'Distribution' (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "start"
+msgstr ""
+
+#. Name of a role
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
+#: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
+#: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
+msgid "vCIO Manager"
+msgstr ""
+
+#: master_plan_it/tax.py:116
+msgid "{0} is non-zero but no VAT rate is specified. Please set a VAT rate on this row or configure a default VAT rate in MPIT Settings."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:214
+msgid "{0} must be inside the selected year."
+msgstr ""
+

@@ -12,7 +12,7 @@
 | **DocType / Workflow / Workspace / Report / Print Format JSON** (metadata) | **Recommended:** `bench --site <site> migrate`  \| **Targeted (layout-only DocType):** `bench --site <site> reload-doctype "<DocType Name>"` | `bench --site <site> clear-cache` + hard refresh (Ctrl+F5) |
 | **Python code** (controllers/hooks/patch code) | If your web process does **not** autoreload, **restart** the web process. If schema/metadata also changed, run `bench --site <site> migrate`. | Hard refresh after reload/restart |
 | **Frontend JS** (client scripts/custom JS assets) | `bench build` (only when JS assets change) | Restart web/socketio if needed, `bench --site <site> clear-cache`, hard refresh |
-| **Translations** (`translations/it.csv`) | `bench --site <site> clear-cache` (and hard refresh) | If still stale: restart web process; if you changed JS assets, run `bench build` |
+| **Translations** (`locale/main.pot`, `locale/it.po`) | `bench compile-po-to-mo --app master_plan_it --locale it --force` | `bench --site <site> clear-cache` (and hard refresh); if still stale: restart web process |
 | **Fixtures** (`fixtures/*.json`, `hooks.py` fixtures list) | `bench --site <site> migrate` | `bench --site <site> clear-cache` |
 | **Patches** (`patches.txt` + patch modules) | `bench --site <site> migrate` (runs patches) | `bench --site <site> clear-cache` |
 

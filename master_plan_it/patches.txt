@@ -1,2 +1,3 @@
 # Runtime patches
 master_plan_it.patches.v1_0.remove_legacy_mpit_navigation_records
+master_plan_it.patches.v1_0.clear_project_print_format_default_language

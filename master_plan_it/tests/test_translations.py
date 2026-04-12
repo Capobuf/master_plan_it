@@ -1,45 +1,117 @@
 # -*- coding: utf-8 -*-
-"""Tests to verify workspace/UI labels are translated in Italian when translations exist.
+"""Tests for required Italian translations in locale/it.po."""
 
-These tests insert Translation records (language=it) for a small set of workspace labels,
-clear the translation cache and assert that `frappe._` returns the expected Italian text.
-"""
+from __future__ import annotations
 
-import frappe
-from frappe.tests.utils import FrappeTestCase
+import ast
+from pathlib import Path
 
-class TestTranslations(FrappeTestCase):
-	def setUp(self):
-		# Ensure tests run as Administrator so we can insert Translation records
-		frappe.set_user("Administrator")
 
-	def test_workspace_labels_translate(self):
-		translations = {
-			"Setup": "Impostazioni",
-			"Setup & Planning": "Impostazioni e pianificazione",
-			"Categories": "Categorie",
-			"Vendors": "Fornitori",
-			"Contracts": "Contratti",
-			"Expired Contracts": "Contratti scaduti",
-			"Quick Actions": "Azioni rapide",
-			"Quick Links": "Collegamenti rapidi",
-			"Your Shortcuts": "I tuoi collegamenti",
-			"More": "Altro",
-		}
+def _po_unquote(value: str) -> str:
+    return ast.literal_eval(value)
 
-		# Insert Translation records if missing
-		for src, tr in translations.items():
-			exists = frappe.db.exists("Translation", {"language": "it", "source_text": src})
-			if not exists:
-				frappe.get_doc({
-					"doctype": "Translation",
-					"language": "it",
-					"source_text": src,
-					"translated_text": tr,
-				}).insert(ignore_permissions=True)
 
-		# Clear translation cache and assert translations are used
-		frappe.translate.clear_cache()
-		frappe.local.lang = "it"
-		for src, tr in translations.items():
-			self.assertEqual(frappe._(src), tr)
+def _load_po_translations(po_path: Path) -> dict[str, str]:
+    translations: dict[str, str] = {}
+    current_msgid: list[str] = []
+    current_msgstr: list[str] = []
+    mode: str | None = None
+
+    def flush() -> None:
+        msgid = "".join(current_msgid)
+        msgstr = "".join(current_msgstr)
+        if msgid:
+            translations[msgid] = msgstr
+
+    for raw_line in po_path.read_text(encoding="utf-8").splitlines():
+        line = raw_line.strip()
+
+        if line.startswith("#"):
+            continue
+
+        if line.startswith("msgid "):
+            if current_msgid or current_msgstr:
+                flush()
+            current_msgid = [_po_unquote(line[5:].strip())]
+            current_msgstr = []
+            mode = "msgid"
+            continue
+
+        if line.startswith("msgstr "):
+            current_msgstr = [_po_unquote(line[6:].strip())]
+            mode = "msgstr"
+            continue
+
+        if line.startswith('"'):
+            if mode == "msgid":
+                current_msgid.append(_po_unquote(line))
+            elif mode == "msgstr":
+                current_msgstr.append(_po_unquote(line))
+            continue
+
+        if not line:
+            if current_msgid or current_msgstr:
+                flush()
+            current_msgid = []
+            current_msgstr = []
+            mode = None
+
+    if current_msgid or current_msgstr:
+        flush()
+
+    return translations
+
+
+def _it_po_path() -> Path:
+    return Path(__file__).resolve().parents[1] / "locale" / "it.po"
+
+
+def test_workspace_translation_targets_present():
+    expected = {
+        "Home": "Home",
+        "Operations": "Operazioni",
+        "Analysis": "Analisi",
+        "Overview": "Panoramica",
+        "Monthly Plan": "Piano mensile",
+        "Expenses Report": "Report spese",
+        "Project Forecast vs Actual": "Forecast vs effettivo per progetto",
+        "Renewals Window": "Finestra rinnovi",
+        "Master Data": "Anagrafiche",
+        "System": "Sistema",
+        "Settings": "Impostazioni",
+        "Expenses": "Spese",
+        "Plafonds": "Plafond",
+        "Contracts": "Contratti",
+        "Projects": "Progetti",
+        "Vendors": "Fornitori",
+        "Cost Centers": "Centri di costo",
+        "Years": "Anni",
+        "Quick Actions": "Azioni rapide",
+        "Navigation": "Navigazione",
+        "Forecast vs Actual by Cost Center": "Forecast vs effettivo per centro di costo",
+        "Monthly Forecast vs Actual": "Forecast mensile vs effettivo",
+        "Plafond Usage by Cost Center": "Utilizzo plafond per centro di costo",
+        "Recent Expenses": "Spese recenti",
+        "Recent Contracts": "Contratti recenti",
+        "Recent Projects": "Progetti recenti",
+        "New Expense": "Nuova spesa",
+        "New Plafond": "Nuovo plafond",
+        "New Contract": "Nuovo contratto",
+        "New Project": "Nuovo progetto",
+        "Forecast Total": "Totale forecast",
+        "Actual Total": "Totale effettivo",
+        "Active Plafonds": "Plafond attivi",
+        "Remaining Plafond": "Plafond residuo",
+    }
+
+    translations = _load_po_translations(_it_po_path())
+
+    missing = [key for key in expected if key not in translations]
+    assert not missing, f"Missing msgid entries in it.po: {missing}"
+
+    mismatched = {
+        key: (translations[key], value)
+        for key, value in expected.items()
+        if translations.get(key) != value
+    }
+    assert not mismatched, f"Mismatched translations in it.po: {mismatched}"

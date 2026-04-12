@@ -573,7 +573,7 @@ Rimuovere ogni shortcut/card/link legacy budget-centric.
 
 ### Traduzioni
 
-Aggiorna `master_plan_it/master_plan_it/translations/it.csv`.
+Aggiorna `master_plan_it/master_plan_it/locale/main.pot` e `master_plan_it/master_plan_it/locale/it.po`.
 
 Rimuovi stringhe legacy non più usate.
 Aggiungi stringhe nuove coerenti con `Expense`, `Plafond`, `Forecast`, `Actual`, `Remaining`, `Extra`.

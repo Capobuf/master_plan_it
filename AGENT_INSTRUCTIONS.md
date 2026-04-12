@@ -20,7 +20,7 @@ Single source of truth for LLM agent rules. Read this file in full before any ta
 | Hooks | `master_plan_it/hooks.py` |
 | Bootstrap | `master_plan_it/setup/install.py` (after_install/after_sync) |
 | Fixtures | `master_plan_it/fixtures/` (filtered exports only; roles shipped) |
-| Translations | `master_plan_it/master_plan_it/translations/it.csv` |
+| Translations | `master_plan_it/master_plan_it/locale/main.pot` + `master_plan_it/master_plan_it/locale/it.po` |
 
 ## Development model
 
@@ -58,7 +58,7 @@ bench --site <site> clear-cache  # always after migrate
 |-------------|---------|
 | DocType / Workflow / Workspace JSON | `migrate` + `clear-cache` |
 | Python logic | `clear-cache` (+ restart web worker if needed) |
-| Translations (`it.csv`) | `clear-cache` only |
+| Translations (`locale/*.po`) | `bench compile-po-to-mo --app master_plan_it --locale it --force` + `clear-cache` |
 | Fixtures | `migrate` + `clear-cache` |
 
 ## Standard task flow
@@ -99,7 +99,7 @@ pytest master_plan_it/tests/test_no_forbidden_metadata_paths.py
 
 ## Translations (i18n)
 
-Source: `master_plan_it/master_plan_it/translations/it.csv`
+Source: `master_plan_it/master_plan_it/locale/main.pot` (template) + `master_plan_it/master_plan_it/locale/it.po` (Italian)
 Usage: Python `_("text")` · JS `__("text")` · Jinja `{{ _("text") }}`
 See `docs/reference/12-i18n.md` for full rules.
 

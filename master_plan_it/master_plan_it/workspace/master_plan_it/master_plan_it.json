@@ -13,7 +13,7 @@
    "label": "Plafond Usage by Cost Center"
   }
  ],
- "content": "[{\"id\":\"h1\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Master Plan IT</span>\",\"col\":12}},{\"id\":\"k1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"MPIT Forecast Total\",\"col\":3}},{\"id\":\"k2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"MPIT Actual Total\",\"col\":3}},{\"id\":\"k3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"MPIT Active Plafonds\",\"col\":3}},{\"id\":\"k4\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"MPIT Remaining Plafond\",\"col\":3}},{\"id\":\"c1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"MPIT Forecast vs Actual by Cost Center\",\"col\":4}},{\"id\":\"c2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"MPIT Monthly Forecast vs Actual\",\"col\":4}},{\"id\":\"c3\",\"type\":\"chart\",\"data\":{\"chart_name\":\"MPIT Plafond Usage by Cost Center\",\"col\":4}},{\"id\":\"h2\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Quick Actions</span>\",\"col\":12}},{\"id\":\"s1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Nuova Spesa\",\"col\":2}},{\"id\":\"s2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Nuovo Plafond\",\"col\":2}},{\"id\":\"s3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Nuovo Contratto\",\"col\":2}},{\"id\":\"s4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Nuovo Progetto\",\"col\":2}},{\"id\":\"s5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Panoramica\",\"col\":2}},{\"id\":\"s6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Piano Mensile\",\"col\":2}},{\"id\":\"h3\",\"type\":\"header\",\"data\":{\"text\":\"<span class=\\\"h4\\\">Navigation</span>\",\"col\":12}},{\"id\":\"g1\",\"type\":\"card\",\"data\":{\"card_name\":\"Operations\",\"col\":4}},{\"id\":\"g2\",\"type\":\"card\",\"data\":{\"card_name\":\"Analysis\",\"col\":4}},{\"id\":\"g3\",\"type\":\"card\",\"data\":{\"card_name\":\"Master Data\",\"col\":4}},{\"id\":\"q1\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Ultime Spese\",\"col\":4}},{\"id\":\"q2\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Contratti Recenti\",\"col\":4}},{\"id\":\"q3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Progetti Recenti\",\"col\":4}}]",
+ "content": "[{\"id\":\"h1\",\"type\":\"header\",\"data\":{\"text\":\"Master Plan IT\",\"col\":12}},{\"id\":\"k1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"MPIT Forecast Total\",\"col\":3}},{\"id\":\"k2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"MPIT Actual Total\",\"col\":3}},{\"id\":\"k3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"MPIT Active Plafonds\",\"col\":3}},{\"id\":\"k4\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"MPIT Remaining Plafond\",\"col\":3}},{\"id\":\"c1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"MPIT Forecast vs Actual by Cost Center\",\"col\":4}},{\"id\":\"c2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"MPIT Monthly Forecast vs Actual\",\"col\":4}},{\"id\":\"c3\",\"type\":\"chart\",\"data\":{\"chart_name\":\"MPIT Plafond Usage by Cost Center\",\"col\":4}},{\"id\":\"h2\",\"type\":\"header\",\"data\":{\"text\":\"Quick Actions\",\"col\":12}},{\"id\":\"s1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Expense\",\"col\":2}},{\"id\":\"s2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Plafond\",\"col\":2}},{\"id\":\"s3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Contract\",\"col\":2}},{\"id\":\"s4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Project\",\"col\":2}},{\"id\":\"s5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Overview\",\"col\":2}},{\"id\":\"s6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Monthly Plan\",\"col\":2}},{\"id\":\"h3\",\"type\":\"header\",\"data\":{\"text\":\"Navigation\",\"col\":12}},{\"id\":\"g1\",\"type\":\"card\",\"data\":{\"card_name\":\"Operations\",\"col\":4}},{\"id\":\"g2\",\"type\":\"card\",\"data\":{\"card_name\":\"Analysis\",\"col\":4}},{\"id\":\"g3\",\"type\":\"card\",\"data\":{\"card_name\":\"Master Data\",\"col\":4}},{\"id\":\"q1\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Expenses\",\"col\":4}},{\"id\":\"q2\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Contracts\",\"col\":4}},{\"id\":\"q3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Projects\",\"col\":4}}]",
  "creation": "2026-03-28 15:15:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -195,19 +195,19 @@
  "name": "Master Plan IT",
  "number_cards": [
   {
-   "label": "MPIT Forecast Total",
+   "label": "Forecast Total",
    "number_card_name": "MPIT Forecast Total"
   },
   {
-   "label": "MPIT Actual Total",
+   "label": "Actual Total",
    "number_card_name": "MPIT Actual Total"
   },
   {
-   "label": "MPIT Active Plafonds",
+   "label": "Active Plafonds",
    "number_card_name": "MPIT Active Plafonds"
   },
   {
-   "label": "MPIT Remaining Plafond",
+   "label": "Remaining Plafond",
    "number_card_name": "MPIT Remaining Plafond"
   }
  ],
@@ -217,15 +217,15 @@
  "quick_lists": [
   {
    "document_type": "MPIT Expense",
-   "label": "Ultime Spese"
+   "label": "Recent Expenses"
   },
   {
    "document_type": "MPIT Contract",
-   "label": "Contratti Recenti"
+   "label": "Recent Contracts"
   },
   {
    "document_type": "MPIT Project",
-   "label": "Progetti Recenti",
+   "label": "Recent Projects",
    "quick_list_filter": "[]"
   }
  ],
@@ -240,40 +240,40 @@
   {
    "doc_view": "New",
    "icon": "mark-as-read",
-   "label": "Nuova Spesa",
+   "label": "New Expense",
    "link_to": "MPIT Expense",
    "type": "DocType"
   },
   {
    "doc_view": "New",
    "icon": "layers",
-   "label": "Nuovo Plafond",
+   "label": "New Plafond",
    "link_to": "MPIT Expense",
    "type": "DocType"
   },
   {
    "doc_view": "New",
    "icon": "file-text",
-   "label": "Nuovo Contratto",
+   "label": "New Contract",
    "link_to": "MPIT Contract",
    "type": "DocType"
   },
   {
    "doc_view": "New",
    "icon": "folder-plus",
-   "label": "Nuovo Progetto",
+   "label": "New Project",
    "link_to": "MPIT Project",
    "type": "DocType"
   },
   {
    "icon": "pie-chart",
-   "label": "Panoramica",
+   "label": "Overview",
    "link_to": "MPIT Overview",
    "type": "Report"
   },
   {
    "icon": "calendar",
-   "label": "Piano Mensile",
+   "label": "Monthly Plan",
    "link_to": "MPIT Monthly Plan",
    "type": "Report"
   }

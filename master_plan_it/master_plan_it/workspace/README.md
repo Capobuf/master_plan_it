@@ -15,12 +15,12 @@ The workspace is aligned with the expense-based model and exposes only active do
 
 Shortcuts are creation-first plus entry points to the two main analytical reports:
 
-- **Nuova Spesa** -> MPIT Expense (New)
-- **Nuovo Plafond** -> MPIT Expense (New)
-- **Nuovo Contratto** -> MPIT Contract (New)
-- **Nuovo Progetto** -> MPIT Project (New)
-- **Panoramica** -> MPIT Overview
-- **Piano Mensile** -> MPIT Monthly Plan
+- **New Expense** -> MPIT Expense (New)
+- **New Plafond** -> MPIT Expense (New)
+- **New Contract** -> MPIT Contract (New)
+- **New Project** -> MPIT Project (New)
+- **Overview** -> MPIT Overview
+- **Monthly Plan** -> MPIT Monthly Plan
 
 ## Navigation Groups
 
