@@ -26,7 +26,7 @@ msgstr "Abbreviation"
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Active"
-msgstr ""
+msgstr "Attivo"
 
 #. Label of a number card in the Master Plan IT Workspace
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
@@ -50,7 +50,7 @@ msgstr "Actual"
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:89
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:180
 msgid "Actual Extra"
-msgstr ""
+msgstr "Effettivo extra"
 
 #. Label of the total_actual_extra_net (Currency) field in DocType 'MPIT
 #. Expense'
@@ -64,7 +64,7 @@ msgstr "Effettivo extra netto"
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:83
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:174
 msgid "Actual On Plafond"
-msgstr ""
+msgstr "Effettivo su plafond"
 
 #. Label of the total_actual_on_plafond_net (Currency) field in DocType 'MPIT
 #. Expense'
@@ -126,7 +126,7 @@ msgstr "Importo (Netto)"
 #. Label of the amount_gross (Currency) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Amount Gross"
-msgstr ""
+msgstr "Importo lordo"
 
 #. Label of the amount_includes_vat (Check) field in DocType 'MPIT Contract
 #. Term'
@@ -140,17 +140,17 @@ msgstr "Importo include IVA"
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:312
 msgid "Amount Net"
-msgstr ""
+msgstr "Importo netto"
 
 #. Label of the amount_vat (Currency) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Amount VAT"
-msgstr ""
+msgstr "Importo IVA"
 
 #. Description of the 'Amount' (Currency) field in DocType 'MPIT Contract Term'
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
 msgid "Amount per billing cycle used when this term overlaps the selected year."
-msgstr ""
+msgstr "Importo per ciclo di fatturazione usato quando questo termine si sovrappone all'anno selezionato."
 
 #. Label of a Card Break in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
@@ -165,7 +165,7 @@ msgstr "Analisi"
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
 msgid "Annual"
-msgstr ""
+msgstr "Annuale"
 
 #. Label of the annual_amount_current_year (Currency) field in DocType 'MPIT
 #. Contract'
@@ -187,7 +187,7 @@ msgstr ""
 #. Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 msgid "Annual Summary"
-msgstr ""
+msgstr "Riepilogo annuale"
 
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:237
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:339
@@ -249,7 +249,7 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
 #: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:8
 msgid "Cancelled"
-msgstr ""
+msgstr "Annullato"
 
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:11
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:5
@@ -280,13 +280,13 @@ msgstr ""
 #. Option for the 'Workflow State' (Select) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 msgid "Closed"
-msgstr ""
+msgstr "Chiuso"
 
 #. Option for the 'Status' (Select) field in DocType 'MPIT Project'
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
 #: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:7
 msgid "Completed"
-msgstr ""
+msgstr "Completato"
 
 #. Label of the section_computed (Section Break) field in DocType 'MPIT
 #. Contract Term'
@@ -298,7 +298,7 @@ msgstr "Calcolato"
 #. Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Computed Amounts"
-msgstr ""
+msgstr "Importi calcolati"
 
 #. Label of the contact_email (Data) field in DocType 'MPIT Vendor'
 #: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
@@ -342,7 +342,7 @@ msgstr "Prefisso Contratto"
 #. Label of the term_section (Section Break) field in DocType 'MPIT Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 msgid "Contract Terms"
-msgstr ""
+msgstr "Termini contrattuali"
 
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:351
 msgid "Contract renewals by time window"
@@ -432,7 +432,7 @@ msgstr "Importo attuale"
 #. Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 msgid "Current Amount Gross"
-msgstr ""
+msgstr "Importo attuale lordo"
 
 #. Label of the current_amount_includes_vat (Check) field in DocType 'MPIT
 #. Contract'
@@ -443,17 +443,17 @@ msgstr "Importo attuale IVA inclusa"
 #. Label of the current_amount_net (Currency) field in DocType 'MPIT Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 msgid "Current Amount Net"
-msgstr ""
+msgstr "Importo attuale netto"
 
 #. Label of the current_amount_vat (Currency) field in DocType 'MPIT Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 msgid "Current Amount VAT"
-msgstr ""
+msgstr "Importo attuale IVA"
 
 #. Label of the current_monthly_net (Currency) field in DocType 'MPIT Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 msgid "Current Monthly Net"
-msgstr ""
+msgstr "Netto mensile attuale"
 
 #. Label of the current_term_section (Section Break) field in DocType 'MPIT
 #. Contract'
@@ -464,24 +464,24 @@ msgstr "Termine Corrente"
 #. Label of the current_term_amount (Currency) field in DocType 'MPIT Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 msgid "Current Term Amount"
-msgstr ""
+msgstr "Importo termine corrente"
 
 #. Label of the current_term_billing_cycle (Data) field in DocType 'MPIT
 #. Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 msgid "Current Term Billing Cycle"
-msgstr ""
+msgstr "Ciclo di fatturazione termine corrente"
 
 #. Label of the current_term_from_date (Date) field in DocType 'MPIT Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 msgid "Current Term From Date"
-msgstr ""
+msgstr "Data inizio termine corrente"
 
 #. Label of the current_term_monthly_net (Currency) field in DocType 'MPIT
 #. Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 msgid "Current Term Monthly Net"
-msgstr ""
+msgstr "Netto mensile termine corrente"
 
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:25
 msgid "Days To Renewal"
@@ -502,7 +502,7 @@ msgstr "Aliquota IVA predefinita"
 #. Settings'
 #: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
 msgid "Default VAT rate for new rows. Leave empty for no default (0 is valid)."
-msgstr ""
+msgstr "Aliquota IVA predefinita per le nuove righe. Lascia vuoto per nessun valore predefinito (0 valido)."
 
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:30
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:48
@@ -625,7 +625,7 @@ msgstr ""
 #. Label of the expense_digits_default (Int) field in DocType 'MPIT Settings'
 #: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
 msgid "Expense Digits"
-msgstr ""
+msgstr "Cifre spesa"
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:47
 msgid "Expense Kind must be Ordinary or Plafond."
@@ -639,7 +639,7 @@ msgstr ""
 #. Label of the expense_prefix_default (Data) field in DocType 'MPIT Settings'
 #: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
 msgid "Expense Prefix"
-msgstr ""
+msgstr "Prefisso spesa"
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:228
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.py:35
@@ -680,7 +680,7 @@ msgstr "Motiva la variazione di prezzo (opzionale)."
 #. Label of the external_reference (Data) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "External Reference"
-msgstr ""
+msgstr "Riferimento esterno"
 
 #. Label of the is_extra (Check) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
@@ -802,7 +802,7 @@ msgstr "Importo lordo"
 #. Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 msgid "Header Fallback (No Terms)"
-msgstr ""
+msgstr "Intestazione fallback (senza termini)"
 
 #. Label of a Workspace Sidebar Item
 #: master_plan_it/workspace_sidebar/master_plan_it.json
@@ -852,7 +852,7 @@ msgstr "Tipo"
 #. Description of the 'To Date' (Date) field in DocType 'MPIT Contract Term'
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
 msgid "Leave empty to end the term on the day before the next term starts."
-msgstr ""
+msgstr "Lascia vuoto per terminare il termine il giorno prima dell'inizio del termine successivo."
 
 #. Label of the lft (Int) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
@@ -1113,7 +1113,7 @@ msgstr "Numero di cifre per la serie di numerazione dei Contratti."
 #. Description of the 'Expense Digits' (Int) field in DocType 'MPIT Settings'
 #: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
 msgid "Number of digits for Expense naming series."
-msgstr ""
+msgstr "Numero di cifre per la serie di numerazione delle Spese."
 
 #. Description of the 'Project Digits' (Int) field in DocType 'MPIT Settings'
 #: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
@@ -1147,7 +1147,7 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
 #: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:5
 msgid "Open"
-msgstr ""
+msgstr "Aperto"
 
 #. Label of a Card Break in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
@@ -1206,7 +1206,7 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:379
 msgid "Over Plafond"
-msgstr ""
+msgstr "Sforamento plafond"
 
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:112
 msgid "Over Plafond: {0}"
@@ -1246,7 +1246,7 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:282
 msgid "Phase"
-msgstr ""
+msgstr "Fase"
 
 #. Option for the 'Kind' (Select) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
@@ -1255,7 +1255,7 @@ msgstr ""
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:192
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:367
 msgid "Plafond"
-msgstr ""
+msgstr "Plafond"
 
 #. Label of the plafond_expense (Link) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
@@ -1266,7 +1266,7 @@ msgstr "Plafond di riferimento"
 #. Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
 msgid "Plafond Remaining"
-msgstr ""
+msgstr "Plafond residuo"
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:183
 msgid "Plafond Spend Date must be inside the selected year."
@@ -1275,7 +1275,7 @@ msgstr ""
 #. Label of the plafond_total (Currency) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
 msgid "Plafond Total"
-msgstr ""
+msgstr "Totale plafond"
 
 #. Label of a chart in the Master Plan IT Workspace
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
@@ -1323,7 +1323,7 @@ msgstr "Prefisso per la serie di numerazione dei Contratti."
 #. Description of the 'Expense Prefix' (Data) field in DocType 'MPIT Settings'
 #: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
 msgid "Prefix for Expense document naming series."
-msgstr ""
+msgstr "Prefisso per la serie di numerazione delle Spese."
 
 #. Description of the 'Project Prefix' (Data) field in DocType 'MPIT Settings'
 #: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
@@ -1543,12 +1543,12 @@ msgstr "Rinnovato"
 #. Option for the 'Row State' (Select) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Replaced"
-msgstr ""
+msgstr "Sostituito"
 
 #. Label of the replaces_row_name (Link) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Replaces Row"
-msgstr ""
+msgstr "Sostituisce riga"
 
 #. Label of the rgt (Int) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
@@ -1562,7 +1562,7 @@ msgstr ""
 #. Label of the row_state (Select) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Row State"
-msgstr ""
+msgstr "Stato riga"
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:174
 msgid "Row State must be Active, Replaced, or Cancelled."
@@ -1720,7 +1720,7 @@ msgstr "Importo Termine"
 #. Description of the 'From Date' (Date) field in DocType 'MPIT Contract Term'
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
 msgid "Term start date used by yearly contract forecast."
-msgstr ""
+msgstr "Data inizio termine usata dal forecast annuale del contratto."
 
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:85
 msgid "Term {0} overlaps with the next term. Review term dates."
