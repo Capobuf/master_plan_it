@@ -13,9 +13,13 @@ Print: Jinja2 HTML templates live next to each report (server-side). 3 of 7 repo
 
 ## Dashboard
 The app uses the native Frappe **Workspace** (`Master Plan IT`) as the primary Desk entry point:
-- **Shortcuts:** New Actual Entry, New Project, New Contract, Overview, Monthly Plan, Renewals, What-If.
-- **Navigation cards:** Budget & Planning, Analysis & Reports, Contracts, Master Data.
-- **Quick lists:** Latest Actual Entries, Recent Contracts, Recent Projects.
+- **Shortcuts:** New Expense, New Plafond, New Contract, New Project, Panoramica MPIT, Monthly Plan.
+- **Navigation cards:** Operations, Analysis, Master Data.
+- **Quick lists:** Recent Expenses, Recent Contracts, Recent Projects.
+
+## Desk Page
+- **Panoramica MPIT** (`/app/mpit-overview`) is a native Desk Page built with `frappe.ui.Page`.
+- The page uses the existing server-side financial engine as source of truth and keeps `MPIT Overview` Script Report as legacy fallback/comparison path.
 
 Dashboard Charts are native Frappe Dashboard Chart objects backed by custom chart sources. Active charts:
 - MPIT Plan vs Cap vs Actual
@@ -30,5 +34,5 @@ Dashboard Charts are native Frappe Dashboard Chart objects backed by custom char
 
 ## Notes
 - Variance views rely on `status = 'Verified'` Actual Entries and `entry_kind in ('Delta','Allowance Spend')`.
-- Query/Script Reports only; stay native file-first and keep the V3 model (Live/Snapshot/Addendum) without legacy baseline logic.
-- No custom frontend page (`mpit-dashboard`) exists; the Workspace IS the dashboard surface.
+- Stay native file-first and keep the V3 model (Live/Snapshot/Addendum) without legacy baseline logic.
+- No custom frontend SPA exists; Desk surfaces are native Workspace, reports, and standard Page scripts.

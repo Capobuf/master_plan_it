@@ -17,6 +17,7 @@ def test_workspace_has_expense_model_links_only():
     assert "MPIT Expense" in link_targets
     assert "MPIT Contract" in link_targets
     assert "MPIT Project" in link_targets
+    assert "mpit-overview" in link_targets
     assert "MPIT Overview" in link_targets
     assert "MPIT Monthly Plan" in link_targets
     assert "MPIT Expenses" in link_targets
