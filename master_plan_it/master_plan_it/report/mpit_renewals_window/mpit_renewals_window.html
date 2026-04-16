@@ -6,49 +6,30 @@
     {%
         var f = filters || {};
         var rows = data || [];
-        var cols = columns || [];
 
         var profile = String(f.print_profile || "Standard");
         var orientation = String(f.print_orientation || "Auto");
         var density = String(f.print_density || "Normal");
 
-        var profile_columns = {
-            Standard: [
-                "contract", "title", "vendor", "cost_center", "next_renewal_date", "days_to_renewal", "auto_renew", "status"
-            ],
-            Compact: [
-                "contract", "vendor", "next_renewal_date", "days_to_renewal", "status"
-            ],
-            All: []
-        };
-
-        var selected_fieldnames = profile_columns[profile] || [];
-        var visible_columns = [];
-        for (var i = 0; i < cols.length; i++) {
-            var col = cols[i] || {};
-            var fieldname = col.fieldname || "";
-            var is_hidden = !!(col.hidden || 0);
-            if (!is_hidden && (profile === "All" || selected_fieldnames.indexOf(fieldname) !== -1)) {
-                visible_columns.push(col);
-            }
-        }
-
         var page_orientation = "portrait";
         if (orientation === "Landscape") {
             page_orientation = "landscape";
-        } else if (orientation === "Auto" && visible_columns.length >= 8) {
-            page_orientation = "landscape";
+        } else if (orientation === "Portrait") {
+            page_orientation = "portrait";
         }
 
         var font_size = "10px";
-        var cell_padding = "6px";
+        var block_padding = "7px 8px";
         if (density === "Compact") {
             font_size = "9px";
-            cell_padding = "4px";
+            block_padding = "6px 7px";
         } else if (density === "Ultra") {
             font_size = "8px";
-            cell_padding = "3px";
+            block_padding = "5px 6px";
         }
+
+        var is_compact = profile === "Compact";
+        var is_all = profile === "All";
 
         function esc(value) {
             if (value === null || value === undefined) return "";
@@ -60,12 +41,13 @@
                 .replace(/'/g, "&#39;");
         }
 
-        function isNumericField(fieldtype) {
-            return ["Currency", "Float", "Int", "Percent"].indexOf(fieldtype || "") !== -1;
+        function toNumber(value) {
+            var n = parseFloat(value);
+            return isNaN(n) ? null : n;
         }
 
         function formatDate(value) {
-            if (!value) return "";
+            if (!value) return " - ";
             try {
                 return frappe.datetime.str_to_user(value);
             } catch (e) {
@@ -73,80 +55,99 @@
             }
         }
 
-        function toNumber(value) {
-            var n = parseFloat(value);
-            return isNaN(n) ? null : n;
-        }
-
-        function getRenewalBadge(daysValue) {
-            var days = toNumber(daysValue);
-            if (days === null) {
-                return { label: __("Normal"), css: "badge badge-normal" };
-            }
-            if (days < 0) {
-                return { label: __("Expired"), css: "badge badge-expired" };
-            }
-            if (days <= 30) {
-                return { label: __("Urgent"), css: "badge badge-urgent" };
-            }
-            if (days <= 60) {
-                return { label: __("Soon"), css: "badge badge-soon" };
-            }
-            return { label: __("Normal"), css: "badge badge-normal" };
-        }
-
-        function formatCellValue(row, col) {
-            var fieldname = col.fieldname || "";
-            var fieldtype = col.fieldtype || "Data";
-            var value = row[fieldname];
-
-            if (fieldname === "days_to_renewal") {
-                var days = toNumber(value);
-                if (days === null) return "";
-                var daysClass = "";
-                if (days < 0) {
-                    daysClass = "text-danger";
-                } else if (days <= 30) {
-                    daysClass = "text-warning";
-                }
-                return '<span class="' + daysClass + '">' + esc(days) + "</span>";
-            }
-
-            if (fieldname === "status") {
-                var badge = getRenewalBadge(row.days_to_renewal);
-                return '<span class="' + badge.css + '">' + esc(badge.label) + "</span>";
-            }
-
-            if (value === null || value === undefined || value === "") {
-                return "";
-            }
-
-            if (fieldtype === "Date") {
-                return formatDate(value);
-            }
-
-            if (fieldtype === "Check") {
-                return value ? "✓" : "";
-            }
-
-            if (isNumericField(fieldtype)) {
-                try {
-                    return frappe.format(value, col, { always_show_decimals: true });
-                } catch (e) {
-                    return esc(value);
-                }
-            }
-
+        function valueOrDash(value) {
+            if (value === null || value === undefined || value === "") return " - ";
             return esc(value);
         }
 
-        function formatFilterValue(fieldname, value) {
-            if (value === null || value === undefined || value === "") return "";
-            if (fieldname === "from_date") return formatDate(value);
-            if (fieldname === "include_past" || fieldname === "auto_renew_only" || fieldname === "include_children") {
-                return value ? __("Yes") : __("No");
+        function compareText(a, b) {
+            var aa = String(a || "").toLowerCase();
+            var bb = String(b || "").toLowerCase();
+            if (aa < bb) return -1;
+            if (aa > bb) return 1;
+            return 0;
+        }
+
+        function bucketForRow(row) {
+            var days = toNumber(row.days_to_renewal);
+            if (days !== null && days < 0) return "Expired";
+            if (days !== null && days <= 30) return "Urgent";
+            if (days !== null && days <= 60) return "Soon";
+            return "Normal";
+        }
+
+        function bucketLabel(bucket) {
+            if (bucket === "Expired") return __("Expired");
+            if (bucket === "Urgent") return __("Urgent");
+            if (bucket === "Soon") return __("Soon");
+            return __("Normal");
+        }
+
+        function bucketOrder(bucket) {
+            if (bucket === "Expired") return 0;
+            if (bucket === "Urgent") return 1;
+            if (bucket === "Soon") return 2;
+            return 3;
+        }
+
+        function sortRows(list) {
+            return (list || []).slice().sort(function (a, b) {
+                var ba = bucketForRow(a);
+                var bb = bucketForRow(b);
+                var days_a = toNumber(a.days_to_renewal);
+                var days_b = toNumber(b.days_to_renewal);
+
+                return (
+                    bucketOrder(ba) - bucketOrder(bb) ||
+                    ((days_a === null ? 999999 : days_a) - (days_b === null ? 999999 : days_b)) ||
+                    compareText(a.next_renewal_date, b.next_renewal_date) ||
+                    compareText(a.contract, b.contract)
+                );
+            });
+        }
+
+        var sorted_rows = sortRows(rows);
+        var sections_map = {
+            Expired: { key: "Expired", rows: [] },
+            Urgent: { key: "Urgent", rows: [] },
+            Soon: { key: "Soon", rows: [] },
+            Normal: { key: "Normal", rows: [] }
+        };
+
+        for (var i = 0; i < sorted_rows.length; i++) {
+            var row = sorted_rows[i] || {};
+            var bucket = bucketForRow(row);
+            sections_map[bucket].rows.push(row);
+        }
+
+        var sections = [];
+        var section_order = ["Expired", "Urgent", "Soon", "Normal"];
+        for (var j = 0; j < section_order.length; j++) {
+            var key = section_order[j];
+            if (sections_map[key].rows.length) {
+                sections.push(sections_map[key]);
             }
-            return esc(value);
+        }
+
+        function daysLabel(value) {
+            var days = toNumber(value);
+            if (days === null) return " - ";
+            return esc(days);
+        }
+
+        function statusClass(status) {
+            var s = String(status || "").toLowerCase();
+            if (s === "active") return "chip chip-strong";
+            if (s === "closed" || s === "cancelled") return "chip chip-alert";
+            return "chip";
+        }
+
+        function renewalClass(row) {
+            var bucket = bucketForRow(row);
+            if (bucket === "Expired") return "chip chip-alert";
+            if (bucket === "Urgent") return "chip chip-strong";
+            if (bucket === "Soon") return "chip";
+            return "chip";
         }
 
         var filter_fields = [
@@ -166,16 +167,14 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            font-family: "Helvetica Neue", Arial, sans-serif;
             font-size: {%= font_size %};
             color: #111827;
-            margin: 0;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
         }
 
         .report-shell {
-            padding: 8px 10px;
+            padding: 7px 8px;
         }
 
         .report-header {
@@ -183,162 +182,200 @@
             justify-content: space-between;
             align-items: flex-start;
             gap: 12px;
-            border-bottom: 2px solid #1f2937;
-            padding-bottom: 10px;
-            margin-bottom: 12px;
+            border-bottom: 1.5px solid #111827;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .report-title {
             margin: 0;
-            font-size: 22px;
-            line-height: 1.15;
+            font-size: 20px;
+            line-height: 1.2;
             font-weight: 700;
-            color: #111827;
         }
 
         .report-subtitle {
-            margin-top: 4px;
-            color: #6b7280;
+            margin-top: 2px;
+            color: #4b5563;
             font-size: 11px;
         }
 
         .report-meta {
             text-align: right;
+            color: #4b5563;
             font-size: 11px;
-            color: #6b7280;
             white-space: nowrap;
         }
 
         .filters-box {
-            margin-bottom: 12px;
-            padding: 8px 10px;
-            border: 1px solid #e5e7eb;
-            background: #f9fafb;
-            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: #f8fafc;
+            border-radius: 4px;
+            padding: 6px 8px;
+            margin-bottom: 10px;
         }
 
         .filters-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: #374151;
-            margin-bottom: 6px;
+            margin: 0 0 5px 0;
+            font-size: 10px;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            color: #4b5563;
+            font-weight: 700;
         }
 
         .filter-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px 16px;
+            gap: 4px 14px;
         }
 
         .filter-item {
             font-size: 11px;
-            color: #374151;
+            color: #1f2937;
         }
 
-        .filter-item strong {
-            color: #111827;
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 10px;
         }
 
-        .warning-banner {
-            margin-bottom: 12px;
-            padding: 8px 10px;
-            border: 1px solid #fde68a;
-            background: #fffbeb;
-            color: #92400e;
-            border-radius: 6px;
-            font-size: 11px;
-        }
-
-        table.report-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        .report-table thead {
-            display: table-header-group;
-        }
-
-        .report-table th {
+        .summary-card {
             border: 1px solid #d1d5db;
-            background: #f3f4f6;
-            color: #111827;
-            font-weight: 700;
-            text-align: left;
-            padding: {%= cell_padding %};
-            vertical-align: top;
-            overflow-wrap: anywhere;
-            white-space: normal;
+            border-radius: 4px;
+            padding: 7px 8px;
+            background: #ffffff;
         }
 
-        .report-table td {
-            border: 1px solid #e5e7eb;
-            padding: {%= cell_padding %};
-            vertical-align: top;
-            overflow-wrap: anywhere;
-            white-space: normal;
-        }
-
-        .report-table tbody tr:nth-child(even) {
-            background: #fafafa;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
-        .text-danger {
-            color: #991b1b;
-            font-weight: 700;
-        }
-
-        .text-warning {
-            color: #92400e;
-            font-weight: 700;
-        }
-
-        .badge {
-            display: inline-block;
-            padding: 2px 7px;
-            border-radius: 999px;
+        .summary-label {
             font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7280;
             font-weight: 700;
-            line-height: 1.4;
+            margin-bottom: 3px;
+        }
+
+        .summary-value {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #111827;
             white-space: nowrap;
         }
 
-        .badge-expired {
-            background: #fee2e2;
-            color: #991b1b;
+        .section {
+            margin-bottom: 12px;
+            page-break-inside: avoid;
         }
 
-        .badge-urgent {
-            background: #ffedd5;
-            color: #9a3412;
+        .section-header {
+            border-top: 1px solid #9ca3af;
+            border-bottom: 1px solid #d1d5db;
+            padding: 5px 0;
+            margin-bottom: 7px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
         }
 
-        .badge-soon {
-            background: #fef3c7;
-            color: #92400e;
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #111827;
         }
 
-        .badge-normal {
-            background: #dbeafe;
-            color: #1d4ed8;
+        .section-meta {
+            font-size: 11px;
+            color: #4b5563;
+            white-space: nowrap;
+        }
+
+        .entry {
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: {%= block_padding %};
+            margin-bottom: 7px;
+            background: #fff;
+            page-break-inside: avoid;
+        }
+
+        .entry-primary {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .entry-left {
+            min-width: 0;
+        }
+
+        .entry-contract {
+            font-weight: 700;
+            color: #111827;
+            white-space: nowrap;
+        }
+
+        .entry-title {
+            margin-top: 1px;
+            color: #1f2937;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+
+        .entry-meta-line {
+            margin-top: 3px;
+            color: #4b5563;
+            font-size: 11px;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+
+        .entry-right {
+            text-align: right;
+            white-space: nowrap;
+            min-width: 220px;
+        }
+
+        .entry-value-line {
+            font-size: 11px;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+
+        .chip {
+            display: inline-block;
+            border: 1px solid #9ca3af;
+            border-radius: 12px;
+            padding: 1px 7px;
+            font-size: 10px;
+            line-height: 1.4;
+            color: #374151;
+            white-space: nowrap;
+        }
+
+        .chip-strong {
+            border-color: #4b5563;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .chip-alert {
+            border-color: #111827;
+            color: #111827;
+            font-weight: 700;
         }
 
         .footer {
-            margin-top: 12px;
-            padding-top: 8px;
-            border-top: 1px solid #e5e7eb;
+            margin-top: 10px;
+            padding-top: 6px;
+            border-top: 1px solid #d1d5db;
             font-size: 11px;
-            color: #6b7280;
+            color: #4b5563;
             text-align: right;
         }
     </style>
@@ -348,7 +385,7 @@
         <div class="report-header">
             <div>
                 <h1 class="report-title">{%= __("MPIT Renewals Window") %}</h1>
-                <div class="report-subtitle">{%= __("Contract renewals by time window") %}</div>
+                <div class="report-subtitle">{%= __("Contracts grouped by renewal urgency") %}</div>
             </div>
             <div class="report-meta">
                 <div><strong>{%= __("Generated") %}:</strong> {%= frappe.datetime.str_to_user(frappe.datetime.get_today()) %}</div>
@@ -363,44 +400,81 @@
             <div class="filter-list">
                 {% for (var i = 0; i < filter_fields.length; i++) { var def = filter_fields[i]; var v = f[def.fieldname]; %}
                     {% if (v !== undefined && v !== null && v !== "") { %}
-                        <div class="filter-item"><strong>{%= esc(def.label) %}:</strong> {%= formatFilterValue(def.fieldname, v) %}</div>
+                        <div class="filter-item">
+                            <strong>{%= esc(def.label) %}:</strong>
+                            {% if (def.fieldname === "from_date") { %}{%= formatDate(v) %}{% } else if (def.fieldname === "include_past" || def.fieldname === "auto_renew_only" || def.fieldname === "include_children") { %}{%= v ? __("Yes") : __("No") %}{% } else { %}{%= esc(v) %}{% } %}
+                        </div>
                     {% } %}
                 {% } %}
             </div>
         </div>
 
-        {% if (visible_columns.length > 10) { %}
-            <div class="warning-banner">
-                {%= __("Many columns detected. For better readability, consider using Compact profile, Landscape orientation, or export to Excel/CSV.") %}
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Contracts") %}</div>
+                <div class="summary-value">{%= esc(rows.length) %}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Expired") %}</div>
+                <div class="summary-value">{%= esc(sections_map.Expired.rows.length) %}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Urgent + Soon") %}</div>
+                <div class="summary-value">{%= esc(sections_map.Urgent.rows.length + sections_map.Soon.rows.length) %}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Normal") %}</div>
+                <div class="summary-value">{%= esc(sections_map.Normal.rows.length) %}</div>
+            </div>
+        </div>
+
+        {% if (!sections.length) { %}
+            <div class="entry">{%= __("No renewals in this window") %}</div>
+        {% } %}
+
+        {% for (var s = 0; s < sections.length; s++) { var section = sections[s]; %}
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">{%= bucketLabel(section.key) %}</div>
+                    <div class="section-meta">{%= __("Contracts") %}: {%= esc(section.rows.length) %}</div>
+                </div>
+
+                {% for (var r = 0; r < section.rows.length; r++) { var row = section.rows[r] || {}; %}
+                    <div class="entry">
+                        <div class="entry-primary">
+                            <div class="entry-left">
+                                <div class="entry-contract">{%= valueOrDash(row.contract) %}</div>
+                                <div class="entry-title">{%= valueOrDash(row.title) %}</div>
+                                <div class="entry-meta-line">
+                                    <strong>{%= __("Vendor") %}:</strong> {%= valueOrDash(row.vendor) %} |
+                                    <strong>{%= __("Cost Center") %}:</strong> {%= valueOrDash(row.cost_center) %}
+                                </div>
+                                {% if (is_all) { %}
+                                    <div class="entry-meta-line">
+                                        <strong>{%= __("Status") %}:</strong> {%= valueOrDash(row.status) %}
+                                    </div>
+                                {% } %}
+                            </div>
+                            <div class="entry-right">
+                                <div class="entry-value-line"><strong>{%= __("Next Renewal") %}:</strong> {%= formatDate(row.next_renewal_date) %}</div>
+                                <div class="entry-value-line"><strong>{%= __("Days") %}:</strong> {%= daysLabel(row.days_to_renewal) %}</div>
+                                <div class="entry-value-line">
+                                    <span class="{%= renewalClass(row) %}">{%= bucketLabel(bucketForRow(row)) %}</span>
+                                    <span class="{%= statusClass(row.status) %}">{%= valueOrDash(row.status) %}</span>
+                                </div>
+                                {% if (!is_compact) { %}
+                                    <div class="entry-value-line"><span class="chip">{%= __("Auto Renew") %}: {%= row.auto_renew ? __("Yes") : __("No") %}</span></div>
+                                {% } %}
+                            </div>
+                        </div>
+                    </div>
+                {% } %}
             </div>
         {% } %}
 
-        <table class="report-table">
-            <thead>
-                <tr>
-                    {% for (var c = 0; c < visible_columns.length; c++) { var col = visible_columns[c]; %}
-                        <th class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">{%= esc(__(col.label || col.fieldname || "")) %}</th>
-                    {% } %}
-                </tr>
-            </thead>
-            <tbody>
-                {% if (rows.length) { %}
-                    {% for (var r = 0; r < rows.length; r++) { var row = rows[r] || {}; %}
-                        <tr>
-                            {% for (var c = 0; c < visible_columns.length; c++) { var col = visible_columns[c]; %}
-                                <td class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">{%= formatCellValue(row, col) %}</td>
-                            {% } %}
-                        </tr>
-                    {% } %}
-                {% } else { %}
-                    <tr>
-                        <td colspan="{%= visible_columns.length || 1 %}" class="text-center">{%= __("No renewals in this window") %}</td>
-                    </tr>
-                {% } %}
-            </tbody>
-        </table>
-
-        <div class="footer">{%= __("Rows") %}: {%= esc(rows.length) %}</div>
+        <div class="footer">
+            {%= __("Rows") %}: {%= esc(rows.length) %}
+        </div>
     </div>
 </body>
 </html>

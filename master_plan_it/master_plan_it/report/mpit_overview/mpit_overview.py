@@ -53,68 +53,9 @@ def _execute_summary(filters, year: str):
             "fieldname": "cost_center",
             "fieldtype": "Link",
             "options": "MPIT Cost Center",
-            "width": 200,
+            "width": 240,
         },
-        {
-            "label": _("Forecast Contracts"),
-            "fieldname": "forecast_contracts",
-            "fieldtype": "Currency",
-            "width": 130,
-        },
-        {
-            "label": _("Forecast Estimate"),
-            "fieldname": "forecast_estimate",
-            "fieldtype": "Currency",
-            "width": 130,
-        },
-        {
-            "label": _("Forecast Quote"),
-            "fieldname": "forecast_quote",
-            "fieldtype": "Currency",
-            "width": 130,
-        },
-        {
-            "label": _("Forecast Total"),
-            "fieldname": "forecast_total",
-            "fieldtype": "Currency",
-            "width": 130,
-        },
-        {
-            "label": _("Actual On Plafond"),
-            "fieldname": "actual_on_plafond",
-            "fieldtype": "Currency",
-            "width": 130,
-        },
-        {
-            "label": _("Actual Extra"),
-            "fieldname": "actual_extra",
-            "fieldtype": "Currency",
-            "width": 120,
-        },
-        {
-            "label": _("Actual Total"),
-            "fieldname": "actual_total",
-            "fieldtype": "Currency",
-            "width": 120,
-        },
-        {
-            "label": _("Plafond"),
-            "fieldname": "plafond",
-            "fieldtype": "Currency",
-            "width": 120,
-        },
-        {
-            "label": _("Remaining"),
-            "fieldname": "remaining",
-            "fieldtype": "Currency",
-            "width": 120,
-        },
-        {
-            "label": _("Over"),
-            "fieldname": "over",
-            "fieldtype": "Currency",
-            "width": 100,
-        },
+        *_overview_metric_columns(),
     ]
 
     report_summary = _build_report_summary_from_dict(summary)
@@ -144,68 +85,9 @@ def _execute_buildup(filters, year: str):
             "label": _("Cost Center / Item"),
             "fieldname": "cost_center",
             "fieldtype": "Data",
-            "width": 220,
+            "width": 260,
         },
-        {
-            "label": _("Forecast Contracts"),
-            "fieldname": "forecast_contracts",
-            "fieldtype": "Currency",
-            "width": 130,
-        },
-        {
-            "label": _("Forecast Estimate"),
-            "fieldname": "forecast_estimate",
-            "fieldtype": "Currency",
-            "width": 130,
-        },
-        {
-            "label": _("Forecast Quote"),
-            "fieldname": "forecast_quote",
-            "fieldtype": "Currency",
-            "width": 130,
-        },
-        {
-            "label": _("Forecast Total"),
-            "fieldname": "forecast_total",
-            "fieldtype": "Currency",
-            "width": 130,
-        },
-        {
-            "label": _("Actual On Plafond"),
-            "fieldname": "actual_on_plafond",
-            "fieldtype": "Currency",
-            "width": 130,
-        },
-        {
-            "label": _("Actual Extra"),
-            "fieldname": "actual_extra",
-            "fieldtype": "Currency",
-            "width": 120,
-        },
-        {
-            "label": _("Actual Total"),
-            "fieldname": "actual_total",
-            "fieldtype": "Currency",
-            "width": 120,
-        },
-        {
-            "label": _("Plafond"),
-            "fieldname": "plafond",
-            "fieldtype": "Currency",
-            "width": 120,
-        },
-        {
-            "label": _("Remaining"),
-            "fieldname": "remaining",
-            "fieldtype": "Currency",
-            "width": 120,
-        },
-        {
-            "label": _("Over"),
-            "fieldname": "over",
-            "fieldtype": "Currency",
-            "width": 100,
-        },
+        *_overview_metric_columns(),
     ]
 
     report_summary = _build_report_summary_from_dict(summary)
@@ -386,6 +268,71 @@ def _build_report_summary_from_dict(summary: dict) -> list[dict]:
             "value": flt(summary.get("actual_extra"), 2),
             "indicator": "Orange",
             "datatype": "Currency",
+        },
+    ]
+
+
+def _overview_metric_columns() -> list[dict]:
+    return [
+        {
+            "label": _("Forecast Contracts"),
+            "fieldname": "forecast_contracts",
+            "fieldtype": "Currency",
+            "width": 150,
+        },
+        {
+            "label": _("Forecast Estimate"),
+            "fieldname": "forecast_estimate",
+            "fieldtype": "Currency",
+            "width": 150,
+        },
+        {
+            "label": _("Forecast Quote"),
+            "fieldname": "forecast_quote",
+            "fieldtype": "Currency",
+            "width": 140,
+        },
+        {
+            "label": _("Forecast Total"),
+            "fieldname": "forecast_total",
+            "fieldtype": "Currency",
+            "width": 150,
+        },
+        {
+            "label": _("Actual On Plafond"),
+            "fieldname": "actual_on_plafond",
+            "fieldtype": "Currency",
+            "width": 150,
+        },
+        {
+            "label": _("Actual Extra"),
+            "fieldname": "actual_extra",
+            "fieldtype": "Currency",
+            "width": 130,
+        },
+        {
+            "label": _("Actual Total"),
+            "fieldname": "actual_total",
+            "fieldtype": "Currency",
+            "width": 140,
+        },
+        {
+            "label": _("Plafond"),
+            "fieldname": "plafond",
+            "fieldtype": "Currency",
+            "width": 130,
+        },
+        {
+            "label": _("Remaining"),
+            "fieldname": "remaining",
+            "fieldtype": "Currency",
+            "width": 130,
+        },
+        {
+            "label": _("Over"),
+            "fieldname": "over",
+            "fieldtype": "Currency",
+            "width": 110,
         },
     ]
 

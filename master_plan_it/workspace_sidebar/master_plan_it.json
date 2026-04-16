@@ -7,7 +7,7 @@
   {
    "child": 0,
    "collapsible": 1,
-   "icon": "home",
+   "icon": "house",
    "indent": 0,
    "keep_closed": 0,
    "label": "Home",
@@ -19,7 +19,7 @@
   {
    "child": 0,
    "collapsible": 1,
-   "icon": "file-text",
+   "icon": "briefcase",
    "indent": 0,
    "keep_closed": 0,
    "label": "Operations",
@@ -30,6 +30,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "receipt-text",
    "indent": 0,
    "keep_closed": 0,
    "label": "Expenses",
@@ -41,6 +42,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "circle-plus",
    "indent": 0,
    "keep_closed": 0,
    "label": "New Expense",
@@ -52,6 +54,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "handshake",
    "indent": 0,
    "keep_closed": 0,
    "label": "New Contract",
@@ -63,6 +66,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "folder-plus",
    "indent": 0,
    "keep_closed": 0,
    "label": "New Project",
@@ -74,7 +78,7 @@
   {
    "child": 0,
    "collapsible": 1,
-   "icon": "pie-chart",
+   "icon": "chart-column",
    "indent": 0,
    "keep_closed": 0,
    "label": "Analysis",
@@ -85,6 +89,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "layout-dashboard",
    "indent": 0,
    "keep_closed": 0,
    "label": "Overview",
@@ -96,6 +101,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "calendar-days",
    "indent": 0,
    "keep_closed": 0,
    "label": "Monthly Plan",
@@ -107,6 +113,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "file-chart-column",
    "indent": 0,
    "keep_closed": 0,
    "label": "Expenses Report",
@@ -118,6 +125,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "chart-no-axes-combined",
    "indent": 0,
    "keep_closed": 0,
    "label": "Project Forecast vs Actual",
@@ -129,6 +137,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "calendar-clock",
    "indent": 0,
    "keep_closed": 0,
    "label": "Renewals Window",
@@ -140,7 +149,7 @@
   {
    "child": 0,
    "collapsible": 1,
-   "icon": "layers",
+   "icon": "database",
    "indent": 0,
    "keep_closed": 0,
    "label": "Master Data",
@@ -151,6 +160,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "file-text",
    "indent": 0,
    "keep_closed": 0,
    "label": "Contracts",
@@ -162,6 +172,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "folder-kanban",
    "indent": 0,
    "keep_closed": 0,
    "label": "Projects",
@@ -173,6 +184,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "building-2",
    "indent": 0,
    "keep_closed": 0,
    "label": "Vendors",
@@ -184,6 +196,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "landmark",
    "indent": 0,
    "keep_closed": 0,
    "label": "Cost Centers",
@@ -195,6 +208,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "calendar",
    "indent": 0,
    "keep_closed": 0,
    "label": "Years",
@@ -206,7 +220,7 @@
   {
    "child": 0,
    "collapsible": 1,
-   "icon": "settings",
+   "icon": "panel-left-close",
    "indent": 0,
    "keep_closed": 0,
    "label": "System",
@@ -217,6 +231,7 @@
   {
    "child": 1,
    "collapsible": 1,
+   "icon": "settings",
    "indent": 0,
    "keep_closed": 0,
    "label": "Settings",

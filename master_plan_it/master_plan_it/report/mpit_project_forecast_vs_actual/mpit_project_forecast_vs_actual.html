@@ -22,9 +22,8 @@
         var visible_columns = [];
         for (var i = 0; i < cols.length; i++) {
             var col = cols[i] || {};
-            var fieldname = col.fieldname || "";
-            var is_hidden = !!(col.hidden || 0);
-            if (!is_hidden && (profile === "All" || selected_fieldnames.indexOf(fieldname) !== -1)) {
+            if (col.hidden) continue;
+            if (profile === "All" || selected_fieldnames.indexOf(col.fieldname || "") !== -1) {
                 visible_columns.push(col);
             }
         }
@@ -32,18 +31,21 @@
         var page_orientation = "portrait";
         if (orientation === "Landscape") {
             page_orientation = "landscape";
-        } else if (orientation === "Auto" && visible_columns.length >= 8) {
-            page_orientation = "landscape";
+        } else if (orientation === "Auto") {
+            page_orientation = profile === "All" ? "landscape" : "portrait";
         }
 
         var font_size = "10px";
-        var cell_padding = "6px";
+        var cell_padding = "7px 8px";
+        var card_value_size = "16px";
         if (density === "Compact") {
             font_size = "9px";
-            cell_padding = "4px";
+            cell_padding = "5px 6px";
+            card_value_size = "14px";
         } else if (density === "Ultra") {
             font_size = "8px";
-            cell_padding = "3px";
+            cell_padding = "4px 5px";
+            card_value_size = "13px";
         }
 
         function esc(value) {
@@ -54,6 +56,11 @@
                 .replace(/>/g, "&gt;")
                 .replace(/\"/g, "&quot;")
                 .replace(/'/g, "&#39;");
+        }
+
+        function asNumber(value) {
+            var n = parseFloat(value);
+            return isNaN(n) ? 0 : n;
         }
 
         function isNumericField(fieldtype) {
@@ -70,23 +77,18 @@
         }
 
         function formatCellValue(row, col) {
-            var fieldname = col.fieldname || "";
-            var fieldtype = col.fieldtype || "Data";
-            var value = row[fieldname];
+            var value = row[col.fieldname || ""];
+            if (value === null || value === undefined || value === "") return "";
 
-            if (value === null || value === undefined || value === "") {
-                return "";
-            }
-
-            if (fieldtype === "Date") {
+            if (col.fieldtype === "Date") {
                 return formatDate(value);
             }
 
-            if (fieldtype === "Check") {
+            if (col.fieldtype === "Check") {
                 return value ? __("Yes") : __("No");
             }
 
-            if (isNumericField(fieldtype)) {
+            if (isNumericField(col.fieldtype)) {
                 try {
                     return frappe.format(value, col, { always_show_decimals: true });
                 } catch (e) {
@@ -95,6 +97,41 @@
             }
 
             return esc(value);
+        }
+
+        function formatCurrency(value) {
+            try {
+                return frappe.format(value, { fieldtype: "Currency" }, { always_show_decimals: true });
+            } catch (e) {
+                return esc(value);
+            }
+        }
+
+        function columnWidth(fieldname) {
+            if (fieldname === "project") return "14%";
+            if (fieldname === "title") return "24%";
+            if (fieldname === "cost_center") return "14%";
+            if (fieldname === "forecast") return "12%";
+            if (fieldname === "actual") return "12%";
+            if (fieldname === "variance") return "12%";
+            if (fieldname === "variance_pct") return "12%";
+            return "auto";
+        }
+
+        function varianceClass(value) {
+            var n = asNumber(value);
+            if (n > 0) return "variance-pos";
+            if (n < 0) return "variance-neg";
+            return "";
+        }
+
+        var forecast_total = 0;
+        var actual_total = 0;
+        var variance_total = 0;
+        for (var r = 0; r < rows.length; r++) {
+            forecast_total += asNumber(rows[r].forecast);
+            actual_total += asNumber(rows[r].actual);
+            variance_total += asNumber(rows[r].variance);
         }
 
         var filter_fields = [
@@ -110,16 +147,16 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            font-family: "Helvetica Neue", Arial, sans-serif;
             font-size: {%= font_size %};
             color: #111827;
-            margin: 0;
             -webkit-print-color-adjust: exact;
             print-color-adjust: exact;
         }
 
         .report-shell {
-            padding: 8px 10px;
+            padding: 7px 8px;
         }
 
         .report-header {
@@ -127,106 +164,128 @@
             justify-content: space-between;
             align-items: flex-start;
             gap: 12px;
-            border-bottom: 2px solid #1f2937;
-            padding-bottom: 10px;
-            margin-bottom: 12px;
+            border-bottom: 1.5px solid #111827;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .report-title {
             margin: 0;
-            font-size: 22px;
-            line-height: 1.15;
+            font-size: 20px;
+            line-height: 1.2;
             font-weight: 700;
-            color: #111827;
         }
 
         .report-subtitle {
-            margin-top: 4px;
-            color: #6b7280;
+            margin-top: 2px;
+            color: #4b5563;
             font-size: 11px;
         }
 
         .report-meta {
             text-align: right;
+            color: #4b5563;
             font-size: 11px;
-            color: #6b7280;
             white-space: nowrap;
         }
 
         .filters-box {
-            margin-bottom: 12px;
-            padding: 8px 10px;
-            border: 1px solid #e5e7eb;
-            background: #f9fafb;
-            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: #f8fafc;
+            border-radius: 4px;
+            padding: 6px 8px;
+            margin-bottom: 10px;
         }
 
         .filters-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: #374151;
-            margin-bottom: 6px;
+            margin: 0 0 5px 0;
+            font-size: 10px;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            color: #4b5563;
+            font-weight: 700;
         }
 
         .filter-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px 16px;
+            gap: 4px 14px;
         }
 
         .filter-item {
             font-size: 11px;
-            color: #374151;
+            color: #1f2937;
         }
 
-        .filter-item strong {
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .summary-card {
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 7px 8px;
+            background: #ffffff;
+        }
+
+        .summary-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7280;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .summary-value {
+            font-size: {%= card_value_size %};
+            font-weight: 700;
+            line-height: 1.2;
             color: #111827;
+            white-space: nowrap;
         }
 
-        .warning-banner {
-            margin-bottom: 12px;
-            padding: 8px 10px;
-            border: 1px solid #fde68a;
-            background: #fffbeb;
-            color: #92400e;
-            border-radius: 6px;
-            font-size: 11px;
-        }
-
-        table.report-table {
+        .matrix-table {
             width: 100%;
             border-collapse: collapse;
-            table-layout: fixed;
         }
 
-        .report-table thead {
+        .matrix-table thead {
             display: table-header-group;
         }
 
-        .report-table th {
-            border: 1px solid #d1d5db;
+        .matrix-table th {
+            border: 1px solid #cbd5e1;
             background: #f3f4f6;
             color: #111827;
             font-weight: 700;
             text-align: left;
             padding: {%= cell_padding %};
-            vertical-align: top;
-            overflow-wrap: anywhere;
-            white-space: normal;
+            vertical-align: middle;
+            white-space: nowrap;
+            word-break: normal;
+            overflow-wrap: normal;
         }
 
-        .report-table td {
-            border: 1px solid #e5e7eb;
+        .matrix-table td {
+            border: 1px solid #e2e8f0;
             padding: {%= cell_padding %};
-            vertical-align: top;
-            overflow-wrap: anywhere;
-            white-space: normal;
+            vertical-align: middle;
+            white-space: nowrap;
+            word-break: normal;
+            overflow-wrap: normal;
         }
 
-        .report-table tbody tr:nth-child(even) {
+        .matrix-table tbody tr:nth-child(even) {
             background: #fafafa;
+        }
+
+        .matrix-table td.text-col {
+            white-space: normal;
+            overflow-wrap: break-word;
         }
 
         .text-right {
@@ -237,12 +296,28 @@
             text-align: center;
         }
 
+        .variance-pos {
+            border-left: 2px solid #9ca3af;
+            font-weight: 700;
+        }
+
+        .variance-neg {
+            border-left: 2px solid #374151;
+            font-weight: 700;
+        }
+
+        .totals-row td {
+            border-top: 2px solid #9ca3af;
+            background: #f8fafc;
+            font-weight: 700;
+        }
+
         .footer {
-            margin-top: 12px;
-            padding-top: 8px;
-            border-top: 1px solid #e5e7eb;
+            margin-top: 10px;
+            padding-top: 6px;
+            border-top: 1px solid #d1d5db;
             font-size: 11px;
-            color: #6b7280;
+            color: #4b5563;
             text-align: right;
         }
     </style>
@@ -252,7 +327,7 @@
         <div class="report-header">
             <div>
                 <h1 class="report-title">{%= __("MPIT Project Forecast vs Actual") %}</h1>
-                <div class="report-subtitle">{%= __("Project variance overview") %}</div>
+                <div class="report-subtitle">{%= __("Management comparison by project") %}</div>
             </div>
             <div class="report-meta">
                 <div><strong>{%= __("Generated") %}:</strong> {%= frappe.datetime.str_to_user(frappe.datetime.get_today()) %}</div>
@@ -273,17 +348,37 @@
             </div>
         </div>
 
-        {% if (visible_columns.length > 10) { %}
-            <div class="warning-banner">
-                {%= __("Many columns detected. For better readability, consider using Compact profile, Landscape orientation, or export to Excel/CSV.") %}
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Projects") %}</div>
+                <div class="summary-value">{%= esc(rows.length) %}</div>
             </div>
-        {% } %}
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Forecast Total") %}</div>
+                <div class="summary-value">{%= formatCurrency(forecast_total) %}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Actual Total") %}</div>
+                <div class="summary-value">{%= formatCurrency(actual_total) %}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Variance Total") %}</div>
+                <div class="summary-value">{%= formatCurrency(variance_total) %}</div>
+            </div>
+        </div>
 
-        <table class="report-table">
+        <table class="matrix-table">
+            <colgroup>
+                {% for (var c = 0; c < visible_columns.length; c++) { var col = visible_columns[c]; %}
+                    <col style="width: {%= columnWidth(col.fieldname || '') %};">
+                {% } %}
+            </colgroup>
             <thead>
                 <tr>
                     {% for (var c = 0; c < visible_columns.length; c++) { var col = visible_columns[c]; %}
-                        <th class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">{%= esc(__(col.label || col.fieldname || "")) %}</th>
+                        <th class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">
+                            {%= esc(__(col.label || col.fieldname || "")) %}
+                        </th>
                     {% } %}
                 </tr>
             </thead>
@@ -291,8 +386,10 @@
                 {% if (rows.length) { %}
                     {% for (var r = 0; r < rows.length; r++) { var row = rows[r] || {}; %}
                         <tr>
-                            {% for (var c = 0; c < visible_columns.length; c++) { var col = visible_columns[c]; %}
-                                <td class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">{%= formatCellValue(row, col) %}</td>
+                            {% for (var c = 0; c < visible_columns.length; c++) { var col = visible_columns[c]; var fieldname = col.fieldname || ""; %}
+                                <td class="{%= (isNumericField(col.fieldtype) ? 'text-right ' : '') + ((fieldname === 'title') ? 'text-col ' : '') + ((fieldname === 'variance') ? varianceClass(row.variance) : '') + ((fieldname === 'variance_pct') ? varianceClass(row.variance_pct) : '') %}">
+                                    {%= formatCellValue(row, col) %}
+                                </td>
                             {% } %}
                         </tr>
                     {% } %}
@@ -302,9 +399,30 @@
                     </tr>
                 {% } %}
             </tbody>
+            {% if (rows.length) { %}
+                <tfoot>
+                    <tr class="totals-row">
+                        {% for (var c = 0; c < visible_columns.length; c++) { var col = visible_columns[c]; %}
+                            <td class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">
+                                {% if (c === 0) { %}
+                                    {%= __("Totals") %}
+                                {% } else if (col.fieldname === "forecast") { %}
+                                    {%= formatCurrency(forecast_total) %}
+                                {% } else if (col.fieldname === "actual") { %}
+                                    {%= formatCurrency(actual_total) %}
+                                {% } else if (col.fieldname === "variance") { %}
+                                    {%= formatCurrency(variance_total) %}
+                                {% } %}
+                            </td>
+                        {% } %}
+                    </tr>
+                </tfoot>
+            {% } %}
         </table>
 
-        <div class="footer">{%= __("Rows") %}: {%= esc(rows.length) %}</div>
+        <div class="footer">
+            {%= __("Rows") %}: {%= esc(rows.length) %}
+        </div>
     </div>
 </body>
 </html>

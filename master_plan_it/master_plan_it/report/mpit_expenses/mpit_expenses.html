@@ -6,49 +6,30 @@
     {%
         var f = filters || {};
         var rows = data || [];
-        var cols = columns || [];
 
         var profile = String(f.print_profile || "Standard");
         var orientation = String(f.print_orientation || "Auto");
         var density = String(f.print_density || "Normal");
 
-        var profile_columns = {
-            Standard: [
-                "expense", "title", "kind", "year", "cost_center", "funding", "forecast", "actual", "workflow_state"
-            ],
-            Compact: [
-                "expense", "title", "kind", "forecast", "actual", "workflow_state"
-            ],
-            All: []
-        };
-
-        var selected_fieldnames = profile_columns[profile] || [];
-        var visible_columns = [];
-        for (var i = 0; i < cols.length; i++) {
-            var col = cols[i] || {};
-            var fieldname = col.fieldname || "";
-            var is_hidden = !!(col.hidden || 0);
-            if (!is_hidden && (profile === "All" || selected_fieldnames.indexOf(fieldname) !== -1)) {
-                visible_columns.push(col);
-            }
-        }
-
         var page_orientation = "portrait";
         if (orientation === "Landscape") {
             page_orientation = "landscape";
-        } else if (orientation === "Auto" && visible_columns.length >= 8) {
-            page_orientation = "landscape";
+        } else if (orientation === "Portrait") {
+            page_orientation = "portrait";
         }
 
         var font_size = "10px";
-        var cell_padding = "6px";
+        var block_padding = "7px 8px";
         if (density === "Compact") {
             font_size = "9px";
-            cell_padding = "4px";
+            block_padding = "6px 7px";
         } else if (density === "Ultra") {
             font_size = "8px";
-            cell_padding = "3px";
+            block_padding = "5px 6px";
         }
+
+        var is_compact = profile === "Compact";
+        var is_all = profile === "All";
 
         function esc(value) {
             if (value === null || value === undefined) return "";
@@ -60,51 +41,95 @@
                 .replace(/'/g, "&#39;");
         }
 
-        function isNumericField(fieldtype) {
-            return ["Currency", "Float", "Int", "Percent"].indexOf(fieldtype || "") !== -1;
+        function asNumber(value) {
+            var n = parseFloat(value);
+            return isNaN(n) ? 0 : n;
         }
 
-        function formatDate(value) {
-            if (!value) return "";
+        function formatCurrency(value) {
             try {
-                return frappe.datetime.str_to_user(value);
+                return frappe.format(value || 0, { fieldtype: "Currency" }, { always_show_decimals: true });
             } catch (e) {
-                return esc(value);
+                return esc(value || 0);
             }
         }
 
-        function formatCellValue(row, col) {
-            var fieldname = col.fieldname || "";
-            var fieldtype = col.fieldtype || "Data";
-            var value = row[fieldname];
-
-            if (value === null || value === undefined || value === "") {
-                return "";
-            }
-
-            if (fieldtype === "Date") {
-                return formatDate(value);
-            }
-
-            if (fieldtype === "Check") {
-                return value ? __("Yes") : __("No");
-            }
-
-            if (isNumericField(fieldtype)) {
-                try {
-                    return frappe.format(value, col, { always_show_decimals: true });
-                } catch (e) {
-                    return esc(value);
-                }
-            }
-
+        function valueOrDash(value) {
+            if (value === null || value === undefined || value === "") return " - ";
             return esc(value);
         }
 
-        function formatFilterValue(fieldname, value) {
-            if (value === null || value === undefined || value === "") return "";
-            if (fieldname === "year") return esc(value);
-            return esc(value);
+        function compareText(a, b) {
+            var aa = String(a || "").toLowerCase();
+            var bb = String(b || "").toLowerCase();
+            if (aa < bb) return -1;
+            if (aa > bb) return 1;
+            return 0;
+        }
+
+        function sortRows(list) {
+            return (list || []).slice().sort(function (a, b) {
+                return (
+                    compareText(a.cost_center, b.cost_center) ||
+                    compareText(a.expense, b.expense) ||
+                    compareText(a.title, b.title) ||
+                    compareText(a.kind, b.kind)
+                );
+            });
+        }
+
+        var sorted_rows = sortRows(rows);
+        var distinct_centers_map = {};
+        for (var i = 0; i < sorted_rows.length; i++) {
+            var cc_key = sorted_rows[i].cost_center || "__single__";
+            distinct_centers_map[cc_key] = 1;
+        }
+        var distinct_centers = Object.keys(distinct_centers_map);
+        var use_cost_center_sections = distinct_centers.length > 1;
+
+        var sections_map = {};
+        for (var j = 0; j < sorted_rows.length; j++) {
+            var row = sorted_rows[j] || {};
+            var section_key = use_cost_center_sections ? (row.cost_center || __("Unassigned Cost Center")) : "__single__";
+            if (!sections_map[section_key]) {
+                sections_map[section_key] = {
+                    key: section_key,
+                    label: use_cost_center_sections ? section_key : (row.cost_center || __("Expenses")),
+                    rows: [],
+                    forecast_total: 0,
+                    actual_total: 0
+                };
+            }
+            sections_map[section_key].rows.push(row);
+            sections_map[section_key].forecast_total += asNumber(row.forecast);
+            sections_map[section_key].actual_total += asNumber(row.actual);
+        }
+
+        var section_keys = Object.keys(sections_map).sort(compareText);
+        var sections = [];
+        for (var s = 0; s < section_keys.length; s++) {
+            sections.push(sections_map[section_keys[s]]);
+        }
+
+        var total_forecast = 0;
+        var total_actual = 0;
+        for (var t = 0; t < rows.length; t++) {
+            total_forecast += asNumber(rows[t].forecast);
+            total_actual += asNumber(rows[t].actual);
+        }
+
+        function stateClass(value) {
+            var v = String(value || "").toLowerCase();
+            if (v === "closed") return "chip chip-strong";
+            if (v === "cancelled") return "chip chip-alert";
+            return "chip";
+        }
+
+        function fundingClass(value) {
+            var v = String(value || "").toLowerCase();
+            if (v === "extra") return "chip chip-alert";
+            if (v === "on plafond") return "chip chip-strong";
+            return "chip";
         }
 
         var filter_fields = [
@@ -124,16 +149,14 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            margin: 0;
+            font-family: "Helvetica Neue", Arial, sans-serif;
             font-size: {%= font_size %};
             color: #111827;
-            margin: 0;
-            -webkit-print-color-adjust: exact;
-            print-color-adjust: exact;
         }
 
         .report-shell {
-            padding: 8px 10px;
+            padding: 7px 8px;
         }
 
         .report-header {
@@ -141,122 +164,199 @@
             justify-content: space-between;
             align-items: flex-start;
             gap: 12px;
-            border-bottom: 2px solid #1f2937;
-            padding-bottom: 10px;
-            margin-bottom: 12px;
+            border-bottom: 1.5px solid #111827;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
         }
 
         .report-title {
             margin: 0;
-            font-size: 22px;
-            line-height: 1.15;
+            font-size: 20px;
+            line-height: 1.2;
             font-weight: 700;
-            color: #111827;
         }
 
         .report-subtitle {
-            margin-top: 4px;
-            color: #6b7280;
+            margin-top: 2px;
+            color: #4b5563;
             font-size: 11px;
         }
 
         .report-meta {
             text-align: right;
+            color: #4b5563;
             font-size: 11px;
-            color: #6b7280;
             white-space: nowrap;
         }
 
         .filters-box {
-            margin-bottom: 12px;
-            padding: 8px 10px;
-            border: 1px solid #e5e7eb;
-            background: #f9fafb;
-            border-radius: 6px;
+            border: 1px solid #d1d5db;
+            background: #f8fafc;
+            border-radius: 4px;
+            padding: 6px 8px;
+            margin-bottom: 10px;
         }
 
         .filters-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: #374151;
-            margin-bottom: 6px;
+            margin: 0 0 5px 0;
+            font-size: 10px;
+            letter-spacing: 0.05em;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
+            color: #4b5563;
+            font-weight: 700;
         }
 
         .filter-list {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px 16px;
+            gap: 4px 14px;
         }
 
         .filter-item {
             font-size: 11px;
-            color: #374151;
+            color: #1f2937;
         }
 
-        .filter-item strong {
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .summary-card {
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 7px 8px;
+            background: #ffffff;
+        }
+
+        .summary-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7280;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .summary-value {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #111827;
+            white-space: nowrap;
+        }
+
+        .section {
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+
+        .section-header {
+            border-top: 1px solid #9ca3af;
+            border-bottom: 1px solid #d1d5db;
+            padding: 5px 0;
+            margin-bottom: 7px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
             color: #111827;
         }
 
-        .warning-banner {
-            margin-bottom: 12px;
-            padding: 8px 10px;
-            border: 1px solid #fde68a;
-            background: #fffbeb;
-            color: #92400e;
-            border-radius: 6px;
+        .section-meta {
             font-size: 11px;
+            color: #4b5563;
+            white-space: nowrap;
         }
 
-        table.report-table {
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }
-
-        .report-table thead {
-            display: table-header-group;
-        }
-
-        .report-table th {
+        .entry {
             border: 1px solid #d1d5db;
-            background: #f3f4f6;
+            border-radius: 4px;
+            padding: {%= block_padding %};
+            margin-bottom: 7px;
+            background: #fff;
+            page-break-inside: avoid;
+        }
+
+        .entry-primary {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .entry-id {
+            font-weight: 700;
+            color: #111827;
+            white-space: nowrap;
+        }
+
+        .entry-title {
+            margin-top: 1px;
+            color: #1f2937;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+
+        .entry-values {
+            text-align: right;
+            white-space: nowrap;
+            min-width: 210px;
+        }
+
+        .entry-value-line {
+            font-size: 11px;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+
+        .entry-meta {
+            margin-top: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 12px;
+            color: #4b5563;
+            font-size: 11px;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+
+        .chip {
+            display: inline-block;
+            border: 1px solid #9ca3af;
+            border-radius: 12px;
+            padding: 1px 7px;
+            font-size: 10px;
+            line-height: 1.4;
+            color: #374151;
+            white-space: nowrap;
+        }
+
+        .chip-strong {
+            border-color: #4b5563;
             color: #111827;
             font-weight: 700;
-            text-align: left;
-            padding: {%= cell_padding %};
-            vertical-align: top;
-            overflow-wrap: anywhere;
-            white-space: normal;
         }
 
-        .report-table td {
-            border: 1px solid #e5e7eb;
-            padding: {%= cell_padding %};
-            vertical-align: top;
-            overflow-wrap: anywhere;
-            white-space: normal;
-        }
-
-        .report-table tbody tr:nth-child(even) {
-            background: #fafafa;
-        }
-
-        .text-right {
-            text-align: right;
-        }
-
-        .text-center {
-            text-align: center;
+        .chip-alert {
+            border-color: #111827;
+            color: #111827;
+            font-weight: 700;
         }
 
         .footer {
-            margin-top: 12px;
-            padding-top: 8px;
-            border-top: 1px solid #e5e7eb;
+            margin-top: 10px;
+            padding-top: 6px;
+            border-top: 1px solid #d1d5db;
             font-size: 11px;
-            color: #6b7280;
+            color: #4b5563;
             text-align: right;
         }
     </style>
@@ -266,7 +366,7 @@
         <div class="report-header">
             <div>
                 <h1 class="report-title">{%= __("MPIT Expenses") %}</h1>
-                <div class="report-subtitle">{%= __("Expense list") %}</div>
+                <div class="report-subtitle">{%= __("Grouped expense ledger for print") %}</div>
             </div>
             <div class="report-meta">
                 <div><strong>{%= __("Generated") %}:</strong> {%= frappe.datetime.str_to_user(frappe.datetime.get_today()) %}</div>
@@ -281,44 +381,82 @@
             <div class="filter-list">
                 {% for (var i = 0; i < filter_fields.length; i++) { var def = filter_fields[i]; var v = f[def.fieldname]; %}
                     {% if (v !== undefined && v !== null && v !== "") { %}
-                        <div class="filter-item"><strong>{%= esc(def.label) %}:</strong> {%= formatFilterValue(def.fieldname, v) %}</div>
+                        <div class="filter-item"><strong>{%= esc(def.label) %}:</strong> {%= esc(v) %}</div>
                     {% } %}
                 {% } %}
             </div>
         </div>
 
-        {% if (visible_columns.length > 10) { %}
-            <div class="warning-banner">
-                {%= __("Many columns detected. For better readability, consider using Compact profile, Landscape orientation, or export to Excel/CSV.") %}
+        <div class="summary-grid">
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Expense Rows") %}</div>
+                <div class="summary-value">{%= esc(rows.length) %}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Cost Centers") %}</div>
+                <div class="summary-value">{%= esc(distinct_centers.length || 0) %}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Forecast Total") %}</div>
+                <div class="summary-value">{%= formatCurrency(total_forecast) %}</div>
+            </div>
+            <div class="summary-card">
+                <div class="summary-label">{%= __("Actual Total") %}</div>
+                <div class="summary-value">{%= formatCurrency(total_actual) %}</div>
+            </div>
+        </div>
+
+        {% if (!sections.length) { %}
+            <div class="entry">{%= __("No data available") %}</div>
+        {% } %}
+
+        {% for (var s = 0; s < sections.length; s++) { var section = sections[s]; %}
+            <div class="section">
+                <div class="section-header">
+                    <div class="section-title">{%= esc(section.label) %}</div>
+                    <div class="section-meta">
+                        {%= __("Rows") %}: {%= esc(section.rows.length) %} |
+                        {%= __("Forecast") %}: {%= formatCurrency(section.forecast_total) %} |
+                        {%= __("Actual") %}: {%= formatCurrency(section.actual_total) %}
+                    </div>
+                </div>
+
+                {% for (var r = 0; r < section.rows.length; r++) { var row = section.rows[r] || {}; %}
+                    <div class="entry">
+                        <div class="entry-primary">
+                            <div>
+                                <div class="entry-id">{%= valueOrDash(row.expense) %}</div>
+                                <div class="entry-title">{%= valueOrDash(row.title) %}</div>
+                            </div>
+                            <div class="entry-values">
+                                <div class="entry-value-line"><strong>{%= __("Forecast") %}:</strong> {%= formatCurrency(row.forecast) %}</div>
+                                <div class="entry-value-line"><strong>{%= __("Actual") %}:</strong> {%= formatCurrency(row.actual) %}</div>
+                                <div class="entry-value-line"><strong>{%= __("Year") %}:</strong> {%= valueOrDash(row.year) %}</div>
+                                <div class="entry-value-line"><span class="{%= stateClass(row.workflow_state) %}">{%= valueOrDash(row.workflow_state) %}</span></div>
+                            </div>
+                        </div>
+
+                        <div class="entry-meta">
+                            <span><strong>{%= __("Kind") %}:</strong> {%= valueOrDash(row.kind) %}</span>
+                            <span><strong>{%= __("Funding") %}:</strong> <span class="{%= fundingClass(row.funding) %}">{%= valueOrDash(row.funding) %}</span></span>
+                            {% if (!is_compact) { %}
+                                <span><strong>{%= __("Project") %}:</strong> {%= valueOrDash(row.project) %}</span>
+                                <span><strong>{%= __("Contract") %}:</strong> {%= valueOrDash(row.contract) %}</span>
+                            {% } %}
+                            {% if (is_all) { %}
+                                <span><strong>{%= __("Cost Center") %}:</strong> {%= valueOrDash(row.cost_center) %}</span>
+                            {% } %}
+                        </div>
+                    </div>
+                {% } %}
             </div>
         {% } %}
 
-        <table class="report-table">
-            <thead>
-                <tr>
-                    {% for (var c = 0; c < visible_columns.length; c++) { var col = visible_columns[c]; %}
-                        <th class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">{%= esc(__(col.label || col.fieldname || "")) %}</th>
-                    {% } %}
-                </tr>
-            </thead>
-            <tbody>
-                {% if (rows.length) { %}
-                    {% for (var r = 0; r < rows.length; r++) { var row = rows[r] || {}; %}
-                        <tr>
-                            {% for (var c = 0; c < visible_columns.length; c++) { var col = visible_columns[c]; %}
-                                <td class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">{%= formatCellValue(row, col) %}</td>
-                            {% } %}
-                        </tr>
-                    {% } %}
-                {% } else { %}
-                    <tr>
-                        <td colspan="{%= visible_columns.length || 1 %}" class="text-center">{%= __("No data available") %}</td>
-                    </tr>
-                {% } %}
-            </tbody>
-        </table>
-
-        <div class="footer">{%= __("Rows") %}: {%= esc(rows.length) %}</div>
+        <div class="footer">
+            {%= __("Rows") %}: {%= esc(rows.length) %} |
+            {%= __("Forecast") %}: {%= formatCurrency(total_forecast) %} |
+            {%= __("Actual") %}: {%= formatCurrency(total_actual) %}
+        </div>
     </div>
 </body>
 </html>

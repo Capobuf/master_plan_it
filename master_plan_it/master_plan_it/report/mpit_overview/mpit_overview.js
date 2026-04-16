@@ -1,3 +1,31 @@
+const OVERVIEW_METRIC_FIELDS = new Set([
+    "forecast_contracts",
+    "forecast_estimate",
+    "forecast_quote",
+    "forecast_total",
+    "actual_on_plafond",
+    "actual_extra",
+    "actual_total",
+    "plafond",
+    "remaining",
+    "over",
+]);
+
+const OVERVIEW_TOTAL_FIELDS = new Set(["forecast_total", "actual_total"]);
+const OVERVIEW_MAIN_LABEL_FIELDS = new Set(["cost_center"]);
+
+function toNumericValue(value) {
+    if (value === null || value === undefined || value === "") {
+        return null;
+    }
+    const numeric = Number(value);
+    return Number.isFinite(numeric) ? numeric : null;
+}
+
+function withCellClass(content, classes) {
+    return `<span class="${classes}">${content}</span>`;
+}
+
 frappe.query_reports["MPIT Overview"] = {
     filters: [
         // ── Core context ──────────────────────────────────────────────
@@ -101,4 +129,47 @@ frappe.query_reports["MPIT Overview"] = {
             default: "Normal",
         },
     ],
+
+    get_datatable_options(options) {
+        return Object.assign({}, options, {
+            serialNoColumn: false,
+            layout: "fixed",
+        });
+    },
+
+    formatter(value, row, column, data, default_formatter) {
+        const formatted = default_formatter(value, row, column, data);
+        const fieldname = column?.fieldname;
+
+        if (!fieldname) {
+            return formatted;
+        }
+
+        if (OVERVIEW_MAIN_LABEL_FIELDS.has(fieldname)) {
+            return withCellClass(formatted, "fw-semibold");
+        }
+
+        if (!OVERVIEW_METRIC_FIELDS.has(fieldname)) {
+            return formatted;
+        }
+
+        const numericValue = toNumericValue(value);
+        if (numericValue === 0) {
+            return withCellClass(formatted, "text-muted");
+        }
+
+        if (fieldname === "remaining" && numericValue > 0) {
+            return withCellClass(formatted, "text-success fw-semibold");
+        }
+
+        if (fieldname === "over" && numericValue > 0) {
+            return withCellClass(formatted, "text-danger fw-semibold");
+        }
+
+        if (OVERVIEW_TOTAL_FIELDS.has(fieldname) || data?.bold) {
+            return withCellClass(formatted, "fw-semibold");
+        }
+
+        return formatted;
+    },
 };

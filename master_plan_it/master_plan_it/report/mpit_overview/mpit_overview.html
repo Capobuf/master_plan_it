@@ -1,613 +1,706 @@
 <!DOCTYPE html>
 <html>
 <head>
-	<meta charset="utf-8">
-
-	{%
-		/* Base context */
-		var f = filters || {};
-		var rows = data || [];
-		var cols = columns || [];
-
-		/* Print controls */
-		var view_mode = String(f.view_mode || "Summary");
-		var profile = String(f.print_profile || "Standard");
-		var orientation = String(f.print_orientation || "Auto");
-		var density = String(f.print_density || "Normal");
-
-		/* Column profiles by view mode */
-		var profile_columns;
-		if (view_mode === "Lines") {
-			profile_columns = {
-				Standard: [
-					"cost_center",
-					"source_type",
-					"source_document",
-					"contract",
-					"project",
-					"vendor",
-					"expense_phase",
-					"funding",
-					"annual_contribution_net",
-					"logical_state"
-				],
-				Compact: [
-					"cost_center",
-					"source_type",
-					"source_document",
-					"expense_phase",
-					"funding",
-					"annual_contribution_net"
-				],
-				All: []
-			};
-		} else {
-			profile_columns = {
-				Standard: [
-					"cost_center",
-					"forecast_contracts",
-					"forecast_total",
-					"actual_total",
-					"plafond",
-					"remaining",
-					"over"
-				],
-				Compact: [
-					"cost_center",
-					"forecast_total",
-					"actual_total",
-					"remaining"
-				],
-				All: []
-			};
-		}
-
-		var selected_fieldnames = profile_columns[profile] || [];
-
-		/* Keep only visible columns, then apply profile selection */
-		var visible_columns = [];
-		for (var i = 0; i < cols.length; i++) {
-			var col = cols[i] || {};
-			var fieldname = col.fieldname || "";
-			var is_hidden = !!(col.hidden || 0);
-
-			if (!is_hidden && (profile === "All" || selected_fieldnames.indexOf(fieldname) !== -1)) {
-				visible_columns.push(col);
-			}
-		}
-
-		/* Auto orientation */
-		var col_count = visible_columns.length;
-		var page_orientation = "portrait";
-		if (orientation === "Landscape") {
-			page_orientation = "landscape";
-		} else if (orientation === "Auto" && col_count >= 8) {
-			page_orientation = "landscape";
-		}
-
-		/* Density presets */
-		var font_size = "10px";
-		var cell_padding = "6px";
-		var summary_value_size = "18px";
-		if (density === "Compact") {
-			font_size = "9px";
-			cell_padding = "4px";
-			summary_value_size = "16px";
-		} else if (density === "Ultra") {
-			font_size = "8px";
-			cell_padding = "3px";
-			summary_value_size = "14px";
-		}
-
-		/* Helpers */
-		function esc(value) {
-			if (value === null || value === undefined) return "";
-			return String(value)
-				.replace(/&/g, "&amp;")
-				.replace(/</g, "&lt;")
-				.replace(/>/g, "&gt;")
-				.replace(/"/g, "&quot;")
-				.replace(/'/g, "&#39;");
-		}
-
-		function asNumber(value) {
-			var n = parseFloat(value);
-			return isNaN(n) ? 0 : n;
-		}
-
-		function isNumericField(fieldtype) {
-			return ["Currency", "Float", "Int", "Percent"].indexOf(fieldtype || "") !== -1;
-		}
-
-		function formatDateValue(value) {
-			if (!value) return "";
-			try {
-				return frappe.datetime.str_to_user(value);
-			} catch (e) {
-				return esc(value);
-			}
-		}
-
-		function formatCellValue(row, col) {
-			var fieldname = col.fieldname || "";
-			var fieldtype = col.fieldtype || "Data";
-			var value = row[fieldname];
-
-			if (value === null || value === undefined || value === "") {
-				return "";
-			}
-
-			if (fieldtype === "Date") {
-				return formatDateValue(value);
-			}
-
-			if (fieldtype === "Check") {
-				return value ? __("Yes") : __("No");
-			}
-
-			if (isNumericField(fieldtype)) {
-				try {
-					return frappe.format(value, col, { always_show_decimals: true });
-				} catch (e) {
-					return esc(value);
-				}
-			}
-
-			return esc(value);
-		}
-
-		function badgeClass(fieldname, value) {
-			var v = String(value || "").toLowerCase();
-
-			if (fieldname === "logical_state" || fieldname === "state" || fieldname === "status") {
-				if (v === "active" || v === "closed") return "badge badge-green";
-				if (v === "open") return "badge badge-blue";
-				if (v === "cancelled" || v === "replaced") return "badge badge-red";
-				return "badge badge-gray";
-			}
-
-			if (fieldname === "expense_phase") {
-				if (v === "actual") return "badge badge-blue";
-				if (v === "quote") return "badge badge-amber";
-				if (v === "estimate") return "badge badge-gray";
-				return "badge badge-gray";
-			}
-
-			if (fieldname === "funding") {
-				if (v === "on plafond") return "badge badge-green";
-				if (v === "extra") return "badge badge-red";
-				return "badge badge-gray";
-			}
-
-			if (fieldname === "source_type") {
-				return "badge badge-gray";
-			}
-
-			return "";
-		}
-
-		function formatMaybeBadge(row, col) {
-			var fieldname = col.fieldname || "";
-			var value = row[fieldname];
-
-			if (value === null || value === undefined || value === "") {
-				return "";
-			}
-
-			if (["logical_state", "state", "status", "expense_phase", "funding", "source_type"].indexOf(fieldname) !== -1) {
-				return '<span class="' + badgeClass(fieldname, value) + '">' + esc(value) + "</span>";
-			}
-
-			return formatCellValue(row, col);
-		}
-
-		function sumField(fieldname) {
-			var total = 0;
-			for (var i = 0; i < rows.length; i++) {
-				total += asNumber(rows[i][fieldname]);
-			}
-			return total;
-		}
-
-		function countDistinct(fieldname) {
-			var seen = {};
-			var count = 0;
-			for (var i = 0; i < rows.length; i++) {
-				var key = rows[i][fieldname];
-				if (!key) continue;
-				if (!seen[key]) {
-					seen[key] = true;
-					count++;
-				}
-			}
-			return count;
-		}
-
-		/* Summary cards computed only from fields available in current data */
-		var summary_cards = [];
-		if (view_mode === "Lines") {
-			summary_cards.push({
-				label: __("Total Lines"),
-				value: rows.length,
-				fieldtype: "Int"
-			});
-
-			if (rows.length && ("annual_contribution_net" in rows[0] || "annual_contribution" in rows[0])) {
-				summary_cards.push({
-					label: __("Annual Total"),
-					value: sumField("annual_contribution_net") || sumField("annual_contribution"),
-					fieldtype: "Currency"
-				});
-			}
-
-			if (countDistinct("cost_center")) {
-				summary_cards.push({
-					label: __("Cost Centers"),
-					value: countDistinct("cost_center"),
-					fieldtype: "Int"
-				});
-			}
-		} else {
-			if (rows.length && ("forecast_total" in rows[0])) {
-				summary_cards.push({
-					label: __("Forecast Total"),
-					value: sumField("forecast_total"),
-					fieldtype: "Currency"
-				});
-			}
-			if (rows.length && ("actual_total" in rows[0])) {
-				summary_cards.push({
-					label: __("Actual Total"),
-					value: sumField("actual_total"),
-					fieldtype: "Currency"
-				});
-			}
-			if (rows.length && ("plafond" in rows[0])) {
-				summary_cards.push({
-					label: __("Plafond"),
-					value: sumField("plafond"),
-					fieldtype: "Currency"
-				});
-			}
-			if (rows.length && ("remaining" in rows[0])) {
-				summary_cards.push({
-					label: __("Remaining"),
-					value: sumField("remaining"),
-					fieldtype: "Currency"
-				});
-			}
-			if (rows.length && ("over" in rows[0])) {
-				summary_cards.push({
-					label: __("Over"),
-					value: sumField("over"),
-					fieldtype: "Currency"
-				});
-			}
-			summary_cards.push({
-				label: __("Cost Centers"),
-				value: countDistinct("cost_center"),
-				fieldtype: "Int"
-			});
-		}
-
-		function formatSummaryValue(card) {
-			if (!card) return "";
-			if (card.fieldtype === "Currency") {
-				try {
-					return frappe.format(card.value, { fieldtype: "Currency" }, { always_show_decimals: true });
-				} catch (e) {
-					return esc(card.value);
-				}
-			}
-			return esc(card.value);
-		}
-	%}
-
-	<style>
-		@page {
-			size: A4 {%= page_orientation %};
-			margin: 10mm;
-		}
-
-		body {
-			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-			font-size: {%= font_size %};
-			color: #111827;
-			padding: 0;
-			margin: 0;
-			-webkit-print-color-adjust: exact;
-			print-color-adjust: exact;
-		}
-
-		.report-shell {
-			padding: 8px 10px;
-		}
-
-		.report-header {
-			display: flex;
-			justify-content: space-between;
-			align-items: flex-start;
-			gap: 12px;
-			border-bottom: 2px solid #1f2937;
-			padding-bottom: 10px;
-			margin-bottom: 12px;
-		}
-
-		.report-title {
-			margin: 0;
-			font-size: 22px;
-			line-height: 1.15;
-			font-weight: 700;
-			color: #111827;
-		}
-
-		.report-subtitle {
-			margin-top: 4px;
-			color: #6b7280;
-			font-size: 11px;
-		}
-
-		.report-meta {
-			text-align: right;
-			font-size: 11px;
-			color: #6b7280;
-			white-space: nowrap;
-		}
-
-		.filters-box {
-			margin-bottom: 12px;
-			padding: 8px 10px;
-			border: 1px solid #e5e7eb;
-			background: #f9fafb;
-			border-radius: 6px;
-		}
-
-		.filters-title {
-			font-size: 11px;
-			font-weight: 700;
-			color: #374151;
-			margin-bottom: 6px;
-			text-transform: uppercase;
-			letter-spacing: 0.04em;
-		}
-
-		.filter-list {
-			display: flex;
-			flex-wrap: wrap;
-			gap: 8px 16px;
-		}
-
-		.filter-item {
-			font-size: 11px;
-			color: #374151;
-		}
-
-		.filter-item strong {
-			color: #111827;
-		}
-
-		.summary-grid {
-			display: grid;
-			grid-template-columns: repeat(3, minmax(0, 1fr));
-			gap: 8px;
-			margin-bottom: 12px;
-		}
-
-		.summary-card {
-			border: 1px solid #e5e7eb;
-			border-radius: 8px;
-			padding: 10px 12px;
-			background: #ffffff;
-		}
-
-		.summary-label {
-			font-size: 11px;
-			font-weight: 600;
-			color: #6b7280;
-			text-transform: uppercase;
-			letter-spacing: 0.04em;
-			margin-bottom: 4px;
-		}
-
-		.summary-value {
-			font-size: {%= summary_value_size %};
-			font-weight: 700;
-			line-height: 1.2;
-			color: #111827;
-			white-space: nowrap;
-		}
-
-		.warning-banner {
-			margin-bottom: 12px;
-			padding: 8px 10px;
-			border: 1px solid #fde68a;
-			background: #fffbeb;
-			color: #92400e;
-			border-radius: 6px;
-			font-size: 11px;
-		}
-
-		table.report-table {
-			width: 100%;
-			border-collapse: collapse;
-			table-layout: fixed;
-		}
-
-		.report-table thead {
-			display: table-header-group;
-		}
-
-		.report-table th {
-			border: 1px solid #d1d5db;
-			background: #f3f4f6;
-			color: #111827;
-			font-weight: 700;
-			text-align: left;
-			padding: {%= cell_padding %};
-			vertical-align: top;
-			overflow-wrap: anywhere;
-			white-space: normal;
-		}
-
-		.report-table td {
-			border: 1px solid #e5e7eb;
-			padding: {%= cell_padding %};
-			vertical-align: top;
-			overflow-wrap: anywhere;
-			white-space: normal;
-		}
-
-		.report-table tbody tr:nth-child(even) {
-			background: #fafafa;
-		}
-
-		.text-right {
-			text-align: right;
-		}
-
-		.text-center {
-			text-align: center;
-		}
-
-		.badge {
-			display: inline-block;
-			padding: 2px 7px;
-			border-radius: 999px;
-			font-size: 10px;
-			font-weight: 700;
-			line-height: 1.4;
-			white-space: nowrap;
-		}
-
-		.badge-gray {
-			background: #f3f4f6;
-			color: #374151;
-		}
-
-		.badge-blue {
-			background: #dbeafe;
-			color: #1d4ed8;
-		}
-
-		.badge-green {
-			background: #dcfce7;
-			color: #166534;
-		}
-
-		.badge-amber {
-			background: #fef3c7;
-			color: #92400e;
-		}
-
-		.badge-red {
-			background: #fee2e2;
-			color: #991b1b;
-		}
-
-		.footer {
-			margin-top: 12px;
-			padding-top: 8px;
-			border-top: 1px solid #e5e7eb;
-			font-size: 11px;
-			color: #6b7280;
-			text-align: right;
-		}
-
-		@media print {
-			.summary-card,
-			.filters-box,
-			.warning-banner,
-			.report-table thead,
-			.report-table tbody tr:nth-child(even),
-			.badge {
-				-webkit-print-color-adjust: exact;
-				print-color-adjust: exact;
-			}
-		}
-	</style>
+    <meta charset="utf-8">
+
+    {%
+        var f = filters || {};
+        var rows = data || [];
+        var cols = columns || [];
+
+        var view_mode = String(f.view_mode || "Summary");
+        var profile = String(f.print_profile || "Standard");
+        var orientation = String(f.print_orientation || "Auto");
+        var density = String(f.print_density || "Normal");
+        var is_lines_mode = view_mode === "Lines";
+
+        var matrix_profile_columns = {
+            Standard: ["cost_center", "forecast_contracts", "forecast_total", "actual_total", "plafond", "remaining", "over"],
+            Compact: ["cost_center", "forecast_total", "actual_total", "remaining"],
+            All: []
+        };
+        var selected_matrix_fields = matrix_profile_columns[profile] || [];
+
+        var matrix_columns = [];
+        if (!is_lines_mode) {
+            for (var i = 0; i < cols.length; i++) {
+                var col = cols[i] || {};
+                var fieldname = col.fieldname || "";
+                if (col.hidden) continue;
+                if (profile === "All" || selected_matrix_fields.indexOf(fieldname) !== -1) {
+                    matrix_columns.push(col);
+                }
+            }
+        }
+
+        var page_orientation = "portrait";
+        if (orientation === "Landscape") {
+            page_orientation = "landscape";
+        } else if (orientation === "Portrait") {
+            page_orientation = "portrait";
+        } else if (!is_lines_mode) {
+            page_orientation = profile === "Compact" ? "portrait" : "landscape";
+        }
+
+        var font_size = "10px";
+        var cell_padding = "7px 8px";
+        var block_padding = "7px 8px";
+        if (density === "Compact") {
+            font_size = "9px";
+            cell_padding = "5px 6px";
+            block_padding = "6px 7px";
+        } else if (density === "Ultra") {
+            font_size = "8px";
+            cell_padding = "4px 5px";
+            block_padding = "5px 6px";
+        }
+
+        var is_compact = profile === "Compact";
+        var is_all = profile === "All";
+
+        function esc(value) {
+            if (value === null || value === undefined) return "";
+            return String(value)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
+        function asNumber(value) {
+            var n = parseFloat(value);
+            return isNaN(n) ? 0 : n;
+        }
+
+        function valueOrDash(value) {
+            if (value === null || value === undefined || value === "") return " - ";
+            return esc(value);
+        }
+
+        function compareText(a, b) {
+            var aa = String(a || "").toLowerCase();
+            var bb = String(b || "").toLowerCase();
+            if (aa < bb) return -1;
+            if (aa > bb) return 1;
+            return 0;
+        }
+
+        function isNumericField(fieldtype) {
+            return ["Currency", "Float", "Int", "Percent"].indexOf(fieldtype || "") !== -1;
+        }
+
+        function formatDate(value) {
+            if (!value) return " - ";
+            try {
+                return frappe.datetime.str_to_user(value);
+            } catch (e) {
+                return esc(value);
+            }
+        }
+
+        function formatCurrency(value) {
+            try {
+                return frappe.format(value || 0, { fieldtype: "Currency" }, { always_show_decimals: true });
+            } catch (e) {
+                return esc(value || 0);
+            }
+        }
+
+        function formatCellValue(row, col) {
+            var fieldname = col.fieldname || "";
+            var value = row[fieldname];
+
+            if (value === null || value === undefined || value === "") return "";
+
+            if (fieldname === "cost_center" && row.indent && row.indent > 0) {
+                return '<span class="cc-indent">' + esc(value) + "</span>";
+            }
+
+            if (col.fieldtype === "Date") {
+                return formatDate(value);
+            }
+
+            if (col.fieldtype === "Check") {
+                return value ? __("Yes") : __("No");
+            }
+
+            if (isNumericField(col.fieldtype)) {
+                try {
+                    return frappe.format(value, col, { always_show_decimals: true });
+                } catch (e) {
+                    return esc(value);
+                }
+            }
+
+            return esc(value);
+        }
+
+        function matrixColumnWidth(fieldname) {
+            if (fieldname === "cost_center") return "260px";
+            if (fieldname === "forecast_contracts") return "130px";
+            if (fieldname === "forecast_estimate") return "120px";
+            if (fieldname === "forecast_quote") return "120px";
+            if (fieldname === "forecast_total") return "130px";
+            if (fieldname === "actual_on_plafond") return "130px";
+            if (fieldname === "actual_extra") return "120px";
+            if (fieldname === "actual_total") return "120px";
+            if (fieldname === "plafond") return "110px";
+            if (fieldname === "remaining") return "115px";
+            if (fieldname === "over") return "100px";
+            return "auto";
+        }
+
+        function matrixRowClass(row) {
+            if (view_mode === "Build-up") {
+                if (row.bold || (!row.indent && row.indent !== 0)) return "matrix-row-header";
+                if (row.indent && row.indent > 0) return "matrix-row-detail";
+            }
+            return "";
+        }
+
+        var matrix_total_rows = rows;
+        if (view_mode === "Build-up") {
+            matrix_total_rows = [];
+            for (var m = 0; m < rows.length; m++) {
+                if ((rows[m].indent || 0) === 0) {
+                    matrix_total_rows.push(rows[m]);
+                }
+            }
+            if (!matrix_total_rows.length) {
+                matrix_total_rows = rows;
+            }
+        }
+
+        function sumField(list, fieldname) {
+            var total = 0;
+            for (var i2 = 0; i2 < (list || []).length; i2++) {
+                total += asNumber(list[i2][fieldname]);
+            }
+            return total;
+        }
+
+        function distinctCount(list, fieldname) {
+            var seen = {};
+            var count = 0;
+            for (var i3 = 0; i3 < (list || []).length; i3++) {
+                var key = list[i3][fieldname];
+                if (!key) continue;
+                if (!seen[key]) {
+                    seen[key] = 1;
+                    count++;
+                }
+            }
+            return count;
+        }
+
+        var summary_cards = [];
+        if (is_lines_mode) {
+            summary_cards.push({ label: __("Lines"), value: rows.length, is_currency: false });
+            summary_cards.push({ label: __("Cost Centers"), value: distinctCount(rows, "cost_center"), is_currency: false });
+            summary_cards.push({ label: __("Annual Total"), value: sumField(rows, "annual_contribution_net"), is_currency: true });
+            summary_cards.push({ label: __("Amount Net Total"), value: sumField(rows, "amount_net"), is_currency: true });
+        } else {
+            summary_cards.push({ label: __("Rows"), value: rows.length, is_currency: false });
+            summary_cards.push({ label: __("Forecast Total"), value: sumField(matrix_total_rows, "forecast_total"), is_currency: true });
+            summary_cards.push({ label: __("Actual Total"), value: sumField(matrix_total_rows, "actual_total"), is_currency: true });
+            summary_cards.push({ label: __("Remaining"), value: sumField(matrix_total_rows, "remaining"), is_currency: true });
+        }
+
+        function summaryValue(card) {
+            if (!card) return "";
+            return card.is_currency ? formatCurrency(card.value) : esc(card.value);
+        }
+
+        var lines_sections = [];
+        if (is_lines_mode) {
+            var sorted_rows = rows.slice().sort(function (a, b) {
+                return (
+                    compareText(a.cost_center, b.cost_center) ||
+                    compareText(a.source_type, b.source_type) ||
+                    compareText(a.source_document, b.source_document) ||
+                    compareText(a.source_row, b.source_row)
+                );
+            });
+
+            var sections_map = {};
+            for (var r = 0; r < sorted_rows.length; r++) {
+                var row = sorted_rows[r] || {};
+                var section_key = row.cost_center || __("Unassigned Cost Center");
+                if (!sections_map[section_key]) {
+                    sections_map[section_key] = {
+                        key: section_key,
+                        rows: [],
+                        annual_total: 0
+                    };
+                }
+                sections_map[section_key].rows.push(row);
+                sections_map[section_key].annual_total += asNumber(row.annual_contribution_net);
+            }
+
+            var section_keys = Object.keys(sections_map).sort(compareText);
+            for (var s = 0; s < section_keys.length; s++) {
+                lines_sections.push(sections_map[section_keys[s]]);
+            }
+        }
+
+        function stateChipClass(value) {
+            var v = String(value || "").toLowerCase();
+            if (v === "closed" || v === "active") return "chip chip-strong";
+            if (v === "cancelled" || v === "replaced") return "chip chip-alert";
+            return "chip";
+        }
+
+        function fundingChipClass(value) {
+            var v = String(value || "").toLowerCase();
+            if (v === "on plafond") return "chip chip-strong";
+            if (v === "extra") return "chip chip-alert";
+            return "chip";
+        }
+    %}
+
+    <style>
+        @page {
+            size: A4 {%= page_orientation %};
+            margin: 10mm;
+        }
+
+        body {
+            margin: 0;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+            font-size: {%= font_size %};
+            color: #111827;
+            -webkit-print-color-adjust: exact;
+            print-color-adjust: exact;
+        }
+
+        .report-shell {
+            padding: 7px 8px;
+        }
+
+        .report-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            border-bottom: 1.5px solid #111827;
+            padding-bottom: 8px;
+            margin-bottom: 10px;
+        }
+
+        .report-title {
+            margin: 0;
+            font-size: 20px;
+            line-height: 1.2;
+            font-weight: 700;
+        }
+
+        .report-subtitle {
+            margin-top: 2px;
+            color: #4b5563;
+            font-size: 11px;
+        }
+
+        .report-meta {
+            text-align: right;
+            color: #4b5563;
+            font-size: 11px;
+            white-space: nowrap;
+        }
+
+        .filters-box {
+            border: 1px solid #d1d5db;
+            background: #f8fafc;
+            border-radius: 4px;
+            padding: 6px 8px;
+            margin-bottom: 10px;
+        }
+
+        .filters-title {
+            margin: 0 0 5px 0;
+            font-size: 10px;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            color: #4b5563;
+            font-weight: 700;
+        }
+
+        .filter-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 14px;
+        }
+
+        .filter-item {
+            font-size: 11px;
+            color: #1f2937;
+        }
+
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 8px;
+            margin-bottom: 10px;
+        }
+
+        .summary-card {
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: 7px 8px;
+            background: #ffffff;
+        }
+
+        .summary-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #6b7280;
+            font-weight: 700;
+            margin-bottom: 3px;
+        }
+
+        .summary-value {
+            font-size: 15px;
+            font-weight: 700;
+            line-height: 1.2;
+            color: #111827;
+            white-space: nowrap;
+        }
+
+        .matrix-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .matrix-table thead {
+            display: table-header-group;
+        }
+
+        .matrix-table th {
+            border: 1px solid #cbd5e1;
+            background: #f3f4f6;
+            color: #111827;
+            font-weight: 700;
+            text-align: left;
+            padding: {%= cell_padding %};
+            vertical-align: middle;
+            white-space: nowrap;
+            word-break: normal;
+            overflow-wrap: normal;
+        }
+
+        .matrix-table td {
+            border: 1px solid #e2e8f0;
+            padding: {%= cell_padding %};
+            vertical-align: middle;
+            white-space: nowrap;
+            word-break: normal;
+            overflow-wrap: normal;
+        }
+
+        .matrix-table td.col-cost-center {
+            white-space: normal;
+            overflow-wrap: break-word;
+        }
+
+        .matrix-table tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .matrix-row-header td {
+            font-weight: 700;
+            background: #f8fafc;
+        }
+
+        .matrix-row-detail td {
+            color: #374151;
+        }
+
+        .cc-indent {
+            display: inline-block;
+            padding-left: 14px;
+        }
+
+        .totals-row td {
+            border-top: 2px solid #9ca3af;
+            background: #f8fafc;
+            font-weight: 700;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+
+        .lines-section {
+            margin-bottom: 12px;
+            page-break-inside: avoid;
+        }
+
+        .section-header {
+            border-top: 1px solid #9ca3af;
+            border-bottom: 1px solid #d1d5db;
+            padding: 5px 0;
+            margin-bottom: 7px;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .section-meta {
+            font-size: 11px;
+            color: #4b5563;
+            white-space: nowrap;
+        }
+
+        .line-entry {
+            border: 1px solid #d1d5db;
+            border-radius: 4px;
+            padding: {%= block_padding %};
+            margin-bottom: 7px;
+            background: #fff;
+            page-break-inside: avoid;
+        }
+
+        .line-primary {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 10px;
+        }
+
+        .line-main {
+            min-width: 0;
+        }
+
+        .line-id {
+            font-weight: 700;
+            color: #111827;
+            white-space: nowrap;
+        }
+
+        .line-title {
+            margin-top: 1px;
+            color: #1f2937;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+
+        .line-secondary {
+            margin-top: 6px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 4px 12px;
+            color: #4b5563;
+            font-size: 11px;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+
+        .line-values {
+            text-align: right;
+            white-space: nowrap;
+            min-width: 250px;
+        }
+
+        .line-value {
+            font-size: 11px;
+            color: #111827;
+            margin-bottom: 2px;
+        }
+
+        .chip {
+            display: inline-block;
+            border: 1px solid #9ca3af;
+            border-radius: 12px;
+            padding: 1px 7px;
+            font-size: 10px;
+            line-height: 1.4;
+            color: #374151;
+            white-space: nowrap;
+        }
+
+        .chip-strong {
+            border-color: #4b5563;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .chip-alert {
+            border-color: #111827;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .footer {
+            margin-top: 10px;
+            padding-top: 6px;
+            border-top: 1px solid #d1d5db;
+            font-size: 11px;
+            color: #4b5563;
+            text-align: right;
+        }
+    </style>
 </head>
 <body>
-	<div class="report-shell">
-		<div class="report-header">
-			<div>
-				<h1 class="report-title">{%= __("MPIT Overview") %}</h1>
-				<div class="report-subtitle">
-					{%= __("Budget-like annual overview") %} · {%= esc(view_mode) %}
-				</div>
-			</div>
-			<div class="report-meta">
-				<div><strong>{%= __("Generated") %}:</strong> {%= frappe.datetime.str_to_user(frappe.datetime.get_today()) %}</div>
-				<div><strong>{%= __("Profile") %}:</strong> {%= esc(profile) %}</div>
-				<div><strong>{%= __("Orientation") %}:</strong> {%= esc(page_orientation) %}</div>
-				<div><strong>{%= __("Density") %}:</strong> {%= esc(density) %}</div>
-			</div>
-		</div>
+    <div class="report-shell">
+        <div class="report-header">
+            <div>
+                <h1 class="report-title">{%= __("MPIT Overview") %}</h1>
+                <div class="report-subtitle">{%= __("Mode") %}: {%= esc(view_mode) %}</div>
+            </div>
+            <div class="report-meta">
+                <div><strong>{%= __("Generated") %}:</strong> {%= frappe.datetime.str_to_user(frappe.datetime.get_today()) %}</div>
+                <div><strong>{%= __("Profile") %}:</strong> {%= esc(profile) %}</div>
+                <div><strong>{%= __("Orientation") %}:</strong> {%= esc(page_orientation) %}</div>
+                <div><strong>{%= __("Density") %}:</strong> {%= esc(density) %}</div>
+            </div>
+        </div>
 
-		<div class="filters-box">
-			<div class="filters-title">{%= __("Applied Filters") %}</div>
-			<div class="filter-list">
-				{% if (f.year) { %}<div class="filter-item"><strong>{%= __("Year") %}:</strong> {%= esc(f.year) %}</div>{% } %}
-				{% if (f.cost_center) { %}<div class="filter-item"><strong>{%= __("Cost Center") %}:</strong> {%= esc(f.cost_center) %}</div>{% } %}
-				{% if (f.section_scope) { %}<div class="filter-item"><strong>{%= __("Section") %}:</strong> {%= esc(f.section_scope) %}</div>{% } %}
-				{% if (f.expense_phase && f.expense_phase !== "All") { %}<div class="filter-item"><strong>{%= __("Expense Phase") %}:</strong> {%= esc(f.expense_phase) %}</div>{% } %}
-				{% if (f.contract) { %}<div class="filter-item"><strong>{%= __("Contract") %}:</strong> {%= esc(f.contract) %}</div>{% } %}
-				{% if (f.project) { %}<div class="filter-item"><strong>{%= __("Project") %}:</strong> {%= esc(f.project) %}</div>{% } %}
-				{% if (f.vendor) { %}<div class="filter-item"><strong>{%= __("Vendor") %}:</strong> {%= esc(f.vendor) %}</div>{% } %}
-				{% if (f.show_zero_rows) { %}<div class="filter-item"><strong>{%= __("Show Zero Rows") %}:</strong> {%= __("Yes") %}</div>{% } %}
-			</div>
-		</div>
+        <div class="filters-box">
+            <div class="filters-title">{%= __("Applied Filters") %}</div>
+            <div class="filter-list">
+                {% if (f.year) { %}<div class="filter-item"><strong>{%= __("Year") %}:</strong> {%= esc(f.year) %}</div>{% } %}
+                {% if (f.cost_center) { %}<div class="filter-item"><strong>{%= __("Cost Center") %}:</strong> {%= esc(f.cost_center) %}</div>{% } %}
+                {% if (f.section_scope) { %}<div class="filter-item"><strong>{%= __("Section Scope") %}:</strong> {%= esc(f.section_scope) %}</div>{% } %}
+                {% if (f.expense_phase && f.expense_phase !== "All") { %}<div class="filter-item"><strong>{%= __("Expense Phase") %}:</strong> {%= esc(f.expense_phase) %}</div>{% } %}
+                {% if (f.contract) { %}<div class="filter-item"><strong>{%= __("Contract") %}:</strong> {%= esc(f.contract) %}</div>{% } %}
+                {% if (f.project) { %}<div class="filter-item"><strong>{%= __("Project") %}:</strong> {%= esc(f.project) %}</div>{% } %}
+                {% if (f.vendor) { %}<div class="filter-item"><strong>{%= __("Vendor") %}:</strong> {%= esc(f.vendor) %}</div>{% } %}
+                {% if (f.show_zero_rows) { %}<div class="filter-item"><strong>{%= __("Show Zero Rows") %}:</strong> {%= __("Yes") %}</div>{% } %}
+            </div>
+        </div>
 
-		{% if (summary_cards.length) { %}
-			<div class="summary-grid">
-				{% for (var s = 0; s < summary_cards.length; s++) { var card = summary_cards[s]; %}
-					<div class="summary-card">
-						<div class="summary-label">{%= esc(card.label) %}</div>
-						<div class="summary-value">{%= formatSummaryValue(card) %}</div>
-					</div>
-				{% } %}
-			</div>
-		{% } %}
+        <div class="summary-grid">
+            {% for (var sc = 0; sc < summary_cards.length; sc++) { var card = summary_cards[sc]; %}
+                <div class="summary-card">
+                    <div class="summary-label">{%= esc(card.label) %}</div>
+                    <div class="summary-value">{%= summaryValue(card) %}</div>
+                </div>
+            {% } %}
+        </div>
 
-		{% if (visible_columns.length > 10) { %}
-			<div class="warning-banner">
-				{%= __("Many columns detected. For better readability, consider using Compact profile, Landscape orientation, or export to Excel/CSV.") %}
-			</div>
-		{% } %}
+        {% if (!is_lines_mode) { %}
+            <table class="matrix-table">
+                <colgroup>
+                    {% for (var c = 0; c < matrix_columns.length; c++) { var col = matrix_columns[c]; %}
+                        <col style="width: {%= matrixColumnWidth(col.fieldname || '') %};">
+                    {% } %}
+                </colgroup>
+                <thead>
+                    <tr>
+                        {% for (var c = 0; c < matrix_columns.length; c++) { var col = matrix_columns[c]; %}
+                            <th class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">
+                                {%= esc(__(col.label || col.fieldname || "")) %}
+                            </th>
+                        {% } %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if (rows.length) { %}
+                        {% for (var r = 0; r < rows.length; r++) { var row = rows[r] || {}; %}
+                            <tr class="{%= matrixRowClass(row) %}">
+                                {% for (var c = 0; c < matrix_columns.length; c++) { var col = matrix_columns[c]; var fname = col.fieldname || ""; %}
+                                    <td class="{%= (isNumericField(col.fieldtype) ? 'text-right ' : '') + (fname === 'cost_center' ? 'col-cost-center' : '') %}">
+                                        {%= formatCellValue(row, col) %}
+                                    </td>
+                                {% } %}
+                            </tr>
+                        {% } %}
+                    {% } else { %}
+                        <tr>
+                            <td colspan="{%= matrix_columns.length || 1 %}" class="text-center">{%= __("No data available") %}</td>
+                        </tr>
+                    {% } %}
+                </tbody>
+                {% if (rows.length) { %}
+                    <tfoot>
+                        <tr class="totals-row">
+                            {% for (var c = 0; c < matrix_columns.length; c++) { var col = matrix_columns[c]; var field = col.fieldname || ""; %}
+                                <td class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">
+                                    {% if (c === 0) { %}
+                                        {%= __("Totals") %}
+                                    {% } else if (field === "forecast_contracts" || field === "forecast_estimate" || field === "forecast_quote" || field === "forecast_total" || field === "actual_on_plafond" || field === "actual_extra" || field === "actual_total" || field === "plafond" || field === "remaining" || field === "over") { %}
+                                        {%= formatCurrency(sumField(matrix_total_rows, field)) %}
+                                    {% } %}
+                                </td>
+                            {% } %}
+                        </tr>
+                    </tfoot>
+                {% } %}
+            </table>
+        {% } else { %}
+            {% if (!lines_sections.length) { %}
+                <div class="line-entry">{%= __("No data available") %}</div>
+            {% } %}
+            {% for (var s = 0; s < lines_sections.length; s++) { var section = lines_sections[s]; %}
+                <div class="lines-section">
+                    <div class="section-header">
+                        <div class="section-title">{%= esc(section.key) %}</div>
+                        <div class="section-meta">
+                            {%= __("Rows") %}: {%= esc(section.rows.length) %} |
+                            {%= __("Annual Total") %}: {%= formatCurrency(section.annual_total) %}
+                        </div>
+                    </div>
 
-		<table class="report-table">
-			<thead>
-				<tr>
-					{% for (var c = 0; c < visible_columns.length; c++) { var col = visible_columns[c]; %}
-						<th class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">
-							{%= esc(__(col.label || col.fieldname || "")) %}
-						</th>
-					{% } %}
-				</tr>
-			</thead>
-			<tbody>
-				{% if (rows.length) { %}
-					{% for (var r = 0; r < rows.length; r++) { var row = rows[r] || {}; %}
-						<tr>
-							{% for (var c = 0; c < visible_columns.length; c++) { var col = visible_columns[c]; %}
-								<td class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">
-									{%= formatMaybeBadge(row, col) %}
-								</td>
-							{% } %}
-						</tr>
-					{% } %}
-				{% } else { %}
-					<tr>
-						<td colspan="{%= visible_columns.length || 1 %}" class="text-center">
-							{%= __("No data available") %}
-						</td>
-					</tr>
-				{% } %}
-			</tbody>
-		</table>
+                    {% for (var r = 0; r < section.rows.length; r++) { var row = section.rows[r] || {}; %}
+                        <div class="line-entry">
+                            <div class="line-primary">
+                                <div class="line-main">
+                                    <div class="line-id">
+                                        {%= valueOrDash(row.source_type) %} |
+                                        {%= valueOrDash(row.source_document) %}
+                                        {% if (is_all && row.source_row) { %} | {%= esc(row.source_row) %}{% } %}
+                                    </div>
+                                    <div class="line-title">
+                                        <strong>{%= __("Vendor") %}:</strong> {%= valueOrDash(row.vendor) %}
+                                    </div>
+                                </div>
+                                <div class="line-values">
+                                    <div class="line-value"><strong>{%= __("Annual Contribution") %}:</strong> {%= formatCurrency(row.annual_contribution_net) %}</div>
+                                    <div class="line-value"><span class="{%= stateChipClass(row.logical_state) %}">{%= valueOrDash(row.logical_state) %}</span></div>
+                                </div>
+                            </div>
 
-		<div class="footer">
-			{%= __("Rows") %}: {%= esc(rows.length) %}
-		</div>
-	</div>
+                            <div class="line-secondary">
+                                {% if (!is_compact || is_all) { %}
+                                    <span><strong>{%= __("Contract") %}:</strong> {%= valueOrDash(row.contract) %}</span>
+                                    <span><strong>{%= __("Project") %}:</strong> {%= valueOrDash(row.project) %}</span>
+                                {% } %}
+                                <span><strong>{%= __("Phase") %}:</strong> {%= valueOrDash(row.expense_phase) %}</span>
+                                <span><strong>{%= __("Funding") %}:</strong> <span class="{%= fundingChipClass(row.funding) %}">{%= valueOrDash(row.funding) %}</span></span>
+                                {% if (!is_compact) { %}
+                                    <span><strong>{%= __("Period") %}:</strong> {%= formatDate(row.period_start) %} - {%= formatDate(row.period_end) %}</span>
+                                    <span><strong>{%= __("Spend Date") %}:</strong> {%= formatDate(row.spend_date) %}</span>
+                                {% } %}
+                                {% if (is_all) { %}
+                                    <span><strong>{%= __("Amount Net") %}:</strong> {%= formatCurrency(row.amount_net) %}</span>
+                                {% } %}
+                            </div>
+                        </div>
+                    {% } %}
+                </div>
+            {% } %}
+        {% } %}
+
+        <div class="footer">
+            {%= __("Rows") %}: {%= esc(rows.length) %}
+            {% if (is_lines_mode) { %}
+                | {%= __("Annual Total") %}: {%= formatCurrency(sumField(rows, "annual_contribution_net")) %}
+            {% } else { %}
+                | {%= __("Forecast Total") %}: {%= formatCurrency(sumField(matrix_total_rows, "forecast_total")) %}
+            {% } %}
+        </div>
+    </div>
 </body>
 </html>
