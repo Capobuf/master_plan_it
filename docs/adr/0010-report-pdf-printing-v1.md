@@ -132,10 +132,10 @@ Three reports used string-format columns (`"Label:Type:Width"`). These were conv
 
 ```python
 # Before
-columns = [_("Budget") + ":Link/MPIT Budget:180"]
+columns = [_("Budget") + ":Link/Legacy Budget DocType:180"]
 
 # After
-columns = [{"label": _("Budget"), "fieldname": "budget", "fieldtype": "Link", "options": "MPIT Budget", "width": 180}]
+columns = [{"label": _("Budget"), "fieldname": "budget", "fieldtype": "Link", "options": "Legacy Budget DocType", "width": 180}]
 ```
 
 This ensures `fieldname` is explicit and matches data keys, enabling reliable dynamic rendering.

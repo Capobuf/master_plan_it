@@ -2,26 +2,25 @@
 
 ## Frappe native tests (Python)
 
-Place tests anywhere in the app; filenames must start with `test_*.py`.
+Place tests in the app with filenames `test_*.py`.
 
 Run the full suite:
 ```bash
 bench --site <site> run-tests --app master_plan_it
 ```
 
-You can run narrower scopes too (examples):
+Run narrower scopes (examples):
 ```bash
-bench --site <site> run-tests --doctype "MPIT Budget"
-bench --site <site> run-tests --test "test_smoke"
+bench --site <site> run-tests --doctype "MPIT Expense"
+bench --site <site> run-tests --test "test_workspace_smoke"
 ```
 
-## UI coverage approach (no Cypress)
+## UI coverage approach
 
-We rely only on Frappe's native Python tests (including UI helpers) instead of Cypress. New UI flows should be exercised through server-side tests and page/doctype controllers, keeping fixtures in the app.
+Cypress smoke tests are supplementary. Core business behavior remains covered by Frappe-native tests.
 
-## What we test in V1
+## Minimum smoke expectations
 
-- Smoke: user can login and open MPIT workspace/pages
-- Smoke: create a Budget, move it through workflow, ensure status changes
-- Regression: permissions (Client Viewer can't edit, Client Editor can)
-- Regression: Actual Entry derives year from posting_date; Project cannot be approved without allocations
+- Workspace `Master Plan IT` is reachable.
+- `MPIT Overview` report is reachable from workspace navigation.
+- Core economic doctypes (Expense, Contract, Project) open correctly.

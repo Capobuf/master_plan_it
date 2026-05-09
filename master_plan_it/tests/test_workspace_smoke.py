@@ -17,12 +17,20 @@ def test_workspace_has_expense_model_links_only():
     assert "MPIT Expense" in link_targets
     assert "MPIT Contract" in link_targets
     assert "MPIT Project" in link_targets
-    assert "mpit-overview" in link_targets
     assert "MPIT Overview" in link_targets
     assert "MPIT Monthly Plan" in link_targets
     assert "MPIT Expenses" in link_targets
     assert "MPIT Project Forecast vs Actual" in link_targets
     assert "MPIT Renewals Window" in link_targets
+    legacy_page = _s("mpit", "-", "overview")
+    assert legacy_page not in link_targets
+
+    legacy_page_links = [
+        row
+        for row in payload.get("links", [])
+        if row.get("link_type") == "Page" and row.get("link_to") == legacy_page
+    ]
+    assert not legacy_page_links
 
     forbidden = {
         _s("MPIT ", "Bud", "get"),

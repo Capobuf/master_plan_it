@@ -1,38 +1,24 @@
-# Reference: Reports and dashboards (V3)
+# Reference: Reports and dashboards (v16)
 
-## Script Reports (core set)
-1) **MPIT Overview** — Budget overview across cost centers for a given year.
-2) **MPIT Monthly Plan** — Monthly plan honoring spend_date and distribution; respects rolling horizon rules.
-3) **MPIT Projects Planned vs Exceptions** — Project allocations/quotes/expected vs Verified deltas (per year).
-4) **MPIT Budget Diff** — Compare two budgets side by side.
-5) **MPIT Renewals Window** — Contracts by `next_renewal_date` with urgency buckets; supports `include_past`.
-6) **MPIT Actual Entries** — List of actual entries with filters.
-7) **MPIT Budget What-If** — What-if scenario analysis for budget lines.
+## Script Reports (active)
+1. **MPIT Overview** — Panoramica Economica by year and cost center.
+2. **MPIT Monthly Plan** — Monthly planning view.
+3. **MPIT Expenses** — Expense detail report.
+4. **MPIT Project Forecast vs Actual** — Project comparison view.
+5. **MPIT Renewals Window** — Contract renewals window.
 
-Print: Jinja2 HTML templates live next to each report (server-side). 3 of 7 reports have templates; 4 fall back to Frappe default. See `docs/reference/11-printing-and-report-print-formats.md`.
+Print: Jinja2 HTML templates live next to each report when provided; otherwise Frappe default print rendering is used.
 
-## Dashboard
-The app uses the native Frappe **Workspace** (`Master Plan IT`) as the primary Desk entry point:
-- **Shortcuts:** New Expense, New Plafond, New Contract, New Project, Panoramica MPIT, Monthly Plan.
+## Workspace
+The app uses the native Frappe **Workspace** (`Master Plan IT`) as primary Desk entry point.
+
+- **Shortcuts:** New Expense, New Plafond, New Contract, New Project, Panoramica Economica, Monthly Plan.
 - **Navigation cards:** Operations, Analysis, Master Data.
 - **Quick lists:** Recent Expenses, Recent Contracts, Recent Projects.
 
-## Desk Page
-- **Panoramica MPIT** (`/app/mpit-overview`) is a native Desk Page built with `frappe.ui.Page`.
-- The page uses the existing server-side financial engine as source of truth and keeps `MPIT Overview` Script Report as legacy fallback/comparison path.
-
-Dashboard Charts are native Frappe Dashboard Chart objects backed by custom chart sources. Active charts:
-- MPIT Plan vs Cap vs Actual
-- MPIT Monthly Plan / MPIT Monthly Plan vs Actual
-- MPIT Planned Items Coverage
-- MPIT Renewals Window (by Month)
-- MPIT Projects Planned vs Exceptions
-- MPIT Budgets by Type / MPIT Budget Totals
-- MPIT Cap vs Actual by Cost Center
-- MPIT Contracts by Status / MPIT Projects by Status
-- MPIT Actual Entries by Kind / MPIT Actual Entries by Status
+## Panoramica Economica
+- Panoramica Economica is exposed as the native report **MPIT Overview**.
+- No custom Desk Page is used as cockpit.
 
 ## Notes
-- Variance views rely on `status = 'Verified'` Actual Entries and `entry_kind in ('Delta','Allowance Spend')`.
-- Stay native file-first and keep the V3 model (Live/Snapshot/Addendum) without legacy baseline logic.
-- No custom frontend SPA exists; Desk surfaces are native Workspace, reports, and standard Page scripts.
+- Keep Desk surfaces native: Workspace, reports, number cards, quick lists, and dashboard charts.

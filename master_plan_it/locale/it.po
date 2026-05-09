@@ -900,7 +900,7 @@ msgstr ""
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:533
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.json
 msgid "MPIT Overview"
-msgstr "Panoramica MPIT"
+msgstr "Panoramica Economica"
 
 #. Name of a DocType
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
