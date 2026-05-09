@@ -1,2 +1,0 @@
-"""MPIT overview page package."""
-
