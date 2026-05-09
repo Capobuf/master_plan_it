@@ -13,6 +13,7 @@
   "main_col",
   "status",
   "cost_center",
+  "project",
   "renewal_section",
   "start_date",
   "end_date",
@@ -98,6 +99,13 @@
    "label": "Cost Center",
    "options": "MPIT Cost Center",
    "reqd": 1
+  },
+  {
+   "fieldname": "project",
+   "fieldtype": "Link",
+   "in_standard_filter": 1,
+   "label": "Project",
+   "options": "MPIT Project"
   },
   {
    "fieldname": "renewal_section",
