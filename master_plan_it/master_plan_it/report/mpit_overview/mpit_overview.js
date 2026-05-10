@@ -3,6 +3,7 @@ const OVERVIEW_METRIC_FIELDS = new Set([
     "forecast_estimate",
     "forecast_quote",
     "forecast_total",
+    "actual_standard",
     "actual_on_plafond",
     "actual_extra",
     "actual_total",

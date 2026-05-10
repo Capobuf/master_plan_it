@@ -64,8 +64,8 @@ class MPITExpense(Document):
 
         uses_plafond = bool(self.uses_plafond)
         is_extra = bool(self.is_extra)
-        if uses_plafond == is_extra:
-            frappe.throw(_("Ordinary expense requires exactly one funding mode: On Plafond or Extra."))
+        if uses_plafond and is_extra:
+            frappe.throw(_("Ordinary expense cannot be both On Plafond and Extra."))
 
         if uses_plafond:
             if not self.plafond_expense:
@@ -73,7 +73,7 @@ class MPITExpense(Document):
             self._validate_plafond_reference()
         else:
             if self.plafond_expense:
-                frappe.throw(_("Plafond reference must be empty when Extra is enabled."))
+                frappe.throw(_("Plafond reference must be empty unless On Plafond is enabled."))
 
     def _validate_single_non_cancelled_plafond(self) -> None:
         filters = {
@@ -266,6 +266,8 @@ class MPITExpense(Document):
             self.total_actual_on_plafond_net = 0
             self.total_actual_extra_net = self.total_actual_net
         else:
+            # Standard planned expenses are represented by uses_plafond=0 and is_extra=0.
+            # They contribute to total_actual_net but not to the special On Plafond or Extra totals.
             self.total_actual_on_plafond_net = 0
             self.total_actual_extra_net = 0
 

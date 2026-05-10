@@ -58,6 +58,16 @@ msgstr "Effettivo extra"
 msgid "Actual Extra Net"
 msgstr "Effettivo extra netto"
 
+#. Label of the actual_standard (Currency) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:308
+msgid "Actual Standard"
+msgstr "Effettivo ordinario"
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:96
+msgid "Actual Standard: {0}"
+msgstr "Effettivo ordinario: {0}"
+
 #. Label of the actual_on_plafond (Currency) field in DocType 'MPIT Cost
 #. Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
@@ -784,6 +794,11 @@ msgstr "Data Inizio"
 msgid "Funding"
 msgstr "Copertura"
 
+#. Description of the 'Funding' (Section Break) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Leave both On Plafond and Extra disabled for ordinary planned expenses."
+msgstr "Lascia sia Su plafond sia Extra disabilitati per le spese ordinarie previste."
+
 #. Label of the section_defaults (Section Break) field in DocType 'MPIT
 #. Settings'
 #: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
@@ -815,13 +830,13 @@ msgstr "Home"
 
 #. Description of the 'On Plafond' (Check) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "If enabled, this expense consumes the selected plafond."
-msgstr "Se abilitato, questa spesa consuma il plafond selezionato."
+msgid "Enable only when this expense consumes a selected plafond."
+msgstr "Abilita solo quando questa spesa consuma un plafond selezionato."
 
 #. Description of the 'Extra' (Check) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "If enabled, this expense does not consume any plafond."
-msgstr "Se abilitato, questa spesa non consuma alcun plafond."
+msgid "Enable only for unplanned or out-of-scope expenses. Leave disabled for ordinary planned expenses."
+msgstr "Abilita solo per spese non previste o fuori perimetro. Lascia disabilitato per le spese ordinarie previste."
 
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:154
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:11
@@ -1177,8 +1192,17 @@ msgid "Ordinary expense allows at most one context: Project or Contract."
 msgstr ""
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:68
-msgid "Ordinary expense requires exactly one funding mode: On Plafond or Extra."
-msgstr ""
+msgid "Ordinary expense cannot be both On Plafond and Extra."
+msgstr "La spesa ordinaria non può essere contemporaneamente su plafond ed extra."
+
+#: master_plan_it/master_plan_it/financial_engine.py:503
+msgid "Actual / Standard"
+msgstr "Effettivo / Ordinario"
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:64
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:249
+msgid "Standard"
+msgstr "Ordinaria"
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:187
 msgid "Ordinary rows require a valid phase: Estimate, Quote, or Actual."
@@ -1307,8 +1331,8 @@ msgid "Plafond reference is required when On Plafond is enabled."
 msgstr ""
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:76
-msgid "Plafond reference must be empty when Extra is enabled."
-msgstr ""
+msgid "Plafond reference must be empty unless On Plafond is enabled."
+msgstr "Il plafond di riferimento deve essere vuoto se Su plafond non è abilitato."
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:180
 msgid "Plafond rows cannot use period distribution fields."

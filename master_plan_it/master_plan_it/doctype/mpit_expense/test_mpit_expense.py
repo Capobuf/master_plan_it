@@ -31,10 +31,44 @@ class TestMPITExpense(FrappeTestCase):
         with self.assertRaises(frappe.ValidationError):
             doc.insert()
 
-    def test_ordinary_requires_exclusive_funding(self):
+    def test_standard_ordinary_expense_saves(self):
         doc = base_expense(self.year_name, self.cost_center, self.project)
         doc.uses_plafond = 0
         doc.is_extra = 0
+        doc.append("rows", base_row(phase="Actual", amount=100, spend_date="2026-01-10"))
+        doc.insert()
+
+        self.assertEqual(doc.total_actual_net, 100)
+        self.assertEqual(doc.total_actual_on_plafond_net, 0)
+        self.assertEqual(doc.total_actual_extra_net, 0)
+
+    def test_ordinary_cannot_be_both_on_plafond_and_extra(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        doc.uses_plafond = 1
+        doc.is_extra = 1
+        doc.append("rows", base_row(phase="Actual", amount=100, spend_date="2026-01-10"))
+        with self.assertRaises(frappe.ValidationError):
+            doc.insert()
+
+    def test_plafond_reference_requires_on_plafond(self):
+        plafond = frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_kind": "Plafond",
+                "expense_title": "Plafond Reference Guard",
+                "workflow_state": "Open",
+                "year": self.year_name,
+                "cost_center": self.cost_center,
+                "rows": [base_row(phase="Actual", amount=1000, spend_date="2026-01-10")],
+            }
+        )
+        plafond.insert()
+
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        doc.uses_plafond = 0
+        doc.is_extra = 0
+        doc.plafond_expense = plafond.name
+        doc.append("rows", base_row(phase="Actual", amount=100, spend_date="2026-02-10"))
         with self.assertRaises(frappe.ValidationError):
             doc.insert()
 
@@ -68,15 +102,19 @@ class TestMPITExpense(FrappeTestCase):
             doc.insert()
 
     def test_plafond_single_open_per_year_and_cost_center(self):
+        suffix = frappe.generate_hash(length=6).upper()
+        year_name = ensure_year(2040)
+        cost_center = ensure_cost_center(f"CC-PLAFOND-RULE-{suffix}")
+
         first = frappe.get_doc(
             {
                 "doctype": "MPIT Expense",
                 "expense_kind": "Plafond",
                 "expense_title": "Main Plafond",
                 "workflow_state": "Closed",
-                "year": self.year_name,
-                "cost_center": self.cost_center,
-                "rows": [base_row(phase="Actual", amount=1000, spend_date="2026-01-10")],
+                "year": year_name,
+                "cost_center": cost_center,
+                "rows": [base_row(phase="Actual", amount=1000, spend_date="2040-01-10")],
             }
         )
         first.insert()
@@ -87,9 +125,9 @@ class TestMPITExpense(FrappeTestCase):
                 "expense_kind": "Plafond",
                 "expense_title": "Second Plafond",
                 "workflow_state": "Open",
-                "year": self.year_name,
-                "cost_center": self.cost_center,
-                "rows": [base_row(phase="Actual", amount=500, spend_date="2026-02-10")],
+                "year": year_name,
+                "cost_center": cost_center,
+                "rows": [base_row(phase="Actual", amount=500, spend_date="2040-02-10")],
             }
         )
         with self.assertRaises(frappe.ValidationError):

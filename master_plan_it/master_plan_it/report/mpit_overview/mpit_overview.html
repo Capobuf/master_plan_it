@@ -15,7 +15,7 @@
         var is_lines_mode = view_mode === "Lines";
 
         var matrix_profile_columns = {
-            Standard: ["cost_center", "forecast_contracts", "forecast_total", "actual_total", "plafond", "remaining", "over"],
+            Standard: ["cost_center", "forecast_contracts", "forecast_total", "actual_standard", "actual_total", "plafond", "remaining", "over"],
             Compact: ["cost_center", "forecast_total", "actual_total", "remaining"],
             All: []
         };
@@ -142,6 +142,7 @@
             if (fieldname === "forecast_estimate") return "120px";
             if (fieldname === "forecast_quote") return "120px";
             if (fieldname === "forecast_total") return "130px";
+            if (fieldname === "actual_standard") return "130px";
             if (fieldname === "actual_on_plafond") return "130px";
             if (fieldname === "actual_extra") return "120px";
             if (fieldname === "actual_total") return "120px";
@@ -630,7 +631,7 @@
                                 <td class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">
                                     {% if (c === 0) { %}
                                         {%= __("Totals") %}
-                                    {% } else if (field === "forecast_contracts" || field === "forecast_estimate" || field === "forecast_quote" || field === "forecast_total" || field === "actual_on_plafond" || field === "actual_extra" || field === "actual_total" || field === "plafond" || field === "remaining" || field === "over") { %}
+                                    {% } else if (field === "forecast_contracts" || field === "forecast_estimate" || field === "forecast_quote" || field === "forecast_total" || field === "actual_standard" || field === "actual_on_plafond" || field === "actual_extra" || field === "actual_total" || field === "plafond" || field === "remaining" || field === "over") { %}
                                         {%= formatCurrency(sumField(matrix_total_rows, field)) %}
                                     {% } %}
                                 </td>

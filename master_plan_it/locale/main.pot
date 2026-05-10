@@ -58,6 +58,16 @@ msgstr ""
 msgid "Actual Extra Net"
 msgstr ""
 
+#. Label of the actual_standard (Currency) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:308
+msgid "Actual Standard"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:96
+msgid "Actual Standard: {0}"
+msgstr ""
+
 #. Label of the actual_on_plafond (Currency) field in DocType 'MPIT Cost
 #. Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
@@ -784,6 +794,11 @@ msgstr ""
 msgid "Funding"
 msgstr ""
 
+#. Description of the 'Funding' (Section Break) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Leave both On Plafond and Extra disabled for ordinary planned expenses."
+msgstr ""
+
 #. Label of the section_defaults (Section Break) field in DocType 'MPIT
 #. Settings'
 #: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
@@ -815,12 +830,12 @@ msgstr ""
 
 #. Description of the 'On Plafond' (Check) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "If enabled, this expense consumes the selected plafond."
+msgid "Enable only when this expense consumes a selected plafond."
 msgstr ""
 
 #. Description of the 'Extra' (Check) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "If enabled, this expense does not consume any plafond."
+msgid "Enable only for unplanned or out-of-scope expenses. Leave disabled for ordinary planned expenses."
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:154
@@ -1176,7 +1191,7 @@ msgid "Ordinary expense allows at most one context: Project or Contract."
 msgstr ""
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:68
-msgid "Ordinary expense requires exactly one funding mode: On Plafond or Extra."
+msgid "Ordinary expense cannot be both On Plafond and Extra."
 msgstr ""
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:187
@@ -1306,7 +1321,7 @@ msgid "Plafond reference is required when On Plafond is enabled."
 msgstr ""
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:76
-msgid "Plafond reference must be empty when Extra is enabled."
+msgid "Plafond reference must be empty unless On Plafond is enabled."
 msgstr ""
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:180
@@ -1681,6 +1696,15 @@ msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:324
 msgid "State"
+msgstr ""
+
+#: master_plan_it/master_plan_it/financial_engine.py:503
+msgid "Actual / Standard"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:64
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:249
+msgid "Standard"
 msgstr ""
 
 #. Label of the status (Select) field in DocType 'MPIT Contract'

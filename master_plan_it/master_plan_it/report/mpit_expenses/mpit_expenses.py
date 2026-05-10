@@ -60,6 +60,8 @@ def execute(filters=None):
                 funding = _("On Plafond")
             elif expense.is_extra:
                 funding = _("Extra")
+            else:
+                funding = _("Standard")
 
         data.append(
             {

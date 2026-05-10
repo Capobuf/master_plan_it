@@ -129,13 +129,14 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
+   "description": "Leave both On Plafond and Extra disabled for ordinary planned expenses.",
    "fieldname": "section_funding",
    "fieldtype": "Section Break",
    "label": "Funding"
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
-   "description": "If enabled, this expense consumes the selected plafond.",
+   "description": "Enable only when this expense consumes a selected plafond.",
    "fieldname": "uses_plafond",
    "fieldtype": "Check",
    "in_standard_filter": 1,
@@ -151,7 +152,7 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
-   "description": "If enabled, this expense does not consume any plafond.",
+   "description": "Enable only for unplanned or out-of-scope expenses. Leave disabled for ordinary planned expenses.",
    "fieldname": "is_extra",
    "fieldtype": "Check",
    "in_standard_filter": 1,

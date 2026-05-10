@@ -82,6 +82,38 @@ class TestExpenseReports(FrappeTestCase):
         self.assertTrue(data)
         self.assertEqual(data[0]["year"], self.year)
 
+    def test_expenses_report_shows_standard_funding_for_standard_ordinary(self):
+        standard = frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_title": f"Expense REP Standard {self.suffix}",
+                "expense_kind": "Ordinary",
+                "workflow_state": "Open",
+                "year": self.year,
+                "cost_center": self.cost_center,
+                "project": self.project,
+                "uses_plafond": 0,
+                "is_extra": 0,
+                "rows": [
+                    {
+                        "doctype": "MPIT Expense Row",
+                        "row_description": "Actual Standard",
+                        "row_phase": "Actual",
+                        "row_state": "Active",
+                        "amount": 40,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "spend_date": "2031-03-10",
+                    },
+                ],
+            }
+        ).insert()
+
+        _columns, data = run_expenses({"year": self.year, "cost_center": self.cost_center})
+        target = next((row for row in data if row.get("expense") == standard.name), None)
+        self.assertIsNotNone(target)
+        self.assertEqual(target.get("funding"), "Standard")
+
     def test_project_forecast_vs_actual_report_runs(self):
         columns, data = run_project_report({"year": self.year, "cost_center": self.cost_center})
         self.assertTrue(columns)
@@ -214,6 +246,34 @@ class TestOverviewModes(FrappeTestCase):
         )
         cls.ordinary_expense.insert()
 
+        cls.standard_expense = frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_title": f"Expense Standard OVW {cls.suffix}",
+                "expense_kind": "Ordinary",
+                "workflow_state": "Open",
+                "year": cls.year,
+                "cost_center": cls.cc,
+                "project": cls.project,
+                "vendor": cls.vendor_name,
+                "uses_plafond": 0,
+                "is_extra": 0,
+                "rows": [
+                    {
+                        "doctype": "MPIT Expense Row",
+                        "row_description": "Standard actual row",
+                        "row_phase": "Actual",
+                        "row_state": "Active",
+                        "amount": 110.0,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 0,
+                        "spend_date": "2032-06-01",
+                    },
+                ],
+            }
+        )
+        cls.standard_expense.insert()
+
     # ── Summary mode ──────────────────────────────────────────────────────
 
     def test_summary_returns_canonical_fields(self):
@@ -224,7 +284,7 @@ class TestOverviewModes(FrappeTestCase):
         fieldnames = {c["fieldname"] for c in columns}
         for expected in [
             "cost_center", "forecast_contracts", "forecast_estimate", "forecast_quote",
-            "forecast_total", "actual_on_plafond", "actual_extra", "actual_total",
+            "forecast_total", "actual_standard", "actual_on_plafond", "actual_extra", "actual_total",
             "plafond", "remaining", "over",
         ]:
             self.assertIn(expected, fieldnames, f"Missing column: {expected}")
@@ -236,7 +296,17 @@ class TestOverviewModes(FrappeTestCase):
         )
         self.assertTrue(data, "Expected at least one summary row")
         self.assertIn("forecast_total", data[0])
+        self.assertIn("actual_standard", data[0])
         self.assertIn("actual_total", data[0])
+
+    def test_summary_report_summary_exposes_actual_standard(self):
+        columns, data, _message, _chart, report_summary = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Summary"}
+        )
+        self.assertTrue(columns)
+        self.assertTrue(data)
+        labels = {row.get("label") for row in report_summary or []}
+        self.assertIn("Standard", labels)
 
     def test_summary_project_filter_not_present_in_simple_call(self):
         """
@@ -296,6 +366,37 @@ class TestOverviewModes(FrappeTestCase):
                 contracts_block.get("forecast_contracts", 0),
                 places=2,
             )
+
+    def test_buildup_includes_actual_standard_block_and_total_invariant(self):
+        columns, data, *_ = run_overview(
+            {
+                "year": self.year,
+                "cost_center": self.cc,
+                "view_mode": "Build-up",
+                "section_scope": "All",
+                "show_zero_rows": 1,
+            }
+        )
+        self.assertTrue(columns)
+        self.assertTrue(data)
+
+        header = next((r for r in data if r.get("indent", 0) == 0 and r.get("cost_center") == self.cc), None)
+        self.assertIsNotNone(header)
+
+        standard_block = next(
+            (r for r in data if r.get("indent", 0) == 1 and r.get("cost_center") == "Actual / Standard"),
+            None,
+        )
+        self.assertIsNotNone(standard_block)
+        self.assertGreater(standard_block.get("actual_standard", 0), 0)
+
+        self.assertAlmostEqual(
+            header.get("actual_total", 0),
+            (header.get("actual_standard", 0) or 0)
+            + (header.get("actual_on_plafond", 0) or 0)
+            + (header.get("actual_extra", 0) or 0),
+            places=2,
+        )
 
     def test_buildup_project_filter_does_not_alter_contract_block(self):
         """
@@ -358,6 +459,22 @@ class TestOverviewModes(FrappeTestCase):
         self.assertIn("Estimate", phases)
         self.assertIn("Quote", phases)
         self.assertIn("Actual", phases)
+
+    def test_lines_standard_expense_funding_label(self):
+        _columns, data, *_ = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Lines", "section_scope": "Expenses"}
+        )
+        standard_line = next(
+            (
+                row for row in data
+                if row.get("source_type") == "Expense Row"
+                and row.get("source_document") == self.standard_expense.name
+                and row.get("expense_phase") == "Actual"
+            ),
+            None,
+        )
+        self.assertIsNotNone(standard_line)
+        self.assertEqual(standard_line.get("funding"), "Standard")
 
     def test_lines_contract_no_terms_uses_contract_header(self):
         """A contract without terms generates a 'Contract Header' line."""

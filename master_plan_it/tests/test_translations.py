@@ -125,6 +125,25 @@ def test_plafond_cross_cost_center_translation_targets_present():
         "Plafond Consumed": "Plafond consumato",
         "Plafond Consumed: {0}": "Plafond consumato: {0}",
         "Consumed": "Consumato",
+        "Ordinary expense cannot be both On Plafond and Extra.": (
+            "La spesa ordinaria non può essere contemporaneamente su plafond ed extra."
+        ),
+        "Plafond reference must be empty unless On Plafond is enabled.": (
+            "Il plafond di riferimento deve essere vuoto se Su plafond non è abilitato."
+        ),
+        "Enable only when this expense consumes a selected plafond.": (
+            "Abilita solo quando questa spesa consuma un plafond selezionato."
+        ),
+        "Enable only for unplanned or out-of-scope expenses. Leave disabled for ordinary planned expenses.": (
+            "Abilita solo per spese non previste o fuori perimetro. Lascia disabilitato per le spese ordinarie previste."
+        ),
+        "Leave both On Plafond and Extra disabled for ordinary planned expenses.": (
+            "Lascia sia Su plafond sia Extra disabilitati per le spese ordinarie previste."
+        ),
+        "Actual Standard": "Effettivo ordinario",
+        "Actual Standard: {0}": "Effettivo ordinario: {0}",
+        "Actual / Standard": "Effettivo / Ordinario",
+        "Standard": "Ordinaria",
     }
 
     translations = _load_po_translations(_it_po_path())

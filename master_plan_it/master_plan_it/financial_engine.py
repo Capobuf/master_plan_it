@@ -5,6 +5,7 @@ import datetime
 from collections import defaultdict
 
 import frappe
+from frappe import _
 from frappe.utils import flt, getdate
 
 from master_plan_it import annualization, tax
@@ -182,6 +183,7 @@ def get_actual_totals(
     )
 
     actual_total = 0.0
+    actual_standard = 0.0
     actual_on_plafond = 0.0
     actual_extra = 0.0
 
@@ -192,9 +194,13 @@ def get_actual_totals(
             actual_on_plafond += amount
         elif row.get("is_extra"):
             actual_extra += amount
+        else:
+            # A row with neither flag is a planned ordinary expense, not an Extra.
+            actual_standard += amount
 
     return {
         "actual_total": flt(actual_total, 2),
+        "actual_standard": flt(actual_standard, 2),
         "actual_on_plafond": flt(actual_on_plafond, 2),
         "actual_extra": flt(actual_extra, 2),
     }
@@ -306,6 +312,7 @@ def get_cost_center_financial_summary(year: str | int, cost_center: str) -> dict
         "forecast_estimate": flt(expense_forecast.get("estimate_total", 0), 2),
         "forecast_quote": flt(expense_forecast.get("quote_total", 0), 2),
         "forecast_total": forecast_total,
+        "actual_standard": flt(actual_totals.get("actual_standard", 0), 2),
         "actual_on_plafond": flt(actual_totals.get("actual_on_plafond", 0), 2),
         "actual_extra": flt(actual_totals.get("actual_extra", 0), 2),
         "actual_total": flt(actual_totals.get("actual_total", 0), 2),
@@ -365,6 +372,7 @@ def get_overview_dataset(year: str | int, cost_center: str | None = None) -> dic
         "forecast_estimate": flt(sum(row["forecast_estimate"] for row in rows), 2),
         "forecast_quote": flt(sum(row["forecast_quote"] for row in rows), 2),
         "forecast_total": flt(sum(row["forecast_total"] for row in rows), 2),
+        "actual_standard": flt(sum(row["actual_standard"] for row in rows), 2),
         "actual_on_plafond": flt(sum(row["actual_on_plafond"] for row in rows), 2),
         "actual_extra": flt(sum(row["actual_extra"] for row in rows), 2),
         "actual_total": flt(sum(row["actual_total"] for row in rows), 2),
@@ -436,6 +444,7 @@ def get_overview_buildup_dataset(
             fc_quote = flt(ef.get("quote_total", 0), 2)
 
         # --- actual blocks ---
+        actual_standard = 0.0
         actual_on_plafond = 0.0
         actual_extra = 0.0
         actual_total = 0.0
@@ -447,6 +456,7 @@ def get_overview_buildup_dataset(
                 contract=contract,
                 vendor=vendor,
             )
+            actual_standard = flt(at.get("actual_standard", 0), 2)
             actual_on_plafond = flt(at.get("actual_on_plafond", 0), 2)
             actual_extra = flt(at.get("actual_extra", 0), 2)
             actual_total = flt(at.get("actual_total", 0), 2)
@@ -473,6 +483,7 @@ def get_overview_buildup_dataset(
         header = _make_summary_row(
             cc,
             fc_contracts, fc_estimate, fc_quote, fc_total,
+            actual_standard,
             actual_on_plafond, actual_extra, actual_total,
             plafond, plafond_consumed, remaining, over,
         )
@@ -488,6 +499,8 @@ def get_overview_buildup_dataset(
                 rows.append(_block_row(cc, "Expenses / Estimate", forecast_estimate=fc_estimate, indent=1))
             if show_zero_rows or fc_quote:
                 rows.append(_block_row(cc, "Expenses / Quote", forecast_quote=fc_quote, indent=1))
+            if show_zero_rows or actual_standard:
+                rows.append(_block_row(cc, _("Actual / Standard"), actual_standard=actual_standard, indent=1))
             if show_zero_rows or actual_on_plafond:
                 rows.append(
                     _block_row(cc, "Actual / On Plafond", actual_on_plafond=actual_on_plafond, indent=1)
@@ -513,6 +526,7 @@ def get_overview_buildup_dataset(
         grand["forecast_estimate"] = flt(grand["forecast_estimate"] + fc_estimate, 2)
         grand["forecast_quote"] = flt(grand["forecast_quote"] + fc_quote, 2)
         grand["forecast_total"] = flt(grand["forecast_total"] + fc_total, 2)
+        grand["actual_standard"] = flt(grand["actual_standard"] + actual_standard, 2)
         grand["actual_on_plafond"] = flt(grand["actual_on_plafond"] + actual_on_plafond, 2)
         grand["actual_extra"] = flt(grand["actual_extra"] + actual_extra, 2)
         grand["actual_total"] = flt(grand["actual_total"] + actual_total, 2)
@@ -696,7 +710,7 @@ def get_overview_lines_dataset(
             if not show_zero_rows and amount == 0:
                 continue
 
-            funding = "-"
+            funding = "Standard"
             if row.get("uses_plafond"):
                 funding = "On Plafond"
             elif row.get("is_extra"):
@@ -821,6 +835,7 @@ def _zero_summary() -> dict:
         "forecast_estimate": 0.0,
         "forecast_quote": 0.0,
         "forecast_total": 0.0,
+        "actual_standard": 0.0,
         "actual_on_plafond": 0.0,
         "actual_extra": 0.0,
         "actual_total": 0.0,
@@ -837,6 +852,7 @@ def _make_summary_row(
     forecast_estimate: float,
     forecast_quote: float,
     forecast_total: float,
+    actual_standard: float,
     actual_on_plafond: float,
     actual_extra: float,
     actual_total: float,
@@ -851,6 +867,7 @@ def _make_summary_row(
         "forecast_estimate": forecast_estimate,
         "forecast_quote": forecast_quote,
         "forecast_total": forecast_total,
+        "actual_standard": actual_standard,
         "actual_on_plafond": actual_on_plafond,
         "actual_extra": actual_extra,
         "actual_total": actual_total,
@@ -868,6 +885,7 @@ def _block_row(
     forecast_contracts: float = 0.0,
     forecast_estimate: float = 0.0,
     forecast_quote: float = 0.0,
+    actual_standard: float = 0.0,
     actual_on_plafond: float = 0.0,
     actual_extra: float = 0.0,
     plafond: float = 0.0,
@@ -877,13 +895,14 @@ def _block_row(
     indent: int = 1,
 ) -> dict:
     fc_total = flt(forecast_contracts + forecast_estimate + forecast_quote, 2)
-    actual_total = flt(actual_on_plafond + actual_extra, 2)
+    actual_total = flt(actual_standard + actual_on_plafond + actual_extra, 2)
     return {
         "cost_center": label,
         "forecast_contracts": forecast_contracts,
         "forecast_estimate": forecast_estimate,
         "forecast_quote": forecast_quote,
         "forecast_total": fc_total,
+        "actual_standard": actual_standard,
         "actual_on_plafond": actual_on_plafond,
         "actual_extra": actual_extra,
         "actual_total": actual_total,

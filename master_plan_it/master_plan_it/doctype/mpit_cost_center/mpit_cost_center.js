@@ -50,6 +50,7 @@ function render_fields(frm, data) {
     frm.set_value("summary_year", data.year || frm.__mpit_summary_year);
     frm.set_value("forecast_total", data.forecast_total || 0);
     frm.set_value("actual_total", data.actual_total || 0);
+    frm.set_value("actual_standard", data.actual_standard || 0);
     frm.set_value("actual_on_plafond", data.actual_on_plafond || 0);
     frm.set_value("actual_extra", data.actual_extra || 0);
     frm.set_value("plafond_total", data.plafond || 0);
@@ -60,6 +61,7 @@ function render_fields(frm, data) {
         "summary_year",
         "forecast_total",
         "actual_total",
+        "actual_standard",
         "actual_on_plafond",
         "actual_extra",
         "plafond_total",
@@ -74,6 +76,7 @@ function render_dashboard(frm, data) {
 
     const forecast = parseFloat(data.forecast_total || 0);
     const actual = parseFloat(data.actual_total || 0);
+    const actualStandard = parseFloat(data.actual_standard || 0);
     const onPlafond = parseFloat(data.actual_on_plafond || 0);
     const extra = parseFloat(data.actual_extra || 0);
     const plafond = parseFloat(data.plafond || 0);
@@ -88,6 +91,10 @@ function render_dashboard(frm, data) {
     frm.dashboard.add_indicator(
         __("Actual: {0}").format([frappe.format(actual, { fieldtype: "Currency" })]),
         "orange"
+    );
+    frm.dashboard.add_indicator(
+        __("Actual Standard: {0}").format([frappe.format(actualStandard, { fieldtype: "Currency" })]),
+        "blue"
     );
     frm.dashboard.add_indicator(
         __("Plafond: {0}").format([frappe.format(plafond, { fieldtype: "Currency" })]),

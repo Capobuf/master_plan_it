@@ -20,6 +20,7 @@
   "forecast_total",
   "cb_summary_mid",
   "actual_total",
+  "actual_standard",
   "actual_on_plafond",
   "cb_summary_right",
   "actual_extra",
@@ -101,6 +102,12 @@
    "fieldname": "actual_total",
    "fieldtype": "Currency",
    "label": "Actual Total",
+   "read_only": 1
+  },
+  {
+   "fieldname": "actual_standard",
+   "fieldtype": "Currency",
+   "label": "Actual Standard",
    "read_only": 1
   },
   {

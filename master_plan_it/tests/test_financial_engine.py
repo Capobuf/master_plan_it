@@ -260,6 +260,56 @@ class TestFinancialEngine(FrappeTestCase):
         self.assertEqual(plafond_funding["plafond_remaining"], 750)
         self.assertEqual(summary_funding["plafond_consumed"], 250)
 
+    def test_actual_standard_and_total_invariant(self):
+        plafond = make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            expense_kind="Plafond",
+            rows=[expense_row("Actual", 1000, "Active", spend_date="2030-01-10")],
+        )
+        make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            project=self.project,
+            uses_plafond=0,
+            is_extra=0,
+            rows=[expense_row("Actual", 100, "Active", spend_date="2030-03-10")],
+        )
+        make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            project=self.project,
+            uses_plafond=1,
+            is_extra=0,
+            plafond_expense=plafond.name,
+            rows=[expense_row("Actual", 250, "Active", spend_date="2030-04-10")],
+        )
+        make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            project=self.project,
+            uses_plafond=0,
+            is_extra=1,
+            rows=[expense_row("Actual", 80, "Active", spend_date="2030-05-10")],
+        )
+
+        actual = get_actual_totals(self.year, cost_center=self.cost_center, project=self.project)
+        summary = get_cost_center_financial_summary(self.year, self.cost_center)
+
+        self.assertEqual(actual["actual_standard"], 100)
+        self.assertEqual(actual["actual_on_plafond"], 250)
+        self.assertEqual(actual["actual_extra"], 80)
+        self.assertEqual(actual["actual_total"], 430)
+
+        self.assertEqual(summary["actual_standard"], 100)
+        self.assertEqual(summary["actual_on_plafond"], 250)
+        self.assertEqual(summary["actual_extra"], 80)
+        self.assertEqual(summary["actual_total"], 430)
+        self.assertEqual(
+            actual["actual_total"],
+            actual["actual_standard"] + actual["actual_on_plafond"] + actual["actual_extra"],
+        )
+
 
 def term_row(from_date: str, to_date: str, amount: float, billing_cycle: str) -> dict:
     return {

@@ -246,6 +246,12 @@ def _build_report_summary_from_dict(summary: dict) -> list[dict]:
             "datatype": "Currency",
         },
         {
+            "label": _("Standard"),
+            "value": flt(summary.get("actual_standard"), 2),
+            "indicator": "Blue",
+            "datatype": "Currency",
+        },
+        {
             "label": _("Plafond"),
             "value": flt(summary.get("plafond"), 2),
             "indicator": "Green",
@@ -297,6 +303,12 @@ def _overview_metric_columns() -> list[dict]:
             "fieldname": "forecast_total",
             "fieldtype": "Currency",
             "width": 150,
+        },
+        {
+            "label": _("Actual Standard"),
+            "fieldname": "actual_standard",
+            "fieldtype": "Currency",
+            "width": 140,
         },
         {
             "label": _("Actual On Plafond"),
