@@ -11,7 +11,7 @@
   "expense_kind",
   "expense_title",
   "main_col_break",
-  "workflow_state_copy",
+  "workflow_state",
   "year",
   "cost_center",
   "vendor",
@@ -220,7 +220,7 @@
   },
   {
    "default": "Open",
-   "fieldname": "workflow_state_copy",
+   "fieldname": "workflow_state",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
