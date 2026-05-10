@@ -66,16 +66,19 @@
   },
   {
    "default": "1",
+   "description": "Used with Unit Price to calculate Amount. Empty quantity is treated as 1.",
    "fieldname": "qty",
    "fieldtype": "Float",
    "label": "Qty"
   },
   {
+   "description": "If set, Amount is calculated as Qty × Unit Price.",
    "fieldname": "unit_price",
    "fieldtype": "Currency",
    "label": "Unit Price"
   },
   {
+   "description": "Calculated from Qty × Unit Price when Unit Price is set. Leave Unit Price empty to enter Amount manually.",
    "fieldname": "amount",
    "fieldtype": "Currency",
    "label": "Amount",

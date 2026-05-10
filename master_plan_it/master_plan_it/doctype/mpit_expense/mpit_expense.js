@@ -3,6 +3,10 @@ frappe.ui.form.on("MPIT Expense", {
         set_link_queries(frm);
     },
 
+    validate(frm) {
+        update_all_expense_rows(frm);
+    },
+
     refresh(frm) {
         apply_kind_visibility(frm);
         apply_funding_rules(frm);
@@ -57,6 +61,39 @@ frappe.ui.form.on("MPIT Expense", {
 });
 
 frappe.ui.form.on("MPIT Expense Row", {
+    form_render(frm, cdt, cdn) {
+        const did_update_amount = update_row_amount_from_unit_price(cdt, cdn);
+        if (!did_update_amount) {
+            update_row_vat_split(cdt, cdn);
+        }
+    },
+
+    qty(frm, cdt, cdn) {
+        const did_update_amount = update_row_amount_from_unit_price(cdt, cdn);
+        if (!did_update_amount) {
+            update_row_vat_split(cdt, cdn);
+        }
+    },
+
+    unit_price(frm, cdt, cdn) {
+        const did_update_amount = update_row_amount_from_unit_price(cdt, cdn);
+        if (!did_update_amount) {
+            update_row_vat_split(cdt, cdn);
+        }
+    },
+
+    amount(frm, cdt, cdn) {
+        update_row_vat_split(cdt, cdn);
+    },
+
+    amount_includes_vat(frm, cdt, cdn) {
+        update_row_vat_split(cdt, cdn);
+    },
+
+    vat_rate(frm, cdt, cdn) {
+        update_row_vat_split(cdt, cdn);
+    },
+
     spend_date(frm, cdt, cdn) {
         const row = locals[cdt][cdn];
         if (row.spend_date) {
@@ -156,4 +193,86 @@ function set_link_queries(frm) {
             },
         };
     });
+}
+
+function get_row_qty(row) {
+    if (row.qty === null || row.qty === undefined || row.qty === "") {
+        return to_float(1);
+    }
+    return to_float(row.qty);
+}
+
+// Client-side totals are UX feedback only; server-side validation recomputes the authoritative amounts.
+function update_row_amount_from_unit_price(cdt, cdn) {
+    const row = locals[cdt] && locals[cdt][cdn];
+    if (!row) {
+        return false;
+    }
+
+    const unit_price = to_float(row.unit_price || 0);
+    if (!unit_price) {
+        return false;
+    }
+
+    const amount = to_float(get_row_qty(row) * unit_price, 2);
+    if (to_float(row.amount, 2) === amount) {
+        return false;
+    }
+
+    frappe.model.set_value(cdt, cdn, "amount", amount);
+    return true;
+}
+
+function update_row_vat_split(cdt, cdn) {
+    const row = locals[cdt] && locals[cdt][cdn];
+    if (!row) {
+        return;
+    }
+
+    const amount = to_float(row.amount || 0);
+    const rate = to_float(row.vat_rate || 0);
+    const includes_vat = !!row.amount_includes_vat;
+
+    let net = amount;
+    let vat = amount * rate / 100;
+    let gross = amount + vat;
+
+    if (includes_vat && rate) {
+        net = amount / (1 + rate / 100);
+        vat = amount - net;
+        gross = amount;
+    }
+
+    frappe.model.set_value(cdt, cdn, "amount_net", to_float(net, 2));
+    frappe.model.set_value(cdt, cdn, "amount_vat", to_float(vat, 2));
+    frappe.model.set_value(cdt, cdn, "amount_gross", to_float(gross, 2));
+}
+
+function update_all_expense_rows(frm) {
+    const rows = frm.doc.rows || [];
+    rows.forEach((row) => {
+        if (!row || !row.doctype || !row.name) {
+            return;
+        }
+
+        const did_update_amount = update_row_amount_from_unit_price(row.doctype, row.name);
+        if (!did_update_amount) {
+            update_row_vat_split(row.doctype, row.name);
+        }
+    });
+}
+
+function to_float(value, precision) {
+    if (typeof flt === "function") {
+        return flt(value, precision);
+    }
+
+    const parsed = Number(value);
+    const numeric = Number.isFinite(parsed) ? parsed : 0;
+    if (precision === undefined || precision === null) {
+        return numeric;
+    }
+
+    const factor = 10 ** precision;
+    return Math.round(numeric * factor) / factor;
 }

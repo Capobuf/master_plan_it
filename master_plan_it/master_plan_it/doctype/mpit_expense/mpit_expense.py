@@ -212,8 +212,16 @@ class MPITExpense(Document):
                 frappe.throw(_("{0} must be inside the selected year.").format(label))
 
     def _sync_row_amounts(self, row) -> float:
-        amount = flt(row.amount or 0, 2)
-        row.amount = amount
+        qty = flt(1 if row.qty in (None, "") else row.qty)
+        unit_price = flt(row.unit_price or 0)
+
+        # Unit Price makes Amount a derived total; without Unit Price, Amount remains manually entered.
+        if unit_price:
+            row.amount = flt(qty * unit_price, 2)
+        else:
+            row.amount = flt(row.amount or 0, 2)
+
+        amount = row.amount
 
         default_vat = mpit_defaults.get_default_vat_rate()
         if row.vat_rate is None and default_vat is not None:

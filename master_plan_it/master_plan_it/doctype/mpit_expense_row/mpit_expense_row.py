@@ -14,13 +14,14 @@ class MPITExpenseRow(Document):
         self._compute_vat_split()
 
     def _compute_input_amount(self) -> None:
-        qty = flt(self.qty or 1)
+        qty = flt(1 if self.qty in (None, "") else self.qty)
         unit_price = flt(self.unit_price or 0)
 
-        if unit_price and not self.amount:
+        # Unit Price makes Amount a derived total; without Unit Price, Amount remains manually entered.
+        if unit_price:
             self.amount = flt(qty * unit_price, 2)
-
-        self.amount = flt(self.amount or 0, 2)
+        else:
+            self.amount = flt(self.amount or 0, 2)
 
     def _compute_vat_split(self) -> None:
         default_vat = mpit_defaults.get_default_vat_rate()

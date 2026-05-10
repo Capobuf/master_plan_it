@@ -123,6 +123,11 @@ msgstr ""
 msgid "Amount"
 msgstr ""
 
+#. Description of the 'Amount' (Currency) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Calculated from Qty × Unit Price when Unit Price is set. Leave Unit Price empty to enter Amount manually."
+msgstr ""
+
 #. Label of the amount_gross (Currency) field in DocType 'MPIT Contract Term'
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
 msgid "Amount (Gross)"
@@ -1454,6 +1459,11 @@ msgstr ""
 msgid "Qty"
 msgstr ""
 
+#. Description of the 'Qty' (Float) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Used with Unit Price to calculate Amount. Empty quantity is treated as 1."
+msgstr ""
+
 #. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract'
 #. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract
 #. Term'
@@ -1822,6 +1832,12 @@ msgstr ""
 #. Label of the unit_price (Currency) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Unit Price"
+msgstr ""
+
+#. Description of the 'Unit Price' (Currency) field in DocType 'MPIT Expense
+#. Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "If set, Amount is calculated as Qty × Unit Price."
 msgstr ""
 
 #: master_plan_it/master_plan_it/dashboard_chart_source/mpit_contracts_by_status/mpit_contracts_by_status.py:45

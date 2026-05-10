@@ -123,6 +123,11 @@ msgstr "Avanzate"
 msgid "Amount"
 msgstr "Importo"
 
+#. Description of the 'Amount' (Currency) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Calculated from Qty × Unit Price when Unit Price is set. Leave Unit Price empty to enter Amount manually."
+msgstr "Calcolato come quantità × prezzo unitario quando il prezzo unitario è valorizzato. Lascia vuoto il prezzo unitario per inserire manualmente l'importo."
+
 #. Label of the amount_gross (Currency) field in DocType 'MPIT Contract Term'
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
 msgid "Amount (Gross)"
@@ -1464,6 +1469,11 @@ msgstr "Progetti"
 msgid "Qty"
 msgstr "Qta"
 
+#. Description of the 'Qty' (Float) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Used with Unit Price to calculate Amount. Empty quantity is treated as 1."
+msgstr "Usata con il prezzo unitario per calcolare l'importo. Una quantità vuota viene considerata pari a 1."
+
 #. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract'
 #. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract
 #. Term'
@@ -1824,6 +1834,12 @@ msgstr "Totale IVA"
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Unit Price"
 msgstr "Prezzo Unitario"
+
+#. Description of the 'Unit Price' (Currency) field in DocType 'MPIT Expense
+#. Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "If set, Amount is calculated as Qty × Unit Price."
+msgstr "Se valorizzato, l'importo viene calcolato come quantità × prezzo unitario."
 
 #: master_plan_it/master_plan_it/dashboard_chart_source/mpit_contracts_by_status/mpit_contracts_by_status.py:45
 #: master_plan_it/master_plan_it/dashboard_chart_source/mpit_projects_by_status/mpit_projects_by_status.py:45

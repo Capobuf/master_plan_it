@@ -42,6 +42,125 @@ class TestMPITExpense(FrappeTestCase):
         self.assertEqual(doc.total_actual_on_plafond_net, 0)
         self.assertEqual(doc.total_actual_extra_net, 0)
 
+    def test_amount_is_computed_from_qty_and_unit_price_when_amount_missing(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        row = base_row(phase="Actual", amount=0, spend_date="2026-01-10")
+        row.update(
+            {
+                "qty": 6,
+                "unit_price": 20.49,
+                "amount_includes_vat": 0,
+                "vat_rate": 22,
+            }
+        )
+        doc.append("rows", row)
+        doc.insert()
+
+        saved_row = doc.rows[0]
+        self.assertEqual(saved_row.amount, 122.94)
+        self.assertEqual(saved_row.amount_net, 122.94)
+        self.assertEqual(saved_row.amount_vat, 27.05)
+        self.assertEqual(saved_row.amount_gross, 149.99)
+
+    def test_amount_is_computed_from_qty_and_unit_price_when_amount_is_absent_field(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        row = base_row(phase="Actual", amount=0, spend_date="2026-01-10")
+        row.pop("amount", None)
+        row.update(
+            {
+                "qty": 6,
+                "unit_price": 20.49,
+                "amount_includes_vat": 0,
+                "vat_rate": 22,
+            }
+        )
+        doc.append("rows", row)
+        doc.insert()
+
+        saved_row = doc.rows[0]
+        self.assertEqual(saved_row.amount, 122.94)
+        self.assertEqual(saved_row.amount_net, 122.94)
+        self.assertEqual(saved_row.amount_vat, 27.05)
+        self.assertEqual(saved_row.amount_gross, 149.99)
+
+    def test_amount_is_computed_from_qty_and_unit_price_when_amount_is_empty_string(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        row = base_row(phase="Actual", amount=0, spend_date="2026-01-10")
+        row["amount"] = ""
+        row.update(
+            {
+                "qty": 6,
+                "unit_price": 20.49,
+                "amount_includes_vat": 0,
+                "vat_rate": 22,
+            }
+        )
+        doc.append("rows", row)
+        doc.insert()
+
+        saved_row = doc.rows[0]
+        self.assertEqual(saved_row.amount, 122.94)
+        self.assertEqual(saved_row.amount_net, 122.94)
+        self.assertEqual(saved_row.amount_vat, 27.05)
+        self.assertEqual(saved_row.amount_gross, 149.99)
+
+    def test_amount_is_recomputed_from_qty_and_unit_price_when_stale(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        row = base_row(phase="Actual", amount=999, spend_date="2026-01-10")
+        row.update(
+            {
+                "qty": 6,
+                "unit_price": 20.49,
+                "amount_includes_vat": 0,
+                "vat_rate": 22,
+            }
+        )
+        doc.append("rows", row)
+        doc.insert()
+
+        doc.rows[0].amount = 999
+        doc.save()
+
+        saved_row = doc.rows[0]
+        self.assertEqual(saved_row.amount, 122.94)
+        self.assertNotEqual(saved_row.amount, 999)
+
+    def test_manual_amount_works_when_unit_price_is_empty(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        row = base_row(phase="Actual", amount=150, spend_date="2026-01-10")
+        row.update(
+            {
+                "qty": 6,
+                "unit_price": 0,
+                "amount_includes_vat": 0,
+                "vat_rate": 22,
+            }
+        )
+        doc.append("rows", row)
+        doc.insert()
+
+        saved_row = doc.rows[0]
+        self.assertEqual(saved_row.amount, 150)
+        self.assertEqual(saved_row.amount_net, 150)
+        self.assertEqual(saved_row.amount_vat, 33)
+        self.assertEqual(saved_row.amount_gross, 183)
+
+    def test_qty_zero_is_not_converted_to_one(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        row = base_row(phase="Actual", amount=0, spend_date="2026-01-10")
+        row.update(
+            {
+                "qty": 0,
+                "unit_price": 20.49,
+                "amount_includes_vat": 0,
+                "vat_rate": 22,
+            }
+        )
+        doc.append("rows", row)
+        doc.insert()
+
+        self.assertEqual(doc.rows[0].amount, 0)
+
     def test_ordinary_cannot_be_both_on_plafond_and_extra(self):
         doc = base_expense(self.year_name, self.cost_center, self.project)
         doc.uses_plafond = 1
