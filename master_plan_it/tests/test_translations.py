@@ -115,3 +115,26 @@ def test_workspace_translation_targets_present():
         if translations.get(key) != value
     }
     assert not mismatched, f"Mismatched translations in it.po: {mismatched}"
+
+
+def test_plafond_cross_cost_center_translation_targets_present():
+    expected = {
+        "Select a non-cancelled plafond for the same year. The plafond can belong to a different cost center than the expense.": (
+            "Seleziona un plafond non annullato dello stesso anno. Il plafond può appartenere a un centro di costo diverso dalla spesa."
+        ),
+        "Plafond Consumed": "Plafond consumato",
+        "Plafond Consumed: {0}": "Plafond consumato: {0}",
+        "Consumed": "Consumato",
+    }
+
+    translations = _load_po_translations(_it_po_path())
+
+    missing = [key for key in expected if key not in translations]
+    assert not missing, f"Missing msgid entries in it.po: {missing}"
+
+    mismatched = {
+        key: (translations[key], value)
+        for key, value in expected.items()
+        if translations.get(key) != value
+    }
+    assert not mismatched, f"Mismatched translations in it.po: {mismatched}"

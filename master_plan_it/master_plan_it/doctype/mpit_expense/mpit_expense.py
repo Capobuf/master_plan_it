@@ -94,7 +94,7 @@ class MPITExpense(Document):
         plafond = frappe.db.get_value(
             "MPIT Expense",
             self.plafond_expense,
-            ["name", "expense_kind", "workflow_state", "year", "cost_center"],
+            ["name", "expense_kind", "workflow_state", "year"],
             as_dict=True,
         )
         if not plafond:
@@ -105,8 +105,6 @@ class MPITExpense(Document):
             frappe.throw(_("Referenced Plafond cannot be Cancelled."))
         if str(plafond.year) != str(self.year):
             frappe.throw(_("Referenced Plafond must belong to the same year."))
-        if plafond.cost_center != self.cost_center:
-            frappe.throw(_("Referenced Plafond must belong to the same cost center."))
 
     def _validate_rows(self) -> None:
         if not self.rows:
@@ -273,16 +271,16 @@ class MPITExpense(Document):
 
 
 @frappe.whitelist()
-def get_available_plafonds(year: str, cost_center: str) -> list[str]:
-    if not year or not cost_center:
+def get_available_plafonds(year: str, cost_center: str | None = None) -> list[str]:
+    if not year:
         return []
+    del cost_center
     return frappe.get_all(
         "MPIT Expense",
         filters={
             "expense_kind": "Plafond",
             "workflow_state": ["!=", "Cancelled"],
             "year": year,
-            "cost_center": cost_center,
         },
         order_by="modified desc",
         pluck="name",

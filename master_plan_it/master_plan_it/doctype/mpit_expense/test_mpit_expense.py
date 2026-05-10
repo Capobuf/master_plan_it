@@ -177,6 +177,102 @@ class TestMPITExpense(FrappeTestCase):
         self.assertNotIn(doc.rows[2].name, names)
         self.assertNotIn(other.rows[0].name, names)
 
+    def test_cross_cost_center_plafond_reference_succeeds(self):
+        year_2030 = ensure_year(2030)
+        suffix = frappe.generate_hash(length=6).upper()
+        cc_funding = ensure_cost_center(f"CC-FUNDING-{suffix}")
+        cc_infra = ensure_cost_center(f"CC-INFRA-{suffix}")
+
+        plafond = frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_kind": "Plafond",
+                "expense_title": f"Plafond Funding {suffix}",
+                "workflow_state": "Open",
+                "year": year_2030,
+                "cost_center": cc_funding,
+                "rows": [base_row(phase="Actual", amount=1000, spend_date="2030-01-10")],
+            }
+        ).insert()
+
+        ordinary = base_expense(year_2030, cc_infra)
+        ordinary.uses_plafond = 1
+        ordinary.is_extra = 0
+        ordinary.plafond_expense = plafond.name
+        ordinary.append("rows", base_row(phase="Actual", amount=250, spend_date="2030-02-10"))
+        ordinary.insert()
+        self.assertTrue(ordinary.name)
+
+    def test_plafond_reference_must_belong_to_same_year(self):
+        year_2030 = ensure_year(2030)
+        year_2031 = ensure_year(2031)
+        suffix = frappe.generate_hash(length=6).upper()
+        cc_funding = ensure_cost_center(f"CC-FUNDING-{suffix}")
+        cc_infra = ensure_cost_center(f"CC-INFRA-{suffix}")
+
+        plafond = frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_kind": "Plafond",
+                "expense_title": f"Plafond Year {suffix}",
+                "workflow_state": "Open",
+                "year": year_2030,
+                "cost_center": cc_funding,
+                "rows": [base_row(phase="Actual", amount=1000, spend_date="2030-01-10")],
+            }
+        ).insert()
+
+        ordinary = base_expense(year_2031, cc_infra)
+        ordinary.uses_plafond = 1
+        ordinary.is_extra = 0
+        ordinary.plafond_expense = plafond.name
+        ordinary.append("rows", base_row(phase="Actual", amount=100, spend_date="2031-03-10"))
+        with self.assertRaises(frappe.ValidationError):
+            ordinary.insert()
+
+    def test_cancelled_plafond_reference_fails(self):
+        year_2030 = ensure_year(2030)
+        suffix = frappe.generate_hash(length=6).upper()
+        cc_funding = ensure_cost_center(f"CC-FUNDING-{suffix}")
+        cc_infra = ensure_cost_center(f"CC-INFRA-{suffix}")
+
+        plafond = frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_kind": "Plafond",
+                "expense_title": f"Plafond Cancelled {suffix}",
+                "workflow_state": "Cancelled",
+                "year": year_2030,
+                "cost_center": cc_funding,
+                "rows": [base_row(phase="Actual", amount=900, spend_date="2030-01-10")],
+            }
+        ).insert()
+
+        ordinary = base_expense(year_2030, cc_infra)
+        ordinary.uses_plafond = 1
+        ordinary.is_extra = 0
+        ordinary.plafond_expense = plafond.name
+        ordinary.append("rows", base_row(phase="Actual", amount=90, spend_date="2030-02-10"))
+        with self.assertRaises(frappe.ValidationError):
+            ordinary.insert()
+
+    def test_non_plafond_reference_fails(self):
+        year_2030 = ensure_year(2030)
+        suffix = frappe.generate_hash(length=6).upper()
+        cc_infra = ensure_cost_center(f"CC-INFRA-{suffix}")
+
+        ordinary_a = base_expense(year_2030, cc_infra)
+        ordinary_a.append("rows", base_row(phase="Actual", amount=120, spend_date="2030-01-10"))
+        ordinary_a.insert()
+
+        ordinary_b = base_expense(year_2030, cc_infra)
+        ordinary_b.uses_plafond = 1
+        ordinary_b.is_extra = 0
+        ordinary_b.plafond_expense = ordinary_a.name
+        ordinary_b.append("rows", base_row(phase="Actual", amount=40, spend_date="2030-02-10"))
+        with self.assertRaises(frappe.ValidationError):
+            ordinary_b.insert()
+
 
 def base_expense(
     year_name: str,

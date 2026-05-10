@@ -310,6 +310,7 @@ def get_cost_center_financial_summary(year: str | int, cost_center: str) -> dict
         "actual_extra": flt(actual_totals.get("actual_extra", 0), 2),
         "actual_total": flt(actual_totals.get("actual_total", 0), 2),
         "plafond": flt(plafond_totals.get("plafond_total", 0), 2),
+        "plafond_consumed": flt(plafond_totals.get("plafond_consumed", 0), 2),
         "remaining": flt(plafond_totals.get("plafond_remaining", 0), 2),
         "over": flt(plafond_totals.get("plafond_over", 0), 2),
     }
@@ -368,6 +369,7 @@ def get_overview_dataset(year: str | int, cost_center: str | None = None) -> dic
         "actual_extra": flt(sum(row["actual_extra"] for row in rows), 2),
         "actual_total": flt(sum(row["actual_total"] for row in rows), 2),
         "plafond": flt(sum(row["plafond"] for row in rows), 2),
+        "plafond_consumed": flt(sum(row["plafond_consumed"] for row in rows), 2),
         "remaining": flt(sum(row["remaining"] for row in rows), 2),
         "over": flt(sum(row["over"] for row in rows), 2),
     }
@@ -451,11 +453,13 @@ def get_overview_buildup_dataset(
 
         # --- plafond block ---
         plafond = 0.0
+        plafond_consumed = 0.0
         remaining = 0.0
         over = 0.0
         if include_plafond:
             pt = get_plafond_totals(year_int, cost_center=cc)
             plafond = flt(pt.get("plafond_total", 0), 2)
+            plafond_consumed = flt(pt.get("plafond_consumed", 0), 2)
             remaining = flt(pt.get("plafond_remaining", 0), 2)
             over = flt(pt.get("plafond_over", 0), 2)
 
@@ -470,7 +474,7 @@ def get_overview_buildup_dataset(
             cc,
             fc_contracts, fc_estimate, fc_quote, fc_total,
             actual_on_plafond, actual_extra, actual_total,
-            plafond, remaining, over,
+            plafond, plafond_consumed, remaining, over,
         )
         header.update({"indent": 0, "bold": 1})
         rows.append(header)
@@ -493,7 +497,15 @@ def get_overview_buildup_dataset(
 
         if include_plafond and (show_zero_rows or plafond):
             rows.append(
-                _block_row(cc, "Plafond", plafond=plafond, remaining=remaining, over=over, indent=1)
+                _block_row(
+                    cc,
+                    "Plafond",
+                    plafond=plafond,
+                    plafond_consumed=plafond_consumed,
+                    remaining=remaining,
+                    over=over,
+                    indent=1,
+                )
             )
 
         # Accumulate grand summary
@@ -505,6 +517,7 @@ def get_overview_buildup_dataset(
         grand["actual_extra"] = flt(grand["actual_extra"] + actual_extra, 2)
         grand["actual_total"] = flt(grand["actual_total"] + actual_total, 2)
         grand["plafond"] = flt(grand["plafond"] + plafond, 2)
+        grand["plafond_consumed"] = flt(grand["plafond_consumed"] + plafond_consumed, 2)
         grand["remaining"] = flt(grand["remaining"] + remaining, 2)
         grand["over"] = flt(grand["over"] + over, 2)
 
@@ -812,6 +825,7 @@ def _zero_summary() -> dict:
         "actual_extra": 0.0,
         "actual_total": 0.0,
         "plafond": 0.0,
+        "plafond_consumed": 0.0,
         "remaining": 0.0,
         "over": 0.0,
     }
@@ -827,6 +841,7 @@ def _make_summary_row(
     actual_extra: float,
     actual_total: float,
     plafond: float,
+    plafond_consumed: float,
     remaining: float,
     over: float,
 ) -> dict:
@@ -840,6 +855,7 @@ def _make_summary_row(
         "actual_extra": actual_extra,
         "actual_total": actual_total,
         "plafond": plafond,
+        "plafond_consumed": plafond_consumed,
         "remaining": remaining,
         "over": over,
     }
@@ -855,6 +871,7 @@ def _block_row(
     actual_on_plafond: float = 0.0,
     actual_extra: float = 0.0,
     plafond: float = 0.0,
+    plafond_consumed: float = 0.0,
     remaining: float = 0.0,
     over: float = 0.0,
     indent: int = 1,
@@ -871,6 +888,7 @@ def _block_row(
         "actual_extra": actual_extra,
         "actual_total": actual_total,
         "plafond": plafond,
+        "plafond_consumed": plafond_consumed,
         "remaining": remaining,
         "over": over,
         "indent": indent,

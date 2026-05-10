@@ -300,6 +300,10 @@ msgstr "Calcolato"
 msgid "Computed Amounts"
 msgstr "Importi calcolati"
 
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_plafond_usage_by_cost_center/mpit_plafond_usage_by_cost_center.py:28
+msgid "Consumed"
+msgstr "Consumato"
+
 #. Label of the contact_email (Data) field in DocType 'MPIT Vendor'
 #: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
 msgid "Contact Email"
@@ -1257,6 +1261,10 @@ msgstr "Fase"
 msgid "Plafond"
 msgstr "Plafond"
 
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:204
+msgid "Plafond Consumed"
+msgstr "Plafond consumato"
+
 #. Label of the plafond_expense (Link) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 msgid "Plafond Reference"
@@ -1309,6 +1317,10 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:92
 msgid "Plafond: {0}"
 msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:96
+msgid "Plafond Consumed: {0}"
+msgstr "Plafond consumato: {0}"
 
 #. Label of a Link in the Master Plan IT Workspace
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
@@ -1477,10 +1489,6 @@ msgstr ""
 msgid "Referenced Plafond does not exist."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:109
-msgid "Referenced Plafond must belong to the same cost center."
-msgstr ""
-
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:107
 msgid "Referenced Plafond must belong to the same year."
 msgstr ""
@@ -1599,8 +1607,8 @@ msgstr "Seleziona Anno"
 #. Description of the 'Plafond Reference' (Link) field in DocType 'MPIT
 #. Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "Select a non-cancelled plafond for the same year and cost center."
-msgstr "Seleziona un plafond non annullato dello stesso anno e centro di costo."
+msgid "Select a non-cancelled plafond for the same year. The plafond can belong to a different cost center than the expense."
+msgstr "Seleziona un plafond non annullato dello stesso anno. Il plafond può appartenere a un centro di costo diverso dalla spesa."
 
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:46
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:48
@@ -2013,4 +2021,3 @@ msgstr "Rinnovi 60g"
 
 msgid "Renewals 90d"
 msgstr "Rinnovi 90g"
-

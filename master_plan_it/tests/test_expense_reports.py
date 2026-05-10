@@ -6,6 +6,9 @@ from uuid import uuid4
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from master_plan_it.master_plan_it.dashboard_chart_source.mpit_plafond_usage_by_cost_center.mpit_plafond_usage_by_cost_center import (
+    get_data as run_plafond_usage_by_cost_center_chart,
+)
 from master_plan_it.master_plan_it.report.mpit_expenses.mpit_expenses import execute as run_expenses
 from master_plan_it.master_plan_it.report.mpit_monthly_plan.mpit_monthly_plan import execute as run_monthly
 from master_plan_it.master_plan_it.report.mpit_overview.mpit_overview import execute as run_overview
@@ -450,6 +453,96 @@ class TestOverviewModes(FrappeTestCase):
             js_src = fh.read()
         for fname in ("print_profile", "print_orientation", "print_density"):
             self.assertIn(fname, js_src, f"Missing print filter in JS: {fname}")
+
+
+class TestCrossCostCenterPlafondOverview(FrappeTestCase):
+    def setUp(self):
+        frappe.set_user("Administrator")
+        self.suffix = uuid4().hex[:6].upper()
+        self.year = ensure_year(2030)
+        self.cc_funding = ensure_cost_center(f"CC-FUNDING-{self.suffix}")
+        self.cc_infra = ensure_cost_center(f"CC-INFRA-{self.suffix}")
+
+        plafond = frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_title": f"Plafond Cross {self.suffix}",
+                "expense_kind": "Plafond",
+                "workflow_state": "Open",
+                "year": self.year,
+                "cost_center": self.cc_funding,
+                "rows": [
+                    {
+                        "doctype": "MPIT Expense Row",
+                        "row_description": "Funding budget",
+                        "row_state": "Active",
+                        "amount": 1000,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "spend_date": "2030-01-10",
+                    }
+                ],
+            }
+        )
+        plafond.insert()
+
+        expense = frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_title": f"Infra Consume {self.suffix}",
+                "expense_kind": "Ordinary",
+                "workflow_state": "Open",
+                "year": self.year,
+                "cost_center": self.cc_infra,
+                "uses_plafond": 1,
+                "is_extra": 0,
+                "plafond_expense": plafond.name,
+                "rows": [
+                    {
+                        "doctype": "MPIT Expense Row",
+                        "row_description": "Infra actual",
+                        "row_phase": "Actual",
+                        "row_state": "Active",
+                        "amount": 250,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "spend_date": "2030-02-10",
+                    }
+                ],
+            }
+        )
+        expense.insert()
+
+    def test_overview_summary_exposes_plafond_consumed(self):
+        columns, data, *_ = run_overview({"year": self.year, "view_mode": "Summary", "show_zero_rows": 1})
+
+        fieldnames = {c["fieldname"] for c in columns}
+        self.assertIn("plafond_consumed", fieldnames)
+
+        rows_by_cc = {row.get("cost_center"): row for row in data}
+        funding = rows_by_cc[self.cc_funding]
+        infra = rows_by_cc[self.cc_infra]
+
+        self.assertEqual(funding.get("plafond"), 1000)
+        self.assertEqual(funding.get("plafond_consumed"), 250)
+        self.assertEqual(funding.get("remaining"), 750)
+        self.assertEqual(infra.get("actual_on_plafond"), 250)
+
+    def test_plafond_usage_chart_uses_plafond_consumed(self):
+        chart = run_plafond_usage_by_cost_center_chart({"year": self.year})
+        labels = chart.get("labels", [])
+        datasets = {ds.get("name"): ds.get("values", []) for ds in chart.get("datasets", [])}
+
+        consumed_values = datasets.get("Consumed") or datasets.get("Consumato")
+        self.assertIsNotNone(consumed_values)
+        self.assertIn(self.cc_funding, labels)
+        self.assertIn(self.cc_infra, labels)
+
+        funding_index = labels.index(self.cc_funding)
+        infra_index = labels.index(self.cc_infra)
+
+        self.assertEqual(consumed_values[funding_index], 250)
+        self.assertEqual(consumed_values[infra_index], 0)
 
 
 # ---------------------------------------------------------------------------

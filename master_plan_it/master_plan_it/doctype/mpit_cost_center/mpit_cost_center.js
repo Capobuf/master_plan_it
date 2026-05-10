@@ -77,6 +77,7 @@ function render_dashboard(frm, data) {
     const onPlafond = parseFloat(data.actual_on_plafond || 0);
     const extra = parseFloat(data.actual_extra || 0);
     const plafond = parseFloat(data.plafond || 0);
+    const plafondConsumed = parseFloat(data.plafond_consumed || 0);
     const remaining = parseFloat(data.remaining || 0);
     const over = parseFloat(data.over || 0);
 
@@ -90,7 +91,11 @@ function render_dashboard(frm, data) {
     );
     frm.dashboard.add_indicator(
         __("Plafond: {0}").format([frappe.format(plafond, { fieldtype: "Currency" })]),
-        onPlafond <= plafond ? "green" : "red"
+        plafondConsumed <= plafond ? "green" : "red"
+    );
+    frm.dashboard.add_indicator(
+        __("Plafond Consumed: {0}").format([frappe.format(plafondConsumed, { fieldtype: "Currency" })]),
+        plafondConsumed <= plafond ? "green" : "red"
     );
     frm.dashboard.add_indicator(
         __("Actual On Plafond: {0}").format([frappe.format(onPlafond, { fieldtype: "Currency" })]),

@@ -7,6 +7,7 @@ const OVERVIEW_METRIC_FIELDS = new Set([
     "actual_extra",
     "actual_total",
     "plafond",
+    "plafond_consumed",
     "remaining",
     "over",
 ]);

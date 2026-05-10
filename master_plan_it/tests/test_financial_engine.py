@@ -228,6 +228,38 @@ class TestFinancialEngine(FrappeTestCase):
         self.assertEqual(aggregate["plafond_total"], 400)
         self.assertEqual(aggregate["plafond_consumed"], 125)
 
+    def test_cross_cost_center_plafond_consumption_semantics(self):
+        year = ensure_year(2030)
+        cc_funding = ensure_cost_center(f"CC-FUNDING-{self.suffix}")
+        cc_infra = ensure_cost_center(f"CC-INFRA-{self.suffix}")
+
+        plafond = make_expense(
+            year=year,
+            cost_center=cc_funding,
+            expense_kind="Plafond",
+            rows=[expense_row("Actual", 1000, "Active", spend_date="2030-01-10")],
+        )
+        make_expense(
+            year=year,
+            cost_center=cc_infra,
+            uses_plafond=1,
+            is_extra=0,
+            plafond_expense=plafond.name,
+            rows=[expense_row("Actual", 250, "Active", spend_date="2030-02-10")],
+        )
+
+        actual_infra = get_actual_totals(year, cost_center=cc_infra)
+        actual_funding = get_actual_totals(year, cost_center=cc_funding)
+        plafond_funding = get_plafond_totals(year, cost_center=cc_funding)
+        summary_funding = get_cost_center_financial_summary(year, cc_funding)
+
+        self.assertEqual(actual_infra["actual_on_plafond"], 250)
+        self.assertEqual(actual_funding["actual_on_plafond"], 0)
+        self.assertEqual(plafond_funding["plafond_total"], 1000)
+        self.assertEqual(plafond_funding["plafond_consumed"], 250)
+        self.assertEqual(plafond_funding["plafond_remaining"], 750)
+        self.assertEqual(summary_funding["plafond_consumed"], 250)
+
 
 def term_row(from_date: str, to_date: str, amount: float, billing_cycle: str) -> dict:
     return {

@@ -323,6 +323,12 @@ def _overview_metric_columns() -> list[dict]:
             "width": 130,
         },
         {
+            "label": _("Plafond Consumed"),
+            "fieldname": "plafond_consumed",
+            "fieldtype": "Currency",
+            "width": 150,
+        },
+        {
             "label": _("Remaining"),
             "fieldname": "remaining",
             "fieldtype": "Currency",

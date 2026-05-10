@@ -142,9 +142,6 @@ function set_link_queries(frm) {
         if (frm.doc.year) {
             filters.year = frm.doc.year;
         }
-        if (frm.doc.cost_center) {
-            filters.cost_center = frm.doc.cost_center;
-        }
 
         return { filters };
     });

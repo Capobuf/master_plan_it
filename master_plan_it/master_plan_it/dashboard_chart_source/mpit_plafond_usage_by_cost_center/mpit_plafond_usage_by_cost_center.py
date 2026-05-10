@@ -3,6 +3,7 @@ from __future__ import annotations
 import datetime
 
 import frappe
+from frappe import _
 
 from master_plan_it.master_plan_it.financial_engine import get_overview_dataset
 
@@ -24,9 +25,9 @@ def get_data(filters=None):
     return {
         "labels": [row.get("cost_center") for row in rows],
         "datasets": [
-            {"name": "Plafond", "values": [row.get("plafond", 0) for row in rows]},
-            {"name": "Consumed", "values": [row.get("actual_on_plafond", 0) for row in rows]},
-            {"name": "Remaining", "values": [row.get("remaining", 0) for row in rows]},
+            {"name": _("Plafond"), "values": [row.get("plafond", 0) for row in rows]},
+            {"name": _("Consumed"), "values": [row.get("plafond_consumed", 0) for row in rows]},
+            {"name": _("Remaining"), "values": [row.get("remaining", 0) for row in rows]},
         ],
         "type": "bar",
     }
