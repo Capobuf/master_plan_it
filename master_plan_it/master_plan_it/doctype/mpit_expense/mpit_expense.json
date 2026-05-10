@@ -2,7 +2,7 @@
  "actions": [],
  "allow_import": 1,
  "allow_rename": 1,
- "creation": "2026-03-28 14:21:00.000000",
+ "creation": "2026-03-28 14:21:00",
  "doctype": "DocType",
  "editable_grid": 1,
  "engine": "InnoDB",
@@ -10,8 +10,8 @@
   "section_main",
   "expense_kind",
   "expense_title",
-  "workflow_state",
   "main_col_break",
+  "workflow_state_copy",
   "year",
   "cost_center",
   "vendor",
@@ -58,16 +58,6 @@
    "in_list_view": 1,
    "in_standard_filter": 1,
    "label": "Title",
-   "reqd": 1
-  },
-  {
-   "default": "Open",
-   "fieldname": "workflow_state",
-   "fieldtype": "Select",
-   "in_list_view": 1,
-   "in_standard_filter": 1,
-   "label": "Workflow State",
-   "options": "Open\nClosed\nCancelled",
    "reqd": 1
   },
   {
@@ -129,12 +119,12 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
-   "description": "Leave both On Plafond and Extra disabled for ordinary planned expenses.",
    "fieldname": "section_funding",
    "fieldtype": "Section Break",
    "label": "Funding"
   },
   {
+   "default": "0",
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
    "description": "Enable only when this expense consumes a selected plafond.",
    "fieldname": "uses_plafond",
@@ -151,6 +141,7 @@
    "options": "MPIT Expense"
   },
   {
+   "default": "0",
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
    "description": "Enable only for unplanned or out-of-scope expenses. Leave disabled for ordinary planned expenses.",
    "fieldname": "is_extra",
@@ -226,12 +217,22 @@
    "fieldname": "notes",
    "fieldtype": "Small Text",
    "label": "Notes"
+  },
+  {
+   "default": "Open",
+   "fieldname": "workflow_state_copy",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "in_standard_filter": 1,
+   "label": "Workflow State Copy",
+   "options": "Open\nClosed\nCancelled",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "links": [],
- "modified": "2026-03-28 14:21:00.000000",
+ "modified": "2026-05-10 20:33:36.279344",
  "modified_by": "Administrator",
  "module": "Master Plan IT",
  "name": "MPIT Expense",
