@@ -157,6 +157,18 @@ def test_overview_and_contract_actualization_translation_targets_present():
     assert not mismatched, f"Mismatched translations in it.po: {mismatched}"
 
 
+def test_contract_fallback_translation_targets_absent():
+    translations = _load_po_translations(_it_po_path())
+
+    forbidden = {
+        "Header " + "Fallback (No Terms)",
+        "Intestazione " + "fallback (senza " + "termini)",
+        "Contract " + "Header",
+    }
+    present = [key for key in forbidden if key in translations or key in translations.values()]
+    assert not present, f"Obsolete contract fallback translations remain in it.po: {present}"
+
+
 def test_plafond_cross_cost_center_translation_targets_present():
     expected = {
         "Select a non-cancelled plafond for the same year. The plafond can belong to a different cost center than the expense.": (

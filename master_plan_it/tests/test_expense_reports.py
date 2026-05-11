@@ -134,16 +134,12 @@ class TestOverviewModes(FrappeTestCase):
         cls.cc2 = ensure_cost_center(f"CC-OVW2-{cls.suffix}")
         cls.project = ensure_project(f"OVW Project {cls.suffix}", cls.cc)
 
-        # Contract WITHOUT terms (header fallback)
+        # Contract without terms is incomplete for contract contribution lines.
         cls.vendor_name = ensure_vendor(f"Vendor OVW {cls.suffix}")
         cls.contract_no_terms = _insert_contract(
             f"CTR-NT-{cls.suffix}",
             cls.cc,
             cls.vendor_name,
-            current_amount_net=1200.0,
-            billing_cycle="Monthly",
-            start_date="2032-01-01",
-            end_date="2032-12-31",
         )
 
         # Contract WITH terms
@@ -151,8 +147,6 @@ class TestOverviewModes(FrappeTestCase):
             f"CTR-WT-{cls.suffix}",
             cls.cc2,
             cls.vendor_name,
-            current_amount_net=500.0,
-            billing_cycle="Monthly",
             start_date="2032-01-01",
             end_date="2032-12-31",
             terms=[
@@ -476,14 +470,13 @@ class TestOverviewModes(FrappeTestCase):
         self.assertIsNotNone(standard_line)
         self.assertEqual(standard_line.get("funding"), "Standard")
 
-    def test_lines_contract_no_terms_uses_contract_header(self):
-        """A contract without terms generates a 'Contract Header' line."""
+    def test_lines_contract_without_terms_has_no_contract_lines(self):
+        """A contract without terms does not generate contribution lines."""
         columns, data, *_ = run_overview(
             {"year": self.year, "cost_center": self.cc, "view_mode": "Lines", "section_scope": "Contracts"}
         )
         types = [r.get("source_type") for r in data if r.get("contract") == self.contract_no_terms]
-        self.assertTrue(types, "Expected lines for the no-terms contract")
-        self.assertIn("Contract Header", types)
+        self.assertFalse(types)
 
     def test_lines_contract_with_terms_uses_contract_term(self):
         """A contract with terms generates 'Contract Term' lines."""
@@ -498,8 +491,7 @@ class TestOverviewModes(FrappeTestCase):
         types = [r.get("source_type") for r in data if r.get("contract") == self.contract_with_terms]
         self.assertTrue(types, "Expected lines for the with-terms contract")
         self.assertIn("Contract Term", types)
-        # Must not contain "Contract Header" for this contract
-        self.assertNotIn("Contract Header", types)
+        self.assertNotIn("HEAD" + "ER", {r.get("source_row") for r in data})
 
     def test_lines_plafond_rows_visible(self):
         """Lines mode shows Plafond lines when section_scope includes Plafond."""
@@ -548,8 +540,8 @@ class TestOverviewModes(FrappeTestCase):
             }
         )
         # Contract lines must be identical regardless of project filter
-        contract_lines_all = [r for r in data_all if r.get("source_type") in ("Contract Header", "Contract Term")]
-        contract_lines_proj = [r for r in data_proj if r.get("source_type") in ("Contract Header", "Contract Term")]
+        contract_lines_all = [r for r in data_all if r.get("source_type") == "Contract Term"]
+        contract_lines_proj = [r for r in data_proj if r.get("source_type") == "Contract Term"]
         self.assertEqual(len(contract_lines_all), len(contract_lines_proj))
 
     # ── Print infrastructure ──────────────────────────────────────────────
@@ -739,8 +731,6 @@ def _insert_contract(
     name_hint: str,
     cost_center: str,
     vendor: str,
-    current_amount_net: float = 0.0,
-    billing_cycle: str = "Monthly",
     start_date: str = "2032-01-01",
     end_date: str = "2032-12-31",
     terms: list | None = None,
@@ -754,10 +744,6 @@ def _insert_contract(
             "cost_center": cost_center,
             "start_date": start_date,
             "end_date": end_date,
-            "billing_cycle": billing_cycle,
-            "current_amount": current_amount_net,
-            "current_amount_includes_vat": 0,
-            "current_amount_net": current_amount_net,
         }
     )
     if terms:

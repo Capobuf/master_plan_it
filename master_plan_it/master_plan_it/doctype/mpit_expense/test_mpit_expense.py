@@ -550,10 +550,17 @@ def ensure_contract(description: str, vendor: str, cost_center: str) -> str:
             "description": description,
             "vendor": vendor,
             "cost_center": cost_center,
-            "current_amount": 100,
-            "current_amount_includes_vat": 0,
-            "vat_rate": 22,
-            "billing_cycle": "Monthly",
+            "terms": [
+                {
+                    "doctype": "MPIT Contract Term",
+                    "from_date": "2026-01-01",
+                    "to_date": "2026-12-31",
+                    "amount": 100,
+                    "amount_includes_vat": 0,
+                    "vat_rate": 22,
+                    "billing_cycle": "Monthly",
+                }
+            ],
         }
     )
     doc.insert(ignore_permissions=True)

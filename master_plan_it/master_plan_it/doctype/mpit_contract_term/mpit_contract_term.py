@@ -28,7 +28,7 @@ class MPITContractTerm(Document):
                 frappe.throw(_("To Date cannot be before From Date."))
 
     def _compute_vat_split(self) -> None:
-        """Compute net/vat/gross - same logic as Contract.current_amount."""
+        """Compute net/vat/gross for this term amount."""
         default_vat = mpit_defaults.get_default_vat_rate()
 
         # Apply default if field is empty
@@ -55,7 +55,7 @@ class MPITContractTerm(Document):
         self.amount_gross = flt(gross, 2)
 
     def _compute_monthly_amount(self) -> None:
-        """Compute monthly net equivalent - same logic as Contract."""
+        """Compute monthly net equivalent for this term."""
         if self.amount_net is None:
             self.monthly_amount_net = None
             return

@@ -441,39 +441,6 @@ msgstr "Il Centro di Costo {0} manca dei limiti dell'albero (lft/rgt)."
 msgid "Cost Centers"
 msgstr "Centri di costo"
 
-#. Label of the current_amount (Currency) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:105
-msgid "Current Amount"
-msgstr "Importo attuale"
-
-#. Label of the current_amount_gross (Currency) field in DocType 'MPIT
-#. Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Current Amount Gross"
-msgstr "Importo attuale lordo"
-
-#. Label of the current_amount_includes_vat (Check) field in DocType 'MPIT
-#. Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Current Amount Includes VAT"
-msgstr "Importo attuale IVA inclusa"
-
-#. Label of the current_amount_net (Currency) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Current Amount Net"
-msgstr "Importo attuale netto"
-
-#. Label of the current_amount_vat (Currency) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Current Amount VAT"
-msgstr "Importo attuale IVA"
-
-#. Label of the current_monthly_net (Currency) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Current Monthly Net"
-msgstr "Netto mensile attuale"
-
 #. Label of the current_term_section (Section Break) field in DocType 'MPIT
 #. Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
@@ -821,12 +788,6 @@ msgstr ""
 #: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:132
 msgid "Gross Amount"
 msgstr "Importo lordo"
-
-#. Label of the fallback_section (Section Break) field in DocType 'MPIT
-#. Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Header Fallback (No Terms)"
-msgstr "Intestazione fallback (senza termini)"
 
 #. Label of a Workspace Sidebar Item
 #: master_plan_it/workspace_sidebar/master_plan_it.json
@@ -1943,14 +1904,6 @@ msgstr "Fornitori"
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:13
 msgid "View Mode"
 msgstr "Vista"
-
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:59
-msgid "When no Contract Terms are set, Billing Cycle is required."
-msgstr ""
-
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:56
-msgid "When no Contract Terms are set, Current Amount is required."
-msgstr ""
 
 #. Label of the workflow_state (Select) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json

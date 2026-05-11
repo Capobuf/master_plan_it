@@ -8,7 +8,7 @@ import frappe
 from frappe import _
 from frappe.utils import flt, getdate
 
-from master_plan_it import annualization, tax
+from master_plan_it import annualization
 
 ACTIVE_CONTRACT_STATUSES = {"Active", "Pending Renewal", "Renewed"}
 ACTIVE_EXPENSE_STATES = {"Open", "Closed"}
@@ -100,13 +100,6 @@ def get_contract_forecast_totals(
         fields=[
             "name",
             "cost_center",
-            "start_date",
-            "end_date",
-            "billing_cycle",
-            "current_amount",
-            "current_amount_net",
-            "current_amount_includes_vat",
-            "vat_rate",
         ],
         order_by="name asc",
         limit=None,
@@ -559,7 +552,6 @@ def get_overview_lines_dataset(
 
     Line types:
     - Contract Term  : one row per contract term that overlaps the year
-    - Contract Header: one row for contracts with no terms
     - Expense Row    : one row per active MPIT Expense Row (Estimate/Quote/Actual)
     - Plafond        : one row per active MPIT Expense Row in a Plafond document
 
@@ -741,7 +733,6 @@ def get_contract_year_contribution_lines(
 
     Source types:
     - Contract Term: one line per overlapping contract term
-    - Contract Header: fallback line when no terms exist
     """
     year_int = _resolve_year_int(year)
     year_start, year_end = annualization.get_year_bounds(year_int)
@@ -761,13 +752,6 @@ def get_contract_year_contribution_lines(
             "name",
             "vendor",
             "cost_center",
-            "start_date",
-            "end_date",
-            "billing_cycle",
-            "current_amount",
-            "current_amount_net",
-            "current_amount_includes_vat",
-            "vat_rate",
             "status",
         ],
         order_by="cost_center asc, name asc",
@@ -816,40 +800,6 @@ def get_contract_year_contribution_lines(
                     }
                 )
             continue
-
-        header_net = _contract_header_amount_net(contract_row)
-        contract_start = getdate(contract_row.start_date) if contract_row.start_date else year_start
-        contract_end = getdate(contract_row.end_date) if contract_row.end_date else year_end
-        period_start = max(contract_start, year_start)
-        period_end = min(contract_end, year_end)
-        annual_contrib = allocate_contract_amount_to_year(
-            header_net,
-            contract_row.billing_cycle,
-            contract_start,
-            contract_end,
-            year_start,
-            year_end,
-        )
-        if not show_zero_rows and annual_contrib == 0:
-            continue
-
-        contribution_lines.append(
-            {
-                "source_type": "Contract Header",
-                "source_row": "HEADER",
-                "contract": contract_row.name,
-                "contract_status": contract_row.status,
-                "cost_center": contract_row.cost_center,
-                "vendor": contract_row.vendor,
-                "period_start": period_start,
-                "period_end": period_end,
-                "amount_net": flt(header_net, 2),
-                "annual_contribution_net": flt(annual_contrib, 2),
-                "billing_cycle": contract_row.billing_cycle,
-                "vat_rate": contract_row.vat_rate,
-                "amount_includes_vat": contract_row.current_amount_includes_vat,
-            }
-        )
 
     contribution_lines.sort(
         key=lambda line: (
@@ -1074,22 +1024,6 @@ def _monthly_from_cycle(amount_net: float, billing_cycle: str | None) -> float:
     return flt(amount_net, 6)
 
 
-def _contract_header_amount_net(contract_row) -> float:
-    if contract_row.current_amount_net is not None:
-        return flt(contract_row.current_amount_net, 2)
-
-    amount = flt(contract_row.current_amount or 0, 2)
-    if amount == 0:
-        return 0.0
-
-    net, _vat, _gross = tax.split_net_vat_gross(
-        amount,
-        contract_row.vat_rate,
-        bool(contract_row.current_amount_includes_vat),
-    )
-    return flt(net, 2)
-
-
 def _contract_forecast_for_year(contract_row, year_start: datetime.date, year_end: datetime.date) -> float:
     terms = _get_contract_terms(contract_row.name)
 
@@ -1118,21 +1052,7 @@ def _contract_forecast_for_year(contract_row, year_start: datetime.date, year_en
             return 0.0
         return flt(total, 2)
 
-    header_amount_net = _contract_header_amount_net(contract_row)
-    if header_amount_net == 0:
-        return 0.0
-
-    contract_start = getdate(contract_row.start_date) if contract_row.start_date else year_start
-    contract_end = getdate(contract_row.end_date) if contract_row.end_date else year_end
-
-    return allocate_contract_amount_to_year(
-        header_amount_net,
-        contract_row.billing_cycle,
-        contract_start,
-        contract_end,
-        year_start,
-        year_end,
-    )
+    return 0.0
 
 
 def _get_contract_terms(contract_name: str) -> list:
@@ -1178,13 +1098,6 @@ def _get_active_contracts(cost_center: str | None = None, contract: str | None =
         fields=[
             "name",
             "cost_center",
-            "start_date",
-            "end_date",
-            "billing_cycle",
-            "current_amount",
-            "current_amount_net",
-            "current_amount_includes_vat",
-            "vat_rate",
         ],
         order_by="name asc",
         limit=None,
@@ -1211,22 +1124,6 @@ def _contract_monthly_allocation(contract_row, year_start: datetime.date, year_e
             for month in _months_touched(period_start, period_end):
                 monthly_map[month] += flt(monthly_net, 6)
         return monthly_map
-
-    header_amount_net = _contract_header_amount_net(contract_row)
-    if header_amount_net == 0:
-        return monthly_map
-
-    monthly_net = _monthly_from_cycle(header_amount_net, contract_row.billing_cycle)
-    period_start = getdate(contract_row.start_date) if contract_row.start_date else year_start
-    period_end = getdate(contract_row.end_date) if contract_row.end_date else year_end
-    period_start = max(period_start, year_start)
-    period_end = min(period_end, year_end)
-
-    if period_start > period_end:
-        return monthly_map
-
-    for month in _months_touched(period_start, period_end):
-        monthly_map[month] += flt(monthly_net, 6)
 
     return monthly_map
 

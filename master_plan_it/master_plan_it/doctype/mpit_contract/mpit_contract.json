@@ -19,16 +19,6 @@
   "end_date",
   "auto_renew",
   "next_renewal_date",
-  "fallback_section",
-  "current_amount",
-  "current_amount_includes_vat",
-  "vat_rate",
-  "billing_cycle",
-  "fallback_col",
-  "current_amount_net",
-  "current_amount_vat",
-  "current_amount_gross",
-  "current_monthly_net",
   "term_section",
   "terms",
   "current_term_section",
@@ -138,63 +128,6 @@
    "in_list_view": 1,
    "in_preview": 1,
    "label": "Next Renewal Date"
-  },
-  {
-   "fieldname": "fallback_section",
-   "fieldtype": "Section Break",
-   "label": "Header Fallback (No Terms)"
-  },
-  {
-   "fieldname": "current_amount",
-   "fieldtype": "Currency",
-   "label": "Current Amount"
-  },
-  {
-   "default": "0",
-   "fieldname": "current_amount_includes_vat",
-   "fieldtype": "Check",
-   "label": "Current Amount Includes VAT"
-  },
-  {
-   "fieldname": "vat_rate",
-   "fieldtype": "Percent",
-   "label": "VAT Rate",
-   "precision": "2"
-  },
-  {
-   "default": "Monthly",
-   "fieldname": "billing_cycle",
-   "fieldtype": "Select",
-   "label": "Billing Cycle",
-   "options": "Monthly\nQuarterly\nAnnual\nOther"
-  },
-  {
-   "fieldname": "fallback_col",
-   "fieldtype": "Column Break"
-  },
-  {
-   "fieldname": "current_amount_net",
-   "fieldtype": "Currency",
-   "label": "Current Amount Net",
-   "read_only": 1
-  },
-  {
-   "fieldname": "current_amount_vat",
-   "fieldtype": "Currency",
-   "label": "Current Amount VAT",
-   "read_only": 1
-  },
-  {
-   "fieldname": "current_amount_gross",
-   "fieldtype": "Currency",
-   "label": "Current Amount Gross",
-   "read_only": 1
-  },
-  {
-   "fieldname": "current_monthly_net",
-   "fieldtype": "Currency",
-   "label": "Current Monthly Net",
-   "read_only": 1
   },
   {
    "fieldname": "term_section",

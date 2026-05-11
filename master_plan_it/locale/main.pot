@@ -441,39 +441,6 @@ msgstr ""
 msgid "Cost Centers"
 msgstr ""
 
-#. Label of the current_amount (Currency) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:105
-msgid "Current Amount"
-msgstr ""
-
-#. Label of the current_amount_gross (Currency) field in DocType 'MPIT
-#. Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Current Amount Gross"
-msgstr ""
-
-#. Label of the current_amount_includes_vat (Check) field in DocType 'MPIT
-#. Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Current Amount Includes VAT"
-msgstr ""
-
-#. Label of the current_amount_net (Currency) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Current Amount Net"
-msgstr ""
-
-#. Label of the current_amount_vat (Currency) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Current Amount VAT"
-msgstr ""
-
-#. Label of the current_monthly_net (Currency) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Current Monthly Net"
-msgstr ""
-
 #. Label of the current_term_section (Section Break) field in DocType 'MPIT
 #. Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
@@ -820,12 +787,6 @@ msgstr ""
 
 #: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:132
 msgid "Gross Amount"
-msgstr ""
-
-#. Label of the fallback_section (Section Break) field in DocType 'MPIT
-#. Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Header Fallback (No Terms)"
 msgstr ""
 
 #. Label of a Workspace Sidebar Item
@@ -1941,14 +1902,6 @@ msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:13
 msgid "View Mode"
-msgstr ""
-
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:59
-msgid "When no Contract Terms are set, Billing Cycle is required."
-msgstr ""
-
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:56
-msgid "When no Contract Terms are set, Current Amount is required."
 msgstr ""
 
 #. Label of the workflow_state (Select) field in DocType 'MPIT Expense'

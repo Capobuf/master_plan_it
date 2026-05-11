@@ -7,6 +7,7 @@ from frappe.tests.utils import FrappeTestCase
 
 from master_plan_it.master_plan_it.financial_engine import (
     get_actual_totals,
+    get_contract_year_contribution_lines,
     get_contract_forecast_totals,
     get_cost_center_financial_summary,
     get_expense_forecast_totals,
@@ -50,24 +51,38 @@ class TestFinancialEngine(FrappeTestCase):
         off_year = get_contract_forecast_totals(self.year, cost_center=self.cost_center, contract=off_year_contract.name)
         self.assertEqual(off_year["contract_forecast_total"], 0)
 
-    def test_contract_header_fallback_applies_only_without_terms(self):
+    def test_contract_without_terms_has_no_contribution_lines(self):
         contract = frappe.get_doc(
             {
                 "doctype": "MPIT Contract",
-                "description": f"Contract Header {self.suffix}",
+                "description": f"Contract No Terms {self.suffix}",
                 "vendor": self.vendor,
                 "cost_center": self.cost_center,
-                "start_date": "2030-01-01",
-                "end_date": "2030-12-31",
-                "current_amount": 100,
-                "current_amount_includes_vat": 0,
-                "vat_rate": 22,
-                "billing_cycle": "Monthly",
             }
         )
         contract.insert()
+        lines = get_contract_year_contribution_lines(self.year, contract_name=contract.name)
         totals = get_contract_forecast_totals(self.year, cost_center=self.cost_center, contract=contract.name)
-        self.assertEqual(totals["contract_forecast_total"], 1200)
+        self.assertEqual(lines, [])
+        self.assertEqual(totals["contract_forecast_total"], 0)
+
+    def test_contract_contribution_lines_are_term_based_and_year_clipped(self):
+        contract = make_contract_with_terms(
+            description=f"Contract Cross Year {self.suffix}",
+            vendor=self.vendor,
+            cost_center=self.cost_center,
+            terms=[
+                term_row("2029-07-01", "2030-06-30", 120, "Monthly"),
+            ],
+        )
+        lines = get_contract_year_contribution_lines(self.year, contract_name=contract.name)
+
+        self.assertEqual(len(lines), 1)
+        self.assertEqual(lines[0]["source_type"], "Contract Term")
+        self.assertEqual(lines[0]["source_row"], contract.terms[0].name)
+        self.assertEqual(str(lines[0]["period_start"]), "2030-01-01")
+        self.assertEqual(str(lines[0]["period_end"]), "2030-06-30")
+        self.assertNotEqual(lines[0]["source_row"], "HEAD" + "ER")
 
     def test_expense_forecast_and_actual_respect_row_and_doc_states(self):
         expense_open = make_expense(

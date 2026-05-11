@@ -8,7 +8,7 @@ from frappe.model.document import Document
 from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import add_days, flt, getdate
 
-from master_plan_it import annualization, mpit_defaults, tax
+from master_plan_it import annualization, mpit_defaults
 from master_plan_it.master_plan_it.financial_engine import get_contract_year_contribution_lines
 from master_plan_it.naming_utils import sync_series_to_max
 
@@ -41,23 +41,11 @@ class MPITContract(Document):
 
         self._auto_compute_term_end_dates()
         self._validate_terms_no_overlap()
-        self._validate_fallback_amount_rules()
 
-        self._compute_header_amounts()
         self._compute_current_term()
         self._compute_annual_summaries()
         self._default_next_renewal_date()
         self._normalize_status()
-
-    def _validate_fallback_amount_rules(self) -> None:
-        if self.terms:
-            return
-
-        if not self.current_amount:
-            frappe.throw(_("When no Contract Terms are set, Current Amount is required."))
-
-        if not self.billing_cycle:
-            frappe.throw(_("When no Contract Terms are set, Billing Cycle is required."))
 
     def _auto_compute_term_end_dates(self) -> None:
         terms = [t for t in self.terms if t.from_date]
@@ -85,37 +73,6 @@ class MPITContract(Document):
                 frappe.throw(
                     _("Term {0} overlaps with the next term. Review term dates.").format(idx + 1)
                 )
-
-    def _compute_header_amounts(self) -> None:
-        amount = flt(self.current_amount or 0, 2)
-        if amount == 0:
-            self.current_amount_net = 0
-            self.current_amount_vat = 0
-            self.current_amount_gross = 0
-            self.current_monthly_net = 0
-            return
-
-        default_vat = mpit_defaults.get_default_vat_rate()
-        if self.vat_rate is None and default_vat is not None:
-            self.vat_rate = default_vat
-
-        final_vat_rate = tax.validate_strict_vat(
-            amount,
-            self.vat_rate,
-            default_vat,
-            field_label=_("Current Amount"),
-        )
-
-        net, vat, gross = tax.split_net_vat_gross(
-            amount,
-            final_vat_rate,
-            bool(self.current_amount_includes_vat),
-        )
-
-        self.current_amount_net = flt(net, 2)
-        self.current_amount_vat = flt(vat, 2)
-        self.current_amount_gross = flt(gross, 2)
-        self.current_monthly_net = self._monthly_from_cycle(self.current_amount_net, self.billing_cycle)
 
     def _compute_current_term(self) -> None:
         self.current_term_amount = None
@@ -182,19 +139,7 @@ class MPITContract(Document):
 
             return flt(total, 2)
 
-        if not self.current_amount_net:
-            return 0.0
-
-        period_start = getdate(self.start_date) if self.start_date else year_start
-        period_end = getdate(self.end_date) if self.end_date else year_end
-        if period_start > period_end:
-            return 0.0
-
-        overlap_months = annualization.overlap_months(period_start, period_end, year_start, year_end)
-        if overlap_months <= 0:
-            return 0.0
-
-        return flt(self.current_monthly_net * overlap_months, 2)
+        return 0.0
 
     def _default_next_renewal_date(self) -> None:
         if self.auto_renew and not self.next_renewal_date and self.end_date:
@@ -404,12 +349,10 @@ def _resolve_target_year_name(year: str | None) -> tuple[str, bool]:
 
 
 def _build_external_reference(year_name: str, contract_name: str, line: dict) -> str:
-    if line.get("source_type") == "Contract Term":
-        return (
-            f"MPIT_CONTRACT_ACTUAL::{year_name}::{contract_name}"
-            f"::TERM::{line.get('source_row') or 'UNKNOWN'}"
-        )
-    return f"MPIT_CONTRACT_ACTUAL::{year_name}::{contract_name}::HEADER"
+    return (
+        f"MPIT_CONTRACT_ACTUAL::{year_name}::{contract_name}"
+        f"::TERM::{line.get('source_row') or 'UNKNOWN'}"
+    )
 
 
 def _get_existing_external_references(
@@ -457,7 +400,7 @@ def _get_existing_contract_year_expense_name(contract_name: str, year_name: str)
 
 
 def _build_actual_row_description(contract, line: dict) -> str:
-    source = line.get("source_row") if line.get("source_type") == "Contract Term" else "HEADER"
+    source = line.get("source_row") or "UNKNOWN"
     description = (contract.description or contract.name or "").strip()
     if description:
         return f"{description} [{source}]"
