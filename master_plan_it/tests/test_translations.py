@@ -69,6 +69,7 @@ def _it_po_path() -> Path:
 def test_workspace_translation_targets_present():
     expected = {
         "Home": "Home",
+        "Management": "Gestione",
         "Operations": "Operazioni",
         "Analysis": "Analisi",
         "Overview": "Panoramica",
@@ -76,7 +77,6 @@ def test_workspace_translation_targets_present():
         "Expenses Report": "Report spese",
         "Project Forecast vs Actual": "Forecast vs effettivo per progetto",
         "Renewals Window": "Finestra rinnovi",
-        "Master Data": "Anagrafiche",
         "System": "Sistema",
         "Settings": "Impostazioni",
         "Expenses": "Spese",
@@ -102,6 +102,46 @@ def test_workspace_translation_targets_present():
         "Actual Total": "Totale effettivo",
         "Active Plafonds": "Plafond attivi",
         "Remaining Plafond": "Plafond residuo",
+    }
+
+    translations = _load_po_translations(_it_po_path())
+
+    missing = [key for key in expected if key not in translations]
+    assert not missing, f"Missing msgid entries in it.po: {missing}"
+
+    mismatched = {
+        key: (translations[key], value)
+        for key, value in expected.items()
+        if translations.get(key) != value
+    }
+    assert not mismatched, f"Mismatched translations in it.po: {mismatched}"
+
+
+def test_overview_and_contract_actualization_translation_targets_present():
+    expected = {
+        "View Mode": "Vista",
+        "Build-up": "Composizione",
+        "Lines": "Righe",
+        "Section Scope": "Ambito sezione",
+        "All": "Tutto",
+        "Expense Phase": "Fase spesa",
+        "Show Zero Rows": "Mostra righe a zero",
+        "Forecast Contracts": "Forecast contratti",
+        "Forecast Estimate": "Forecast stima",
+        "Forecast Quote": "Forecast preventivo",
+        "Over": "Sforamento",
+        "Source Type": "Tipo origine",
+        "Source Document": "Documento origine",
+        "Source Row": "Riga origine",
+        "Period Start": "Inizio periodo",
+        "Period End": "Fine periodo",
+        "Annual Contribution": "Contributo annuale",
+        "Total Lines": "Totale righe",
+        "Annual Total": "Totale annuale",
+        "Create Actual for Current Year": "Crea effettivo anno corrente",
+        "Actual current year: not created": "Effettivo anno corrente: non creato",
+        "Actual current year: partial": "Effettivo anno corrente: parziale",
+        "Actual current year: complete": "Effettivo anno corrente: completo",
     }
 
     translations = _load_po_translations(_it_po_path())

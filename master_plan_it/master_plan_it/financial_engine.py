@@ -400,10 +400,11 @@ def get_overview_buildup_dataset(
     Each cost center produces a header row (indent=0) followed by block rows
     (indent=1) that explain which components compose the total.
 
-    NOTE: ``project`` applies only to expense blocks.  Contract blocks are
-    always fetched unfiltered by project because MPIT Contract has no project
-    link.  When ``project`` is active the summary header values for the
-    expense side are project-scoped; contract values remain full.
+    NOTE: ``project`` applies only to expense blocks. Contract blocks are
+    intentionally kept unfiltered by project to preserve existing semantics in
+    this report path, even though MPIT Contract has an optional project link.
+    When ``project`` is active the summary header values for the expense side
+    are project-scoped; contract values remain full.
     """
     year_int = _resolve_year_int(year)
     year_start, year_end = annualization.get_year_bounds(year_int)
@@ -562,8 +563,9 @@ def get_overview_lines_dataset(
     - Expense Row    : one row per active MPIT Expense Row (Estimate/Quote/Actual)
     - Plafond        : one row per active MPIT Expense Row in a Plafond document
 
-    ``project`` applies only to Expense Row lines.  Contract lines are never
-    filtered by project because MPIT Contract has no project link.
+    ``project`` applies only to Expense Row lines. Contract lines are
+    intentionally left unfiltered by project in this report path to preserve
+    existing semantics.
     """
     year_int = _resolve_year_int(year)
     year_start, year_end = annualization.get_year_bounds(year_int)
@@ -578,112 +580,33 @@ def get_overview_lines_dataset(
     # Contract lines
     # ------------------------------------------------------------------
     if include_contracts:
-        contract_filters: dict = {"status": ["in", list(ACTIVE_CONTRACT_STATUSES)]}
-        if cost_center:
-            contract_filters["cost_center"] = cost_center
-        if contract:
-            contract_filters["name"] = contract
-        if vendor:
-            contract_filters["vendor"] = vendor
-
-        contracts = frappe.get_all(
-            "MPIT Contract",
-            filters=contract_filters,
-            fields=[
-                "name",
-                "description",
-                "vendor",
-                "cost_center",
-                "start_date",
-                "end_date",
-                "billing_cycle",
-                "current_amount",
-                "current_amount_net",
-                "current_amount_includes_vat",
-                "vat_rate",
-                "status",
-            ],
-            order_by="cost_center asc, name asc",
-            limit=None,
+        contract_lines = get_contract_year_contribution_lines(
+            year_int,
+            contract_name=contract,
+            cost_center=cost_center,
+            vendor=vendor,
+            show_zero_rows=show_zero_rows,
         )
-
-        for c in contracts:
-            terms = _get_contract_terms(c.name)
-            if terms:
-                for idx, term in enumerate(terms):
-                    term_end = _resolve_term_end(terms, idx, year_end)
-                    period_start = max(getdate(term.from_date), year_start)
-                    period_end = min(term_end, year_end)
-                    if c.start_date:
-                        period_start = max(period_start, getdate(c.start_date))
-                    if c.end_date:
-                        period_end = min(period_end, getdate(c.end_date))
-                    if period_start > period_end:
-                        continue
-
-                    term_amount_net = flt(
-                        term.amount_net if term.amount_net is not None else term.amount, 2
-                    )
-                    annual_contrib = allocate_contract_amount_to_year(
-                        term_amount_net,
-                        term.billing_cycle,
-                        getdate(term.from_date),
-                        term_end,
-                        year_start,
-                        year_end,
-                    )
-                    if not show_zero_rows and annual_contrib == 0:
-                        continue
-
-                    rows.append({
-                        "cost_center": c.cost_center,
-                        "source_type": "Contract Term",
-                        "source_document": c.name,
-                        "source_row": term.name,
-                        "contract": c.name,
-                        "project": None,
-                        "vendor": c.vendor,
-                        "expense_phase": None,
-                        "funding": "-",
-                        "period_start": getdate(term.from_date),
-                        "period_end": term_end,
-                        "spend_date": None,
-                        "amount_net": term_amount_net,
-                        "annual_contribution_net": flt(annual_contrib, 2),
-                        "logical_state": c.status,
-                    })
-            else:
-                header_net = _contract_header_amount_net(c)
-                contract_start = getdate(c.start_date) if c.start_date else year_start
-                contract_end = getdate(c.end_date) if c.end_date else year_end
-                annual_contrib = allocate_contract_amount_to_year(
-                    header_net,
-                    c.billing_cycle,
-                    contract_start,
-                    contract_end,
-                    year_start,
-                    year_end,
-                )
-                if not show_zero_rows and annual_contrib == 0:
-                    continue
-
-                rows.append({
-                    "cost_center": c.cost_center,
-                    "source_type": "Contract Header",
-                    "source_document": c.name,
-                    "source_row": None,
-                    "contract": c.name,
+        for line in contract_lines:
+            rows.append(
+                {
+                    "cost_center": line.get("cost_center"),
+                    "source_type": line.get("source_type"),
+                    "source_document": line.get("contract"),
+                    "source_row": line.get("source_row"),
+                    "contract": line.get("contract"),
                     "project": None,
-                    "vendor": c.vendor,
+                    "vendor": line.get("vendor"),
                     "expense_phase": None,
                     "funding": "-",
-                    "period_start": contract_start,
-                    "period_end": contract_end,
+                    "period_start": line.get("period_start"),
+                    "period_end": line.get("period_end"),
                     "spend_date": None,
-                    "amount_net": header_net,
-                    "annual_contribution_net": flt(annual_contrib, 2),
-                    "logical_state": c.status,
-                })
+                    "amount_net": flt(line.get("amount_net"), 2),
+                    "annual_contribution_net": flt(line.get("annual_contribution_net"), 2),
+                    "logical_state": line.get("contract_status"),
+                }
+            )
 
     # ------------------------------------------------------------------
     # Expense rows (Estimate / Quote / Actual)
@@ -804,6 +727,139 @@ def get_overview_lines_dataset(
         "summary": summary,
         "project_filter_active": bool(project),
     }
+
+
+def get_contract_year_contribution_lines(
+    year: str | int,
+    contract_name: str | None = None,
+    cost_center: str | None = None,
+    vendor: str | None = None,
+    show_zero_rows: bool = False,
+) -> list[dict]:
+    """
+    Deterministic contract contribution lines for a specific year.
+
+    Source types:
+    - Contract Term: one line per overlapping contract term
+    - Contract Header: fallback line when no terms exist
+    """
+    year_int = _resolve_year_int(year)
+    year_start, year_end = annualization.get_year_bounds(year_int)
+
+    contract_filters: dict = {"status": ["in", list(ACTIVE_CONTRACT_STATUSES)]}
+    if contract_name:
+        contract_filters["name"] = contract_name
+    if cost_center:
+        contract_filters["cost_center"] = cost_center
+    if vendor:
+        contract_filters["vendor"] = vendor
+
+    contracts = frappe.get_all(
+        "MPIT Contract",
+        filters=contract_filters,
+        fields=[
+            "name",
+            "vendor",
+            "cost_center",
+            "start_date",
+            "end_date",
+            "billing_cycle",
+            "current_amount",
+            "current_amount_net",
+            "current_amount_includes_vat",
+            "vat_rate",
+            "status",
+        ],
+        order_by="cost_center asc, name asc",
+        limit=None,
+    )
+
+    contribution_lines: list[dict] = []
+
+    for contract_row in contracts:
+        terms = _get_contract_terms(contract_row.name)
+        if terms:
+            for idx, term in enumerate(terms):
+                term_end = _resolve_term_end(terms, idx, year_end)
+                period_start = max(getdate(term.from_date), year_start)
+                period_end = min(term_end, year_end)
+                if period_start > period_end:
+                    continue
+
+                term_amount_net = flt(term.amount_net if term.amount_net is not None else term.amount, 2)
+                annual_contrib = allocate_contract_amount_to_year(
+                    term_amount_net,
+                    term.billing_cycle,
+                    getdate(term.from_date),
+                    term_end,
+                    year_start,
+                    year_end,
+                )
+                if not show_zero_rows and annual_contrib == 0:
+                    continue
+
+                contribution_lines.append(
+                    {
+                        "source_type": "Contract Term",
+                        "source_row": term.name,
+                        "contract": contract_row.name,
+                        "contract_status": contract_row.status,
+                        "cost_center": contract_row.cost_center,
+                        "vendor": contract_row.vendor,
+                        "period_start": period_start,
+                        "period_end": period_end,
+                        "amount_net": term_amount_net,
+                        "annual_contribution_net": flt(annual_contrib, 2),
+                        "billing_cycle": term.billing_cycle,
+                        "vat_rate": term.vat_rate,
+                        "amount_includes_vat": term.amount_includes_vat,
+                    }
+                )
+            continue
+
+        header_net = _contract_header_amount_net(contract_row)
+        contract_start = getdate(contract_row.start_date) if contract_row.start_date else year_start
+        contract_end = getdate(contract_row.end_date) if contract_row.end_date else year_end
+        period_start = max(contract_start, year_start)
+        period_end = min(contract_end, year_end)
+        annual_contrib = allocate_contract_amount_to_year(
+            header_net,
+            contract_row.billing_cycle,
+            contract_start,
+            contract_end,
+            year_start,
+            year_end,
+        )
+        if not show_zero_rows and annual_contrib == 0:
+            continue
+
+        contribution_lines.append(
+            {
+                "source_type": "Contract Header",
+                "source_row": "HEADER",
+                "contract": contract_row.name,
+                "contract_status": contract_row.status,
+                "cost_center": contract_row.cost_center,
+                "vendor": contract_row.vendor,
+                "period_start": period_start,
+                "period_end": period_end,
+                "amount_net": flt(header_net, 2),
+                "annual_contribution_net": flt(annual_contrib, 2),
+                "billing_cycle": contract_row.billing_cycle,
+                "vat_rate": contract_row.vat_rate,
+                "amount_includes_vat": contract_row.current_amount_includes_vat,
+            }
+        )
+
+    contribution_lines.sort(
+        key=lambda line: (
+            line.get("cost_center") or "",
+            line.get("contract") or "",
+            line.get("source_type") or "",
+            line.get("source_row") or "",
+        )
+    )
+    return contribution_lines
 
 
 # ---------------------------------------------------------------------------
@@ -1046,11 +1102,6 @@ def _contract_forecast_for_year(contract_row, year_start: datetime.date, year_en
 
             period_start = max(term_start, year_start)
             period_end = min(term_end, year_end)
-            if contract_row.start_date:
-                period_start = max(period_start, getdate(contract_row.start_date))
-            if contract_row.end_date:
-                period_end = min(period_end, getdate(contract_row.end_date))
-
             if period_start > period_end:
                 continue
 
@@ -1088,7 +1139,16 @@ def _get_contract_terms(contract_name: str) -> list:
     terms = frappe.get_all(
         "MPIT Contract Term",
         filters={"parent": contract_name, "parenttype": "MPIT Contract", "parentfield": "terms"},
-        fields=["name", "from_date", "to_date", "amount", "amount_net", "billing_cycle"],
+        fields=[
+            "name",
+            "from_date",
+            "to_date",
+            "amount",
+            "amount_net",
+            "billing_cycle",
+            "vat_rate",
+            "amount_includes_vat",
+        ],
         order_by="from_date asc, idx asc",
         limit=None,
     )
@@ -1142,10 +1202,6 @@ def _contract_monthly_allocation(contract_row, year_start: datetime.date, year_e
 
             period_start = max(term_start, year_start)
             period_end = min(term_end, year_end)
-            if contract_row.start_date:
-                period_start = max(period_start, getdate(contract_row.start_date))
-            if contract_row.end_date:
-                period_end = min(period_end, getdate(contract_row.end_date))
             if period_start > period_end:
                 continue
 

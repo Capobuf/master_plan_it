@@ -2044,3 +2044,47 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:214
 msgid "{0} must be inside the selected year."
 msgstr ""
+
+#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.js:38
+msgid "Create Actual for Current Year"
+msgstr ""
+
+#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.js:73
+#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:347
+msgid "Actual current year: not created"
+msgstr ""
+
+#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.js:74
+#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:348
+msgid "Actual current year: partial"
+msgstr ""
+
+#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.js:75
+#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:349
+msgid "Actual current year: complete"
+msgstr ""
+
+#: master_plan_it/master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:47
+msgid "Build-up"
+msgstr ""
+
+#: master_plan_it/master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:60
+msgid "All"
+msgstr ""
+
+#: master_plan_it/master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:47
+msgid "Lines"
+msgstr ""
+
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Management"
+msgstr ""
+
+#: master_plan_it/master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:88
+msgid "Filters expense lines only. Contract lines are intentionally not project-filtered."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py
+msgid "No active MPIT Year covers today ({0})."
+msgstr ""

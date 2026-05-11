@@ -36,6 +36,7 @@ frappe.query_reports["MPIT Overview"] = {
             label: __("Year"),
             fieldtype: "Link",
             options: "MPIT Year",
+            default: String(new Date().getFullYear()),
             reqd: 1,
         },
         {
@@ -86,13 +87,13 @@ frappe.query_reports["MPIT Overview"] = {
         },
         {
             // project applies to expenses only; hidden in Summary to avoid
-            // misrepresenting contract figures that have no project link.
+            // misrepresenting contract figures in this report path.
             fieldname: "project",
             label: __("Project"),
             fieldtype: "Link",
             options: "MPIT Project",
             depends_on: "eval:['Build-up','Lines'].includes(doc.view_mode) && ['All','Expenses'].includes(doc.section_scope || 'All')",
-            description: __("Filters expense lines only. Contract lines are not linked to projects."),
+            description: __("Filters expense lines only. Contract lines are intentionally not project-filtered."),
         },
         {
             fieldname: "vendor",

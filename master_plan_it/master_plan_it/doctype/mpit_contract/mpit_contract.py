@@ -9,6 +9,7 @@ from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import add_days, flt, getdate
 
 from master_plan_it import annualization, mpit_defaults, tax
+from master_plan_it.master_plan_it.financial_engine import get_contract_year_contribution_lines
 from master_plan_it.naming_utils import sync_series_to_max
 
 VALID_CONTRACT_STATUSES = {"Active", "Pending Renewal", "Renewed"}
@@ -222,3 +223,280 @@ def resolve_term_end(terms_sorted: list, idx: int, fallback_end=None):
     if idx + 1 < len(terms_sorted):
         return add_days(getdate(terms_sorted[idx + 1].from_date), -1)
     return fallback_end
+
+
+@frappe.whitelist()
+def create_actual_from_contract(contract_name: str, year: str | None = None) -> dict:
+    if not contract_name:
+        frappe.throw(_("Contract is required."))
+
+    contract = frappe.get_doc("MPIT Contract", contract_name)
+    contract.check_permission("read")
+
+    selected_year, has_year_records = _resolve_target_year_name(year)
+    if not has_year_records:
+        frappe.throw(
+            _("No MPIT Year records exist. Create MPIT Year {0} before generating Actual rows.").format(
+                selected_year
+            )
+        )
+
+    if contract.status not in VALID_CONTRACT_STATUSES:
+        message = _("Contract status {0} is not actualizable.").format(contract.status or _("Draft"))
+        status_info = _get_actualization_status(contract.name, selected_year, preloaded_lines=[])
+        return {
+            "status": "not_allowed",
+            "message": message,
+            "year": selected_year,
+            "expense_name": status_info.get("expense_name"),
+            "actualization_status": status_info.get("actualization_status"),
+            "actualization_status_label": status_info.get("actualization_status_label"),
+        }
+
+    lines = get_contract_year_contribution_lines(
+        selected_year,
+        contract_name=contract.name,
+        show_zero_rows=False,
+    )
+    if not lines:
+        message = _("Contract {0} does not overlap year {1}. No Actual rows were created.").format(
+            contract.name, selected_year
+        )
+        return {
+            "status": "no_overlap",
+            "message": message,
+            "year": selected_year,
+            "expense_name": _get_existing_contract_year_expense_name(contract.name, selected_year),
+            "added_rows": 0,
+            "expected_rows": 0,
+            "actualization_status": "not_created",
+            "actualization_status_label": _("Actual current year: not created"),
+        }
+
+    expected_refs = {_build_external_reference(selected_year, contract.name, line) for line in lines}
+    existing_refs = _get_existing_external_references(contract.name, selected_year, expected_refs)
+
+    expense_name = _get_existing_contract_year_expense_name(contract.name, selected_year)
+    created = False
+    if expense_name:
+        expense_doc = frappe.get_doc("MPIT Expense", expense_name)
+        if expense_doc.project:
+            frappe.throw(
+                _(
+                    "Expense {0} has both Contract and Project set. Clear Project before appending Actual rows."
+                ).format(expense_doc.name)
+            )
+    else:
+        expense_doc = frappe.new_doc("MPIT Expense")
+        expense_doc.update(
+            {
+                "expense_kind": "Ordinary",
+                "expense_title": _("Actual from contract {0} - {1}").format(contract.name, selected_year),
+                "workflow_state": "Open",
+                "year": selected_year,
+                "cost_center": contract.cost_center,
+                "vendor": contract.vendor,
+                "contract": contract.name,
+                "uses_plafond": 0,
+                "is_extra": 0,
+            }
+        )
+        created = True
+
+    added_rows = 0
+    for line in lines:
+        external_reference = _build_external_reference(selected_year, contract.name, line)
+        if external_reference in existing_refs:
+            continue
+
+        expense_doc.append(
+            "rows",
+            {
+                "row_state": "Active",
+                "row_phase": "Actual",
+                "row_description": _build_actual_row_description(contract, line),
+                "vendor": line.get("vendor"),
+                "external_reference": external_reference,
+                "amount": flt(line.get("annual_contribution_net"), 2),
+                "amount_includes_vat": 0,
+                "start_date": line.get("period_start"),
+                "end_date": line.get("period_end"),
+                "distribution": "all",
+            },
+        )
+        added_rows += 1
+
+    if added_rows:
+        if created:
+            expense_doc.insert()
+            expense_name = expense_doc.name
+        else:
+            expense_doc.save()
+            expense_name = expense_doc.name
+
+    status_info = _get_actualization_status(contract.name, selected_year, preloaded_lines=lines)
+    if added_rows == 0:
+        message = _("Actual rows already exist for contract {0} in year {1}.").format(
+            contract.name, selected_year
+        )
+        return {
+            "status": "noop",
+            "message": message,
+            "year": selected_year,
+            "expense_name": status_info.get("expense_name"),
+            "added_rows": 0,
+            "expected_rows": len(expected_refs),
+            "actualization_status": status_info.get("actualization_status"),
+            "actualization_status_label": status_info.get("actualization_status_label"),
+        }
+
+    action = "created" if created else "updated"
+    message = (
+        _("Created expense {0} with {1} Actual rows from contract {2}.")
+        if created
+        else _("Updated expense {0}: added {1} Actual rows from contract {2}.")
+    ).format(expense_name, added_rows, contract.name)
+    return {
+        "status": action,
+        "message": message,
+        "year": selected_year,
+        "expense_name": expense_name,
+        "added_rows": added_rows,
+        "expected_rows": len(expected_refs),
+        "actualization_status": status_info.get("actualization_status"),
+        "actualization_status_label": status_info.get("actualization_status_label"),
+    }
+
+
+@frappe.whitelist()
+def get_current_year_actualization_status(contract_name: str, year: str | None = None) -> dict:
+    if not contract_name:
+        frappe.throw(_("Contract is required."))
+
+    contract = frappe.get_doc("MPIT Contract", contract_name)
+    contract.check_permission("read")
+    selected_year, _has_year_records = _resolve_target_year_name(year)
+
+    return _get_actualization_status(contract.name, selected_year)
+
+
+def _resolve_target_year_name(year: str | None) -> tuple[str, bool]:
+    today = datetime.date.today()
+    has_year_records = bool(frappe.db.count("MPIT Year"))
+    selected_year = str(year).strip() if year else ""
+    if not selected_year:
+        current_year = frappe.db.get_value(
+            "MPIT Year",
+            {"start_date": ["<=", today], "end_date": [">=", today]},
+            "name",
+        )
+        if current_year:
+            selected_year = str(current_year)
+        elif has_year_records:
+            frappe.throw(_("No active MPIT Year covers today ({0}).").format(today))
+        else:
+            selected_year = str(today.year)
+
+    if has_year_records and not frappe.db.exists("MPIT Year", selected_year):
+        frappe.throw(_("MPIT Year {0} does not exist.").format(selected_year))
+
+    return selected_year, has_year_records
+
+
+def _build_external_reference(year_name: str, contract_name: str, line: dict) -> str:
+    if line.get("source_type") == "Contract Term":
+        return (
+            f"MPIT_CONTRACT_ACTUAL::{year_name}::{contract_name}"
+            f"::TERM::{line.get('source_row') or 'UNKNOWN'}"
+        )
+    return f"MPIT_CONTRACT_ACTUAL::{year_name}::{contract_name}::HEADER"
+
+
+def _get_existing_external_references(
+    contract_name: str, year_name: str, expected_refs: set[str]
+) -> set[str]:
+    if not expected_refs:
+        return set()
+
+    rows = frappe.db.sql(
+        """
+        SELECT r.external_reference
+        FROM `tabMPIT Expense Row` r
+        INNER JOIN `tabMPIT Expense` e ON e.name = r.parent
+        WHERE e.contract = %(contract)s
+          AND e.year = %(year)s
+          AND e.expense_kind = 'Ordinary'
+          AND r.external_reference IN %(refs)s
+        """,
+        {
+            "contract": contract_name,
+            "year": year_name,
+            "refs": tuple(sorted(expected_refs)),
+        },
+        as_dict=True,
+    )
+    return {row.external_reference for row in rows if row.external_reference}
+
+
+def _get_existing_contract_year_expense_name(contract_name: str, year_name: str) -> str | None:
+    expenses = frappe.get_all(
+        "MPIT Expense",
+        filters={
+            "contract": contract_name,
+            "year": year_name,
+            "expense_kind": "Ordinary",
+            "workflow_state": ["!=", "Cancelled"],
+        },
+        fields=["name"],
+        order_by="creation asc",
+        limit=1,
+    )
+    if expenses:
+        return expenses[0].name
+    return None
+
+
+def _build_actual_row_description(contract, line: dict) -> str:
+    source = line.get("source_row") if line.get("source_type") == "Contract Term" else "HEADER"
+    description = (contract.description or contract.name or "").strip()
+    if description:
+        return f"{description} [{source}]"
+    return f"{contract.name} [{source}]"
+
+
+def _get_actualization_status(
+    contract_name: str,
+    year_name: str,
+    preloaded_lines: list[dict] | None = None,
+) -> dict:
+    lines = preloaded_lines
+    if lines is None:
+        lines = get_contract_year_contribution_lines(
+            year_name,
+            contract_name=contract_name,
+            show_zero_rows=False,
+        )
+
+    expected_refs = {_build_external_reference(year_name, contract_name, line) for line in lines}
+    existing_refs = _get_existing_external_references(contract_name, year_name, expected_refs)
+
+    if not expected_refs or not existing_refs:
+        status = "not_created"
+    elif len(existing_refs) < len(expected_refs):
+        status = "partial"
+    else:
+        status = "complete"
+
+    label_map = {
+        "not_created": _("Actual current year: not created"),
+        "partial": _("Actual current year: partial"),
+        "complete": _("Actual current year: complete"),
+    }
+    return {
+        "year": year_name,
+        "expense_name": _get_existing_contract_year_expense_name(contract_name, year_name),
+        "actualization_status": status,
+        "actualization_status_label": label_map[status],
+        "expected_rows": len(expected_refs),
+        "existing_rows": len(existing_refs),
+    }

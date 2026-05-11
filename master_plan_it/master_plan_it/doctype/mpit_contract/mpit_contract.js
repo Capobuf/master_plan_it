@@ -29,6 +29,7 @@ async function apply_term_defaults(cdt, cdn) {
 frappe.ui.form.on("MPIT Contract", {
     refresh(frm) {
         maybe_autofill_next_renewal_date(frm);
+        apply_actualization_controls(frm);
     },
 
     auto_renew(frm) {
@@ -39,6 +40,56 @@ frappe.ui.form.on("MPIT Contract", {
         maybe_autofill_next_renewal_date(frm);
     },
 });
+
+function apply_actualization_controls(frm) {
+    if (frm.is_new()) {
+        frm.set_intro("");
+        return;
+    }
+
+    frm.add_custom_button(__("Create Actual for Current Year"), async () => {
+        const result = await frappe.call({
+            method: "master_plan_it.master_plan_it.doctype.mpit_contract.mpit_contract.create_actual_from_contract",
+            args: { contract_name: frm.doc.name },
+        });
+        const payload = result.message || {};
+        if (payload.message) {
+            frappe.show_alert({ message: payload.message, indicator: "blue" }, 7);
+        }
+        if (payload.expense_name && ["created", "updated", "noop"].includes(payload.status)) {
+            frappe.set_route("Form", "MPIT Expense", payload.expense_name);
+            return;
+        }
+        update_actualization_intro(frm, payload.actualization_status, payload.actualization_status_label);
+    });
+
+    refresh_actualization_status(frm);
+}
+
+async function refresh_actualization_status(frm) {
+    const result = await frappe.call({
+        method: "master_plan_it.master_plan_it.doctype.mpit_contract.mpit_contract.get_current_year_actualization_status",
+        args: { contract_name: frm.doc.name },
+    });
+    const payload = result.message || {};
+    update_actualization_intro(frm, payload.actualization_status, payload.actualization_status_label);
+}
+
+function update_actualization_intro(frm, status, label) {
+    const status_label_map = {
+        not_created: __("Actual current year: not created"),
+        partial: __("Actual current year: partial"),
+        complete: __("Actual current year: complete"),
+    };
+    const indicator_map = {
+        not_created: "blue",
+        partial: "orange",
+        complete: "green",
+    };
+
+    const key = status || "not_created";
+    frm.set_intro(label || status_label_map[key], indicator_map[key] || "blue");
+}
 
 frappe.ui.form.on("MPIT Contract Term", {
     terms_add(frm, cdt, cdn) {

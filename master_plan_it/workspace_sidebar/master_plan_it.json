@@ -19,10 +19,10 @@
   {
    "child": 0,
    "collapsible": 1,
-   "icon": "briefcase",
+   "icon": "database",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Operations",
+   "label": "Management",
    "link_type": "DocType",
    "show_arrow": 0,
    "type": "Section Break"
@@ -42,38 +42,62 @@
   {
    "child": 1,
    "collapsible": 1,
-   "icon": "circle-plus",
+   "icon": "file-text",
    "indent": 0,
    "keep_closed": 0,
-   "label": "New Expense",
-   "link_type": "URL",
+   "label": "Contracts",
+   "link_to": "MPIT Contract",
+   "link_type": "DocType",
    "show_arrow": 0,
-   "type": "Link",
-   "url": "/app/mpit-expense/new-mpit-expense-1"
+   "type": "Link"
   },
   {
    "child": 1,
    "collapsible": 1,
-   "icon": "handshake",
+   "icon": "folder-kanban",
    "indent": 0,
    "keep_closed": 0,
-   "label": "New Contract",
-   "link_type": "URL",
+   "label": "Projects",
+   "link_to": "MPIT Project",
+   "link_type": "DocType",
    "show_arrow": 0,
-   "type": "Link",
-   "url": "/app/mpit-contract/new-mpit-contract-1"
+   "type": "Link"
   },
   {
    "child": 1,
    "collapsible": 1,
-   "icon": "folder-plus",
+   "icon": "building-2",
    "indent": 0,
    "keep_closed": 0,
-   "label": "New Project",
-   "link_type": "URL",
+   "label": "Vendors",
+   "link_to": "MPIT Vendor",
+   "link_type": "DocType",
    "show_arrow": 0,
-   "type": "Link",
-   "url": "/app/mpit-project/new-mpit-project-1"
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
+   "icon": "landmark",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Cost Centers",
+   "link_to": "MPIT Cost Center",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
+  },
+  {
+   "child": 1,
+   "collapsible": 1,
+   "icon": "calendar",
+   "indent": 0,
+   "keep_closed": 0,
+   "label": "Years",
+   "link_to": "MPIT Year",
+   "link_type": "DocType",
+   "show_arrow": 0,
+   "type": "Link"
   },
   {
    "child": 0,
@@ -149,10 +173,10 @@
   {
    "child": 0,
    "collapsible": 1,
-   "icon": "database",
+   "icon": "briefcase",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Master Data",
+   "label": "Operations",
    "link_type": "DocType",
    "show_arrow": 0,
    "type": "Section Break"
@@ -160,62 +184,38 @@
   {
    "child": 1,
    "collapsible": 1,
-   "icon": "file-text",
+   "icon": "circle-plus",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Contracts",
-   "link_to": "MPIT Contract",
-   "link_type": "DocType",
+   "label": "New Expense",
+   "link_type": "URL",
    "show_arrow": 0,
-   "type": "Link"
+   "type": "Link",
+   "url": "/app/mpit-expense/new-mpit-expense-1"
   },
   {
    "child": 1,
    "collapsible": 1,
-   "icon": "folder-kanban",
+   "icon": "handshake",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Projects",
-   "link_to": "MPIT Project",
-   "link_type": "DocType",
+   "label": "New Contract",
+   "link_type": "URL",
    "show_arrow": 0,
-   "type": "Link"
+   "type": "Link",
+   "url": "/app/mpit-contract/new-mpit-contract-1"
   },
   {
    "child": 1,
    "collapsible": 1,
-   "icon": "building-2",
+   "icon": "folder-plus",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Vendors",
-   "link_to": "MPIT Vendor",
-   "link_type": "DocType",
+   "label": "New Project",
+   "link_type": "URL",
    "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 1,
-   "collapsible": 1,
-   "icon": "landmark",
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Cost Centers",
-   "link_to": "MPIT Cost Center",
-   "link_type": "DocType",
-   "show_arrow": 0,
-   "type": "Link"
-  },
-  {
-   "child": 1,
-   "collapsible": 1,
-   "icon": "calendar",
-   "indent": 0,
-   "keep_closed": 0,
-   "label": "Years",
-   "link_to": "MPIT Year",
-   "link_type": "DocType",
-   "show_arrow": 0,
-   "type": "Link"
+   "type": "Link",
+   "url": "/app/mpit-project/new-mpit-project-1"
   },
   {
    "child": 0,

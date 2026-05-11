@@ -3,12 +3,16 @@ from __future__ import annotations
 import frappe
 from frappe.tests.utils import FrappeTestCase
 
+from master_plan_it.master_plan_it.doctype.mpit_contract.mpit_contract import create_actual_from_contract
+
 
 class TestMPITContract(FrappeTestCase):
     def setUp(self):
         frappe.set_user("Administrator")
         self.cost_center = ensure_cost_center("CC-CONTRACT-TEST")
         self.vendor = ensure_vendor("Vendor Contract Test")
+        self.year_2026 = ensure_year(2026)
+        self.year_2027 = ensure_year(2027)
 
     def test_header_fallback_requires_amount_without_terms(self):
         doc = frappe.get_doc(
@@ -81,6 +85,162 @@ class TestMPITContract(FrappeTestCase):
         self.assertEqual(str(terms[0].to_date), "2026-06-30")
         self.assertIsNone(terms[1].to_date)
 
+    def test_create_actual_from_contract_uses_header_fallback(self):
+        contract = frappe.get_doc(
+            {
+                "doctype": "MPIT Contract",
+                "description": "Contract Header Actualization",
+                "vendor": self.vendor,
+                "cost_center": self.cost_center,
+                "status": "Active",
+                "start_date": "2026-01-01",
+                "end_date": "2026-12-31",
+                "current_amount": 100,
+                "current_amount_includes_vat": 0,
+                "vat_rate": 22,
+                "billing_cycle": "Monthly",
+            }
+        ).insert()
+
+        result = create_actual_from_contract(contract.name, year=self.year_2026)
+        self.assertEqual(result["status"], "created")
+        self.assertEqual(result["added_rows"], 1)
+
+        expense = frappe.get_doc("MPIT Expense", result["expense_name"])
+        self.assertEqual(expense.contract, contract.name)
+        self.assertEqual(expense.year, self.year_2026)
+        self.assertEqual(expense.expense_kind, "Ordinary")
+        self.assertEqual(expense.workflow_state, "Open")
+        self.assertEqual(len(expense.rows), 1)
+
+        row = expense.rows[0]
+        self.assertEqual(row.row_phase, "Actual")
+        self.assertEqual(row.row_state, "Active")
+        self.assertEqual(row.distribution, "all")
+        self.assertFalse(row.spend_date)
+        self.assertEqual(str(row.start_date), "2026-01-01")
+        self.assertEqual(str(row.end_date), "2026-12-31")
+        self.assertEqual(row.external_reference, f"MPIT_CONTRACT_ACTUAL::{self.year_2026}::{contract.name}::HEADER")
+        self.assertEqual(row.amount, 1200)
+        self.assertEqual(row.amount_net, 1200)
+
+    def test_create_actual_from_contract_uses_terms_when_present(self):
+        contract = frappe.get_doc(
+            {
+                "doctype": "MPIT Contract",
+                "description": "Contract Terms Actualization",
+                "vendor": self.vendor,
+                "cost_center": self.cost_center,
+                "status": "Active",
+                "terms": [
+                    {
+                        "doctype": "MPIT Contract Term",
+                        "from_date": "2026-01-01",
+                        "to_date": "2026-06-30",
+                        "amount": 100,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "billing_cycle": "Monthly",
+                    },
+                    {
+                        "doctype": "MPIT Contract Term",
+                        "from_date": "2026-07-01",
+                        "to_date": "2026-12-31",
+                        "amount": 200,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "billing_cycle": "Monthly",
+                    },
+                ],
+            }
+        ).insert()
+
+        result = create_actual_from_contract(contract.name, year=self.year_2026)
+        self.assertEqual(result["status"], "created")
+        self.assertEqual(result["added_rows"], 2)
+
+        expense = frappe.get_doc("MPIT Expense", result["expense_name"])
+        self.assertEqual(len(expense.rows), 2)
+        references = {row.external_reference for row in expense.rows}
+        for term in contract.terms:
+            expected_ref = f"MPIT_CONTRACT_ACTUAL::{self.year_2026}::{contract.name}::TERM::{term.name}"
+            self.assertIn(expected_ref, references)
+
+    def test_create_actual_from_contract_is_idempotent(self):
+        contract = frappe.get_doc(
+            {
+                "doctype": "MPIT Contract",
+                "description": "Contract Idempotent Actualization",
+                "vendor": self.vendor,
+                "cost_center": self.cost_center,
+                "status": "Active",
+                "start_date": "2026-01-01",
+                "end_date": "2026-12-31",
+                "current_amount": 150,
+                "current_amount_includes_vat": 0,
+                "vat_rate": 22,
+                "billing_cycle": "Monthly",
+            }
+        ).insert()
+
+        first = create_actual_from_contract(contract.name, year=self.year_2026)
+        second = create_actual_from_contract(contract.name, year=self.year_2026)
+
+        self.assertEqual(first["status"], "created")
+        self.assertEqual(second["status"], "noop")
+
+        expense = frappe.get_doc("MPIT Expense", first["expense_name"])
+        self.assertEqual(len(expense.rows), 1)
+
+    def test_create_actual_from_contract_no_overlap_creates_nothing(self):
+        contract = frappe.get_doc(
+            {
+                "doctype": "MPIT Contract",
+                "description": "Contract No Overlap Actualization",
+                "vendor": self.vendor,
+                "cost_center": self.cost_center,
+                "status": "Active",
+                "start_date": "2026-01-01",
+                "end_date": "2026-12-31",
+                "current_amount": 100,
+                "current_amount_includes_vat": 0,
+                "vat_rate": 22,
+                "billing_cycle": "Monthly",
+            }
+        ).insert()
+
+        result = create_actual_from_contract(contract.name, year=self.year_2027)
+        self.assertEqual(result["status"], "no_overlap")
+
+        expenses = frappe.get_all(
+            "MPIT Expense",
+            filters={"contract": contract.name, "year": self.year_2027},
+            pluck="name",
+        )
+        self.assertFalse(expenses)
+
+    def test_generated_actual_rows_pass_existing_expense_validation_rules(self):
+        contract = frappe.get_doc(
+            {
+                "doctype": "MPIT Contract",
+                "description": "Contract Validation Actualization",
+                "vendor": self.vendor,
+                "cost_center": self.cost_center,
+                "status": "Active",
+                "start_date": "2026-01-01",
+                "end_date": "2026-12-31",
+                "current_amount": 90,
+                "current_amount_includes_vat": 0,
+                "vat_rate": 22,
+                "billing_cycle": "Monthly",
+            }
+        ).insert()
+
+        result = create_actual_from_contract(contract.name, year=self.year_2026)
+        expense = frappe.get_doc("MPIT Expense", result["expense_name"])
+        expense.run_method("validate")
+        self.assertEqual(expense.total_actual_net, sum(row.amount_net for row in expense.rows))
+
 
 def ensure_vendor(name: str) -> str:
     existing = frappe.db.get_value("MPIT Vendor", {"vendor_name": name}, "name")
@@ -102,6 +262,22 @@ def ensure_cost_center(name: str) -> str:
             "cost_center_name": name,
             "is_group": 0,
             "parent_mpit_cost_center": "All Cost Centers",
+        }
+    )
+    doc.insert(ignore_permissions=True)
+    return doc.name
+
+
+def ensure_year(year: int) -> str:
+    if frappe.db.exists("MPIT Year", str(year)):
+        return str(year)
+
+    doc = frappe.get_doc(
+        {
+            "doctype": "MPIT Year",
+            "year": year,
+            "start_date": f"{year}-01-01",
+            "end_date": f"{year}-12-31",
         }
     )
     doc.insert(ignore_permissions=True)

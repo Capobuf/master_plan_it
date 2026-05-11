@@ -571,6 +571,17 @@ class TestOverviewModes(FrappeTestCase):
         for fname in ("print_profile", "print_orientation", "print_density"):
             self.assertIn(fname, js_src, f"Missing print filter in JS: {fname}")
 
+    def test_js_year_filter_has_default(self):
+        import master_plan_it.master_plan_it.report.mpit_overview as _mod_pkg
+
+        report_dir = os.path.dirname(os.path.abspath(_mod_pkg.__file__))
+        js_path = os.path.join(report_dir, "mpit_overview.js")
+        with open(js_path) as fh:
+            js_src = fh.read()
+
+        self.assertIn('fieldname: "year"', js_src)
+        self.assertIn("default: String(new Date().getFullYear())", js_src)
+
 
 class TestCrossCostCenterPlafondOverview(FrappeTestCase):
     def setUp(self):
