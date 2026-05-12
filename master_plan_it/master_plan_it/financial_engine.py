@@ -38,6 +38,19 @@ def _get_project_bucket(row: dict) -> str:
     return "No Project"
 
 
+def _get_project_bucket_label(bucket: str) -> str:
+    if bucket in {
+        "No Project",
+        PROJECT_STATE_IDEA,
+        PROJECT_STATE_PROPOSED,
+        PROJECT_STATE_APPROVED,
+        PROJECT_STATE_DEFERRED,
+        PROJECT_STATE_REJECTED,
+    }:
+        return _(bucket)
+    return _("No Project")
+
+
 def _is_forecast_bucket_included(bucket: str) -> bool:
     return bucket in {"No Project", PROJECT_STATE_PROPOSED, PROJECT_STATE_APPROVED}
 
@@ -562,9 +575,9 @@ def get_overview_buildup_dataset(
         # --- block rows (indent=1) ---
         if include_expenses:
             if show_zero_rows or fc_estimate:
-                rows.append(_block_row(cc, "Expenses / Estimate", forecast_estimate=fc_estimate, indent=1))
+                rows.append(_block_row(cc, _("Expenses / Estimate"), forecast_estimate=fc_estimate, indent=1))
             if show_zero_rows or fc_quote:
-                rows.append(_block_row(cc, "Expenses / Quote", forecast_quote=fc_quote, indent=1))
+                rows.append(_block_row(cc, _("Expenses / Quote"), forecast_quote=fc_quote, indent=1))
             if show_zero_rows or approved_budget:
                 rows.append(_block_row(cc, _("Approved Budget"), approved_budget=approved_budget, indent=1))
             if show_zero_rows or proposals:
@@ -575,16 +588,16 @@ def get_overview_buildup_dataset(
                 rows.append(_block_row(cc, _("Actual / Standard"), actual_standard=actual_standard, indent=1))
             if show_zero_rows or actual_on_plafond:
                 rows.append(
-                    _block_row(cc, "Actual / On Plafond", actual_on_plafond=actual_on_plafond, indent=1)
+                    _block_row(cc, _("Actual / On Plafond"), actual_on_plafond=actual_on_plafond, indent=1)
                 )
             if show_zero_rows or actual_extra:
-                rows.append(_block_row(cc, "Actual / Extra", actual_extra=actual_extra, indent=1))
+                rows.append(_block_row(cc, _("Actual / Extra"), actual_extra=actual_extra, indent=1))
 
         if include_plafond and (show_zero_rows or plafond):
             rows.append(
                 _block_row(
                     cc,
-                    "Plafond",
+                    _("Plafond"),
                     plafond=plafond,
                     plafond_consumed=plafond_consumed,
                     remaining=remaining,
@@ -667,30 +680,37 @@ def get_overview_lines_dataset(
             if not show_zero_rows and amount == 0:
                 continue
 
-            funding = "Standard"
+            funding_key = "Standard"
             if row.get("uses_plafond"):
-                funding = "On Plafond"
+                funding_key = "On Plafond"
             elif row.get("is_extra"):
-                funding = "Extra"
+                funding_key = "Extra"
             project_bucket = _get_project_bucket(row)
+            expense_phase = row.get("row_phase")
+            logical_state = row.get("workflow_state") or "Open"
 
             rows.append({
                 "cost_center": row.get("cost_center"),
-                "source_type": "Expense Row",
+                "source_type": _("Expense Row"),
+                "source_type_key": "Expense Row",
                 "source_document": row.get("expense"),
                 "source_row": row.get("row_name"),
                 "contract": row.get("contract"),
                 "project": row.get("effective_project"),
-                "project_bucket": project_bucket,
+                "project_bucket": _get_project_bucket_label(project_bucket),
+                "project_bucket_key": project_bucket,
                 "vendor": row.get("vendor"),
-                "expense_phase": row.get("row_phase"),
-                "funding": funding,
+                "expense_phase": _(expense_phase) if expense_phase else None,
+                "expense_phase_key": expense_phase,
+                "funding": _(funding_key),
+                "funding_key": funding_key,
                 "period_start": getdate(row.get("start_date")) if row.get("start_date") else None,
                 "period_end": getdate(row.get("end_date")) if row.get("end_date") else None,
                 "spend_date": row.get("spend_date"),
                 "amount_net": amount,
                 "annual_contribution_net": amount,
-                "logical_state": row.get("workflow_state") or "Open",
+                "logical_state": _(logical_state),
+                "logical_state_key": logical_state,
             })
 
     # ------------------------------------------------------------------
@@ -732,21 +752,26 @@ def get_overview_lines_dataset(
 
                 rows.append({
                     "cost_center": plafond_doc.cost_center,
-                    "source_type": "Plafond",
+                    "source_type": _("Plafond"),
+                    "source_type_key": "Plafond",
                     "source_document": plafond_doc.name,
                     "source_row": row.name,
                     "contract": None,
                     "project": None,
-                    "project_bucket": "No Project",
+                    "project_bucket": _("No Project"),
+                    "project_bucket_key": "No Project",
                     "vendor": row.vendor,
                     "expense_phase": None,
-                    "funding": "On Plafond",
+                    "expense_phase_key": None,
+                    "funding": _("On Plafond"),
+                    "funding_key": "On Plafond",
                     "period_start": None,
                     "period_end": None,
                     "spend_date": row.spend_date,
                     "amount_net": amount,
                     "annual_contribution_net": amount,
-                    "logical_state": plafond_doc.workflow_state,
+                    "logical_state": _(plafond_doc.workflow_state),
+                    "logical_state_key": plafond_doc.workflow_state,
                 })
 
     # Sort final rows: cost_center → source_type → source_document

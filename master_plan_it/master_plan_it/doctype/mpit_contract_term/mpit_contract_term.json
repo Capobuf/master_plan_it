@@ -72,7 +72,7 @@
   },
   {
    "default": "0",
-   "description": "Technical flag set automatically for auto-renew generated rows. Generated rows are never used as renewal source terms.",
+   "description": "Automatically renewed contract term.",
    "fieldname": "is_auto_renewed",
    "fieldtype": "Check",
    "hidden": 1,
@@ -81,7 +81,7 @@
    "read_only": 1
   },
   {
-   "description": "Reference to the source term that generated this row during auto-renew. Used to keep renewal idempotent and traceable.",
+   "description": "Source term used to generate this automatic renewal.",
    "fieldname": "renewed_from_term",
    "fieldtype": "Data",
    "hidden": 1,

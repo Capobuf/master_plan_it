@@ -2084,40 +2084,76 @@ msgid "Enable only when this ordinary expense consumes a selected plafond. The p
 msgstr "Abilita solo quando questa spesa ordinaria consuma un plafond selezionato. Il plafond può appartenere a un altro centro di costo, ma deve essere dello stesso anno."
 
 msgid "Enable only for unplanned or out-of-scope actual expenses. Extra expenses do not consume plafond."
-msgstr "Abilita solo per spese effettive non pianificate o fuori perimetro. Le spese extra non consumano plafond."
+msgstr "Abilita solo per spese effettive non pianificate o fuori ambito. Le spese extra non consumano plafond."
 
-msgid "Official budget totals are calculated from active MPIT Expense rows only. Contract totals are not added independently."
-msgstr "I totali ufficiali di budget sono calcolati solo dalle righe attive di MPIT Expense. I totali contrattuali non vengono aggiunti in modo indipendente."
+msgid "Extra expenses do not consume plafond."
+msgstr "Le spese extra non consumano plafond."
+
+msgid "Generated from contract."
+msgstr "Generata da contratto."
+
+msgid "Official budget totals are calculated from active expense rows only."
+msgstr "I totali ufficiali del budget sono calcolati solo dalle righe spesa attive."
 
 msgid "Controls whether linked expenses are included in the operating budget, shown only as planning, deferred, or excluded."
 msgstr "Determina se le spese collegate sono incluse nel budget operativo, mostrate solo come pianificazione, rimandate o escluse."
 
-msgid "Required for deferred projects. When this year becomes current, the scheduler moves the project back to Proposed."
-msgstr "Obbligatorio per i progetti rimandati. Quando questo anno diventa corrente, lo scheduler riporta il progetto a Proposto."
+msgid "Select the year when this deferred project must return to proposal stage."
+msgstr "Seleziona l’anno in cui questo progetto rimandato deve tornare allo stato proposto."
 
-msgid "System-calculated status based on contract terms. Active means at least one term is still open or current; Concluded means all terms ended before today."
-msgstr "Stato calcolato dal sistema in base ai termini contrattuali. Active significa che almeno un termine è ancora aperto o corrente; Concluded significa che tutti i termini sono terminati prima di oggi."
+msgid "System-calculated status based on contract terms."
+msgstr "Stato calcolato dal sistema in base alle righe del contratto."
 
-msgid "Contract economic periods. At least one row is required. These rows generate closed Actual expenses for existing MPIT Years."
-msgstr "Periodi economici del contratto. È richiesta almeno una riga. Queste righe generano spese Actual chiuse per gli MPIT Year esistenti."
+msgid "Contract terms are mandatory because contract status and generated expenses are calculated from them."
+msgstr "Le righe del contratto sono obbligatorie perché lo stato del contratto e le spese generate vengono calcolati da esse."
 
-msgid "Technical flag set automatically for auto-renew generated rows. Generated rows are never used as renewal source terms."
-msgstr "Flag tecnico impostato automaticamente per le righe generate dal rinnovo automatico. Le righe generate non sono mai usate come termini sorgente di rinnovo."
+msgid "Automatically renewed contract term."
+msgstr "Riga contratto rinnovata automaticamente."
 
-msgid "Reference to the source term that generated this row during auto-renew. Used to keep renewal idempotent and traceable."
-msgstr "Riferimento al termine sorgente che ha generato questa riga durante il rinnovo automatico. Usato per mantenere il rinnovo idempotente e tracciabile."
+msgid "Source term used to generate this automatic renewal."
+msgstr "Riga di origine usata per generare questo rinnovo automatico."
 
-msgid "Official vendor for this expense row. Reports and vendor filters use this field, not the parent expense vendor."
-msgstr "Fornitore ufficiale per questa riga spesa. Report e filtri fornitore usano questo campo, non il fornitore della spesa padre."
+msgid "Row vendor is the official vendor used by reports and budget calculations."
+msgstr "Il fornitore della riga è il fornitore ufficiale usato dai report e dai calcoli di budget."
 
 msgid "Active rows contribute to totals. Replaced and Cancelled rows remain visible for audit but are excluded from totals."
 msgstr "Le righe Active contribuiscono ai totali. Le righe Replaced e Cancelled restano visibili per audit ma sono escluse dai totali."
 
-msgid "Select an Estimate or Quote row from the same expense to supersede. The selected row will be marked as Replaced automatically."
-msgstr "Seleziona una riga Estimate o Quote della stessa spesa da sostituire. La riga selezionata sarà marcata automaticamente come Replaced."
+msgid "Replacement target. The replaced row will be marked as Replaced automatically."
+msgstr "Riga sostituita. La riga indicata verrà marcata automaticamente come Sostituita."
 
-msgid "Optional contract context. Contract-generated expenses are synchronized automatically and are counted only through expense rows."
-msgstr "Contesto contratto opzionale. Le spese generate da contratto sono sincronizzate automaticamente e vengono conteggiate solo tramite le righe spesa."
+msgid "Contracts are context and generators; they are not added as independent budget totals."
+msgstr "I contratti sono contesto e generatori; non vengono sommati come totali di budget indipendenti."
+
+msgid "Projects are decision contexts; they do not create independent budget totals."
+msgstr "I progetti sono contesti decisionali; non creano totali di budget indipendenti."
+
+msgid "This expense row is generated from a contract and should not be edited unless the contract source is corrected."
+msgstr "Questa riga spesa è generata da un contratto e non dovrebbe essere modificata, salvo correggere il contratto di origine."
+
+msgid "Required when the project stage is Deferred."
+msgstr "Obbligatorio quando lo stato del progetto è Rimandato."
+
+msgid "Actual rows cannot be replaced."
+msgstr "Le righe effettive non possono essere sostituite."
+
+msgid "Expenses / Estimate"
+msgstr "Spese / Stima"
+
+msgid "Expenses / Quote"
+msgstr "Spese / Preventivo"
+
+msgid "Actual / On Plafond"
+msgstr "Effettivo / Su plafond"
+
+msgid "Actual / Extra"
+msgstr "Effettivo / Extra"
+
+msgid "Expense Row"
+msgstr "Riga spesa"
+
+msgid "No Project"
+msgstr "Nessun progetto"
 
 msgid "Proposed"
 msgstr "Proposto"

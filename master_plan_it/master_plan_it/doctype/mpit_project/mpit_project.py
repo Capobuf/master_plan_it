@@ -47,7 +47,7 @@ class MPITProject(Document):
             return
 
         if not self.deferred_to_year:
-            frappe.throw(_("Defer To Year is required when Project Stage is Deferred."))
+            frappe.throw(_("Required when the project stage is Deferred."))
 
         if not frappe.db.exists("MPIT Year", self.deferred_to_year):
             frappe.throw(_("MPIT Year {0} does not exist.").format(self.deferred_to_year))

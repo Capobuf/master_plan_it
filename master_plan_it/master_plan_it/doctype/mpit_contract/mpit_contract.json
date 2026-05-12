@@ -72,7 +72,7 @@
   {
    "allow_in_quick_entry": 1,
    "default": "Active",
-   "description": "System-calculated status based on contract terms. Active means at least one term is still open or current; Concluded means all terms ended before today.",
+   "description": "System-calculated status based on contract terms.",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -139,7 +139,7 @@
    "label": "Contract Terms"
   },
   {
-   "description": "Contract economic periods. At least one row is required. These rows generate closed Actual expenses for existing MPIT Years.",
+   "description": "Contract terms are mandatory because contract status and generated expenses are calculated from them.",
    "fieldname": "terms",
    "fieldtype": "Table",
    "label": "Terms",

@@ -159,7 +159,7 @@ class MPITExpense(Document):
                 frappe.throw(_("Referenced row {0} must belong to the same Expense document.").format(target_name))
 
             if (target_row.row_phase or "").strip() == "Actual":
-                frappe.throw(_("Row #{0} cannot replace an Actual row.").format(row.idx))
+                frappe.throw(_("Actual rows cannot be replaced."))
 
             if row.name:
                 replacement_graph[row.name] = target_name

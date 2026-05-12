@@ -49,7 +49,7 @@
   },
   {
    "depends_on": "eval:doc.workflow_state == 'Deferred'",
-   "description": "Required for deferred projects. When this year becomes current, the scheduler moves the project back to Proposed.",
+   "description": "Select the year when this deferred project must return to proposal stage.",
    "fieldname": "deferred_to_year",
    "fieldtype": "Link",
    "label": "Defer To Year",

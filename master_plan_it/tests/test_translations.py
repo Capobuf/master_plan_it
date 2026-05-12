@@ -195,7 +195,7 @@ def test_plafond_cross_cost_center_translation_targets_present():
             "Abilita solo quando questa spesa ordinaria consuma un plafond selezionato. Il plafond può appartenere a un altro centro di costo, ma deve essere dello stesso anno."
         ),
         "Enable only for unplanned or out-of-scope actual expenses. Extra expenses do not consume plafond.": (
-            "Abilita solo per spese effettive non pianificate o fuori perimetro. Le spese extra non consumano plafond."
+            "Abilita solo per spese effettive non pianificate o fuori ambito. Le spese extra non consumano plafond."
         ),
         "Actual Standard": "Effettivo ordinario",
         "Actual Standard: {0}": "Effettivo ordinario: {0}",
@@ -221,44 +221,47 @@ def test_help_text_and_rule_translation_targets_present():
         "Controls whether linked expenses are included in the operating budget, shown only as planning, deferred, or excluded.": (
             "Determina se le spese collegate sono incluse nel budget operativo, mostrate solo come pianificazione, rimandate o escluse."
         ),
-        "Required for deferred projects. When this year becomes current, the scheduler moves the project back to Proposed.": (
-            "Obbligatorio per i progetti rimandati. Quando questo anno diventa corrente, lo scheduler riporta il progetto a Proposto."
+        "Select the year when this deferred project must return to proposal stage.": (
+            "Seleziona l’anno in cui questo progetto rimandato deve tornare allo stato proposto."
         ),
-        "System-calculated status based on contract terms. Active means at least one term is still open or current; Concluded means all terms ended before today.": (
-            "Stato calcolato dal sistema in base ai termini contrattuali. Active significa che almeno un termine è ancora aperto o corrente; Concluded significa che tutti i termini sono terminati prima di oggi."
+        "System-calculated status based on contract terms.": (
+            "Stato calcolato dal sistema in base alle righe del contratto."
         ),
-        "Contract economic periods. At least one row is required. These rows generate closed Actual expenses for existing MPIT Years.": (
-            "Periodi economici del contratto. È richiesta almeno una riga. Queste righe generano spese Actual chiuse per gli MPIT Year esistenti."
+        "Contract terms are mandatory because contract status and generated expenses are calculated from them.": (
+            "Le righe del contratto sono obbligatorie perché lo stato del contratto e le spese generate vengono calcolati da esse."
         ),
-        "Technical flag set automatically for auto-renew generated rows. Generated rows are never used as renewal source terms.": (
-            "Flag tecnico impostato automaticamente per le righe generate dal rinnovo automatico. Le righe generate non sono mai usate come termini sorgente di rinnovo."
+        "Automatically renewed contract term.": (
+            "Riga contratto rinnovata automaticamente."
         ),
-        "Reference to the source term that generated this row during auto-renew. Used to keep renewal idempotent and traceable.": (
-            "Riferimento al termine sorgente che ha generato questa riga durante il rinnovo automatico. Usato per mantenere il rinnovo idempotente e tracciabile."
+        "Source term used to generate this automatic renewal.": (
+            "Riga di origine usata per generare questo rinnovo automatico."
         ),
-        "Official vendor for this expense row. Reports and vendor filters use this field, not the parent expense vendor.": (
-            "Fornitore ufficiale per questa riga spesa. Report e filtri fornitore usano questo campo, non il fornitore della spesa padre."
+        "Row vendor is the official vendor used by reports and budget calculations.": (
+            "Il fornitore della riga è il fornitore ufficiale usato dai report e dai calcoli di budget."
         ),
         "Active rows contribute to totals. Replaced and Cancelled rows remain visible for audit but are excluded from totals.": (
             "Le righe Active contribuiscono ai totali. Le righe Replaced e Cancelled restano visibili per audit ma sono escluse dai totali."
         ),
-        "Select an Estimate or Quote row from the same expense to supersede. The selected row will be marked as Replaced automatically.": (
-            "Seleziona una riga Estimate o Quote della stessa spesa da sostituire. La riga selezionata sarà marcata automaticamente come Replaced."
+        "Replacement target. The replaced row will be marked as Replaced automatically.": (
+            "Riga sostituita. La riga indicata verrà marcata automaticamente come Sostituita."
         ),
-        "Optional contract context. Contract-generated expenses are synchronized automatically and are counted only through expense rows.": (
-            "Contesto contratto opzionale. Le spese generate da contratto sono sincronizzate automaticamente e vengono conteggiate solo tramite le righe spesa."
+        "Contracts are context and generators; they are not added as independent budget totals.": (
+            "I contratti sono contesto e generatori; non vengono sommati come totali di budget indipendenti."
         ),
-        "Official budget totals are calculated from active MPIT Expense rows only. Contract totals are not added independently.": (
-            "I totali ufficiali di budget sono calcolati solo dalle righe attive di MPIT Expense. I totali contrattuali non vengono aggiunti in modo indipendente."
+        "Projects are decision contexts; they do not create independent budget totals.": (
+            "I progetti sono contesti decisionali; non creano totali di budget indipendenti."
+        ),
+        "Official budget totals are calculated from active expense rows only.": (
+            "I totali ufficiali del budget sono calcolati solo dalle righe spesa attive."
         ),
         "At least one Contract Term is required.": "È richiesto almeno un termine contrattuale.",
-        "Defer To Year is required when Project Stage is Deferred.": (
-            "Rimanda all’anno è obbligatorio quando lo stato progetto è Rimandato."
+        "Required when the project stage is Deferred.": (
+            "Obbligatorio quando lo stato del progetto è Rimandato."
         ),
         "Vendor is required on ordinary expense rows (row #{0}).": (
             "Il fornitore è obbligatorio sulle righe di spesa ordinaria (riga #{0})."
         ),
-        "Row #{0} cannot replace an Actual row.": "La riga #{0} non può sostituire una riga Actual.",
+        "Actual rows cannot be replaced.": "Le righe effettive non possono essere sostituite.",
         "Replacement cycle detected on row {0}.": "Rilevato ciclo di sostituzione sulla riga {0}.",
     }
 
@@ -278,23 +281,59 @@ def test_help_text_and_rule_translation_targets_present():
 def test_main_pot_contains_help_text_source_strings():
     required_sources = {
         "Controls whether linked expenses are included in the operating budget, shown only as planning, deferred, or excluded.",
-        "Required for deferred projects. When this year becomes current, the scheduler moves the project back to Proposed.",
-        "System-calculated status based on contract terms. Active means at least one term is still open or current; Concluded means all terms ended before today.",
-        "Contract economic periods. At least one row is required. These rows generate closed Actual expenses for existing MPIT Years.",
-        "Technical flag set automatically for auto-renew generated rows. Generated rows are never used as renewal source terms.",
-        "Reference to the source term that generated this row during auto-renew. Used to keep renewal idempotent and traceable.",
-        "Official vendor for this expense row. Reports and vendor filters use this field, not the parent expense vendor.",
+        "Select the year when this deferred project must return to proposal stage.",
+        "System-calculated status based on contract terms.",
+        "Contract terms are mandatory because contract status and generated expenses are calculated from them.",
+        "Automatically renewed contract term.",
+        "Source term used to generate this automatic renewal.",
+        "Row vendor is the official vendor used by reports and budget calculations.",
         "Active rows contribute to totals. Replaced and Cancelled rows remain visible for audit but are excluded from totals.",
-        "Select an Estimate or Quote row from the same expense to supersede. The selected row will be marked as Replaced automatically.",
-        "Optional contract context. Contract-generated expenses are synchronized automatically and are counted only through expense rows.",
-        "Official budget totals are calculated from active MPIT Expense rows only. Contract totals are not added independently.",
+        "Replacement target. The replaced row will be marked as Replaced automatically.",
+        "Contracts are context and generators; they are not added as independent budget totals.",
+        "Projects are decision contexts; they do not create independent budget totals.",
+        "Official budget totals are calculated from active expense rows only.",
         "At least one Contract Term is required.",
-        "Defer To Year is required when Project Stage is Deferred.",
+        "Required when the project stage is Deferred.",
         "Vendor is required on ordinary expense rows (row #{0}).",
-        "Row #{0} cannot replace an Actual row.",
+        "Actual rows cannot be replaced.",
         "Replacement cycle detected on row {0}.",
     }
 
     sources = _load_po_translations(_main_pot_path())
     missing = sorted(msgid for msgid in required_sources if msgid not in sources)
     assert not missing, f"Missing msgid entries in main.pot: {missing}"
+
+
+def test_minimum_budget_refactor_i18n_targets_present_in_pot_and_it_po():
+    expected = {
+        "Enable only for unplanned or out-of-scope actual expenses. Extra expenses do not consume plafond.": (
+            "Abilita solo per spese effettive non pianificate o fuori ambito. Le spese extra non consumano plafond."
+        ),
+        "Official budget totals are calculated from active expense rows only.": (
+            "I totali ufficiali del budget sono calcolati solo dalle righe spesa attive."
+        ),
+        "Contracts are context and generators; they are not added as independent budget totals.": (
+            "I contratti sono contesto e generatori; non vengono sommati come totali di budget indipendenti."
+        ),
+        "Row vendor is the official vendor used by reports and budget calculations.": (
+            "Il fornitore della riga è il fornitore ufficiale usato dai report e dai calcoli di budget."
+        ),
+        "Select the year when this deferred project must return to proposal stage.": (
+            "Seleziona l’anno in cui questo progetto rimandato deve tornare allo stato proposto."
+        ),
+    }
+
+    pot_sources = _load_po_translations(_main_pot_path())
+    pot_missing = sorted(msgid for msgid in expected if msgid not in pot_sources)
+    assert not pot_missing, f"Missing msgid entries in main.pot: {pot_missing}"
+
+    it_translations = _load_po_translations(_it_po_path())
+    it_missing = sorted(msgid for msgid in expected if msgid not in it_translations)
+    assert not it_missing, f"Missing msgid entries in it.po: {it_missing}"
+
+    mismatched = {
+        msgid: (it_translations.get(msgid), msgstr)
+        for msgid, msgstr in expected.items()
+        if it_translations.get(msgid) != msgstr
+    }
+    assert not mismatched, f"Mismatched translations in it.po: {mismatched}"

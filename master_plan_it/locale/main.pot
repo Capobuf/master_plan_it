@@ -2069,37 +2069,73 @@ msgstr ""
 msgid "Enable only for unplanned or out-of-scope actual expenses. Extra expenses do not consume plafond."
 msgstr ""
 
-msgid "Official budget totals are calculated from active MPIT Expense rows only. Contract totals are not added independently."
+msgid "Extra expenses do not consume plafond."
+msgstr ""
+
+msgid "Generated from contract."
+msgstr ""
+
+msgid "Official budget totals are calculated from active expense rows only."
 msgstr ""
 
 msgid "Controls whether linked expenses are included in the operating budget, shown only as planning, deferred, or excluded."
 msgstr ""
 
-msgid "Required for deferred projects. When this year becomes current, the scheduler moves the project back to Proposed."
+msgid "Select the year when this deferred project must return to proposal stage."
 msgstr ""
 
-msgid "System-calculated status based on contract terms. Active means at least one term is still open or current; Concluded means all terms ended before today."
+msgid "System-calculated status based on contract terms."
 msgstr ""
 
-msgid "Contract economic periods. At least one row is required. These rows generate closed Actual expenses for existing MPIT Years."
+msgid "Contract terms are mandatory because contract status and generated expenses are calculated from them."
 msgstr ""
 
-msgid "Technical flag set automatically for auto-renew generated rows. Generated rows are never used as renewal source terms."
+msgid "Automatically renewed contract term."
 msgstr ""
 
-msgid "Reference to the source term that generated this row during auto-renew. Used to keep renewal idempotent and traceable."
+msgid "Source term used to generate this automatic renewal."
 msgstr ""
 
-msgid "Official vendor for this expense row. Reports and vendor filters use this field, not the parent expense vendor."
+msgid "Row vendor is the official vendor used by reports and budget calculations."
 msgstr ""
 
 msgid "Active rows contribute to totals. Replaced and Cancelled rows remain visible for audit but are excluded from totals."
 msgstr ""
 
-msgid "Select an Estimate or Quote row from the same expense to supersede. The selected row will be marked as Replaced automatically."
+msgid "Replacement target. The replaced row will be marked as Replaced automatically."
 msgstr ""
 
-msgid "Optional contract context. Contract-generated expenses are synchronized automatically and are counted only through expense rows."
+msgid "Contracts are context and generators; they are not added as independent budget totals."
+msgstr ""
+
+msgid "Projects are decision contexts; they do not create independent budget totals."
+msgstr ""
+
+msgid "This expense row is generated from a contract and should not be edited unless the contract source is corrected."
+msgstr ""
+
+msgid "Required when the project stage is Deferred."
+msgstr ""
+
+msgid "Actual rows cannot be replaced."
+msgstr ""
+
+msgid "Expenses / Estimate"
+msgstr ""
+
+msgid "Expenses / Quote"
+msgstr ""
+
+msgid "Actual / On Plafond"
+msgstr ""
+
+msgid "Actual / Extra"
+msgstr ""
+
+msgid "Expense Row"
+msgstr ""
+
+msgid "No Project"
 msgstr ""
 
 msgid "Proposed"

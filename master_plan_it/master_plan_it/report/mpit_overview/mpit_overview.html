@@ -671,7 +671,7 @@
                                 </div>
                                 <div class="line-values">
                                     <div class="line-value"><strong>{%= __("Annual Contribution") %}:</strong> {%= formatCurrency(row.annual_contribution_net) %}</div>
-                                    <div class="line-value"><span class="{%= stateChipClass(row.logical_state) %}">{%= valueOrDash(row.logical_state) %}</span></div>
+                                    <div class="line-value"><span class="{%= stateChipClass(row.logical_state_key || row.logical_state) %}">{%= valueOrDash(row.logical_state) %}</span></div>
                                 </div>
                             </div>
 
@@ -681,7 +681,7 @@
                                     <span><strong>{%= __("Project") %}:</strong> {%= valueOrDash(row.project) %}</span>
                                 {% } %}
                                 <span><strong>{%= __("Phase") %}:</strong> {%= valueOrDash(row.expense_phase) %}</span>
-                                <span><strong>{%= __("Funding") %}:</strong> <span class="{%= fundingChipClass(row.funding) %}">{%= valueOrDash(row.funding) %}</span></span>
+                                <span><strong>{%= __("Funding") %}:</strong> <span class="{%= fundingChipClass(row.funding_key || row.funding) %}">{%= valueOrDash(row.funding) %}</span></span>
                                 {% if (!is_compact) { %}
                                     <span><strong>{%= __("Period") %}:</strong> {%= formatDate(row.period_start) %} - {%= formatDate(row.period_end) %}</span>
                                     <span><strong>{%= __("Spend Date") %}:</strong> {%= formatDate(row.spend_date) %}</span>
