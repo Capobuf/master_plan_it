@@ -21,25 +21,33 @@ def execute(filters=None):
     filters = frappe._dict(filters or {})
     year = _resolve_year(filters)
     view_mode = (filters.get("view_mode") or VIEW_SUMMARY).strip()
+    financial_view = (filters.get("financial_view") or "Actual with Estimates and Quotes").strip()
 
     if view_mode == VIEW_BUILDUP:
-        return _execute_buildup(filters, year)
+        return _execute_buildup(filters, year, financial_view)
     if view_mode == VIEW_LINES:
         return _execute_lines(filters, year)
-    return _execute_summary(filters, year)
+    return _execute_summary(filters, year, financial_view)
 
 
 # ---------------------------------------------------------------------------
 # Summary mode
 # ---------------------------------------------------------------------------
 
-def _execute_summary(filters, year: str):
+def _execute_summary(filters, year: str, financial_view: str):
     show_zero = bool(filters.get("show_zero_rows"))
     cost_center = filters.get("cost_center")
 
-    dataset = get_overview_dataset(year, cost_center=cost_center)
+    dataset = get_overview_dataset(
+        year,
+        cost_center=cost_center,
+        project=filters.get("project"),
+        contract=filters.get("contract"),
+        vendor=filters.get("vendor"),
+    )
     data = dataset.get("rows", [])
     summary = dataset.get("summary", {})
+    _apply_financial_view(data, summary, financial_view)
 
     if not show_zero:
         data = [
@@ -66,7 +74,7 @@ def _execute_summary(filters, year: str):
 # Build-up mode
 # ---------------------------------------------------------------------------
 
-def _execute_buildup(filters, year: str):
+def _execute_buildup(filters, year: str, financial_view: str):
     dataset = get_overview_buildup_dataset(
         year,
         cost_center=filters.get("cost_center"),
@@ -78,6 +86,7 @@ def _execute_buildup(filters, year: str):
     )
     data = dataset.get("rows", [])
     summary = dataset.get("summary", {})
+    _apply_financial_view(data, summary, financial_view)
 
     # Build-up uses a Data (not Link) column so indented block rows display cleanly
     columns = [
@@ -152,6 +161,12 @@ def _execute_lines(filters, year: str):
             "fieldtype": "Link",
             "options": "MPIT Project",
             "width": 140,
+        },
+        {
+            "label": _("Project Bucket"),
+            "fieldname": "project_bucket",
+            "fieldtype": "Data",
+            "width": 130,
         },
         {
             "label": _("Vendor"),
@@ -246,6 +261,24 @@ def _build_report_summary_from_dict(summary: dict) -> list[dict]:
             "datatype": "Currency",
         },
         {
+            "label": _("Approved Budget"),
+            "value": flt(summary.get("approved_budget"), 2),
+            "indicator": "Blue",
+            "datatype": "Currency",
+        },
+        {
+            "label": _("Proposals"),
+            "value": flt(summary.get("proposals"), 2),
+            "indicator": "Orange",
+            "datatype": "Currency",
+        },
+        {
+            "label": _("Ideas"),
+            "value": flt(summary.get("ideas"), 2),
+            "indicator": "Blue",
+            "datatype": "Currency",
+        },
+        {
             "label": _("Standard"),
             "value": flt(summary.get("actual_standard"), 2),
             "indicator": "Blue",
@@ -278,14 +311,43 @@ def _build_report_summary_from_dict(summary: dict) -> list[dict]:
     ]
 
 
+def _apply_financial_view(data: list[dict], summary: dict, financial_view: str) -> None:
+    if financial_view == "Actual":
+        for row in data:
+            _zero_forecast_cells(row)
+        _zero_forecast_cells(summary)
+        return
+
+    if financial_view == "Forecast":
+        for row in data:
+            _zero_actual_cells(row)
+        _zero_actual_cells(summary)
+
+
+def _zero_forecast_cells(row: dict) -> None:
+    for fieldname in (
+        "forecast_estimate",
+        "forecast_quote",
+        "forecast_total",
+        "approved_budget",
+        "proposals",
+        "ideas",
+    ):
+        row[fieldname] = 0
+
+
+def _zero_actual_cells(row: dict) -> None:
+    for fieldname in (
+        "actual_standard",
+        "actual_on_plafond",
+        "actual_extra",
+        "actual_total",
+    ):
+        row[fieldname] = 0
+
+
 def _overview_metric_columns() -> list[dict]:
     return [
-        {
-            "label": _("Forecast Contracts"),
-            "fieldname": "forecast_contracts",
-            "fieldtype": "Currency",
-            "width": 150,
-        },
         {
             "label": _("Forecast Estimate"),
             "fieldname": "forecast_estimate",
@@ -303,6 +365,24 @@ def _overview_metric_columns() -> list[dict]:
             "fieldname": "forecast_total",
             "fieldtype": "Currency",
             "width": 150,
+        },
+        {
+            "label": _("Approved Budget"),
+            "fieldname": "approved_budget",
+            "fieldtype": "Currency",
+            "width": 150,
+        },
+        {
+            "label": _("Proposals"),
+            "fieldname": "proposals",
+            "fieldtype": "Currency",
+            "width": 130,
+        },
+        {
+            "label": _("Ideas"),
+            "fieldname": "ideas",
+            "fieldtype": "Currency",
+            "width": 120,
         },
         {
             "label": _("Actual Standard"),

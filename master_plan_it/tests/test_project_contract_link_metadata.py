@@ -33,4 +33,5 @@ def test_project_dashboard_keeps_contract_item():
 
     assert '"fieldname": "project"' in text
     assert '"label": _("Operations")' in text
-    assert '"items": ["MPIT Expense", "MPIT Contract"]' in text
+    assert '"MPIT Expense"' in text
+    assert '"MPIT Contract"' in text

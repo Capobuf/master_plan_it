@@ -10,6 +10,7 @@
   "section_overview",
   "title",
   "workflow_state",
+  "deferred_to_year",
   "overview_col_break",
   "cost_center",
   "start_date",
@@ -37,13 +38,23 @@
    "reqd": 1
   },
   {
-   "default": "Open",
+   "default": "Idea",
    "fieldname": "workflow_state",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_standard_filter": 1,
-   "label": "Status",
-   "options": "Open\nOn Hold\nCompleted\nCancelled"
+   "label": "Project Stage",
+   "options": "Idea\nProposed\nApproved\nDeferred\nRejected",
+   "description": "Controls whether linked expenses are included in the operating budget, shown only as planning, deferred, or excluded."
+  },
+  {
+   "depends_on": "eval:doc.workflow_state == 'Deferred'",
+   "description": "Required for deferred projects. When this year becomes current, the scheduler moves the project back to Proposed.",
+   "fieldname": "deferred_to_year",
+   "fieldtype": "Link",
+   "label": "Defer To Year",
+   "mandatory_depends_on": "eval:doc.workflow_state == 'Deferred'",
+   "options": "MPIT Year"
   },
   {
    "fieldname": "overview_col_break",

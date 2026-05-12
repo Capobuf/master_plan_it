@@ -2,10 +2,11 @@
 {% set settings = frappe.get_single("MPIT Settings") %}
 {% set show_attachments = settings.show_attachments_in_print if settings else 0 %}
 {% set status_map = {
-    "Open": _("Open"),
-    "On Hold": _("On Hold"),
-    "Completed": _("Completed"),
-    "Cancelled": _("Cancelled"),
+    "Idea": _("Idea"),
+    "Proposed": _("Proposed"),
+    "Approved": _("Approved"),
+    "Deferred": _("Deferred"),
+    "Rejected": _("Rejected"),
 } %}
 {% set status_label = status_map.get(doc.workflow_state, doc.workflow_state) %}
 

@@ -12,6 +12,8 @@
   "amount_includes_vat",
   "vat_rate",
   "billing_cycle",
+  "is_auto_renewed",
+  "renewed_from_term",
   "section_computed",
   "amount_net",
   "amount_vat",
@@ -24,7 +26,7 @@
   {
    "fieldname": "from_date",
    "fieldtype": "Date",
-   "description": "Term start date used by yearly contract forecast.",
+   "description": "Start date of this contract economic period.",
    "in_list_view": 1,
    "label": "From Date",
    "reqd": 1
@@ -33,7 +35,7 @@
    "fieldname": "to_date",
    "fieldtype": "Date",
    "label": "To Date",
-   "description": "Leave empty to end the term on the day before the next term starts."
+   "description": "End date of this contract economic period. Leave empty only for an open-ended active term."
   },
   {
    "fieldname": "cb_term_right",
@@ -45,7 +47,7 @@
    "in_list_view": 1,
    "label": "Amount",
    "reqd": 1,
-   "description": "Amount per billing cycle used when this term overlaps the selected year."
+   "description": "Amount for the selected billing cycle. The yearly contribution is calculated from dates and billing cycle."
   },
   {
    "default": "0",
@@ -65,7 +67,27 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Billing Cycle",
+   "description": "Defines how the amount matures over the year. Existing cycles are preserved to avoid changing historical calculations.",
    "options": "Monthly\nQuarterly\nAnnual\nOther"
+  },
+  {
+   "default": "0",
+   "description": "Technical flag set automatically for auto-renew generated rows. Generated rows are never used as renewal source terms.",
+   "fieldname": "is_auto_renewed",
+   "fieldtype": "Check",
+   "hidden": 1,
+   "label": "Is Auto Renewed",
+   "no_copy": 1,
+   "read_only": 1
+  },
+  {
+   "description": "Reference to the source term that generated this row during auto-renew. Used to keep renewal idempotent and traceable.",
+   "fieldname": "renewed_from_term",
+   "fieldtype": "Data",
+   "hidden": 1,
+   "label": "Renewed From Term",
+   "no_copy": 1,
+   "read_only": 1
   },
   {
    "collapsible": 1,

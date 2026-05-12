@@ -19,6 +19,9 @@ The app uses the native Frappe **Workspace** (`Master Plan IT`) as primary Desk 
 ## Panoramica Economica
 - Panoramica Economica is exposed as the native report **MPIT Overview**.
 - No custom Desk Page is used as cockpit.
+- Official totals come from active `MPIT Expense Row` records only.
+- Contract data is context/filter input; it is not summed independently into official budget totals.
+- Vendor filtering is based on `MPIT Expense Row.vendor`.
 
 ## Notes
 - Keep Desk surfaces native: Workspace, reports, number cards, quick lists, and dashboard charts.

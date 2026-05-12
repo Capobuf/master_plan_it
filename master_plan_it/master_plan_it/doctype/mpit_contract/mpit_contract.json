@@ -72,13 +72,15 @@
   {
    "allow_in_quick_entry": 1,
    "default": "Active",
+   "description": "System-calculated status based on contract terms. Active means at least one term is still open or current; Concluded means all terms ended before today.",
    "fieldname": "status",
    "fieldtype": "Select",
    "in_list_view": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Status",
-   "options": "Draft\nActive\nPending Renewal\nRenewed\nCancelled\nExpired"
+   "label": "Calculated Status",
+   "options": "Active\nConcluded",
+   "read_only": 1
   },
   {
    "allow_in_quick_entry": 1,
@@ -114,12 +116,13 @@
   },
   {
    "default": "1",
+   "description": "When enabled, saving the contract creates missing yearly terms within existing MPIT Years, without duplicates or overlapping periods.",
    "fieldname": "auto_renew",
    "fieldtype": "Check",
    "in_filter": 1,
    "in_preview": 1,
    "in_standard_filter": 1,
-   "label": "Auto Renew"
+   "label": "Auto Renew Terms"
   },
   {
    "depends_on": "eval:doc.auto_renew",
@@ -127,7 +130,8 @@
    "fieldtype": "Date",
    "in_list_view": 1,
    "in_preview": 1,
-   "label": "Next Renewal Date"
+   "label": "Next Renewal Date",
+   "read_only": 1
   },
   {
    "fieldname": "term_section",
@@ -135,6 +139,7 @@
    "label": "Contract Terms"
   },
   {
+   "description": "Contract economic periods. At least one row is required. These rows generate closed Actual expenses for existing MPIT Years.",
    "fieldname": "terms",
    "fieldtype": "Table",
    "label": "Terms",

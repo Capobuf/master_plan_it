@@ -6,6 +6,16 @@
 - Policy: do not invent business rules; base help text on fieldtype, label/fieldname, options, or confirmed controller logic. If unclear, pause and ask for wording options.
 - Current state: all meaningful DocFields now have bilingual descriptions (English source + Italian translation).
 
+## Mandatory business-critical help texts
+
+- `MPIT Project.workflow_state`: project stage controls budget inclusion/exclusion.
+- `MPIT Project.deferred_to_year`: required for deferred projects and used by scheduler promotion.
+- `MPIT Contract.status`: calculated status (`Active` / `Concluded`) from terms.
+- `MPIT Contract.auto_renew`: term auto-renew only within existing `MPIT Year` horizon.
+- `MPIT Expense.vendor`: deprecated parent compatibility field; reports must use row vendor.
+- `MPIT Expense Row.vendor`: official vendor for reporting and filtering.
+- `MPIT Expense Row.replaces_row_name`: superseded row is marked `Replaced` automatically.
+
 ## Conventions and rules
 
 - DocField `description` renders as helper text below the field in Frappe.

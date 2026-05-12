@@ -116,26 +116,24 @@ class MPITExpense(Document):
         self._validate_row_replacements()
 
     def _validate_row_replacements(self) -> None:
-        current_row_names = {row.name for row in self.rows if row.name}
-        referenced_targets: list[tuple] = []
+        local_rows = {row.name: row for row in self.rows if row.name}
+        replacements: list[tuple] = []
 
         for row in self.rows:
-            target_row_name = (row.replaces_row_name or "").strip()
-            row.replaces_row_name = target_row_name or None
-            if not target_row_name:
+            target_name = (row.replaces_row_name or "").strip()
+            row.replaces_row_name = target_name or None
+            if not target_name:
                 continue
 
-            if row.name and target_row_name == row.name:
+            if row.name and target_name == row.name:
                 frappe.throw(_("Row #{0} cannot replace itself.").format(row.idx))
 
-            referenced_targets.append((row, target_row_name))
+            replacements.append((row, target_name))
 
-        if not referenced_targets:
+        if not replacements:
             return
 
-        unresolved_targets = sorted(
-            {target for _row, target in referenced_targets if target not in current_row_names}
-        )
+        unresolved_targets = sorted({target for _row, target in replacements if target not in local_rows})
         unresolved_rows = {}
         if unresolved_targets:
             unresolved_rows = {
@@ -143,26 +141,46 @@ class MPITExpense(Document):
                 for row in frappe.get_all(
                     "MPIT Expense Row",
                     filters={"name": ["in", unresolved_targets]},
-                    fields=["name", "parent", "parenttype", "parentfield"],
+                    fields=["name", "parent", "parenttype", "parentfield", "row_phase", "replaces_row_name"],
                 )
             }
 
-        for _row, target_row_name in referenced_targets:
-            if target_row_name in current_row_names:
-                continue
-
-            target_row = unresolved_rows.get(target_row_name)
+        replacement_graph: dict[str, str] = {}
+        for row, target_name in replacements:
+            target_row = local_rows.get(target_name) or unresolved_rows.get(target_name)
             if not target_row:
-                frappe.throw(_("Referenced row {0} does not exist.").format(target_row_name))
+                frappe.throw(_("Referenced row {0} does not exist.").format(target_name))
 
             if (
                 target_row.parent != self.name
                 or target_row.parenttype != self.doctype
                 or target_row.parentfield != "rows"
             ):
-                frappe.throw(
-                    _("Referenced row {0} must belong to the same Expense document.").format(target_row_name)
-                )
+                frappe.throw(_("Referenced row {0} must belong to the same Expense document.").format(target_name))
+
+            if (target_row.row_phase or "").strip() == "Actual":
+                frappe.throw(_("Row #{0} cannot replace an Actual row.").format(row.idx))
+
+            if row.name:
+                replacement_graph[row.name] = target_name
+
+            # Replacement preserves auditability: the superseded row remains visible
+            # but is excluded from totals once it is marked as Replaced.
+            if hasattr(target_row, "row_state"):
+                target_row.row_state = "Replaced"
+
+        self._validate_replacement_cycles(replacement_graph)
+
+    @staticmethod
+    def _validate_replacement_cycles(replacement_graph: dict[str, str]) -> None:
+        for source in replacement_graph:
+            visited: set[str] = set()
+            current = source
+            while current in replacement_graph:
+                if current in visited:
+                    frappe.throw(_("Replacement cycle detected on row {0}.").format(source))
+                visited.add(current)
+                current = replacement_graph[current]
 
     def _validate_row(self, row, year_start: datetime.date, year_end: datetime.date) -> None:
         if not row.row_state:
@@ -180,6 +198,9 @@ class MPITExpense(Document):
             if row.spend_date and not (year_start <= getdate(row.spend_date) <= year_end):
                 frappe.throw(_("Plafond Spend Date must be inside the selected year."))
             return
+
+        if not row.vendor:
+            frappe.throw(_("Vendor is required on ordinary expense rows (row #{0}).").format(row.idx))
 
         if row.row_phase not in {"Estimate", "Quote", "Actual"}:
             frappe.throw(_("Ordinary rows require a valid phase: Estimate, Quote, or Actual."))
@@ -324,6 +345,7 @@ def get_expense_row_replacement_options(
         "parent": parent_expense,
         "parenttype": "MPIT Expense",
         "parentfield": "rows",
+        "row_phase": ["!=", "Actual"],
     }
     if current_row_name:
         db_filters["name"] = ["!=", current_row_name]
@@ -341,7 +363,7 @@ def get_expense_row_replacement_options(
         "MPIT Expense Row",
         filters=db_filters,
         or_filters=or_filters,
-        fields=["name", "idx", "row_phase", "row_description"],
+        fields=["name", "idx", "row_phase", "row_state", "vendor", "amount_net", "row_description"],
         order_by="idx asc",
         limit_start=max(int(start or 0), 0),
         limit_page_length=max(int(page_len or 20), 1),
@@ -349,9 +371,12 @@ def get_expense_row_replacement_options(
 
     results = []
     for row in rows:
-        label = "#{0} · {1} · {2}".format(
+        label = "#{0} · {1}/{2} · {3} · {4} · {5}".format(
             row.get("idx") or "?",
             row.get("row_phase") or "-",
+            row.get("row_state") or "-",
+            row.get("vendor") or "-",
+            flt(row.get("amount_net") or 0, 2),
             row.get("row_description") or row.get("name"),
         )
         results.append((row.get("name"), label, row.get("name")))

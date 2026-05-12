@@ -10,9 +10,40 @@ from frappe.utils import flt, getdate
 
 from master_plan_it import annualization
 
-ACTIVE_CONTRACT_STATUSES = {"Active", "Pending Renewal", "Renewed"}
+ACTIVE_CONTRACT_STATUSES = {"Active"}
 ACTIVE_EXPENSE_STATES = {"Open", "Closed"}
 ACTIVE_ROW_STATES = {"Active"}
+
+PROJECT_STATE_IDEA = "Idea"
+PROJECT_STATE_PROPOSED = "Proposed"
+PROJECT_STATE_APPROVED = "Approved"
+PROJECT_STATE_DEFERRED = "Deferred"
+PROJECT_STATE_REJECTED = "Rejected"
+
+
+def _get_project_bucket(row: dict) -> str:
+    effective_project = row.get("effective_project")
+    if not effective_project:
+        return "No Project"
+
+    state = (row.get("effective_project_state") or "").strip()
+    if state in {
+        PROJECT_STATE_IDEA,
+        PROJECT_STATE_PROPOSED,
+        PROJECT_STATE_APPROVED,
+        PROJECT_STATE_DEFERRED,
+        PROJECT_STATE_REJECTED,
+    }:
+        return state
+    return "No Project"
+
+
+def _is_forecast_bucket_included(bucket: str) -> bool:
+    return bucket in {"No Project", PROJECT_STATE_PROPOSED, PROJECT_STATE_APPROVED}
+
+
+def _is_actual_bucket_included(bucket: str) -> bool:
+    return bucket in {"No Project", PROJECT_STATE_APPROVED}
 
 
 def get_year_bounds(year: str | int) -> tuple[datetime.date, datetime.date]:
@@ -144,8 +175,25 @@ def get_expense_forecast_totals(
 
     estimate_total = 0.0
     quote_total = 0.0
+    approved_budget = 0.0
+    proposals_total = 0.0
+    ideas_total = 0.0
     for row in rows:
         amount = flt(row.get("amount_net"), 2)
+        bucket = _get_project_bucket(row)
+        if row.get("row_phase") not in {"Estimate", "Quote"}:
+            continue
+
+        if bucket == PROJECT_STATE_APPROVED:
+            approved_budget += amount
+        elif bucket == PROJECT_STATE_PROPOSED:
+            proposals_total += amount
+        elif bucket == PROJECT_STATE_IDEA:
+            ideas_total += amount
+
+        if not _is_forecast_bucket_included(bucket):
+            continue
+
         if row.get("row_phase") == "Estimate":
             estimate_total += amount
         elif row.get("row_phase") == "Quote":
@@ -155,6 +203,9 @@ def get_expense_forecast_totals(
         "estimate_total": flt(estimate_total, 2),
         "quote_total": flt(quote_total, 2),
         "expense_forecast_total": flt(estimate_total + quote_total, 2),
+        "approved_budget": flt(approved_budget, 2),
+        "proposals_total": flt(proposals_total, 2),
+        "ideas_total": flt(ideas_total, 2),
     }
 
 
@@ -181,6 +232,10 @@ def get_actual_totals(
     actual_extra = 0.0
 
     for row in rows:
+        bucket = _get_project_bucket(row)
+        if not _is_actual_bucket_included(bucket):
+            continue
+
         amount = flt(row.get("amount_net"), 2)
         actual_total += amount
         if row.get("uses_plafond"):
@@ -288,23 +343,42 @@ def get_plafond_document_totals(plafond_expense: str) -> dict:
     }
 
 
-def get_cost_center_financial_summary(year: str | int, cost_center: str) -> dict:
-    contract_totals = get_contract_forecast_totals(year, cost_center=cost_center)
-    expense_forecast = get_expense_forecast_totals(year, cost_center=cost_center)
-    actual_totals = get_actual_totals(year, cost_center=cost_center)
+def get_cost_center_financial_summary(
+    year: str | int,
+    cost_center: str,
+    project: str | None = None,
+    contract: str | None = None,
+    vendor: str | None = None,
+) -> dict:
+    expense_forecast = get_expense_forecast_totals(
+        year,
+        cost_center=cost_center,
+        project=project,
+        contract=contract,
+        vendor=vendor,
+    )
+    actual_totals = get_actual_totals(
+        year,
+        cost_center=cost_center,
+        project=project,
+        contract=contract,
+        vendor=vendor,
+    )
     plafond_totals = get_plafond_totals(year, cost_center=cost_center)
 
-    forecast_total = flt(
-        contract_totals.get("contract_forecast_total", 0) + expense_forecast.get("expense_forecast_total", 0),
-        2,
-    )
+    # Official budget totals are built from expense rows only. Contract totals are
+    # context/generator data and would double-count once contract sync is enabled.
+    forecast_total = flt(expense_forecast.get("expense_forecast_total", 0), 2)
 
     return {
         "cost_center": cost_center,
-        "forecast_contracts": flt(contract_totals.get("contract_forecast_total", 0), 2),
+        "forecast_contracts": 0.0,
         "forecast_estimate": flt(expense_forecast.get("estimate_total", 0), 2),
         "forecast_quote": flt(expense_forecast.get("quote_total", 0), 2),
         "forecast_total": forecast_total,
+        "approved_budget": flt(expense_forecast.get("approved_budget", 0), 2),
+        "proposals": flt(expense_forecast.get("proposals_total", 0), 2),
+        "ideas": flt(expense_forecast.get("ideas_total", 0), 2),
         "actual_standard": flt(actual_totals.get("actual_standard", 0), 2),
         "actual_on_plafond": flt(actual_totals.get("actual_on_plafond", 0), 2),
         "actual_extra": flt(actual_totals.get("actual_extra", 0), 2),
@@ -336,35 +410,46 @@ def get_project_financial_summary(project: str, year: str | int | None = None) -
     }
 
 
-def get_overview_dataset(year: str | int, cost_center: str | None = None) -> dict:
+def get_overview_dataset(
+    year: str | int,
+    cost_center: str | None = None,
+    project: str | None = None,
+    contract: str | None = None,
+    vendor: str | None = None,
+) -> dict:
     year_int = _resolve_year_int(year)
 
     if cost_center:
         cost_centers = [cost_center]
     else:
-        from_contracts = frappe.get_all(
-            "MPIT Contract",
-            filters={"status": ["in", list(ACTIVE_CONTRACT_STATUSES)]},
-            pluck="cost_center",
-            limit=None,
-        )
         from_expenses = frappe.get_all(
             "MPIT Expense",
             filters={"year": str(year_int), "workflow_state": ["in", list(ACTIVE_EXPENSE_STATES)]},
             pluck="cost_center",
             limit=None,
         )
-        cost_centers = sorted({cc for cc in (from_contracts + from_expenses) if cc})
+        cost_centers = sorted({cc for cc in from_expenses if cc})
 
     rows = []
     for cc in cost_centers:
-        rows.append(get_cost_center_financial_summary(year_int, cc))
+        rows.append(
+            get_cost_center_financial_summary(
+                year_int,
+                cc,
+                project=project,
+                contract=contract,
+                vendor=vendor,
+            )
+        )
 
     summary = {
         "forecast_contracts": flt(sum(row["forecast_contracts"] for row in rows), 2),
         "forecast_estimate": flt(sum(row["forecast_estimate"] for row in rows), 2),
         "forecast_quote": flt(sum(row["forecast_quote"] for row in rows), 2),
         "forecast_total": flt(sum(row["forecast_total"] for row in rows), 2),
+        "approved_budget": flt(sum(row.get("approved_budget", 0) for row in rows), 2),
+        "proposals": flt(sum(row.get("proposals", 0) for row in rows), 2),
+        "ideas": flt(sum(row.get("ideas", 0) for row in rows), 2),
         "actual_standard": flt(sum(row["actual_standard"] for row in rows), 2),
         "actual_on_plafond": flt(sum(row["actual_on_plafond"] for row in rows), 2),
         "actual_extra": flt(sum(row["actual_extra"] for row in rows), 2),
@@ -392,17 +477,9 @@ def get_overview_buildup_dataset(
 
     Each cost center produces a header row (indent=0) followed by block rows
     (indent=1) that explain which components compose the total.
-
-    NOTE: ``project`` applies only to expense blocks. Contract blocks are
-    intentionally kept unfiltered by project to preserve existing semantics in
-    this report path, even though MPIT Contract has an optional project link.
-    When ``project`` is active the summary header values for the expense side
-    are project-scoped; contract values remain full.
     """
     year_int = _resolve_year_int(year)
-    year_start, year_end = annualization.get_year_bounds(year_int)
     scope = (section_scope or "All").strip()
-    include_contracts = scope in ("All", "Contracts")
     include_expenses = scope in ("All", "Expenses")
     include_plafond = scope in ("All", "Plafond")
 
@@ -412,20 +489,14 @@ def get_overview_buildup_dataset(
     grand = _zero_summary()
 
     for cc in cost_centers:
-        # --- contract block ---
         fc_contracts = 0.0
-        if include_contracts:
-            ct = get_contract_forecast_totals(
-                year_int,
-                cost_center=cc,
-                contract=contract,
-                vendor=vendor,
-            )
-            fc_contracts = flt(ct.get("contract_forecast_total", 0), 2)
 
         # --- expense forecast blocks ---
         fc_estimate = 0.0
         fc_quote = 0.0
+        approved_budget = 0.0
+        proposals = 0.0
+        ideas = 0.0
         if include_expenses:
             ef = get_expense_forecast_totals(
                 year_int,
@@ -436,6 +507,9 @@ def get_overview_buildup_dataset(
             )
             fc_estimate = flt(ef.get("estimate_total", 0), 2)
             fc_quote = flt(ef.get("quote_total", 0), 2)
+            approved_budget = flt(ef.get("approved_budget", 0), 2)
+            proposals = flt(ef.get("proposals_total", 0), 2)
+            ideas = flt(ef.get("ideas_total", 0), 2)
 
         # --- actual blocks ---
         actual_standard = 0.0
@@ -467,7 +541,7 @@ def get_overview_buildup_dataset(
             remaining = flt(pt.get("plafond_remaining", 0), 2)
             over = flt(pt.get("plafond_over", 0), 2)
 
-        fc_total = flt(fc_contracts + fc_estimate + fc_quote, 2)
+        fc_total = flt(fc_estimate + fc_quote, 2)
 
         # Skip empty CC when show_zero_rows is False
         if not show_zero_rows and fc_total == 0 and actual_total == 0 and plafond == 0:
@@ -477,6 +551,7 @@ def get_overview_buildup_dataset(
         header = _make_summary_row(
             cc,
             fc_contracts, fc_estimate, fc_quote, fc_total,
+            approved_budget, proposals, ideas,
             actual_standard,
             actual_on_plafond, actual_extra, actual_total,
             plafond, plafond_consumed, remaining, over,
@@ -485,14 +560,17 @@ def get_overview_buildup_dataset(
         rows.append(header)
 
         # --- block rows (indent=1) ---
-        if include_contracts and (show_zero_rows or fc_contracts):
-            rows.append(_block_row(cc, "Contracts", forecast_contracts=fc_contracts, indent=1))
-
         if include_expenses:
             if show_zero_rows or fc_estimate:
                 rows.append(_block_row(cc, "Expenses / Estimate", forecast_estimate=fc_estimate, indent=1))
             if show_zero_rows or fc_quote:
                 rows.append(_block_row(cc, "Expenses / Quote", forecast_quote=fc_quote, indent=1))
+            if show_zero_rows or approved_budget:
+                rows.append(_block_row(cc, _("Approved Budget"), approved_budget=approved_budget, indent=1))
+            if show_zero_rows or proposals:
+                rows.append(_block_row(cc, _("Proposals"), proposals=proposals, indent=1))
+            if show_zero_rows or ideas:
+                rows.append(_block_row(cc, _("Ideas"), ideas=ideas, indent=1))
             if show_zero_rows or actual_standard:
                 rows.append(_block_row(cc, _("Actual / Standard"), actual_standard=actual_standard, indent=1))
             if show_zero_rows or actual_on_plafond:
@@ -520,6 +598,9 @@ def get_overview_buildup_dataset(
         grand["forecast_estimate"] = flt(grand["forecast_estimate"] + fc_estimate, 2)
         grand["forecast_quote"] = flt(grand["forecast_quote"] + fc_quote, 2)
         grand["forecast_total"] = flt(grand["forecast_total"] + fc_total, 2)
+        grand["approved_budget"] = flt(grand["approved_budget"] + approved_budget, 2)
+        grand["proposals"] = flt(grand["proposals"] + proposals, 2)
+        grand["ideas"] = flt(grand["ideas"] + ideas, 2)
         grand["actual_standard"] = flt(grand["actual_standard"] + actual_standard, 2)
         grand["actual_on_plafond"] = flt(grand["actual_on_plafond"] + actual_on_plafond, 2)
         grand["actual_extra"] = flt(grand["actual_extra"] + actual_extra, 2)
@@ -551,54 +632,15 @@ def get_overview_lines_dataset(
     Returns individual contribution lines for the MPIT Overview Lines mode.
 
     Line types:
-    - Contract Term  : one row per contract term that overlaps the year
     - Expense Row    : one row per active MPIT Expense Row (Estimate/Quote/Actual)
     - Plafond        : one row per active MPIT Expense Row in a Plafond document
-
-    ``project`` applies only to Expense Row lines. Contract lines are
-    intentionally left unfiltered by project in this report path to preserve
-    existing semantics.
     """
     year_int = _resolve_year_int(year)
-    year_start, year_end = annualization.get_year_bounds(year_int)
     scope = (section_scope or "All").strip()
-    include_contracts = scope in ("All", "Contracts")
     include_expenses = scope in ("All", "Expenses")
     include_plafond = scope in ("All", "Plafond")
 
     rows: list[dict] = []
-
-    # ------------------------------------------------------------------
-    # Contract lines
-    # ------------------------------------------------------------------
-    if include_contracts:
-        contract_lines = get_contract_year_contribution_lines(
-            year_int,
-            contract_name=contract,
-            cost_center=cost_center,
-            vendor=vendor,
-            show_zero_rows=show_zero_rows,
-        )
-        for line in contract_lines:
-            rows.append(
-                {
-                    "cost_center": line.get("cost_center"),
-                    "source_type": line.get("source_type"),
-                    "source_document": line.get("contract"),
-                    "source_row": line.get("source_row"),
-                    "contract": line.get("contract"),
-                    "project": None,
-                    "vendor": line.get("vendor"),
-                    "expense_phase": None,
-                    "funding": "-",
-                    "period_start": line.get("period_start"),
-                    "period_end": line.get("period_end"),
-                    "spend_date": None,
-                    "amount_net": flt(line.get("amount_net"), 2),
-                    "annual_contribution_net": flt(line.get("annual_contribution_net"), 2),
-                    "logical_state": line.get("contract_status"),
-                }
-            )
 
     # ------------------------------------------------------------------
     # Expense rows (Estimate / Quote / Actual)
@@ -630,6 +672,7 @@ def get_overview_lines_dataset(
                 funding = "On Plafond"
             elif row.get("is_extra"):
                 funding = "Extra"
+            project_bucket = _get_project_bucket(row)
 
             rows.append({
                 "cost_center": row.get("cost_center"),
@@ -637,7 +680,8 @@ def get_overview_lines_dataset(
                 "source_document": row.get("expense"),
                 "source_row": row.get("row_name"),
                 "contract": row.get("contract"),
-                "project": row.get("project"),
+                "project": row.get("effective_project"),
+                "project_bucket": project_bucket,
                 "vendor": row.get("vendor"),
                 "expense_phase": row.get("row_phase"),
                 "funding": funding,
@@ -672,7 +716,7 @@ def get_overview_lines_dataset(
         for plafond_doc in plafonds:
             plafond_rows_raw = frappe.db.sql(
                 """
-                SELECT r.name, r.amount_net, r.spend_date, r.row_description
+                SELECT r.name, r.amount_net, r.spend_date, r.row_description, r.vendor
                 FROM `tabMPIT Expense Row` r
                 WHERE r.parent = %(plafond)s
                   AND r.row_state = 'Active'
@@ -693,7 +737,8 @@ def get_overview_lines_dataset(
                     "source_row": row.name,
                     "contract": None,
                     "project": None,
-                    "vendor": plafond_doc.vendor,
+                    "project_bucket": "No Project",
+                    "vendor": row.vendor,
                     "expense_phase": None,
                     "funding": "On Plafond",
                     "period_start": None,
@@ -820,19 +865,13 @@ def _resolve_cost_centers_for_year(year_int: int, cost_center: str | None) -> li
     if cost_center:
         return [cost_center]
 
-    from_contracts = frappe.get_all(
-        "MPIT Contract",
-        filters={"status": ["in", list(ACTIVE_CONTRACT_STATUSES)]},
-        pluck="cost_center",
-        limit=None,
-    )
     from_expenses = frappe.get_all(
         "MPIT Expense",
         filters={"year": str(year_int), "workflow_state": ["in", list(ACTIVE_EXPENSE_STATES)]},
         pluck="cost_center",
         limit=None,
     )
-    return sorted({cc for cc in (from_contracts + from_expenses) if cc})
+    return sorted({cc for cc in from_expenses if cc})
 
 
 def _zero_summary() -> dict:
@@ -841,6 +880,9 @@ def _zero_summary() -> dict:
         "forecast_estimate": 0.0,
         "forecast_quote": 0.0,
         "forecast_total": 0.0,
+        "approved_budget": 0.0,
+        "proposals": 0.0,
+        "ideas": 0.0,
         "actual_standard": 0.0,
         "actual_on_plafond": 0.0,
         "actual_extra": 0.0,
@@ -858,6 +900,9 @@ def _make_summary_row(
     forecast_estimate: float,
     forecast_quote: float,
     forecast_total: float,
+    approved_budget: float,
+    proposals: float,
+    ideas: float,
     actual_standard: float,
     actual_on_plafond: float,
     actual_extra: float,
@@ -873,6 +918,9 @@ def _make_summary_row(
         "forecast_estimate": forecast_estimate,
         "forecast_quote": forecast_quote,
         "forecast_total": forecast_total,
+        "approved_budget": approved_budget,
+        "proposals": proposals,
+        "ideas": ideas,
         "actual_standard": actual_standard,
         "actual_on_plafond": actual_on_plafond,
         "actual_extra": actual_extra,
@@ -891,6 +939,9 @@ def _block_row(
     forecast_contracts: float = 0.0,
     forecast_estimate: float = 0.0,
     forecast_quote: float = 0.0,
+    approved_budget: float = 0.0,
+    proposals: float = 0.0,
+    ideas: float = 0.0,
     actual_standard: float = 0.0,
     actual_on_plafond: float = 0.0,
     actual_extra: float = 0.0,
@@ -908,6 +959,9 @@ def _block_row(
         "forecast_estimate": forecast_estimate,
         "forecast_quote": forecast_quote,
         "forecast_total": fc_total,
+        "approved_budget": approved_budget,
+        "proposals": proposals,
+        "ideas": ideas,
         "actual_standard": actual_standard,
         "actual_on_plafond": actual_on_plafond,
         "actual_extra": actual_extra,
@@ -931,13 +985,6 @@ def get_monthly_forecast_vs_actual(
 
     forecast_by_month = defaultdict(float)
     actual_by_month = defaultdict(float)
-
-    if not project:
-        contract_rows = _get_active_contracts(cost_center=cost_center, contract=contract)
-        for contract_row in contract_rows:
-            monthly_map = _contract_monthly_allocation(contract_row, year_start, year_end)
-            for month, value in monthly_map.items():
-                forecast_by_month[month] += flt(value, 6)
 
     forecast_rows = _get_active_rows(
         year_int,
@@ -1146,10 +1193,11 @@ def _get_active_rows(
             e.cost_center,
             e.project,
             e.contract,
+            COALESCE(e.project, contract_doc.project) AS effective_project,
+            COALESCE(project_direct.workflow_state, project_from_contract.workflow_state) AS effective_project_state,
             e.expense_kind,
             e.uses_plafond,
             e.is_extra,
-            e.vendor,
             e.workflow_state,
             r.name AS row_name,
             r.row_phase,
@@ -1159,9 +1207,12 @@ def _get_active_rows(
             r.start_date,
             r.end_date,
             r.distribution,
-            r.vendor AS row_vendor
+            r.vendor
         FROM `tabMPIT Expense Row` r
         INNER JOIN `tabMPIT Expense` e ON e.name = r.parent
+        LEFT JOIN `tabMPIT Contract` contract_doc ON contract_doc.name = e.contract
+        LEFT JOIN `tabMPIT Project` project_direct ON project_direct.name = e.project
+        LEFT JOIN `tabMPIT Project` project_from_contract ON project_from_contract.name = contract_doc.project
         WHERE e.year = %(year)s
           AND e.expense_kind = %(expense_kind)s
           AND e.workflow_state IN ('Open', 'Closed')
@@ -1180,7 +1231,7 @@ def _get_active_rows(
         params["cost_center"] = cost_center
 
     if project:
-        sql.append("AND e.project = %(project)s")
+        sql.append("AND COALESCE(e.project, contract_doc.project) = %(project)s")
         params["project"] = project
 
     if contract:
@@ -1188,7 +1239,7 @@ def _get_active_rows(
         params["contract"] = contract
 
     if vendor:
-        sql.append("AND e.vendor = %(vendor)s")
+        sql.append("AND r.vendor = %(vendor)s")
         params["vendor"] = vendor
 
     sql.append("ORDER BY e.name, r.idx")

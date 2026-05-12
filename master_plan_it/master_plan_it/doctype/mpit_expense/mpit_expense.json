@@ -83,9 +83,10 @@
    "reqd": 1
   },
   {
+   "description": "Deprecated compatibility field. The official vendor is set on each expense row. Do not use this field for reporting.",
    "fieldname": "vendor",
    "fieldtype": "Link",
-   "label": "Vendor",
+   "label": "Deprecated Parent Vendor",
    "options": "MPIT Vendor"
   },
   {
@@ -96,7 +97,7 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
-   "description": "Optional context. Leave empty for standalone cost center expenses.",
+   "description": "Optional planning context. Project stage controls whether linked expense rows are included in budget or planning buckets.",
    "fieldname": "project",
    "fieldtype": "Link",
    "in_standard_filter": 1,
@@ -110,7 +111,7 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
-   "description": "Optional context. Leave empty for standalone cost center expenses.",
+   "description": "Optional contract context. Contract-generated expenses are synchronized automatically and are counted only through expense rows.",
    "fieldname": "contract",
    "fieldtype": "Link",
    "in_standard_filter": 1,
@@ -126,7 +127,7 @@
   {
    "default": "0",
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
-   "description": "Enable only when this expense consumes a selected plafond.",
+   "description": "Enable only when this ordinary expense consumes a selected plafond. The plafond may belong to another cost center but must be in the same year.",
    "fieldname": "uses_plafond",
    "fieldtype": "Check",
    "in_standard_filter": 1,
@@ -134,7 +135,7 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary' && doc.uses_plafond",
-   "description": "Select a non-cancelled plafond for the same year. The plafond can belong to a different cost center than the expense.",
+   "description": "Select the plafond consumed by this expense. Only non-cancelled plafonds from the same year are valid.",
    "fieldname": "plafond_expense",
    "fieldtype": "Link",
    "label": "Plafond Reference",
@@ -143,7 +144,7 @@
   {
    "default": "0",
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
-   "description": "Enable only for unplanned or out-of-scope expenses. Leave disabled for ordinary planned expenses.",
+   "description": "Enable only for unplanned or out-of-scope actual expenses. Extra expenses do not consume plafond.",
    "fieldname": "is_extra",
    "fieldtype": "Check",
    "in_standard_filter": 1,

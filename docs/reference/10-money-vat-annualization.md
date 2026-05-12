@@ -33,11 +33,11 @@ Rounding: `frappe.utils.flt(value, 2)`.
 
 ## 3) Contract annualization
 
-Contracts can span multiple years. Forecast for a selected year is allocated by overlap months:
+Contracts can span multiple years. Term overlap is still used to compute year slices, but official budget totals are taken from generated `MPIT Expense Row` records.
 
-- If contract terms exist, forecast comes only from overlapping terms.
-- If no terms exist, fallback uses header (`current_amount` + `billing_cycle`).
-- If terms exist but none overlap the year, yearly forecast is `0`.
+- Contract terms are mandatory.
+- Automatic sync generates `Closed` `MPIT Expense` rows for existing `MPIT Year` records only.
+- Contract values are context/generator data and must not be added independently to official totals (to avoid double counting).
 
 Billing cycle monthly equivalent:
 

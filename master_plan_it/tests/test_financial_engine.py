@@ -51,7 +51,7 @@ class TestFinancialEngine(FrappeTestCase):
         off_year = get_contract_forecast_totals(self.year, cost_center=self.cost_center, contract=off_year_contract.name)
         self.assertEqual(off_year["contract_forecast_total"], 0)
 
-    def test_contract_without_terms_has_no_contribution_lines(self):
+    def test_contract_without_terms_is_rejected(self):
         contract = frappe.get_doc(
             {
                 "doctype": "MPIT Contract",
@@ -60,11 +60,8 @@ class TestFinancialEngine(FrappeTestCase):
                 "cost_center": self.cost_center,
             }
         )
-        contract.insert()
-        lines = get_contract_year_contribution_lines(self.year, contract_name=contract.name)
-        totals = get_contract_forecast_totals(self.year, cost_center=self.cost_center, contract=contract.name)
-        self.assertEqual(lines, [])
-        self.assertEqual(totals["contract_forecast_total"], 0)
+        with self.assertRaises(frappe.ValidationError):
+            contract.insert()
 
     def test_contract_contribution_lines_are_term_based_and_year_clipped(self):
         contract = make_contract_with_terms(
@@ -83,6 +80,77 @@ class TestFinancialEngine(FrappeTestCase):
         self.assertEqual(str(lines[0]["period_start"]), "2030-01-01")
         self.assertEqual(str(lines[0]["period_end"]), "2030-06-30")
         self.assertNotEqual(lines[0]["source_row"], "HEAD" + "ER")
+
+    def test_overview_forecast_totals_do_not_sum_contract_forecasts_directly(self):
+        make_contract_with_terms(
+            description=f"Contract Forecast Neutralized {self.suffix}",
+            vendor=self.vendor,
+            cost_center=self.cost_center,
+            terms=[term_row("2030-01-01", "2030-12-31", 200, "Monthly")],
+        )
+
+        contract_totals = get_contract_forecast_totals(self.year, cost_center=self.cost_center)
+        summary = get_cost_center_financial_summary(self.year, self.cost_center)
+
+        self.assertGreater(contract_totals["contract_forecast_total"], 0)
+        self.assertEqual(summary["forecast_contracts"], 0)
+        self.assertEqual(summary["forecast_total"], summary["forecast_estimate"] + summary["forecast_quote"])
+
+    def test_vendor_filter_uses_row_vendor(self):
+        vendor_a = ensure_vendor(f"Vendor A {self.suffix}")
+        vendor_b = ensure_vendor(f"Vendor B {self.suffix}")
+
+        make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            rows=[
+                expense_row("Actual", 100, "Active", spend_date="2030-01-10", vendor=vendor_a),
+                expense_row("Actual", 40, "Active", spend_date="2030-01-12", vendor=vendor_b),
+            ],
+        )
+
+        totals_a = get_actual_totals(self.year, cost_center=self.cost_center, vendor=vendor_a)
+        totals_b = get_actual_totals(self.year, cost_center=self.cost_center, vendor=vendor_b)
+
+        self.assertEqual(totals_a["actual_total"], 100)
+        self.assertEqual(totals_b["actual_total"], 40)
+
+    def test_project_stage_rules_drive_forecast_and_actual_inclusion(self):
+        project_proposed = ensure_project_with_stage(f"Project Proposed {self.suffix}", self.cost_center, "Proposed")
+        project_idea = ensure_project_with_stage(f"Project Idea {self.suffix}", self.cost_center, "Idea")
+
+        make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            project=self.project,
+            rows=[
+                expense_row("Estimate", 50, "Active", spend_date="2030-01-10"),
+                expense_row("Actual", 30, "Active", spend_date="2030-01-11"),
+            ],
+        )
+        make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            project=project_proposed,
+            rows=[
+                expense_row("Estimate", 70, "Active", spend_date="2030-02-10"),
+                expense_row("Actual", 40, "Active", spend_date="2030-02-11"),
+            ],
+        )
+        make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            project=project_idea,
+            rows=[expense_row("Estimate", 90, "Active", spend_date="2030-03-10")],
+        )
+
+        forecast = get_expense_forecast_totals(self.year, cost_center=self.cost_center)
+        actual = get_actual_totals(self.year, cost_center=self.cost_center)
+
+        self.assertEqual(forecast["expense_forecast_total"], 120)  # Approved + Proposed, excludes Idea
+        self.assertEqual(forecast["ideas_total"], 90)
+        self.assertEqual(forecast["proposals_total"], 70)
+        self.assertEqual(actual["actual_total"], 30)  # Approved only
 
     def test_expense_forecast_and_actual_respect_row_and_doc_states(self):
         expense_open = make_expense(
@@ -391,12 +459,15 @@ def expense_row(
     start_date: str | None = None,
     end_date: str | None = None,
     distribution: str | None = None,
+    vendor: str | None = None,
 ) -> dict:
+    row_vendor = vendor or ensure_vendor("Vendor FE Row Default")
     return {
         "doctype": "MPIT Expense Row",
         "row_description": "row",
         "row_phase": phase,
         "row_state": row_state,
+        "vendor": row_vendor,
         "amount": amount,
         "amount_includes_vat": 0,
         "vat_rate": 22,
@@ -450,6 +521,10 @@ def ensure_vendor(name: str) -> str:
 
 
 def ensure_project(title: str, cost_center: str) -> str:
+    return ensure_project_with_stage(title, cost_center, "Approved")
+
+
+def ensure_project_with_stage(title: str, cost_center: str, stage: str) -> str:
     existing = frappe.db.get_value("MPIT Project", {"title": title}, "name")
     if existing:
         return existing
@@ -458,7 +533,7 @@ def ensure_project(title: str, cost_center: str) -> str:
         {
             "doctype": "MPIT Project",
             "title": title,
-            "workflow_state": "Open",
+            "workflow_state": stage,
             "cost_center": cost_center,
         }
     )

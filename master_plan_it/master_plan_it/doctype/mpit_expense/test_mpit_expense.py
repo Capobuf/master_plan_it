@@ -205,6 +205,12 @@ class TestMPITExpense(FrappeTestCase):
         with self.assertRaises(frappe.ValidationError):
             doc.insert()
 
+    def test_ordinary_rows_require_vendor(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        doc.append("rows", base_row(phase="Actual", amount=100, spend_date="2026-01-10", vendor=""))
+        with self.assertRaises(frappe.ValidationError):
+            doc.insert()
+
     def test_row_date_must_stay_in_document_year(self):
         doc = base_expense(self.year_name, self.cost_center, self.project)
         doc.append("rows", base_row(spend_date="2027-01-10"))
@@ -274,6 +280,28 @@ class TestMPITExpense(FrappeTestCase):
         doc.save()
 
         self.assertEqual(doc.rows[1].replaces_row_name, target)
+        self.assertEqual(doc.rows[0].row_state, "Replaced")
+
+    def test_row_cannot_replace_actual_target(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        doc.append("rows", base_row(phase="Actual", amount=100, spend_date="2026-01-10"))
+        doc.append("rows", base_row(phase="Estimate", amount=120, spend_date="2026-02-10"))
+        doc.insert()
+
+        doc.rows[1].replaces_row_name = doc.rows[0].name
+        with self.assertRaises(frappe.ValidationError):
+            doc.save()
+
+    def test_row_replacement_cycle_is_rejected(self):
+        doc = base_expense(self.year_name, self.cost_center, self.project)
+        doc.append("rows", base_row(phase="Estimate", amount=100, spend_date="2026-01-10"))
+        doc.append("rows", base_row(phase="Quote", amount=120, spend_date="2026-02-10"))
+        doc.insert()
+
+        doc.rows[0].replaces_row_name = doc.rows[1].name
+        doc.rows[1].replaces_row_name = doc.rows[0].name
+        with self.assertRaises(frappe.ValidationError):
+            doc.save()
 
     def test_row_cannot_reference_itself(self):
         doc = base_expense(self.year_name, self.cost_center, self.project)
@@ -463,12 +491,15 @@ def base_row(
     end_date: str | None = None,
     distribution: str | None = None,
     replaces_row_name: str | None = None,
+    vendor: str | None = None,
 ):
+    row_vendor = ensure_vendor("Vendor Expense Row Default") if vendor is None else vendor
     return {
         "doctype": "MPIT Expense Row",
         "row_description": "Row",
         "row_phase": phase,
         "row_state": row_state,
+        "vendor": row_vendor,
         "amount": amount,
         "amount_includes_vat": 0,
         "vat_rate": 22,
@@ -531,7 +562,7 @@ def ensure_project(title: str, cost_center: str) -> str:
         {
             "doctype": "MPIT Project",
             "title": title,
-            "workflow_state": "Open",
+            "workflow_state": "Approved",
             "cost_center": cost_center,
         }
     )

@@ -31,3 +31,9 @@ fixtures = [
         "filters": [["name", "in", ["MPIT Contract Expiry (Non Auto Renew)", "MPIT Contract Renewal (Auto Renew)"]]],
     },
 ]
+
+scheduler_events = {
+    "daily": [
+        "master_plan_it.master_plan_it.tasks.promote_deferred_projects",
+    ],
+}

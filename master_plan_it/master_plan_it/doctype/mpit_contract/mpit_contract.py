@@ -9,10 +9,8 @@ from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import add_days, flt, getdate
 
 from master_plan_it import annualization, mpit_defaults
-from master_plan_it.master_plan_it.financial_engine import get_contract_year_contribution_lines
+from master_plan_it.master_plan_it.services.contract_expense_sync import sync_contract_expenses
 from master_plan_it.naming_utils import sync_series_to_max
-
-VALID_CONTRACT_STATUSES = {"Active", "Pending Renewal", "Renewed"}
 
 
 class MPITContract(Document):
@@ -31,21 +29,48 @@ class MPITContract(Document):
         revert_series_if_last(series_key, self.name, doc=self)
 
     def validate(self):
-        if not self.vendor:
-            frappe.throw(_("Vendor is required for contracts."))
-        if not self.cost_center:
-            frappe.throw(_("Cost Center is required for contracts."))
+        self._validate_head()
+        self._validate_terms_present()
+        self._ensure_term_row_names()
 
         for term in self.terms:
             term.validate()
 
         self._auto_compute_term_end_dates()
         self._validate_terms_no_overlap()
+        self._sync_auto_renew_successor()
+        self._auto_compute_term_end_dates()
+        self._validate_terms_no_overlap()
 
+        self.status = self._calculate_status()
         self._compute_current_term()
         self._compute_annual_summaries()
         self._default_next_renewal_date()
-        self._normalize_status()
+
+    def on_update(self):
+        if getattr(self.flags, "skip_contract_expense_sync", False):
+            return
+        # Contract rows are generators, not budget rows. Generated expenses are
+        # the official budget source and must stay synchronized after each save.
+        sync_contract_expenses(self.name)
+
+    def _validate_head(self) -> None:
+        if not self.vendor:
+            frappe.throw(_("Vendor is required for contracts."))
+        if not self.cost_center:
+            frappe.throw(_("Cost Center is required for contracts."))
+
+    def _validate_terms_present(self) -> None:
+        terms = [term for term in self.terms if term.from_date]
+        if not terms:
+            frappe.throw(_("At least one Contract Term is required."))
+
+    def _ensure_term_row_names(self) -> None:
+        # Child row names are required to create stable source/successor links
+        # during the first insert, before Frappe auto-assigns child names.
+        for term in self.terms:
+            if term.from_date and not term.name:
+                term.name = frappe.generate_hash(length=10)
 
     def _auto_compute_term_end_dates(self) -> None:
         terms = [t for t in self.terms if t.from_date]
@@ -73,6 +98,130 @@ class MPITContract(Document):
                 frappe.throw(
                     _("Term {0} overlaps with the next term. Review term dates.").format(idx + 1)
                 )
+
+    def _sync_auto_renew_successor(self) -> None:
+        if not self.auto_renew:
+            return
+
+        terms = [t for t in self.terms if t.from_date]
+        if not terms:
+            return
+
+        manual_terms = [term for term in terms if not bool(term.is_auto_renewed)]
+        if not manual_terms:
+            return
+
+        source_term = max(manual_terms, key=lambda term: (getdate(term.from_date), term.idx or 0))
+        source_name = source_term.name
+        if not source_name:
+            return
+
+        source_successors = self._get_auto_renew_successors(source_name)
+
+        if not source_term.to_date:
+            self._remove_auto_renew_successors(source_successors)
+            return
+
+        source_start = getdate(source_term.from_date)
+        source_end = getdate(source_term.to_date)
+        next_from = add_days(source_end, 1)
+        next_to = add_days(next_from, (source_end - source_start).days)
+
+        if not self._mpit_years_exist_for_range(next_from, next_to):
+            self._remove_auto_renew_successors(source_successors)
+            return
+
+        successors_by_name = {term.name for term in source_successors if term.name}
+        if self._range_overlaps_other_terms(next_from, next_to, ignore_names={source_name, *successors_by_name}):
+            self._remove_auto_renew_successors(source_successors)
+            return
+
+        successor = self._pick_canonical_successor(source_successors)
+        if successor is None:
+            successor = self.append("terms", {})
+            successor.name = frappe.generate_hash(length=10)
+
+        # Auto-generated terms must never recursively renew themselves.
+        successor.is_auto_renewed = 1
+        successor.renewed_from_term = source_name
+        successor.from_date = next_from
+        successor.to_date = next_to
+        successor.amount = source_term.amount
+        successor.amount_includes_vat = source_term.amount_includes_vat
+        successor.vat_rate = source_term.vat_rate
+        successor.billing_cycle = source_term.billing_cycle
+        successor.notes = source_term.notes
+        successor.attachment = source_term.attachment
+
+        self._remove_duplicate_auto_renew_successors(source_successors, keep=successor.name)
+
+    def _get_auto_renew_successors(self, source_name: str) -> list:
+        return [
+            term
+            for term in self.terms
+            if term.from_date and bool(term.is_auto_renewed) and (term.renewed_from_term or "") == source_name
+        ]
+
+    def _pick_canonical_successor(self, successors: list) -> object | None:
+        if not successors:
+            return None
+        return min(
+            successors,
+            key=lambda term: (getdate(term.from_date), term.idx or 0),
+        )
+
+    def _remove_auto_renew_successors(self, successors: list) -> None:
+        if not successors:
+            return
+        successor_object_ids = {id(term) for term in successors}
+        self.set("terms", [term for term in self.terms if id(term) not in successor_object_ids])
+
+    def _remove_duplicate_auto_renew_successors(self, successors: list, keep: str | None = None) -> None:
+        if not successors:
+            return
+        keep_name = keep
+        if keep_name is None:
+            canonical = self._pick_canonical_successor(successors)
+            keep_name = canonical.name if canonical else None
+        if not keep_name:
+            return
+
+        successor_object_ids = {id(term) for term in successors}
+        self.set(
+            "terms",
+            [
+                term
+                for term in self.terms
+                if id(term) not in successor_object_ids or term.name == keep_name
+            ],
+        )
+
+    def _mpit_years_exist_for_range(self, period_start: datetime.date, period_end: datetime.date) -> bool:
+        for year in range(period_start.year, period_end.year + 1):
+            if not frappe.db.exists("MPIT Year", str(year)):
+                return False
+        return True
+
+    def _range_overlaps_other_terms(
+        self,
+        period_start: datetime.date,
+        period_end: datetime.date,
+        ignore_names: set[str],
+    ) -> bool:
+        for term in self.terms:
+            if not term.from_date:
+                continue
+            if term.name in ignore_names:
+                continue
+            term_start = getdate(term.from_date)
+            term_end = getdate(term.to_date) if term.to_date else None
+            if term_end is None:
+                if term_start <= period_end:
+                    return True
+                continue
+            if term_start <= period_end and term_end >= period_start:
+                return True
+        return False
 
     def _compute_current_term(self) -> None:
         self.current_term_amount = None
@@ -145,11 +294,24 @@ class MPITContract(Document):
         if self.auto_renew and not self.next_renewal_date and self.end_date:
             self.next_renewal_date = self.end_date
 
-    def _normalize_status(self) -> None:
-        if not self.status:
-            self.status = "Active"
-        if self.auto_renew and self.status == "Pending Renewal":
-            self.status = "Active"
+    def _calculate_status(self, today: datetime.date | None = None) -> str:
+        terms = [t for t in self.terms if t.from_date]
+        if not terms:
+            return "Concluded"
+
+        reference_date = today or datetime.date.today()
+        max_end = None
+        for term in terms:
+            if not term.to_date:
+                return "Active"
+            term_end = getdate(term.to_date)
+            if term_end >= reference_date:
+                return "Active"
+            max_end = term_end if max_end is None else max(max_end, term_end)
+
+        if max_end and max_end < reference_date:
+            return "Concluded"
+        return "Concluded"
 
     @staticmethod
     def _monthly_from_cycle(amount_net: float, billing_cycle: str | None) -> float:
@@ -176,140 +338,20 @@ def create_actual_from_contract(contract_name: str, year: str | None = None) -> 
         frappe.throw(_("Contract is required."))
 
     contract = frappe.get_doc("MPIT Contract", contract_name)
-    contract.check_permission("read")
-
-    selected_year, has_year_records = _resolve_target_year_name(year)
-    if not has_year_records:
-        frappe.throw(
-            _("No MPIT Year records exist. Create MPIT Year {0} before generating Actual rows.").format(
-                selected_year
-            )
-        )
-
-    if contract.status not in VALID_CONTRACT_STATUSES:
-        message = _("Contract status {0} is not actualizable.").format(contract.status or _("Draft"))
-        status_info = _get_actualization_status(contract.name, selected_year, preloaded_lines=[])
-        return {
-            "status": "not_allowed",
-            "message": message,
-            "year": selected_year,
-            "expense_name": status_info.get("expense_name"),
-            "actualization_status": status_info.get("actualization_status"),
-            "actualization_status_label": status_info.get("actualization_status_label"),
-        }
-
-    lines = get_contract_year_contribution_lines(
-        selected_year,
-        contract_name=contract.name,
-        show_zero_rows=False,
-    )
-    if not lines:
-        message = _("Contract {0} does not overlap year {1}. No Actual rows were created.").format(
-            contract.name, selected_year
-        )
-        return {
-            "status": "no_overlap",
-            "message": message,
-            "year": selected_year,
-            "expense_name": _get_existing_contract_year_expense_name(contract.name, selected_year),
-            "added_rows": 0,
-            "expected_rows": 0,
-            "actualization_status": "not_created",
-            "actualization_status_label": _("Actual current year: not created"),
-        }
-
-    expected_refs = {_build_external_reference(selected_year, contract.name, line) for line in lines}
-    existing_refs = _get_existing_external_references(contract.name, selected_year, expected_refs)
-
-    expense_name = _get_existing_contract_year_expense_name(contract.name, selected_year)
-    created = False
-    if expense_name:
-        expense_doc = frappe.get_doc("MPIT Expense", expense_name)
-        if expense_doc.project:
-            frappe.throw(
-                _(
-                    "Expense {0} has both Contract and Project set. Clear Project before appending Actual rows."
-                ).format(expense_doc.name)
-            )
-    else:
-        expense_doc = frappe.new_doc("MPIT Expense")
-        expense_doc.update(
-            {
-                "expense_kind": "Ordinary",
-                "expense_title": _("Actual from contract {0} - {1}").format(contract.name, selected_year),
-                "workflow_state": "Open",
-                "year": selected_year,
-                "cost_center": contract.cost_center,
-                "vendor": contract.vendor,
-                "contract": contract.name,
-                "uses_plafond": 0,
-                "is_extra": 0,
-            }
-        )
-        created = True
-
-    added_rows = 0
-    for line in lines:
-        external_reference = _build_external_reference(selected_year, contract.name, line)
-        if external_reference in existing_refs:
-            continue
-
-        expense_doc.append(
-            "rows",
-            {
-                "row_state": "Active",
-                "row_phase": "Actual",
-                "row_description": _build_actual_row_description(contract, line),
-                "vendor": line.get("vendor"),
-                "external_reference": external_reference,
-                "amount": flt(line.get("annual_contribution_net"), 2),
-                "amount_includes_vat": 0,
-                "start_date": line.get("period_start"),
-                "end_date": line.get("period_end"),
-                "distribution": "all",
-            },
-        )
-        added_rows += 1
-
-    if added_rows:
-        if created:
-            expense_doc.insert()
-            expense_name = expense_doc.name
-        else:
-            expense_doc.save()
-            expense_name = expense_doc.name
-
-    status_info = _get_actualization_status(contract.name, selected_year, preloaded_lines=lines)
-    if added_rows == 0:
-        message = _("Actual rows already exist for contract {0} in year {1}.").format(
-            contract.name, selected_year
-        )
-        return {
-            "status": "noop",
-            "message": message,
-            "year": selected_year,
-            "expense_name": status_info.get("expense_name"),
-            "added_rows": 0,
-            "expected_rows": len(expected_refs),
-            "actualization_status": status_info.get("actualization_status"),
-            "actualization_status_label": status_info.get("actualization_status_label"),
-        }
-
-    action = "created" if created else "updated"
-    message = (
-        _("Created expense {0} with {1} Actual rows from contract {2}.")
-        if created
-        else _("Updated expense {0}: added {1} Actual rows from contract {2}.")
-    ).format(expense_name, added_rows, contract.name)
+    contract.check_permission("write")
+    sync_result = sync_contract_expenses(contract.name)
+    selected_year, _has_year_records = _resolve_target_year_name(year)
+    status_info = _get_sync_status(contract.name, selected_year)
     return {
-        "status": action,
-        "message": message,
+        "status": "synchronized",
+        "message": _("Contract expenses were synchronized automatically."),
         "year": selected_year,
-        "expense_name": expense_name,
-        "added_rows": added_rows,
-        "expected_rows": len(expected_refs),
+        "expense_name": status_info.get("expense_name"),
         "actualization_status": status_info.get("actualization_status"),
         "actualization_status_label": status_info.get("actualization_status_label"),
+        "rows_added": sync_result.get("rows_added", 0),
+        "rows_updated": sync_result.get("rows_updated", 0),
+        "rows_cancelled": sync_result.get("rows_cancelled", 0),
     }
 
 
@@ -322,7 +364,7 @@ def get_current_year_actualization_status(contract_name: str, year: str | None =
     contract.check_permission("read")
     selected_year, _has_year_records = _resolve_target_year_name(year)
 
-    return _get_actualization_status(contract.name, selected_year)
+    return _get_sync_status(contract.name, selected_year)
 
 
 def _resolve_target_year_name(year: str | None) -> tuple[str, bool]:
@@ -348,39 +390,6 @@ def _resolve_target_year_name(year: str | None) -> tuple[str, bool]:
     return selected_year, has_year_records
 
 
-def _build_external_reference(year_name: str, contract_name: str, line: dict) -> str:
-    return (
-        f"MPIT_CONTRACT_ACTUAL::{year_name}::{contract_name}"
-        f"::TERM::{line.get('source_row') or 'UNKNOWN'}"
-    )
-
-
-def _get_existing_external_references(
-    contract_name: str, year_name: str, expected_refs: set[str]
-) -> set[str]:
-    if not expected_refs:
-        return set()
-
-    rows = frappe.db.sql(
-        """
-        SELECT r.external_reference
-        FROM `tabMPIT Expense Row` r
-        INNER JOIN `tabMPIT Expense` e ON e.name = r.parent
-        WHERE e.contract = %(contract)s
-          AND e.year = %(year)s
-          AND e.expense_kind = 'Ordinary'
-          AND r.external_reference IN %(refs)s
-        """,
-        {
-            "contract": contract_name,
-            "year": year_name,
-            "refs": tuple(sorted(expected_refs)),
-        },
-        as_dict=True,
-    )
-    return {row.external_reference for row in rows if row.external_reference}
-
-
 def _get_existing_contract_year_expense_name(contract_name: str, year_name: str) -> str | None:
     expenses = frappe.get_all(
         "MPIT Expense",
@@ -399,47 +408,41 @@ def _get_existing_contract_year_expense_name(contract_name: str, year_name: str)
     return None
 
 
-def _build_actual_row_description(contract, line: dict) -> str:
-    source = line.get("source_row") or "UNKNOWN"
-    description = (contract.description or contract.name or "").strip()
-    if description:
-        return f"{description} [{source}]"
-    return f"{contract.name} [{source}]"
+def _get_sync_status(contract_name: str, year_name: str) -> dict:
+    expense_name = _get_existing_contract_year_expense_name(contract_name, year_name)
+    if not expense_name:
+        return {
+            "year": year_name,
+            "expense_name": None,
+            "actualization_status": "not_created",
+            "actualization_status_label": _("Actual current year: not created"),
+            "expected_rows": 0,
+            "existing_rows": 0,
+        }
 
-
-def _get_actualization_status(
-    contract_name: str,
-    year_name: str,
-    preloaded_lines: list[dict] | None = None,
-) -> dict:
-    lines = preloaded_lines
-    if lines is None:
-        lines = get_contract_year_contribution_lines(
-            year_name,
-            contract_name=contract_name,
-            show_zero_rows=False,
-        )
-
-    expected_refs = {_build_external_reference(year_name, contract_name, line) for line in lines}
-    existing_refs = _get_existing_external_references(contract_name, year_name, expected_refs)
-
-    if not expected_refs or not existing_refs:
-        status = "not_created"
-    elif len(existing_refs) < len(expected_refs):
-        status = "partial"
-    else:
-        status = "complete"
-
+    prefix = f"MPIT_CONTRACT_ACTUAL::{year_name}::{contract_name}::TERM::"
+    rows = frappe.get_all(
+        "MPIT Expense Row",
+        filters={
+            "parent": expense_name,
+            "parenttype": "MPIT Expense",
+            "parentfield": "rows",
+            "external_reference": ["like", f"{prefix}%"],
+            "row_state": "Active",
+        },
+        fields=["name"],
+        limit=None,
+    )
+    status = "complete" if rows else "not_created"
     label_map = {
         "not_created": _("Actual current year: not created"),
-        "partial": _("Actual current year: partial"),
         "complete": _("Actual current year: complete"),
     }
     return {
         "year": year_name,
-        "expense_name": _get_existing_contract_year_expense_name(contract_name, year_name),
+        "expense_name": expense_name,
         "actualization_status": status,
         "actualization_status_label": label_map[status],
-        "expected_rows": len(expected_refs),
-        "existing_rows": len(existing_refs),
+        "expected_rows": len(rows),
+        "existing_rows": len(rows),
     }

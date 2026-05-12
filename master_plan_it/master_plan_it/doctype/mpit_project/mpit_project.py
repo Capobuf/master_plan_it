@@ -12,7 +12,7 @@ from master_plan_it import mpit_defaults
 from master_plan_it.master_plan_it.financial_engine import get_project_financial_summary
 from master_plan_it.naming_utils import sync_series_to_max
 
-VALID_PROJECT_STATUSES = {"Open", "On Hold", "Completed", "Cancelled"}
+VALID_PROJECT_STATUSES = {"Idea", "Proposed", "Approved", "Deferred", "Rejected"}
 
 
 class MPITProject(Document):
@@ -31,15 +31,26 @@ class MPITProject(Document):
         if not self.cost_center and not frappe.in_test:
             frappe.throw(_("Cost Center is required on Project."))
         self._normalize_status()
+        self._validate_deferred_to_year()
         self._validate_dates()
 
     def _normalize_status(self) -> None:
         if not self.workflow_state:
-            self.workflow_state = "Open"
+            self.workflow_state = "Idea"
         if self.workflow_state not in VALID_PROJECT_STATUSES:
             frappe.throw(
-                _("Project Status must be one of: Open, On Hold, Completed, Cancelled.")
+                _("Project Stage must be one of: Idea, Proposed, Approved, Deferred, Rejected.")
             )
+
+    def _validate_deferred_to_year(self) -> None:
+        if self.workflow_state != "Deferred":
+            return
+
+        if not self.deferred_to_year:
+            frappe.throw(_("Defer To Year is required when Project Stage is Deferred."))
+
+        if not frappe.db.exists("MPIT Year", self.deferred_to_year):
+            frappe.throw(_("MPIT Year {0} does not exist.").format(self.deferred_to_year))
 
     def _validate_dates(self) -> None:
         if self.start_date and not self.end_date:

@@ -2041,3 +2041,132 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py
 msgid "No active MPIT Year covers today ({0})."
 msgstr ""
+
+msgid "Visualization"
+msgstr ""
+
+msgid "Layout"
+msgstr ""
+
+msgid "Approved Budget"
+msgstr ""
+
+msgid "Proposals"
+msgstr ""
+
+msgid "Ideas"
+msgstr ""
+
+msgid "Contract expenses are synchronized automatically after saving."
+msgstr ""
+
+msgid "Select the plafond consumed by this expense. Only non-cancelled plafonds from the same year are valid."
+msgstr ""
+
+msgid "Enable only when this ordinary expense consumes a selected plafond. The plafond may belong to another cost center but must be in the same year."
+msgstr ""
+
+msgid "Enable only for unplanned or out-of-scope actual expenses. Extra expenses do not consume plafond."
+msgstr ""
+
+msgid "Official budget totals are calculated from active MPIT Expense rows only. Contract totals are not added independently."
+msgstr ""
+
+msgid "Controls whether linked expenses are included in the operating budget, shown only as planning, deferred, or excluded."
+msgstr ""
+
+msgid "Required for deferred projects. When this year becomes current, the scheduler moves the project back to Proposed."
+msgstr ""
+
+msgid "System-calculated status based on contract terms. Active means at least one term is still open or current; Concluded means all terms ended before today."
+msgstr ""
+
+msgid "Contract economic periods. At least one row is required. These rows generate closed Actual expenses for existing MPIT Years."
+msgstr ""
+
+msgid "Technical flag set automatically for auto-renew generated rows. Generated rows are never used as renewal source terms."
+msgstr ""
+
+msgid "Reference to the source term that generated this row during auto-renew. Used to keep renewal idempotent and traceable."
+msgstr ""
+
+msgid "Official vendor for this expense row. Reports and vendor filters use this field, not the parent expense vendor."
+msgstr ""
+
+msgid "Active rows contribute to totals. Replaced and Cancelled rows remain visible for audit but are excluded from totals."
+msgstr ""
+
+msgid "Select an Estimate or Quote row from the same expense to supersede. The selected row will be marked as Replaced automatically."
+msgstr ""
+
+msgid "Optional contract context. Contract-generated expenses are synchronized automatically and are counted only through expense rows."
+msgstr ""
+
+msgid "Proposed"
+msgstr ""
+
+msgid "Approved"
+msgstr ""
+
+msgid "Deferred"
+msgstr ""
+
+msgid "Rejected"
+msgstr ""
+
+msgid "Concluded"
+msgstr ""
+
+msgid "Calculated Status"
+msgstr ""
+
+msgid "Project Stage"
+msgstr ""
+
+msgid "Defer To Year"
+msgstr ""
+
+msgid "Auto Renew Terms"
+msgstr ""
+
+msgid "Actual with Estimates and Quotes"
+msgstr ""
+
+msgid "Project Bucket"
+msgstr ""
+
+msgid "Contract expenses were synchronized automatically."
+msgstr ""
+
+msgid "Concluded Contracts"
+msgstr ""
+
+msgid "Filters by effective project context for expense rows, including contract-linked rows."
+msgstr ""
+
+msgid "Choose whether the report shows actual budget, forecast, or actual values enriched with estimates and quotes."
+msgstr ""
+
+msgid "Select how the report is displayed: summary, build-up, or detailed lines."
+msgstr ""
+
+msgid "Limits the report to a specific economic area without changing the underlying budget rules."
+msgstr ""
+
+msgid "Show rows with zero value for audit and troubleshooting. Disable for normal reading."
+msgstr ""
+
+msgid "At least one Contract Term is required."
+msgstr ""
+
+msgid "Defer To Year is required when Project Stage is Deferred."
+msgstr ""
+
+msgid "Vendor is required on ordinary expense rows (row #{0})."
+msgstr ""
+
+msgid "Row #{0} cannot replace an Actual row."
+msgstr ""
+
+msgid "Replacement cycle detected on row {0}."
+msgstr ""

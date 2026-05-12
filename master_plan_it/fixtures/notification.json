@@ -1,6 +1,6 @@
 [
  {
-  "condition": "doc.auto_renew != 1 and doc.status in (\"Active\", \"Pending Renewal\")",
+  "condition": "doc.auto_renew != 1 and doc.status == \"Active\"",
   "date_changed": "end_date",
   "days_in_advance": 90,
   "doctype": "Notification",
@@ -18,7 +18,7 @@
   "channel": "Email"
  },
  {
-  "condition": "doc.auto_renew == 1 and doc.status in (\"Active\", \"Pending Renewal\")",
+  "condition": "doc.auto_renew == 1 and doc.status == \"Active\"",
   "date_changed": "next_renewal_date",
   "days_in_advance": 90,
   "doctype": "Notification",

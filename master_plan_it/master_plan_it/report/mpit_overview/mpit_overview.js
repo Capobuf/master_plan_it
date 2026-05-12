@@ -1,8 +1,10 @@
 const OVERVIEW_METRIC_FIELDS = new Set([
-    "forecast_contracts",
     "forecast_estimate",
     "forecast_quote",
     "forecast_total",
+    "approved_budget",
+    "proposals",
+    "ideas",
     "actual_standard",
     "actual_on_plafond",
     "actual_extra",
@@ -40,11 +42,23 @@ frappe.query_reports["MPIT Overview"] = {
             reqd: 1,
         },
         {
+            fieldname: "financial_view",
+            label: __("Visualization"),
+            fieldtype: "Select",
+            options: "Actual\nForecast\nActual with Estimates and Quotes",
+            default: "Actual with Estimates and Quotes",
+            description: __(
+                "Choose whether the report shows actual budget, forecast, or actual values enriched with estimates and quotes."
+            ),
+            reqd: 1,
+        },
+        {
             fieldname: "view_mode",
-            label: __("View Mode"),
+            label: __("Layout"),
             fieldtype: "Select",
             options: "Summary\nBuild-up\nLines",
             default: "Summary",
+            description: __("Select how the report is displayed: summary, build-up, or detailed lines."),
             reqd: 1,
             on_change: function () {
                 // Re-render to show/hide context-sensitive filters
@@ -63,8 +77,11 @@ frappe.query_reports["MPIT Overview"] = {
             fieldname: "section_scope",
             label: __("Section Scope"),
             fieldtype: "Select",
-            options: "All\nContracts\nExpenses\nPlafond",
+            options: "All\nExpenses\nPlafond",
             default: "All",
+            description: __(
+                "Limits the report to a specific economic area without changing the underlying budget rules."
+            ),
             depends_on: "eval:['Build-up','Lines'].includes(doc.view_mode)",
         },
         {
@@ -83,17 +100,15 @@ frappe.query_reports["MPIT Overview"] = {
             label: __("Contract"),
             fieldtype: "Link",
             options: "MPIT Contract",
-            depends_on: "eval:['Build-up','Lines'].includes(doc.view_mode)",
+            depends_on: "eval:true",
         },
         {
-            // project applies to expenses only; hidden in Summary to avoid
-            // misrepresenting contract figures in this report path.
             fieldname: "project",
             label: __("Project"),
             fieldtype: "Link",
             options: "MPIT Project",
-            depends_on: "eval:['Build-up','Lines'].includes(doc.view_mode) && ['All','Expenses'].includes(doc.section_scope || 'All')",
-            description: __("Filters expense lines only. Contract lines are intentionally not project-filtered."),
+            depends_on: "eval:true",
+            description: __("Filters by effective project context for expense rows, including contract-linked rows."),
         },
         {
             fieldname: "vendor",
@@ -107,6 +122,7 @@ frappe.query_reports["MPIT Overview"] = {
             label: __("Show Zero Rows"),
             fieldtype: "Check",
             default: 0,
+            description: __("Show rows with zero value for audit and troubleshooting. Disable for normal reading."),
         },
 
         // ── Print filters ─────────────────────────────────────────────

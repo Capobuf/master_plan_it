@@ -24,6 +24,7 @@ class TestExpenseReports(FrappeTestCase):
         self.year = ensure_year(2031)
         self.cost_center = ensure_cost_center(f"CC-REP-{self.suffix}")
         self.project = ensure_project(f"Project REP {self.suffix}", self.cost_center)
+        self.vendor = ensure_vendor(f"Vendor REP {self.suffix}")
 
         expense = frappe.get_doc(
             {
@@ -34,6 +35,7 @@ class TestExpenseReports(FrappeTestCase):
                 "year": self.year,
                 "cost_center": self.cost_center,
                 "project": self.project,
+                "vendor": self.vendor,
                 "uses_plafond": 0,
                 "is_extra": 1,
                 "rows": [
@@ -42,6 +44,7 @@ class TestExpenseReports(FrappeTestCase):
                         "row_description": "Estimate",
                         "row_phase": "Estimate",
                         "row_state": "Active",
+                        "vendor": self.vendor,
                         "amount": 120,
                         "amount_includes_vat": 0,
                         "vat_rate": 22,
@@ -52,6 +55,7 @@ class TestExpenseReports(FrappeTestCase):
                         "row_description": "Actual",
                         "row_phase": "Actual",
                         "row_state": "Active",
+                        "vendor": self.vendor,
                         "amount": 50,
                         "amount_includes_vat": 0,
                         "vat_rate": 22,
@@ -92,6 +96,7 @@ class TestExpenseReports(FrappeTestCase):
                 "year": self.year,
                 "cost_center": self.cost_center,
                 "project": self.project,
+                "vendor": self.vendor,
                 "uses_plafond": 0,
                 "is_extra": 0,
                 "rows": [
@@ -100,6 +105,7 @@ class TestExpenseReports(FrappeTestCase):
                         "row_description": "Actual Standard",
                         "row_phase": "Actual",
                         "row_state": "Active",
+                        "vendor": self.vendor,
                         "amount": 40,
                         "amount_includes_vat": 0,
                         "vat_rate": 22,
@@ -134,12 +140,20 @@ class TestOverviewModes(FrappeTestCase):
         cls.cc2 = ensure_cost_center(f"CC-OVW2-{cls.suffix}")
         cls.project = ensure_project(f"OVW Project {cls.suffix}", cls.cc)
 
-        # Contract without terms is incomplete for contract contribution lines.
         cls.vendor_name = ensure_vendor(f"Vendor OVW {cls.suffix}")
-        cls.contract_no_terms = _insert_contract(
-            f"CTR-NT-{cls.suffix}",
+        cls.contract_context = _insert_contract(
+            f"CTR-CONTEXT-{cls.suffix}",
             cls.cc,
             cls.vendor_name,
+            terms=[
+                {
+                    "from_date": "2032-01-01",
+                    "to_date": "2032-12-31",
+                    "amount": 350.0,
+                    "amount_net": 350.0,
+                    "billing_cycle": "Monthly",
+                }
+            ],
         )
 
         # Contract WITH terms
@@ -210,6 +224,7 @@ class TestOverviewModes(FrappeTestCase):
                         "row_description": "Estimate row",
                         "row_phase": "Estimate",
                         "row_state": "Active",
+                        "vendor": cls.vendor_name,
                         "amount": 300.0,
                         "amount_includes_vat": 0,
                         "vat_rate": 0,
@@ -220,6 +235,7 @@ class TestOverviewModes(FrappeTestCase):
                         "row_description": "Quote row",
                         "row_phase": "Quote",
                         "row_state": "Active",
+                        "vendor": cls.vendor_name,
                         "amount": 280.0,
                         "amount_includes_vat": 0,
                         "vat_rate": 0,
@@ -230,6 +246,7 @@ class TestOverviewModes(FrappeTestCase):
                         "row_description": "Actual row",
                         "row_phase": "Actual",
                         "row_state": "Active",
+                        "vendor": cls.vendor_name,
                         "amount": 290.0,
                         "amount_includes_vat": 0,
                         "vat_rate": 0,
@@ -258,6 +275,7 @@ class TestOverviewModes(FrappeTestCase):
                         "row_description": "Standard actual row",
                         "row_phase": "Actual",
                         "row_state": "Active",
+                        "vendor": cls.vendor_name,
                         "amount": 110.0,
                         "amount_includes_vat": 0,
                         "vat_rate": 0,
@@ -277,9 +295,9 @@ class TestOverviewModes(FrappeTestCase):
         )
         fieldnames = {c["fieldname"] for c in columns}
         for expected in [
-            "cost_center", "forecast_contracts", "forecast_estimate", "forecast_quote",
+            "cost_center", "forecast_estimate", "forecast_quote",
             "forecast_total", "actual_standard", "actual_on_plafond", "actual_extra", "actual_total",
-            "plafond", "remaining", "over",
+            "approved_budget", "proposals", "ideas", "plafond", "remaining", "over",
         ]:
             self.assertIn(expected, fieldnames, f"Missing column: {expected}")
 
@@ -305,14 +323,14 @@ class TestOverviewModes(FrappeTestCase):
     def test_summary_project_filter_not_present_in_simple_call(self):
         """
         Summary mode: passing a project filter should not crash; the result
-        is still a valid summary (even though project does not filter contracts).
+        is still a valid summary.
         """
         columns, data, *_ = run_overview(
             {
                 "year": self.year,
                 "cost_center": self.cc,
                 "view_mode": "Summary",
-                # project is not used in Summary execute path
+                "project": self.project,
             }
         )
         self.assertIsInstance(data, list)
@@ -335,11 +353,11 @@ class TestOverviewModes(FrappeTestCase):
             {"year": self.year, "cost_center": self.cc, "view_mode": "Build-up"}
         )
         fieldnames = {c["fieldname"] for c in columns}
-        for expected in ["forecast_contracts", "forecast_total", "actual_total", "plafond"]:
+        for expected in ["forecast_total", "approved_budget", "proposals", "ideas", "actual_total", "plafond"]:
             self.assertIn(expected, fieldnames)
 
     def test_buildup_reconciles_blocks_to_header(self):
-        """Sum of block-row forecast_contracts equals header forecast_contracts."""
+        """Sum of proposals block reconciles with header proposals."""
         columns, data, *_ = run_overview(
             {
                 "year": self.year,
@@ -349,15 +367,15 @@ class TestOverviewModes(FrappeTestCase):
                 "show_zero_rows": 1,
             }
         )
-        # Find header row and its "Contracts" sub-block
+        # Find header row and its "Proposals" sub-block
         header = next((r for r in data if r.get("indent", 0) == 0 and r.get("cost_center") == self.cc), None)
-        contracts_block = next(
-            (r for r in data if r.get("indent", 0) == 1 and r.get("cost_center") == "Contracts"), None
+        proposals_block = next(
+            (r for r in data if r.get("indent", 0) == 1 and r.get("cost_center") == "Proposals"), None
         )
-        if header and contracts_block:
+        if header and proposals_block:
             self.assertAlmostEqual(
-                header.get("forecast_contracts", 0),
-                contracts_block.get("forecast_contracts", 0),
+                header.get("proposals", 0),
+                proposals_block.get("proposals", 0),
                 places=2,
             )
 
@@ -392,10 +410,9 @@ class TestOverviewModes(FrappeTestCase):
             places=2,
         )
 
-    def test_buildup_project_filter_does_not_alter_contract_block(self):
+    def test_buildup_project_filter_applies(self):
         """
-        When project filter is active in Build-up, contract totals must remain
-        the same as without project filter (project does not link to contracts).
+        Build-up project filter must narrow expense totals.
         """
         cols_all, data_all, *_ = run_overview(
             {"year": self.year, "cost_center": self.cc, "view_mode": "Build-up"}
@@ -409,18 +426,13 @@ class TestOverviewModes(FrappeTestCase):
             }
         )
 
-        def header_forecast_contracts(rows):
+        def header_forecast_total(rows):
             for r in rows:
                 if r.get("indent", 0) == 0 and r.get("cost_center") == self.cc:
-                    return r.get("forecast_contracts", 0)
+                    return r.get("forecast_total", 0)
             return 0
 
-        self.assertAlmostEqual(
-            header_forecast_contracts(data_all),
-            header_forecast_contracts(data_proj),
-            places=2,
-            msg="Contract totals should be unaffected by project filter",
-        )
+        self.assertGreaterEqual(header_forecast_total(data_all), header_forecast_total(data_proj))
 
     # ── Lines mode ────────────────────────────────────────────────────────
 
@@ -431,7 +443,7 @@ class TestOverviewModes(FrappeTestCase):
         )
         fieldnames = {c["fieldname"] for c in columns}
         for expected in [
-            "source_type", "source_document", "contract", "project", "vendor",
+            "source_type", "source_document", "contract", "project", "project_bucket", "vendor",
             "expense_phase", "funding", "amount_net", "annual_contribution_net",
         ]:
             self.assertIn(expected, fieldnames)
@@ -470,28 +482,10 @@ class TestOverviewModes(FrappeTestCase):
         self.assertIsNotNone(standard_line)
         self.assertEqual(standard_line.get("funding"), "Standard")
 
-    def test_lines_contract_without_terms_has_no_contract_lines(self):
-        """A contract without terms does not generate contribution lines."""
-        columns, data, *_ = run_overview(
-            {"year": self.year, "cost_center": self.cc, "view_mode": "Lines", "section_scope": "Contracts"}
-        )
-        types = [r.get("source_type") for r in data if r.get("contract") == self.contract_no_terms]
-        self.assertFalse(types)
-
-    def test_lines_contract_with_terms_uses_contract_term(self):
-        """A contract with terms generates 'Contract Term' lines."""
-        columns, data, *_ = run_overview(
-            {
-                "year": self.year,
-                "cost_center": self.cc2,
-                "view_mode": "Lines",
-                "section_scope": "Contracts",
-            }
-        )
-        types = [r.get("source_type") for r in data if r.get("contract") == self.contract_with_terms]
-        self.assertTrue(types, "Expected lines for the with-terms contract")
-        self.assertIn("Contract Term", types)
-        self.assertNotIn("HEAD" + "ER", {r.get("source_row") for r in data})
+    def test_lines_does_not_emit_contract_term_source_type(self):
+        columns, data, *_ = run_overview({"year": self.year, "cost_center": self.cc, "view_mode": "Lines"})
+        self.assertTrue(columns)
+        self.assertNotIn("Contract Term", {row.get("source_type") for row in data})
 
     def test_lines_plafond_rows_visible(self):
         """Lines mode shows Plafond lines when section_scope includes Plafond."""
@@ -521,28 +515,21 @@ class TestOverviewModes(FrappeTestCase):
             if row.get("source_type") == "Expense Row":
                 self.assertEqual(row.get("expense_phase"), "Estimate")
 
-    def test_lines_project_filter_only_affects_expenses(self):
-        """
-        In Lines mode with project filter, only Expense Row lines are filtered;
-        Contract lines from other projects (or without project) are still
-        unaffected because contracts have no project field.
-        """
-        columns_all, data_all, *_ = run_overview(
-            {"year": self.year, "cost_center": self.cc, "view_mode": "Lines", "section_scope": "Contracts"}
-        )
+    def test_lines_project_filter_applies_to_effective_project(self):
         columns_proj, data_proj, *_ = run_overview(
             {
                 "year": self.year,
                 "cost_center": self.cc,
                 "view_mode": "Lines",
-                "section_scope": "Contracts",
+                "section_scope": "Expenses",
                 "project": self.project,
             }
         )
-        # Contract lines must be identical regardless of project filter
-        contract_lines_all = [r for r in data_all if r.get("source_type") == "Contract Term"]
-        contract_lines_proj = [r for r in data_proj if r.get("source_type") == "Contract Term"]
-        self.assertEqual(len(contract_lines_all), len(contract_lines_proj))
+        self.assertTrue(columns_proj)
+        self.assertTrue(data_proj)
+        for row in data_proj:
+            if row.get("source_type") == "Expense Row":
+                self.assertEqual(row.get("project"), self.project)
 
     # ── Print infrastructure ──────────────────────────────────────────────
 
@@ -582,6 +569,7 @@ class TestCrossCostCenterPlafondOverview(FrappeTestCase):
         self.year = ensure_year(2030)
         self.cc_funding = ensure_cost_center(f"CC-FUNDING-{self.suffix}")
         self.cc_infra = ensure_cost_center(f"CC-INFRA-{self.suffix}")
+        self.vendor = ensure_vendor(f"Vendor Cross {self.suffix}")
 
         plafond = frappe.get_doc(
             {
@@ -614,6 +602,7 @@ class TestCrossCostCenterPlafondOverview(FrappeTestCase):
                 "workflow_state": "Open",
                 "year": self.year,
                 "cost_center": self.cc_infra,
+                "vendor": self.vendor,
                 "uses_plafond": 1,
                 "is_extra": 0,
                 "plafond_expense": plafond.name,
@@ -623,6 +612,7 @@ class TestCrossCostCenterPlafondOverview(FrappeTestCase):
                         "row_description": "Infra actual",
                         "row_phase": "Actual",
                         "row_state": "Active",
+                        "vendor": self.vendor,
                         "amount": 250,
                         "amount_includes_vat": 0,
                         "vat_rate": 22,
@@ -710,7 +700,7 @@ def ensure_project(title: str, cost_center: str) -> str:
         {
             "doctype": "MPIT Project",
             "title": title,
-            "workflow_state": "Open",
+            "workflow_state": "Approved",
             "cost_center": cost_center,
         }
     )

@@ -38,6 +38,7 @@
   },
   {
    "depends_on": "eval:parent.expense_kind!='Plafond'",
+   "description": "Estimate, Quote, or Actual. Actual rows are definitive and cannot be replaced by another row.",
    "fieldname": "row_phase",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -46,6 +47,7 @@
   },
   {
    "default": "Active",
+   "description": "Active rows contribute to totals. Replaced and Cancelled rows remain visible for audit but are excluded from totals.",
    "fieldname": "row_state",
    "fieldtype": "Select",
    "in_list_view": 1,
@@ -54,15 +56,18 @@
    "reqd": 1
   },
   {
+   "description": "Official vendor for this expense row. Reports and vendor filters use this field, not the parent expense vendor.",
    "fieldname": "vendor",
    "fieldtype": "Link",
    "label": "Vendor",
    "options": "MPIT Vendor"
   },
   {
+   "description": "Technical reference used by automatic synchronization. Do not edit manually.",
    "fieldname": "external_reference",
    "fieldtype": "Data",
-   "label": "External Reference"
+   "label": "External Reference",
+   "read_only": 1
   },
   {
    "default": "1",
@@ -148,6 +153,7 @@
    "options": "all\nstart\nend"
   },
   {
+   "description": "Select an Estimate or Quote row from the same expense to supersede. The selected row will be marked as Replaced automatically.",
    "fieldname": "replaces_row_name",
    "fieldtype": "Link",
    "label": "Replaces Row",
