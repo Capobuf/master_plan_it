@@ -43,6 +43,7 @@ class MPITContract(Document):
         self._validate_terms_no_overlap()
 
         self.status = self._calculate_status()
+        self._compute_contract_bounds()
         self._compute_current_term()
         self._compute_annual_summaries()
         self._default_next_renewal_date()
@@ -231,15 +232,10 @@ class MPITContract(Document):
 
         terms = [t for t in self.terms if t.from_date]
         if not terms:
-            self.start_date = self.start_date or None
-            self.end_date = self.end_date or None
             return
 
         today = datetime.date.today()
         terms_sorted = sorted(terms, key=lambda t: getdate(t.from_date))
-
-        self.start_date = terms_sorted[0].from_date
-        self.end_date = terms_sorted[-1].to_date or None
 
         for idx, term in enumerate(terms_sorted):
             term_start = getdate(term.from_date)
@@ -251,9 +247,19 @@ class MPITContract(Document):
                 self.current_term_billing_cycle = term.billing_cycle
                 self.current_term_monthly_net = term.monthly_amount_net
                 self.current_term_from_date = term.from_date
-                self.start_date = term.from_date
-                self.end_date = term.to_date or None
                 break
+
+    def _compute_contract_bounds(self) -> None:
+        terms = [t for t in self.terms if t.from_date]
+        if not terms:
+            self.start_date = None
+            self.end_date = None
+            return
+
+        terms_sorted = sorted(terms, key=lambda t: getdate(t.from_date))
+        self.start_date = terms_sorted[0].from_date
+        latest_term = terms_sorted[-1]
+        self.end_date = None if not latest_term.to_date else latest_term.to_date
 
     def _compute_annual_summaries(self) -> None:
         today = datetime.date.today()
@@ -316,11 +322,11 @@ class MPITContract(Document):
     @staticmethod
     def _monthly_from_cycle(amount_net: float, billing_cycle: str | None) -> float:
         cycle = (billing_cycle or "Monthly").strip()
-        if cycle == "Quarterly":
-            return flt(amount_net * 4 / 12, 2)
         if cycle == "Annual":
             return flt(amount_net / 12, 2)
-        return flt(amount_net, 2)
+        if cycle == "Monthly":
+            return flt(amount_net, 2)
+        frappe.throw(_("Billing Cycle must be Monthly or Annual."))
 
 
 def resolve_term_end(terms_sorted: list, idx: int, fallback_end=None):
@@ -397,7 +403,6 @@ def _get_existing_contract_year_expense_name(contract_name: str, year_name: str)
             "contract": contract_name,
             "year": year_name,
             "expense_kind": "Ordinary",
-            "workflow_state": ["!=", "Cancelled"],
         },
         fields=["name"],
         order_by="creation asc",

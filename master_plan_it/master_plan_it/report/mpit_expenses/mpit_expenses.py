@@ -12,7 +12,7 @@ def execute(filters=None):
     year = _resolve_year(filters)
 
     expense_filters = {"year": year}
-    for key in ("cost_center", "expense_kind", "workflow_state", "project", "contract"):
+    for key in ("cost_center", "expense_kind", "project", "contract"):
         value = filters.get(key)
         if value:
             expense_filters[key] = value
@@ -32,7 +32,6 @@ def execute(filters=None):
             "is_extra",
             "total_forecast_net",
             "total_actual_net",
-            "workflow_state",
         ],
         order_by="modified desc",
         limit=None,
@@ -49,7 +48,6 @@ def execute(filters=None):
         {"label": _("Funding"), "fieldname": "funding", "fieldtype": "Data", "width": 120},
         {"label": _("Forecast"), "fieldname": "forecast", "fieldtype": "Currency", "width": 120},
         {"label": _("Actual"), "fieldname": "actual", "fieldtype": "Currency", "width": 120},
-        {"label": _("Workflow State"), "fieldname": "workflow_state", "fieldtype": "Data", "width": 120},
     ]
 
     data = []
@@ -75,7 +73,6 @@ def execute(filters=None):
                 "funding": funding,
                 "forecast": flt(expense.total_forecast_net, 2),
                 "actual": flt(expense.total_actual_net, 2),
-                "workflow_state": expense.workflow_state,
             }
         )
 

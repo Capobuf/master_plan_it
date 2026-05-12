@@ -152,7 +152,7 @@ class TestFinancialEngine(FrappeTestCase):
         self.assertEqual(forecast["proposals_total"], 70)
         self.assertEqual(actual["actual_total"], 30)  # Approved only
 
-    def test_expense_forecast_and_actual_respect_row_and_doc_states(self):
+    def test_expense_forecast_and_actual_respect_active_rows(self):
         expense_open = make_expense(
             year=self.year,
             cost_center=self.cost_center,
@@ -171,21 +171,19 @@ class TestFinancialEngine(FrappeTestCase):
             year=self.year,
             cost_center=self.cost_center,
             project=self.project,
-            workflow_state="Closed",
             is_extra=1,
             rows=[expense_row("Actual", 20, "Active", spend_date="2030-05-10")],
         )
         self.assertIsNotNone(expense_closed.name)
 
-        expense_cancelled = make_expense(
+        expense_inactive_row = make_expense(
             year=self.year,
             cost_center=self.cost_center,
             project=self.project,
-            workflow_state="Cancelled",
             is_extra=1,
-            rows=[expense_row("Actual", 999, "Active", spend_date="2030-06-10")],
+            rows=[expense_row("Actual", 999, "Cancelled", spend_date="2030-06-10")],
         )
-        self.assertIsNotNone(expense_cancelled.name)
+        self.assertIsNotNone(expense_inactive_row.name)
 
         forecast = get_expense_forecast_totals(self.year, project=self.project)
         actual = get_actual_totals(self.year, project=self.project)
@@ -286,7 +284,6 @@ class TestFinancialEngine(FrappeTestCase):
             year=self.year,
             cost_center=self.cost_center,
             expense_kind="Plafond",
-            workflow_state="Cancelled",
             rows=[expense_row("Actual", 700, "Active", spend_date="2030-01-06")],
         )
         self.assertIsNotNone(plafond_b.name)
@@ -307,14 +304,14 @@ class TestFinancialEngine(FrappeTestCase):
         self.assertEqual(totals_a["plafond_total"], 400)
         self.assertEqual(totals_a["plafond_consumed"], 125)
         self.assertEqual(totals_a["plafond_remaining"], 275)
+        self.assertEqual(totals_b["plafond_total"], 700)
         self.assertEqual(totals_b["plafond_consumed"], 0)
-        self.assertEqual(aggregate["plafond_total"], 400)
+        self.assertEqual(aggregate["plafond_total"], 1100)
         self.assertEqual(aggregate["plafond_consumed"], 125)
 
-    def test_cross_cost_center_plafond_consumption_semantics(self):
+    def test_same_cost_center_plafond_consumption_semantics(self):
         year = ensure_year(2030)
         cc_funding = ensure_cost_center(f"CC-FUNDING-{self.suffix}")
-        cc_infra = ensure_cost_center(f"CC-INFRA-{self.suffix}")
 
         plafond = make_expense(
             year=year,
@@ -324,20 +321,18 @@ class TestFinancialEngine(FrappeTestCase):
         )
         make_expense(
             year=year,
-            cost_center=cc_infra,
+            cost_center=cc_funding,
             uses_plafond=1,
             is_extra=0,
             plafond_expense=plafond.name,
             rows=[expense_row("Actual", 250, "Active", spend_date="2030-02-10")],
         )
 
-        actual_infra = get_actual_totals(year, cost_center=cc_infra)
         actual_funding = get_actual_totals(year, cost_center=cc_funding)
         plafond_funding = get_plafond_totals(year, cost_center=cc_funding)
         summary_funding = get_cost_center_financial_summary(year, cc_funding)
 
-        self.assertEqual(actual_infra["actual_on_plafond"], 250)
-        self.assertEqual(actual_funding["actual_on_plafond"], 0)
+        self.assertEqual(actual_funding["actual_on_plafond"], 250)
         self.assertEqual(plafond_funding["plafond_total"], 1000)
         self.assertEqual(plafond_funding["plafond_consumed"], 250)
         self.assertEqual(plafond_funding["plafond_remaining"], 750)
@@ -426,7 +421,6 @@ def make_expense(
     project: str | None = None,
     contract: str | None = None,
     expense_kind: str = "Ordinary",
-    workflow_state: str = "Open",
     uses_plafond: int = 0,
     is_extra: int = 1,
     plafond_expense: str | None = None,
@@ -436,7 +430,6 @@ def make_expense(
         "doctype": "MPIT Expense",
         "expense_title": f"Expense {uuid4().hex[:8]}",
         "expense_kind": expense_kind,
-        "workflow_state": workflow_state,
         "year": year,
         "cost_center": cost_center,
         "project": project if expense_kind == "Ordinary" else None,

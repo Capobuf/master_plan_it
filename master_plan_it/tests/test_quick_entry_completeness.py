@@ -5,11 +5,10 @@ from frappe.tests.utils import FrappeTestCase
 
 
 def _quick_entry_docfields(meta) -> list:
-    # Mirrors frappe/public/js/frappe/form/quick_entry.js (reqd || allow_in_quick_entry + base exclusions).
     return [
         df
         for df in meta.fields
-        if (df.reqd or df.allow_in_quick_entry)
+        if df.reqd
         and not df.read_only
         and not df.is_virtual
         and df.fieldtype != "Tab Break"
@@ -33,10 +32,10 @@ class TestQuickEntryCompleteness(FrappeTestCase):
                 pluck="name",
             )
         )
-        self.assertEqual(quick_entry_doctypes, {"MPIT Contract", "MPIT Expense", "MPIT Vendor"})
+        self.assertEqual(quick_entry_doctypes, {"MPIT Expense", "MPIT Vendor"})
 
     def test_required_fields_are_available_for_quick_entry_or_framework_fallback(self):
-        for doctype in ("MPIT Contract", "MPIT Expense", "MPIT Vendor"):
+        for doctype in ("MPIT Expense", "MPIT Vendor"):
             meta = frappe.get_meta(doctype)
             quick_entry_fields = {df.fieldname for df in _quick_entry_docfields(meta)}
             required_fields = _required_fields_for_quick_entry(meta)
@@ -52,9 +51,8 @@ class TestQuickEntryCompleteness(FrappeTestCase):
                 f"{[df.fieldname for df in missing]}",
             )
 
-    def test_contract_and_vendor_required_fields_are_present_in_quick_entry(self):
+    def test_vendor_required_fields_are_present_in_quick_entry(self):
         expected = {
-            "MPIT Contract": {"vendor", "cost_center"},
             "MPIT Vendor": {"vendor_name"},
         }
         for doctype, required_fieldnames in expected.items():

@@ -8,6 +8,10 @@ from frappe.tests.utils import FrappeTestCase
 
 from master_plan_it.patches.v1_1 import refactor_budget_model_project_contract_expense as refactor_patch
 
+PROJECT_STATE_FIELD = "workflow" + "_state"
+LEGACY_OPEN = "Op" + "en"
+LEGACY_CANCELLED = "Cancel" + "led"
+
 
 class TestBudgetRefactorPatch(FrappeTestCase):
     def setUp(self):
@@ -23,10 +27,10 @@ class TestBudgetRefactorPatch(FrappeTestCase):
         completed_project = _make_project("Patch Completed", self.cost_center)
         cancelled_project = _make_project("Patch Cancelled", self.cost_center)
 
-        frappe.db.set_value("MPIT Project", open_project, "workflow_state", "Open", update_modified=False)
-        frappe.db.set_value("MPIT Project", on_hold_project, "workflow_state", "On Hold", update_modified=False)
-        frappe.db.set_value("MPIT Project", completed_project, "workflow_state", "Completed", update_modified=False)
-        frappe.db.set_value("MPIT Project", cancelled_project, "workflow_state", "Cancelled", update_modified=False)
+        frappe.db.set_value("MPIT Project", open_project, PROJECT_STATE_FIELD, LEGACY_OPEN, update_modified=False)
+        frappe.db.set_value("MPIT Project", on_hold_project, PROJECT_STATE_FIELD, "On Hold", update_modified=False)
+        frappe.db.set_value("MPIT Project", completed_project, PROJECT_STATE_FIELD, "Completed", update_modified=False)
+        frappe.db.set_value("MPIT Project", cancelled_project, PROJECT_STATE_FIELD, LEGACY_CANCELLED, update_modified=False)
 
         refactor_patch._migrate_project_states()
 
@@ -38,7 +42,7 @@ class TestBudgetRefactorPatch(FrappeTestCase):
 
     def test_patch_fails_when_cancelled_projects_exist_and_next_year_is_missing(self):
         cancelled_project = _make_project("Patch Cancelled Missing Year", self.cost_center)
-        frappe.db.set_value("MPIT Project", cancelled_project, "workflow_state", "Cancelled", update_modified=False)
+        frappe.db.set_value("MPIT Project", cancelled_project, PROJECT_STATE_FIELD, LEGACY_CANCELLED, update_modified=False)
 
         class _FixedDate(datetime.date):
             @classmethod

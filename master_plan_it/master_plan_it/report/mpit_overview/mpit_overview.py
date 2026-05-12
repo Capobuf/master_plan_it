@@ -217,12 +217,6 @@ def _execute_lines(filters, year: str):
             "fieldtype": "Currency",
             "width": 130,
         },
-        {
-            "label": _("State"),
-            "fieldname": "logical_state",
-            "fieldtype": "Data",
-            "width": 100,
-        },
     ]
 
     report_summary = [

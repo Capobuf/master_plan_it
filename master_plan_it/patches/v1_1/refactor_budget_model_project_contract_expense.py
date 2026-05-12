@@ -85,6 +85,13 @@ def _calculate_contract_status(terms, today) -> str:
 
 
 def _backfill_row_vendor_from_parent_vendor() -> None:
+    if not (
+        frappe.db.table_exists("MPIT Expense")
+        and frappe.db.table_exists("MPIT Expense Row")
+        and frappe.db.has_column("MPIT Expense", "vendor")
+    ):
+        return
+
     # Backfill only empty row vendors; existing row-level values remain authoritative.
     frappe.db.sql(
         """

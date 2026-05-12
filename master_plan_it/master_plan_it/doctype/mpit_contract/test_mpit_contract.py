@@ -179,7 +179,7 @@ class TestMPITContract(FrappeTestCase):
         self.assertEqual(len(doc.terms), 1)
         self.assertFalse(frappe.db.exists("MPIT Year", str(year + 1)))
 
-    def test_contract_sync_generates_closed_expenses_only_for_existing_years(self):
+    def test_contract_sync_generates_expenses_only_for_existing_years(self):
         year = _pick_future_year_without_next()
         ensure_year(year)
 
@@ -206,13 +206,12 @@ class TestMPITContract(FrappeTestCase):
 
         expenses = frappe.get_all(
             "MPIT Expense",
-            filters={"contract": contract.name, "expense_kind": "Ordinary", "workflow_state": ["!=", "Cancelled"]},
-            fields=["name", "year", "workflow_state"],
+            filters={"contract": contract.name, "expense_kind": "Ordinary"},
+            fields=["name", "year"],
             order_by="year asc",
         )
         self.assertEqual(len(expenses), 1)
         self.assertEqual(str(expenses[0].year), str(year))
-        self.assertEqual(expenses[0].workflow_state, "Closed")
 
         expense_doc = frappe.get_doc("MPIT Expense", expenses[0].name)
         self.assertTrue(expense_doc.rows)
@@ -252,7 +251,7 @@ class TestMPITContract(FrappeTestCase):
 
         expenses = frappe.get_all(
             "MPIT Expense",
-            filters={"contract": contract.name, "year": str(year), "expense_kind": "Ordinary", "workflow_state": ["!=", "Cancelled"]},
+            filters={"contract": contract.name, "year": str(year), "expense_kind": "Ordinary"},
             fields=["name"],
         )
         self.assertEqual(len(expenses), 1)
@@ -267,6 +266,98 @@ class TestMPITContract(FrappeTestCase):
         refreshed_rows = [row for row in expense.rows if row.row_state == "Active" and row.external_reference]
         self.assertEqual(len(refreshed_rows), 1)
         self.assertEqual(refreshed_rows[0].amount, 1800)
+
+    def test_contract_bounds_are_calculated_from_all_terms(self):
+        year = datetime.date.today().year + 6
+        ensure_year(year)
+        ensure_year(year + 1)
+
+        doc = frappe.get_doc(
+            {
+                "doctype": "MPIT Contract",
+                "description": "Contract Bounds All Terms",
+                "vendor": self.vendor,
+                "cost_center": self.cost_center,
+                "auto_renew": 0,
+                "terms": [
+                    {
+                        "doctype": "MPIT Contract Term",
+                        "from_date": f"{year + 1}-01-01",
+                        "to_date": f"{year + 1}-12-31",
+                        "amount": 1200,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "billing_cycle": "Annual",
+                    },
+                    {
+                        "doctype": "MPIT Contract Term",
+                        "from_date": f"{year}-01-01",
+                        "to_date": f"{year}-12-31",
+                        "amount": 100,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "billing_cycle": "Monthly",
+                    },
+                ],
+            }
+        ).insert()
+
+        self.assertEqual(str(doc.start_date), f"{year}-01-01")
+        self.assertEqual(str(doc.end_date), f"{year + 1}-12-31")
+
+    def test_contract_bounds_leave_end_empty_for_open_latest_term(self):
+        year = datetime.date.today().year + 8
+        ensure_year(year)
+        ensure_year(year + 1)
+
+        doc = frappe.get_doc(
+            {
+                "doctype": "MPIT Contract",
+                "description": "Contract Bounds Open Latest",
+                "vendor": self.vendor,
+                "cost_center": self.cost_center,
+                "auto_renew": 0,
+                "terms": [
+                    {
+                        "doctype": "MPIT Contract Term",
+                        "from_date": f"{year}-01-01",
+                        "to_date": f"{year}-12-31",
+                        "amount": 100,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "billing_cycle": "Monthly",
+                    },
+                    {
+                        "doctype": "MPIT Contract Term",
+                        "from_date": f"{year + 1}-01-01",
+                        "to_date": None,
+                        "amount": 120,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "billing_cycle": "Monthly",
+                    },
+                ],
+            }
+        ).insert()
+
+        self.assertEqual(str(doc.start_date), f"{year}-01-01")
+        self.assertIsNone(doc.end_date)
+
+    def test_contract_term_rejects_removed_billing_cycles(self):
+        for billing_cycle in ("Quarter" + "ly", "Oth" + "er"):
+            doc = frappe.get_doc(
+                {
+                    "doctype": "MPIT Contract Term",
+                    "from_date": "2099-01-01",
+                    "to_date": "2099-12-31",
+                    "amount": 100,
+                    "amount_includes_vat": 0,
+                    "vat_rate": 22,
+                    "billing_cycle": billing_cycle,
+                }
+            )
+            with self.assertRaises(frappe.ValidationError):
+                doc.validate()
 
 
 def _pick_future_year_without_next() -> int:

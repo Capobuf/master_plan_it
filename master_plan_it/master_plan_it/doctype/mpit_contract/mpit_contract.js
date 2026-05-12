@@ -35,10 +35,6 @@ frappe.ui.form.on("MPIT Contract", {
     auto_renew(frm) {
         maybe_autofill_next_renewal_date(frm);
     },
-
-    end_date(frm) {
-        maybe_autofill_next_renewal_date(frm);
-    },
 });
 
 function apply_sync_intro(frm) {

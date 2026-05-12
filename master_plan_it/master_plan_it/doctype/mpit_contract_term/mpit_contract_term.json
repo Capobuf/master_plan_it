@@ -7,18 +7,17 @@
  "field_order": [
   "from_date",
   "to_date",
-  "cb_term_right",
+  "billing_cycle",
   "amount",
   "amount_includes_vat",
   "vat_rate",
-  "billing_cycle",
-  "is_auto_renewed",
-  "renewed_from_term",
   "section_computed",
   "amount_net",
   "amount_vat",
   "amount_gross",
   "monthly_amount_net",
+  "is_auto_renewed",
+  "renewed_from_term",
   "notes",
   "attachment"
  ],
@@ -67,8 +66,8 @@
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Billing Cycle",
-   "description": "Defines how the amount matures over the year. Existing cycles are preserved to avoid changing historical calculations.",
-   "options": "Monthly\nQuarterly\nAnnual\nOther"
+   "description": "Monthly amounts are recurring monthly values; Annual amounts are divided by 12 for monthly equivalents.",
+   "options": "Monthly\nAnnual"
   },
   {
    "default": "0",
@@ -93,7 +92,7 @@
    "collapsible": 1,
    "fieldname": "section_computed",
    "fieldtype": "Section Break",
-   "label": "Computed"
+   "label": "Amounts / VAT"
   },
   {
    "fieldname": "amount_net",

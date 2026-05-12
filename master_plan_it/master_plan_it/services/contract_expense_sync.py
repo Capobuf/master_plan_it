@@ -143,7 +143,6 @@ def _sync_contract_year_expense(contract, year_name: str, expected_rows: list[di
             "contract": contract.name,
             "year": year_name,
             "expense_kind": "Ordinary",
-            "workflow_state": ["!=", "Cancelled"],
         },
         fields=["name"],
         order_by="creation asc",
@@ -152,7 +151,7 @@ def _sync_contract_year_expense(contract, year_name: str, expected_rows: list[di
     if len(expenses) > 1:
         frappe.throw(
             _(
-                "Contract {0} has multiple active generated expenses for MPIT Year {1}. Keep only one non-cancelled expense before syncing."
+                "Contract {0} has multiple generated expenses for MPIT Year {1}. Keep only one expense before syncing."
             ).format(contract.name, year_name)
         )
 
@@ -180,7 +179,6 @@ def _sync_contract_year_expense(contract, year_name: str, expected_rows: list[di
             {
                 "expense_kind": "Ordinary",
                 "expense_title": _("Actual from contract {0} - {1}").format(contract.name, year_name),
-                "workflow_state": "Closed",
                 "year": year_name,
                 "cost_center": contract.cost_center,
                 "contract": contract.name,
@@ -204,9 +202,6 @@ def _sync_contract_year_expense(contract, year_name: str, expected_rows: list[di
     rows_updated = 0
     rows_cancelled = 0
 
-    if expense_doc.workflow_state != "Closed":
-        expense_doc.workflow_state = "Closed"
-        changed = True
     if expense_doc.cost_center != contract.cost_center:
         expense_doc.cost_center = contract.cost_center
         changed = True

@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Master Plan IT VERSION\n"
 "Report-Msgid-Bugs-To: n/a\n"
-"POT-Creation-Date: 2026-04-12 17:23+0050\n"
+"POT-Creation-Date: 2026-05-12 22:43+0050\n"
 "PO-Revision-Date: 2026-04-12 17:22+0050\n"
 "Last-Translator: n/a\n"
 "Language-Team: n/a\n"
@@ -21,34 +21,43 @@ msgstr ""
 msgid "Abbreviation"
 msgstr "Abbreviation"
 
-#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
+#. Option for the 'Calculated Status' (Select) field in DocType 'MPIT Contract'
 #. Option for the 'Row State' (Select) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Active"
 msgstr "Attivo"
 
-#. Label of a number card in the Master Plan IT Workspace
-#: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
-msgid "Active Plafonds"
-msgstr "Plafond attivi"
-
 #. Option for the 'Phase' (Select) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:66
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:51
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:412
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:425
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:449
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:50
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:29
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:38
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:47
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:361
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:252
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:33
 msgid "Actual"
 msgstr "Actual"
 
+#: master_plan_it/master_plan_it/financial_engine.py:585
+msgid "Actual / Extra"
+msgstr "Effettivo / Extra"
+
+#: master_plan_it/master_plan_it/financial_engine.py:582
+msgid "Actual / On Plafond"
+msgstr "Effettivo / Su plafond"
+
+#: master_plan_it/master_plan_it/financial_engine.py:579
+msgid "Actual / Standard"
+msgstr "Effettivo / Ordinario"
+
 #. Label of the actual_extra (Currency) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:89
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:180
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:394
 msgid "Actual Extra"
 msgstr "Effettivo extra"
 
@@ -58,21 +67,10 @@ msgstr "Effettivo extra"
 msgid "Actual Extra Net"
 msgstr "Effettivo extra netto"
 
-#. Label of the actual_standard (Currency) field in DocType 'MPIT Cost Center'
-#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:308
-msgid "Actual Standard"
-msgstr "Effettivo ordinario"
-
-#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:96
-msgid "Actual Standard: {0}"
-msgstr "Effettivo ordinario: {0}"
-
 #. Label of the actual_on_plafond (Currency) field in DocType 'MPIT Cost
 #. Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:83
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:174
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:388
 msgid "Actual On Plafond"
 msgstr "Effettivo su plafond"
 
@@ -82,21 +80,51 @@ msgstr "Effettivo su plafond"
 msgid "Actual On Plafond Net"
 msgstr "Effettivo su plafond netto"
 
-#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:96
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:108
 msgid "Actual On Plafond: {0}"
 msgstr ""
+
+#. Label of the actual_standard (Currency) field in DocType 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:382
+msgid "Actual Standard"
+msgstr "Effettivo ordinario"
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:96
+msgid "Actual Standard: {0}"
+msgstr "Effettivo ordinario: {0}"
 
 #. Label of the actual_total (Currency) field in DocType 'MPIT Cost Center'
 #. Label of a number card in the Master Plan IT Workspace
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:260
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:95
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:186
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:396
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:356
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:209
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:400
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:361
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 msgid "Actual Total"
 msgstr "Totale effettivo"
 
-#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:88
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:444
+msgid "Actual current year: complete"
+msgstr "Effettivo anno corrente: completo"
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:423
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:443
+msgid "Actual current year: not created"
+msgstr "Effettivo anno corrente: non creato"
+
+#: master_plan_it/master_plan_it/services/contract_expense_sync.py:181
+#: master_plan_it/master_plan_it/services/contract_expense_sync.py:208
+msgid "Actual from contract {0} - {1}"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:142
+msgid "Actual rows cannot be replaced."
+msgstr "Le righe effettive non possono essere sostituite."
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:92
 msgid "Actual: {0}"
 msgstr "Actual: {0}"
 
@@ -123,11 +151,6 @@ msgstr "Avanzate"
 msgid "Amount"
 msgstr "Importo"
 
-#. Description of the 'Amount' (Currency) field in DocType 'MPIT Expense Row'
-#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
-msgid "Calculated from Qty × Unit Price when Unit Price is set. Leave Unit Price empty to enter Amount manually."
-msgstr "Calcolato come quantità × prezzo unitario quando il prezzo unitario è valorizzato. Lascia vuoto il prezzo unitario per inserire manualmente l'importo."
-
 #. Label of the amount_gross (Currency) field in DocType 'MPIT Contract Term'
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
 msgid "Amount (Gross)"
@@ -153,9 +176,14 @@ msgstr "Importo include IVA"
 
 #. Label of the amount_net (Currency) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:312
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:682
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:209
 msgid "Amount Net"
 msgstr "Importo netto"
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:205
+msgid "Amount Net Total"
+msgstr ""
 
 #. Label of the amount_vat (Currency) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
@@ -164,8 +192,14 @@ msgstr "Importo IVA"
 
 #. Description of the 'Amount' (Currency) field in DocType 'MPIT Contract Term'
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
-msgid "Amount per billing cycle used when this term overlaps the selected year."
-msgstr "Importo per ciclo di fatturazione usato quando questo termine si sovrappone all'anno selezionato."
+msgid "Amount for the selected billing cycle. The yearly contribution is calculated from dates and billing cycle."
+msgstr ""
+
+#. Label of the section_computed (Section Break) field in DocType 'MPIT
+#. Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Amounts / VAT"
+msgstr "Importi e IVA"
 
 #. Label of a Card Break in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
@@ -174,10 +208,8 @@ msgstr "Importo per ciclo di fatturazione usato quando questo termine si sovrapp
 msgid "Analysis"
 msgstr "Analisi"
 
-#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract'
 #. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract
 #. Term'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
 msgid "Annual"
 msgstr "Annuale"
@@ -194,7 +226,8 @@ msgstr "Importo Annuale (Anno Corrente)"
 msgid "Annual Amount (Next Year)"
 msgstr "Importo Annuale (Anno Prossimo)"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:318
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:666
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:215
 msgid "Annual Contribution"
 msgstr "Contributo annuale"
 
@@ -204,20 +237,38 @@ msgstr "Contributo annuale"
 msgid "Annual Summary"
 msgstr "Riepilogo annuale"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:237
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:339
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:204
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:648
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:694
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:230
 msgid "Annual Total"
 msgstr "Totale annuale"
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:280
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:268
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:547
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:266
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:362
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:372
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:340
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:567
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:341
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:399
 msgid "Applied Filters"
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:113
+#. Option for the 'Project Stage' (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:7
+msgid "Approved"
+msgstr "Approvato"
+
+#: master_plan_it/master_plan_it/financial_engine.py:573
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:258
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:364
+msgid "Approved Budget"
+msgstr "Budget approvato"
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:67
+msgid "At least one Contract Term is required."
+msgstr "È richiesto almeno un termine contrattuale."
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:91
 msgid "At least one Expense Row is required."
 msgstr ""
 
@@ -228,48 +279,87 @@ msgstr ""
 msgid "Attachment"
 msgstr "Allegato"
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:165
+#. Label of the attachments (Attach) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:166
 msgid "Attachments"
 msgstr "Allegati"
 
-#. Label of the auto_renew (Check) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:466
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:26
 msgid "Auto Renew"
 msgstr "Rinnovo automatico"
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:158
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:159
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:35
 msgid "Auto Renew Only"
 msgstr "Solo rinnovo automatico"
 
-#. Label of the billing_cycle (Select) field in DocType 'MPIT Contract'
-#. Label of the billing_cycle (Select) field in DocType 'MPIT Contract Term'
+#. Label of the auto_renew (Check) field in DocType 'MPIT Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Auto Renew Terms"
+msgstr "Rinnovo automatico righe"
+
+#. Description of the 'Is Auto Renewed' (Check) field in DocType 'MPIT Contract
+#. Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Automatically renewed contract term."
+msgstr "Riga contratto rinnovata automaticamente."
+
+#. Label of the billing_cycle (Select) field in DocType 'MPIT Contract Term'
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
 msgid "Billing Cycle"
 msgstr "Ciclo di Fatturazione"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:535
-msgid "Budget-like annual overview"
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:329
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.py:27
+#: master_plan_it/master_plan_it/financial_engine.py:1110
+msgid "Billing Cycle must be Monthly or Annual."
 msgstr ""
 
-#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
-#. Option for the 'Workflow State' (Select) field in DocType 'MPIT Expense'
-#. Option for the 'Row State' (Select) field in DocType 'MPIT Expense Row'
-#. Option for the 'Status' (Select) field in DocType 'MPIT Project'
+#. Label of the calculated_dates_section (Section Break) field in DocType 'MPIT
+#. Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Calculated Dates"
+msgstr "Date calcolate"
+
+#. Label of the status (Select) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Calculated Status"
+msgstr "Stato calcolato"
+
+#. Description of the 'Amount' (Currency) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
-#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:8
+msgid "Calculated from Qty × Unit Price when Unit Price is set. Leave Unit Price empty to enter Amount manually."
+msgstr "Calcolato come quantità × prezzo unitario quando il prezzo unitario è valorizzato. Lascia vuoto il prezzo unitario per inserire manualmente l'importo."
+
+#. Description of the 'Start Date' (Date) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Calculated from the earliest contract term."
+msgstr "Calcolata dal primo termine del contratto."
+
+#. Description of the 'End Date' (Date) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Calculated from the latest contract term; empty when the latest term is open-ended."
+msgstr "Calcolata dall’ultimo termine del contratto; vuota quando l’ultimo termine è aperto."
+
+#. Option for the 'Row State' (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Cancelled"
 msgstr "Annullato"
+
+#: master_plan_it/patches/v1_1/refactor_budget_model_project_contract_expense.py:54
+msgid "Cannot migrate Cancelled projects to Deferred because MPIT Year {0} does not exist."
+msgstr ""
 
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:11
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:5
 msgid "Change Year"
 msgstr "Cambia Anno"
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:50
+msgid "Choose whether the report shows actual budget, forecast, or actual values enriched with estimates and quotes."
+msgstr "Scegli se il report mostra il budget effettivo, la previsione oppure gli effettivi integrati con stime e preventivi."
 
 #. Name of a role
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
@@ -292,30 +382,18 @@ msgstr ""
 msgid "Client Viewer"
 msgstr ""
 
-#. Option for the 'Workflow State' (Select) field in DocType 'MPIT Expense'
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "Closed"
-msgstr "Chiuso"
-
-#. Option for the 'Status' (Select) field in DocType 'MPIT Project'
-#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:7
-msgid "Completed"
-msgstr "Completato"
-
-#. Label of the section_computed (Section Break) field in DocType 'MPIT
-#. Contract Term'
-#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
-msgid "Computed"
-msgstr "Calcolato"
-
 #. Label of the section_amounts (Section Break) field in DocType 'MPIT Expense
 #. Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Computed Amounts"
 msgstr "Importi calcolati"
 
-#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_plafond_usage_by_cost_center/mpit_plafond_usage_by_cost_center.py:28
+#. Option for the 'Calculated Status' (Select) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Concluded"
+msgstr "Concluso"
+
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_plafond_usage_by_cost_center/mpit_plafond_usage_by_cost_center.py:29
 msgid "Consumed"
 msgstr "Consumato"
 
@@ -336,14 +414,16 @@ msgstr "Contesto"
 
 #. Label of the contract (Link) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:116
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:35
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:48
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:104
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:133
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:435
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:29
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:47
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:138
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:23
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:553
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:52
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:261
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:573
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:672
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:100
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:152
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:20
 msgid "Contract"
 msgstr "Contratto"
@@ -363,18 +443,53 @@ msgstr "Prefisso Contratto"
 msgid "Contract Terms"
 msgstr "Termini contrattuali"
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:351
-msgid "Contract renewals by time window"
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.js:45
+msgid "Contract expenses are synchronized automatically after saving."
+msgstr "Le spese contratto vengono sincronizzate automaticamente dopo il salvataggio."
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:353
+msgid "Contract expenses were synchronized automatically."
+msgstr "Le spese contratto sono state sincronizzate automaticamente."
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:344
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:367
+#: master_plan_it/master_plan_it/services/contract_expense_sync.py:17
+msgid "Contract is required."
+msgstr ""
+
+#. Description of the 'Terms' (Table) field in DocType 'MPIT Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "Contract terms are mandatory because contract status and generated expenses are calculated from them."
+msgstr "Le righe del contratto sono obbligatorie perché lo stato del contratto e le spese generate vengono calcolati da esse."
+
+#: master_plan_it/master_plan_it/services/contract_expense_sync.py:153
+msgid "Contract {0} has multiple generated expenses for MPIT Year {1}. Keep only one expense before syncing."
 msgstr ""
 
 #. Label of a Link in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
 #: master_plan_it/master_plan_it/dashboard_chart_source/mpit_contracts_by_status/mpit_contracts_by_status.py:51
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project_dashboard.py:13
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:414
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:439
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 #: master_plan_it/workspace_sidebar/master_plan_it.json
 msgid "Contracts"
 msgstr "Contratti"
+
+#. Description of the 'Contract' (Link) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Contracts are context and generators; they are not added as independent budget totals."
+msgstr "I contratti sono contesto e generatori; non vengono sommati come totali di budget indipendenti."
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:388
+msgid "Contracts grouped by renewal urgency"
+msgstr ""
+
+#. Description of the 'Project Stage' (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Controls whether linked expenses are included in the operating budget, shown only as planning, deferred, or excluded."
+msgstr "Determina se le spese collegate sono incluse nel budget operativo, mostrate solo come pianificazione, rimandate o escluse."
 
 #. Label of the cost_center (Link) field in DocType 'MPIT Contract'
 #. Label of the cost_center (Link) field in DocType 'MPIT Expense'
@@ -385,25 +500,27 @@ msgstr "Contratti"
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:112
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:130
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:438
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:11
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:46
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:102
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:45
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:136
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:11
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:550
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:25
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:52
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:235
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:102
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:570
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:70
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:60
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:126
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:139
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:11
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:31
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:153
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:154
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:450
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:5
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:23
 msgid "Cost Center"
 msgstr "Centro di Costo"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:144
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:94
 msgid "Cost Center / Item"
 msgstr ""
 
@@ -412,7 +529,7 @@ msgstr ""
 msgid "Cost Center Name"
 msgstr "Nome Centro di Costo"
 
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:36
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:62
 msgid "Cost Center is required for contracts."
 msgstr "Il Centro di Costo è obbligatorio per i contratti."
 
@@ -434,8 +551,8 @@ msgstr "Il Centro di Costo {0} manca dei limiti dell'albero (lft/rgt)."
 
 #. Label of a Link in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:245
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:287
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:388
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:203
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 #: master_plan_it/workspace_sidebar/master_plan_it.json
 msgid "Cost Centers"
@@ -469,8 +586,18 @@ msgstr "Data inizio termine corrente"
 msgid "Current Term Monthly Net"
 msgstr "Netto mensile termine corrente"
 
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:460
+msgid "Days"
+msgstr ""
+
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:25
 msgid "Days To Renewal"
+msgstr ""
+
+#. Label of the decision_section (Section Break) field in DocType 'MPIT
+#. Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Decision"
 msgstr ""
 
 #. Label of the default_amount_includes_vat (Check) field in DocType 'MPIT
@@ -490,16 +617,31 @@ msgstr "Aliquota IVA predefinita"
 msgid "Default VAT rate for new rows. Leave empty for no default (0 is valid)."
 msgstr "Aliquota IVA predefinita per le nuove righe. Lascia vuoto per nessun valore predefinito (0 valido)."
 
+#. Label of the deferred_to_year (Link) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Defer To Year"
+msgstr "Rimanda all’anno"
+
+#. Option for the 'Project Stage' (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:8
+msgid "Deferred"
+msgstr "Rimandato"
+
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:30
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:48
 msgid "Delta"
 msgstr "Delta"
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:275
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:263
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:542
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:261
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:357
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:360
+msgid "Delta Total"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:367
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:335
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:562
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:336
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:394
 msgid "Density"
 msgstr ""
 
@@ -509,7 +651,7 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:69
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:70
 msgid "Description"
 msgstr "Descrizione"
 
@@ -530,10 +672,15 @@ msgstr "ID Documento"
 msgid "Document Naming"
 msgstr "Denominazione Documenti"
 
-#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Draft"
-msgstr "Bozza"
+#. Description of the 'Extra' (Check) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Enable only for unplanned or out-of-scope actual expenses. Extra expenses do not consume plafond."
+msgstr "Abilita solo per spese effettive non pianificate o fuori ambito. Le spese extra non consumano plafond."
+
+#. Description of the 'On Plafond' (Check) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Enable only when this ordinary expense consumes a selected plafond. The plafond may belong to another cost center but must be in the same year."
+msgstr "Abilita solo quando questa spesa ordinaria consuma un plafond selezionato. Il plafond può appartenere a un altro centro di costo, ma deve essere dello stesso anno."
 
 #. Description of the 'Default Amount Includes VAT' (Check) field in DocType
 #. 'MPIT Settings'
@@ -565,7 +712,7 @@ msgstr "Attiva per rendere l'anno disponibile per la pianificazione."
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
 #: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:63
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:64
 msgid "End Date"
 msgstr "Data fine"
 
@@ -573,6 +720,11 @@ msgstr "Data fine"
 #: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
 msgid "End date of the year period. Must not overlap with other years."
 msgstr "Data fine del periodo dell'anno. Non deve sovrapporsi ad altri anni."
+
+#. Description of the 'To Date' (Date) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "End date of this contract economic period. Leave empty only for an open-ended active term."
+msgstr ""
 
 #. Description of the 'Contact Email' (Data) field in DocType 'MPIT Vendor'
 #: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
@@ -604,7 +756,12 @@ msgstr "Inserisci l'identificativo dell'anno (es. 2025)."
 msgid "Estimate"
 msgstr "Stima"
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:42
+#. Description of the 'Phase' (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Estimate, Quote, or Actual. Actual rows are definitive and cannot be replaced by another row."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:41
 msgid "Expense"
 msgstr ""
 
@@ -613,12 +770,12 @@ msgstr ""
 msgid "Expense Digits"
 msgstr "Cifre spesa"
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:47
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:44
 msgid "Expense Kind must be Ordinary or Plafond."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:552
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:41
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:572
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:89
 msgid "Expense Phase"
 msgstr "Fase spesa"
 
@@ -627,21 +784,38 @@ msgstr "Fase spesa"
 msgid "Expense Prefix"
 msgstr "Prefisso spesa"
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:228
-#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.py:35
+#: master_plan_it/master_plan_it/financial_engine.py:684
+msgid "Expense Row"
+msgstr "Riga spesa"
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:235
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.py:36
 msgid "Expense Row Amount"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:269
-msgid "Expense list"
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:384
+msgid "Expense Rows"
+msgstr ""
+
+#: master_plan_it/master_plan_it/services/contract_expense_sync.py:172
+msgid "Expense {0} has both Contract and Project set. Clear Project before automatic contract sync."
 msgstr ""
 
 #. Label of a Link in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:97
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 #: master_plan_it/workspace_sidebar/master_plan_it.json
 msgid "Expenses"
 msgstr "Spese"
+
+#: master_plan_it/master_plan_it/financial_engine.py:569
+msgid "Expenses / Estimate"
+msgstr "Spese / Stima"
+
+#: master_plan_it/master_plan_it/financial_engine.py:571
+msgid "Expenses / Quote"
+msgstr "Spese / Preventivo"
 
 #. Label of a Link in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
@@ -650,9 +824,8 @@ msgstr "Spese"
 msgid "Expenses Report"
 msgstr "Report spese"
 
-#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:87
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:80
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:418
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:92
 msgid "Expired"
 msgstr "Scaduto"
@@ -670,20 +843,20 @@ msgstr "Riferimento esterno"
 
 #. Label of the is_extra (Check) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:62
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:385
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:60
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:300
 msgid "Extra"
 msgstr "Extra"
 
-#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:100
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:112
 msgid "Extra: {0}"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:65
-msgid "Filters expense lines only. Contract lines are not linked to projects."
-msgstr ""
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:111
+msgid "Filters by effective project context for expense rows, including contract-linked rows."
+msgstr "Filtra per contesto progetto effettivo delle righe spesa, incluse quelle collegate a contratto."
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:76
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:77
 msgid "Financial Allocations"
 msgstr ""
 
@@ -694,51 +867,56 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
 msgid "Financial Summary"
-msgstr "Riepilogo Finanziario"
+msgstr "Riepilogo economico"
 
-#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:73
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:75
 msgid "Financial Summary - Year {0}"
 msgstr ""
 
+#. Description of the 'Financial Summary' (Section Break) field in DocType
+#. 'MPIT Cost Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "For group cost centers, summaries include all descendant cost centers. Leaf summaries include only that cost center."
+msgstr ""
+
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:65
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:50
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:411
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:424
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:448
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:49
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:28
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:37
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:46
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:355
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:246
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:32
 msgid "Forecast"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:59
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:150
-msgid "Forecast Contracts"
-msgstr "Forecast contratti"
-
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:65
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:156
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:346
 msgid "Forecast Estimate"
 msgstr "Forecast stima"
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:85
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:86
 msgid "Forecast Gross"
 msgstr ""
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:83
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:84
 msgid "Forecast Net"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:71
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:162
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:352
 msgid "Forecast Quote"
 msgstr "Forecast preventivo"
 
 #. Label of the forecast_total (Currency) field in DocType 'MPIT Cost Center'
 #. Label of a number card in the Master Plan IT Workspace
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:253
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:77
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:168
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:392
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:352
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:208
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:696
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:358
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:357
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 msgid "Forecast Total"
 msgstr "Totale forecast"
@@ -748,28 +926,25 @@ msgstr "Totale forecast"
 msgid "Forecast vs Actual by Cost Center"
 msgstr "Forecast vs effettivo per centro di costo"
 
-#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:84
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:88
 msgid "Forecast: {0}"
 msgstr ""
 
 #. Label of the from_date (Date) field in DocType 'MPIT Contract Term'
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:156
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:157
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:24
 msgid "From Date"
 msgstr "Data Inizio"
 
 #. Label of the section_funding (Section Break) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:49
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:288
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:432
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:48
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:676
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:185
 msgid "Funding"
 msgstr "Copertura"
-
-#. Description of the 'Funding' (Section Break) field in DocType 'MPIT Expense'
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "Leave both On Plafond and Extra disabled for ordinary planned expenses."
-msgstr "Lascia sia Su plafond sia Extra disabilitati per le spese ordinarie previste."
 
 #. Label of the section_defaults (Section Break) field in DocType 'MPIT
 #. Settings'
@@ -777,39 +952,66 @@ msgstr "Lascia sia Su plafond sia Extra disabilitati per le spese ordinarie prev
 msgid "General Defaults"
 msgstr "Impostazioni Generali"
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:272
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:260
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:539
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:258
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:354
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:364
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:332
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:559
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:333
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:391
 msgid "Generated"
 msgstr ""
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:132
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:133
 msgid "Gross Amount"
 msgstr "Importo lordo"
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:361
+msgid "Grouped expense ledger for print"
+msgstr ""
+
+#. Label of the hierarchy_section (Section Break) field in DocType 'MPIT Cost
+#. Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Hierarchy"
+msgstr ""
 
 #. Label of a Workspace Sidebar Item
 #: master_plan_it/workspace_sidebar/master_plan_it.json
 msgid "Home"
 msgstr "Home"
 
-#. Description of the 'On Plafond' (Check) field in DocType 'MPIT Expense'
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "Enable only when this expense consumes a selected plafond."
-msgstr "Abilita solo quando questa spesa consuma un plafond selezionato."
+#. Option for the 'Project Stage' (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:5
+msgid "Idea"
+msgstr ""
 
-#. Description of the 'Extra' (Check) field in DocType 'MPIT Expense'
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "Enable only for unplanned or out-of-scope expenses. Leave disabled for ordinary planned expenses."
-msgstr "Abilita solo per spese non previste o fuori perimetro. Lascia disabilitato per le spese ordinarie previste."
+#: master_plan_it/master_plan_it/financial_engine.py:577
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:270
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:376
+msgid "Ideas"
+msgstr "Idee"
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:154
+#. Label of the identity_section (Section Break) field in DocType 'MPIT Cost
+#. Center'
+#. Label of the identity_section (Section Break) field in DocType 'MPIT
+#. Project'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Identity"
+msgstr ""
+
+#. Description of the 'Unit Price' (Currency) field in DocType 'MPIT Expense
+#. Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "If set, Amount is calculated as Qty × Unit Price."
+msgstr "Se valorizzato, l'importo viene calcolato come quantità × prezzo unitario."
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:155
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:11
 msgid "Include Child Cost Centers"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:157
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:158
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:29
 msgid "Include Past"
 msgstr "Includi passati"
@@ -821,6 +1023,11 @@ msgstr "Includi passati"
 msgid "Is Active"
 msgstr "Attivo"
 
+#. Label of the is_auto_renewed (Check) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Is Auto Renewed"
+msgstr ""
+
 #. Label of the is_group (Check) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
 msgid "Is Group"
@@ -828,21 +1035,36 @@ msgstr "Contenitore"
 
 #. Label of the expense_kind (Select) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:113
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:131
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:431
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:17
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:44
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:43
 msgid "Kind"
 msgstr "Tipo"
 
-#. Description of the 'To Date' (Date) field in DocType 'MPIT Contract Term'
-#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
-msgid "Leave empty to end the term on the day before the next term starts."
-msgstr "Lascia vuoto per terminare il termine il giorno prima dell'inizio del termine successivo."
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:57
+msgid "Layout"
+msgstr "Layout"
 
 #. Label of the lft (Int) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
 msgid "Left"
 msgstr "Sinistra"
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:82
+msgid "Limits the report to a specific economic area without changing the underlying budget rules."
+msgstr "Limita il report a una specifica area economica senza modificare le regole di budget sottostanti."
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:202
+msgid "Lines"
+msgstr "Righe"
+
+#. Label of the linked_sources_section (Section Break) field in DocType 'MPIT
+#. Project'
+#. Label of the linked_sources_summary (HTML) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Linked Sources"
+msgstr "Fonti collegate"
 
 #. Name of a DocType
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
@@ -870,19 +1092,19 @@ msgid "MPIT Expense Row"
 msgstr "Riga spesa"
 
 #. Name of a report
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:268
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:360
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.json
 msgid "MPIT Expenses"
 msgstr ""
 
 #. Name of a report
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:256
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:328
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.json
 msgid "MPIT Monthly Plan"
 msgstr ""
 
 #. Name of a report
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:533
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:555
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.json
 msgid "MPIT Overview"
 msgstr "Panoramica Economica"
@@ -893,13 +1115,13 @@ msgid "MPIT Project"
 msgstr "Progetto MPIT"
 
 #. Name of a report
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:254
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:329
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.json
 msgid "MPIT Project Forecast vs Actual"
 msgstr ""
 
 #. Name of a report
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:350
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:387
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.json
 msgid "MPIT Renewals Window"
 msgstr "Finestra rinnovi MPIT"
@@ -923,25 +1145,27 @@ msgstr "MPIT Anno"
 msgid "MPIT Year dates overlap with existing year: {0}."
 msgstr ""
 
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:394
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:53
+msgid "MPIT Year {0} does not exist."
+msgstr ""
+
 #. Label of the section_main (Section Break) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 msgid "Main"
 msgstr "Dati principali"
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:292
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:280
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:573
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:278
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:374
-msgid ""
-"Many columns detected. For better readability, consider using Compact profile, Landscape "
-"orientation, or export to Excel/CSV."
+#. Label of a Workspace Sidebar Item
+#: master_plan_it/workspace_sidebar/master_plan_it.json
+msgid "Management"
+msgstr "Gestione"
+
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:330
+msgid "Management comparison by project"
 msgstr ""
 
 #. Label of a Card Break in the Master Plan IT Workspace
-#. Label of a Workspace Sidebar Item
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
-#: master_plan_it/workspace_sidebar/master_plan_it.json
 msgid "Master Data"
 msgstr "Anagrafiche"
 
@@ -949,20 +1173,23 @@ msgstr "Anagrafiche"
 #. Name of a Workspace
 #. Header text in the Master Plan IT Workspace
 #. Title of a Workspace Sidebar
-#: master_plan_it/config/desktop.py:11 master_plan_it/desktop_icon/master_plan_it.json
+#: master_plan_it/config/desktop.py:11
+#: master_plan_it/desktop_icon/master_plan_it.json
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 #: master_plan_it/workspace_sidebar/master_plan_it.json
 msgid "Master Plan IT"
 msgstr "Master Plan IT"
 
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:556
+msgid "Mode"
+msgstr ""
+
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:27
 msgid "Month"
 msgstr ""
 
-#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract'
 #. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract
 #. Term'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
 msgid "Monthly"
 msgstr "Mensile"
@@ -986,8 +1213,18 @@ msgstr "Forecast mensile vs effettivo"
 msgid "Monthly Plan"
 msgstr "Piano mensile"
 
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:257
-msgid "Monthly forecast vs actual"
+#. Description of the 'Billing Cycle' (Select) field in DocType 'MPIT Contract
+#. Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Monthly amounts are recurring monthly values; Annual amounts are divided by 12 for monthly equivalents."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:329
+msgid "Monthly financial sheet: forecast vs actual"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:364
+msgid "Months"
 msgstr ""
 
 #. Header text in the Master Plan IT Workspace
@@ -995,11 +1232,11 @@ msgstr ""
 msgid "Navigation"
 msgstr "Navigazione"
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:190
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:189
 msgid "Negative amounts are not allowed for Estimate or Quote rows."
 msgstr ""
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:130
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:131
 msgid "Net Amount"
 msgstr "Importo netto"
 
@@ -1029,10 +1266,14 @@ msgstr "Nuovo plafond"
 msgid "New Project"
 msgstr "Nuovo progetto"
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:155
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:156
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:18
 msgid "Next N Days"
 msgstr "Prossimi N Giorni"
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:459
+msgid "Next Renewal"
+msgstr ""
 
 #. Label of the next_renewal_date (Date) field in DocType 'MPIT Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
@@ -1040,27 +1281,37 @@ msgstr "Prossimi N Giorni"
 msgid "Next Renewal Date"
 msgstr "Prossima data di rinnovo"
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:90
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:86
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:145
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:86
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:147
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:88
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:125
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:88
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:405
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:466
 msgid "No"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:315
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:303
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:601
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:301
+#: master_plan_it/master_plan_it/financial_engine.py:50
+#: master_plan_it/master_plan_it/financial_engine.py:748
+msgid "No Project"
+msgstr "Nessun progetto"
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:389
+msgid "No active MPIT Year covers today ({0})."
+msgstr "Nessun anno MPIT attivo copre la data odierna ({0})."
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:402
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:397
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:618
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:640
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:398
 msgid "No data available"
 msgstr "Nessun dato disponibile"
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:397
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:432
 msgid "No renewals in this window"
 msgstr "Nessun rinnovo in questa finestra"
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:84
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:95
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:83
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:426
 msgid "Normal"
 msgstr "Normale"
 
@@ -1079,10 +1330,16 @@ msgstr "Normale"
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
 #: master_plan_it/master_plan_it/doctype/mpit_vendor/mpit_vendor.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:86
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:133
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:87
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:134
 msgid "Notes"
 msgstr "Note"
+
+#. Label of the notes_system_section (Section Break) field in DocType 'MPIT
+#. Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Notes / System"
+msgstr ""
 
 #. Description of the 'Renewal Window Days' (Int) field in DocType 'MPIT
 #. Settings'
@@ -1105,34 +1362,22 @@ msgstr "Numero di cifre per la serie di numerazione delle Spese."
 msgid "Number of digits for Project naming series."
 msgstr "Numero di cifre per la serie di numerazione dei Progetti."
 
+#. Description of the 'Rows' (Table) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Official budget totals are calculated from active expense rows only."
+msgstr "I totali ufficiali del budget sono calcolati solo dalle righe spesa attive."
+
 #. Label of the old_parent (Link) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
 msgid "Old Parent"
 msgstr "Vecchio genitore"
 
-#. Option for the 'Status' (Select) field in DocType 'MPIT Project'
-#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:6
-msgid "On Hold"
-msgstr "In sospeso"
-
 #. Label of the uses_plafond (Check) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:60
+#: master_plan_it/master_plan_it/financial_engine.py:753
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:58
 msgid "On Plafond"
 msgstr "Su plafond"
-
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:88
-msgid "Only one non-Cancelled Plafond is allowed for this Year and Cost Center. Existing: {0}"
-msgstr ""
-
-#. Option for the 'Workflow State' (Select) field in DocType 'MPIT Expense'
-#. Option for the 'Status' (Select) field in DocType 'MPIT Project'
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:5
-msgid "Open"
-msgstr "Aperto"
 
 #. Label of a Card Break in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
@@ -1142,80 +1387,58 @@ msgstr "Aperto"
 msgid "Operations"
 msgstr "Operazioni"
 
-#. Description of the 'Project' (Link) field in DocType 'MPIT Expense'
-#. Description of the 'Contract' (Link) field in DocType 'MPIT Expense'
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "Optional context. Leave empty for standalone cost center expenses."
-msgstr "Contesto opzionale. Lascia vuoto per spese direttamente sul centro di costo."
-
 #. Option for the 'Kind' (Select) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 msgid "Ordinary"
 msgstr "Ordinaria"
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:63
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:58
 msgid "Ordinary expense allows at most one context: Project or Contract."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:68
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:63
 msgid "Ordinary expense cannot be both On Plafond and Extra."
 msgstr "La spesa ordinaria non può essere contemporaneamente su plafond ed extra."
 
-#: master_plan_it/master_plan_it/financial_engine.py:503
-msgid "Actual / Standard"
-msgstr "Effettivo / Ordinario"
-
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:64
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:249
-msgid "Standard"
-msgstr "Ordinaria"
-
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:187
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:186
 msgid "Ordinary rows require a valid phase: Estimate, Quote, or Actual."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:274
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:262
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:541
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:260
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:356
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:366
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:334
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:561
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:335
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:393
 msgid "Orientation"
 msgstr ""
 
-#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract'
-#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract
-#. Term'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
-msgid "Other"
-msgstr "Altro"
-
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:281
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:113
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:204
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:424
 msgid "Over"
 msgstr "Sforamento"
 
 #. Label of the plafond_over (Currency) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:379
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:294
 msgid "Over Plafond"
 msgstr "Sforamento plafond"
 
-#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:112
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:124
 msgid "Over Plafond: {0}"
 msgstr ""
 
 #. Label of the section_overview (Section Break) field in DocType 'MPIT
 #. Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Overview"
+msgstr "Panoramica"
+
 #. Label of a Link in the Master Plan IT Workspace
 #. Label of a shortcut in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
-#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 #: master_plan_it/workspace_sidebar/master_plan_it.json
-msgid "Overview"
-msgstr "Panoramica"
+msgid "Panoramica Economica"
+msgstr ""
 
 #. Label of the parent_mpit_cost_center (Link) field in DocType 'MPIT Cost
 #. Center'
@@ -1223,37 +1446,48 @@ msgstr "Panoramica"
 msgid "Parent Cost Center"
 msgstr "Centro di Costo Padre"
 
-#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Pending Renewal"
-msgstr "In attesa di rinnovo"
+#. Description of the 'Parent Cost Center' (Link) field in DocType 'MPIT Cost
+#. Center'
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
+msgid "Parent cost center in the native Frappe tree. Group summaries include descendant cost centers."
+msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:300
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:678
+msgid "Period"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:197
 msgid "Period End"
 msgstr "Fine periodo"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:294
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:191
 msgid "Period Start"
 msgstr "Inizio periodo"
 
 #. Label of the row_phase (Select) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:282
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:675
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:179
 msgid "Phase"
 msgstr "Fase"
 
 #. Option for the 'Kind' (Select) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_plafond_usage_by_cost_center/mpit_plafond_usage_by_cost_center.py:28
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:267
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:101
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:192
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:367
+#: master_plan_it/master_plan_it/financial_engine.py:591
+#: master_plan_it/master_plan_it/financial_engine.py:742
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:282
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:406
 msgid "Plafond"
 msgstr "Plafond"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:204
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:412
 msgid "Plafond Consumed"
 msgstr "Plafond consumato"
+
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:104
+msgid "Plafond Consumed: {0}"
+msgstr "Plafond consumato: {0}"
 
 #. Label of the plafond_expense (Link) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
@@ -1266,7 +1500,7 @@ msgstr "Plafond di riferimento"
 msgid "Plafond Remaining"
 msgstr "Plafond residuo"
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:183
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:179
 msgid "Plafond Spend Date must be inside the selected year."
 msgstr ""
 
@@ -1280,42 +1514,45 @@ msgstr "Totale plafond"
 msgid "Plafond Usage by Cost Center"
 msgstr "Utilizzo plafond per centro di costo"
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:53
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:50
 msgid "Plafond cannot be flagged as On Plafond or Extra."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:51
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:48
 msgid "Plafond cannot be linked to Project or Contract."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:55
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:52
 msgid "Plafond cannot reference another Plafond."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:72
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:67
 msgid "Plafond reference is required when On Plafond is enabled."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:76
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:71
 msgid "Plafond reference must be empty unless On Plafond is enabled."
 msgstr "Il plafond di riferimento deve essere vuoto se Su plafond non è abilitato."
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:180
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:176
 msgid "Plafond rows cannot use period distribution fields."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:92
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:100
 msgid "Plafond: {0}"
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:96
-msgid "Plafond Consumed: {0}"
-msgstr "Plafond consumato: {0}"
-
+#. Label of a number card in the Master Plan IT Workspace
 #. Label of a Link in the Master Plan IT Workspace
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 msgid "Plafonds"
 msgstr "Plafond"
+
+#. Label of the planning_section (Section Break) field in DocType 'MPIT
+#. Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Planning"
+msgstr ""
 
 #. Description of the 'Contract Prefix' (Data) field in DocType 'MPIT Settings'
 #: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
@@ -1332,25 +1569,25 @@ msgstr "Prefisso per la serie di numerazione delle Spese."
 msgid "Prefix for Project document naming series."
 msgstr "Prefisso per la serie di numerazione dei Progetti."
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:55
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:49
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:43
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:98
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:145
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:31
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:55
 msgid "Print Density"
 msgstr "Densità di Stampa"
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:48
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:42
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:36
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:91
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:138
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:24
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:48
 msgid "Print Orientation"
 msgstr "Orientamento Stampa"
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:41
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:35
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:29
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:84
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:131
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:17
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:41
 msgid "Print Profile"
@@ -1361,32 +1598,40 @@ msgstr "Profilo di Stampa"
 msgid "Print Settings"
 msgstr "Impostazioni di Stampa"
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:176
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:177
 msgid "Printed on"
 msgstr "Stampato il"
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:273
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:261
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:540
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:259
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:355
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:365
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:333
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:560
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:334
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:392
 msgid "Profile"
 msgstr ""
 
+#. Label of the project (Link) field in DocType 'MPIT Contract'
 #. Label of the project (Link) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:46
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:115
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:29
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:47
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:103
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:47
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:132
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:434
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:23
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:46
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:137
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:17
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:554
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:61
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:268
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:574
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:673
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:107
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:159
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:29
 msgid "Project"
 msgstr "Progetto"
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:166
+msgid "Project Bucket"
+msgstr "Bucket progetto"
 
 #. Label of the project_digits_default (Int) field in DocType 'MPIT Settings'
 #: master_plan_it/master_plan_it/doctype/mpit_settings/mpit_settings.json
@@ -1405,43 +1650,49 @@ msgstr "Forecast vs effettivo per progetto"
 msgid "Project Prefix"
 msgstr "Prefisso progetto"
 
-#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:41
-msgid "Project Status must be one of: Open, On Hold, Completed, Cancelled."
+#. Label of the workflow_state (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Project Stage"
+msgstr "Fase progetto"
+
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:42
+msgid "Project Stage must be one of: Idea, Proposed, Approved, Deferred, Rejected."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:50
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:61
 msgid "Project end date cannot be before start date."
-msgstr ""
-
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:255
-msgid "Project variance overview"
 msgstr ""
 
 #. Label of a Link in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
 #: master_plan_it/master_plan_it/dashboard_chart_source/mpit_projects_by_status/mpit_projects_by_status.py:51
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:353
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 #: master_plan_it/workspace_sidebar/master_plan_it.json
 msgid "Projects"
 msgstr "Progetti"
 
+#. Description of the 'Project' (Link) field in DocType 'MPIT Expense'
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
+msgid "Projects are decision contexts; they do not create independent budget totals."
+msgstr "I progetti sono contesti decisionali; non creano totali di budget indipendenti."
+
+#: master_plan_it/master_plan_it/financial_engine.py:575
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:264
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:370
+msgid "Proposals"
+msgstr "Proposte"
+
+#. Option for the 'Project Stage' (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:6
+msgid "Proposed"
+msgstr "Proposto"
+
 #. Label of the qty (Float) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Qty"
 msgstr "Qta"
-
-#. Description of the 'Qty' (Float) field in DocType 'MPIT Expense Row'
-#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
-msgid "Used with Unit Price to calculate Amount. Empty quantity is treated as 1."
-msgstr "Usata con il prezzo unitario per calcolare l'importo. Una quantità vuota viene considerata pari a 1."
-
-#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract'
-#. Option for the 'Billing Cycle' (Select) field in DocType 'MPIT Contract
-#. Term'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
-msgid "Quarterly"
-msgstr "Trimestrale"
 
 #. Header text in the Master Plan IT Workspace
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
@@ -1453,7 +1704,7 @@ msgstr "Azioni rapide"
 msgid "Quote"
 msgstr "Preventivo"
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:129
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:130
 msgid "Quote Date"
 msgstr "Data preventivo"
 
@@ -1472,38 +1723,44 @@ msgstr "Spese recenti"
 msgid "Recent Projects"
 msgstr "Progetti recenti"
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:82
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:83
 msgid "Reference"
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:105
-msgid "Referenced Plafond cannot be Cancelled."
-msgstr ""
-
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:101
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:81
 msgid "Referenced Plafond does not exist."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:107
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:87
+msgid "Referenced Plafond must belong to the same Cost Center."
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:85
 msgid "Referenced Plafond must belong to the same year."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:103
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:83
 msgid "Referenced document must be a Plafond."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:158
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:132
 msgid "Referenced row {0} does not exist."
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:166
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:139
 msgid "Referenced row {0} must belong to the same Expense document."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:274
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:107
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:198
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:373
+#. Option for the 'Project Stage' (Select) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:9
+msgid "Rejected"
+msgstr "Rifiutato"
+
+#: master_plan_it/master_plan_it/dashboard_chart_source/mpit_plafond_usage_by_cost_center/mpit_plafond_usage_by_cost_center.py:30
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:210
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:288
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:418
 msgid "Remaining"
 msgstr "Rimanente"
 
@@ -1512,7 +1769,7 @@ msgstr "Rimanente"
 msgid "Remaining Plafond"
 msgstr "Plafond residuo"
 
-#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:106
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.js:118
 msgid "Remaining Plafond: {0}"
 msgstr ""
 
@@ -1538,27 +1795,40 @@ msgstr "Rinnovi"
 msgid "Renewals Window"
 msgstr "Finestra rinnovi"
 
-#. Option for the 'Status' (Select) field in DocType 'MPIT Contract'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-msgid "Renewed"
-msgstr "Rinnovato"
+#. Label of the renewed_from_term (Data) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Renewed From Term"
+msgstr ""
 
 #. Option for the 'Row State' (Select) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Replaced"
 msgstr "Sostituito"
 
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:161
+msgid "Replacement cycle detected on row {0}."
+msgstr "Rilevato ciclo di sostituzione sulla riga {0}."
+
+#. Description of the 'Replaces Row' (Link) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Replacement target. The replaced row will be marked as Replaced automatically."
+msgstr "Riga sostituita. La riga indicata verrà marcata automaticamente come Sostituita."
+
 #. Label of the replaces_row_name (Link) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Replaces Row"
 msgstr "Sostituisce riga"
+
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:50
+msgid "Required when the project stage is Deferred."
+msgstr "Obbligatorio quando lo stato del progetto è Rimandato."
 
 #. Label of the rgt (Int) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
 msgid "Right"
 msgstr "Destra"
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:131
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:109
 msgid "Row #{0} cannot replace itself."
 msgstr ""
 
@@ -1567,30 +1837,35 @@ msgstr ""
 msgid "Row State"
 msgstr "Stato riga"
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:174
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:170
 msgid "Row State must be Active, Replaced, or Cancelled."
 msgstr ""
+
+#. Description of the 'Vendor' (Link) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Row vendor is the official vendor used by reports and budget calculations."
+msgstr "Il fornitore della riga è il fornitore ufficiale usato dai report e dai calcoli di budget."
 
 #. Label of the section_rows (Section Break) field in DocType 'MPIT Expense'
 #. Label of the rows (Table) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:321
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:309
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:609
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:307
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:403
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:410
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:447
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:423
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:207
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:647
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:692
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:424
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:476
 msgid "Rows"
 msgstr "Righe"
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:203
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:202
 msgid "Rows without Spend Date require Start Date, End Date, and Distribution."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:551
-msgid "Section"
-msgstr ""
-
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:33
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:571
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:78
 msgid "Section Scope"
 msgstr "Ambito sezione"
 
@@ -1599,14 +1874,23 @@ msgstr "Ambito sezione"
 msgid "Select Year"
 msgstr "Seleziona Anno"
 
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:61
+msgid "Select how the report is displayed: summary, build-up, or detailed lines."
+msgstr "Seleziona come visualizzare il report: riepilogo, dettaglio per blocchi o righe analitiche."
+
 #. Description of the 'Plafond Reference' (Link) field in DocType 'MPIT
 #. Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "Select a non-cancelled plafond for the same year. The plafond can belong to a different cost center than the expense."
-msgstr "Seleziona un plafond non annullato dello stesso anno. Il plafond può appartenere a un centro di costo diverso dalla spesa."
+msgid "Select the plafond consumed by this expense. Only plafonds from the same year and cost center are valid."
+msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:46
-#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:48
+#. Description of the 'Defer To Year' (Link) field in DocType 'MPIT Project'
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
+msgid "Select the year when this deferred project must return to proposal stage."
+msgstr "Seleziona l’anno in cui questo progetto rimandato deve tornare allo stato proposto."
+
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:57
+#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.py:59
 msgid "Set both start and end date, or clear both."
 msgstr ""
 
@@ -1623,32 +1907,48 @@ msgstr "Impostazioni"
 msgid "Show Attachments in Print"
 msgstr "Mostra allegati in stampa"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:556
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:76
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:576
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:122
 msgid "Show Zero Rows"
 msgstr "Mostra righe a zero"
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:93
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:125
+msgid "Show rows with zero value for audit and troubleshooting. Disable for normal reading."
+msgstr "Mostra le righe con valore zero per verifica e diagnosi. Disabilita per la lettura ordinaria."
+
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:82
 msgid "Soon"
 msgstr "Presto"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:248
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:139
 msgid "Source Document"
 msgstr "Documento origine"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:254
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:145
 msgid "Source Row"
 msgstr "Riga origine"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:242
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:133
 msgid "Source Type"
 msgstr "Tipo origine"
 
+#. Description of the 'Renewed From Term' (Data) field in DocType 'MPIT
+#. Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Source term used to generate this automatic renewal."
+msgstr "Riga di origine usata per generare questo rinnovo automatico."
+
 #. Label of the spend_date (Date) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:306
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:679
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:203
 msgid "Spend Date"
 msgstr "Data di Spesa"
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:62
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:276
+msgid "Standard"
+msgstr "Ordinaria"
 
 #. Label of the start_date (Date) field in DocType 'MPIT Contract'
 #. Label of the start_date (Date) field in DocType 'MPIT Expense Row'
@@ -1658,7 +1958,7 @@ msgstr "Data di Spesa"
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
 #: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:57
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:58
 msgid "Start Date"
 msgstr "Data inizio"
 
@@ -1666,7 +1966,7 @@ msgstr "Data inizio"
 msgid "Start Date cannot be after End Date"
 msgstr "La Data Inizio non può essere successiva alla Data Fine"
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:206
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:205
 msgid "Start Date cannot be after End Date."
 msgstr ""
 
@@ -1675,15 +1975,13 @@ msgstr ""
 msgid "Start date of the year period. Must not overlap with other years."
 msgstr "Data inizio del periodo dell'anno. Non deve sovrapporsi ad altri anni."
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:324
-msgid "State"
+#. Description of the 'From Date' (Date) field in DocType 'MPIT Contract Term'
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
+msgid "Start date of this contract economic period."
 msgstr ""
 
-#. Label of the status (Select) field in DocType 'MPIT Contract'
-#. Label of the workflow_state (Select) field in DocType 'MPIT Project'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-#: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:52
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:53
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:454
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:27
 msgid "Status"
 msgstr "Stato"
@@ -1700,7 +1998,10 @@ msgstr "Riepilogo"
 msgid "Summary Year"
 msgstr "Anno di Riepilogo"
 
+#. Label of the system_section (Section Break) field in DocType 'MPIT Cost
+#. Center'
 #. Label of a Workspace Sidebar Item
+#: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
 #: master_plan_it/workspace_sidebar/master_plan_it.json
 msgid "System"
 msgstr "Sistema"
@@ -1716,16 +2017,22 @@ msgstr "Sistema"
 msgid "System Manager"
 msgstr ""
 
-#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.py:43
+#. Description of the 'Row State' (Select) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "System lifecycle used for row replacement and generated-row synchronization. It is read-only and is not used to exclude an Expense; delete the Expense instead."
+msgstr "Lifecycle tecnico usato per la sostituzione righe e la sincronizzazione delle righe generate. È di sola lettura e non serve a escludere una Spesa; eliminare invece la Spesa."
+
+#. Description of the 'Calculated Status' (Select) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "System-calculated status based on contract terms."
+msgstr "Stato calcolato dal sistema in base alle righe del contratto."
+
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.py:50
 msgid "Term Amount"
 msgstr "Importo Termine"
 
-#. Description of the 'From Date' (Date) field in DocType 'MPIT Contract Term'
-#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
-msgid "Term start date used by yearly contract forecast."
-msgstr "Data inizio termine usata dal forecast annuale del contratto."
-
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:85
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:100
 msgid "Term {0} overlaps with the next term. Review term dates."
 msgstr ""
 
@@ -1734,11 +2041,17 @@ msgstr ""
 msgid "Terms"
 msgstr "Termini"
 
+#. Description of the 'External Reference' (Data) field in DocType 'MPIT
+#. Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "This expense row is generated from a contract and should not be edited unless the contract source is corrected."
+msgstr "Questa riga spesa è generata da un contratto e non dovrebbe essere modificata, salvo correggere il contratto di origine."
+
 #. Label of the expense_title (Data) field in DocType 'MPIT Expense'
 #. Label of the title (Data) field in DocType 'MPIT Project'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:43
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:42
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:30
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:21
 msgid "Title"
@@ -1749,7 +2062,7 @@ msgstr "Titolo"
 msgid "To Date"
 msgstr "Data Fine"
 
-#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.py:28
+#: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.py:35
 msgid "To Date cannot be before From Date."
 msgstr "La Data Fine non può essere precedente alla Data Inizio."
 
@@ -1765,16 +2078,15 @@ msgstr "Totale stima netto"
 
 #. Label of the total_forecast_net (Currency) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:107
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:108
 msgid "Total Forecast Net"
 msgstr "Totale forecast netto"
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:115
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:116
 msgid "Total Gross"
 msgstr "Totale lordo"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:230
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:333
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:224
 msgid "Total Lines"
 msgstr "Totale righe"
 
@@ -1783,33 +2095,34 @@ msgstr "Totale righe"
 msgid "Total Quote Net"
 msgstr "Totale preventivo netto"
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:154
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:155
 msgid "Total Quotes Gross"
 msgstr "Totale lordo preventivi"
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:111
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:112
 msgid "Total VAT"
 msgstr "Totale IVA"
+
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:407
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:628
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:408
+msgid "Totals"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:93
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:232
+msgid "Unassigned Cost Center"
+msgstr ""
 
 #. Label of the unit_price (Currency) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "Unit Price"
 msgstr "Prezzo Unitario"
 
-#. Description of the 'Unit Price' (Currency) field in DocType 'MPIT Expense
-#. Row'
-#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
-msgid "If set, Amount is calculated as Qty × Unit Price."
-msgstr "Se valorizzato, l'importo viene calcolato come quantità × prezzo unitario."
-
 #: master_plan_it/master_plan_it/dashboard_chart_source/mpit_contracts_by_status/mpit_contracts_by_status.py:45
 #: master_plan_it/master_plan_it/dashboard_chart_source/mpit_projects_by_status/mpit_projects_by_status.py:45
 msgid "Unknown"
 msgstr "Sconosciuto"
-
-#: master_plan_it/annualization.py:168
-msgid "Unsupported recurrence rule: {0}"
-msgstr "Regola di ricorrenza non supportata: {0}"
 
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:91
 msgid "Upcoming (<= {0} days)"
@@ -1821,16 +2134,25 @@ msgstr "In scadenza (≤ {0} giorni)"
 msgid "Upload supporting documents for this variation (optional)."
 msgstr "Carica documenti di supporto per questa variazione (opzionale)."
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:90
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:81
 msgid "Urgent"
 msgstr "Urgente"
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:197
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:422
+msgid "Urgent + Soon"
+msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:196
 msgid "Use either Spend Date or period fields on the same row, not both."
 msgstr ""
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:84
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:131
+#. Description of the 'Qty' (Float) field in DocType 'MPIT Expense Row'
+#: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
+msgid "Used with Unit Price to calculate Amount. Empty quantity is treated as 1."
+msgstr "Usata con il prezzo unitario per calcolare l'importo. Una quantità vuota viene considerata pari a 1."
+
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:85
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:132
 msgid "VAT %"
 msgstr ""
 
@@ -1849,10 +2171,8 @@ msgstr "Impostazioni IVA predefinite"
 msgid "VAT ID"
 msgstr "Partita IVA"
 
-#. Label of the vat_rate (Percent) field in DocType 'MPIT Contract'
 #. Label of the vat_rate (Percent) field in DocType 'MPIT Contract Term'
 #. Label of the vat_rate (Percent) field in DocType 'MPIT Expense Row'
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 msgid "VAT Rate"
@@ -1867,16 +2187,20 @@ msgstr "Scostamento"
 msgid "Variance %"
 msgstr ""
 
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:365
+msgid "Variance Total"
+msgstr ""
+
 #. Label of the vendor (Link) field in DocType 'MPIT Contract'
-#. Label of the vendor (Link) field in DocType 'MPIT Expense'
 #. Label of the vendor (Link) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:128
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:555
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:69
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:275
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:129
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:575
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:662
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:115
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:172
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:449
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:22
 msgid "Vendor"
 msgstr "Fornitore"
@@ -1886,13 +2210,17 @@ msgstr "Fornitore"
 msgid "Vendor Name"
 msgstr "Nome fornitore"
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:123
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:124
 msgid "Vendor Quotes"
 msgstr "Preventivi fornitori"
 
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:34
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:60
 msgid "Vendor is required for contracts."
 msgstr ""
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:183
+msgid "Vendor is required on ordinary expense rows (row #{0})."
+msgstr "Il fornitore è obbligatorio sulle righe di spesa ordinaria (riga #{0})."
 
 #. Label of a Link in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
@@ -1901,17 +2229,15 @@ msgstr ""
 msgid "Vendors"
 msgstr "Fornitori"
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:13
-msgid "View Mode"
-msgstr "Vista"
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:46
+msgid "Visualization"
+msgstr "Visualizzazione"
 
-#. Label of the workflow_state (Select) field in DocType 'MPIT Expense'
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:114
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:23
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:52
-msgid "Workflow State"
-msgstr "Stato workflow"
+#. Description of the 'Auto Renew Terms' (Check) field in DocType 'MPIT
+#. Contract'
+#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
+msgid "When enabled, saving the contract creates missing yearly terms within existing MPIT Years, without duplicates or overlapping periods."
+msgstr ""
 
 #. Label of the current_year_label (Data) field in DocType 'MPIT Contract'
 #. Label of the next_year_label (Data) field in DocType 'MPIT Contract'
@@ -1928,15 +2254,16 @@ msgstr "Stato workflow"
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:11
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.js:61
 #: master_plan_it/master_plan_it/doctype/mpit_year/mpit_year.json
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:81
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:111
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:82
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:129
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:426
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:5
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:45
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:101
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:44
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:135
 #: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:5
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:549
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:6
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:101
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:569
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:38
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:138
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:5
 msgid "Year"
 msgstr "Anno"
@@ -1952,12 +2279,12 @@ msgstr ""
 msgid "Years"
 msgstr "Anni"
 
-#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:90
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:86
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:145
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:556
-#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:86
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:147
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:88
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:125
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:576
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:88
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:405
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:466
 msgid "Yes"
 msgstr "Sì"
 
@@ -1966,7 +2293,7 @@ msgstr "Sì"
 msgid "all"
 msgstr "Tutti i mesi"
 
-#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:176
+#: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:177
 msgid "by"
 msgstr "da"
 
@@ -1991,235 +2318,14 @@ msgstr "Solo mese iniziale"
 msgid "vCIO Manager"
 msgstr "vCIO Manager"
 
-#: master_plan_it/tax.py:116
-msgid ""
-"{0} is non-zero but no VAT rate is specified. Please set a VAT rate on this row or configure a "
-"default VAT rate in MPIT Settings."
+#: master_plan_it/master_plan_it/services/contract_expense_sync.py:279
+msgid "{0} [{1}]"
 msgstr ""
-"{0} è diverso da zero ma non è stata specificata alcuna aliquota IVA. Imposta un'aliquota IVA su "
-"questa riga o configura un'aliquota IVA predefinita nelle Impostazioni MPIT."
 
-#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:214
+#: master_plan_it/tax.py:116
+msgid "{0} is non-zero but no VAT rate is specified. Please set a VAT rate on this row or configure a default VAT rate in MPIT Settings."
+msgstr "{0} è diverso da zero ma non è stata specificata alcuna aliquota IVA. Imposta un'aliquota IVA su questa riga o configura un'aliquota IVA predefinita nelle Impostazioni MPIT."
+
+#: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:213
 msgid "{0} must be inside the selected year."
 msgstr ""
-
-msgid "Expired Contracts"
-msgstr "Contratti scaduti"
-
-msgid "Renewals 30d"
-msgstr "Rinnovi 30g"
-
-msgid "Renewals 60d"
-msgstr "Rinnovi 60g"
-
-msgid "Renewals 90d"
-msgstr "Rinnovi 90g"
-
-#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.js:38
-msgid "Create Actual for Current Year"
-msgstr "Crea effettivo anno corrente"
-
-#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.js:73
-#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:347
-msgid "Actual current year: not created"
-msgstr "Effettivo anno corrente: non creato"
-
-#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.js:74
-#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:348
-msgid "Actual current year: partial"
-msgstr "Effettivo anno corrente: parziale"
-
-#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.js:75
-#: master_plan_it/master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py:349
-msgid "Actual current year: complete"
-msgstr "Effettivo anno corrente: completo"
-
-#: master_plan_it/master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:47
-msgid "Build-up"
-msgstr "Composizione"
-
-#: master_plan_it/master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:60
-msgid "All"
-msgstr "Tutto"
-
-#: master_plan_it/master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:47
-msgid "Lines"
-msgstr "Righe"
-
-#. Label of a Workspace Sidebar Item
-#: master_plan_it/workspace_sidebar/master_plan_it.json
-msgid "Management"
-msgstr "Gestione"
-
-#: master_plan_it/master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:88
-msgid "Filters expense lines only. Contract lines are intentionally not project-filtered."
-msgstr "Filtra solo le righe di spesa. Le righe contratto non sono intenzionalmente filtrate per progetto."
-
-#: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.py
-msgid "No active MPIT Year covers today ({0})."
-msgstr "Nessun anno MPIT attivo copre la data odierna ({0})."
-
-msgid "Visualization"
-msgstr "Visualizzazione"
-
-msgid "Layout"
-msgstr "Layout"
-
-msgid "Approved Budget"
-msgstr "Budget approvato"
-
-msgid "Proposals"
-msgstr "Proposte"
-
-msgid "Ideas"
-msgstr "Idee"
-
-msgid "Contract expenses are synchronized automatically after saving."
-msgstr "Le spese contratto vengono sincronizzate automaticamente dopo il salvataggio."
-
-msgid "Select the plafond consumed by this expense. Only non-cancelled plafonds from the same year are valid."
-msgstr "Seleziona il plafond consumato da questa spesa. Sono validi solo plafond non annullati dello stesso anno."
-
-msgid "Enable only when this ordinary expense consumes a selected plafond. The plafond may belong to another cost center but must be in the same year."
-msgstr "Abilita solo quando questa spesa ordinaria consuma un plafond selezionato. Il plafond può appartenere a un altro centro di costo, ma deve essere dello stesso anno."
-
-msgid "Enable only for unplanned or out-of-scope actual expenses. Extra expenses do not consume plafond."
-msgstr "Abilita solo per spese effettive non pianificate o fuori ambito. Le spese extra non consumano plafond."
-
-msgid "Extra expenses do not consume plafond."
-msgstr "Le spese extra non consumano plafond."
-
-msgid "Generated from contract."
-msgstr "Generata da contratto."
-
-msgid "Official budget totals are calculated from active expense rows only."
-msgstr "I totali ufficiali del budget sono calcolati solo dalle righe spesa attive."
-
-msgid "Controls whether linked expenses are included in the operating budget, shown only as planning, deferred, or excluded."
-msgstr "Determina se le spese collegate sono incluse nel budget operativo, mostrate solo come pianificazione, rimandate o escluse."
-
-msgid "Select the year when this deferred project must return to proposal stage."
-msgstr "Seleziona l’anno in cui questo progetto rimandato deve tornare allo stato proposto."
-
-msgid "System-calculated status based on contract terms."
-msgstr "Stato calcolato dal sistema in base alle righe del contratto."
-
-msgid "Contract terms are mandatory because contract status and generated expenses are calculated from them."
-msgstr "Le righe del contratto sono obbligatorie perché lo stato del contratto e le spese generate vengono calcolati da esse."
-
-msgid "Automatically renewed contract term."
-msgstr "Riga contratto rinnovata automaticamente."
-
-msgid "Source term used to generate this automatic renewal."
-msgstr "Riga di origine usata per generare questo rinnovo automatico."
-
-msgid "Row vendor is the official vendor used by reports and budget calculations."
-msgstr "Il fornitore della riga è il fornitore ufficiale usato dai report e dai calcoli di budget."
-
-msgid "Active rows contribute to totals. Replaced and Cancelled rows remain visible for audit but are excluded from totals."
-msgstr "Le righe Active contribuiscono ai totali. Le righe Replaced e Cancelled restano visibili per audit ma sono escluse dai totali."
-
-msgid "Replacement target. The replaced row will be marked as Replaced automatically."
-msgstr "Riga sostituita. La riga indicata verrà marcata automaticamente come Sostituita."
-
-msgid "Contracts are context and generators; they are not added as independent budget totals."
-msgstr "I contratti sono contesto e generatori; non vengono sommati come totali di budget indipendenti."
-
-msgid "Projects are decision contexts; they do not create independent budget totals."
-msgstr "I progetti sono contesti decisionali; non creano totali di budget indipendenti."
-
-msgid "This expense row is generated from a contract and should not be edited unless the contract source is corrected."
-msgstr "Questa riga spesa è generata da un contratto e non dovrebbe essere modificata, salvo correggere il contratto di origine."
-
-msgid "Required when the project stage is Deferred."
-msgstr "Obbligatorio quando lo stato del progetto è Rimandato."
-
-msgid "Actual rows cannot be replaced."
-msgstr "Le righe effettive non possono essere sostituite."
-
-msgid "Expenses / Estimate"
-msgstr "Spese / Stima"
-
-msgid "Expenses / Quote"
-msgstr "Spese / Preventivo"
-
-msgid "Actual / On Plafond"
-msgstr "Effettivo / Su plafond"
-
-msgid "Actual / Extra"
-msgstr "Effettivo / Extra"
-
-msgid "Expense Row"
-msgstr "Riga spesa"
-
-msgid "No Project"
-msgstr "Nessun progetto"
-
-msgid "Proposed"
-msgstr "Proposto"
-
-msgid "Approved"
-msgstr "Approvato"
-
-msgid "Deferred"
-msgstr "Rimandato"
-
-msgid "Rejected"
-msgstr "Rifiutato"
-
-msgid "Concluded"
-msgstr "Concluso"
-
-msgid "Calculated Status"
-msgstr "Stato calcolato"
-
-msgid "Project Stage"
-msgstr "Stato progetto"
-
-msgid "Defer To Year"
-msgstr "Rimanda all’anno"
-
-msgid "Auto Renew Terms"
-msgstr "Rinnovo automatico righe"
-
-msgid "Actual with Estimates and Quotes"
-msgstr "Effettivo con stime e preventivi"
-
-msgid "Project Bucket"
-msgstr "Bucket progetto"
-
-msgid "Contract expenses were synchronized automatically."
-msgstr "Le spese contratto sono state sincronizzate automaticamente."
-
-msgid "Concluded Contracts"
-msgstr "Contratti conclusi"
-
-msgid "Filters by effective project context for expense rows, including contract-linked rows."
-msgstr "Filtra per contesto progetto effettivo delle righe spesa, incluse quelle collegate a contratto."
-
-msgid "Choose whether the report shows actual budget, forecast, or actual values enriched with estimates and quotes."
-msgstr "Scegli se il report mostra il budget effettivo, la previsione oppure gli effettivi integrati con stime e preventivi."
-
-msgid "Select how the report is displayed: summary, build-up, or detailed lines."
-msgstr "Seleziona come visualizzare il report: riepilogo, dettaglio per blocchi o righe analitiche."
-
-msgid "Limits the report to a specific economic area without changing the underlying budget rules."
-msgstr "Limita il report a una specifica area economica senza modificare le regole di budget sottostanti."
-
-msgid "Show rows with zero value for audit and troubleshooting. Disable for normal reading."
-msgstr "Mostra le righe con valore zero per verifica e diagnosi. Disabilita per la lettura ordinaria."
-
-msgid "At least one Contract Term is required."
-msgstr "È richiesto almeno un termine contrattuale."
-
-msgid "Defer To Year is required when Project Stage is Deferred."
-msgstr "Rimanda all’anno è obbligatorio quando lo stato progetto è Rimandato."
-
-msgid "Vendor is required on ordinary expense rows (row #{0})."
-msgstr "Il fornitore è obbligatorio sulle righe di spesa ordinaria (riga #{0})."
-
-msgid "Row #{0} cannot replace an Actual row."
-msgstr "La riga #{0} non può sostituire una riga Actual."
-
-msgid "Replacement cycle detected on row {0}."
-msgstr "Rilevato ciclo di sostituzione sulla riga {0}."

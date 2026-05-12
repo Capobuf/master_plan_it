@@ -118,13 +118,6 @@
             total_actual += asNumber(rows[t].actual);
         }
 
-        function stateClass(value) {
-            var v = String(value || "").toLowerCase();
-            if (v === "closed") return "chip chip-strong";
-            if (v === "cancelled") return "chip chip-alert";
-            return "chip";
-        }
-
         function fundingClass(value) {
             var v = String(value || "").toLowerCase();
             if (v === "extra") return "chip chip-alert";
@@ -136,7 +129,6 @@
             { fieldname: "year", label: __("Year") },
             { fieldname: "cost_center", label: __("Cost Center") },
             { fieldname: "expense_kind", label: __("Kind") },
-            { fieldname: "workflow_state", label: __("Workflow State") },
             { fieldname: "project", label: __("Project") },
             { fieldname: "contract", label: __("Contract") }
         ];
@@ -432,7 +424,6 @@
                                 <div class="entry-value-line"><strong>{%= __("Forecast") %}:</strong> {%= formatCurrency(row.forecast) %}</div>
                                 <div class="entry-value-line"><strong>{%= __("Actual") %}:</strong> {%= formatCurrency(row.actual) %}</div>
                                 <div class="entry-value-line"><strong>{%= __("Year") %}:</strong> {%= valueOrDash(row.year) %}</div>
-                                <div class="entry-value-line"><span class="{%= stateClass(row.workflow_state) %}">{%= valueOrDash(row.workflow_state) %}</span></div>
                             </div>
                         </div>
 

@@ -1,6 +1,5 @@
 recursive-include master_plan_it *.py
 recursive-include master_plan_it *.json
-recursive-include master_plan_it *.md
 recursive-include master_plan_it *.txt
 recursive-include master_plan_it *.csv
 recursive-include master_plan_it *.po

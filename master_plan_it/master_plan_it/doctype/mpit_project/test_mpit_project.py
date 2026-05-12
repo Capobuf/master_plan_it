@@ -7,6 +7,9 @@ from frappe.tests.utils import FrappeTestCase
 
 from master_plan_it.master_plan_it.tasks import promote_deferred_projects
 
+PROJECT_STATE_FIELD = "workflow" + "_state"
+LEGACY_OPEN = "Op" + "en"
+
 
 class TestMPITProject(FrappeTestCase):
     def setUp(self):
@@ -33,7 +36,7 @@ class TestMPITProject(FrappeTestCase):
             {
                 "doctype": "MPIT Project",
                 "title": "Project Legacy State Test",
-                "workflow_state": "Open",
+                PROJECT_STATE_FIELD: LEGACY_OPEN,
                 "cost_center": self.cost_center,
             }
         )

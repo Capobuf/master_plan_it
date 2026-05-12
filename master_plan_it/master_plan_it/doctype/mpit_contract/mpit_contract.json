@@ -15,8 +15,6 @@
   "cost_center",
   "project",
   "renewal_section",
-  "start_date",
-  "end_date",
   "auto_renew",
   "next_renewal_date",
   "term_section",
@@ -33,6 +31,10 @@
   "summary_col",
   "annual_amount_next_year",
   "next_year_label",
+  "calculated_dates_section",
+  "start_date",
+  "calculated_dates_col",
+  "end_date",
   "notes_section",
   "notes",
   "attachment",
@@ -45,7 +47,6 @@
    "fieldtype": "Section Break"
   },
   {
-   "allow_in_quick_entry": 1,
    "bold": 1,
    "fieldname": "description",
    "fieldtype": "Data",
@@ -54,7 +55,6 @@
    "label": "Description"
   },
   {
-   "allow_in_quick_entry": 1,
    "bold": 1,
    "fieldname": "vendor",
    "fieldtype": "Link",
@@ -70,7 +70,6 @@
    "fieldtype": "Column Break"
   },
   {
-   "allow_in_quick_entry": 1,
    "default": "Active",
    "description": "System-calculated status based on contract terms.",
    "fieldname": "status",
@@ -83,7 +82,6 @@
    "read_only": 1
   },
   {
-   "allow_in_quick_entry": 1,
    "fieldname": "cost_center",
    "fieldtype": "Link",
    "in_list_view": 1,
@@ -107,12 +105,16 @@
   {
    "fieldname": "start_date",
    "fieldtype": "Date",
-   "label": "Start Date"
+   "label": "Start Date",
+   "read_only": 1,
+   "description": "Calculated from the earliest contract term."
   },
   {
    "fieldname": "end_date",
    "fieldtype": "Date",
-   "label": "End Date"
+   "label": "End Date",
+   "read_only": 1,
+   "description": "Calculated from the latest contract term; empty when the latest term is open-ended."
   },
   {
    "default": "1",
@@ -243,6 +245,16 @@
    "in_preview": 1,
    "label": "Document ID",
    "options": "name"
+  },
+  {
+   "fieldname": "calculated_dates_section",
+   "fieldtype": "Section Break",
+   "label": "Calculated Dates",
+   "depends_on": "eval:doc.terms && doc.terms.length > 0"
+  },
+  {
+   "fieldname": "calculated_dates_col",
+   "fieldtype": "Column Break"
   }
  ],
  "grid_page_length": 50,
@@ -302,7 +314,7 @@
    "share": 1
   }
  ],
- "quick_entry": 1,
+ "quick_entry": 0,
  "row_format": "Dynamic",
  "rows_threshold_for_grid_search": 20,
  "show_preview_popup": 1,

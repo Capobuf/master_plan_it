@@ -16,9 +16,16 @@ from master_plan_it import mpit_defaults, tax
 
 class MPITContractTerm(Document):
     def validate(self):
+        self._validate_billing_cycle()
         self._validate_dates()
         self._compute_vat_split()
         self._compute_monthly_amount()
+
+    def _validate_billing_cycle(self) -> None:
+        billing = (self.billing_cycle or "Monthly").strip()
+        if billing not in {"Monthly", "Annual"}:
+            frappe.throw(_("Billing Cycle must be Monthly or Annual."))
+        self.billing_cycle = billing
 
     def _validate_dates(self) -> None:
         """Validate from_date and to_date if set."""
@@ -61,10 +68,7 @@ class MPITContractTerm(Document):
             return
 
         billing = self.billing_cycle or "Monthly"
-        if billing == "Quarterly":
-            self.monthly_amount_net = flt((self.amount_net or 0) * 4 / 12, 2)
-        elif billing == "Annual":
+        if billing == "Annual":
             self.monthly_amount_net = flt((self.amount_net or 0) / 12, 2)
         else:
-            # Monthly and "Other" default to same value
             self.monthly_amount_net = flt(self.amount_net or 0, 2)

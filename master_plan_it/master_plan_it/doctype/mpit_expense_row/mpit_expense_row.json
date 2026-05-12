@@ -47,13 +47,14 @@
   },
   {
    "default": "Active",
-   "description": "Active rows contribute to totals. Replaced and Cancelled rows remain visible for audit but are excluded from totals.",
+   "description": "System lifecycle used for row replacement and generated-row synchronization. It is read-only and is not used to exclude an Expense; delete the Expense instead.",
    "fieldname": "row_state",
    "fieldtype": "Select",
    "in_list_view": 1,
    "label": "Row State",
    "options": "Active\nReplaced\nCancelled",
-   "reqd": 1
+   "reqd": 1,
+   "read_only": 1
   },
   {
    "description": "Row vendor is the official vendor used by reports and budget calculations.",

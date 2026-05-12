@@ -173,11 +173,13 @@ function set_link_queries(frm) {
     frm.set_query("plafond_expense", () => {
         const filters = {
             expense_kind: "Plafond",
-            workflow_state: ["!=", "Cancelled"],
         };
 
         if (frm.doc.year) {
             filters.year = frm.doc.year;
+        }
+        if (frm.doc.cost_center) {
+            filters.cost_center = frm.doc.cost_center;
         }
 
         return { filters };

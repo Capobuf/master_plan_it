@@ -8,13 +8,12 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "section_meta",
+  "identity_section",
   "cost_center_name",
-  "cb_meta_right",
-  "is_group",
-  "parent_mpit_cost_center",
-  "cb_meta_right2",
   "abbr",
+  "is_group",
+  "hierarchy_section",
+  "parent_mpit_cost_center",
   "section_financial_summary",
   "summary_year",
   "forecast_total",
@@ -27,7 +26,7 @@
   "plafond_total",
   "plafond_remaining",
   "plafond_over",
-  "section_advanced",
+  "system_section",
   "old_parent",
   "lft",
   "rgt"
@@ -62,7 +61,8 @@
    "fieldtype": "Link",
    "in_list_view": 1,
    "label": "Parent Cost Center",
-   "options": "MPIT Cost Center"
+   "options": "MPIT Cost Center",
+   "description": "Parent cost center in the native Frappe tree. Group summaries include descendant cost centers."
   },
   {
    "fieldname": "cb_meta_right2",
@@ -79,7 +79,8 @@
    "fieldtype": "Section Break",
    "label": "Financial Summary",
    "collapsible": 1,
-   "collapsible_depends_on": "eval:!doc.summary_year"
+   "collapsible_depends_on": "eval:!doc.summary_year",
+   "description": "For group cost centers, summaries include all descendant cost centers. Leaf summaries include only that cost center."
   },
   {
    "fieldname": "summary_year",
@@ -174,6 +175,23 @@
    "options": "MPIT Cost Center",
    "hidden": 1,
    "read_only": 1
+  },
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "hierarchy_section",
+   "fieldtype": "Section Break",
+   "label": "Hierarchy"
+  },
+  {
+   "fieldname": "system_section",
+   "fieldtype": "Section Break",
+   "label": "System",
+   "hidden": 1,
+   "collapsible": 1
   }
  ],
  "grid_page_length": 50,

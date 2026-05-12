@@ -40,7 +40,7 @@ REQUIRED_DASHBOARD_CHARTS = [
 REQUIRED_NUMBER_CARDS = [
     "MPIT Forecast Total",
     "MPIT Actual Total",
-    "MPIT Active Plafonds",
+    "MPIT Plafonds",
     "MPIT Remaining Plafond",
     "Renewals 30d",
     "Renewals 60d",

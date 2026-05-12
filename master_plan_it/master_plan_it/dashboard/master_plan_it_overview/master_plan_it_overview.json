@@ -16,7 +16,7 @@
     "width": "Quarter"
    },
    {
-    "card": "MPIT Active Plafonds",
+    "card": "MPIT Plafonds",
     "parent": "Master Plan IT Overview",
     "parentfield": "cards",
     "parenttype": "Dashboard",

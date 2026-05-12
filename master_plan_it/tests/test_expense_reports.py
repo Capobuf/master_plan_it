@@ -31,11 +31,9 @@ class TestExpenseReports(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_title": f"Expense REP {self.suffix}",
                 "expense_kind": "Ordinary",
-                "workflow_state": "Open",
                 "year": self.year,
                 "cost_center": self.cost_center,
                 "project": self.project,
-                "vendor": self.vendor,
                 "uses_plafond": 0,
                 "is_extra": 1,
                 "rows": [
@@ -92,11 +90,9 @@ class TestExpenseReports(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_title": f"Expense REP Standard {self.suffix}",
                 "expense_kind": "Ordinary",
-                "workflow_state": "Open",
                 "year": self.year,
                 "cost_center": self.cost_center,
                 "project": self.project,
-                "vendor": self.vendor,
                 "uses_plafond": 0,
                 "is_extra": 0,
                 "rows": [
@@ -187,7 +183,6 @@ class TestOverviewModes(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_title": f"Plafond OVW {cls.suffix}",
                 "expense_kind": "Plafond",
-                "workflow_state": "Open",
                 "year": cls.year,
                 "cost_center": cls.cc,
                 "rows": [
@@ -210,11 +205,9 @@ class TestOverviewModes(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_title": f"Expense OVW {cls.suffix}",
                 "expense_kind": "Ordinary",
-                "workflow_state": "Open",
                 "year": cls.year,
                 "cost_center": cls.cc,
                 "project": cls.project,
-                "vendor": cls.vendor_name,
                 "uses_plafond": 1,
                 "plafond_expense": cls.plafond_expense.name,
                 "is_extra": 0,
@@ -262,11 +255,9 @@ class TestOverviewModes(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_title": f"Expense Standard OVW {cls.suffix}",
                 "expense_kind": "Ordinary",
-                "workflow_state": "Open",
                 "year": cls.year,
                 "cost_center": cls.cc,
                 "project": cls.project,
-                "vendor": cls.vendor_name,
                 "uses_plafond": 0,
                 "is_extra": 0,
                 "rows": [
@@ -562,13 +553,12 @@ class TestOverviewModes(FrappeTestCase):
         self.assertIn("default: String(new Date().getFullYear())", js_src)
 
 
-class TestCrossCostCenterPlafondOverview(FrappeTestCase):
+class TestSameCostCenterPlafondOverview(FrappeTestCase):
     def setUp(self):
         frappe.set_user("Administrator")
         self.suffix = uuid4().hex[:6].upper()
         self.year = ensure_year(2030)
         self.cc_funding = ensure_cost_center(f"CC-FUNDING-{self.suffix}")
-        self.cc_infra = ensure_cost_center(f"CC-INFRA-{self.suffix}")
         self.vendor = ensure_vendor(f"Vendor Cross {self.suffix}")
 
         plafond = frappe.get_doc(
@@ -576,7 +566,6 @@ class TestCrossCostCenterPlafondOverview(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_title": f"Plafond Cross {self.suffix}",
                 "expense_kind": "Plafond",
-                "workflow_state": "Open",
                 "year": self.year,
                 "cost_center": self.cc_funding,
                 "rows": [
@@ -597,12 +586,10 @@ class TestCrossCostCenterPlafondOverview(FrappeTestCase):
         expense = frappe.get_doc(
             {
                 "doctype": "MPIT Expense",
-                "expense_title": f"Infra Consume {self.suffix}",
+                "expense_title": f"Plafond Consume {self.suffix}",
                 "expense_kind": "Ordinary",
-                "workflow_state": "Open",
                 "year": self.year,
-                "cost_center": self.cc_infra,
-                "vendor": self.vendor,
+                "cost_center": self.cc_funding,
                 "uses_plafond": 1,
                 "is_extra": 0,
                 "plafond_expense": plafond.name,
@@ -631,12 +618,11 @@ class TestCrossCostCenterPlafondOverview(FrappeTestCase):
 
         rows_by_cc = {row.get("cost_center"): row for row in data}
         funding = rows_by_cc[self.cc_funding]
-        infra = rows_by_cc[self.cc_infra]
 
         self.assertEqual(funding.get("plafond"), 1000)
         self.assertEqual(funding.get("plafond_consumed"), 250)
         self.assertEqual(funding.get("remaining"), 750)
-        self.assertEqual(infra.get("actual_on_plafond"), 250)
+        self.assertEqual(funding.get("actual_on_plafond"), 250)
 
     def test_plafond_usage_chart_uses_plafond_consumed(self):
         chart = run_plafond_usage_by_cost_center_chart({"year": self.year})
@@ -646,13 +632,10 @@ class TestCrossCostCenterPlafondOverview(FrappeTestCase):
         consumed_values = datasets.get("Consumed") or datasets.get("Consumato")
         self.assertIsNotNone(consumed_values)
         self.assertIn(self.cc_funding, labels)
-        self.assertIn(self.cc_infra, labels)
 
         funding_index = labels.index(self.cc_funding)
-        infra_index = labels.index(self.cc_infra)
 
         self.assertEqual(consumed_values[funding_index], 250)
-        self.assertEqual(consumed_values[infra_index], 0)
 
 
 # ---------------------------------------------------------------------------
@@ -730,10 +713,7 @@ def _insert_contract(
             "doctype": "MPIT Contract",
             "description": name_hint,
             "vendor": vendor,
-            "status": "Active",
             "cost_center": cost_center,
-            "start_date": start_date,
-            "end_date": end_date,
         }
     )
     if terms:

@@ -175,7 +175,6 @@ class TestMPITExpense(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_kind": "Plafond",
                 "expense_title": "Plafond Reference Guard",
-                "workflow_state": "Open",
                 "year": self.year_name,
                 "cost_center": self.cost_center,
                 "rows": [base_row(phase="Actual", amount=1000, spend_date="2026-01-10")],
@@ -226,7 +225,7 @@ class TestMPITExpense(FrappeTestCase):
         with self.assertRaises(frappe.ValidationError):
             doc.insert()
 
-    def test_plafond_single_open_per_year_and_cost_center(self):
+    def test_multiple_plafonds_same_year_and_cost_center_are_allowed(self):
         suffix = frappe.generate_hash(length=6).upper()
         year_name = ensure_year(2040)
         cost_center = ensure_cost_center(f"CC-PLAFOND-RULE-{suffix}")
@@ -236,7 +235,6 @@ class TestMPITExpense(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_kind": "Plafond",
                 "expense_title": "Main Plafond",
-                "workflow_state": "Closed",
                 "year": year_name,
                 "cost_center": cost_center,
                 "rows": [base_row(phase="Actual", amount=1000, spend_date="2040-01-10")],
@@ -249,14 +247,14 @@ class TestMPITExpense(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_kind": "Plafond",
                 "expense_title": "Second Plafond",
-                "workflow_state": "Open",
                 "year": year_name,
                 "cost_center": cost_center,
                 "rows": [base_row(phase="Actual", amount=500, spend_date="2040-02-10")],
             }
         )
-        with self.assertRaises(frappe.ValidationError):
-            second.insert()
+        second.insert()
+        self.assertTrue(first.name)
+        self.assertTrue(second.name)
 
     def test_replaced_and_cancelled_rows_are_excluded(self):
         doc = base_expense(self.year_name, self.cost_center, self.project)
@@ -362,7 +360,7 @@ class TestMPITExpense(FrappeTestCase):
         self.assertNotIn(doc.rows[2].name, names)
         self.assertNotIn(other.rows[0].name, names)
 
-    def test_cross_cost_center_plafond_reference_succeeds(self):
+    def test_cross_cost_center_plafond_reference_fails(self):
         year_2030 = ensure_year(2030)
         suffix = frappe.generate_hash(length=6).upper()
         cc_funding = ensure_cost_center(f"CC-FUNDING-{suffix}")
@@ -373,7 +371,6 @@ class TestMPITExpense(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_kind": "Plafond",
                 "expense_title": f"Plafond Funding {suffix}",
-                "workflow_state": "Open",
                 "year": year_2030,
                 "cost_center": cc_funding,
                 "rows": [base_row(phase="Actual", amount=1000, spend_date="2030-01-10")],
@@ -385,8 +382,8 @@ class TestMPITExpense(FrappeTestCase):
         ordinary.is_extra = 0
         ordinary.plafond_expense = plafond.name
         ordinary.append("rows", base_row(phase="Actual", amount=250, spend_date="2030-02-10"))
-        ordinary.insert()
-        self.assertTrue(ordinary.name)
+        with self.assertRaises(frappe.ValidationError):
+            ordinary.insert()
 
     def test_plafond_reference_must_belong_to_same_year(self):
         year_2030 = ensure_year(2030)
@@ -400,7 +397,6 @@ class TestMPITExpense(FrappeTestCase):
                 "doctype": "MPIT Expense",
                 "expense_kind": "Plafond",
                 "expense_title": f"Plafond Year {suffix}",
-                "workflow_state": "Open",
                 "year": year_2030,
                 "cost_center": cc_funding,
                 "rows": [base_row(phase="Actual", amount=1000, spend_date="2030-01-10")],
@@ -415,31 +411,29 @@ class TestMPITExpense(FrappeTestCase):
         with self.assertRaises(frappe.ValidationError):
             ordinary.insert()
 
-    def test_cancelled_plafond_reference_fails(self):
+    def test_same_cost_center_plafond_reference_succeeds(self):
         year_2030 = ensure_year(2030)
         suffix = frappe.generate_hash(length=6).upper()
         cc_funding = ensure_cost_center(f"CC-FUNDING-{suffix}")
-        cc_infra = ensure_cost_center(f"CC-INFRA-{suffix}")
 
         plafond = frappe.get_doc(
             {
                 "doctype": "MPIT Expense",
                 "expense_kind": "Plafond",
-                "expense_title": f"Plafond Cancelled {suffix}",
-                "workflow_state": "Cancelled",
+                "expense_title": f"Plafond Same CC {suffix}",
                 "year": year_2030,
                 "cost_center": cc_funding,
                 "rows": [base_row(phase="Actual", amount=900, spend_date="2030-01-10")],
             }
         ).insert()
 
-        ordinary = base_expense(year_2030, cc_infra)
+        ordinary = base_expense(year_2030, cc_funding)
         ordinary.uses_plafond = 1
         ordinary.is_extra = 0
         ordinary.plafond_expense = plafond.name
         ordinary.append("rows", base_row(phase="Actual", amount=90, spend_date="2030-02-10"))
-        with self.assertRaises(frappe.ValidationError):
-            ordinary.insert()
+        ordinary.insert()
+        self.assertTrue(ordinary.name)
 
     def test_non_plafond_reference_fails(self):
         year_2030 = ensure_year(2030)
@@ -470,7 +464,6 @@ def base_expense(
             "doctype": "MPIT Expense",
             "expense_kind": "Ordinary",
             "expense_title": "Expense Test",
-            "workflow_state": "Open",
             "year": year_name,
             "cost_center": cost_center,
             "project": project,

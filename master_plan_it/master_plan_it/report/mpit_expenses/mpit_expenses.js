@@ -19,12 +19,6 @@ frappe.query_reports["MPIT Expenses"] = {
             options: "\nOrdinary\nPlafond",
         },
         {
-            fieldname: "workflow_state",
-            label: __("Workflow State"),
-            fieldtype: "Select",
-            options: "\nOpen\nClosed\nCancelled",
-        },
-        {
             fieldname: "project",
             label: __("Project"),
             fieldtype: "Link",

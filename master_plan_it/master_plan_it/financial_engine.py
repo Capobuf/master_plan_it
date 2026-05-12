@@ -11,7 +11,6 @@ from frappe.utils import flt, getdate
 from master_plan_it import annualization
 
 ACTIVE_CONTRACT_STATUSES = {"Active"}
-ACTIVE_EXPENSE_STATES = {"Open", "Closed"}
 ACTIVE_ROW_STATES = {"Active"}
 
 PROJECT_STATE_IDEA = "Idea"
@@ -273,10 +272,9 @@ def get_plafond_totals(year: str | int, cost_center: str | None = None) -> dict:
     filters: dict = {
         "year": str(year_int),
         "expense_kind": "Plafond",
-        "workflow_state": ["!=", "Cancelled"],
     }
     if cost_center:
-        filters["cost_center"] = cost_center
+        filters["cost_center"] = ["in", _get_cost_center_scope(cost_center)]
 
     plafonds = frappe.get_all("MPIT Expense", filters=filters, pluck="name", limit=None)
     plafond_total = 0.0
@@ -337,7 +335,6 @@ def get_plafond_document_totals(plafond_expense: str) -> dict:
             FROM `tabMPIT Expense Row` r
             INNER JOIN `tabMPIT Expense` e ON e.name = r.parent
             WHERE e.expense_kind = 'Ordinary'
-              AND e.workflow_state IN ('Open', 'Closed')
               AND e.uses_plafond = 1
               AND e.plafond_expense = %(plafond_expense)s
               AND r.row_state = 'Active'
@@ -435,13 +432,7 @@ def get_overview_dataset(
     if cost_center:
         cost_centers = [cost_center]
     else:
-        from_expenses = frappe.get_all(
-            "MPIT Expense",
-            filters={"year": str(year_int), "workflow_state": ["in", list(ACTIVE_EXPENSE_STATES)]},
-            pluck="cost_center",
-            limit=None,
-        )
-        cost_centers = sorted({cc for cc in from_expenses if cc})
+        cost_centers = _resolve_cost_centers_for_year(year_int, None)
 
     rows = []
     for cc in cost_centers:
@@ -687,7 +678,6 @@ def get_overview_lines_dataset(
                 funding_key = "Extra"
             project_bucket = _get_project_bucket(row)
             expense_phase = row.get("row_phase")
-            logical_state = row.get("workflow_state") or "Open"
 
             rows.append({
                 "cost_center": row.get("cost_center"),
@@ -709,8 +699,6 @@ def get_overview_lines_dataset(
                 "spend_date": row.get("spend_date"),
                 "amount_net": amount,
                 "annual_contribution_net": amount,
-                "logical_state": _(logical_state),
-                "logical_state_key": logical_state,
             })
 
     # ------------------------------------------------------------------
@@ -720,15 +708,14 @@ def get_overview_lines_dataset(
         plafond_filters: dict = {
             "year": str(year_int),
             "expense_kind": "Plafond",
-            "workflow_state": ["!=", "Cancelled"],
         }
         if cost_center:
-            plafond_filters["cost_center"] = cost_center
+            plafond_filters["cost_center"] = ["in", _get_cost_center_scope(cost_center)]
 
         plafonds = frappe.get_all(
             "MPIT Expense",
             filters=plafond_filters,
-            fields=["name", "cost_center", "vendor", "workflow_state", "expense_title"],
+            fields=["name", "cost_center", "expense_title"],
             order_by="cost_center asc, name asc",
             limit=None,
         )
@@ -770,8 +757,6 @@ def get_overview_lines_dataset(
                     "spend_date": row.spend_date,
                     "amount_net": amount,
                     "annual_contribution_net": amount,
-                    "logical_state": _(plafond_doc.workflow_state),
-                    "logical_state_key": plafond_doc.workflow_state,
                 })
 
     # Sort final rows: cost_center → source_type → source_document
@@ -890,13 +875,42 @@ def _resolve_cost_centers_for_year(year_int: int, cost_center: str | None) -> li
     if cost_center:
         return [cost_center]
 
-    from_expenses = frappe.get_all(
-        "MPIT Expense",
-        filters={"year": str(year_int), "workflow_state": ["in", list(ACTIVE_EXPENSE_STATES)]},
-        pluck="cost_center",
+    from_expenses = frappe.db.sql(
+        """
+        SELECT DISTINCT e.cost_center
+        FROM `tabMPIT Expense` e
+        INNER JOIN `tabMPIT Expense Row` r ON r.parent = e.name
+        WHERE e.year = %(year)s
+          AND r.parenttype = 'MPIT Expense'
+          AND r.parentfield = 'rows'
+          AND r.row_state = 'Active'
+        """,
+        {"year": str(year_int)},
+        as_dict=True,
+    )
+    return sorted({row.cost_center for row in from_expenses if row.cost_center})
+
+
+def _get_cost_center_scope(cost_center: str) -> list[str]:
+    cost_center_doc = frappe.db.get_value(
+        "MPIT Cost Center",
+        cost_center,
+        ["is_group", "lft", "rgt"],
+        as_dict=True,
+    )
+    if not cost_center_doc or not cost_center_doc.is_group:
+        return [cost_center]
+
+    descendants = frappe.get_all(
+        "MPIT Cost Center",
+        filters={
+            "lft": [">=", cost_center_doc.lft],
+            "rgt": ["<=", cost_center_doc.rgt],
+        },
+        pluck="name",
         limit=None,
     )
-    return sorted({cc for cc in from_expenses if cc})
+    return sorted(descendants) or [cost_center]
 
 
 def _zero_summary() -> dict:
@@ -1089,11 +1103,11 @@ def _monthly_from_cycle(amount_net: float, billing_cycle: str | None) -> float:
     amount_net = flt(amount_net, 2)
     cycle = (billing_cycle or "Monthly").strip()
 
-    if cycle == "Quarterly":
-        return flt(amount_net * 4 / 12, 6)
     if cycle == "Annual":
         return flt(amount_net / 12, 6)
-    return flt(amount_net, 6)
+    if cycle == "Monthly":
+        return flt(amount_net, 6)
+    frappe.throw(_("Billing Cycle must be Monthly or Annual."))
 
 
 def _contract_forecast_for_year(contract_row, year_start: datetime.date, year_end: datetime.date) -> float:
@@ -1210,6 +1224,7 @@ def _get_active_rows(
     row_phases: tuple[str, ...] | None = None,
 ) -> list[dict]:
     year_int = _resolve_year_int(year)
+    cost_centers = _get_cost_center_scope(cost_center) if cost_center else None
 
     sql = [
         """
@@ -1223,7 +1238,6 @@ def _get_active_rows(
             e.expense_kind,
             e.uses_plafond,
             e.is_extra,
-            e.workflow_state,
             r.name AS row_name,
             r.row_phase,
             r.row_description,
@@ -1240,7 +1254,6 @@ def _get_active_rows(
         LEFT JOIN `tabMPIT Project` project_from_contract ON project_from_contract.name = contract_doc.project
         WHERE e.year = %(year)s
           AND e.expense_kind = %(expense_kind)s
-          AND e.workflow_state IN ('Open', 'Closed')
           AND r.row_state = 'Active'
         """
     ]
@@ -1252,8 +1265,8 @@ def _get_active_rows(
         params["row_phases"] = row_phases
 
     if cost_center:
-        sql.append("AND e.cost_center = %(cost_center)s")
-        params["cost_center"] = cost_center
+        sql.append("AND e.cost_center IN %(cost_centers)s")
+        params["cost_centers"] = tuple(cost_centers)
 
     if project:
         sql.append("AND COALESCE(e.project, contract_doc.project) = %(project)s")

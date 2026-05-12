@@ -247,13 +247,6 @@
             }
         }
 
-        function stateChipClass(value) {
-            var v = String(value || "").toLowerCase();
-            if (v === "closed" || v === "active") return "chip chip-strong";
-            if (v === "cancelled" || v === "replaced") return "chip chip-alert";
-            return "chip";
-        }
-
         function fundingChipClass(value) {
             var v = String(value || "").toLowerCase();
             if (v === "on plafond") return "chip chip-strong";
@@ -671,7 +664,6 @@
                                 </div>
                                 <div class="line-values">
                                     <div class="line-value"><strong>{%= __("Annual Contribution") %}:</strong> {%= formatCurrency(row.annual_contribution_net) %}</div>
-                                    <div class="line-value"><span class="{%= stateChipClass(row.logical_state_key || row.logical_state) %}">{%= valueOrDash(row.logical_state) %}</span></div>
                                 </div>
                             </div>
 

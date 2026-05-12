@@ -28,7 +28,7 @@ class MPITProject(Document):
         revert_series_if_last(series_key, self.name, doc=self)
 
     def validate(self):
-        if not self.cost_center and not frappe.in_test:
+        if not self.cost_center:
             frappe.throw(_("Cost Center is required on Project."))
         self._normalize_status()
         self._validate_deferred_to_year()

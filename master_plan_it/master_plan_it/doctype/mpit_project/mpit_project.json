@@ -7,21 +7,24 @@
  "editable_grid": 1,
  "engine": "InnoDB",
  "field_order": [
-  "section_overview",
+  "identity_section",
   "title",
+  "cost_center",
+  "decision_section",
   "workflow_state",
   "deferred_to_year",
-  "overview_col_break",
-  "cost_center",
+  "planning_section",
   "start_date",
   "end_date",
   "description",
-  "document_id",
-  "section_notes",
-  "notes",
+  "linked_sources_section",
+  "linked_sources_summary",
   "financial_section",
   "summary_year",
-  "financial_summary"
+  "financial_summary",
+  "notes_system_section",
+  "notes",
+  "document_id"
  ],
  "fields": [
   {
@@ -120,6 +123,38 @@
    "fieldtype": "HTML",
    "label": "Summary",
    "read_only": 1
+  },
+  {
+   "fieldname": "identity_section",
+   "fieldtype": "Section Break",
+   "label": "Identity"
+  },
+  {
+   "fieldname": "decision_section",
+   "fieldtype": "Section Break",
+   "label": "Decision"
+  },
+  {
+   "fieldname": "planning_section",
+   "fieldtype": "Section Break",
+   "label": "Planning"
+  },
+  {
+   "fieldname": "linked_sources_section",
+   "fieldtype": "Section Break",
+   "label": "Linked Sources",
+   "collapsible": 1
+  },
+  {
+   "fieldname": "linked_sources_summary",
+   "fieldtype": "HTML",
+   "label": "Linked Sources",
+   "read_only": 1
+  },
+  {
+   "fieldname": "notes_system_section",
+   "fieldtype": "Section Break",
+   "label": "Notes / System"
   }
  ],
  "grid_page_length": 50,

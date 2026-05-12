@@ -1,6 +1,6 @@
 const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || "admin";
 
-function fetchYearAndCostCenter() {
+function fetchYearCostCenterAndVendor() {
   return cy
     .request({
       method: "GET",
@@ -18,7 +18,16 @@ function fetchYearAndCostCenter() {
         .then((ccRes) => {
           const costCenter = ccRes.body?.data?.[0]?.name;
           expect(costCenter, "MPIT Cost Center available").to.be.a("string").and.not.be.empty;
-          return { year, costCenter };
+          return cy
+            .request({
+              method: "GET",
+              url: '/api/resource/MPIT Vendor?limit=1&fields=["name"]',
+            })
+            .then((vendorRes) => {
+              const vendor = vendorRes.body?.data?.[0]?.name;
+              expect(vendor, "MPIT Vendor available").to.be.a("string").and.not.be.empty;
+              return { year, costCenter, vendor };
+            });
         });
     });
 }
@@ -26,15 +35,6 @@ function fetchYearAndCostCenter() {
 describe("MPIT quick entry and row replacement selector", () => {
   beforeEach(() => {
     cy.frappeLogin("Administrator", ADMIN_PASSWORD);
-  });
-
-  it("MPIT Contract quick entry shows all required fields", () => {
-    cy.visit("/desk");
-    cy.window().then((win) => win.frappe.ui.form.make_quick_entry("MPIT Contract"));
-
-    cy.get('.modal.show [data-fieldname="vendor"] input', { timeout: 15000 }).should("exist");
-    cy.get('.modal.show [data-fieldname="cost_center"] input', { timeout: 10000 }).should("exist");
-    cy.get(".modal.show .btn-modal-close").first().click({ force: true });
   });
 
   it("MPIT Vendor quick entry shows all required fields", () => {
@@ -48,12 +48,11 @@ describe("MPIT quick entry and row replacement selector", () => {
   it("Expense row replacement selector query returns only sibling rows", () => {
     const suffix = Date.now();
 
-    fetchYearAndCostCenter().then(({ year, costCenter }) => {
+    fetchYearCostCenterAndVendor().then(({ year, costCenter, vendor }) => {
       cy.frappePost("/api/resource/MPIT Expense", {
         doctype: "MPIT Expense",
         expense_kind: "Ordinary",
         expense_title: `Cypress RowRef A ${suffix}`,
-        workflow_state: "Open",
         year,
         cost_center: costCenter,
         uses_plafond: 0,
@@ -64,6 +63,7 @@ describe("MPIT quick entry and row replacement selector", () => {
             row_description: "A-1",
             row_phase: "Estimate",
             row_state: "Active",
+            vendor,
             amount: 100,
             amount_includes_vat: 0,
             vat_rate: 22,
@@ -74,6 +74,7 @@ describe("MPIT quick entry and row replacement selector", () => {
             row_description: "A-2",
             row_phase: "Quote",
             row_state: "Active",
+            vendor,
             amount: 120,
             amount_includes_vat: 0,
             vat_rate: 22,
@@ -84,6 +85,7 @@ describe("MPIT quick entry and row replacement selector", () => {
             row_description: "A-3",
             row_phase: "Actual",
             row_state: "Active",
+            vendor,
             amount: 140,
             amount_includes_vat: 0,
             vat_rate: 22,
@@ -99,7 +101,6 @@ describe("MPIT quick entry and row replacement selector", () => {
           doctype: "MPIT Expense",
           expense_kind: "Ordinary",
           expense_title: `Cypress RowRef B ${suffix}`,
-          workflow_state: "Open",
           year,
           cost_center: costCenter,
           uses_plafond: 0,
@@ -110,6 +111,7 @@ describe("MPIT quick entry and row replacement selector", () => {
               row_description: "B-1",
               row_phase: "Estimate",
               row_state: "Active",
+              vendor,
               amount: 80,
               amount_includes_vat: 0,
               vat_rate: 22,

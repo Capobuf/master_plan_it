@@ -104,7 +104,7 @@ def test_workspace_translation_targets_present():
         "New Project": "Nuovo progetto",
         "Forecast Total": "Totale forecast",
         "Actual Total": "Totale effettivo",
-        "Active Plafonds": "Plafond attivi",
+        "Plafonds": "Plafond",
         "Remaining Plafond": "Plafond residuo",
     }
 
@@ -239,9 +239,14 @@ def test_help_text_and_rule_translation_targets_present():
         "Row vendor is the official vendor used by reports and budget calculations.": (
             "Il fornitore della riga è il fornitore ufficiale usato dai report e dai calcoli di budget."
         ),
-        "Active rows contribute to totals. Replaced and Cancelled rows remain visible for audit but are excluded from totals.": (
-            "Le righe Active contribuiscono ai totali. Le righe Replaced e Cancelled restano visibili per audit ma sono escluse dai totali."
+        "System lifecycle used for row replacement and generated-row synchronization. It is read-only and is not used to exclude an Expense; delete the Expense instead.": (
+            "Lifecycle tecnico usato per la sostituzione righe e la sincronizzazione delle righe generate. È di sola lettura e non serve a escludere una Spesa; eliminare invece la Spesa."
         ),
+        "Amounts / VAT": "Importi e IVA",
+        "Calculated Dates": "Date calcolate",
+        "Project Stage": "Fase progetto",
+        "Linked Sources": "Fonti collegate",
+        "Financial Summary": "Riepilogo economico",
         "Replacement target. The replaced row will be marked as Replaced automatically.": (
             "Riga sostituita. La riga indicata verrà marcata automaticamente come Sostituita."
         ),
@@ -287,7 +292,12 @@ def test_main_pot_contains_help_text_source_strings():
         "Automatically renewed contract term.",
         "Source term used to generate this automatic renewal.",
         "Row vendor is the official vendor used by reports and budget calculations.",
-        "Active rows contribute to totals. Replaced and Cancelled rows remain visible for audit but are excluded from totals.",
+        "System lifecycle used for row replacement and generated-row synchronization. It is read-only and is not used to exclude an Expense; delete the Expense instead.",
+        "Amounts / VAT",
+        "Calculated Dates",
+        "Project Stage",
+        "Linked Sources",
+        "Financial Summary",
         "Replacement target. The replaced row will be marked as Replaced automatically.",
         "Contracts are context and generators; they are not added as independent budget totals.",
         "Projects are decision contexts; they do not create independent budget totals.",
