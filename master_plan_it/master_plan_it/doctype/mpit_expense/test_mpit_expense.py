@@ -25,6 +25,23 @@ class TestMPITExpense(FrappeTestCase):
         self.assertFalse(doc.project)
         self.assertFalse(doc.contract)
 
+    def test_ordinary_allows_contract_from_different_cost_center(self):
+        suffix = frappe.generate_hash(length=6).upper()
+        contract_cost_center = ensure_cost_center(f"CC-CONTRACT-LINK-{suffix}")
+        expense_cost_center = ensure_cost_center(f"CC-EXPENSE-LINK-{suffix}")
+        contract = ensure_contract(f"Contract Cross Link {suffix}", self.vendor, contract_cost_center)
+
+        doc = base_expense(self.year_name, expense_cost_center, contract=contract)
+        doc.append("rows", base_row(phase="Actual", amount=100, spend_date="2026-01-10"))
+        doc.insert()
+
+        self.assertEqual(doc.cost_center, expense_cost_center)
+        self.assertEqual(doc.contract, contract)
+        self.assertEqual(
+            frappe.db.get_value("MPIT Contract", contract, "cost_center"),
+            contract_cost_center,
+        )
+
     def test_ordinary_rejects_project_and_contract_together(self):
         doc = base_expense(self.year_name, self.cost_center, self.project, self.contract)
         doc.append("rows", base_row(phase="Actual", amount=100, spend_date="2026-01-10"))
@@ -360,7 +377,7 @@ class TestMPITExpense(FrappeTestCase):
         self.assertNotIn(doc.rows[2].name, names)
         self.assertNotIn(other.rows[0].name, names)
 
-    def test_cross_cost_center_plafond_reference_fails(self):
+    def test_cross_cost_center_plafond_reference_is_allowed(self):
         year_2030 = ensure_year(2030)
         suffix = frappe.generate_hash(length=6).upper()
         cc_funding = ensure_cost_center(f"CC-FUNDING-{suffix}")
@@ -382,8 +399,8 @@ class TestMPITExpense(FrappeTestCase):
         ordinary.is_extra = 0
         ordinary.plafond_expense = plafond.name
         ordinary.append("rows", base_row(phase="Actual", amount=250, spend_date="2030-02-10"))
-        with self.assertRaises(frappe.ValidationError):
-            ordinary.insert()
+        ordinary.insert()
+        self.assertEqual(ordinary.plafond_expense, plafond.name)
 
     def test_plafond_reference_must_belong_to_same_year(self):
         year_2030 = ensure_year(2030)

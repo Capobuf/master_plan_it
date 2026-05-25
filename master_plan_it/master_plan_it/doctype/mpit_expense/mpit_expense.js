@@ -163,11 +163,7 @@ function set_link_queries(frm) {
     });
 
     frm.set_query("contract", () => {
-        const filters = {};
-        if (frm.doc.cost_center) {
-            filters.cost_center = frm.doc.cost_center;
-        }
-        return { filters };
+        return { filters: {} };
     });
 
     frm.set_query("plafond_expense", () => {
@@ -177,9 +173,6 @@ function set_link_queries(frm) {
 
         if (frm.doc.year) {
             filters.year = frm.doc.year;
-        }
-        if (frm.doc.cost_center) {
-            filters.cost_center = frm.doc.cost_center;
         }
 
         return { filters };

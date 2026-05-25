@@ -145,6 +145,8 @@ def test_overview_and_contract_actualization_translation_targets_present():
         "Annual Contribution": "Contributo annuale",
         "Total Lines": "Totale righe",
         "Annual Total": "Totale annuale",
+        "Renewal - {0}": "Rinnovo - {0}",
+        "Automatic renewal": "Rinnovo automatico",
         "Contract expenses are synchronized automatically after saving.": (
             "Le spese contratto vengono sincronizzate automaticamente dopo il salvataggio."
         ),
@@ -179,8 +181,8 @@ def test_contract_fallback_translation_targets_absent():
 
 def test_plafond_cross_cost_center_translation_targets_present():
     expected = {
-        "Select the plafond consumed by this expense. Only non-cancelled plafonds from the same year are valid.": (
-            "Seleziona il plafond consumato da questa spesa. Sono validi solo plafond non annullati dello stesso anno."
+        "Select the plafond consumed by this expense. Plafonds from the same year are valid, even if they belong to another cost center.": (
+            "Seleziona il plafond consumato da questa spesa. Sono validi i plafond dello stesso anno, anche se appartengono a un altro centro di costo."
         ),
         "Plafond Consumed": "Plafond consumato",
         "Plafond Consumed: {0}": "Plafond consumato: {0}",
@@ -236,6 +238,8 @@ def test_help_text_and_rule_translation_targets_present():
         "Source term used to generate this automatic renewal.": (
             "Riga di origine usata per generare questo rinnovo automatico."
         ),
+        "Renewal - {0}": "Rinnovo - {0}",
+        "Automatic renewal": "Rinnovo automatico",
         "Row vendor is the official vendor used by reports and budget calculations.": (
             "Il fornitore della riga è il fornitore ufficiale usato dai report e dai calcoli di budget."
         ),
@@ -250,8 +254,8 @@ def test_help_text_and_rule_translation_targets_present():
         "Replacement target. The replaced row will be marked as Replaced automatically.": (
             "Riga sostituita. La riga indicata verrà marcata automaticamente come Sostituita."
         ),
-        "Contracts are context and generators; they are not added as independent budget totals.": (
-            "I contratti sono contesto e generatori; non vengono sommati come totali di budget indipendenti."
+        "Optional contract related to this expense. The expense keeps its own cost center; the contract is a logical reference.": (
+            "Contratto opzionale collegato a questa spesa. La spesa mantiene il proprio centro di costo; il contratto è un riferimento logico."
         ),
         "Projects are decision contexts; they do not create independent budget totals.": (
             "I progetti sono contesti decisionali; non creano totali di budget indipendenti."
@@ -291,6 +295,8 @@ def test_main_pot_contains_help_text_source_strings():
         "Contract terms are mandatory because contract status and generated expenses are calculated from them.",
         "Automatically renewed contract term.",
         "Source term used to generate this automatic renewal.",
+        "Renewal - {0}",
+        "Automatic renewal",
         "Row vendor is the official vendor used by reports and budget calculations.",
         "System lifecycle used for row replacement and generated-row synchronization. It is read-only and is not used to exclude an Expense; delete the Expense instead.",
         "Amounts / VAT",
@@ -299,7 +305,7 @@ def test_main_pot_contains_help_text_source_strings():
         "Linked Sources",
         "Financial Summary",
         "Replacement target. The replaced row will be marked as Replaced automatically.",
-        "Contracts are context and generators; they are not added as independent budget totals.",
+        "Optional contract related to this expense. The expense keeps its own cost center; the contract is a logical reference.",
         "Projects are decision contexts; they do not create independent budget totals.",
         "Official budget totals are calculated from active expense rows only.",
         "At least one Contract Term is required.",
@@ -307,6 +313,7 @@ def test_main_pot_contains_help_text_source_strings():
         "Vendor is required on ordinary expense rows (row #{0}).",
         "Actual rows cannot be replaced.",
         "Replacement cycle detected on row {0}.",
+        "Select the plafond consumed by this expense. Plafonds from the same year are valid, even if they belong to another cost center.",
     }
 
     sources = _load_po_translations(_main_pot_path())
@@ -322,14 +329,17 @@ def test_minimum_budget_refactor_i18n_targets_present_in_pot_and_it_po():
         "Official budget totals are calculated from active expense rows only.": (
             "I totali ufficiali del budget sono calcolati solo dalle righe spesa attive."
         ),
-        "Contracts are context and generators; they are not added as independent budget totals.": (
-            "I contratti sono contesto e generatori; non vengono sommati come totali di budget indipendenti."
+        "Optional contract related to this expense. The expense keeps its own cost center; the contract is a logical reference.": (
+            "Contratto opzionale collegato a questa spesa. La spesa mantiene il proprio centro di costo; il contratto è un riferimento logico."
         ),
         "Row vendor is the official vendor used by reports and budget calculations.": (
             "Il fornitore della riga è il fornitore ufficiale usato dai report e dai calcoli di budget."
         ),
         "Select the year when this deferred project must return to proposal stage.": (
             "Seleziona l’anno in cui questo progetto rimandato deve tornare allo stato proposto."
+        ),
+        "Select the plafond consumed by this expense. Plafonds from the same year are valid, even if they belong to another cost center.": (
+            "Seleziona il plafond consumato da questa spesa. Sono validi i plafond dello stesso anno, anche se appartengono a un altro centro di costo."
         ),
     }
 

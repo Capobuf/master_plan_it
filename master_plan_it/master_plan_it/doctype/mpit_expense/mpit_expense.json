@@ -102,7 +102,7 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary'",
-   "description": "Contracts are context and generators; they are not added as independent budget totals.",
+   "description": "Optional contract related to this expense. The expense keeps its own cost center; the contract is a logical reference.",
    "fieldname": "contract",
    "fieldtype": "Link",
    "in_standard_filter": 1,
@@ -126,7 +126,7 @@
   },
   {
    "depends_on": "eval:doc.expense_kind=='Ordinary' && doc.uses_plafond",
-   "description": "Select the plafond consumed by this expense. Only plafonds from the same year and cost center are valid.",
+   "description": "Select the plafond consumed by this expense. Plafonds from the same year are valid, even if they belong to another cost center.",
    "fieldname": "plafond_expense",
    "fieldtype": "Link",
    "label": "Plafond Reference",

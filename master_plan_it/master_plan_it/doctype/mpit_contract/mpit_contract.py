@@ -9,7 +9,10 @@ from frappe.model.naming import make_autoname, revert_series_if_last
 from frappe.utils import add_days, flt, getdate
 
 from master_plan_it import annualization, mpit_defaults
-from master_plan_it.master_plan_it.services.contract_expense_sync import sync_contract_expenses
+from master_plan_it.master_plan_it.services.contract_expense_sync import (
+    get_generated_contract_expense_name,
+    sync_contract_expenses,
+)
 from master_plan_it.naming_utils import sync_series_to_max
 
 
@@ -396,25 +399,8 @@ def _resolve_target_year_name(year: str | None) -> tuple[str, bool]:
     return selected_year, has_year_records
 
 
-def _get_existing_contract_year_expense_name(contract_name: str, year_name: str) -> str | None:
-    expenses = frappe.get_all(
-        "MPIT Expense",
-        filters={
-            "contract": contract_name,
-            "year": year_name,
-            "expense_kind": "Ordinary",
-        },
-        fields=["name"],
-        order_by="creation asc",
-        limit=1,
-    )
-    if expenses:
-        return expenses[0].name
-    return None
-
-
 def _get_sync_status(contract_name: str, year_name: str) -> dict:
-    expense_name = _get_existing_contract_year_expense_name(contract_name, year_name)
+    expense_name = get_generated_contract_expense_name(contract_name, year_name)
     if not expense_name:
         return {
             "year": year_name,

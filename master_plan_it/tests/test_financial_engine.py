@@ -257,6 +257,53 @@ class TestFinancialEngine(FrappeTestCase):
         self.assertEqual(monthly["totals"]["forecast_total"], project_summary["forecast_total_net"])
         self.assertEqual(monthly["totals"]["actual_total"], project_summary["actual_total_net"])
 
+    def test_monthly_dataset_respects_mp_it_year_start_and_end(self):
+        fiscal_year = ensure_year_with_bounds(2400, "2400-04-01", "2401-03-31")
+
+        make_expense(
+            year=fiscal_year,
+            cost_center=self.cost_center,
+            project=self.project,
+            is_extra=1,
+            rows=[
+                expense_row(
+                    "Estimate",
+                    120,
+                    "Active",
+                    spend_date=None,
+                    start_date="2400-04-01",
+                    end_date="2401-03-31",
+                    distribution="all",
+                ),
+                expense_row("Actual", 24, "Active", spend_date="2401-01-15"),
+            ],
+        )
+
+        monthly = get_monthly_forecast_vs_actual(fiscal_year, project=self.project)
+        labels = [row["month"] for row in monthly["months"]]
+
+        self.assertEqual(
+            labels,
+            [
+                "Apr 2400",
+                "May 2400",
+                "Jun 2400",
+                "Jul 2400",
+                "Aug 2400",
+                "Sep 2400",
+                "Oct 2400",
+                "Nov 2400",
+                "Dec 2400",
+                "Jan 2401",
+                "Feb 2401",
+                "Mar 2401",
+            ],
+        )
+        self.assertEqual(monthly["months"][0]["month_index"], 4)
+        self.assertEqual(monthly["months"][-1]["month_index"], 3)
+        self.assertEqual(monthly["totals"]["forecast_total"], 120)
+        self.assertEqual(monthly["totals"]["actual_total"], 24)
+
     def test_standalone_extra_is_included_in_cost_center_and_overview_totals(self):
         make_expense(
             year=self.year,
@@ -309,9 +356,10 @@ class TestFinancialEngine(FrappeTestCase):
         self.assertEqual(aggregate["plafond_total"], 1100)
         self.assertEqual(aggregate["plafond_consumed"], 125)
 
-    def test_same_cost_center_plafond_consumption_semantics(self):
+    def test_cross_cost_center_plafond_consumption_semantics(self):
         year = ensure_year(2030)
         cc_funding = ensure_cost_center(f"CC-FUNDING-{self.suffix}")
+        cc_infra = ensure_cost_center(f"CC-INFRA-{self.suffix}")
 
         plafond = make_expense(
             year=year,
@@ -321,7 +369,7 @@ class TestFinancialEngine(FrappeTestCase):
         )
         make_expense(
             year=year,
-            cost_center=cc_funding,
+            cost_center=cc_infra,
             uses_plafond=1,
             is_extra=0,
             plafond_expense=plafond.name,
@@ -329,14 +377,21 @@ class TestFinancialEngine(FrappeTestCase):
         )
 
         actual_funding = get_actual_totals(year, cost_center=cc_funding)
+        actual_infra = get_actual_totals(year, cost_center=cc_infra)
         plafond_funding = get_plafond_totals(year, cost_center=cc_funding)
         summary_funding = get_cost_center_financial_summary(year, cc_funding)
+        summary_infra = get_cost_center_financial_summary(year, cc_infra)
 
-        self.assertEqual(actual_funding["actual_on_plafond"], 250)
+        self.assertEqual(actual_funding["actual_on_plafond"], 0)
+        self.assertEqual(actual_infra["actual_on_plafond"], 250)
         self.assertEqual(plafond_funding["plafond_total"], 1000)
         self.assertEqual(plafond_funding["plafond_consumed"], 250)
         self.assertEqual(plafond_funding["plafond_remaining"], 750)
         self.assertEqual(summary_funding["plafond_consumed"], 250)
+        self.assertEqual(summary_funding["actual_total"], 0)
+        self.assertEqual(summary_infra["actual_total"], 250)
+        self.assertEqual(summary_infra["plafond"], 0)
+        self.assertEqual(summary_infra["plafond_consumed"], 0)
 
     def test_actual_standard_and_total_invariant(self):
         plafond = make_expense(
@@ -481,6 +536,22 @@ def ensure_year(year: int) -> str:
             "year": year,
             "start_date": f"{year}-01-01",
             "end_date": f"{year}-12-31",
+        }
+    )
+    doc.insert(ignore_permissions=True)
+    return doc.name
+
+
+def ensure_year_with_bounds(year: int, start_date: str, end_date: str) -> str:
+    if frappe.db.exists("MPIT Year", str(year)):
+        return str(year)
+
+    doc = frappe.get_doc(
+        {
+            "doctype": "MPIT Year",
+            "year": year,
+            "start_date": start_date,
+            "end_date": end_date,
         }
     )
     doc.insert(ignore_permissions=True)

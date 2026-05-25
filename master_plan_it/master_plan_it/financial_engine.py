@@ -81,7 +81,11 @@ def allocate_contract_amount_to_year(
     return flt(monthly_net * overlap_months, 2)
 
 
-def allocate_expense_row_to_months(row: dict, year_start: datetime.date, year_end: datetime.date) -> dict[int, float]:
+def allocate_expense_row_to_months(
+    row: dict,
+    year_start: datetime.date,
+    year_end: datetime.date,
+) -> dict[datetime.date, float]:
     amount = flt(row.get("amount_net"), 2)
     if amount == 0:
         return {}
@@ -90,7 +94,7 @@ def allocate_expense_row_to_months(row: dict, year_start: datetime.date, year_en
     if spend_date:
         spend = getdate(spend_date)
         if year_start <= spend <= year_end:
-            return {spend.month: amount}
+            return {datetime.date(spend.year, spend.month, 1): amount}
         return {}
 
     start_date = row.get("start_date")
@@ -103,7 +107,7 @@ def allocate_expense_row_to_months(row: dict, year_start: datetime.date, year_en
     if period_start > period_end:
         return {}
 
-    months = _months_touched(period_start, period_end)
+    months = _month_periods_touched(period_start, period_end)
     if not months:
         return {}
 
@@ -114,9 +118,9 @@ def allocate_expense_row_to_months(row: dict, year_start: datetime.date, year_en
         return {months[-1]: amount}
 
     per_month = flt(amount / len(months), 6)
-    out: dict[int, float] = {}
-    for month in months:
-        out[month] = flt(out.get(month, 0) + per_month, 6)
+    out: dict[datetime.date, float] = {}
+    for month_start in months:
+        out[month_start] = flt(out.get(month_start, 0) + per_month, 6)
     return out
 
 
@@ -1035,8 +1039,8 @@ def get_monthly_forecast_vs_actual(
     )
     for row in forecast_rows:
         monthly_map = allocate_expense_row_to_months(row, year_start, year_end)
-        for month, value in monthly_map.items():
-            forecast_by_month[month] += flt(value, 6)
+        for month_start, value in monthly_map.items():
+            forecast_by_month[month_start] += flt(value, 6)
 
     actual_rows = _get_active_rows(
         year_int,
@@ -1048,28 +1052,37 @@ def get_monthly_forecast_vs_actual(
     )
     for row in actual_rows:
         monthly_map = allocate_expense_row_to_months(row, year_start, year_end)
-        for month, value in monthly_map.items():
-            actual_by_month[month] += flt(value, 6)
+        for month_start, value in monthly_map.items():
+            actual_by_month[month_start] += flt(value, 6)
 
     months = []
     forecast_total = 0.0
     actual_total = 0.0
 
-    for month in range(1, 13):
-        forecast_value = flt(forecast_by_month.get(month, 0), 2)
-        actual_value = flt(actual_by_month.get(month, 0), 2)
+    current = datetime.date(year_start.year, year_start.month, 1)
+    limit = datetime.date(year_end.year, year_end.month, 1)
+    while current <= limit:
+        forecast_value = flt(forecast_by_month.get(current, 0), 2)
+        actual_value = flt(actual_by_month.get(current, 0), 2)
         forecast_total += forecast_value
         actual_total += actual_value
 
         months.append(
             {
-                "month_index": month,
-                "month": calendar.month_abbr[month],
+                "month_index": current.month,
+                "calendar_year": current.year,
+                "calendar_month": current.month,
+                "month": _format_month_label(current, year_start, year_end),
                 "forecast": forecast_value,
                 "actual": actual_value,
                 "delta": flt(forecast_value - actual_value, 2),
             }
         )
+
+        if current.month == 12:
+            current = datetime.date(current.year + 1, 1, 1)
+        else:
+            current = datetime.date(current.year, current.month + 1, 1)
 
     return {
         "year": str(year_int),
@@ -1298,3 +1311,25 @@ def _months_touched(period_start: datetime.date, period_end: datetime.date) -> l
             current = datetime.date(current.year, current.month + 1, 1)
 
     return months
+
+
+def _month_periods_touched(period_start: datetime.date, period_end: datetime.date) -> list[datetime.date]:
+    month_starts = []
+    current = datetime.date(period_start.year, period_start.month, 1)
+    limit = datetime.date(period_end.year, period_end.month, 1)
+
+    while current <= limit:
+        month_starts.append(current)
+        if current.month == 12:
+            current = datetime.date(current.year + 1, 1, 1)
+        else:
+            current = datetime.date(current.year, current.month + 1, 1)
+
+    return month_starts
+
+
+def _format_month_label(month_start: datetime.date, year_start: datetime.date, year_end: datetime.date) -> str:
+    label = calendar.month_abbr[month_start.month]
+    if year_start.year != year_end.year:
+        return f"{label} {month_start.year}"
+    return label

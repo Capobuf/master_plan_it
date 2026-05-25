@@ -553,12 +553,13 @@ class TestOverviewModes(FrappeTestCase):
         self.assertIn("default: String(new Date().getFullYear())", js_src)
 
 
-class TestSameCostCenterPlafondOverview(FrappeTestCase):
+class TestCrossCostCenterPlafondOverview(FrappeTestCase):
     def setUp(self):
         frappe.set_user("Administrator")
         self.suffix = uuid4().hex[:6].upper()
         self.year = ensure_year(2030)
         self.cc_funding = ensure_cost_center(f"CC-FUNDING-{self.suffix}")
+        self.cc_infra = ensure_cost_center(f"CC-INFRA-{self.suffix}")
         self.vendor = ensure_vendor(f"Vendor Cross {self.suffix}")
 
         plafond = frappe.get_doc(
@@ -589,7 +590,7 @@ class TestSameCostCenterPlafondOverview(FrappeTestCase):
                 "expense_title": f"Plafond Consume {self.suffix}",
                 "expense_kind": "Ordinary",
                 "year": self.year,
-                "cost_center": self.cc_funding,
+                "cost_center": self.cc_infra,
                 "uses_plafond": 1,
                 "is_extra": 0,
                 "plafond_expense": plafond.name,
@@ -618,11 +619,17 @@ class TestSameCostCenterPlafondOverview(FrappeTestCase):
 
         rows_by_cc = {row.get("cost_center"): row for row in data}
         funding = rows_by_cc[self.cc_funding]
+        infra = rows_by_cc[self.cc_infra]
 
         self.assertEqual(funding.get("plafond"), 1000)
         self.assertEqual(funding.get("plafond_consumed"), 250)
         self.assertEqual(funding.get("remaining"), 750)
-        self.assertEqual(funding.get("actual_on_plafond"), 250)
+        self.assertEqual(funding.get("actual_on_plafond"), 0)
+        self.assertEqual(funding.get("actual_total"), 0)
+        self.assertEqual(infra.get("plafond"), 0)
+        self.assertEqual(infra.get("plafond_consumed"), 0)
+        self.assertEqual(infra.get("actual_on_plafond"), 250)
+        self.assertEqual(infra.get("actual_total"), 250)
 
     def test_plafond_usage_chart_uses_plafond_consumed(self):
         chart = run_plafond_usage_by_cost_center_chart({"year": self.year})
@@ -632,10 +639,13 @@ class TestSameCostCenterPlafondOverview(FrappeTestCase):
         consumed_values = datasets.get("Consumed") or datasets.get("Consumato")
         self.assertIsNotNone(consumed_values)
         self.assertIn(self.cc_funding, labels)
+        self.assertIn(self.cc_infra, labels)
 
         funding_index = labels.index(self.cc_funding)
+        infra_index = labels.index(self.cc_infra)
 
         self.assertEqual(consumed_values[funding_index], 250)
+        self.assertEqual(consumed_values[infra_index], 0)
 
 
 # ---------------------------------------------------------------------------

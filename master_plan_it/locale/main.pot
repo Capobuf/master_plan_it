@@ -115,9 +115,12 @@ msgstr ""
 msgid "Actual current year: not created"
 msgstr ""
 
-#: master_plan_it/master_plan_it/services/contract_expense_sync.py:181
-#: master_plan_it/master_plan_it/services/contract_expense_sync.py:208
-msgid "Actual from contract {0} - {1}"
+#: master_plan_it/master_plan_it/services/contract_expense_sync.py:231
+msgid "Renewal - {0}"
+msgstr ""
+
+#: master_plan_it/master_plan_it/services/contract_expense_sync.py:235
+msgid "Automatic renewal"
 msgstr ""
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:142
@@ -479,7 +482,7 @@ msgstr ""
 
 #. Description of the 'Contract' (Link) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "Contracts are context and generators; they are not added as independent budget totals."
+msgid "Optional contract related to this expense. The expense keeps its own cost center; the contract is a logical reference."
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:388
@@ -1881,7 +1884,7 @@ msgstr ""
 #. Description of the 'Plafond Reference' (Link) field in DocType 'MPIT
 #. Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "Select the plafond consumed by this expense. Only plafonds from the same year and cost center are valid."
+msgid "Select the plafond consumed by this expense. Plafonds from the same year are valid, even if they belong to another cost center."
 msgstr ""
 
 #. Description of the 'Defer To Year' (Link) field in DocType 'MPIT Project'
@@ -1991,6 +1994,10 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
 msgid "Summary"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:59
+msgid "Build-up"
 msgstr ""
 
 #. Label of the summary_year (Link) field in DocType 'MPIT Project'
@@ -2231,6 +2238,14 @@ msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:46
 msgid "Visualization"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:37
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:31
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:80
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:19
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:43
+msgid "All"
 msgstr ""
 
 #. Description of the 'Auto Renew Terms' (Check) field in DocType 'MPIT

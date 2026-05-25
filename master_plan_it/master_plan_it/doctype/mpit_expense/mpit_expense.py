@@ -81,10 +81,9 @@ class MPITExpense(Document):
             frappe.throw(_("Referenced Plafond does not exist."))
         if plafond.expense_kind != "Plafond":
             frappe.throw(_("Referenced document must be a Plafond."))
+        # The plafond owns budget in its cost center, but an ordinary expense may consume it from another cost center; the selected plafond document is the funding source.
         if str(plafond.year) != str(self.year):
             frappe.throw(_("Referenced Plafond must belong to the same year."))
-        if plafond.cost_center != self.cost_center:
-            frappe.throw(_("Referenced Plafond must belong to the same Cost Center."))
 
     def _validate_rows(self) -> None:
         if not self.rows:
@@ -289,8 +288,6 @@ def get_available_plafonds(year: str, cost_center: str | None = None) -> list[st
         "expense_kind": "Plafond",
         "year": year,
     }
-    if cost_center:
-        filters["cost_center"] = cost_center
 
     return frappe.get_all(
         "MPIT Expense",

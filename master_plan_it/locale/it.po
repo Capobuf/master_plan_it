@@ -115,10 +115,13 @@ msgstr "Effettivo anno corrente: completo"
 msgid "Actual current year: not created"
 msgstr "Effettivo anno corrente: non creato"
 
-#: master_plan_it/master_plan_it/services/contract_expense_sync.py:181
-#: master_plan_it/master_plan_it/services/contract_expense_sync.py:208
-msgid "Actual from contract {0} - {1}"
-msgstr ""
+#: master_plan_it/master_plan_it/services/contract_expense_sync.py:231
+msgid "Renewal - {0}"
+msgstr "Rinnovo - {0}"
+
+#: master_plan_it/master_plan_it/services/contract_expense_sync.py:235
+msgid "Automatic renewal"
+msgstr "Rinnovo automatico"
 
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:142
 msgid "Actual rows cannot be replaced."
@@ -479,8 +482,8 @@ msgstr "Contratti"
 
 #. Description of the 'Contract' (Link) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "Contracts are context and generators; they are not added as independent budget totals."
-msgstr "I contratti sono contesto e generatori; non vengono sommati come totali di budget indipendenti."
+msgid "Optional contract related to this expense. The expense keeps its own cost center; the contract is a logical reference."
+msgstr "Contratto opzionale collegato a questa spesa. La spesa mantiene il proprio centro di costo; il contratto è un riferimento logico."
 
 #: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:388
 msgid "Contracts grouped by renewal urgency"
@@ -1881,8 +1884,8 @@ msgstr "Seleziona come visualizzare il report: riepilogo, dettaglio per blocchi 
 #. Description of the 'Plafond Reference' (Link) field in DocType 'MPIT
 #. Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
-msgid "Select the plafond consumed by this expense. Only plafonds from the same year and cost center are valid."
-msgstr ""
+msgid "Select the plafond consumed by this expense. Plafonds from the same year are valid, even if they belong to another cost center."
+msgstr "Seleziona il plafond consumato da questa spesa. Sono validi i plafond dello stesso anno, anche se appartengono a un altro centro di costo."
 
 #. Description of the 'Defer To Year' (Link) field in DocType 'MPIT Project'
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
@@ -1992,6 +1995,10 @@ msgstr "Stato"
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
 msgid "Summary"
 msgstr "Riepilogo"
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:59
+msgid "Build-up"
+msgstr "Composizione"
 
 #. Label of the summary_year (Link) field in DocType 'MPIT Project'
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
@@ -2232,6 +2239,14 @@ msgstr "Fornitori"
 #: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:46
 msgid "Visualization"
 msgstr "Visualizzazione"
+
+#: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:37
+#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:31
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:80
+#: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:19
+#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:43
+msgid "All"
+msgstr "Tutto"
 
 #. Description of the 'Auto Renew Terms' (Check) field in DocType 'MPIT
 #. Contract'

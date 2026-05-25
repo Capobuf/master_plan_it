@@ -112,7 +112,7 @@ def _build_expected_rows_for_year(
         expected.append(
             {
                 "external_reference": _build_external_reference(year_name, contract.name, term.name),
-                "row_description": _build_row_description(contract, term.name),
+                "row_description": _build_row_description(),
                 "vendor": contract.vendor,
                 "amount": annual_contribution,
                 "amount_includes_vat": 0,
@@ -136,26 +136,34 @@ def _resolve_term_end(terms: list, idx: int, fallback_end: datetime.date) -> dat
     return fallback_end
 
 
-def _sync_contract_year_expense(contract, year_name: str, expected_rows: list[dict]) -> dict:
-    expenses = frappe.get_all(
-        "MPIT Expense",
-        filters={
-            "contract": contract.name,
-            "year": year_name,
-            "expense_kind": "Ordinary",
-        },
-        fields=["name"],
-        order_by="creation asc",
-        limit=None,
+def get_generated_contract_expense_name(contract_name: str, year_name: str) -> str | None:
+    prefix = f"{SYNC_PREFIX}{year_name}::{contract_name}::TERM::"
+    parents = frappe.db.sql(
+        """
+        SELECT DISTINCT r.parent
+        FROM `tabMPIT Expense Row` r
+        INNER JOIN `tabMPIT Expense` e ON e.name = r.parent
+        WHERE r.external_reference LIKE %(prefix)s
+        ORDER BY r.parent
+        """,
+        {"prefix": f"{prefix}%"},
+        as_dict=True,
     )
-    if len(expenses) > 1:
+    if not parents:
+        return None
+    if len(parents) > 1:
         frappe.throw(
             _(
                 "Contract {0} has multiple generated expenses for MPIT Year {1}. Keep only one expense before syncing."
-            ).format(contract.name, year_name)
+            ).format(contract_name, year_name)
         )
+    return parents[0].parent
 
-    if not expenses and not expected_rows:
+
+def _sync_contract_year_expense(contract, year_name: str, expected_rows: list[dict]) -> dict:
+    generated_expense_name = get_generated_contract_expense_name(contract.name, year_name)
+    # Manual expenses may share contract/year. The generated renewal expense is identified by generated row references, not by the contract link alone.
+    if not generated_expense_name and not expected_rows:
         return {
             "expenses_created": 0,
             "expenses_updated": 0,
@@ -165,20 +173,14 @@ def _sync_contract_year_expense(contract, year_name: str, expected_rows: list[di
         }
 
     created = False
-    if expenses:
-        expense_doc = frappe.get_doc("MPIT Expense", expenses[0].name)
-        if expense_doc.project:
-            frappe.throw(
-                _(
-                    "Expense {0} has both Contract and Project set. Clear Project before automatic contract sync."
-                ).format(expense_doc.name)
-            )
+    if generated_expense_name:
+        expense_doc = frappe.get_doc("MPIT Expense", generated_expense_name)
     else:
         expense_doc = frappe.new_doc("MPIT Expense")
         expense_doc.update(
             {
                 "expense_kind": "Ordinary",
-                "expense_title": _("Actual from contract {0} - {1}").format(contract.name, year_name),
+                "expense_title": _build_generated_expense_title(contract),
                 "year": year_name,
                 "cost_center": contract.cost_center,
                 "contract": contract.name,
@@ -197,39 +199,16 @@ def _sync_contract_year_expense(contract, year_name: str, expected_rows: list[di
         if (row.external_reference or "").startswith(prefix)
     }
 
+    # Generated actuals are a starting point. Once created, user edits are authoritative, so later sync only creates missing generated rows.
     changed = False
     rows_added = 0
-    rows_updated = 0
-    rows_cancelled = 0
-
-    if expense_doc.cost_center != contract.cost_center:
-        expense_doc.cost_center = contract.cost_center
-        changed = True
-    expected_title = _("Actual from contract {0} - {1}").format(contract.name, year_name)
-    if expense_doc.expense_title != expected_title:
-        expense_doc.expense_title = expected_title
-        changed = True
 
     for external_reference, expected in expected_by_reference.items():
-        existing_row = existing_generated_by_reference.get(external_reference)
-        if not existing_row:
-            expense_doc.append("rows", expected)
-            rows_added += 1
-            changed = True
+        if external_reference in existing_generated_by_reference:
             continue
-
-        row_changed = _sync_existing_generated_row(existing_row, expected)
-        if row_changed:
-            rows_updated += 1
-            changed = True
-
-    for external_reference, row in existing_generated_by_reference.items():
-        if external_reference in expected_by_reference:
-            continue
-        if row.row_state != "Cancelled":
-            row.row_state = "Cancelled"
-            rows_cancelled += 1
-            changed = True
+        expense_doc.append("rows", expected)
+        rows_added += 1
+        changed = True
 
     if created:
         expense_doc.insert()
@@ -240,40 +219,18 @@ def _sync_contract_year_expense(contract, year_name: str, expected_rows: list[di
         "expenses_created": 1 if created else 0,
         "expenses_updated": 0 if created else int(changed),
         "rows_added": rows_added,
-        "rows_updated": rows_updated,
-        "rows_cancelled": rows_cancelled,
+        "rows_updated": 0,
+        "rows_cancelled": 0,
     }
-
-
-def _sync_existing_generated_row(row, expected: dict) -> bool:
-    changed = False
-    for fieldname in (
-        "row_state",
-        "row_phase",
-        "row_description",
-        "vendor",
-        "amount",
-        "amount_includes_vat",
-        "vat_rate",
-        "start_date",
-        "end_date",
-        "distribution",
-    ):
-        current_value = row.get(fieldname)
-        expected_value = expected.get(fieldname)
-        if current_value != expected_value:
-            row.set(fieldname, expected_value)
-            changed = True
-
-    if row.spend_date:
-        row.spend_date = None
-        changed = True
-    return changed
 
 
 def _build_external_reference(year_name: str, contract_name: str, term_name: str) -> str:
     return f"{SYNC_PREFIX}{year_name}::{contract_name}::TERM::{term_name}"
 
 
-def _build_row_description(contract, term_name: str) -> str:
-    return _("{0} [{1}]").format((contract.description or contract.name), term_name)
+def _build_generated_expense_title(contract) -> str:
+    return _("Renewal - {0}").format(contract.description or contract.name)
+
+
+def _build_row_description() -> str:
+    return _("Automatic renewal")
