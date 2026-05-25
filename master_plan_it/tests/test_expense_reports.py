@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from uuid import uuid4
 
 import frappe
@@ -309,7 +310,29 @@ class TestOverviewModes(FrappeTestCase):
         self.assertTrue(columns)
         self.assertTrue(data)
         labels = {row.get("label") for row in report_summary or []}
-        self.assertIn("Standard", labels)
+        self.assertIn("Ordinary Actual Spend", labels)
+
+    def test_summary_report_summary_uses_business_labels(self):
+        columns, data, _message, _chart, report_summary = run_overview(
+            {"year": self.year, "cost_center": self.cc, "view_mode": "Summary"}
+        )
+        self.assertTrue(columns)
+        self.assertTrue(data)
+
+        labels = {row.get("label") for row in report_summary or []}
+        for expected in {
+            "Forecast Budget",
+            "Actual Spend",
+            "Approved Projects",
+            "Proposed Projects",
+            "Ideas Outside Budget",
+            "Ordinary Actual Spend",
+            "Consumed Plafond",
+            "Remaining Plafond",
+            "Over Plafond",
+            "Extra Budget",
+        }:
+            self.assertIn(expected, labels)
 
     def test_summary_project_filter_not_present_in_simple_call(self):
         """
@@ -551,6 +574,90 @@ class TestOverviewModes(FrappeTestCase):
 
         self.assertIn('fieldname: "year"', js_src)
         self.assertIn("default: String(new Date().getFullYear())", js_src)
+
+    def test_html_print_template_uses_business_pdf_sections(self):
+        import master_plan_it.master_plan_it.report.mpit_overview as _mod_pkg
+
+        report_dir = os.path.dirname(os.path.abspath(_mod_pkg.__file__))
+        html_path = os.path.join(report_dir, "mpit_overview.html")
+        with open(html_path) as fh:
+            html_src = fh.read()
+
+        for expected in (
+            "IT Economic Overview",
+            "Budget approval note",
+            "Financial Legend",
+            "Meeting approval",
+            "Approved by",
+            "Approval date",
+            "Signature",
+        ):
+            self.assertIn(expected, html_src)
+
+    def test_html_print_standard_profile_includes_plafond_consumed(self):
+        import master_plan_it.master_plan_it.report.mpit_overview as _mod_pkg
+
+        report_dir = os.path.dirname(os.path.abspath(_mod_pkg.__file__))
+        html_path = os.path.join(report_dir, "mpit_overview.html")
+        with open(html_path) as fh:
+            html_src = fh.read()
+
+        self.assertIn('"plafond_consumed"', html_src)
+        self.assertIn('field === "plafond_consumed"', html_src)
+
+    def test_html_print_standard_profile_uses_compact_pdf_labels(self):
+        import master_plan_it.master_plan_it.report.mpit_overview as _mod_pkg
+
+        report_dir = os.path.dirname(os.path.abspath(_mod_pkg.__file__))
+        html_path = os.path.join(report_dir, "mpit_overview.html")
+        with open(html_path) as fh:
+            html_src = fh.read()
+
+        self.assertIn("printColumnLabel", html_src)
+        self.assertIn('"actual_total": __("Effettivo")', html_src)
+        self.assertIn('"forecast_total": __("Previsto")', html_src)
+        self.assertIn('"plafond_consumed": __("Consumato")', html_src)
+        self.assertIn("PDF headers are intentionally shorter", html_src)
+
+    def test_html_print_standard_profile_excludes_ideas_to_prevent_pdf_clipping(self):
+        import master_plan_it.master_plan_it.report.mpit_overview as _mod_pkg
+
+        report_dir = os.path.dirname(os.path.abspath(_mod_pkg.__file__))
+        html_path = os.path.join(report_dir, "mpit_overview.html")
+        with open(html_path) as fh:
+            html_src = fh.read()
+
+        match = re.search(r"Standard:\s*\[(.*?)\]", html_src, re.DOTALL)
+        self.assertIsNotNone(match)
+        standard_block = match.group(1)
+        self.assertNotIn('"ideas"', standard_block)
+        self.assertIn('"plafond_consumed"', standard_block)
+
+    def test_html_print_template_avoids_line_comments_in_microtemplate(self):
+        import master_plan_it.master_plan_it.report.mpit_overview as _mod_pkg
+
+        report_dir = os.path.dirname(os.path.abspath(_mod_pkg.__file__))
+        html_path = os.path.join(report_dir, "mpit_overview.html")
+        with open(html_path) as fh:
+            html_src = fh.read()
+
+        self.assertNotIn("// Print profiles define", html_src)
+
+    def test_html_print_template_maps_technical_filter_values(self):
+        import master_plan_it.master_plan_it.report.mpit_overview as _mod_pkg
+
+        report_dir = os.path.dirname(os.path.abspath(_mod_pkg.__file__))
+        html_path = os.path.join(report_dir, "mpit_overview.html")
+        with open(html_path) as fh:
+            html_src = fh.read()
+
+        for expected in (
+            '"Summary": __("Executive Summary")',
+            '"Build-up": __("Budget Build-up")',
+            '"Lines": __("Detailed Lines")',
+            '"Actual with Estimates and Quotes": __("Actual Spend with Estimates and Quotes")',
+        ):
+            self.assertIn(expected, html_src)
 
 
 class TestCrossCostCenterPlafondOverview(FrappeTestCase):

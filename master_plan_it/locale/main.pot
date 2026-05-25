@@ -2344,3 +2344,294 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.py:213
 msgid "{0} must be inside the selected year."
 msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "IT Economic Overview"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Budget, actual spend, forecasts and plafond"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Financial View"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Report View"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Executive Summary"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Budget Build-up"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Detailed Lines"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Auto"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Portrait"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Landscape"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Compact"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Ultra"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Actual Spend"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Forecast Budget"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Actual Spend with Estimates and Quotes"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+msgid "Estimates"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+msgid "Quotes"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Approved Projects"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Proposed Projects"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Ideas Outside Budget"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+msgid "Ordinary Actual Spend"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+msgid "Actual Spend On Plafond"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+msgid "Extra Budget"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+msgid "Consumed Plafond"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Budget approval note"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "This document summarizes the IT economic position using data recorded in Master Plan IT. The approved budget is the printed PDF version shared and approved during the meeting."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Financial Legend"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Actual rows already consumed in the selected year, including contract-generated expenses."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Estimates and quotes included by the selected financial view."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Forecast values linked to approved projects; this is not the official approved PDF budget."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Forecast values linked to proposed projects and useful for meeting discussion."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Tracked ideas that remain outside the main budget totals."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Available plafond after consumed plafond."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Amount exceeding available plafond."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Meeting approval"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Meeting notes"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Approved by"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Approval date"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Signature"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Generated by"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+msgid "Choose whether to show actual spend, forecast values, or actual spend enriched with estimates and quotes."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+msgid "Select the executive summary, budget build-up, or detailed source lines."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+msgid "Controls how many columns are printed in the PDF."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+msgid "Controls the PDF page orientation. Auto selects the safer orientation for the selected profile."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+msgid "Controls PDF table spacing without changing report values."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Centro di costo"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Effettivo"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Previsto"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Approvati"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Proposte"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Idee"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Consumato"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Residuo"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Sforamento"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Spesa/Riga"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Fornitore"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Contratto"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Progetto"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Fase"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Copertura"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Periodo/Data"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Contributo annuo"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Importo netto"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Righe"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Centri di costo"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Budget previsto"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Spesa effettiva"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Plafond residuo"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Sforamento plafond"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Totale annuale"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+msgid "Totale importo netto"
+msgstr ""

@@ -14,21 +14,54 @@
         var density = String(f.print_density || "Normal");
         var is_lines_mode = view_mode === "Lines";
 
+        /* Print profiles define a business reading order independent from the datatable column order. */
+        /* Ideas remain available in the All profile; Standard prioritizes printable executive budget columns. */
         var matrix_profile_columns = {
-            Standard: ["cost_center", "forecast_total", "approved_budget", "proposals", "ideas", "actual_standard", "actual_total", "plafond", "remaining", "over"],
-            Compact: ["cost_center", "forecast_total", "actual_total", "remaining"],
+            Standard: [
+                "cost_center",
+                "actual_total",
+                "forecast_total",
+                "approved_budget",
+                "proposals",
+                "plafond",
+                "plafond_consumed",
+                "remaining",
+                "over"
+            ],
+            Compact: [
+                "cost_center",
+                "actual_total",
+                "forecast_total",
+                "remaining",
+                "over"
+            ],
             All: []
         };
         var selected_matrix_fields = matrix_profile_columns[profile] || [];
 
         var matrix_columns = [];
         if (!is_lines_mode) {
-            for (var i = 0; i < cols.length; i++) {
-                var col = cols[i] || {};
-                var fieldname = col.fieldname || "";
-                if (col.hidden) continue;
-                if (profile === "All" || selected_matrix_fields.indexOf(fieldname) !== -1) {
-                    matrix_columns.push(col);
+            if (profile === "All") {
+                for (var i = 0; i < cols.length; i++) {
+                    var col = cols[i] || {};
+                    if (!col.hidden) {
+                        matrix_columns.push(col);
+                    }
+                }
+            } else {
+                var added_matrix_fields = {};
+                for (var sf = 0; sf < selected_matrix_fields.length; sf++) {
+                    var selected_fieldname = selected_matrix_fields[sf];
+                    if (added_matrix_fields[selected_fieldname]) continue;
+                    for (var ci = 0; ci < cols.length; ci++) {
+                        var selected_col = cols[ci] || {};
+                        if (selected_col.hidden) continue;
+                        if ((selected_col.fieldname || "") === selected_fieldname) {
+                            matrix_columns.push(selected_col);
+                            added_matrix_fields[selected_fieldname] = 1;
+                            break;
+                        }
+                    }
                 }
             }
         }
@@ -40,6 +73,8 @@
             page_orientation = "portrait";
         } else if (!is_lines_mode) {
             page_orientation = profile === "Compact" ? "portrait" : "landscape";
+        } else if (profile === "All") {
+            page_orientation = "landscape";
         }
 
         var font_size = "10px";
@@ -66,6 +101,47 @@
                 .replace(/>/g, "&gt;")
                 .replace(/\"/g, "&quot;")
                 .replace(/'/g, "&#39;");
+        }
+
+        function displayLabel(value) {
+            var labels = {
+                "Summary": __("Executive Summary"),
+                "Build-up": __("Budget Build-up"),
+                "Lines": __("Detailed Lines"),
+                "Actual": __("Actual Spend"),
+                "Forecast": __("Forecast Budget"),
+                "Actual with Estimates and Quotes": __("Actual Spend with Estimates and Quotes"),
+                "Standard": __("Standard"),
+                "Compact": __("Compact"),
+                "All": __("All"),
+                "Auto": __("Auto"),
+                "Portrait": __("Portrait"),
+                "Landscape": __("Landscape"),
+                "Normal": __("Normal"),
+                "Ultra": __("Ultra"),
+                "Expenses": __("Expenses"),
+                "Plafond": __("Plafond"),
+                "Estimate": __("Estimate"),
+                "Quote": __("Quote")
+            };
+            return labels[value] || __(value || "");
+        }
+
+        /* PDF headers are intentionally shorter than datatable labels to prevent clipping in wkhtmltopdf. */
+        function printColumnLabel(fieldname, fallback_label) {
+            var labels = {
+                "cost_center": __("Centro di costo"),
+                "actual_total": __("Effettivo"),
+                "forecast_total": __("Previsto"),
+                "approved_budget": __("Approvati"),
+                "proposals": __("Proposte"),
+                "ideas": __("Idee"),
+                "plafond": __("Plafond"),
+                "plafond_consumed": __("Consumato"),
+                "remaining": __("Residuo"),
+                "over": __("Sforamento")
+            };
+            return labels[fieldname] || __(fallback_label || fieldname || "");
         }
 
         function asNumber(value) {
@@ -137,20 +213,21 @@
         }
 
         function matrixColumnWidth(fieldname) {
-            if (fieldname === "cost_center") return "260px";
+            if (fieldname === "cost_center") return "130px";
             if (fieldname === "forecast_estimate") return "120px";
             if (fieldname === "forecast_quote") return "120px";
-            if (fieldname === "forecast_total") return "130px";
-            if (fieldname === "approved_budget") return "130px";
-            if (fieldname === "proposals") return "120px";
+            if (fieldname === "forecast_total") return "82px";
+            if (fieldname === "approved_budget") return "86px";
+            if (fieldname === "proposals") return "82px";
             if (fieldname === "ideas") return "110px";
             if (fieldname === "actual_standard") return "130px";
             if (fieldname === "actual_on_plafond") return "130px";
             if (fieldname === "actual_extra") return "120px";
-            if (fieldname === "actual_total") return "120px";
-            if (fieldname === "plafond") return "110px";
-            if (fieldname === "remaining") return "115px";
-            if (fieldname === "over") return "100px";
+            if (fieldname === "actual_total") return "82px";
+            if (fieldname === "plafond") return "82px";
+            if (fieldname === "plafond_consumed") return "86px";
+            if (fieldname === "remaining") return "82px";
+            if (fieldname === "over") return "86px";
             return "auto";
         }
 
@@ -197,17 +274,35 @@
             return count;
         }
 
+        function linePeriodDate(row) {
+            if (row.period_start && row.period_end) {
+                return formatDate(row.period_start) + " - " + formatDate(row.period_end);
+            }
+            if (row.expense_date) {
+                return formatDate(row.expense_date);
+            }
+            if (row.spend_date) {
+                return formatDate(row.spend_date);
+            }
+            return " - ";
+        }
+
         var summary_cards = [];
         if (is_lines_mode) {
-            summary_cards.push({ label: __("Lines"), value: rows.length, is_currency: false });
-            summary_cards.push({ label: __("Cost Centers"), value: distinctCount(rows, "cost_center"), is_currency: false });
-            summary_cards.push({ label: __("Annual Total"), value: sumField(rows, "annual_contribution_net"), is_currency: true });
-            summary_cards.push({ label: __("Amount Net Total"), value: sumField(rows, "amount_net"), is_currency: true });
+            summary_cards.push({ label: __("Righe"), value: rows.length, is_currency: false });
+            summary_cards.push({ label: __("Centri di costo"), value: distinctCount(rows, "cost_center"), is_currency: false });
+            summary_cards.push({ label: __("Totale annuale"), value: sumField(rows, "annual_contribution_net"), is_currency: true });
+            summary_cards.push({ label: __("Totale importo netto"), value: sumField(rows, "amount_net"), is_currency: true });
         } else {
-            summary_cards.push({ label: __("Rows"), value: rows.length, is_currency: false });
-            summary_cards.push({ label: __("Forecast Total"), value: sumField(matrix_total_rows, "forecast_total"), is_currency: true });
-            summary_cards.push({ label: __("Actual Total"), value: sumField(matrix_total_rows, "actual_total"), is_currency: true });
-            summary_cards.push({ label: __("Remaining"), value: sumField(matrix_total_rows, "remaining"), is_currency: true });
+            var over_total = sumField(matrix_total_rows, "over");
+            summary_cards.push({ label: __("Actual Spend"), value: sumField(matrix_total_rows, "actual_total"), is_currency: true });
+            summary_cards.push({ label: __("Forecast Budget"), value: sumField(matrix_total_rows, "forecast_total"), is_currency: true });
+            summary_cards.push({ label: __("Proposed Projects"), value: sumField(matrix_total_rows, "proposals"), is_currency: true });
+            if (over_total > 0) {
+                summary_cards.push({ label: __("Over Plafond"), value: over_total, is_currency: true });
+            } else {
+                summary_cards.push({ label: __("Remaining Plafond"), value: sumField(matrix_total_rows, "remaining"), is_currency: true });
+            }
         }
 
         function summaryValue(card) {
@@ -274,14 +369,16 @@
             padding: 7px 8px;
         }
 
-        .report-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 12px;
+        .report-header-table {
+            width: 100%;
+            border-collapse: collapse;
             border-bottom: 1.5px solid #111827;
-            padding-bottom: 8px;
             margin-bottom: 10px;
+        }
+
+        .report-header-table td {
+            padding: 0 0 8px 0;
+            vertical-align: top;
         }
 
         .report-title {
@@ -332,11 +429,28 @@
             color: #1f2937;
         }
 
-        .summary-grid {
-            display: grid;
-            grid-template-columns: repeat(4, minmax(0, 1fr));
-            gap: 8px;
+        .summary-block,
+        .note-block,
+        .legend-block,
+        .approval-block {
+            page-break-inside: avoid;
+        }
+
+        .summary-table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 6px;
             margin-bottom: 10px;
+        }
+
+        .summary-table td {
+            width: 25%;
+            padding-right: 8px;
+            vertical-align: top;
+        }
+
+        .summary-table td:last-child {
+            padding-right: 0;
         }
 
         .summary-card {
@@ -363,6 +477,28 @@
             white-space: nowrap;
         }
 
+        .note-block {
+            border: 1px solid #d1d5db;
+            background: #f8fafc;
+            border-radius: 4px;
+            padding: 7px 8px;
+            margin-bottom: 10px;
+        }
+
+        .block-title {
+            margin: 0 0 5px 0;
+            font-size: 11px;
+            font-weight: 700;
+            color: #111827;
+        }
+
+        .note-text,
+        .legend-table td,
+        .approval-table td {
+            color: #374151;
+            line-height: 1.35;
+        }
+
         .matrix-table {
             width: 100%;
             border-collapse: collapse;
@@ -378,7 +514,7 @@
             color: #111827;
             font-weight: 700;
             text-align: left;
-            padding: {%= cell_padding %};
+            padding: 5px 4px;
             vertical-align: middle;
             white-space: nowrap;
             word-break: normal;
@@ -387,7 +523,7 @@
 
         .matrix-table td {
             border: 1px solid #e2e8f0;
-            padding: {%= cell_padding %};
+            padding: 5px 4px;
             vertical-align: middle;
             white-space: nowrap;
             word-break: normal;
@@ -432,19 +568,15 @@
         }
 
         .lines-section {
-            margin-bottom: 12px;
+            margin-bottom: 8px;
             page-break-inside: avoid;
         }
 
         .section-header {
             border-top: 1px solid #9ca3af;
             border-bottom: 1px solid #d1d5db;
-            padding: 5px 0;
-            margin-bottom: 7px;
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            gap: 8px;
+            padding: 4px 0;
+            margin-bottom: 4px;
         }
 
         .section-title {
@@ -459,131 +591,144 @@
             white-space: nowrap;
         }
 
-        .line-entry {
+        .lines-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
+            table-layout: fixed;
+        }
+
+        .lines-table th,
+        .lines-table td {
             border: 1px solid #d1d5db;
-            border-radius: 4px;
-            padding: {%= block_padding %};
-            margin-bottom: 7px;
-            background: #fff;
+            padding: 4px 4px;
+            vertical-align: top;
+            line-height: 1.25;
+            word-break: normal;
+            overflow-wrap: break-word;
+        }
+
+        .lines-table th {
+            background: #f3f4f6;
+            color: #111827;
+            font-weight: 700;
+        }
+
+        .lines-table tbody tr:nth-child(even) {
+            background: #fafafa;
+        }
+
+        .legend-block {
+            margin-top: 10px;
+        }
+
+        .legend-table,
+        .approval-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .legend-table th,
+        .legend-table td,
+        .approval-table th,
+        .approval-table td {
+            border: 1px solid #d1d5db;
+            padding: 6px 8px;
+            vertical-align: top;
+        }
+
+        .legend-table th,
+        .approval-table th {
+            background: #f3f4f6;
+            text-align: left;
+            color: #111827;
+        }
+
+        .approval-block {
+            margin-top: 10px;
             page-break-inside: avoid;
         }
 
-        .line-primary {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            gap: 10px;
+        .approval-notes {
+            height: 28px;
         }
 
-        .line-main {
-            min-width: 0;
+        .approval-line {
+            height: 18px;
         }
 
-        .line-id {
-            font-weight: 700;
-            color: #111827;
-            white-space: nowrap;
-        }
-
-        .line-title {
-            margin-top: 1px;
-            color: #1f2937;
-            word-break: normal;
-            overflow-wrap: break-word;
-        }
-
-        .line-secondary {
-            margin-top: 6px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 4px 12px;
-            color: #4b5563;
-            font-size: 11px;
-            word-break: normal;
-            overflow-wrap: break-word;
-        }
-
-        .line-values {
-            text-align: right;
-            white-space: nowrap;
-            min-width: 250px;
-        }
-
-        .line-value {
-            font-size: 11px;
-            color: #111827;
-            margin-bottom: 2px;
-        }
-
-        .chip {
-            display: inline-block;
-            border: 1px solid #9ca3af;
-            border-radius: 12px;
-            padding: 1px 7px;
-            font-size: 10px;
-            line-height: 1.4;
-            color: #374151;
-            white-space: nowrap;
-        }
-
-        .chip-strong {
-            border-color: #4b5563;
-            color: #111827;
-            font-weight: 700;
-        }
-
-        .chip-alert {
-            border-color: #111827;
-            color: #111827;
-            font-weight: 700;
-        }
-
-        .footer {
+        .print-footer {
             margin-top: 10px;
-            padding-top: 6px;
-            border-top: 1px solid #d1d5db;
-            font-size: 11px;
+            page-break-inside: avoid;
+        }
+
+        .footer-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 8px;
             color: #4b5563;
-            text-align: right;
+        }
+
+        .footer-table td {
+            border-top: 1px solid #d1d5db;
+            padding: 4px 3px 0 3px;
+            white-space: nowrap;
+            text-align: center;
         }
     </style>
 </head>
 <body>
     <div class="report-shell">
-        <div class="report-header">
-            <div>
-                <h1 class="report-title">{%= __("MPIT Overview") %}</h1>
-                <div class="report-subtitle">{%= __("Mode") %}: {%= esc(view_mode) %}</div>
-            </div>
-            <div class="report-meta">
-                <div><strong>{%= __("Generated") %}:</strong> {%= frappe.datetime.str_to_user(frappe.datetime.get_today()) %}</div>
-                <div><strong>{%= __("Profile") %}:</strong> {%= esc(profile) %}</div>
-                <div><strong>{%= __("Orientation") %}:</strong> {%= esc(page_orientation) %}</div>
-                <div><strong>{%= __("Density") %}:</strong> {%= esc(density) %}</div>
-            </div>
-        </div>
+        <!-- Table-based layout is used for PDF stability across Frappe/wkhtmltopdf renderers. -->
+        <table class="report-header-table">
+            <tr>
+                <td>
+                    <h1 class="report-title">{%= __("IT Economic Overview") %}</h1>
+                    <div class="report-subtitle">{%= __("Budget, actual spend, forecasts and plafond") %}</div>
+                </td>
+                <td class="report-meta">
+                    <div><strong>{%= __("Generated") %}:</strong> {%= frappe.datetime.str_to_user(frappe.datetime.get_today()) %}</div>
+                    <div><strong>{%= __("Generated by") %}:</strong> {%= esc((frappe.session && frappe.session.user) || "") %}</div>
+                    <div><strong>{%= __("Year") %}:</strong> {%= esc(f.year || "") %}</div>
+                    <div><strong>{%= __("Report View") %}:</strong> {%= esc(displayLabel(view_mode)) %}</div>
+                    <div><strong>{%= __("Financial View") %}:</strong> {%= esc(displayLabel(f.financial_view || "")) %}</div>
+                </td>
+            </tr>
+        </table>
 
         <div class="filters-box">
             <div class="filters-title">{%= __("Applied Filters") %}</div>
             <div class="filter-list">
                 {% if (f.year) { %}<div class="filter-item"><strong>{%= __("Year") %}:</strong> {%= esc(f.year) %}</div>{% } %}
                 {% if (f.cost_center) { %}<div class="filter-item"><strong>{%= __("Cost Center") %}:</strong> {%= esc(f.cost_center) %}</div>{% } %}
-                {% if (f.section_scope) { %}<div class="filter-item"><strong>{%= __("Section Scope") %}:</strong> {%= esc(f.section_scope) %}</div>{% } %}
-                {% if (f.expense_phase && f.expense_phase !== "All") { %}<div class="filter-item"><strong>{%= __("Expense Phase") %}:</strong> {%= esc(f.expense_phase) %}</div>{% } %}
+                {% if (f.section_scope) { %}<div class="filter-item"><strong>{%= __("Section Scope") %}:</strong> {%= esc(displayLabel(f.section_scope)) %}</div>{% } %}
+                {% if (f.expense_phase && f.expense_phase !== "All") { %}<div class="filter-item"><strong>{%= __("Expense Phase") %}:</strong> {%= esc(displayLabel(f.expense_phase)) %}</div>{% } %}
                 {% if (f.contract) { %}<div class="filter-item"><strong>{%= __("Contract") %}:</strong> {%= esc(f.contract) %}</div>{% } %}
                 {% if (f.project) { %}<div class="filter-item"><strong>{%= __("Project") %}:</strong> {%= esc(f.project) %}</div>{% } %}
                 {% if (f.vendor) { %}<div class="filter-item"><strong>{%= __("Vendor") %}:</strong> {%= esc(f.vendor) %}</div>{% } %}
-                {% if (f.show_zero_rows) { %}<div class="filter-item"><strong>{%= __("Show Zero Rows") %}:</strong> {%= __("Yes") %}</div>{% } %}
+                {% if (f.show_zero_rows) { %}<div class="filter-item"><strong>{%= __("Show Zero Rows") %}:</strong> {%= esc(displayLabel("Yes")) %}</div>{% } %}
             </div>
         </div>
 
-        <div class="summary-grid">
-            {% for (var sc = 0; sc < summary_cards.length; sc++) { var card = summary_cards[sc]; %}
-                <div class="summary-card">
-                    <div class="summary-label">{%= esc(card.label) %}</div>
-                    <div class="summary-value">{%= summaryValue(card) %}</div>
-                </div>
-            {% } %}
+        <!-- Table-based layout is used for PDF stability across Frappe/wkhtmltopdf renderers. -->
+        <div class="summary-block">
+            <table class="summary-table">
+                <tr>
+                    {% for (var sc = 0; sc < summary_cards.length; sc++) { var card = summary_cards[sc]; %}
+                        <td>
+                            <div class="summary-card">
+                                <div class="summary-label">{%= esc(card.label) %}</div>
+                                <div class="summary-value">{%= summaryValue(card) %}</div>
+                            </div>
+                        </td>
+                    {% } %}
+                </tr>
+            </table>
+        </div>
+
+        <div class="note-block">
+            <div class="block-title">{%= __("Budget approval note") %}</div>
+            <div class="note-text">{%= __("This document summarizes the IT economic position using data recorded in Master Plan IT. The approved budget is the printed PDF version shared and approved during the meeting.") %}</div>
         </div>
 
         {% if (!is_lines_mode) { %}
@@ -597,7 +742,7 @@
                     <tr>
                         {% for (var c = 0; c < matrix_columns.length; c++) { var col = matrix_columns[c]; %}
                             <th class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">
-                                {%= esc(__(col.label || col.fieldname || "")) %}
+                                {%= esc(printColumnLabel(col.fieldname || "", col.label || "")) %}
                             </th>
                         {% } %}
                     </tr>
@@ -626,7 +771,7 @@
                                 <td class="{%= isNumericField(col.fieldtype) ? 'text-right' : '' %}">
                                     {% if (c === 0) { %}
                                         {%= __("Totals") %}
-                                    {% } else if (field === "forecast_estimate" || field === "forecast_quote" || field === "forecast_total" || field === "approved_budget" || field === "proposals" || field === "ideas" || field === "actual_standard" || field === "actual_on_plafond" || field === "actual_extra" || field === "actual_total" || field === "plafond" || field === "remaining" || field === "over") { %}
+                                    {% } else if (field === "forecast_estimate" || field === "forecast_quote" || field === "forecast_total" || field === "approved_budget" || field === "proposals" || field === "ideas" || field === "actual_standard" || field === "actual_on_plafond" || field === "actual_extra" || field === "actual_total" || field === "plafond" || field === "plafond_consumed" || field === "remaining" || field === "over") { %}
                                         {%= formatCurrency(sumField(matrix_total_rows, field)) %}
                                     {% } %}
                                 </td>
@@ -637,7 +782,7 @@
             </table>
         {% } else { %}
             {% if (!lines_sections.length) { %}
-                <div class="line-entry">{%= __("No data available") %}</div>
+                <div>{%= __("No data available") %}</div>
             {% } %}
             {% for (var s = 0; s < lines_sections.length; s++) { var section = lines_sections[s]; %}
                 <div class="lines-section">
@@ -649,52 +794,133 @@
                         </div>
                     </div>
 
-                    {% for (var r = 0; r < section.rows.length; r++) { var row = section.rows[r] || {}; %}
-                        <div class="line-entry">
-                            <div class="line-primary">
-                                <div class="line-main">
-                                    <div class="line-id">
-                                        {%= valueOrDash(row.source_type) %} |
+                    <!-- Lines mode uses a compact table to avoid oversized cards and broken label wrapping in PDF output. -->
+                    <table class="lines-table">
+                        <colgroup>
+                            <col style="width: 15%;">
+                            <col style="width: 12%;">
+                            <col style="width: 12%;">
+                            <col style="width: 12%;">
+                            <col style="width: 8%;">
+                            <col style="width: 9%;">
+                            <col style="width: 14%;">
+                            <col style="width: 9%;">
+                            <col style="width: 9%;">
+                        </colgroup>
+                        <thead>
+                            <tr>
+                                <th>{%= __("Spesa/Riga") %}</th>
+                                <th>{%= __("Fornitore") %}</th>
+                                <th>{%= __("Contratto") %}</th>
+                                <th>{%= __("Progetto") %}</th>
+                                <th>{%= __("Fase") %}</th>
+                                <th>{%= __("Copertura") %}</th>
+                                <th>{%= __("Periodo/Data") %}</th>
+                                <th class="text-right">{%= __("Contributo annuo") %}</th>
+                                <th class="text-right">{%= __("Importo netto") %}</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for (var r = 0; r < section.rows.length; r++) { var row = section.rows[r] || {}; %}
+                                <tr>
+                                    <td>
                                         {%= valueOrDash(row.source_document) %}
-                                        {% if (is_all && row.source_row) { %} | {%= esc(row.source_row) %}{% } %}
-                                    </div>
-                                    <div class="line-title">
-                                        <strong>{%= __("Vendor") %}:</strong> {%= valueOrDash(row.vendor) %}
-                                    </div>
-                                </div>
-                                <div class="line-values">
-                                    <div class="line-value"><strong>{%= __("Annual Contribution") %}:</strong> {%= formatCurrency(row.annual_contribution_net) %}</div>
-                                </div>
-                            </div>
-
-                            <div class="line-secondary">
-                                {% if (!is_compact || is_all) { %}
-                                    <span><strong>{%= __("Contract") %}:</strong> {%= valueOrDash(row.contract) %}</span>
-                                    <span><strong>{%= __("Project") %}:</strong> {%= valueOrDash(row.project) %}</span>
-                                {% } %}
-                                <span><strong>{%= __("Phase") %}:</strong> {%= valueOrDash(row.expense_phase) %}</span>
-                                <span><strong>{%= __("Funding") %}:</strong> <span class="{%= fundingChipClass(row.funding_key || row.funding) %}">{%= valueOrDash(row.funding) %}</span></span>
-                                {% if (!is_compact) { %}
-                                    <span><strong>{%= __("Period") %}:</strong> {%= formatDate(row.period_start) %} - {%= formatDate(row.period_end) %}</span>
-                                    <span><strong>{%= __("Spend Date") %}:</strong> {%= formatDate(row.spend_date) %}</span>
-                                {% } %}
-                                {% if (is_all) { %}
-                                    <span><strong>{%= __("Amount Net") %}:</strong> {%= formatCurrency(row.amount_net) %}</span>
-                                {% } %}
-                            </div>
-                        </div>
-                    {% } %}
+                                        {% if (is_all && row.source_row) { %}<br>{%= valueOrDash(row.source_row) %}{% } %}
+                                    </td>
+                                    <td>{%= valueOrDash(row.vendor) %}</td>
+                                    <td>{%= valueOrDash(row.contract) %}</td>
+                                    <td>{%= valueOrDash(row.project) %}</td>
+                                    <td>{%= esc(displayLabel(row.expense_phase || "")) %}</td>
+                                    <td>{%= esc(displayLabel(row.funding || "")) %}</td>
+                                    <td>{%= linePeriodDate(row) %}</td>
+                                    <td class="text-right">{%= formatCurrency(row.annual_contribution_net) %}</td>
+                                    <td class="text-right">{%= formatCurrency(row.amount_net) %}</td>
+                                </tr>
+                            {% } %}
+                        </tbody>
+                    </table>
                 </div>
             {% } %}
         {% } %}
 
-        <div class="footer">
-            {%= __("Rows") %}: {%= esc(rows.length) %}
-            {% if (is_lines_mode) { %}
-                | {%= __("Annual Total") %}: {%= formatCurrency(sumField(rows, "annual_contribution_net")) %}
-            {% } else { %}
-                | {%= __("Forecast Total") %}: {%= formatCurrency(sumField(matrix_total_rows, "forecast_total")) %}
-            {% } %}
+        {% if (!is_lines_mode) { %}
+            <div class="legend-block">
+                <div class="block-title">{%= __("Financial Legend") %}</div>
+                <table class="legend-table">
+                    <tbody>
+                        <tr>
+                            <th>{%= __("Actual Spend") %}</th>
+                            <td>{%= __("Actual rows already consumed in the selected year, including contract-generated expenses.") %}</td>
+                        </tr>
+                        <tr>
+                            <th>{%= __("Forecast Budget") %}</th>
+                            <td>{%= __("Estimates and quotes included by the selected financial view.") %}</td>
+                        </tr>
+                        <tr>
+                            <th>{%= __("Approved Projects") %}</th>
+                            <td>{%= __("Forecast values linked to approved projects; this is not the official approved PDF budget.") %}</td>
+                        </tr>
+                        <tr>
+                            <th>{%= __("Proposed Projects") %}</th>
+                            <td>{%= __("Forecast values linked to proposed projects and useful for meeting discussion.") %}</td>
+                        </tr>
+                        <tr>
+                            <th>{%= __("Ideas Outside Budget") %}</th>
+                            <td>{%= __("Tracked ideas that remain outside the main budget totals.") %}</td>
+                        </tr>
+                        <tr>
+                            <th>{%= __("Remaining Plafond") %}</th>
+                            <td>{%= __("Available plafond after consumed plafond.") %}</td>
+                        </tr>
+                        <tr>
+                            <th>{%= __("Over Plafond") %}</th>
+                            <td>{%= __("Amount exceeding available plafond.") %}</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        {% } %}
+
+        <!-- Table-based layout is used for PDF stability across Frappe/wkhtmltopdf renderers. -->
+        <div class="approval-block">
+            <div class="block-title">{%= __("Meeting approval") %}</div>
+            <table class="approval-table">
+                <tbody>
+                    <tr>
+                        <th>{%= __("Meeting notes") %}</th>
+                        <td class="approval-notes"></td>
+                    </tr>
+                    <tr>
+                        <th>{%= __("Approved by") %}</th>
+                        <td class="approval-line"></td>
+                    </tr>
+                    <tr>
+                        <th>{%= __("Approval date") %}</th>
+                        <td class="approval-line"></td>
+                    </tr>
+                    <tr>
+                        <th>{%= __("Signature") %}</th>
+                        <td class="approval-line"></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <div class="print-footer">
+            <table class="footer-table">
+                <tr>
+                    <td><strong>{%= __("Righe") %}</strong>: {%= esc(rows.length) %}</td>
+                    {% if (is_lines_mode) { %}
+                        <td><strong>{%= __("Totale annuale") %}</strong>: {%= formatCurrency(sumField(rows, "annual_contribution_net")) %}</td>
+                        <td><strong>{%= __("Totale importo netto") %}</strong>: {%= formatCurrency(sumField(rows, "amount_net")) %}</td>
+                    {% } else { %}
+                        <td><strong>{%= __("Budget previsto") %}</strong>: {%= formatCurrency(sumField(matrix_total_rows, "forecast_total")) %}</td>
+                        <td><strong>{%= __("Spesa effettiva") %}</strong>: {%= formatCurrency(sumField(matrix_total_rows, "actual_total")) %}</td>
+                        <td><strong>{%= __("Plafond residuo") %}</strong>: {%= formatCurrency(sumField(matrix_total_rows, "remaining")) %}</td>
+                        <td><strong>{%= __("Sforamento plafond") %}</strong>: {%= formatCurrency(sumField(matrix_total_rows, "over")) %}</td>
+                    {% } %}
+                </tr>
+            </table>
         </div>
     </div>
 </body>

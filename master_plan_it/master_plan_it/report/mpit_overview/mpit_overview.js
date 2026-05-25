@@ -43,22 +43,22 @@ frappe.query_reports["MPIT Overview"] = {
         },
         {
             fieldname: "financial_view",
-            label: __("Visualization"),
+            label: __("Financial View"),
             fieldtype: "Select",
             options: "Actual\nForecast\nActual with Estimates and Quotes",
             default: "Actual with Estimates and Quotes",
             description: __(
-                "Choose whether the report shows actual budget, forecast, or actual values enriched with estimates and quotes."
+                "Choose whether to show actual spend, forecast values, or actual spend enriched with estimates and quotes."
             ),
             reqd: 1,
         },
         {
             fieldname: "view_mode",
-            label: __("Layout"),
+            label: __("Report View"),
             fieldtype: "Select",
             options: "Summary\nBuild-up\nLines",
             default: "Summary",
-            description: __("Select how the report is displayed: summary, build-up, or detailed lines."),
+            description: __("Select the executive summary, budget build-up, or detailed source lines."),
             reqd: 1,
             on_change: function () {
                 // Re-render to show/hide context-sensitive filters
@@ -132,6 +132,7 @@ frappe.query_reports["MPIT Overview"] = {
             fieldtype: "Select",
             options: "Standard\nCompact\nAll",
             default: "Standard",
+            description: __("Controls how many columns are printed in the PDF."),
         },
         {
             fieldname: "print_orientation",
@@ -139,6 +140,9 @@ frappe.query_reports["MPIT Overview"] = {
             fieldtype: "Select",
             options: "Auto\nPortrait\nLandscape",
             default: "Auto",
+            description: __(
+                "Controls the PDF page orientation. Auto selects the safer orientation for the selected profile."
+            ),
         },
         {
             fieldname: "print_density",
@@ -146,6 +150,7 @@ frappe.query_reports["MPIT Overview"] = {
             fieldtype: "Select",
             options: "Normal\nCompact\nUltra",
             default: "Normal",
+            description: __("Controls PDF table spacing without changing report values."),
         },
     ],
 

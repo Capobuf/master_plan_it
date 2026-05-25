@@ -243,37 +243,38 @@ def _execute_lines(filters, year: str):
 def _build_report_summary_from_dict(summary: dict) -> list[dict]:
     return [
         {
-            "label": _("Forecast"),
+            "label": _("Forecast Budget"),
             "value": flt(summary.get("forecast_total"), 2),
             "indicator": "Blue",
             "datatype": "Currency",
         },
         {
-            "label": _("Actual"),
+            "label": _("Actual Spend"),
             "value": flt(summary.get("actual_total"), 2),
             "indicator": "Orange",
             "datatype": "Currency",
         },
+        # approved_budget is a forecast bucket for approved projects; the official approved budget is the printed PDF snapshot.
         {
-            "label": _("Approved Budget"),
+            "label": _("Approved Projects"),
             "value": flt(summary.get("approved_budget"), 2),
             "indicator": "Blue",
             "datatype": "Currency",
         },
         {
-            "label": _("Proposals"),
+            "label": _("Proposed Projects"),
             "value": flt(summary.get("proposals"), 2),
             "indicator": "Orange",
             "datatype": "Currency",
         },
         {
-            "label": _("Ideas"),
+            "label": _("Ideas Outside Budget"),
             "value": flt(summary.get("ideas"), 2),
             "indicator": "Blue",
             "datatype": "Currency",
         },
         {
-            "label": _("Standard"),
+            "label": _("Ordinary Actual Spend"),
             "value": flt(summary.get("actual_standard"), 2),
             "indicator": "Blue",
             "datatype": "Currency",
@@ -285,7 +286,13 @@ def _build_report_summary_from_dict(summary: dict) -> list[dict]:
             "datatype": "Currency",
         },
         {
-            "label": _("Remaining"),
+            "label": _("Consumed Plafond"),
+            "value": flt(summary.get("plafond_consumed"), 2),
+            "indicator": "Orange",
+            "datatype": "Currency",
+        },
+        {
+            "label": _("Remaining Plafond"),
             "value": flt(summary.get("remaining"), 2),
             "indicator": "Green",
             "datatype": "Currency",
@@ -297,7 +304,7 @@ def _build_report_summary_from_dict(summary: dict) -> list[dict]:
             "datatype": "Currency",
         },
         {
-            "label": _("Extra"),
+            "label": _("Extra Budget"),
             "value": flt(summary.get("actual_extra"), 2),
             "indicator": "Orange",
             "datatype": "Currency",
@@ -343,61 +350,62 @@ def _zero_actual_cells(row: dict) -> None:
 def _overview_metric_columns() -> list[dict]:
     return [
         {
-            "label": _("Forecast Estimate"),
+            "label": _("Estimates"),
             "fieldname": "forecast_estimate",
             "fieldtype": "Currency",
             "width": 150,
         },
         {
-            "label": _("Forecast Quote"),
+            "label": _("Quotes"),
             "fieldname": "forecast_quote",
             "fieldtype": "Currency",
             "width": 140,
         },
         {
-            "label": _("Forecast Total"),
+            "label": _("Forecast Budget"),
             "fieldname": "forecast_total",
             "fieldtype": "Currency",
             "width": 150,
         },
+        # approved_budget is a forecast bucket for approved projects; the official approved budget is the printed PDF snapshot.
         {
-            "label": _("Approved Budget"),
+            "label": _("Approved Projects"),
             "fieldname": "approved_budget",
             "fieldtype": "Currency",
             "width": 150,
         },
         {
-            "label": _("Proposals"),
+            "label": _("Proposed Projects"),
             "fieldname": "proposals",
             "fieldtype": "Currency",
             "width": 130,
         },
         {
-            "label": _("Ideas"),
+            "label": _("Ideas Outside Budget"),
             "fieldname": "ideas",
             "fieldtype": "Currency",
             "width": 120,
         },
         {
-            "label": _("Actual Standard"),
+            "label": _("Ordinary Actual Spend"),
             "fieldname": "actual_standard",
             "fieldtype": "Currency",
             "width": 140,
         },
         {
-            "label": _("Actual On Plafond"),
+            "label": _("Actual Spend On Plafond"),
             "fieldname": "actual_on_plafond",
             "fieldtype": "Currency",
             "width": 150,
         },
         {
-            "label": _("Actual Extra"),
+            "label": _("Extra Budget"),
             "fieldname": "actual_extra",
             "fieldtype": "Currency",
             "width": 130,
         },
         {
-            "label": _("Actual Total"),
+            "label": _("Actual Spend"),
             "fieldname": "actual_total",
             "fieldtype": "Currency",
             "width": 140,
@@ -409,19 +417,19 @@ def _overview_metric_columns() -> list[dict]:
             "width": 130,
         },
         {
-            "label": _("Plafond Consumed"),
+            "label": _("Consumed Plafond"),
             "fieldname": "plafond_consumed",
             "fieldtype": "Currency",
             "width": 150,
         },
         {
-            "label": _("Remaining"),
+            "label": _("Remaining Plafond"),
             "fieldname": "remaining",
             "fieldtype": "Currency",
             "width": 130,
         },
         {
-            "label": _("Over"),
+            "label": _("Over Plafond"),
             "fieldname": "over",
             "fieldtype": "Currency",
             "width": 110,
