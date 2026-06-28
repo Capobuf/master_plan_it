@@ -18,11 +18,9 @@
  * that an empty shell loaded.
  */
 
-const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || "admin";
-
 describe("v16 — Report: MPIT Monthly Plan", () => {
   beforeEach(() => {
-    cy.frappeLogin("Administrator", ADMIN_PASSWORD);
+    cy.frappeLogin();
   });
 
   it("report page loads and displays correct title", () => {

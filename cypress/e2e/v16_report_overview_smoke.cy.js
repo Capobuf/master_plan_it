@@ -4,11 +4,9 @@
  * Smoke tests for the MPIT Overview report on Frappe v16.
  */
 
-const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || "admin";
-
 describe("v16 — Report: MPIT Overview", () => {
   beforeEach(() => {
-    cy.frappeLogin("Administrator", ADMIN_PASSWORD);
+    cy.frappeLogin();
   });
 
   it("report page loads and displays correct title", () => {
@@ -19,12 +17,17 @@ describe("v16 — Report: MPIT Overview", () => {
   it("core visible filters are rendered", () => {
     cy.openReport("MPIT Overview");
 
-    cy.get('[data-fieldname="year"] input', { timeout: 15000 }).should("exist");
-    cy.get('[data-fieldname="view_mode"] input', { timeout: 10000 }).should("exist");
-    cy.get('[data-fieldname="cost_center"] input', { timeout: 10000 }).should("exist");
-    cy.get('[data-fieldname="show_zero_rows"] input', { timeout: 10000 }).should("exist");
-    cy.get('[data-fieldname="print_profile"] input', { timeout: 10000 }).should("exist");
-    cy.get('[data-fieldname="print_orientation"] input', { timeout: 10000 }).should("exist");
-    cy.get('[data-fieldname="print_density"] input', { timeout: 10000 }).should("exist");
+    [
+      "year",
+      "financial_view",
+      "view_mode",
+      "cost_center",
+      "show_zero_rows",
+      "print_profile",
+      "print_orientation",
+      "print_density",
+    ].forEach((fieldname) => {
+      cy.get(`[data-fieldname="${fieldname}"]`, { timeout: 15000 }).should("be.visible");
+    });
   });
 });

@@ -5,10 +5,13 @@
 .env.*.local
 .envrc
 /artifacts
-/cypress
 /tools
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
 
 # Python artifacts
+*.py[cod]
 *.pyc
 __pycache__/
 .pytest_cache/
