@@ -4,7 +4,7 @@
  * Smoke tests for the MPIT Overview report on Frappe v16.
  */
 
-const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || "admin";
+const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || Cypress.env("FRAPPE_PASSWORD") || "admin";
 
 describe("v16 — Report: MPIT Overview", () => {
   beforeEach(() => {

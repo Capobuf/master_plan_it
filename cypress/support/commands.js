@@ -4,7 +4,10 @@
  * Login to Frappe Desk via the login form.
  * Frappe redirects to /app after successful login.
  */
-Cypress.Commands.add("frappeLogin", (user = "Administrator", password = "admin") => {
+Cypress.Commands.add("frappeLogin", (
+  user = Cypress.env("FRAPPE_USER") || "Administrator",
+  password = Cypress.env("FRAPPE_PASSWORD") || "admin"
+) => {
   cy.session(
     [user, password],
     () => {

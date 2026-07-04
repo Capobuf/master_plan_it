@@ -78,3 +78,21 @@ def test_workspace_dashboard_uses_new_cards_and_charts():
     }
     assert not (cards & forbidden_cards)
     assert not (charts & forbidden_charts)
+
+
+def test_workspace_content_references_widget_labels():
+    repo_root = Path(__file__).resolve().parents[1]
+    workspace_json = repo_root / "master_plan_it" / "workspace" / "master_plan_it" / "master_plan_it.json"
+    payload = json.loads(workspace_json.read_text())
+    content = json.loads(payload["content"])
+
+    chart_labels = {row.get("label") or row.get("chart_name") for row in payload.get("charts", [])}
+    number_card_labels = {
+        row.get("label") or row.get("number_card_name") for row in payload.get("number_cards", [])
+    }
+
+    for block in content:
+        if block.get("type") == "chart":
+            assert block.get("data", {}).get("chart_name") in chart_labels
+        if block.get("type") == "number_card":
+            assert block.get("data", {}).get("number_card_name") in number_card_labels

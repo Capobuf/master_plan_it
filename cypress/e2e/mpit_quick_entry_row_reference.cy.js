@@ -1,4 +1,4 @@
-const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || "admin";
+const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || Cypress.env("FRAPPE_PASSWORD") || "admin";
 
 function fetchYearCostCenterAndVendor() {
   return cy

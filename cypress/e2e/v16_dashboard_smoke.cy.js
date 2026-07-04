@@ -17,7 +17,7 @@
  * not that they contain data. Data-level emptiness is expected on a fresh install.
  */
 
-const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || "admin";
+const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || Cypress.env("FRAPPE_PASSWORD") || "admin";
 
 describe("v16 — Dashboard Smoke", () => {
   beforeEach(() => {

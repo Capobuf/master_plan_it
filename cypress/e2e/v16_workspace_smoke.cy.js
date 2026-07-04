@@ -8,7 +8,7 @@
  *   URL slug: /app/master-plan-it
  */
 
-const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || "admin";
+const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || Cypress.env("FRAPPE_PASSWORD") || "admin";
 
 describe("v16 — Workspace Smoke", () => {
   beforeEach(() => {
@@ -35,6 +35,21 @@ describe("v16 — Workspace Smoke", () => {
     shortcuts.forEach((label) => {
       cy.contains(label, { timeout: 10000 }).should("be.visible");
     });
+  });
+
+  it("workspace charts are rendered", () => {
+    cy.visit("/app/master-plan-it");
+
+    const charts = [
+      "Forecast vs Actual by Cost Center",
+      "Monthly Forecast vs Actual",
+      "Plafond Usage by Cost Center",
+    ];
+
+    charts.forEach((label) => {
+      cy.contains(label, { timeout: 20000 }).should("be.visible");
+    });
+    cy.get(".widget-charts .dashboard-widget-box", { timeout: 20000 }).should("have.length", 3);
   });
 
   it("'Monthly Plan' shortcut navigates to MPIT Monthly Plan report", () => {
