@@ -1,10 +1,14 @@
 const { defineConfig } = require("cypress");
 
+const artifactsPath = process.env.CYPRESS_ARTIFACTS_PATH || ".";
+
 module.exports = defineConfig({
   e2e: {
-    // Internal Docker network URL (mpit-frontend:8080) — used when running from mpit-backend container.
-    // Override with CYPRESS_BASE_URL=http://localhost:9797 when running from the host.
-    baseUrl: "http://10.0.5.5:8080",
+    baseUrl: process.env.CYPRESS_BASE_URL || "http://frappe:8000",
+    env: {
+      FRAPPE_USER: process.env.CYPRESS_FRAPPE_USER || "Administrator",
+      FRAPPE_PASSWORD: process.env.FRAPPE_PASSWORD,
+    },
     viewportWidth: 1280,
     viewportHeight: 800,
     defaultCommandTimeout: 15000,
@@ -17,6 +21,8 @@ module.exports = defineConfig({
     supportFile: "support/commands.js",
     video: false,
     screenshotOnRunFailure: true,
-    screenshotsFolder: "screenshots",
+    screenshotsFolder: `${artifactsPath}/screenshots`,
+    videosFolder: `${artifactsPath}/videos`,
+    downloadsFolder: `${artifactsPath}/downloads`,
   },
 });

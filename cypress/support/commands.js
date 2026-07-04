@@ -4,17 +4,21 @@
  * Login to Frappe Desk via the login form.
  * Frappe redirects to /app after successful login.
  */
-Cypress.Commands.add("frappeLogin", (
-  user = Cypress.env("FRAPPE_USER") || "Administrator",
-  password = Cypress.env("FRAPPE_PASSWORD") || "admin"
-) => {
+Cypress.Commands.add("frappeLogin", (user, password) => {
+  const loginUser = user || Cypress.env("FRAPPE_USER") || "Administrator";
+  const loginPassword = password || Cypress.env("FRAPPE_PASSWORD");
+
+  if (!loginPassword) {
+    throw new Error("FRAPPE_PASSWORD is required for Cypress Frappe login.");
+  }
+
   cy.session(
-    [user, password],
+    [loginUser, loginPassword],
     () => {
       cy.visit("/login");
       // Frappe v16 login page: #login_email / #login_password / button.btn-login
-      cy.get("#login_email", { timeout: 15000 }).clear().type(user);
-      cy.get("#login_password").clear().type(password);
+      cy.get("#login_email", { timeout: 15000 }).clear().type(loginUser);
+      cy.get("#login_password").clear().type(loginPassword);
       cy.get("button.btn-login").first().click();
       // Wait for redirect to /app after successful login
       cy.url({ timeout: 30000 }).should("match", /\/(app|desk)/);
@@ -125,6 +129,21 @@ Cypress.Commands.add("frappePost", (url, body, options = {}) => {
       headers: {
         "X-Frappe-CSRF-Token": token,
         "Content-Type": "application/json",
+        ...extraHeaders,
+      },
+      ...rest,
+    });
+  });
+});
+
+Cypress.Commands.add("frappeDeleteResource", (doctype, name, options = {}) => {
+  return cy.getFrappeCsrfToken().then((token) => {
+    const { headers: extraHeaders, ...rest } = options;
+    return cy.request({
+      method: "DELETE",
+      url: `/api/resource/${encodeURIComponent(doctype)}/${encodeURIComponent(name)}`,
+      headers: {
+        "X-Frappe-CSRF-Token": token,
         ...extraHeaders,
       },
       ...rest,

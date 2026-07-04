@@ -8,11 +8,9 @@
  *   URL slug: /app/master-plan-it
  */
 
-const ADMIN_PASSWORD = Cypress.env("ADMIN_PASSWORD") || Cypress.env("FRAPPE_PASSWORD") || "admin";
-
 describe("v16 — Workspace Smoke", () => {
   beforeEach(() => {
-    cy.frappeLogin("Administrator", ADMIN_PASSWORD);
+    cy.frappeLogin();
   });
 
   it("workspace page is reachable and title is correct", () => {
