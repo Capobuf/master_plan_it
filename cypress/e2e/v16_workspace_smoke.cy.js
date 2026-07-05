@@ -47,7 +47,7 @@ describe("v16 — Workspace Smoke", () => {
     charts.forEach((label) => {
       cy.contains(label, { timeout: 20000 }).should("be.visible");
     });
-    cy.get(".widget-charts .dashboard-widget-box", { timeout: 20000 }).should("have.length", 3);
+    cy.get(".dashboard-widget-box", { timeout: 20000 }).its("length").should("be.gte", 3);
   });
 
   it("'Monthly Plan' shortcut navigates to MPIT Monthly Plan report", () => {

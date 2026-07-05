@@ -9,8 +9,25 @@ Cypress.Commands.add("frappeLogin", (user, password) => {
   const loginPassword = password || Cypress.env("FRAPPE_PASSWORD");
 
   if (!loginPassword) {
-    throw new Error("FRAPPE_PASSWORD is required for Cypress Frappe login.");
+    throw new Error("CYPRESS_FRAPPE_PASSWORD is required for Cypress Frappe login.");
   }
+
+  cy.request({
+    method: "POST",
+    url: "/api/method/login",
+    form: true,
+    body: { usr: loginUser, pwd: loginPassword },
+    failOnStatusCode: false,
+    log: false,
+  }).then((response) => {
+    if (response.status !== 200 || response.body?.message !== "Logged In") {
+      throw new Error(
+        `Cypress Frappe auth preflight failed for ${loginUser}. ` +
+          "Run the development setup with CYPRESS_FRAPPE_USER and CYPRESS_FRAPPE_PASSWORD."
+      );
+    }
+    cy.clearCookies({ log: false });
+  });
 
   cy.session(
     [loginUser, loginPassword],

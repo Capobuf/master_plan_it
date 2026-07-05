@@ -1,13 +1,23 @@
 const { defineConfig } = require("cypress");
 
-const artifactsPath = process.env.CYPRESS_ARTIFACTS_PATH || ".";
-
 module.exports = defineConfig({
   e2e: {
+    setupNodeEvents(on, config) {
+      on("before:browser:launch", (browser, launchOptions) => {
+        if (browser.family !== "chromium") {
+          return launchOptions;
+        }
+        if (Array.isArray(launchOptions.args)) {
+          launchOptions.args.push("--mute-audio", "--disable-audio-output");
+        }
+        return launchOptions;
+      });
+      return config;
+    },
     baseUrl: process.env.CYPRESS_BASE_URL || "http://frappe:8000",
     env: {
-      FRAPPE_USER: process.env.CYPRESS_FRAPPE_USER || "Administrator",
-      FRAPPE_PASSWORD: process.env.FRAPPE_PASSWORD,
+      FRAPPE_USER: process.env.CYPRESS_FRAPPE_USER || "cypress@example.local",
+      FRAPPE_PASSWORD: process.env.CYPRESS_FRAPPE_PASSWORD || process.env.FRAPPE_PASSWORD,
     },
     viewportWidth: 1280,
     viewportHeight: 800,
@@ -20,9 +30,6 @@ module.exports = defineConfig({
     specPattern: "e2e/**/*.cy.js",
     supportFile: "support/commands.js",
     video: false,
-    screenshotOnRunFailure: true,
-    screenshotsFolder: `${artifactsPath}/screenshots`,
-    videosFolder: `${artifactsPath}/videos`,
-    downloadsFolder: `${artifactsPath}/downloads`,
+    screenshotOnRunFailure: false,
   },
 });
