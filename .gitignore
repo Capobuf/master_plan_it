@@ -6,9 +6,6 @@
 .envrc
 /artifacts
 /tools
-cypress/screenshots/
-cypress/videos/
-cypress/downloads/
 
 # Python artifacts
 *.py[cod]
@@ -56,9 +53,3 @@ yarn-error.log*
 /data/redis/
 private/
 sites/
-
-# Docker overrides
-docker-compose.override.yml
-docker-compose.override.yml.local
-
-/tmp

@@ -1,5 +1,9 @@
 // Cypress custom commands for Frappe Desk
 
+function doctypeSlug(doctype) {
+  return doctype.toLowerCase().replace(/\s+/g, "-");
+}
+
 /**
  * Login to Frappe Desk via the login form.
  * Frappe redirects to /app after successful login.
@@ -110,6 +114,88 @@ Cypress.Commands.add("openReport", (reportName) => {
 });
 
 /**
+ * Open the standard Frappe "new document" form for a DocType.
+ *
+ * The tests use this before setting values through cur_frm. That keeps the
+ * browser flow close to what a user does (route, form boot, client scripts,
+ * save lifecycle) without making the suite depend on Frappe's frequently
+ * changing autocomplete and grid DOM internals.
+ */
+Cypress.Commands.add("openNewDoc", (doctype) => {
+  const slug = doctypeSlug(doctype);
+  cy.visit(`/app/${slug}/new-${slug}`);
+  cy.get(".form-layout, .form-page", { timeout: 20000 }).should("be.visible");
+  cy.window({ timeout: 20000 }).its("cur_frm.doc.doctype").should("eq", doctype);
+});
+
+/**
+ * Mutate and save the currently opened Frappe form through the browser form
+ * controller.
+ *
+ * This intentionally runs inside the Desk page, not through the REST API. It
+ * exercises client-side form setup, field dependencies, child-table handling,
+ * server validation, autoname, and the normal save path while avoiding brittle
+ * low-level selectors for dynamic Frappe controls.
+ */
+Cypress.Commands.add("saveCurrentForm", (mutateForm) => {
+  return cy.window({ timeout: 20000 }).then({ timeout: 60000 }, async (win) => {
+    const frm = win.cur_frm;
+    if (!frm) {
+      throw new Error("No active Frappe form found on the current page.");
+    }
+
+    await mutateForm(win, frm);
+    await frm.save();
+
+    return {
+      doctype: frm.doc.doctype,
+      name: frm.doc.name,
+      doc: JSON.parse(JSON.stringify(frm.doc)),
+    };
+  });
+});
+
+/**
+ * Save the current form through Frappe Desk's own savedocs endpoint.
+ *
+ * This is reserved for complex child-table setup where Cypress should still
+ * open and populate the real Desk form, but where driving Frappe grid internals
+ * or waiting on frm.save() would make the test about framework mechanics
+ * instead of the MPIT workflow. The server path is the same endpoint used by
+ * Desk form saves.
+ */
+Cypress.Commands.add("saveCurrentFormViaDesk", (mutateForm) => {
+  return cy.window({ timeout: 20000 }).then({ timeout: 60000 }, async (win) => {
+    const frm = win.cur_frm;
+    if (!frm) {
+      throw new Error("No active Frappe form found on the current page.");
+    }
+
+    await mutateForm(win, frm);
+    let response;
+    try {
+      response = await win.frappe.call({
+        method: "frappe.desk.form.save.savedocs",
+        args: {
+          doc: JSON.stringify(frm.doc),
+          action: "Save",
+        },
+      });
+    } catch (error) {
+      const serverMessage = error?.responseJSON?._server_messages || error?.responseText || error?.message;
+      throw new Error(`Frappe Desk save failed: ${serverMessage || "unknown error"}`);
+    }
+    const saved = response.message || frm.doc;
+
+    return {
+      doctype: saved.doctype,
+      name: saved.name,
+      doc: JSON.parse(JSON.stringify(saved)),
+    };
+  });
+});
+
+/**
  * Retrieve the Frappe CSRF token from the current session.
  *
  * Frappe v16 embeds `frappe.csrf_token = "<token>"` in the /desk page HTML.
@@ -150,6 +236,49 @@ Cypress.Commands.add("frappePost", (url, body, options = {}) => {
       },
       ...rest,
     });
+  });
+});
+
+/**
+ * PUT to a Frappe REST API endpoint with CSRF included.
+ *
+ * Economic tests mostly create data through the UI and verify through reports.
+ * PUT remains useful for targeted setup/teardown where driving a full form
+ * would add noise without improving behavioral coverage.
+ */
+Cypress.Commands.add("frappePut", (url, body, options = {}) => {
+  return cy.getFrappeCsrfToken().then((token) => {
+    const { headers: extraHeaders, ...rest } = options;
+    return cy.request({
+      method: "PUT",
+      url,
+      body,
+      headers: {
+        "X-Frappe-CSRF-Token": token,
+        "Content-Type": "application/json",
+        ...extraHeaders,
+      },
+      ...rest,
+    });
+  });
+});
+
+/**
+ * Execute a Frappe query report and return the raw server response.
+ *
+ * Numeric assertions use this path instead of scraping the datatable because
+ * the report endpoint is the economic contract: it returns the exact data,
+ * chart, and summary used by Desk after filters are applied.
+ */
+Cypress.Commands.add("runReport", (reportName, filters = {}) => {
+  return cy.frappePost("/api/method/frappe.desk.query_report.run", {
+    report_name: reportName,
+    filters: JSON.stringify(filters),
+    ignore_prepared_report: 1,
+  }).then((response) => {
+    expect(response.status, `${reportName} report status`).to.eq(200);
+    expect(response.body?.message, `${reportName} report payload`).to.be.an("object");
+    return response.body.message;
   });
 });
 
