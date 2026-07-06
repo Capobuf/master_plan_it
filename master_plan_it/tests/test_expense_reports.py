@@ -85,6 +85,67 @@ class TestExpenseReports(FrappeTestCase):
         self.assertTrue(data)
         self.assertEqual(data[0]["year"], self.year)
 
+    def test_expenses_report_shows_calculated_plafond_totals(self):
+        plafond = frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_title": f"Plafond REP {self.suffix}",
+                "expense_kind": "Plafond",
+                "year": self.year,
+                "cost_center": self.cost_center,
+                "rows": [
+                    {
+                        "doctype": "MPIT Expense Row",
+                        "row_description": "Plafond allocation",
+                        "row_state": "Active",
+                        "amount": 1000,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 0,
+                        "spend_date": "2031-01-10",
+                    }
+                ],
+            }
+        ).insert()
+
+        frappe.get_doc(
+            {
+                "doctype": "MPIT Expense",
+                "expense_title": f"Plafond Consumer REP {self.suffix}",
+                "expense_kind": "Ordinary",
+                "year": self.year,
+                "cost_center": self.cost_center,
+                "project": self.project,
+                "uses_plafond": 1,
+                "is_extra": 0,
+                "plafond_expense": plafond.name,
+                "rows": [
+                    {
+                        "doctype": "MPIT Expense Row",
+                        "row_description": "Plafond actual",
+                        "row_phase": "Actual",
+                        "row_state": "Active",
+                        "vendor": self.vendor,
+                        "amount": 250,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 0,
+                        "spend_date": "2031-02-10",
+                    }
+                ],
+            }
+        ).insert()
+
+        columns, data = run_expenses({"year": self.year, "cost_center": self.cost_center})
+        fieldnames = {column["fieldname"] for column in columns}
+        for expected in {"plafond", "plafond_consumed", "plafond_remaining", "plafond_over"}:
+            self.assertIn(expected, fieldnames)
+
+        target = next((row for row in data if row.get("expense") == plafond.name), None)
+        self.assertIsNotNone(target)
+        self.assertEqual(target.get("plafond"), 1000)
+        self.assertEqual(target.get("plafond_consumed"), 250)
+        self.assertEqual(target.get("plafond_remaining"), 750)
+        self.assertEqual(target.get("plafond_over"), 0)
+
     def test_expenses_report_shows_standard_funding_for_standard_ordinary(self):
         standard = frappe.get_doc(
             {

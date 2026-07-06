@@ -11,7 +11,7 @@ from frappe import _
 from frappe.model.document import Document
 from frappe.utils import flt
 
-from master_plan_it import mpit_defaults, tax
+from master_plan_it import annualization, mpit_defaults, tax
 
 
 class MPITContractTerm(Document):
@@ -68,7 +68,8 @@ class MPITContractTerm(Document):
             return
 
         billing = self.billing_cycle or "Monthly"
-        if billing == "Annual":
-            self.monthly_amount_net = flt((self.amount_net or 0) / 12, 2)
-        else:
-            self.monthly_amount_net = flt(self.amount_net or 0, 2)
+        self.monthly_amount_net = annualization.monthly_equivalent_net(
+            self.amount_net or 0,
+            billing,
+            precision=2,
+        )

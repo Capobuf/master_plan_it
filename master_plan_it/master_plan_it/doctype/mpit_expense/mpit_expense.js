@@ -1,3 +1,12 @@
+frappe.provide("master_plan_it.vat");
+
+master_plan_it.vat.defaults_promise =
+    master_plan_it.vat.defaults_promise ||
+    frappe.call({ method: "master_plan_it.mpit_defaults.get_vat_defaults" }).then((r) => {
+        master_plan_it.vat.defaults = r.message || {};
+        return master_plan_it.vat.defaults;
+    });
+
 frappe.ui.form.on("MPIT Expense", {
     setup(frm) {
         set_link_queries(frm);
@@ -5,9 +14,11 @@ frappe.ui.form.on("MPIT Expense", {
 
     validate(frm) {
         update_all_expense_rows(frm);
+        validate_client_vat(frm);
     },
 
     refresh(frm) {
+        load_expense_vat_defaults(frm);
         apply_kind_visibility(frm);
         apply_funding_rules(frm);
     },
@@ -62,10 +73,12 @@ frappe.ui.form.on("MPIT Expense", {
 
 frappe.ui.form.on("MPIT Expense Row", {
     form_render(frm, cdt, cdn) {
-        const did_update_amount = update_row_amount_from_unit_price(cdt, cdn);
-        if (!did_update_amount) {
-            update_row_vat_split(cdt, cdn);
-        }
+        apply_row_vat_defaults(cdt, cdn).then(() => {
+            const did_update_amount = update_row_amount_from_unit_price(cdt, cdn);
+            if (!did_update_amount) {
+                update_row_vat_split(cdt, cdn);
+            }
+        });
     },
 
     qty(frm, cdt, cdn) {
@@ -190,6 +203,12 @@ function set_link_queries(frm) {
     });
 }
 
+function load_expense_vat_defaults(frm) {
+    master_plan_it.vat.defaults_promise.then(() => {
+        update_all_expense_rows(frm);
+    });
+}
+
 function get_row_qty(row) {
     if (row.qty === null || row.qty === undefined || row.qty === "") {
         return to_float(1);
@@ -225,7 +244,13 @@ function update_row_vat_split(cdt, cdn) {
     }
 
     const amount = to_float(row.amount || 0);
-    const rate = to_float(row.vat_rate || 0);
+    const rate = get_effective_vat_rate(row, amount);
+    if (rate === null) {
+        frappe.model.set_value(cdt, cdn, "amount_net", null);
+        frappe.model.set_value(cdt, cdn, "amount_vat", null);
+        frappe.model.set_value(cdt, cdn, "amount_gross", null);
+        return;
+    }
     const includes_vat = !!row.amount_includes_vat;
 
     let net = amount;
@@ -243,6 +268,74 @@ function update_row_vat_split(cdt, cdn) {
     frappe.model.set_value(cdt, cdn, "amount_gross", to_float(gross, 2));
 }
 
+function get_effective_vat_rate(row, amount) {
+    if (!is_blank(row.vat_rate)) {
+        return to_float(row.vat_rate, 2);
+    }
+
+    const defaults = master_plan_it.vat.defaults || {};
+    if (!is_blank(defaults.default_vat_rate)) {
+        return to_float(defaults.default_vat_rate, 2);
+    }
+
+    if (to_float(amount, 2) === 0) {
+        return 0;
+    }
+
+    return null;
+}
+
+function get_missing_vat_rows(frm) {
+    const rows = frm.doc.rows || [];
+    const defaults = master_plan_it.vat.defaults || {};
+    if (!is_blank(defaults.default_vat_rate)) {
+        return [];
+    }
+
+    return rows.filter((row) => {
+        const amount = get_row_amount_for_validation(row);
+        return to_float(amount, 2) !== 0 && is_blank(row.vat_rate);
+    });
+}
+
+function get_row_amount_for_validation(row) {
+    const unit_price = to_float(row.unit_price || 0);
+    if (unit_price) {
+        return to_float(get_row_qty(row) * unit_price, 2);
+    }
+    return to_float(row.amount || 0, 2);
+}
+
+function validate_client_vat(frm) {
+    const missing = get_missing_vat_rows(frm);
+    if (!missing.length) {
+        return;
+    }
+
+    frappe.throw(
+        __(
+            "One or more non-zero expense rows have no VAT Rate. Set a VAT Rate on the row or configure a Default VAT Rate in MPIT Settings."
+        )
+    );
+}
+
+function apply_row_vat_defaults(cdt, cdn) {
+    return master_plan_it.vat.defaults_promise.then((defaults) => {
+        const row = locals[cdt] && locals[cdt][cdn];
+        if (!row || row.__vat_defaults_applied) {
+            return;
+        }
+
+        if (row.__islocal && !is_blank(defaults.default_includes_vat)) {
+            frappe.model.set_value(cdt, cdn, "amount_includes_vat", defaults.default_includes_vat ? 1 : 0);
+        }
+        if (row.__islocal && !is_blank(defaults.default_vat_rate) && is_blank(row.vat_rate)) {
+            frappe.model.set_value(cdt, cdn, "vat_rate", defaults.default_vat_rate);
+        }
+        row.__vat_defaults_applied = true;
+    });
+}
+
 function update_all_expense_rows(frm) {
     const rows = frm.doc.rows || [];
     rows.forEach((row) => {
@@ -255,6 +348,10 @@ function update_all_expense_rows(frm) {
             update_row_vat_split(row.doctype, row.name);
         }
     });
+}
+
+function is_blank(value) {
+    return value === null || value === undefined || value === "";
 }
 
 function to_float(value, precision) {

@@ -6,6 +6,8 @@ import frappe
 from frappe import _
 from frappe.utils import flt
 
+from master_plan_it.master_plan_it.financial_engine import get_plafond_document_totals
+
 
 def execute(filters=None):
     filters = frappe._dict(filters or {})
@@ -48,11 +50,16 @@ def execute(filters=None):
         {"label": _("Funding"), "fieldname": "funding", "fieldtype": "Data", "width": 120},
         {"label": _("Forecast"), "fieldname": "forecast", "fieldtype": "Currency", "width": 120},
         {"label": _("Actual"), "fieldname": "actual", "fieldtype": "Currency", "width": 120},
+        {"label": _("Plafond"), "fieldname": "plafond", "fieldtype": "Currency", "width": 120},
+        {"label": _("Consumed Plafond"), "fieldname": "plafond_consumed", "fieldtype": "Currency", "width": 140},
+        {"label": _("Remaining Plafond"), "fieldname": "plafond_remaining", "fieldtype": "Currency", "width": 140},
+        {"label": _("Over Plafond"), "fieldname": "plafond_over", "fieldtype": "Currency", "width": 120},
     ]
 
     data = []
     for expense in expenses:
         funding = "-"
+        plafond_totals = {}
         if expense.expense_kind == "Ordinary":
             if expense.uses_plafond:
                 funding = _("On Plafond")
@@ -60,6 +67,8 @@ def execute(filters=None):
                 funding = _("Extra")
             else:
                 funding = _("Standard")
+        elif expense.expense_kind == "Plafond":
+            plafond_totals = get_plafond_document_totals(expense.name)
 
         data.append(
             {
@@ -73,6 +82,10 @@ def execute(filters=None):
                 "funding": funding,
                 "forecast": flt(expense.total_forecast_net, 2),
                 "actual": flt(expense.total_actual_net, 2),
+                "plafond": flt(plafond_totals.get("plafond_total", 0), 2),
+                "plafond_consumed": flt(plafond_totals.get("plafond_consumed", 0), 2),
+                "plafond_remaining": flt(plafond_totals.get("plafond_remaining", 0), 2),
+                "plafond_over": flt(plafond_totals.get("plafond_over", 0), 2),
             }
         )
 

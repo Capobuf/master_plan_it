@@ -13,7 +13,8 @@ from __future__ import annotations
 import datetime
 
 import frappe
-from frappe.utils import getdate, nowdate
+from frappe import _
+from frappe.utils import flt, getdate, nowdate
 
 
 def get_horizon_years() -> set[int]:
@@ -83,3 +84,35 @@ def overlap_months(
 			current = datetime.date(current.year, current.month + 1, 1)
 
 	return len(months)
+
+
+def monthly_equivalent_net(amount_net: float, billing_cycle: str | None, precision: int = 6) -> float:
+	"""Return the monthly net equivalent for a supported billing cycle."""
+	amount_net = flt(amount_net, 2)
+	cycle = (billing_cycle or "Monthly").strip()
+
+	if cycle == "Annual":
+		return flt(amount_net / 12, precision)
+	if cycle == "Monthly":
+		return flt(amount_net, precision)
+	frappe.throw(_("Billing Cycle must be Monthly or Annual."))
+
+
+def allocate_billing_cycle_amount_to_year(
+	amount_net: float,
+	billing_cycle: str | None,
+	period_start: datetime.date,
+	period_end: datetime.date,
+	year_start: datetime.date,
+	year_end: datetime.date,
+) -> float:
+	"""Allocate a billing-cycle amount to overlapping months and return a final 2-decimal value."""
+	if period_start > period_end:
+		return 0.0
+
+	months = overlap_months(period_start, period_end, year_start, year_end)
+	if months <= 0:
+		return 0.0
+
+	monthly_net = monthly_equivalent_net(amount_net, billing_cycle, precision=6)
+	return flt(monthly_net * months, 2)

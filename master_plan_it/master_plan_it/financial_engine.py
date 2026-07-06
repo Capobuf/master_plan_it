@@ -70,15 +70,14 @@ def allocate_contract_amount_to_year(
     year_start: datetime.date,
     year_end: datetime.date,
 ) -> float:
-    if period_start > period_end:
-        return 0.0
-
-    overlap_months = annualization.overlap_months(period_start, period_end, year_start, year_end)
-    if overlap_months <= 0:
-        return 0.0
-
-    monthly_net = _monthly_from_cycle(amount_net, billing_cycle)
-    return flt(monthly_net * overlap_months, 2)
+    return annualization.allocate_billing_cycle_amount_to_year(
+        amount_net,
+        billing_cycle,
+        period_start,
+        period_end,
+        year_start,
+        year_end,
+    )
 
 
 def allocate_expense_row_to_months(
@@ -1112,17 +1111,6 @@ def _resolve_year_int(year: str | int | None) -> int:
     return int(str(year))
 
 
-def _monthly_from_cycle(amount_net: float, billing_cycle: str | None) -> float:
-    amount_net = flt(amount_net, 2)
-    cycle = (billing_cycle or "Monthly").strip()
-
-    if cycle == "Annual":
-        return flt(amount_net / 12, 6)
-    if cycle == "Monthly":
-        return flt(amount_net, 6)
-    frappe.throw(_("Billing Cycle must be Monthly or Annual."))
-
-
 def _contract_forecast_for_year(contract_row, year_start: datetime.date, year_end: datetime.date) -> float:
     terms = _get_contract_terms(contract_row.name)
 
@@ -1138,14 +1126,20 @@ def _contract_forecast_for_year(contract_row, year_start: datetime.date, year_en
             if period_start > period_end:
                 continue
 
-            overlap_months = annualization.overlap_months(period_start, period_end, year_start, year_end)
-            if overlap_months <= 0:
+            term_amount_net = flt(term.amount_net if term.amount_net is not None else term.amount, 2)
+            annual_contribution = allocate_contract_amount_to_year(
+                term_amount_net,
+                term.billing_cycle,
+                term_start,
+                term_end,
+                year_start,
+                year_end,
+            )
+            if annual_contribution == 0:
                 continue
 
             impacted = True
-            term_amount_net = flt(term.amount_net if term.amount_net is not None else term.amount, 2)
-            monthly_net = _monthly_from_cycle(term_amount_net, term.billing_cycle)
-            total += flt(monthly_net * overlap_months, 2)
+            total += annual_contribution
 
         if not impacted:
             return 0.0
@@ -1218,7 +1212,7 @@ def _contract_monthly_allocation(contract_row, year_start: datetime.date, year_e
                 continue
 
             term_amount_net = flt(term.amount_net if term.amount_net is not None else term.amount, 2)
-            monthly_net = _monthly_from_cycle(term_amount_net, term.billing_cycle)
+            monthly_net = annualization.monthly_equivalent_net(term_amount_net, term.billing_cycle, precision=6)
 
             for month in _months_touched(period_start, period_end):
                 monthly_map[month] += flt(monthly_net, 6)

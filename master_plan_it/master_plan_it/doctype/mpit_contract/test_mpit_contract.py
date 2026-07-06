@@ -371,6 +371,33 @@ class TestMPITContract(FrappeTestCase):
             expense.name,
         )
 
+    def test_annual_summary_preserves_full_year_annual_amount(self):
+        year = datetime.date.today().year + 5
+        ensure_year(year)
+
+        doc = frappe.get_doc(
+            {
+                "doctype": "MPIT Contract",
+                "description": "Contract Annual Rounding",
+                "vendor": self.vendor,
+                "cost_center": self.cost_center,
+                "auto_renew": 0,
+                "terms": [
+                    {
+                        "doctype": "MPIT Contract Term",
+                        "from_date": f"{year}-01-01",
+                        "to_date": f"{year}-12-31",
+                        "amount": 100,
+                        "amount_includes_vat": 0,
+                        "vat_rate": 22,
+                        "billing_cycle": "Annual",
+                    }
+                ],
+            }
+        ).insert()
+
+        self.assertEqual(doc._calculate_annual_for_year(year), 100)
+
     def test_contract_bounds_are_calculated_from_all_terms(self):
         year = datetime.date.today().year + 6
         ensure_year(year)

@@ -288,12 +288,14 @@ class MPITContract(Document):
                 if period_start > period_end:
                     continue
 
-                overlap_months = annualization.overlap_months(period_start, period_end, year_start, year_end)
-                if overlap_months <= 0:
-                    continue
-
-                monthly_net = self._monthly_from_cycle(flt(term.amount_net or term.amount, 2), term.billing_cycle)
-                total += flt(monthly_net * overlap_months, 2)
+                total += annualization.allocate_billing_cycle_amount_to_year(
+                    flt(term.amount_net if term.amount_net is not None else term.amount, 2),
+                    term.billing_cycle,
+                    term_start,
+                    term_end,
+                    year_start,
+                    year_end,
+                )
 
             return flt(total, 2)
 
@@ -321,15 +323,6 @@ class MPITContract(Document):
         if max_end and max_end < reference_date:
             return "Concluded"
         return "Concluded"
-
-    @staticmethod
-    def _monthly_from_cycle(amount_net: float, billing_cycle: str | None) -> float:
-        cycle = (billing_cycle or "Monthly").strip()
-        if cycle == "Annual":
-            return flt(amount_net / 12, 2)
-        if cycle == "Monthly":
-            return flt(amount_net, 2)
-        frappe.throw(_("Billing Cycle must be Monthly or Annual."))
 
 
 def resolve_term_end(terms_sorted: list, idx: int, fallback_end=None):
