@@ -192,7 +192,7 @@ def test_overview_and_contract_actualization_translation_targets_present():
     assert not mismatched, f"Mismatched translations in it.po: {mismatched}"
 
 
-def test_mpit_overview_pdf_business_translation_targets_present():
+def test_mpit_economic_position_pdf_business_translation_targets_present():
     expected = {
         "IT Economic Overview": "Panoramica economica IT",
         "Budget, actual spend, forecasts and plafond": "Budget, consuntivo, previsioni e plafond",
@@ -310,7 +310,7 @@ def test_mpit_overview_pdf_business_translation_targets_present():
 
     fuzzy = _load_po_fuzzy_msgids(_it_po_path())
     fuzzy_expected = sorted(msgid for msgid in expected if msgid in fuzzy)
-    assert not fuzzy_expected, f"Fuzzy MPIT Overview PDF translations in it.po: {fuzzy_expected}"
+    assert not fuzzy_expected, f"Fuzzy MPIT Economic Position PDF translations in it.po: {fuzzy_expected}"
 
 
 def test_contract_fallback_translation_targets_absent():

@@ -103,7 +103,7 @@
     "width": "Half"
    },
    {
-    "chart": "MPIT Renewals Window (by Month)",
+    "chart": "MPIT Renewals And Commitments (by Month)",
     "parent": "Master Plan IT Overview",
     "parentfield": "charts",
     "parenttype": "Dashboard",

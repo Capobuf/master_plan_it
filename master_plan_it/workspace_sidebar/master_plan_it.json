@@ -117,7 +117,7 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Panoramica Economica",
-   "link_to": "MPIT Overview",
+   "link_to": "MPIT Economic Position",
    "link_type": "Report",
    "show_arrow": 0,
    "type": "Link"
@@ -128,8 +128,8 @@
    "icon": "calendar-days",
    "indent": 0,
    "keep_closed": 0,
-   "label": "Monthly Plan",
-   "link_to": "MPIT Monthly Plan",
+   "label": "Year End Forecast",
+   "link_to": "MPIT Year End Forecast",
    "link_type": "Report",
    "show_arrow": 0,
    "type": "Link"
@@ -165,7 +165,7 @@
    "indent": 0,
    "keep_closed": 0,
    "label": "Renewals Window",
-   "link_to": "MPIT Renewals Window",
+   "link_to": "MPIT Renewals And Commitments",
    "link_type": "Report",
    "show_arrow": 0,
    "type": "Link"

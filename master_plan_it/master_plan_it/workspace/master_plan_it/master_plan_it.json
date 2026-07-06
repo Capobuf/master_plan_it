@@ -13,7 +13,7 @@
    "label": "Plafond Usage by Cost Center"
   }
  ],
- "content": "[{\"id\":\"h1\",\"type\":\"header\",\"data\":{\"text\":\"Master Plan IT\",\"col\":12}},{\"id\":\"k1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Forecast Total\",\"col\":3}},{\"id\":\"k2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Actual Total\",\"col\":3}},{\"id\":\"k3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Plafonds\",\"col\":3}},{\"id\":\"k4\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Remaining Plafond\",\"col\":3}},{\"id\":\"c1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Forecast vs Actual by Cost Center\",\"col\":4}},{\"id\":\"c2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Monthly Forecast vs Actual\",\"col\":4}},{\"id\":\"c3\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Plafond Usage by Cost Center\",\"col\":4}},{\"id\":\"h2\",\"type\":\"header\",\"data\":{\"text\":\"Quick Actions\",\"col\":12}},{\"id\":\"s1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Expense\",\"col\":2}},{\"id\":\"s2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Plafond\",\"col\":2}},{\"id\":\"s3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Contract\",\"col\":2}},{\"id\":\"s4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Project\",\"col\":2}},{\"id\":\"s5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Panoramica Economica\",\"col\":2}},{\"id\":\"s6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Monthly Plan\",\"col\":2}},{\"id\":\"h3\",\"type\":\"header\",\"data\":{\"text\":\"Navigation\",\"col\":12}},{\"id\":\"g1\",\"type\":\"card\",\"data\":{\"card_name\":\"Operations\",\"col\":4}},{\"id\":\"g2\",\"type\":\"card\",\"data\":{\"card_name\":\"Analysis\",\"col\":4}},{\"id\":\"g3\",\"type\":\"card\",\"data\":{\"card_name\":\"Master Data\",\"col\":4}},{\"id\":\"sp1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"q1\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Expenses\",\"col\":4}},{\"id\":\"q2\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Contracts\",\"col\":4}},{\"id\":\"q3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Projects\",\"col\":4}}]",
+ "content": "[{\"id\":\"h1\",\"type\":\"header\",\"data\":{\"text\":\"Master Plan IT\",\"col\":12}},{\"id\":\"k1\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Forecast Total\",\"col\":3}},{\"id\":\"k2\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Actual Total\",\"col\":3}},{\"id\":\"k3\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Plafonds\",\"col\":3}},{\"id\":\"k4\",\"type\":\"number_card\",\"data\":{\"number_card_name\":\"Remaining Plafond\",\"col\":3}},{\"id\":\"c1\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Forecast vs Actual by Cost Center\",\"col\":4}},{\"id\":\"c2\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Monthly Forecast vs Actual\",\"col\":4}},{\"id\":\"c3\",\"type\":\"chart\",\"data\":{\"chart_name\":\"Plafond Usage by Cost Center\",\"col\":4}},{\"id\":\"h2\",\"type\":\"header\",\"data\":{\"text\":\"Quick Actions\",\"col\":12}},{\"id\":\"s1\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Expense\",\"col\":2}},{\"id\":\"s2\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Plafond\",\"col\":2}},{\"id\":\"s3\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Contract\",\"col\":2}},{\"id\":\"s4\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"New Project\",\"col\":2}},{\"id\":\"s5\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Panoramica Economica\",\"col\":2}},{\"id\":\"s6\",\"type\":\"shortcut\",\"data\":{\"shortcut_name\":\"Year End Forecast\",\"col\":2}},{\"id\":\"h3\",\"type\":\"header\",\"data\":{\"text\":\"Navigation\",\"col\":12}},{\"id\":\"g1\",\"type\":\"card\",\"data\":{\"card_name\":\"Operations\",\"col\":4}},{\"id\":\"g2\",\"type\":\"card\",\"data\":{\"card_name\":\"Analysis\",\"col\":4}},{\"id\":\"g3\",\"type\":\"card\",\"data\":{\"card_name\":\"Master Data\",\"col\":4}},{\"id\":\"sp1\",\"type\":\"spacer\",\"data\":{\"col\":12}},{\"id\":\"q1\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Expenses\",\"col\":4}},{\"id\":\"q2\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Contracts\",\"col\":4}},{\"id\":\"q3\",\"type\":\"quick_list\",\"data\":{\"quick_list_name\":\"Recent Projects\",\"col\":4}}]",
  "creation": "2026-03-28 15:15:00.000000",
  "custom_blocks": [],
  "docstatus": 0,
@@ -89,7 +89,7 @@
    "is_query_report": 1,
    "label": "Panoramica Economica",
    "link_count": 0,
-   "link_to": "MPIT Overview",
+   "link_to": "MPIT Economic Position",
    "link_type": "Report",
    "onboard": 0,
    "report_ref_doctype": "MPIT Expense",
@@ -98,9 +98,9 @@
   {
    "hidden": 0,
    "is_query_report": 1,
-   "label": "Monthly Plan",
+   "label": "Year End Forecast",
    "link_count": 0,
-   "link_to": "MPIT Monthly Plan",
+   "link_to": "MPIT Year End Forecast",
    "link_type": "Report",
    "onboard": 0,
    "report_ref_doctype": "MPIT Expense",
@@ -133,7 +133,7 @@
    "is_query_report": 1,
    "label": "Renewals Window",
    "link_count": 0,
-   "link_to": "MPIT Renewals Window",
+   "link_to": "MPIT Renewals And Commitments",
    "link_type": "Report",
    "onboard": 0,
    "report_ref_doctype": "MPIT Contract",
@@ -276,13 +276,13 @@
   {
    "icon": "pie-chart",
    "label": "Panoramica Economica",
-   "link_to": "MPIT Overview",
+   "link_to": "MPIT Economic Position",
    "type": "Report"
   },
   {
    "icon": "calendar",
-   "label": "Monthly Plan",
-   "link_to": "MPIT Monthly Plan",
+   "label": "Year End Forecast",
+   "link_to": "MPIT Year End Forecast",
    "type": "Report"
   }
  ],

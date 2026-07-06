@@ -1,0 +1,82 @@
+<style>
+@page { size: A4 portrait; margin: 10mm; }
+body { font-family: Arial, sans-serif; font-size: 10px; color: #111827; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+.report-header { margin-bottom: 10px; }
+.report-title { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+.report-meta { font-size: 9px; color: #4b5563; }
+.summary-grid { display: table; width: 100%; margin: 8px 0 10px 0; table-layout: fixed; }
+.summary-card { display: table-cell; border: 1px solid #d1d5db; padding: 6px; }
+.summary-label { font-size: 8px; color: #6b7280; text-transform: uppercase; }
+.summary-value { font-size: 13px; font-weight: 700; }
+table { width: 100%; border-collapse: collapse; }
+thead { display: table-header-group; }
+tfoot { display: table-footer-group; }
+tr { page-break-inside: avoid; }
+th, td { border: 1px solid #d1d5db; padding: 5px 6px; vertical-align: top; }
+th { background: #f3f4f6; font-weight: 700; }
+.text-right { text-align: right; white-space: nowrap; }
+.legend { margin-top: 10px; font-size: 9px; color: #374151; }
+.footer { margin-top: 12px; font-size: 8px; color: #6b7280; }
+</style>
+
+<div class="report-header">
+  <div class="report-title">MPIT Economic Detail</div>
+  <div class="report-meta">
+    Year: {%= filters.year || filters.year_b || "" %}
+    {% if (filters.year_a) { %} - Year A: {%= filters.year_a %}{% } %}
+    {% if (filters.cost_center) { %} - Cost Center: {%= filters.cost_center %}{% } %}
+    - Generated: {%= frappe.datetime.now_datetime() %}
+    {% if (frappe.session && frappe.session.user) { %} - User: {%= frappe.session.user %}{% } %}
+  </div>
+</div>
+
+<div class="summary-grid">
+    <div class="summary-card">
+      <div class="summary-label">Rows</div>
+      <div class="summary-value">{%= (report_summary && report_summary[0] ? report_summary[0].value : 0) %}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Net</div>
+      <div class="summary-value">{%= frappe.format(report_summary && report_summary[1] ? report_summary[1].value : 0, {fieldtype: "Currency"}) %}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">VAT</div>
+      <div class="summary-value">{%= frappe.format(report_summary && report_summary[2] ? report_summary[2].value : 0, {fieldtype: "Currency"}) %}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Gross</div>
+      <div class="summary-value">{%= frappe.format(report_summary && report_summary[3] ? report_summary[3].value : 0, {fieldtype: "Currency"}) %}</div>
+    </div>
+</div>
+
+<table>
+  <thead>
+    <tr>
+      <th>Date</th>
+      <th>Cost Center</th>
+      <th>Document</th>
+      <th>Vendor</th>
+      <th>Phase</th>
+      <th>Funding</th>
+      <th class="text-right">Net</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for (var i = 0; i < data.length; i++) { %}
+    <tr>
+      <td>{%= data[i].effective_date || "" %}</td>
+      <td>{%= data[i].cost_center || "" %}</td>
+      <td>{%= data[i].source_document || "" %}</td>
+      <td>{%= data[i].vendor || "" %}</td>
+      <td>{%= data[i].row_phase || "" %}</td>
+      <td>{%= data[i].funding || "" %}</td>
+      <td class="text-right">{%= frappe.format(data[i].amount_net, {fieldtype: "Currency"}) %}</td>
+    </tr>
+    {% } %}
+  </tbody>
+</table>
+
+<div class="legend">
+  Print profile: {%= filters.print_profile || "Standard" %} - Orientation: {%= filters.print_orientation || "Auto" %} - Density: {%= filters.print_density || "Normal" %}
+</div>
+<div class="footer">Values are computed by the Python financial engine. This template only formats precomputed report data.</div>

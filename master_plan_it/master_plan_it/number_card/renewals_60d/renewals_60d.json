@@ -16,7 +16,7 @@
  "owner": "Administrator",
  "report_field": "count",
  "report_function": "Sum",
- "report_name": "MPIT Renewals Window",
+ "report_name": "MPIT Renewals And Commitments",
  "show_full_number": 0,
  "show_percentage_stats": 0,
  "stats_time_interval": "Daily",

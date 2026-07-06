@@ -1,28 +1,29 @@
 /**
- * v16_report_overview_smoke.cy.js
+ * v16_report_economic_position_smoke.cy.js
  *
- * Smoke tests for the MPIT Overview report on Frappe v16.
+ * Smoke tests for the MPIT Economic Position report on Frappe v16.
  */
 
-describe("v16 — Report: MPIT Overview", () => {
+describe("v16 - Report: MPIT Economic Position", () => {
   beforeEach(() => {
     cy.frappeLogin();
   });
 
   it("report page loads and displays correct title", () => {
-    cy.openReport("MPIT Overview");
-    cy.contains("MPIT Overview", { timeout: 15000 }).should("be.visible");
+    cy.openReport("MPIT Economic Position");
+    cy.contains("MPIT Economic Position", { timeout: 15000 }).should("be.visible");
   });
 
   it("core visible filters are rendered", () => {
-    cy.openReport("MPIT Overview");
+    cy.openReport("MPIT Economic Position");
 
     [
       "year",
-      "financial_view",
-      "view_mode",
       "cost_center",
-      "show_zero_rows",
+      "group_by",
+      "basis",
+      "scope",
+      "hide_zero_rows",
       "print_profile",
       "print_orientation",
       "print_density",
