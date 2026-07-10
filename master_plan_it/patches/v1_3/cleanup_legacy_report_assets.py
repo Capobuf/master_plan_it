@@ -16,7 +16,7 @@ CHART_RENAMES = {
 
 NUMBER_CARD_FIELDS = {
     "MPIT Forecast Total": "year_end_forecast",
-    "MPIT Remaining Plafond": "remaining_or_over",
+    "MPIT Remaining Plafond": "plafond_remaining",
 }
 
 

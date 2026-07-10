@@ -10,6 +10,7 @@ from master_plan_it.master_plan_it.financial_engine import (
     get_contract_year_contribution_lines,
     get_contract_forecast_totals,
     get_cost_center_financial_summary,
+    get_economic_position_dataset,
     get_expense_forecast_totals,
     get_monthly_forecast_vs_actual,
     get_overview_dataset,
@@ -392,6 +393,55 @@ class TestFinancialEngine(FrappeTestCase):
         self.assertEqual(summary_infra["actual_total"], 250)
         self.assertEqual(summary_infra["plafond"], 0)
         self.assertEqual(summary_infra["plafond_consumed"], 0)
+
+        position = get_economic_position_dataset(
+            {
+                "year": year,
+                "group_by": "Cost Center",
+                "basis": "Actual + Proposed",
+                "scope": "Plafond",
+                "hide_zero_rows": 0,
+            }
+        )
+        position_by_cost_center = {row["group_label"]: row for row in position["rows"]}
+        funding_position = position_by_cost_center[cc_funding]
+        infra_position = position_by_cost_center[cc_infra]
+
+        self.assertEqual(funding_position["plafond_total"], 1000)
+        self.assertEqual(funding_position["plafond_consumed"], 250)
+        self.assertEqual(funding_position["plafond_remaining"], 750)
+        self.assertEqual(funding_position["plafond_over"], 0)
+        self.assertEqual(infra_position["actual_on_plafond"], 250)
+        self.assertEqual(infra_position["plafond_consumed"], 0)
+        self.assertEqual(position["summary"]["plafond_over"], 0)
+
+    def test_economic_position_usage_is_confirmed_spend_over_year_end_forecast(self):
+        make_expense(
+            year=self.year,
+            cost_center=self.cost_center,
+            is_extra=0,
+            rows=[
+                expense_row("Estimate", 300, "Active", spend_date="2030-01-10"),
+                expense_row("Actual", 100, "Active", spend_date="2030-02-10"),
+            ],
+        )
+
+        position = get_economic_position_dataset(
+            {
+                "year": self.year,
+                "cost_center": self.cost_center,
+                "include_children": 0,
+                "basis": "Actual + Proposed",
+                "hide_zero_rows": 0,
+            }
+        )
+        row = position["rows"][0]
+
+        self.assertEqual(row["actual_total"], 100)
+        self.assertEqual(row["forecast_remaining"], 300)
+        self.assertEqual(row["year_end_forecast"], 400)
+        self.assertEqual(row["usage_percent"], 25)
+        self.assertEqual(position["summary"]["usage_percent"], 25)
 
     def test_actual_standard_and_total_invariant(self):
         plafond = make_expense(

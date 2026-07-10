@@ -14,7 +14,7 @@
  "module": "Master Plan IT",
  "name": "MPIT Remaining Plafond",
  "owner": "Administrator",
- "report_field": "remaining_or_over",
+ "report_field": "plafond_remaining",
  "report_function": "Sum",
  "report_name": "MPIT Economic Position",
  "show_full_number": 0,

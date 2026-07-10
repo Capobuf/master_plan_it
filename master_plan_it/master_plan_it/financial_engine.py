@@ -1170,13 +1170,14 @@ def get_economic_position_dataset(filters: dict) -> dict:
     rows = _query_report_economic_rows(filters)
     group_by = filters.get("group_by") or "Cost Center"
     scope = filters.get("scope") or "All"
-    basis = filters.get("basis") or "Actual + Forecast"
-    warning_threshold = flt(filters.get("warning_threshold_percent") or 85)
+    basis = filters.get("basis") or "Actual + Proposed"
 
     grouped: dict[str, dict] = {}
     for row in rows:
         funding = _classify_funding(row)
         if scope == "Expenses" and row.get("expense_kind") != "Ordinary":
+            continue
+        if scope == "Standard" and funding != "Standard":
             continue
         if scope == "Plafond" and funding != "Plafond":
             continue
@@ -1188,7 +1189,11 @@ def get_economic_position_dataset(filters: dict) -> dict:
         amount = flt(row.get("amount_net"), 2)
 
         if row.get("expense_kind") == "Plafond":
-            target["plafond_total"] = flt(target["plafond_total"] + amount, 2)
+            # Cost-center plafond values are merged below from their funding
+            # source so cross-cost-center consumption remains attributed to
+            # the owner of the selected plafond.
+            if group_by != "Cost Center":
+                target["plafond_total"] = flt(target["plafond_total"] + amount, 2)
             continue
 
         if row.get("row_phase") == "Actual":
@@ -1197,6 +1202,8 @@ def get_economic_position_dataset(filters: dict) -> dict:
             target["actual_total"] = flt(target["actual_total"] + amount, 2)
             if funding == "Plafond":
                 target["actual_on_plafond"] = flt(target["actual_on_plafond"] + amount, 2)
+                if group_by == "Funding":
+                    target["plafond_consumed"] = flt(target["plafond_consumed"] + amount, 2)
             elif funding == "Extra":
                 target["actual_extra"] = flt(target["actual_extra"] + amount, 2)
             else:
@@ -1213,12 +1220,16 @@ def get_economic_position_dataset(filters: dict) -> dict:
             if _is_forecast_included_for_basis(stage, basis):
                 target["forecast_remaining"] = flt(target["forecast_remaining"] + amount, 2)
 
+    if group_by == "Cost Center" and scope in {"All", "Plafond"}:
+        for cost_center, plafond in _get_plafond_position_by_cost_center(filters).items():
+            target = grouped.setdefault(cost_center, _empty_position_row(cost_center))
+            target["plafond_total"] = plafond["plafond_total"]
+            target["plafond_consumed"] = plafond["plafond_consumed"]
+
     out_rows = []
     for row in grouped.values():
-        _finalize_position_row(row, warning_threshold)
+        _finalize_position_row(row)
         if filters.get("hide_zero_rows", 1) and not _position_row_has_amounts(row):
-            continue
-        if filters.get("show_only_exceptions") and row["status"] == "OK":
             continue
         out_rows.append(row)
 
@@ -1667,6 +1678,76 @@ def _query_report_economic_rows(
     return frappe.db.sql("\n".join(sql), params, as_dict=True)
 
 
+def _get_plafond_position_by_cost_center(filters: frappe._dict) -> dict[str, dict]:
+    """Aggregate allocation and consumption on the plafond owner's cost center."""
+    year_int = _resolve_year_int(filters.get("year"))
+    cost_centers = _get_cost_center_scope(
+        filters.get("cost_center"),
+        bool(filters.get("include_children", 1)),
+    )
+    params: dict = {"year": str(year_int)}
+    cost_center_clause = ""
+    if cost_centers:
+        cost_center_clause = "AND p.cost_center IN %(cost_centers)s"
+        params["cost_centers"] = tuple(cost_centers)
+
+    allocations = frappe.db.sql(
+        f"""
+        SELECT
+            p.cost_center,
+            COALESCE(SUM(r.amount_net), 0) AS plafond_total
+        FROM `tabMPIT Expense` p
+        INNER JOIN `tabMPIT Expense Row` r ON r.parent = p.name
+        WHERE p.year = %(year)s
+          AND p.expense_kind = 'Plafond'
+          AND r.parenttype = 'MPIT Expense'
+          AND r.parentfield = 'rows'
+          AND r.row_state = 'Active'
+          {cost_center_clause}
+        GROUP BY p.cost_center
+        """,
+        params,
+        as_dict=True,
+    )
+    consumptions = frappe.db.sql(
+        f"""
+        SELECT
+            p.cost_center,
+            COALESCE(SUM(r.amount_net), 0) AS plafond_consumed
+        FROM `tabMPIT Expense` p
+        INNER JOIN `tabMPIT Expense` e ON e.plafond_expense = p.name
+        INNER JOIN `tabMPIT Expense Row` r ON r.parent = e.name
+        WHERE p.year = %(year)s
+          AND p.expense_kind = 'Plafond'
+          AND e.year = %(year)s
+          AND e.expense_kind = 'Ordinary'
+          AND e.uses_plafond = 1
+          AND r.parenttype = 'MPIT Expense'
+          AND r.parentfield = 'rows'
+          AND r.row_state = 'Active'
+          AND r.row_phase = 'Actual'
+          {cost_center_clause}
+        GROUP BY p.cost_center
+        """,
+        params,
+        as_dict=True,
+    )
+
+    out: dict[str, dict] = {}
+    for row in allocations:
+        out[row.cost_center] = {
+            "plafond_total": flt(row.plafond_total, 2),
+            "plafond_consumed": 0.0,
+        }
+    for row in consumptions:
+        target = out.setdefault(
+            row.cost_center,
+            {"plafond_total": 0.0, "plafond_consumed": 0.0},
+        )
+        target["plafond_consumed"] = flt(row.plafond_consumed, 2)
+    return out
+
+
 def _get_report_group(row: dict, group_by: str) -> tuple[str, str]:
     if group_by == "Vendor":
         value = row.get("vendor") or "No Vendor"
@@ -1688,6 +1769,7 @@ def _empty_position_row(label: str) -> dict:
         "group_label": label,
         "operating_budget": 0.0,
         "plafond_total": 0.0,
+        "plafond_consumed": 0.0,
         "actual_standard": 0.0,
         "actual_on_plafond": 0.0,
         "actual_extra": 0.0,
@@ -1700,18 +1782,20 @@ def _empty_position_row(label: str) -> dict:
         "remaining_or_over": 0.0,
         "usage_percent": 0.0,
         "available_budget": 0.0,
-        "status": "OK",
     }
 
 
-def _finalize_position_row(row: dict, warning_threshold: float) -> None:
+def _finalize_position_row(row: dict) -> None:
     row["available_budget"] = flt(row.get("operating_budget", 0) + row.get("plafond_total", 0), 2)
     row["year_end_forecast"] = flt(row.get("actual_total", 0) + row.get("forecast_remaining", 0), 2)
-    row["plafond_remaining"] = flt(row.get("plafond_total", 0) - row.get("actual_on_plafond", 0), 2)
-    row["plafond_over"] = flt(max(row.get("actual_on_plafond", 0) - row.get("plafond_total", 0), 0), 2)
+    row["plafond_remaining"] = flt(row.get("plafond_total", 0) - row.get("plafond_consumed", 0), 2)
+    row["plafond_over"] = flt(max(row.get("plafond_consumed", 0) - row.get("plafond_total", 0), 0), 2)
     row["remaining_or_over"] = flt(row.get("available_budget", 0) - row.get("year_end_forecast", 0), 2)
-    row["usage_percent"] = flt((row["year_end_forecast"] / row["available_budget"]) * 100, 2) if row["available_budget"] else 0.0
-    row["status"] = _status_from_amounts(row["available_budget"], row["year_end_forecast"], warning_threshold)
+    row["usage_percent"] = (
+        flt((row["actual_total"] / row["year_end_forecast"]) * 100, 2)
+        if row["year_end_forecast"]
+        else 0.0
+    )
 
 
 def _position_row_has_amounts(row: dict) -> bool:
@@ -1723,6 +1807,7 @@ def _summarize_position_rows(rows: list[dict]) -> dict:
     fields = [
         "operating_budget",
         "plafond_total",
+        "plafond_consumed",
         "actual_standard",
         "actual_on_plafond",
         "actual_extra",
@@ -1736,7 +1821,11 @@ def _summarize_position_rows(rows: list[dict]) -> dict:
         "available_budget",
     ]
     summary = {field: flt(sum(row.get(field, 0) for row in rows), 2) for field in fields}
-    summary["critical_rows"] = len([row for row in rows if row.get("status") == "Critical"])
+    summary["usage_percent"] = (
+        flt((summary["actual_total"] / summary["year_end_forecast"]) * 100, 2)
+        if summary["year_end_forecast"]
+        else 0.0
+    )
     return summary
 
 
@@ -1745,7 +1834,7 @@ def _build_position_chart(rows: list[dict]) -> dict:
         "data": {
             "labels": [row["group_label"] for row in rows],
             "datasets": [
-                {"name": _("Available Budget"), "values": [row["available_budget"] for row in rows]},
+                {"name": _("Actual Total"), "values": [row["actual_total"] for row in rows]},
                 {"name": _("Year-end Forecast"), "values": [row["year_end_forecast"] for row in rows]},
             ],
         },

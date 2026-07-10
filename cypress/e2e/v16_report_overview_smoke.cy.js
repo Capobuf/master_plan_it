@@ -30,5 +30,9 @@ describe("v16 - Report: MPIT Economic Position", () => {
     ].forEach((fieldname) => {
       cy.get(`[data-fieldname="${fieldname}"]`, { timeout: 15000 }).should("be.visible");
     });
+
+    ["show_only_exceptions", "warning_threshold_percent"].forEach((fieldname) => {
+      cy.get(`[data-fieldname="${fieldname}"]`).should("not.exist");
+    });
   });
 });

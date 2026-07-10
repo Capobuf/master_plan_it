@@ -110,9 +110,13 @@ class TestReportingRefactor(FrappeTestCase):
         )
         fieldnames = {column["fieldname"] for column in columns}
         self.assertIn("year_end_forecast", fieldnames)
-        self.assertIn("remaining_or_over", fieldnames)
+        self.assertIn("usage_percent", fieldnames)
+        self.assertIn("plafond_consumed", fieldnames)
+        self.assertNotIn("operating_budget", fieldnames)
+        self.assertNotIn("remaining_or_over", fieldnames)
+        self.assertNotIn("status", fieldnames)
         self.assertTrue(data)
-        self.assertIn("available_budget", data[0])
+        self.assertEqual(data[0]["usage_percent"], 29.41)
         self.assertTrue(report_summary)
 
     def test_what_if_switches_columns_for_detail(self):

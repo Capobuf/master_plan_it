@@ -288,7 +288,7 @@ describe("MPIT economic correctness", () => {
                   year,
                   cost_center: costCenter,
                   group_by: "Cost Center",
-                  basis: "Actual + Forecast",
+                  basis: "Actual + Proposed",
                   hide_zero_rows: 0,
                 }).then((payload) => {
                   const rows = reportRows(payload);
@@ -303,15 +303,17 @@ describe("MPIT economic correctness", () => {
                   expect(money(row.actual_extra)).to.eq(70);
                   expect(money(row.actual_total)).to.eq(740);
                   expect(money(row.plafond_total)).to.eq(1000);
+                  expect(money(row.plafond_consumed)).to.eq(600);
                   expect(money(row.plafond_remaining)).to.eq(400);
                   expect(money(row.plafond_over)).to.eq(0);
                   expect(money(row.year_end_forecast)).to.eq(1090);
-                  expect(money(row.remaining_or_over)).to.eq(60);
+                  expect(money(row.usage_percent)).to.eq(67.89);
 
                   const summary = reportSummaryMap(payload);
                   expect(summary["Year-end Forecast"]).to.eq(1090);
                   expect(summary["Actual Total"]).to.eq(740);
-                  expect(summary["Remaining / Over"]).to.eq(60);
+                  expect(summary["Forecast Remaining"]).to.eq(350);
+                  expect(summary["Confirmed Usage %"]).to.eq(67.89);
                 });
               });
             });
@@ -402,7 +404,7 @@ describe("MPIT economic correctness", () => {
               year,
               cost_center: costCenter,
               group_by: "Cost Center",
-              basis: "Actual + Forecast",
+              basis: "Actual + Proposed",
               hide_zero_rows: 0,
             }).then((payload) => {
               const rows = reportRows(payload);

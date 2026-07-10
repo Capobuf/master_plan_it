@@ -48,7 +48,8 @@ are excluded.
 
 ## Available Budget
 
-Available budget is implemented as:
+Available budget remains an internal compatibility value for reports that use
+the historical planning comparison:
 
 `operating_budget + plafond_total`
 
@@ -57,6 +58,9 @@ projects and rows without a project. Approved project forecast is kept as a
 planning bucket named `approved_projects_forecast`, not as an official approved
 budget limit.
 
+It is not displayed as a budget in `MPIT Economic Position`, because the data
+model does not store an independent approved budget baseline.
+
 ## Remaining Or Over
 
 Remaining or over is:
@@ -64,6 +68,28 @@ Remaining or over is:
 `available_budget - year_end_forecast`
 
 Negative values represent overrun.
+
+`Remaining Or Over` is not displayed in `MPIT Economic Position`; without an
+independent approved budget it would compare two values derived from the same
+estimate and quote rows.
+
+## Confirmed Usage
+
+Confirmed usage in `MPIT Economic Position` is:
+
+`actual_total / year_end_forecast * 100`
+
+This measures confirmed spend against the complete expected year-end amount.
+An actual-only position is therefore 100% confirmed, while a forecast-only
+position is 0% confirmed.
+
+## Plafond Position By Cost Center
+
+Plafond allocation, consumption, remaining, and overrun are attributed to the
+cost center that owns the selected Plafond document. An ordinary expense may
+belong to a different spending cost center; its `actual_on_plafond` remains on
+the spending cost center, while `plafond_consumed` is reconciled on the funding
+cost center.
 
 ## Variance
 

@@ -364,6 +364,45 @@ def test_plafond_cross_cost_center_translation_targets_present():
     assert not mismatched, f"Mismatched translations in it.po: {mismatched}"
 
 
+def test_economic_position_usage_and_filter_translation_targets_present():
+    expected = {
+        "Group": "Raggruppamento",
+        "Confirmed Usage %": "Utilizzo confermato %",
+        "Plafond Over": "Sforamento plafond",
+        "Group By": "Raggruppa per",
+        "Include Children": "Includi sottocentri",
+        "Forecast Scope": "Ambito forecast",
+        "Funding Scope": "Ambito finanziamento",
+        "Actual + Approved Projects": "Effettivo + progetti approvati",
+        "Actual + Proposed": "Effettivo + proposte",
+        "Full Planning": "Pianificazione completa",
+        "Hide Zero Rows": "Nascondi righe a zero",
+        "Plafond availability is shown only when grouping by Cost Center or Funding.": (
+            "La disponibilità del plafond è mostrata solo raggruppando per centro di costo o finanziamento."
+        ),
+        "Choose which active estimates and quotes are included in the remaining forecast.": (
+            "Scegli quali stime e preventivi attivi includere nel forecast residuo."
+        ),
+        "Limit the report to standard, plafond-funded, or extra expenses.": (
+            "Limita il report alle spese ordinarie, finanziate da plafond o extra."
+        ),
+    }
+
+    pot_sources = _load_po_translations(_main_pot_path())
+    translations = _load_po_translations(_it_po_path())
+
+    pot_missing = sorted(msgid for msgid in expected if msgid not in pot_sources)
+    assert not pot_missing, f"Missing msgid entries in main.pot: {pot_missing}"
+    missing = sorted(msgid for msgid in expected if msgid not in translations)
+    assert not missing, f"Missing msgid entries in it.po: {missing}"
+    mismatched = {
+        msgid: (translations.get(msgid), msgstr)
+        for msgid, msgstr in expected.items()
+        if translations.get(msgid) != msgstr
+    }
+    assert not mismatched, f"Mismatched translations in it.po: {mismatched}"
+
+
 def test_help_text_and_rule_translation_targets_present():
     expected = {
         "Controls whether linked expenses are included in the operating budget, shown only as planning, deferred, or excluded.": (

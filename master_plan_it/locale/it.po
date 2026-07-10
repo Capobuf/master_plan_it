@@ -2641,3 +2641,59 @@ msgstr "Totale annuale"
 #: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Totale importo netto"
 msgstr "Totale importo netto"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
+msgid "Group"
+msgstr "Raggruppamento"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
+msgid "Confirmed Usage %"
+msgstr "Utilizzo confermato %"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
+msgid "Plafond Over"
+msgstr "Sforamento plafond"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Group By"
+msgstr "Raggruppa per"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Include Children"
+msgstr "Includi sottocentri"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Forecast Scope"
+msgstr "Ambito forecast"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Funding Scope"
+msgstr "Ambito finanziamento"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Actual + Approved Projects"
+msgstr "Effettivo + progetti approvati"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Actual + Proposed"
+msgstr "Effettivo + proposte"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Full Planning"
+msgstr "Pianificazione completa"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Hide Zero Rows"
+msgstr "Nascondi righe a zero"
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Plafond availability is shown only when grouping by Cost Center or Funding."
+msgstr "La disponibilità del plafond è mostrata solo raggruppando per centro di costo o finanziamento."
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Choose which active estimates and quotes are included in the remaining forecast."
+msgstr "Scegli quali stime e preventivi attivi includere nel forecast residuo."
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Limit the report to standard, plafond-funded, or extra expenses."
+msgstr "Limita il report alle spese ordinarie, finanziate da plafond o extra."
