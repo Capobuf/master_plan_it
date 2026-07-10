@@ -1839,6 +1839,8 @@ def _build_position_chart(rows: list[dict]) -> dict:
             ],
         },
         "type": "bar",
+        "colors": ["#2563EB", "#F59E0B"],
+        "fieldtype": "Currency",
     }
 
 

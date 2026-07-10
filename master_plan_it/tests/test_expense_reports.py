@@ -147,6 +147,18 @@ def test_report_templates_do_not_contain_business_calculation_patterns():
             assert token not in html
 
 
+def test_economic_position_print_template_uses_supported_frappe_context():
+    report_root = Path(__file__).resolve().parents[1] / "master_plan_it" / "report"
+    report_dir = report_root / "mpit_economic_position"
+    html = (report_dir / "mpit_economic_position.html").read_text()
+    javascript = (report_dir / "mpit_economic_position.js").read_text()
+
+    assert "report_summary" not in html
+    for fieldname in ("print_profile", "print_orientation", "print_density"):
+        assert fieldname not in html
+        assert fieldname not in javascript
+
+
 def ensure_year(year: int) -> str:
     name = str(year)
     if not frappe.db.exists("MPIT Year", name):

@@ -28,9 +28,6 @@ frappe.query_reports["MPIT Economic Position"] = {
             description: __("Limit the report to standard, plafond-funded, or extra expenses."),
         },
         { fieldname: "hide_zero_rows", label: __("Hide Zero Rows"), fieldtype: "Check", default: 1 },
-        { fieldname: "print_profile", label: __("Print Profile"), fieldtype: "Select", options: "Executive\nStandard\nDetailed\nAudit", default: "Standard" },
-        { fieldname: "print_orientation", label: __("Print Orientation"), fieldtype: "Select", options: "Auto\nPortrait\nLandscape", default: "Auto" },
-        { fieldname: "print_density", label: __("Print Density"), fieldtype: "Select", options: "Normal\nCompact", default: "Normal" },
     ],
 
     formatter(value, row, column, data, default_formatter) {
