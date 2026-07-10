@@ -55,7 +55,13 @@ def test_workspace_dashboard_uses_new_cards_and_charts():
     cards = {row.get("card") for row in dashboard.get("cards", [])}
     charts = {row.get("chart") for row in dashboard.get("charts", [])}
 
-    assert {"MPIT Forecast Total", "MPIT Actual Total", "MPIT Plafonds", "MPIT Remaining Plafond"} <= cards
+    assert {
+        "MPIT Forecast Total",
+        "MPIT Actual Total",
+        "MPIT Forecast Remaining",
+        "MPIT Extra Budget",
+    } <= cards
+    assert not {"MPIT Plafonds", "MPIT Remaining Plafond"} & cards
     assert {
         "MPIT Forecast vs Actual by Cost Center",
         "MPIT Monthly Forecast vs Actual",

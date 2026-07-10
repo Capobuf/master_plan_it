@@ -2444,6 +2444,12 @@ msgstr ""
 msgid "Extra Budget"
 msgstr ""
 
+msgid "Forecast Remaining"
+msgstr ""
+
+msgid "Year-end Forecast"
+msgstr ""
+
 #: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
 msgid "Consumed Plafond"
 msgstr ""

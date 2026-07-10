@@ -123,10 +123,10 @@ def test_workspace_translation_targets_present():
         "New Plafond": "Nuovo plafond",
         "New Contract": "Nuovo contratto",
         "New Project": "Nuovo progetto",
-        "Forecast Total": "Budget previsto",
         "Actual Total": "Spesa effettiva",
-        "Plafonds": "Plafond",
-        "Remaining Plafond": "Plafond residuo",
+        "Forecast Remaining": "Forecast residuo",
+        "Year-end Forecast": "Forecast fine anno",
+        "Extra Budget": "Extra budget",
     }
 
     translations = _load_po_translations(_it_po_path())

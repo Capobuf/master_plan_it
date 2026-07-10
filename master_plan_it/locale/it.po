@@ -2444,6 +2444,12 @@ msgstr "Spesa su plafond"
 msgid "Extra Budget"
 msgstr "Extra budget"
 
+msgid "Forecast Remaining"
+msgstr "Forecast residuo"
+
+msgid "Year-end Forecast"
+msgstr "Forecast fine anno"
+
 #: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
 msgid "Consumed Plafond"
 msgstr "Plafond consumato"
