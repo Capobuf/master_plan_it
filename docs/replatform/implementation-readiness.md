@@ -1,43 +1,47 @@
 # Implementation readiness
 
-Status: `PRODUCT CLARIFIED — TECHNICAL REPLANNING REQUIRED`
+Status: `PLAN COMPLETE — TASKS AND ANALYSIS REQUIRED`
 
-The prior readiness scores predate Constitution 3.0.1. They are historical depth indicators only and do not authorize implementation from existing plans/tasks.
+Constitution 3.0.1, 41 product decisions, integrated architecture, technical research and Feature 001–007 plans/data models/quickstarts are current on this branch.
 
-| Feature | Product clarification | Technical readiness | Current status |
-|---|---|---|---|
-| 001 Platform foundation | Complete: authentication, configurable RBAC, password behavior, scheduler, notifications, confirmations, global audit-retention setting | Existing plan/tasks must integrate approved packages, permission catalogue, no-self-reset behavior, audit retention, and PR #2 development/test decisions | PLAN REQUIRED |
-| 002 Master data | Complete: inactive vendor/cost-center lifecycle and revisions | Physical versioning, policies, selection scopes, migration, tests/tasks need regeneration | PLAN REQUIRED |
-| 003 Expense domain | Complete: one current record, editable/deletable Actual, revisions, restore, deletion exclusion | Current state/replacement data model, accounting equivalence, migration, files, Actions, tests/tasks require full reconciliation | PLAN REQUIRED |
-| 004 Contracts/projects | Complete: generated-expense history, regeneration choice, suppression/resume/manual year, notifications | Source-key encoding, exception model, UI/query contracts, migration, tests/tasks require regeneration | PLAN REQUIRED |
-| 005 Reporting/analytics | Complete: named immutable budget versions, scenarios, comparisons, empty states, single-tenant filtered/complete output scopes | Physical snapshot/comparison model, shared economic kernel, renderer/export packages, tests/tasks require regeneration | PLAN REQUIRED |
-| 006 Migration/operations | Complete: whole-system backup, tenant portability without audit export, collision quarantine, approved exclusions, notifications | Package/tool/hosting spikes, field mappings, reconciliation, deployment, tasks require regeneration | PLAN REQUIRED; NOT CUTOVER READY |
-| 007 Tenancy/access control | Complete: protected Administrator, configurable tenant roles, lifecycle, audit settings/access, passwords, onboarding | RBAC package spike, physical schema/context/cache integration, policies, tests/tasks require regeneration | PLAN REQUIRED |
+| Feature | Planned scope | Status |
+|---|---|---|
+| 001 Platform foundation | exact runtime direction, Sail/test/CI, auth, settings, audit, scheduler, release | PLAN COMPLETE; dependency lock execution pending |
+| 002 Master data | years/vendors/cost centers, lifecycle, revisions, policies/UI | PLAN COMPLETE |
+| 003 Expense domain | Money/VAT/allocation, one current aggregate, Actual confirmation/revisions/deletion | PLAN COMPLETE |
+| 004 Contracts/projects | project buckets, terms, source keys, system/user ownership, suppression/resume, notifications | PLAN COMPLETE |
+| 005 Reporting/analytics | shared kernel, rolling Budget, scenarios, BudgetVersion, comparison, print/CSV/XLSX | PLAN COMPLETE |
+| 006 Migration/operations | staging/import, portability, conditional backup, immutable deployment | PLAN COMPLETE; NOT CUTOVER READY |
+| 007 Tenancy/access | explicit context, Spatie teams/Shield, lifecycle, protected abilities, isolation | PLAN COMPLETE |
 
-## Readiness gates
+## Remaining implementation-readiness gates
 
-Implementation may start only after:
+1. Product Owner/technical review of this plan branch.
+2. `/speckit.tasks` regenerates every stale task file with exact files/symbols/dependencies/tests/commands/results/forbidden work.
+3. `/speckit.analyze` reports CRITICAL 0 and HIGH 0 for implementation readiness.
+4. First implementation task executes exact Composer/frontend lock resolution and package smoke tests. Static research is not an installation claim.
+5. Implementation proceeds through separate reviewed PRs in the dependency sequence from `replatform-plan.md`.
 
-1. `/speckit.plan` reads Constitution 3.0.1 and every clarified contract;
-2. TS-001 through TS-006 produce verified technical decisions where applicable;
-3. each affected feature plan/data model/contract is regenerated and approved;
-4. `/speckit.tasks` replaces stale tasks with exact files, symbols, dependencies, tests, commands, expected results, and forbidden work;
-5. PR #1 and PR #2 are rebased/reconciled so economic-kernel, development/test/CI, and accounting assumptions match the final product model;
-6. `/speckit.analyze` reports no CRITICAL/HIGH implementation-readiness conflict;
-7. real implementation begins through a separate PR.
+## Conditional package gate
+
+`spatie/laravel-backup` 10.3.0 remains conditional because its Composer metadata and documentation disagree on PHP floor. Failure on PHP platform 8.3.32 blocks backup implementation and requires plan/ADR amendment; it does not activate a fallback.
+
+All other pinned package targets also require real lock/smoke before feature code relies on them.
 
 ## Cutover gates
 
-Feature 006 additionally requires:
+Feature 006 remains not CUTOVER READY until:
 
-- real production export dry-run/anomaly evidence;
-- final hosting capabilities and paths;
+- real source export anomaly/dry-run evidence;
+- final hosting capabilities/paths/tools;
 - signed legacy report parity inventory;
-- verified backup/restore rehearsal and reconciliation.
+- verified installation backup restore rehearsal;
+- migration reconciliation/sign-off;
+- deployment/rollback rehearsal.
 
 ## Prohibited interpretation
 
-- `CLARIFICATION COMPLETE` is not `IMPLEMENTATION READY`.
-- Existing detailed task files are not executable merely because product questions are closed.
-- A package direction is not a verified dependency until the planning spike succeeds.
-- No coding agent may preserve the superseded fixed-role, immutable-Actual, parallel current replacement-state, fixed audit-retention, or implicit export-scope model by default.
+- plan complete is not implementation complete;
+- current `tasks.md` files are stale until `/speckit.tasks` replaces them;
+- no tests/build/package installs/workflows were executed by this documentation plan;
+- old fixed-role, immutable-Actual, replacement-state, fixed-retention, implicit-output or Italian-only assumptions remain superseded.
