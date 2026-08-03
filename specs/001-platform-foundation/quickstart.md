@@ -1,40 +1,70 @@
-# Verification quickstart — Platform foundation
+# Verification quickstart — Feature 001 Platform foundation
 
-These are future commands; they were not executed during documentation deepening.
+Future commands; none were executed during planning.
 
-## Prerequisites
+## Bootstrap
 
-- Laravel environment installed from the locked dependency files.
-- MySQL test database with strict mode.
-- `.env.testing` uses Europe/Rome display configuration and EUR.
-- Features before 001 migrated and seeded.
+```bash
+cp .env.example .env
+cp .env.testing.example .env.testing
+./vendor/bin/sail up -d
+./vendor/bin/sail composer validate --strict
+./vendor/bin/sail artisan migrate
+./vendor/bin/sail artisan migrate --env=testing
+```
 
-## Minimal data
+`test:prepare` must fail unless environment is `testing` and database is exactly `master_plan_it_test`. Do not use `migrate:fresh`, `db:wipe`, RefreshDatabase or truncation traits.
 
-Create one user for each role and the minimum records required for login, application shell, settings. Use factories, not production data.
+## Dependency gate
 
-## Verification path
+```bash
+./vendor/bin/sail composer update --with-all-dependencies
+./vendor/bin/sail composer audit
+./vendor/bin/sail composer show --locked
+```
 
-1. Run migrations and the feature seed fixture.
-2. Authenticate as Administrator.
-3. Open the primary screen: `login`.
-4. Execute the main valid operation and record the expected persisted/result values from `spec.md`.
-5. Repeat the mapped invalid, unauthorized, empty and stale-version scenarios.
-6. Run `php artisan test --filter=Platformfoundation` and the listed focused Dusk test only if the feature uses browser JavaScript.
+Verify exact planned versions and PHP platform 8.3.32. Failure blocks implementation.
 
-## Success criteria
+## Seed minimum platform
 
-- All mapped FR/INV tests pass.
-- No failed job/queue dependency exists.
-- Database totals and screen values match the documented dataset.
-- Logs contain no unexpected error or sensitive payload.
+```bash
+./vendor/bin/sail artisan db:seed --class=PermissionCatalogueSeeder
+./vendor/bin/sail artisan db:seed --class=PlatformSettingSeeder
+./vendor/bin/sail artisan db:seed --class=PlatformAdministratorSeeder
+```
 
-## Cleanup
+Create two tenants through Feature 007 fixture, one tenant role/user for each and one inactive tenant/user.
 
-Drop the disposable test database or run `migrate:fresh` only in the test environment. Never use cleanup commands against production.
+## Focused verification
 
-## Tenant validation
+```bash
+./vendor/bin/sail composer test:static
+./vendor/bin/sail artisan test --testsuite=Feature --filter=Platform
+./vendor/bin/sail artisan test --testsuite=Feature --filter=TenantContext
+./vendor/bin/sail artisan test --testsuite=Feature --filter=Permission
+./vendor/bin/sail artisan test --testsuite=Feature --filter=AuditRetention
+```
 
-- Read Feature 007 before coding.
-- Seed at least two tenants and test same-tenant allow plus other-tenant deny.
-- Verify reports, exports, attachments, direct links, and commands never return unscoped data.
+Browser only when shell/role/settings UI is implemented:
+
+```bash
+./vendor/bin/sail artisan dusk --filter=PlatformShellTest
+```
+
+## Manual acceptance
+
+1. Login as Administrator.
+2. Enter tenant A and verify tenant label/breadcrumb.
+3. Directly request tenant B object and receive safe denial.
+4. Assign/remove a tenant permission and verify behavior changes without code change.
+5. Lower audit retention and verify reinforced confirmation; do not run prune against shared data.
+6. Deactivate a user/tenant and verify login/access rules.
+7. Build production assets and inspect Vite manifest.
+
+## Full gate
+
+```bash
+./vendor/bin/sail composer verify
+```
+
+Success requires no destructive DB command, no unexpected log, no sensitive audit payload, no cross-request permission-team leakage and a valid release artifact structural test.
