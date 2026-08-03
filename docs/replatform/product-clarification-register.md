@@ -1,49 +1,56 @@
 # Product Clarification Register
 
-This register tracks functional ambiguity discovered while converging the Laravel replatform specifications with multi-tenant product requirements. Technical implementation choices are intentionally excluded.
+Status: `CLOSED`  
+Closed: 2026-08-03  
+Normative decisions: `approved-decisions.md`  
+Decision history: `clarification-log.md`
 
-| ID | Area | Ambiguity | Evidence | Impact | Priority | Required question | Status |
-| -- | ---- | --------- | -------- | ------ | -------- | ----------------- | ------ |
-| Q-001 | Roles | The package preserves four legacy roles while the tenancy baseline defines three product roles. | Constitution and every feature authorization contract preserve `System Manager`, `vCIO Manager`, `Client Editor`, and `Client Viewer`. | Authorization matrices, migration, navigation, audit. | BLOCKING | What is the definitive role model? | ANSWERED — `System Manager` and `vCIO Manager` merge into `Administrator`; `Client Editor` becomes `Editor`; `Client Viewer` becomes `Viewer`. |
-| Q-002 | Tenant lifecycle | No tenant lifecycle exists in the single-client package. | No Tenant entity or activation state is specified. | Access, retention, audit, administration. | BLOCKING | Which tenant lifecycle is required? | ANSWERED — `Active`/`Inactive`; only Administrator creates, deactivates, and reactivates; no permanent deletion; data, users, and audit are retained. |
-| Q-003 | Tenant users | Creator, inviter, multiplicity, and deactivation authority are undefined. | Existing user administration is global and not tenant-aware. | Onboarding, access recovery, deactivation. | BLOCKING | Who manages Editor and Viewer accounts? | ANSWERED — only Administrator manages them; each tenant may have multiple Editors and Viewers. |
-| Q-004 | Administrator tenant access | Tenant context switching and impersonation are not distinguished. | Administrator must enter a tenant context, but the current package has no tenant context. | Audit attribution, session state, support workflow. | BLOCKING | How does Administrator operate within a tenant? | ANSWERED — explicit tenant selection; Administrator keeps their own identity; every action is attributed to Administrator. |
-| Q-005 | Viewer visibility | “View customer status” does not define readable resources. | Legacy Client Viewer may read, print, and export; the new baseline only states read-only status access. | Navigation, policies, reports, export, attachments, audit. | BLOCKING | What can Viewer read? | ANSWERED — complete tenant read access, including operational detail, amounts, attachments, audit, reports, print and export; no tenant-user administration or global operations. |
-| Q-006 | Editor economic operations | The exact permitted expense lifecycle is not fully defined for the new Editor role. | Expense contracts allow legacy Client Editor create/update but prohibit deletion of economic history and Actual replacement. | Expense UI, policy, audit, tests. | BLOCKING | Which economic operations may Editor perform? | ANSWERED — Editor may create/update expenses; add Estimate, Quote, and Actual rows; replace non-Actual rows; manage plafond; recorded Actual and economic history remain immutable. |
-| Q-007 | Editor master data | Years, cost centers, and vendors currently have different legacy permissions. | Master-data contracts make Client Editor read-only for years/cost centers and conditionally writable for vendors. | Master-data screens, ownership, tenant setup. | BLOCKING | Which master data may Editor manage? | ANSWERED — Editor manages vendors and cost centers; only Administrator configures financial years. |
-| Q-008 | Editor projects and contracts | Existing permissions allow some writes but leave exact state and term powers implicit. | Contracts/projects authorization says Client Editor may create/update where legacy permissions grant it. | Project and contract workflows, generated expenses. | BLOCKING | Which project and contract operations may Editor perform? | ANSWERED — Editor manages projects, contracts, stages, terms, and renewals; generated identities and used history remain system-controlled. |
-| Q-009 | Editor operational utilities | Import, export, attachments, scenarios, and audit visibility are not converged for Editor. | Feature contracts define these separately under legacy roles. | Menu, batch operations, data exposure. | BLOCKING | Which utilities may Editor use? | ANSWERED — Editor may export, print, create scenarios, manage attachments, and read audit; import, migration, backup, restore, and user management are Administrator-only. |
-| Q-010 | Global and tenant data | Current settings and reference records are application-global because the package is single-client. | Years, cost centers, vendors, VAT/currency/locale, report settings and attachments have no tenant ownership. | Data model, visibility, customization, migration. | BLOCKING | Which data is global, tenant-owned, or shared read-only? | ANSWERED — business data is tenant-owned; only tenant registry, accounts, roles, technical configuration, and system currency/language/timezone lists are global. |
-| Q-011 | Migration tenant association | Legacy records have no target tenant association rule. | The migration feature assumes one source installation and one target dataset. | Reconciliation, blocking anomalies, acceptance. | BLOCKING | How are legacy records associated with tenants? | ANSWERED — one Frappe site represents one customer; the one active site is migrated manually or by CSV into one explicitly selected tenant; no generalized multi-site migration platform. |
-| Q-012 | Tenant creation data | Required fields at tenant creation are undefined. | No Tenant screen or contract exists. | Onboarding and validation. | HIGH | Which fields are mandatory when creating a tenant? | ANSWERED — required: display name, unique code, currency, language, timezone, default VAT; optional: logo, company data, address, contacts. |
-| Q-013 | Tenant branding and settings | Per-tenant customization is undefined. | Locale, currency and timezone are currently fixed in feature plans. | Display, calculations, printing. | HIGH | Which branding and economic settings may differ per tenant? | ANSWERED — tenant report branding and company/economic/local settings are configurable; application shell retains Master Plan IT branding. |
-| Q-014 | Global Administrator overview | The Administrator’s global landing view is undefined. | Reporting is designed only for one customer dataset. | Navigation, KPI exposure, product scope. | HIGH | What must the global overview show? | ANSWERED — operational global overview with tenant state, user counts, last activity, entry action, alerts, renewals, and import/migration errors; no economic aggregation. |
-| Q-015 | Tenant context visibility | The UI representation of the current tenant is undefined. | Existing shell has no tenant selector or tenant banner. | Wrong-context prevention and usability. | HIGH | How visibly must the active tenant be represented? | ANSWERED — current tenant is always visible in side navigation and page breadcrumbs; only Administrator may change context. |
-| Q-016 | Inactive tenant behavior | Login, direct-link, report, export, and Administrator access behavior are undefined for inactive tenants. | No tenant state exists in current contracts. | Security and support operations. | HIGH | What remains accessible for an inactive tenant? | OPEN |
-| Q-017 | Deactivated user ownership | Existing records created by a deactivated user need a product rule. | Audit stores actor IDs but no deactivation behavior is specified. | History, attribution, edit continuity. | HIGH | What happens to records and assignments of a deactivated user? | OPEN |
-| Q-018 | Attachments | Attachment upload, deletion, retention, and read access are not defined by role and tenant state. | Expense model includes attachment paths; tenancy ownership is absent. | Data exposure and retention. | HIGH | Who may upload/delete attachments, and what is retained? | OPEN |
-| Q-019 | Reports and exports | Tenant filtering is mandatory, but allowed report/export scopes per role and Administrator context remain incomplete. | Reporting contracts are role-scoped but not tenant-aware. | Data leakage prevention and UX. | HIGH | Which scopes may each role export or print? | OPEN |
-| Q-020 | Audit | Viewer access is now decided, but audit retention, export, and Administrator cross-tenant view are undefined. | Audit structures exist per feature without tenant lifecycle rules. | Compliance, support, storage. | HIGH | Which audit views and retention behavior are required? | OPEN |
-| Q-021 | Backup and restore | Current operations are installation-wide and do not define tenant-level behavior. | Backup/restore contract assumes one dataset. | Recovery semantics and destructive operations. | HIGH | Is backup/restore installation-wide only or also tenant-selective? | OPEN |
-| Q-022 | Import identity and collisions | Import behavior does not define tenant assignment or cross-tenant duplicate handling. | Import/export contract preserves legacy IDs without tenant ownership. | Data integrity and isolation. | HIGH | How are imported rows assigned and collision-checked? | OPEN |
-| Q-023 | Notifications | Recipients, events, and tenant scope are undefined. | No complete notification product contract exists. | User expectations and operational noise. | HIGH | Which notifications are part of the product? | OPEN |
-| Q-024 | Destructive confirmations | Additional confirmation rules for tenant and economic operations are undefined. | Existing contracts describe authorization, not confirmation UX. | Error prevention. | HIGH | Which destructive operations require reinforced confirmation? | OPEN |
-| Q-025 | Tenant onboarding | Initial tenant setup flow is undefined. | No onboarding feature exists. | First-use completion. | MEDIUM | What must onboarding complete before normal use? | OPEN |
-| Q-026 | Access recovery | Password recovery ownership and disabled-tenant handling are undefined. | Authentication is platform-level only. | Account recovery and support. | MEDIUM | What recovery path should tenant users have? | OPEN |
-| Q-027 | What-if scenarios | Role visibility and persistence of scenarios are not fully defined. | Reporting mentions forecast/scenario behavior without tenancy decisions. | Read/write boundaries and report semantics. | MEDIUM | Who may create and view scenarios? | OPEN |
-| Q-028 | Empty reporting | Expected behavior for tenants without data is not explicit. | Reports define datasets but not tenant onboarding empty states. | UX and acceptance tests. | MEDIUM | What should empty dashboards and reports show? | OPEN |
-| Q-029 | Unassignable legacy data | Migration behavior for records that cannot be assigned to a tenant is undefined. | Reconciliation identifies anomalies but no tenancy blocking rule exists. | Migration approval and data loss prevention. | MEDIUM | Must unassignable records block migration? | OPEN |
-| Q-030 | Inactive vendors | Visibility and reuse of inactive vendors are not fully specified. | Vendor lifecycle exists as master data but tenant context is new. | Expense editing and historical readability. | MEDIUM | How should inactive vendors behave in historical and new records? | OPEN |
-| Q-031 | Removed cost centers | Historical behavior when a cost center is disabled or removed is not fully specified. | Cost-center tree integrity is defined, but tenant lifecycle interaction is absent. | Reporting history and new entries. | MEDIUM | How should inactive cost centers behave? | OPEN |
-| Q-032 | Tenant visual identity | This question duplicated the branding scope already decided by Q-013. | Q-013 approves tenant name, logo, company data, and report header/footer while retaining Master Plan IT shell branding. | Branding only. | LOW | Is tenant-specific visual identity required at launch? | ANSWERED BY Q-013 — tenant report/print identity is included and configurable; optional branding fields remain optional. |
-| Q-033 | Usage indicators | Administrator usage analytics are not established as product scope. | No cross-tenant analytics requirement exists. | Optional global dashboard complexity. | LOW | Are usage indicators required? | OPEN |
+This register tracks the product ambiguities discovered during Laravel replatform convergence. Technical package selection and implementation detail are recorded in architecture decisions, not as product questions.
+
+| ID | Area | Priority | Required question | Status |
+|---|---|---|---|---|
+| Q-001 | Roles and permissions | BLOCKING | What is the definitive role model? | ANSWERED — protected global Administrator; configurable tenant roles; Editor and Viewer are seeded templates. |
+| Q-002 | Tenant lifecycle | BLOCKING | Which tenant lifecycle is required? | ANSWERED — Active/Inactive; reversible deactivation; no permanent tenant deletion. |
+| Q-003 | Tenant users | BLOCKING | Who manages tenant users and roles? | ANSWERED — Administrator only; multiple users and tenant-scoped role assignments. |
+| Q-004 | Administrator tenant access | BLOCKING | How does Administrator operate within a tenant? | ANSWERED — explicit context, own identity, no impersonation. |
+| Q-005 | Read-only visibility | BLOCKING | What does the Viewer template receive? | ANSWERED — complete same-tenant read/print/export/download/audit-view permissions. |
+| Q-006 | Expense and Actual lifecycle | BLOCKING | Which economic operations are permitted? | ANSWERED — permission-controlled create, correct, version, restore, and delete; one current record; revisions outside current totals. |
+| Q-007 | Master data | BLOCKING | Which master data may tenant roles manage? | ANSWERED — seeded Editor manages vendors/cost centers; financial-year permission is protected by the catalogue. |
+| Q-008 | Projects and contracts | BLOCKING | Which project/contract operations are permitted? | ANSWERED — seeded Editor manages ordinary lifecycle and approved generation controls. |
+| Q-009 | Operational utilities | BLOCKING | Which utilities are tenant or platform operations? | ANSWERED — tenant utilities are permission-controlled; global import/migration/backup/restore/user administration remain Administrator operations. |
+| Q-010 | Global and tenant data | BLOCKING | Which data is global or tenant-owned? | ANSWERED — business data tenant-owned; only platform identity/configuration/reference lists global. |
+| Q-011 | Migration tenant association | BLOCKING | How are legacy records assigned? | ANSWERED — one active Frappe site into one explicitly selected tenant. |
+| Q-012 | Tenant creation data | HIGH | Which fields are mandatory? | ANSWERED — name, code, currency, language, timezone, default VAT; company/branding/contact fields optional. |
+| Q-013 | Tenant branding/settings | HIGH | Which settings differ by tenant? | ANSWERED — approved report/company/economic/local settings; Master Plan IT shell remains. |
+| Q-014 | Global overview | HIGH | What must Administrator see globally? | ANSWERED — operational tenant status only; no cross-tenant economics. |
+| Q-015 | Tenant context visibility | HIGH | How visible is current tenant context? | ANSWERED — always in navigation and breadcrumbs. |
+| Q-016 | Inactive tenant behavior | HIGH | What remains accessible? | ANSWERED — tenant users blocked; Administrator retains authorized access and reactivation. |
+| Q-017 | Deactivated-user ownership | HIGH | What happens to records and assignments? | ANSWERED — authorship preserved; tenant ownership unchanged; assignments manually reassigned. |
+| Q-018 | Attachments | HIGH | Who may manage attachments and what is retained? | ANSWERED — permission-controlled current attachment lifecycle; minimum revision/audit metadata retained. |
+| Q-019 | Reports and exports | HIGH | Which scopes are permitted? | ANSWERED — exactly one tenant per economic output; authorized filtered or explicit complete report/year scope; global export operational only. |
+| Q-020 | Audit | HIGH | Which views and retention apply? | ANSWERED — default 24 months, Administrator-configurable installation setting; view permission; no audit export at launch; Administrator global view. |
+| Q-021 | Backup and restore | HIGH | Is restore installation-wide or tenant-selective? | ANSWERED — installation-wide; tenant data portability is a separate export/import contract. |
+| Q-022 | Import identity/collisions | HIGH | How are rows assigned and collisions resolved? | ANSWERED — immutable tenant; scoped legacy identity; idempotent replay; collision quarantine; no silent resolution. |
+| Q-023 | Notifications | HIGH | Which events and recipients are included? | ANSWERED — renewals, expirations and failed operations; permission-controlled recipients; scheduler/database/optional email; no worker. |
+| Q-024 | Destructive confirmations | HIGH | Which operations require reinforced confirmation? | ANSWERED — proportional to risk; reinforced for tenant deactivation, migration apply, restore and equivalent actions. |
+| Q-025 | Tenant onboarding | MEDIUM | What must onboarding complete? | ANSWERED — normal creation form plus optional reusable non-blocking checklist/wizard. |
+| Q-026 | Access recovery | MEDIUM | What recovery path is required? | ANSWERED — no tenant-user self-service reset; Administrator resets externally; global emergency Artisan command. |
+| Q-027 | What-if scenarios | MEDIUM | Who may create and view scenarios? | ANSWERED — persistent, tenant-shared, permission-controlled, non-official. |
+| Q-028 | Empty reporting | MEDIUM | What should empty reports show? | ANSWERED — valid zeros, empty datasets, guidance, no invented values. |
+| Q-029 | Unassignable legacy data | MEDIUM | Must anomalies block migration? | ANSWERED — quarantine and cutover block until correction or approved exclusion. |
+| Q-030 | Inactive vendors | MEDIUM | How do inactive vendors behave? | ANSWERED — historical visibility, no new selection, reactivation, no deletion while referenced. |
+| Q-031 | Inactive cost centers | MEDIUM | How do inactive centers behave? | ANSWERED — historical visibility, no new selection, no automatic reassignment, controlled tree deactivation. |
+| Q-032 | Tenant visual identity | LOW | Is tenant identity required? | ANSWERED BY Q-013. |
+| Q-033 | Usage indicators | LOW | Are additional usage analytics required? | ANSWERED — no behavioral telemetry at launch. |
 
 ## Priority summary
 
 | Priority | Total | Answered | Open |
-| -- | --: | --: | --: |
+|---|---:|---:|---:|
 | BLOCKING | 11 | 11 | 0 |
-| HIGH | 13 | 4 | 9 |
-| MEDIUM | 7 | 0 | 7 |
-| LOW | 2 | 1 | 1 |
-| **Total** | **33** | **16** | **17** |
+| HIGH | 13 | 13 | 0 |
+| MEDIUM | 7 | 7 | 0 |
+| LOW | 2 | 2 | 0 |
+| **Total** | **33** | **33** | **0** |
+
+No implementation agent may reopen or reinterpret these decisions implicitly. A change requires a new Product Owner decision and, where constitutional principles are affected, the amendment procedure.

@@ -1,143 +1,122 @@
 # Feature 003 — Expense domain
 
-Status: PARTIALLY READY — Q-001 through Q-015 propagated; Q-018 and Q-024 remain open  
-Logical owner: product owner with domain approval  
-Actor: budget editor  
-Dependencies: feature 002
+Status: `CLARIFIED — PLAN REGENERATION REQUIRED`  
+Logical owner: Product Owner with domain approval  
+Actor: tenant user with explicit permission  
+Dependencies: Feature 002 and Feature 007
 
 ## Problem
 
-The Frappe implementation contains verified behavior but couples schema, controller lifecycle, report queries and framework UI. A coding agent cannot safely replatform it from generic requirements without stable invariants, files and tests.
+The target must preserve verified monetary, VAT, funding, allocation, and source-row semantics while replacing the legacy parallel `Active/Replaced/Cancelled` editing model with one current expense identity plus true revision history. Actual rows must be correctable and deletable without making revision or audit storage an economic source.
 
 ## Objective
 
-A user can create auditable expenses and rows with exact VAT, funding, replacement and allocation semantics while preserving the traced legacy behavior and the target operational constraints.
-
-## Out of scope
-
-- Rewriting unrelated legacy behavior.
-- SPA or public API.
-- Separate tenant databases, custom tenant domains, impersonation, and cross-tenant economic analytics are out of scope; tenant isolation itself is mandatory under Feature 007.
-- Untraced formula changes.
-- Background workers or real-time notifications.
-
-## Actors
-
-| Actor | Scope | Constraint |
-|---|---|---|
-| Administrator | global platform operations and all approved operations inside an explicitly selected tenant | keeps Administrator identity; cannot bypass domain invariants or impersonate tenant users |
-| Editor | approved operations within exactly one assigned tenant | no user/global administration, import, migration, backup, restore, or cross-tenant access |
-| Viewer | complete read, print, and export access within exactly one assigned tenant | no writes, global operations, or cross-tenant access |
+Create, edit, version, restore, delete, report, print, and export tenant-owned expenses and rows with exact calculations, one current logical record, explicit permissions, and complete exclusion of deleted or historical revisions from current totals.
 
 ## User stories
 
-### US-003-01 — expense register
-Priority: P1  
-Value: enables create auditable expenses and rows with exact VAT, funding, replacement and allocation semantics.  
-Acceptance: AC-003-01; requirements: FR-003-001, FR-003-002.
-### US-003-02 — expense editor
-Priority: P2  
-Value: enables create auditable expenses and rows with exact VAT, funding, replacement and allocation semantics.  
-Acceptance: AC-003-02; requirements: FR-003-002, FR-003-010.
-### US-003-03 — expense audit drawer
-Priority: P2  
-Value: enables create auditable expenses and rows with exact VAT, funding, replacement and allocation semantics.  
-Acceptance: AC-003-03; requirements: FR-003-010, FR-003-011.
+### US-003-01 — Current expense register
+
+An authorized actor sees each current expense once, with server-calculated totals and no superseded/deleted copies.
+
+### US-003-02 — Expense editor
+
+An authorized actor creates or edits an Expense aggregate, including Estimate, Quote, Actual, and Plafond rows, in one transaction.
+
+### US-003-03 — Revision history
+
+An authorized actor compares revisions and restores a valid earlier state as a new current revision.
+
+### US-003-04 — Delete expense or row
+
+An authorized actor deletes a current expense or row after explicit confirmation; it disappears from the active domain and all current outputs while minimized revision/audit evidence remains.
 
 ## Acceptance scenarios
 
-### AC-003-01 — Main path
-Given an authenticated and authorized actor and valid prerequisite records  
-When the actor completes the primary expense domain operation  
-Then the server persists the result in one transaction  
-And the response reflects server-calculated values  
-And an unauthorized actor receives 403 without mutation.
+### AC-003-01 — Current totals
 
-### AC-003-02 — Validation and rollback
-Given invalid or conflicting input  
-When the operation is submitted  
-Then validation/domain errors identify the affected field or invariant  
-And the transaction is rolled back  
-And no partial side effect remains.
+Given current, revised, restored, and deleted expenses, the register, KPI, report, print, CSV, and XLSX use only current non-deleted rows and return identical exact totals.
 
-### AC-003-03 — Empty and legacy-anomaly state
-Given no matching records or a quarantined legacy anomaly  
-When the screen/query is opened  
-Then an explicit empty/error state is rendered  
-And no value is silently invented.
+### AC-003-02 — Correct Actual
 
-### AC-003-04 — Concurrency
-Given two writers loaded the same record version  
-When the first saves and the second submits stale data  
-Then the second receives a concurrency conflict  
-And can reload current data before retrying.
+Given an Actual row, an actor with update permission changes valid fields. The same logical row remains current, the aggregate receives one revision batch, exact totals update, and the prior state is available only in revision history.
 
-### AC-003-05 — Tenant-owned expense workflow
+### AC-003-03 — Delete Actual or expense
 
-Given an Editor and Viewer in tenant A plus records in tenant B, when tenant A expenses are created, updated, printed, exported, audited, or accessed through attachments, then only tenant A data is used; Editor receives Q-006 operations, Viewer remains read-only, and recorded Actual/history invariants remain enforced.
+Given a current Actual row or Expense, an actor with delete permission confirms deletion. The deleted object is absent from ordinary queries, selections, totals, reports, prints, exports, and relationships. Audit/revision data contains only the approved minimized evidence.
+
+### AC-003-04 — Restore revision
+
+Given an earlier revision, restore revalidates tenant ownership, current master-data availability rules, money, VAT, dates, funding, project/contract links, source keys, and concurrency. Success creates a new revision; failure leaves current state unchanged.
+
+### AC-003-05 — Aggregate revision
+
+Given one save that changes an Expense and several rows, the UI shows one logical revision operation linked by `revision_batch_uuid`, while each persisted model version remains traceable.
+
+### AC-003-06 — Tenant and permission denial
+
+Missing permission, inactive tenant, deactivated user, or other-tenant identifier fails before protected data or revision details are disclosed.
+
+### AC-003-07 — Validation and rollback
+
+Invalid money, VAT, dates, funding, references, duplicate source keys, or stale `lock_version` rolls back the entire aggregate and file operation.
 
 ## Functional requirements
 
 | ID | Requirement | Acceptance |
 |---|---|---|
-| FR-003-001 | Expense kind shall be Ordinary or Plafond. | AC-001 |
-| FR-003-002 | Expense requires year, cost center, title and at least one row. | AC-002 |
-| FR-003-010 | Ordinary rows require vendor and Estimate, Quote or Actual phase. | AC-010 |
-| FR-003-011 | An Ordinary expense cannot be both Extra and funded by Plafond. | AC-011 |
-| FR-003-012 | A referenced Plafond shall exist in the same year; its cost center may differ. | AC-012 |
-| FR-003-020 | Only Active rows contribute to totals. | AC-020 |
-| FR-003-031 | Actual rows cannot be replacement targets. | AC-031 |
-| FR-003-032 | Replacement links cannot self-reference or form cycles. | AC-032 |
-| FR-003-040 | Non-zero unit price derives amount as quantity multiplied by unit price; otherwise amount is manual. | AC-040 |
-| FR-003-041 | Non-zero amount requires row VAT rate or configured default. | AC-041 |
-| FR-003-050 | A row uses spend date or complete period dates plus distribution, never both. | AC-050 |
-| FR-003-051 | Distribution shall be all, start or end. | AC-051 |
-| FR-003-052 | Estimate and Quote net amounts cannot be negative; Actual may be negative. | AC-052 |
-| FR-003-060 | Register, detail, print and export shall use server-calculated values. | AC-060 |
-
-| FR-003-061 | Expenses, rows, plafond references, attachments, audit, register, print, and export shall be scoped to one tenant. Editor may perform Q-006 operations; Viewer remains read/print/export only. | AC-003-05 |
-## Non-functional requirements
-
-| ID | Measure | Threshold and verification |
-|---|---|---|
-| NFR-003-PERF-01 | Primary register on 10,000 rows | server response p95 ≤ 800 ms on documented reference environment, measured with seeded feature test profile |
-| NFR-003-A11Y-01 | Keyboard/accessibility | all controls keyboard reachable; labels/errors programmatically associated; axe smoke has no critical violations |
-| NFR-003-SEC-01 | Authorization | 100% mapped write/read routes have allow and deny tests |
-| NFR-003-INT-01 | Integrity | every documented write is transactional and rollback-tested |
-| NFR-003-LOG-01 | Logging | domain conflicts are user-safe; unexpected errors include correlation ID and no sensitive payload |
+| FR-003-001 | Expense kind shall be `Ordinary` or `Plafond`. | AC-003-07 |
+| FR-003-002 | Expense shall require tenant, year, cost center, title, and at least one current row. | AC-003-01 |
+| FR-003-010 | Ordinary rows shall require vendor and phase `Estimate`, `Quote`, or `Actual`. | AC-003-02 |
+| FR-003-011 | An Ordinary expense shall not be both Extra and funded by Plafond. | AC-003-07 |
+| FR-003-012 | A referenced Plafond shall belong to the same tenant/year; cost center may differ. | AC-003-07 |
+| FR-003-020 | Only current non-deleted expense rows shall contribute to current totals. | AC-003-01 |
+| FR-003-021 | Operational revisions, audit events, deleted tombstones, scenarios, and named budget versions shall not contribute to current totals. | AC-003-01 |
+| FR-003-030 | An actor with the exact permission may create/update/delete Expense and Estimate/Quote/Actual rows subject to all invariants. | AC-003-02, AC-003-03 |
+| FR-003-031 | Actual rows shall support correction, revision compare, restore, and deletion; Actual is not immutable in the target model. | AC-003-02, AC-003-04 |
+| FR-003-032 | Expense and row identity shall remain stable across revisions; restore shall create a new current revision rather than rewrite history. | AC-003-04 |
+| FR-003-033 | One aggregate operation shall assign a shared `revision_batch_uuid` to the Expense and changed rows. | AC-003-05 |
+| FR-003-034 | Permitted deletion shall remove the record from the active domain and retain only approved revision/audit evidence. | AC-003-03 |
+| FR-003-040 | Non-zero unit price shall derive entered amount as quantity multiplied by unit price; otherwise amount is manual. | AC-003-07 |
+| FR-003-041 | Non-zero amount shall require row VAT rate or tenant default. | AC-003-07 |
+| FR-003-050 | A row shall use spend date or complete period dates plus distribution, never both. | AC-003-07 |
+| FR-003-051 | Distribution shall be `all`, `start`, or `end`. | AC-003-07 |
+| FR-003-052 | Estimate and Quote net amounts shall not be negative; Actual may be negative. | AC-003-07 |
+| FR-003-060 | Register, detail, print, export, scenario inputs, and budget-version source rows shall use server-calculated exact values. | AC-003-01 |
+| FR-003-061 | Expense aggregate, rows, references, files, revisions, and audit shall belong to exactly one tenant. | AC-003-06 |
+| FR-003-062 | Revision history view/restore and delete operations shall be separately permission-controlled. | AC-003-04, AC-003-06 |
+| FR-003-063 | Optimistic writes shall require and increment `lock_version`. | AC-003-07 |
 
 ## Business invariants
 
 | ID | Rule | Error | Test |
 |---|---|---|---|
-| INV-EXP-001 | Active rows are sole total source. | DomainConflict | TEST-003-001 |
+| INV-EXP-001 | Current non-deleted rows are the sole current total source. | DomainConflict | TEST-003-001 |
 | INV-EXP-002 | Expense kind domain is closed. | DomainConflict | TEST-003-002 |
-| INV-EXP-003 | At most one project/contract context once feature 004 is installed. | DomainConflict | TEST-003-003 |
-| INV-PLF-001 | Extra and Plafond funding are mutually exclusive. | DomainConflict | TEST-003-001 |
-| INV-PLF-002 | Plafond reference shares year. | DomainConflict | TEST-003-002 |
-| INV-ROW-001 | Actual is immutable as replacement target. | DomainConflict | TEST-003-001 |
-| INV-ROW-002 | Replacement graph is acyclic. | DomainConflict | TEST-003-002 |
-| INV-AMT-001 | Money arithmetic is decimal. | DomainConflict | TEST-003-001 |
-| INV-VAT-001 | VAT split net+vat=gross at two decimals. | DomainConflict | TEST-003-001 |
-| INV-DATE-001 | Date modes are exclusive. | DomainConflict | TEST-003-001 |
-| INV-DIST-001 | Monthly allocated sum equals row net. | DomainConflict | TEST-003-001 |
+| INV-EXP-003 | At most one project/contract context is present. | DomainConflict | TEST-003-003 |
+| INV-PLF-001 | Extra and Plafond funding are mutually exclusive. | DomainConflict | TEST-003-004 |
+| INV-PLF-002 | Plafond reference shares tenant and year. | DomainConflict | TEST-003-005 |
+| INV-REV-001 | Revision/audit/deleted storage never enters current economic queries. | DomainConflict | TEST-003-006 |
+| INV-REV-002 | Restore creates a new revision and cannot rewrite prior history. | DomainConflict | TEST-003-007 |
+| INV-REV-003 | Restored state must satisfy every current invariant and reference rule. | DomainConflict | TEST-003-008 |
+| INV-AMT-001 | Authoritative money arithmetic is decimal. | DomainConflict | TEST-003-009 |
+| INV-VAT-001 | Net plus VAT equals gross at two decimals. | DomainConflict | TEST-003-010 |
+| INV-DATE-001 | Date modes are exclusive. | DomainConflict | TEST-003-011 |
+| INV-DIST-001 | Monthly allocated sum equals row net exactly. | DomainConflict | TEST-003-012 |
+| INV-TEN-003 | Expense, rows, references, attachments, revisions, and audit share one tenant. | Authorization/DomainConflict | TEST-003-013 |
 
-| INV-TEN-003 | An expense and every referenced year, cost center, vendor, plafond, project, contract, row, attachment, and audit event share the same tenant. | DomainConflict | TEST-003-061 |
+## Migration notes
 
-## Clarifications
+Legacy `Active/Replaced/Cancelled` rows remain source evidence. `/speckit.plan` must define deterministic migration into one current logical row plus revision/audit evidence where feasible, without changing accepted current totals. A legacy Actual is not migrated into a permanently immutable target state.
 
-### Resolved from repository
+## Out of scope
 
-The feature preserves the verified rules listed in `docs/replatform/source-traceability.md` and `current-state.md`.
+- showing superseded or deleted copies in ordinary expense registers;
+- physical audit/revision payload as a report source;
+- automatic restore that bypasses current validation;
+- role-name conditionals instead of permissions;
+- silent deletion or restore without audit/correlation.
 
-### Approved product decisions
+## Clarification result
 
-Q-005, Q-006, Q-009, and Q-010 define Viewer access, Editor economic operations, utilities, and ownership. Feature 007 and `docs/replatform/approved-decisions.md` are normative for tenant scope.
-
-### Proposed target
-
-Optimistic concurrency uses an integer `lock_version`; updates include the expected version and increment it atomically.
-
-### Unresolved
-
-The open items in `docs/replatform/product-clarification-register.md` and `docs/replatform/open-questions.md` remain unresolved; none may be resolved implicitly by the coding agent.
+Q-006, Q-018, and Q-024 are fully resolved by the amended product contract. The previous plan, data model, financial-rule contract, authorization matrices, accounting equivalence cases, and tasks must be regenerated before implementation.

@@ -1,23 +1,33 @@
-# Open questions
+# Open evidence and operational decisions
 
-## Blocking for CUTOVER READY
+Status: `NO OPEN PRODUCT QUESTIONS`
 
-| ID | Question | Required evidence | Owner |
+All product questions Q-001 through Q-033 are closed in `product-clarification-register.md`. This file contains evidence that cannot be invented during specification and technical selections that require a real compatibility spike.
+
+## Blocking for `CUTOVER READY`
+
+| ID | Evidence required | Owner | Why it cannot be guessed |
 |---|---|---|---|
-| OQ-001 | What anomalies exist in the production export? | Dry-run manifest with counts and samples | Migration owner |
-| OQ-002 | Which shared-hosting provider/path conventions are final? | Hosting account capabilities and document root | Operations owner |
-| OQ-004 | Which legacy reports beyond Economic Position require exact parity? | Signed report inventory and filter list | Product owner |
+| OQ-001 | Production export dry-run manifest with anomaly counts and representative samples | Migration owner | Actual source-data quality and references are unknown until exported. |
+| OQ-002 | Final hosting provider capabilities, document root, PHP/MySQL versions, cron, filesystem permissions, dump tools, storage limits, and deployment path | Operations owner | Hosting constraints are environment facts. |
+| OQ-004 | Signed inventory of legacy reports requiring exact parity, including filters and output formats | Product Owner | Only the Product Owner can approve report retention/removal. |
 
-## Non-blocking for implementation
+## Required technical spikes during `/speckit.plan`
 
-| ID | Question | Default |
+| ID | Decision to verify | Acceptance evidence |
 |---|---|---|
-| OQ-101 | PDF renderer package | Keep behind `ReportPdfRenderer`; select after Laravel 13/PHP compatibility spike. |
-| OQ-102 | XLSX package | Use CSV first; add one package only when XLSX is accepted as a release requirement. |
-| OQ-103 | Dark mode | Out of scope for initial release. |
+| TS-001 | `spatie/laravel-permission` exact version and tenant/team scoping | Composer resolution on Laravel 13/PHP baseline; tenant-role isolation tests; cache/context lifecycle; license/maintenance record. |
+| TS-002 | `bezhansalleh/filament-shield` exact version and Filament tenancy integration | Resource/page/custom-permission generation; protected Administrator behavior; tenant-scoped role UI; removal path. |
+| TS-003 | `mansoor/filament-versionable` plus `overtrue/laravel-versionable` suitability | Compare/restore/delete tests; aggregate revision batching; tenant scope; soft-deleted model history; package maintenance/license; no domain-query leakage. |
+| TS-004 | Installation backup package | Database/file scope, shared-hosting dump tools, restore verification, storage/encryption/retention, Laravel/PHP compatibility. |
+| TS-005 | CSV/XLSX package boundary for tenant portability | Streaming/memory behavior, exact decimal/date serialization, import staging compatibility, no queue requirement; CSV remains authoritative. |
+| TS-006 | PDF renderer | Laravel/PHP/shared-hosting compatibility behind `ReportPdfRenderer`; printable dataset equality. |
 
-## Resolved product questions
+A failed spike rejects the package, not the approved product contract. `/speckit.plan` must choose the smallest native Laravel/Filament alternative and record the technical decision.
 
-| ID | Decision | Evidence |
-|---|---|---|
-| OQ-003 | One Laravel application supports multiple customer tenants. Tenant isolation, roles, context, ownership, and migration scope are defined by Q-001 through Q-015 and Feature 007. | `approved-decisions.md`; `specs/007-tenancy-and-access-control/` |
+## Resolved defaults retained
+
+- dark mode remains out of initial scope;
+- CSV is authoritative exchange format; XLSX is optional presentation/import convenience only after acceptance;
+- no permanent worker, Redis, WebSockets, or runtime Node requirement;
+- no generalized multi-site migration platform.
