@@ -1,40 +1,49 @@
-# Verification quickstart — Reporting and analytics
+# Verification quickstart — Feature 005 Reporting and analytics
 
-These are future commands; they were not executed during documentation deepening.
+Future commands; none were executed during planning.
 
-## Prerequisites
+## Fixture
 
-- Laravel environment installed from the locked dependency files.
-- MySQL test database with strict mode.
-- `.env.testing` uses Europe/Rome display configuration and EUR.
-- Features before 005 migrated and seeded.
+Seed two tenants. In tenant A create 10,000 current rows covering all types, confirmation states, project stages, Extra and Plafond cases; include deleted/revision/scenario/version rows that must be excluded. Create manual total-only/partial/full BudgetVersion drafts.
 
-## Minimal data
+## Focused tests
 
-Create one user for each role and the minimum records required for dashboard, economic position, variance/comparison report, print/export. Use factories, not production data.
+```bash
+./vendor/bin/sail artisan test tests/Accounting/Unit/EconomicEngineTest.php
+./vendor/bin/sail artisan test --filter=EconomicDataset
+./vendor/bin/sail artisan test --filter=BudgetVersion
+./vendor/bin/sail artisan test --filter=BudgetComparison
+./vendor/bin/sail artisan test --filter=ReportingParity
+```
 
-## Verification path
+## Acceptance path
 
-1. Run migrations and the feature seed fixture.
-2. Authenticate as Administrator.
-3. Open the primary screen: `dashboard`.
-4. Execute the main valid operation and record the expected persisted/result values from `spec.md`.
-5. Repeat the mapped invalid, unauthorized, empty and stale-version scenarios.
-6. Run `php artisan test --filter=Reportingandanalytics` and the listed focused Dusk test only if the feature uses browser JavaScript.
+1. Open dashboard/current Budget and verify one economic query result supplies KPI/table/chart.
+2. Verify project buckets, Actual state and Plafond reconciliation.
+3. Switch tenant official Net/Gross basis without changing stored components.
+4. Publish a current snapshot during a concurrent Expense update and verify one consistent snapshot.
+5. Publish manual total-only/partial version and verify missing dimensions are unavailable.
+6. Change current data/settings and verify Published version unchanged.
+7. Compare current/version and version/version with additions/removals/changes.
+8. Export filtered and complete report/year; verify scope metadata and exact parity.
+9. Generate CSV/XLSX and inspect exact decimal values.
+10. Open print view and use browser print smoke; no server PDF service.
+11. Verify other-tenant IDs and data are inaccessible.
 
-## Success criteria
+Browser focus:
 
-- All mapped FR/INV tests pass.
-- No failed job/queue dependency exists.
-- Database totals and screen values match the documented dataset.
-- Logs contain no unexpected error or sensitive payload.
+```bash
+./vendor/bin/sail artisan dusk --filter=EconomicReportBrowserTest
+```
+
+## Performance evidence
+
+Record query count, memory, wall time and EXPLAIN for dashboard, paginated report and complete capture/export at 10,000 rows. Do not introduce cache/preaggregation unless thresholds fail and a plan amendment is approved.
 
 ## Cleanup
 
-Drop the disposable test database or run `migrate:fresh` only in the test environment. Never use cleanup commands against production.
+Transactions or run-ID targeted cleanup only. Never reset/truncate the persistent test database.
 
-## Tenant validation
+## Success
 
-- Read Feature 007 before coding.
-- Seed at least two tenants and test same-tenant allow plus other-tenant deny.
-- Verify reports, exports, attachments, direct links, and commands never return unscoped data.
+All consumers match the same dataset, Published versions remain immutable, scopes are explicit and no current formula is duplicated outside the kernel.
