@@ -1,565 +1,92 @@
-# Tasks — Reporting and analytics
+# Tasks — Feature 005 Reporting, BudgetVersion and analytics
 
+Status: `PROPOSED TARGET — /speckit.tasks`  
+Input: Constitution 3.0.1; current Feature 005 spec/plan/research/data model; economic and BudgetVersion contracts; shared Money, Expense, project, tenant, permission and output contracts.  
+ID policy: former `T005-01`–`T005-14` are superseded because they introduced `EconomicPositionQuery` duplication and a server-PDF interface. New IDs use `T005-001` onward.
 
-### T005-01 — Typed dataset row
+Tests are mandatory and use exact decimal-string fixtures. No presentation task may calculate authoritative economics.
 
-User story: US-005-01  
-Requirements: FR-005-001, FR-005-002  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: none  
-Parallelizable: no
+## Phase 1 — Shared economic kernel foundation
 
-**Objective.** Create or modify `app/Domain/Reporting/Data/EconomicPositionRow.php` so it owns only: typed dataset row.
+- [ ] T005-001 Write pure engine tests in `tests/Accounting/Unit/EconomicEngineTest.php`; symbols: Estimate/Quote/Actual independence, Actual confirmation components, project buckets, Actual-always-primary, Extra, Plafond allocated/consumed/residual/overrun/no-double-count, Net/VAT/Gross and summary reconciliation; depends: Feature 003 T003-002 and Feature 004 T004-005; requirements: FR-005-011, FR-005-013–FR-005-016, FR-005-070, INV-ECO-001, INV-ECO-002, INV-PRJ-004, INV-PLF-003, INV-BAS-002; validate: `php artisan test tests/Accounting/Unit/EconomicEngineTest.php`; expected before implementation: focused failures; forbidden: Eloquent models, SQL queries, float expected values, one calculator per KPI or contract/project monetary inputs.
+- [ ] T005-002 Implement the six kernel files `app/Domain/Economics/Data/EconomicScope.php`, `EconomicLine.php`, `EconomicSummary.php`, `EconomicDataset.php`, `Queries/EconomicDatasetQuery.php` stub boundary and `Services/EconomicEngine.php`; symbols: immutable DTOs and pure `calculate(EconomicScope, iterable): EconomicDataset`; depends: T005-001; requirements: FR-005-011, FR-005-013–FR-005-016, FR-005-070; tests first: T005-001; validate: `php artisan test tests/Accounting/Unit/EconomicEngineTest.php`; expected: one deterministic engine pass with private classification/accumulation methods; forbidden: repository/interface, cache, event bus, Eloquent dependency, export formatting or scenario/version persistence.
+- [ ] T005-003 Write current-query tests in `tests/Accounting/Integration/EconomicDatasetQueryTest.php` and `tests/Feature/Reporting/EconomicDatasetAuthorizationTest.php`; symbols: tenant/year/current/non-deleted projection, filtered/complete scopes, detail none/page/all, exclusion of revisions/audit/deleted/scenarios/exceptions/versions, permission and query-count guard; depends: T005-002, Feature 003 T003-010, Feature 004 T004-011; requirements: FR-005-001, FR-005-002, FR-005-010–FR-005-012, FR-005-020–FR-005-025, INV-REP-001, INV-REP-004–INV-REP-006; validate: `php artisan test tests/Accounting/Integration/EconomicDatasetQueryTest.php tests/Feature/Reporting/EconomicDatasetAuthorizationTest.php`; expected before implementation: focused failures; forbidden: reading revision/snapshot tables, hidden scope widening or full Eloquent graph hydration.
+- [ ] T005-004 Implement current query/filter contracts in `app/Domain/Economics/Queries/EconomicDatasetQuery.php`, `app/Domain/Reporting/Data/EconomicReportFilterData.php`, `EconomicOutputScope.php`, grouping/order enums and required indexes migration; symbols: tenant-scoped scalar projection, explicit scope normalization, one engine invocation and deterministic ordering; depends: T005-003; requirements: FR-005-001, FR-005-002, FR-005-010–FR-005-025, FR-005-070; tests first: T005-003; validate: `php artisan test tests/Accounting/Integration/EconomicDatasetQueryTest.php tests/Feature/Reporting/EconomicDatasetAuthorizationTest.php`; expected: same query/result contract for all current consumers with bounded SQL; forbidden: formulas in query/UI, implicit complete scope, persistent current totals or N+1 relation loading.
+- [ ] T005-005 Create annual Budget context and report policies in `database/migrations/*_create_annual_budgets_table.php`, `app/Models/AnnualBudget.php`, `app/Policies/AnnualBudgetPolicy.php`, `ScenarioPolicy.php`, `BudgetVersionPolicy.php` and permission seeder; symbols: unique tenant/year context, nullable reference version, no monetary columns and explicit view/manage/publish/reference/compare/output abilities; depends: T005-004 and Feature 007 T007-009; requirements: FR-005-001, FR-005-022, FR-005-030, FR-005-040–FR-005-047; tests first: create `tests/Feature/Reporting/AnnualBudgetSchemaAuthorizationTest.php`; validate: `php artisan test tests/Feature/Reporting/AnnualBudgetSchemaAuthorizationTest.php`; expected: one rolling context and permission matrix with no current total; forbidden: synchronized amount columns, role-name branching or cross-tenant reference version.
 
-**Files to create**
-- `app/Domain/Reporting/Data/EconomicPositionRow.php`
+**Checkpoint:** the single economic kernel and current query boundary are complete before any screen/version/output consumer.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+## Phase 2 — US-005-01 Current rolling Budget (P1, MVP)
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+**Goal:** display one current tenant/year Budget and dashboard from the canonical dataset.
 
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+**Independent test:** selected tenant/year returns exact components/buckets/Plafond and empty state; dashboard and Budget summaries equal the same `EconomicDataset`.
 
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+- [ ] T005-006 [P] [US1] Write current Budget/dashboard tests in `tests/Feature/Reporting/CurrentBudgetTest.php`, `TenantDashboardTest.php` and `tests/Accounting/Integration/CurrentBudgetParityTest.php`; symbols: official basis, components, project buckets, potential label, Plafond, empty zeros/guidance, one query invocation and no cross-tenant economics; depends: T005-005; requirements: FR-005-001–FR-005-016, FR-005-050, FR-005-070, INV-REP-001, INV-ECO-001, INV-EMPTY-001; validate: `php artisan test tests/Feature/Reporting/CurrentBudgetTest.php tests/Feature/Reporting/TenantDashboardTest.php tests/Accounting/Integration/CurrentBudgetParityTest.php`; expected before implementation: focused failures; forbidden: dashboard calculator, persisted summary, invented empty rows or operational alerts merged into economic totals.
+- [ ] T005-007 [US1] Implement `TenantDashboardQuery`, `CurrentBudgetPage` and dashboard widgets in `app/Domain/Reporting/Queries/TenantDashboardQuery.php`, `app/Filament/Pages/CurrentBudgetPage.php`, `app/Filament/Widgets/BudgetSummaryWidget.php` and `BudgetComponentWidget.php`; symbols: one `EconomicDataset` detail-none/page call plus separately composed non-economic alerts; depends: T005-006; requirements: FR-005-001–FR-005-016, FR-005-050, FR-005-070; tests first: T005-006; validate: `php artisan test tests/Feature/Reporting/CurrentBudgetTest.php tests/Feature/Reporting/TenantDashboardTest.php`; expected: current Budget/dashboard exact parity and guided empty state; forbidden: formulas in widgets, reading Expense models directly or hidden scenario/version selection.
+- [ ] T005-008 [US1] Implement chart lifecycle in `resources/js/charts.js`, Filament chart component and `tests/Browser/Reporting/BudgetChartLifecycleTest.php`; symbols: server-calculated numeric copies, destroy/recreate on Livewire navigation and accessible table fallback; depends: T005-007; requirements: FR-005-003, FR-005-020, FR-005-070; tests first: browser lifecycle test; validate: `php artisan dusk tests/Browser/Reporting/BudgetChartLifecycleTest.php`; expected: no duplicate chart instance and values equal dataset summary; forbidden: JavaScript arithmetic, second chart library or chart-only information.
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+**Checkpoint:** US1 independently delivers current Budget/dashboard MVP.
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+## Phase 3 — US-005-02 Historical year (P2)
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
+**Goal:** represent available historical data or explicit Manual total-only/partial/full evidence without fabrication.
 
+**Independent test:** previous current data reconstructs normally; manual draft records available dimensions, rejects invented approval and publishes mathematically valid unavailable dimensions.
 
-### T005-02 — Authoritative position dataset
+- [ ] T005-009 Write BudgetVersion schema tests in `tests/Feature/BudgetVersions/BudgetVersionSchemaTest.php`; symbols: tenant/year/name/kind/status/basis/context/dimension availability/summary/checksum/rows, draft lock and published immutability boundary; depends: T005-005; requirements: FR-005-040–FR-005-044, INV-BUD-001–INV-BUD-004; validate: `php artisan test tests/Feature/BudgetVersions/BudgetVersionSchemaTest.php`; expected before implementation: focused failures; forbidden: generic model versions, FK-only historical labels, published delete or current total columns.
+- [ ] T005-010 Create BudgetVersion persistence/data in `database/migrations/*_create_budget_versions_table.php`, `*_create_budget_version_rows_table.php`, `app/Models/BudgetVersion.php`, `BudgetVersionRow.php`, factories and enums/data DTOs under `app/Domain/BudgetVersions/Data/`; depends: T005-009; requirements: FR-005-040–FR-005-044; tests first: T005-009; validate: `php artisan test tests/Feature/BudgetVersions/BudgetVersionSchemaTest.php`; expected: draft/published snapshot storage with captured labels and decimal strings; forbidden: using operational version package, mutable published content or missing-dimension zero substitution.
+- [ ] T005-011 [P] [US2] Write manual-history tests in `tests/Feature/BudgetVersions/ManualBudgetVersionTest.php`; symbols: total-only/partial/full availability, manual rows, no Expense mutation, explicit kind, no inferred Approved and empty historical version; depends: T005-010; requirements: FR-005-040, FR-005-043, FR-005-044, INV-BUD-003, INV-BUD-004, INV-EMPTY-001; validate: `php artisan test tests/Feature/BudgetVersions/ManualBudgetVersionTest.php`; expected before implementation: focused failures; forbidden: fabricated rows/labels, approval inference or writing current Expense.
+- [ ] T005-012 [US2] Implement manual draft Actions/UI in `app/Domain/BudgetVersions/Actions/CreateManualBudgetVersionDraft.php`, `UpdateManualBudgetVersionDraft.php`, `app/Filament/Resources/BudgetVersions/BudgetVersionResource.php` and manual row editor; symbols: dimension availability, exact totals, draft lock, explicit kind and Action-only writes; depends: T005-011; requirements: FR-005-040, FR-005-043, FR-005-044; tests first: T005-011 plus `tests/Livewire/BudgetVersions/ManualBudgetVersionResourceTest.php`; validate: `php artisan test tests/Feature/BudgetVersions/ManualBudgetVersionTest.php tests/Livewire/BudgetVersions/ManualBudgetVersionResourceTest.php`; expected: historical evidence is usable and explicit without changing current data; forbidden: sample rows, automatic Approved kind or spreadsheet formula authority.
 
-User story: US-005-01  
-Requirements: FR-005-002, FR-005-010  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-01  
-Parallelizable: no
+## Phase 4 — US-005-03 Create named BudgetVersion (P1)
 
-**Objective.** Create or modify `app/Domain/Reporting/Queries/EconomicPositionQuery.php` so it owns only: authoritative position dataset.
+**Goal:** capture current data and publish an immutable exact named snapshot.
 
-**Files to create**
-- `app/Domain/Reporting/Queries/EconomicPositionQuery.php`
+**Independent test:** repeatable-read capture saves exact rows/summary/source references/checksum; publish freezes content; current changes do not alter it; failed publish rolls back.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+- [ ] T005-013 [P] [US3] Write capture/publish tests in `tests/Accounting/Integration/BudgetVersionCaptureTest.php`, `tests/Feature/BudgetVersions/PublishBudgetVersionTest.php` and `BudgetVersionImmutabilityTest.php`; symbols: repeatable-read snapshot, name coordination, canonical checksum, basis/locale/timezone, source revision IDs, failed rollback and all mutation paths denied after publish; depends: T005-010, T005-004; requirements: FR-005-040–FR-005-042, INV-BUD-001–INV-BUD-003; validate: `php artisan test tests/Accounting/Integration/BudgetVersionCaptureTest.php tests/Feature/BudgetVersions/PublishBudgetVersionTest.php tests/Feature/BudgetVersions/BudgetVersionImmutabilityTest.php`; expected before implementation: focused failures; forbidden: package restore/edit, locking all Expense rows, non-deterministic row order or mutable checksum metadata.
+- [ ] T005-014 [US3] Implement current-capture/publish Actions in `app/Domain/BudgetVersions/Actions/CreateBudgetVersionDraft.php`, `RebuildBudgetVersionDraft.php`, `PublishBudgetVersion.php`, `DuplicateBudgetVersion.php` and `app/Domain/BudgetVersions/Services/BudgetVersionChecksum.php`; symbols: repeatable-read transaction before first read, annual-budget context lock, `EconomicDataset` capture, normalized checksum and immutable publish; depends: T005-013; requirements: FR-005-040–FR-005-042; tests first: T005-013; validate: `php artisan test tests/Accounting/Integration/BudgetVersionCaptureTest.php tests/Feature/BudgetVersions/PublishBudgetVersionTest.php tests/Feature/BudgetVersions/BudgetVersionImmutabilityTest.php`; expected: exact snapshot remains unchanged after current edits/settings changes; forbidden: in-place published correction, economic recalculation from stored rows or source-data mutation.
+- [ ] T005-015 [US3] Complete BudgetVersion Filament publish/duplicate UI and metadata view under `app/Filament/Resources/BudgetVersions/`; symbols: explicit source mode, draft rebuild confirmation, publish action, immutable published view and checksum/context display; depends: T005-014; requirements: FR-005-040–FR-005-042, FR-005-047; tests first: create `tests/Livewire/BudgetVersions/BudgetVersionResourceTest.php`; validate: `php artisan test tests/Livewire/BudgetVersions/BudgetVersionResourceTest.php`; expected: UI exposes no content mutation/deletion for Published records; forbidden: generic revision restore button, direct row edit after publish or hidden current refresh.
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+## Phase 5 — US-005-04 Select reference and compare (P2)
 
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+**Goal:** compare current/version/scenario sources without mutating or reprocessing snapshot rows through the current query.
 
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+**Independent test:** same-tenant compatible sources return unchanged/added/removed/changed rows and exact variance; incompatible dimension/cross-tenant inputs fail; reference selection changes only context.
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+- [ ] T005-016 [P] [US4] Write source comparison tests in `tests/Feature/BudgetVersions/BudgetReferenceTest.php` and `tests/Accounting/Integration/CompareBudgetSourcesTest.php`; symbols: current/version/version/scenario source variants, stable row key, dimension compatibility, zero denominator, reference selection and no source mutation; depends: T005-014; requirements: FR-005-045–FR-005-047, INV-BUD-003, INV-REP-004, INV-REP-005; validate: `php artisan test tests/Feature/BudgetVersions/BudgetReferenceTest.php tests/Accounting/Integration/CompareBudgetSourcesTest.php`; expected before implementation: focused failures; forbidden: re-running current engine on snapshot rows, treating unavailable dimension as zero or cross-tenant comparison.
+- [ ] T005-017 [US4] Implement source adapters/comparison in `app/Domain/Reporting/Data/BudgetSource.php`, `BudgetComparison.php`, `app/Domain/BudgetVersions/Queries/BudgetVersionDatasetQuery.php`, `app/Domain/Reporting/Queries/ResolveBudgetSource.php`, `app/Domain/Reporting/Services/CompareBudgetSources.php` and `SelectBudgetReference.php`; symbols: typed source resolution, compatibility result, exact variance and immutable reference update; depends: T005-016; requirements: FR-005-045–FR-005-047; tests first: T005-016; validate: `php artisan test tests/Feature/BudgetVersions/BudgetReferenceTest.php tests/Accounting/Integration/CompareBudgetSourcesTest.php`; expected: deterministic read-only comparison and reference selection; forbidden: generic repository/resolver chain, source mutation or hidden fallback to current.
+- [ ] T005-018 [US4] Implement comparison page in `app/Filament/Pages/BudgetComparisonPage.php`; symbols: explicit left/right source, unavailable-dimension messaging, added/removed/changed table and exact totals; depends: T005-017; requirements: FR-005-045–FR-005-047; tests first: create `tests/Livewire/Reporting/BudgetComparisonPageTest.php`; validate: `php artisan test tests/Livewire/Reporting/BudgetComparisonPageTest.php`; expected: UI renders only comparison DTO and keeps tenant/source identity visible; forbidden: browser-side variance calculation or automatic source coercion.
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+## Phase 6 — US-005-05 What-if scenario (P2)
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
+**Goal:** persist shared tenant scenarios as explicit non-official alternative datasets.
 
+**Independent test:** create/update/archive scenario and rows; current Budget remains unchanged; only authorized same-tenant users view/manage it.
 
-### T005-03 — Kpi composition
+- [ ] T005-019 [P] [US5] Write scenario tests in `tests/Feature/Scenarios/ScenarioLifecycleTest.php` and `tests/Accounting/Integration/ScenarioIsolationTest.php`; symbols: tenant/year ownership, shared visibility, active/archive, exact rows, permissions and current exclusion; depends: T005-005; requirements: FR-005-030, INV-SCN-001, INV-REP-004; validate: `php artisan test tests/Feature/Scenarios/ScenarioLifecycleTest.php tests/Accounting/Integration/ScenarioIsolationTest.php`; expected before implementation: focused failures; forbidden: private user scenario, direct current Expense mutation or implicit inclusion in dashboard.
+- [ ] T005-020 [US5] Implement scenario persistence/Actions/query/UI in `database/migrations/*_create_scenarios_table.php`, `*_create_scenario_rows_table.php`, `app/Models/Scenario.php`, `ScenarioRow.php`, `app/Domain/Scenarios/Actions/`, `Queries/ScenarioDatasetQuery.php` and `app/Filament/Resources/Scenarios/ScenarioResource.php`; symbols: create/update/archive/delete draft data, explicit source row references and alternative dataset DTO; depends: T005-019; requirements: FR-005-030; tests first: T005-019 plus `tests/Livewire/Scenarios/ScenarioResourceTest.php`; validate: `php artisan test tests/Feature/Scenarios/ScenarioLifecycleTest.php tests/Accounting/Integration/ScenarioIsolationTest.php tests/Livewire/Scenarios/ScenarioResourceTest.php`; expected: persistent shared non-official source with no current side effects; forbidden: `ScenarioEconomicEngine`, current record overwrite or role-name authorization.
 
-User story: US-005-01  
-Requirements: FR-005-010, FR-005-011  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-02  
-Parallelizable: no
+## Phase 7 — US-005-06 Print and export (P1)
 
-**Objective.** Create or modify `app/Domain/Reporting/Queries/DashboardQuery.php` so it owns only: KPI composition.
+**Goal:** produce filtered or complete single-tenant print/CSV/XLSX from the same dataset and explicit metadata.
 
-**Files to create**
-- `app/Domain/Reporting/Queries/DashboardQuery.php`
+**Independent test:** screen/KPI/chart/print/CSV/XLSX totals and rows match for filtered scope; complete outputs match the same complete report/year dataset; metadata identifies scope and no partial file is returned on limit/error.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+- [ ] T005-021 [P] [US6] Write output parity tests in `tests/Accounting/Integration/EconomicOutputParityTest.php`, `tests/Feature/Reporting/OutputScopeTest.php`, `CsvExportTest.php` and `XlsxExportTest.php`; symbols: filtered/complete normalization, ordering/context metadata, decimal/date serialization, output limit failure and audit metadata without payload; depends: T005-004, T005-007; requirements: FR-005-020–FR-005-025, FR-005-060, INV-REP-002–INV-REP-006; validate: `php artisan test tests/Accounting/Integration/EconomicOutputParityTest.php tests/Feature/Reporting/OutputScopeTest.php tests/Feature/Reporting/CsvExportTest.php tests/Feature/Reporting/XlsxExportTest.php`; expected before implementation: focused failures; forbidden: PDF package, XLSX formulas/import, payload audit or silent scope widening.
+- [ ] T005-022 [US6] Implement output adapters in `app/Domain/Reporting/Exports/EconomicDatasetCsvExporter.php`, `EconomicDatasetXlsxExporter.php`, `app/Http/Controllers/Reports/EconomicPrintController.php`, `EconomicExportController.php`, `resources/views/reports/economic-print.blade.php` and print CSS; symbols: DTO-only iterator, UTF-8 CSV, OpenSpout writer-only XLSX, Blade print and explicit scope metadata; depends: T005-021; requirements: FR-005-020–FR-005-025, FR-005-060; tests first: T005-021; validate: `php artisan test tests/Accounting/Integration/EconomicOutputParityTest.php tests/Feature/Reporting/OutputScopeTest.php tests/Feature/Reporting/CsvExportTest.php tests/Feature/Reporting/XlsxExportTest.php`; expected: exact complete/filtered outputs with no Eloquent query in exporters; forbidden: `ReportPdfRenderer`, Browsershot/DOMPDF/WeasyPrint, formulas or production XLSX reader.
+- [ ] T005-023 [US6] Implement report page/output actions and bounded Dusk smoke in `app/Filament/Pages/EconomicReportPage.php`, `tests/Livewire/Reporting/EconomicReportPageTest.php` and `tests/Browser/Reporting/EconomicPrintTest.php`; symbols: filter/order state, explicit output-scope modal, print route, download actions and browser Save-as-PDF path documentation; depends: T005-022; requirements: FR-005-020–FR-005-025, FR-005-060; tests first: Livewire and Dusk tests; validate: `php artisan test tests/Livewire/Reporting/EconomicReportPageTest.php && php artisan dusk tests/Browser/Reporting/EconomicPrintTest.php`; expected: user explicitly selects scope and browser print view shows identical metadata/totals; forbidden: default complete export, hidden filter clearing or screenshot comparison.
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+## Phase 8 — Performance and complete verification
 
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+- [ ] T005-024 Record 10,000-row profile in `tests/Performance/EconomicDatasetPerformanceTest.php` and `docs/replatform/performance-baseline.md`; symbols: SQL count, memory, p95, EXPLAIN for detail none/page/all and complete output; depends: T005-004, T005-022; requirements: NFR plan profile; validate: `php artisan test tests/Performance/EconomicDatasetPerformanceTest.php`; expected: measured baseline with semantic parity; forbidden: cache/materialized totals/preaggregation before evidence or weakening detail contract.
+- [ ] T005-025 Run Feature 005 verification and update `specs/005-reporting-and-analytics/quickstart.md`, contracts and traceability with actual results; depends: T005-008, T005-012, T005-015, T005-018, T005-020, T005-023, T005-024; requirements: FR-005-001–FR-005-070; validate: `composer test:accounting && php artisan test tests/Feature/Reporting tests/Feature/BudgetVersions tests/Feature/Scenarios tests/Livewire/Reporting tests/Livewire/BudgetVersions tests/Livewire/Scenarios && composer test:static`; expected: kernel/output/version/scenario/tenant tests pass and bounded Dusk covers chart/scope/print; forbidden: completion with duplicated formula, skipped parity format or unexecuted performance measurement.
 
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+## Dependencies and execution order
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+`Feature 003/004 current data → T005-001 → T005-002 → T005-003 → T005-004 → T005-005`. US1 then provides the current dataset. BudgetVersion schema supports US2/US3; comparison depends on published versions; scenarios are independent after policy/schema foundation; output depends on the current dataset and source adapters.
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+## MVP scope
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T005-04 — Csv from dataset
-
-User story: US-005-01  
-Requirements: FR-005-011, FR-005-012  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-03  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/Reporting/Exports/CsvStreamExporter.php` so it owns only: CSV from dataset.
-
-**Files to create**
-- `app/Domain/Reporting/Exports/CsvStreamExporter.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T005-05 — Pdf adapter boundary
-
-User story: US-005-01  
-Requirements: FR-005-012, FR-005-013  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-04  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/Reporting/Contracts/ReportPdfRenderer.php` so it owns only: PDF adapter boundary.
-
-**Files to create**
-- `app/Domain/Reporting/Contracts/ReportPdfRenderer.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T005-06 — Html/print routes
-
-User story: US-005-01  
-Requirements: FR-005-013, FR-005-014  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-05  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Http/Controllers/Reports/EconomicPositionController.php` so it owns only: HTML/print routes.
-
-**Files to create**
-- `app/Http/Controllers/Reports/EconomicPositionController.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T005-07 — Csv/xlsx
-
-User story: US-005-01  
-Requirements: FR-005-014, FR-005-020  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-06  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Http/Controllers/Reports/EconomicPositionExportController.php` so it owns only: CSV/XLSX.
-
-**Files to create**
-- `app/Http/Controllers/Reports/EconomicPositionExportController.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T005-08 — Filters/kpis/chart
-
-User story: US-005-01  
-Requirements: FR-005-020, FR-005-021  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-07  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Livewire/Dashboard/DashboardPage.php` so it owns only: filters/KPIs/chart.
-
-**Files to create**
-- `app/Livewire/Dashboard/DashboardPage.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T005-09 — Table/filter/drilldown
-
-User story: US-005-01  
-Requirements: FR-005-021, FR-005-030  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-08  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Livewire/Reports/EconomicPositionPage.php` so it owns only: table/filter/drilldown.
-
-**Files to create**
-- `app/Livewire/Reports/EconomicPositionPage.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T005-10 — Chart.js create/destroy
-
-User story: US-005-01  
-Requirements: FR-005-030  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-09  
-Parallelizable: no
-
-**Objective.** Create or modify `resources/js/charts.ts` so it owns only: Chart.js create/destroy.
-
-**Files to create**
-- `resources/js/charts.ts`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T005-11 — Formulas/filters
-
-User story: US-005-01  
-Requirements: FR-005-001, FR-005-002  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-10  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/Reporting/EconomicPositionDatasetTest.php` so it owns only: formulas/filters.
-
-**Files to create**
-- `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T005-12 — Screen/export equality
-
-User story: US-005-01  
-Requirements: FR-005-002, FR-005-010  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-11  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/Reporting/ExportParityTest.php` so it owns only: screen/export equality.
-
-**Files to create**
-- `tests/Feature/Reporting/ExportParityTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T005-13 — Print/chart lifecycle
-
-User story: US-005-01  
-Requirements: FR-005-010, FR-005-011  
-Invariants: INV-REP-001, INV-REP-002  
-Dependencies: T005-12  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Browser/Reporting/EconomicPositionPrintTest.php` so it owns only: print/chart lifecycle.
-
-**Files to create**
-- `tests/Browser/Reporting/EconomicPositionPrintTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Reporting/EconomicPositionDatasetTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-### T005-14 — Tenant-scope economic datasets and add operational global overview
-
-Requirements: FR-005-031, FR-005-032  
-Invariants: INV-REP-005  
-Dependencies: Feature 007 clarification convergence and preceding local task  
-
-**Objective.** Update the feature's migrations/models, policies, Actions/Queries, screens, contracts, exports/files/commands where applicable, and tests so tenant ownership and approved role behavior are explicit and fail closed.
-
-**Required tests.**
-
-1. same-tenant Administrator/Editor/Viewer allow paths according to the feature contract;
-2. other-tenant direct ID and relationship denial without existence leakage;
-3. missing tenant context denial;
-4. tenant-scoped dataset/export/file equality where applicable;
-5. audit records real actor and tenant context.
-
-**Forbidden work.** Do not resolve any question still marked `OPEN` in the clarification registers, add impersonation, add shared mutable business catalogues, or introduce separate tenant databases/domains without an approved requirement.
+T005-001–T005-008 deliver the shared kernel and current rolling Budget/dashboard. No version, scenario or export is required to validate that MVP independently.
