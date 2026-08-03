@@ -6,9 +6,11 @@ Purpose: export, archive, dry-run import, collision handling, and apply of one c
 
 ## Boundary
 
-Tenant portability is not installation backup or selective disaster restore. It exports one tenant's approved data into a versioned, inspectable package and imports it only through staging and domain Actions.
+Tenant portability is not installation backup or selective disaster restore. It exports one tenant's approved portable business data into a versioned, inspectable package and imports it only through staging and domain Actions.
 
 Only Administrator may export or import a complete tenant package.
+
+Tenant portability is distinct from ordinary report/export scopes and from audit access. Audit events are excluded at launch by Q-020 and are not part of a tenant portability package.
 
 ## Export package
 
@@ -35,23 +37,23 @@ scenario_rows.csv
 budget_versions.csv
 budget_version_rows.csv
 operational_revisions.csv
-audit.csv
 notifications.csv
 attachments/
 checksums.json
 ```
 
-The final inclusion of notifications and expired audit/revisions is governed by retention and purpose during `/speckit.plan`; the package must document included and intentionally excluded datasets.
+The final inclusion of notifications and retained operational revisions is governed by portability purpose during `/speckit.plan`; the package must document included and intentionally excluded datasets. Audit events remain excluded while audit export is unavailable at launch.
 
 ## Exclusions
 
 Never export:
 
+- audit events;
 - passwords or password hashes;
 - reset tokens, sessions, remember tokens, API tokens;
 - SMTP/storage/database credentials;
 - application keys or platform secrets;
-- global technical configuration;
+- global technical configuration, including the installation-wide audit-retention setting;
 - another tenant's data;
 - file payloads that are no longer retained by the current attachment lifecycle.
 
@@ -66,7 +68,7 @@ Required fields:
 - currency/language/timezone;
 - file list, row counts, byte sizes, SHA-256 checksums;
 - attachment count and aggregate/file checksums;
-- included dataset/retention policy summary;
+- included and intentionally excluded dataset summary;
 - schema compatibility range;
 - package checksum.
 
@@ -79,7 +81,7 @@ CSV uses UTF-8 and a declared delimiter/line-ending convention. XLSX, when later
 - Money uses normalized decimal strings.
 - Dates/times use declared ISO formats and timezone context.
 - Published budget-version snapshots remain exact and immutable in the package.
-- Operational revisions/audit are exported only to the approved minimized extent; no secret or attachment payload appears in metadata.
+- Operational revisions are exported only to the approved minimized extent; audit events are not exported; no secret or attachment payload appears in revision metadata.
 - Export records actor, tenant, counts, checksum, result, and correlation ID without logging the package payload.
 
 ## Import target
@@ -136,7 +138,7 @@ A package import is not accepted until reconciliation is approved.
 
 ## Test contract
 
-1. no cross-tenant or secret data in export;
+1. no cross-tenant, audit-event, or secret data in export;
 2. exact manifest/count/checksum generation;
 3. export/import decimal and date round trip;
 4. same-lineage idempotency;
@@ -147,4 +149,5 @@ A package import is not accepted until reconciliation is approved.
 9. protected permissions cannot be imported into tenant roles;
 10. current Expense, revisions, budget versions, generation exceptions, scenarios, and files preserve their separate semantics;
 11. dry-run has no current-domain writes;
-12. failed apply leaves explicit coherent result and no hidden partial success.
+12. failed apply leaves explicit coherent result and no hidden partial success;
+13. audit events and global retention settings are absent from the package.
