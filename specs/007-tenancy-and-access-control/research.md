@@ -1,34 +1,22 @@
-# Research — Tenancy and access control
+# Research — Feature 007 Tenancy and access control
 
-## Required research before implementation
+Verification date: 2026-08-03. Shared package research is in `docs/replatform/technical-research.md`.
 
-Use primary, current sources only:
+| ID | Decision | Reason | Rejected |
+|---|---|---|---|
+| RES-007-001 | One database with explicit tenant ownership | Approved product boundary and minimum shared-hosting complexity. | separate DBs/subdomains/tenancy package |
+| RES-007-002 | Spatie Permission 8.3 teams keyed by tenant ID | Current Laravel 13-compatible configurable RBAC. | custom ACL or fixed roles |
+| RES-007-003 | Shield 4.3.1 for Filament role UI/catalogue | Supports Filament 5 and Spatie 8; removes custom role CRUD. | application-owned generic role builder |
+| RES-007-004 | Request-scoped TenantContext + explicit query predicates | Fail-closed and testable; permission team context alone does not scope business data. | hidden global scope as sole isolation |
+| RES-007-005 | Protected global Administrator role | Product requires platform control but no invariant bypass. | super-admin `Gate::before` allowing everything |
+| RES-007-006 | Tenant user belongs to one tenant | Approved model; avoids membership pivot/switch complexity. | multi-tenant memberships |
+| RES-007-007 | No impersonation | Real actor+tenant audit and simpler security. | login-as tenant user |
+| RES-007-008 | Native Filament resources/onboarding | Existing components sufficient. | custom SPA or mandatory onboarding state machine |
 
-- official Laravel authentication, authorization, middleware, validation, filesystem, queues and scheduler documentation;
-- official database documentation for foreign keys, composite indexes, uniqueness and transactional behaviour;
-- official Livewire documentation if reactive tenant switching is necessary;
-- official hosting documentation relevant to PHP and MySQL shared hosting.
+## Executable gates
 
-## Alternatives to evaluate
-
-1. Laravel-native single-database tenancy.
-2. Maintained tenancy packages.
-3. Separate databases per tenant.
-4. Custom domains or subdomains.
-
-## Evaluation order
-
-1. Correct isolation.
-2. Prevention of cross-tenant access.
-3. Simplicity.
-4. Standard Laravel capabilities.
-5. Testability.
-6. Maintainability.
-7. PHP and MySQL hosting compatibility.
-8. Dependency count.
-9. Migration suitability.
-10. Adequate performance.
-
-## Current product conclusion
-
-The approved requirements do not currently justify separate databases, subdomains, impersonation, multi-tenant user memberships or cross-tenant economic analytics. Laravel-native single-database tenancy is therefore the baseline to validate, not an unreviewed final implementation choice.
+- teams enabled before package migration;
+- team context and permission cache reset across HTTP, Livewire, console and tests;
+- protected role/abilities unavailable in tenant RoleResource;
+- direct-object isolation matrix across all feature resources;
+- no unscoped model lookup in tenant controllers/resources/queries.
