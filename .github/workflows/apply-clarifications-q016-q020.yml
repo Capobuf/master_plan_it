@@ -1,0 +1,355 @@
+name: Apply clarifications Q-016 through Q-020
+
+on:
+  push:
+    branches:
+      - laravel-replatform
+    paths:
+      - '.github/workflows/apply-clarifications-q016-q020.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Apply approved product decisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          root = Path('.')
+
+          def replace_once(path_str: str, old: str, new: str) -> None:
+              path = root / path_str
+              text = path.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path_str}: expected one occurrence, found {count}: {old!r}')
+              path.write_text(text.replace(old, new, 1))
+
+          # Root entry point.
+          replace_once(
+              'README.md',
+              'The approved product decisions `Q-001` through `Q-015` are propagated into the package. All remaining open questions are listed in `docs/replatform/product-clarification-register.md` and must not be guessed by an implementation agent.',
+              'The approved product decisions `Q-001` through `Q-020`, together with `Q-032` as resolved by `Q-013`, are propagated into the package. All remaining open questions are listed in `docs/replatform/product-clarification-register.md` and must not be guessed by an implementation agent.'
+          )
+
+          # Clarification register.
+          register_path = root / 'docs/replatform/product-clarification-register.md'
+          register = register_path.read_text()
+          decisions = {
+              '| Q-016 | Inactive tenant behavior | Login, direct-link, report, export, and Administrator access behavior are undefined for inactive tenants. | No tenant state exists in current contracts. | Security and support operations. | HIGH | What remains accessible for an inactive tenant? | OPEN |':
+                  '| Q-016 | Inactive tenant behavior | Login, direct-link, report, export, and Administrator access behavior are undefined for inactive tenants. | No tenant state exists in current contracts. | Security and support operations. | HIGH | What remains accessible for an inactive tenant? | ANSWERED — Editor and Viewer access is blocked while the tenant is Inactive; Administrator retains the full read/write abilities already authorized for that tenant and may reactivate it. |',
+              '| Q-017 | Deactivated user ownership | Existing records created by a deactivated user need a product rule. | Audit stores actor IDs but no deactivation behavior is specified. | History, attribution, edit continuity. | HIGH | What happens to records and assignments of a deactivated user? | OPEN |':
+                  '| Q-017 | Deactivated user ownership | Existing records created by a deactivated user need a product rule. | Audit stores actor IDs but no deactivation behavior is specified. | History, attribution, edit continuity. | HIGH | What happens to records and assignments of a deactivated user? | ANSWERED — original authorship and audit references are preserved; records remain tenant-owned and manageable by other authorized Editors; no automatic transfer occurs; open assignments are flagged for explicit manual reassignment. |',
+              '| Q-018 | Attachments | Attachment upload, deletion, retention, and read access are not defined by role and tenant state. | Expense model includes attachment paths; tenancy ownership is absent. | Data exposure and retention. | HIGH | Who may upload/delete attachments, and what is retained? | OPEN |':
+                  '| Q-018 | Attachments | Attachment upload, deletion, retention, and read access are not defined by role and tenant state. | Expense model includes attachment paths; tenancy ownership is absent. | Data exposure and retention. | HIGH | Who may upload/delete attachments, and what is retained? | ANSWERED — Editor may delete an attachment only while its parent record is editable; attachments documenting immutable history cannot be permanently deleted and may only be superseded or archived with audit preserved; Administrator follows the same invariant; Viewer may read/download. |',
+              '| Q-019 | Reports and exports | Tenant filtering is mandatory, but allowed report/export scopes per role and Administrator context remain incomplete. | Reporting contracts are role-scoped but not tenant-aware. | Data leakage prevention and UX. | HIGH | Which scopes may each role export or print? | OPEN |':
+                  '| Q-019 | Reports and exports | Tenant filtering is mandatory, but allowed report/export scopes per role and Administrator context remain incomplete. | Reporting contracts are role-scoped but not tenant-aware. | Data leakage prevention and UX. | HIGH | Which scopes may each role export or print? | ANSWERED — economic reports, prints and exports always contain one tenant; Administrator enters that tenant context first; the global overview may export only operational tenant metadata, alerts, renewals and import/migration errors; no combined or batch economic export is included. |',
+              '| Q-020 | Audit | Viewer access is now decided, but audit retention, export, and Administrator cross-tenant view are undefined. | Audit structures exist per feature without tenant lifecycle rules. | Compliance, support, storage. | HIGH | Which audit views and retention behavior are required? | OPEN |':
+                  '| Q-020 | Audit | Viewer access is now decided, but audit retention, export, and Administrator cross-tenant view are undefined. | Audit structures exist per feature without tenant lifecycle rules. | Compliance, support, storage. | HIGH | Which audit views and retention behavior are required? | ANSWERED — audit events are retained for 24 months; Editor and Viewer may consult same-tenant audit but cannot export it; Administrator may consult tenant and global audit; no audit-export capability is included at launch; events older than 24 months are removed by the documented retention process. |'
+          }
+          for old, new in decisions.items():
+              if register.count(old) != 1:
+                  raise SystemExit(f'Register row mismatch: {old[:60]}')
+              register = register.replace(old, new, 1)
+          register = register.replace('| HIGH | 13 | 4 | 9 |', '| HIGH | 13 | 9 | 4 |')
+          register = register.replace('| **Total** | **33** | **16** | **17** |', '| **Total** | **33** | **21** | **12** |')
+          register_path.write_text(register)
+
+          # Clarification log.
+          log_path = root / 'docs/replatform/clarification-log.md'
+          log = log_path.read_text().rstrip() + '\n'
+          rows = [
+              '| Q-016 | While a tenant is Inactive, Editor and Viewer cannot access it; Administrator retains the full read/write abilities already authorized in that tenant and may reactivate it. | 2026-08-03 | Tenant context; authorization; lifecycle acceptance tests; Feature 001 and 007. | Tenant inactivity blocks customer users but does not create an Administrator read-only support mode. |',
+              '| Q-017 | Deactivation preserves original authorship and audit references. Records remain tenant-owned and manageable by other authorized Editors; no automatic transfer occurs; open assignments require explicit manual reassignment. | 2026-08-03 | User model; audit; assignment handling; authorization; tests. | User deactivation cannot rewrite history or block ordinary access to tenant-owned records. |',
+              '| Q-018 | Editor may delete attachments only while the parent record is editable. Attachments tied to immutable history cannot be permanently deleted and may only be superseded or archived with audit preserved. Administrator follows the same invariant; Viewer may read/download. | 2026-08-03 | Attachment contract; economic history; authorization; storage lifecycle; tests. | Attachment lifecycle follows the mutability of the record it documents. |',
+              '| Q-019 | Economic reports, prints and exports always contain one tenant. Administrator enters tenant context first. Global export is limited to operational tenant metadata, alerts, renewals and import/migration errors; combined and batch economic exports are excluded. | 2026-08-03 | Reporting contracts; global overview; export authorization; tests. | Cross-tenant economic output remains prohibited. |',
+              '| Q-020 | Audit events are retained for 24 months. Editor and Viewer may consult same-tenant audit but cannot export it. Administrator may consult tenant and global audit. No audit-export capability is included at launch; expired events are removed through a documented retention process. | 2026-08-03 | Audit model; authorization; scheduler/retention operation; tests. | Audit retention is finite and must be enforced without rewriting business history. |'
+          ]
+          for row in rows:
+              qid = row.split('|')[1].strip()
+              if f'| {qid} |' not in log:
+                  log += row + '\n'
+          log_path.write_text(log)
+
+          # Approved decisions.
+          approved_path = root / 'docs/replatform/approved-decisions.md'
+          approved = approved_path.read_text()
+          approved = approved.replace(
+              '# Approved product decisions — Q-001 through Q-015',
+              '# Approved product decisions — Q-001 through Q-020 and Q-032'
+          )
+          marker = '| Q-015 | Current tenant is always visible in side navigation and page breadcrumbs; only Administrator can change it. | Screen shell, tenant-context contract, UX tests. |\n'
+          additions = (
+              '| Q-016 | Inactive tenant blocks Editor and Viewer access; Administrator retains full authorized read/write access and may reactivate. | Tenant context, authorization, lifecycle and tests. |\n'
+              '| Q-017 | Deactivated-user authorship remains unchanged; records stay tenant-owned; no automatic reassignment; open assignments require manual reassignment. | User model, audit, assignments and tests. |\n'
+              '| Q-018 | Attachment deletion follows parent-record mutability; immutable-history attachments may only be superseded or archived with audit retained. | Attachments, storage lifecycle, authorization and tests. |\n'
+              '| Q-019 | Economic output is single-tenant; global export is operational only; combined and batch economic exports are excluded. | Reports, print/export contracts, global overview and tests. |\n'
+              '| Q-020 | Audit is retained for 24 months; Editor/Viewer can view but not export; Administrator can view tenant/global audit; audit export is out of launch scope. | Audit model, retention operation, authorization and tests. |\n'
+          )
+          if additions not in approved:
+              if approved.count(marker) != 1:
+                  raise SystemExit('Approved-decision insertion marker missing')
+              approved = approved.replace(marker, marker + additions, 1)
+          approved = approved.replace(
+              'These decisions are closed. Q-032 is also closed as a duplicate already resolved by Q-013. All remaining open questions are listed explicitly in `product-clarification-register.md` and must not be inferred from this document.',
+              'Q-001 through Q-020 are closed. Q-032 is also closed as a duplicate already resolved by Q-013. All remaining open questions are listed explicitly in `product-clarification-register.md` and must not be inferred from this document.'
+          )
+          approved_path.write_text(approved)
+
+          # Feature 001 status no longer lists Q-016/Q-020 as open.
+          replace_once(
+              'specs/001-platform-foundation/spec.md',
+              'Status: PARTIALLY READY — Q-001 through Q-015 propagated; Q-016, Q-020, Q-024, and Q-026 remain open where applicable',
+              'Status: PARTIALLY READY — Q-001 through Q-020 propagated; Q-024 and Q-026 remain open where applicable'
+          )
+
+          # Feature 007 specification.
+          spec_path = root / 'specs/007-tenancy-and-access-control/spec.md'
+          spec = spec_path.read_text()
+          spec = spec.replace('Approved decisions: Q-001 through Q-015', 'Approved decisions: Q-001 through Q-020 and Q-032')
+          acceptance_marker = '## Functional requirements\n'
+          acceptance_additions = '''### AC-007-10 — Inactive tenant access\n\nGiven an Inactive tenant, when Editor or Viewer attempts login, a direct link, report, export, attachment or other tenant operation, then access is denied; when Administrator enters that tenant, the full operations otherwise authorized to Administrator remain available and the tenant may be reactivated.\n\n### AC-007-11 — Deactivated user history\n\nGiven a deactivated tenant user, when existing records and audit are viewed or edited by another authorized Editor, then original authorship remains unchanged, records remain tenant-owned, and any still-open assignment is explicitly flagged for manual reassignment.\n\n### AC-007-12 — Attachment lifecycle\n\nGiven an attachment on an editable record, when Editor deletes it, then deletion and audit follow the ordinary attachment operation; given an attachment documenting immutable history, permanent deletion is denied and only an audited supersede/archive operation is available.\n\n### AC-007-13 — Single-tenant outputs\n\nGiven any economic report, print or export, when it is generated, then it contains exactly one tenant; the global overview export contains only approved operational fields and never combines or batches economic tenant datasets.\n\n### AC-007-14 — Audit retention and access\n\nGiven audit events, when Editor or Viewer consults same-tenant audit, then read access is allowed and audit export is denied; Administrator may consult tenant and global audit; events older than 24 months are removed by the explicit retention operation, while business records and economic history remain unchanged.\n\n'''
+          if '### AC-007-10 — Inactive tenant access' not in spec:
+              if spec.count(acceptance_marker) != 1:
+                  raise SystemExit('Functional requirements marker missing')
+              spec = spec.replace(acceptance_marker, acceptance_additions + acceptance_marker, 1)
+          fr_marker = '| FR-007-017 | Tenant lifecycle shall be `Active`/`Inactive`; permanent deletion is unavailable and deactivation preserves users, business records, attachments, and audit. | AC-007-01 |\n'
+          fr_additions = (
+              '| FR-007-018 | While a tenant is Inactive, Editor and Viewer shall be denied all tenant access; Administrator shall retain all otherwise authorized read/write abilities and may reactivate the tenant. | AC-007-10 |\n'
+              '| FR-007-019 | Deactivating a tenant user shall preserve original authorship and audit references, shall not transfer tenant-owned records, and shall flag open assignments for explicit manual reassignment. | AC-007-11 |\n'
+              '| FR-007-020 | Attachment deletion shall be allowed only when the parent record is editable; immutable-history attachments shall not be permanently deleted and shall support audited supersede/archive handling. | AC-007-12 |\n'
+              '| FR-007-021 | Economic reports, prints and exports shall contain exactly one tenant; global exports shall contain only approved operational data and shall not combine or batch economic tenant datasets. | AC-007-13 |\n'
+              '| FR-007-022 | Audit events shall be retained for 24 months; Editor and Viewer may read same-tenant audit but cannot export it; Administrator may read tenant and global audit; audit export is not part of the launch scope. | AC-007-14 |\n'
+          )
+          if fr_additions not in spec:
+              if spec.count(fr_marker) != 1:
+                  raise SystemExit('FR insertion marker missing')
+              spec = spec.replace(fr_marker, fr_marker + fr_additions, 1)
+          inv_marker = '| INV-TEN-007 | Global overview contains no cross-tenant economic aggregation. | DomainConflict | TEST-007-007 |\n'
+          inv_additions = (
+              '| INV-TEN-008 | Inactive tenant state never grants access to Editor or Viewer and never reduces Administrator permissions already authorized for the selected tenant. | Authorization denial | TEST-007-008 |\n'
+              '| INV-TEN-009 | User deactivation never rewrites historical authorship or transfers tenant-owned records automatically. | DomainConflict | TEST-007-009 |\n'
+              '| INV-TEN-010 | An attachment documenting immutable history cannot be permanently deleted. | DomainConflict | TEST-007-010 |\n'
+              '| INV-TEN-011 | No economic output contains more than one tenant. | DomainConflict | TEST-007-011 |\n'
+              '| INV-TEN-012 | Audit retention removes only audit events older than 24 months and cannot mutate business records or economic history. | DomainConflict | TEST-007-012 |\n'
+          )
+          if inv_additions not in spec:
+              if spec.count(inv_marker) != 1:
+                  raise SystemExit('Invariant insertion marker missing')
+              spec = spec.replace(inv_marker, inv_marker + inv_additions, 1)
+          spec = spec.replace(
+              'Q-001 through Q-015 are normative and are summarized in `docs/replatform/approved-decisions.md` and recorded in `clarification-log.md`.',
+              'Q-001 through Q-020 and Q-032 are normative and are summarized in `docs/replatform/approved-decisions.md` and recorded in `clarification-log.md`.'
+          )
+          spec = spec.replace(
+              'The remaining open questions in the clarification register stay unresolved. In particular, implementation must not invent inactive-tenant access, deactivated-user assignment handling, attachment retention/deletion, detailed export scope, audit retention, backup/restore scope, import collisions, notifications, or destructive confirmations.',
+              'The remaining open questions in the clarification register stay unresolved. In particular, implementation must not invent backup/restore scope, import identity/collision handling, notifications, destructive confirmations, onboarding, access recovery, scenario persistence, empty-reporting behaviour, migration anomalies, inactive-master-data behaviour, or usage indicators.'
+          )
+          spec_path.write_text(spec)
+
+          # Tenant context contract.
+          replace_once(
+              'specs/007-tenancy-and-access-control/contracts/tenant-context.md',
+              '## Inactive tenant\n\nThe exact read/write behaviour for inactive tenants remains open under Q-016 and must not be invented during implementation.',
+              '## Inactive tenant\n\n- Editor and Viewer cannot access an Inactive tenant through login, direct links, reports, exports, attachments, downloads, commands, or scheduled operations.\n- Administrator may explicitly select an Inactive tenant and retains every read/write operation otherwise authorized to Administrator.\n- Administrator may reactivate the tenant.\n- Inactive state does not delete, transfer, or alter tenant data.'
+          )
+
+          # Authorization contract.
+          auth_path = root / 'specs/007-tenancy-and-access-control/contracts/authorization.md'
+          auth = auth_path.read_text()
+          auth = auth.replace(
+              '| View tenant audit | Allow | Allow | Allow | Deny |',
+              '| View tenant audit | Allow tenant/global | Allow same tenant | Allow same tenant | Deny |'
+          )
+          auth = auth.replace(
+              '| Manage attachments | Allow | Allow, subject to open retention rule | Read/download | Deny |',
+              '| Manage attachments | Allow subject to record mutability | Allow subject to record mutability | Read/download | Deny |'
+          )
+          insertion = (
+              '| Export audit events | Deny at launch | Deny | Deny | Deny |\n'
+              '| Access Inactive tenant | Allow full authorized operations | Deny | Deny | Deny |\n'
+              '| Reactivate tenant | Allow | Deny | Deny | Deny |\n'
+          )
+          marker = '| View global operational overview | Allow | Deny | Deny | Deny |\n'
+          if insertion not in auth:
+              if auth.count(marker) != 1:
+                  raise SystemExit('Authorization insertion marker missing')
+              auth = auth.replace(marker, marker + insertion, 1)
+          auth = auth.replace(
+              'Open decisions must be updated after Q-016 through Q-020 and later clarification rounds.',
+              'Open decisions Q-021 through Q-024 and the remaining lower-priority questions must be resolved in later clarification rounds.'
+          )
+          auth_path.write_text(auth)
+
+          # Data model.
+          model_path = root / 'specs/007-tenancy-and-access-control/data-model.md'
+          model = model_path.read_text()
+          model = model.replace(
+              '- historical actor references must not be silently rewritten; the exact treatment of records, open assignments, and disabled-user references remains open under Q-017.',
+              '- deactivation preserves historical actor references; records remain tenant-owned and are not automatically transferred; open assignments are flagged for explicit manual reassignment.'
+          )
+          attachment_section = '''## Attachments\n\n- attachments are tenant-owned through their parent aggregate;\n- Viewer may read and download same-tenant attachments;\n- Editor and Administrator may delete attachments only while the parent record is editable;\n- attachments documenting immutable history cannot be permanently deleted and must use an audited supersede/archive operation.\n\n'''
+          if '## Attachments' not in model:
+              model = model.replace('## Audit\n', attachment_section + '## Audit\n', 1)
+          model = model.replace(
+              'Retention and inactive-tenant access remain subject to open clarification Q-020 and Q-016.',
+              'Audit events are retained for 24 months. Editor and Viewer may consult same-tenant audit but cannot export it. Administrator may consult tenant and global audit. Audit export is not part of the launch scope. The retention operation removes expired audit events only and cannot modify business records or economic history.'
+          )
+          model_path.write_text(model)
+
+          # Tasks and checklist.
+          replace_once(
+              'specs/007-tenancy-and-access-control/tasks.md',
+              '- [ ] Close the nine remaining `HIGH` questions Q-016 through Q-024 in the clarification register.',
+              '- [x] Close and propagate Q-016 through Q-020.\n- [ ] Close the four remaining `HIGH` questions Q-021 through Q-024 in the clarification register.'
+          )
+          replace_once(
+              'specs/007-tenancy-and-access-control/checklists/requirements.md',
+              '- [ ] Remaining high-priority clarifications are closed before implementation.',
+              '- [ ] The four remaining HIGH clarifications Q-021 through Q-024 are closed before implementation.'
+          )
+
+          # Traceability.
+          trace_path = root / 'docs/replatform/source-traceability.md'
+          trace = trace_path.read_text().rstrip() + '\n'
+          trace_rows = (
+              '| R-TEN-006 | Inactive tenant denies Editor/Viewer and preserves full authorized Administrator access | Q-016 | FR-007-018 | INV-TEN-008 | Tenant context and policies | TEST-007-008 | T007 planning |\n'
+              '| R-TEN-007 | Deactivated-user authorship is preserved and open assignments require manual reassignment | Q-017 | FR-007-019 | INV-TEN-009 | User deactivation action | TEST-007-009 | T007 planning |\n'
+              '| R-TEN-008 | Attachment deletion follows parent mutability and immutable-history attachments are retained | Q-018 | FR-007-020 | INV-TEN-010 | Attachment lifecycle action | TEST-007-010 | T007 planning |\n'
+              '| R-TEN-009 | Economic outputs are single-tenant and global export is operational only | Q-019 | FR-007-021 | INV-TEN-011 | Report/export queries | TEST-007-011 | T005/T007 planning |\n'
+              '| R-TEN-010 | Audit is readable by approved roles, non-exportable at launch, and retained for 24 months | Q-020 | FR-007-022 | INV-TEN-012 | Audit queries and retention command | TEST-007-012 | T007 planning |\n'
+          )
+          if '| R-TEN-006 |' not in trace:
+              trace += trace_rows
+          trace_path.write_text(trace)
+
+          # Package validation and other readiness statements.
+          validation_path = root / 'docs/replatform/package-validation.md'
+          validation = validation_path.read_text()
+          validation = validation.replace(
+              '- Q-001 through Q-015 are recorded as answered; Q-032 is closed as a duplicate resolved by Q-013.',
+              '- Q-001 through Q-020 are recorded as answered; Q-032 is closed as a duplicate resolved by Q-013.'
+          )
+          validation = validation.replace(
+              '- Nine `HIGH` questions Q-016 through Q-024 remain open and implementation readiness is explicitly limited.',
+              '- Four `HIGH` questions Q-021 through Q-024 remain open and implementation readiness is explicitly limited.'
+          )
+          validation_path.write_text(validation)
+
+          # Update exact generic references where they remain.
+          replacements = {
+              'Q-001 through Q-015 propagated': 'Q-001 through Q-020 propagated',
+              'approved decisions Q-001 through Q-015': 'approved decisions Q-001 through Q-020',
+              'Q-001–Q-015': 'Q-001–Q-020',
+              'Q-001 through Q-015': 'Q-001 through Q-020',
+              'nine remaining `HIGH` questions Q-016 through Q-024': 'four remaining `HIGH` questions Q-021 through Q-024',
+          }
+          protected = {
+              root / 'docs/replatform/clarification-log.md',
+              root / 'docs/replatform/approved-decisions.md',
+              root / 'docs/replatform/product-clarification-register.md',
+          }
+          for path in root.rglob('*.md'):
+              if path in protected:
+                  continue
+              text = path.read_text()
+              original = text
+              for old, new in replacements.items():
+                  text = text.replace(old, new)
+              if text != original:
+                  path.write_text(text)
+          PY
+
+      - name: Regenerate manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib
+
+          root = Path('.')
+          manifest = root / 'docs/replatform/file-manifest.md'
+          rows = []
+          for path in sorted(root.rglob('*')):
+              if not path.is_file() or path == manifest or '.git' in path.parts or '.github' in path.parts:
+                  continue
+              data = path.read_bytes()
+              rows.append((path.as_posix(), len(data), hashlib.sha256(data).hexdigest()))
+          text = '# File manifest\n\nGenerated after propagation of approved decisions Q-001 through Q-020 and closure of Q-032 as subsumed by Q-013.\n`docs/replatform/file-manifest.md` is excluded from its own hash list.\n\n| Path | Bytes | SHA-256 |\n|---|---:|---|\n'
+          text += '\n'.join(f'| `{path}` | {size} | `{digest}` |' for path, size, digest in rows) + '\n'
+          manifest.write_text(text)
+          PY
+
+      - name: Remove temporary workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/apply-clarifications-q016-q020.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+
+      - name: Validate clarified Spec Kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find . -path ./.git -prune -o -type f -print | wc -l)" -eq 105
+          unexpected="$(find . -path ./.git -prune -o -type f ! -name '*.md' -print)"
+          test -z "$unexpected"
+          grep -q 'Q-016.*ANSWERED' docs/replatform/product-clarification-register.md
+          grep -q 'Q-017.*ANSWERED' docs/replatform/product-clarification-register.md
+          grep -q 'Q-018.*ANSWERED' docs/replatform/product-clarification-register.md
+          grep -q 'Q-019.*ANSWERED' docs/replatform/product-clarification-register.md
+          grep -q 'Q-020.*ANSWERED' docs/replatform/product-clarification-register.md
+          grep -q 'HIGH | 13 | 9 | 4' docs/replatform/product-clarification-register.md
+          grep -q 'Total.*33.*21.*12' docs/replatform/product-clarification-register.md
+          grep -q 'FR-007-022' specs/007-tenancy-and-access-control/spec.md
+          grep -q 'INV-TEN-012' specs/007-tenancy-and-access-control/spec.md
+          grep -q 'Access Inactive tenant.*Allow full authorized operations.*Deny.*Deny.*Deny' specs/007-tenancy-and-access-control/contracts/authorization.md
+          grep -q 'retained for 24 months' specs/007-tenancy-and-access-control/data-model.md
+          grep -q 'four remaining `HIGH` questions Q-021 through Q-024' specs/007-tenancy-and-access-control/tasks.md
+          test -z "$(grep -RIl --include='*.md' 'Q-016 through Q-024 remain open' . || true)"
+          test -z "$(grep -RIl --include='*.md' 'Q-016, Q-020, Q-024, and Q-026 remain open' . || true)"
+          test -z "$(grep -RIl --include='*.md' 'exact read/write behaviour for inactive tenants remains open' . || true)"
+          test -z "$(grep -RIl --include='*.md' 'retention rule.*open' specs/007-tenancy-and-access-control || true)"
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          root = Path('.')
+          broken = []
+          for path in root.rglob('*.md'):
+              text = path.read_text()
+              for target in re.findall(r'\[[^\]]*\]\(([^)]+)\)', text):
+                  clean = target.split('#')[0]
+                  if not clean or '://' in clean or clean.startswith('mailto:') or clean.startswith('#'):
+                      continue
+                  candidate = (path.parent / clean).resolve()
+                  try:
+                      candidate.relative_to(root.resolve())
+                  except ValueError:
+                      continue
+                  if not candidate.exists():
+                      broken.append((str(path), target))
+          if broken:
+              raise SystemExit(f'Broken relative links: {broken[:20]}')
+          PY
+
+      - name: Commit clarified Spec Kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: record clarification decisions Q-016 through Q-020"
+          git push origin HEAD:laravel-replatform
