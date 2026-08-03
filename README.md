@@ -17,10 +17,18 @@ Read in this order:
 4. `docs/replatform/product-clarification-register.md`;
 5. `docs/replatform/clarification-log.md`;
 6. `docs/replatform/versioning-permissions-and-operations-contract.md`;
-7. `specs/007-tenancy-and-access-control/spec.md`;
-8. feature specifications `001` through `006`;
-9. feature plans and tasks only after they have been regenerated against Constitution 3.0.1.
+7. `docs/replatform/development-and-test-contract.md` after PR #2 is merged;
+8. `docs/replatform/budget-domain-review.md`;
+9. `docs/replatform/economic-engine-architecture.md`;
+10. `docs/replatform/source-traceability.md`;
+11. `specs/007-tenancy-and-access-control/spec.md`;
+12. feature specifications `001` through `006`;
+13. feature plans and tasks only after they have been regenerated against Constitution 3.0.1.
 
-All product questions `Q-001` through `Q-033` are closed. The approved product contract includes configurable tenant roles, operational model revisions, editable/deletable Actual rows, immutable named budget versions, tenant data portability, synchronous scheduled notifications, and controllable contract-expense generation.
+All product questions `Q-001` through `Q-041` are closed. Q-039 is superseded by Q-013 and Q-041 is implemented by the already approved PD-GEN-001 / Constitution C-13 contract.
 
-`CLARIFICATION COMPLETE` does not mean the existing plans and tasks are current. The next valid Spec Kit command is `/speckit.plan`; implementation must not begin from task files that still encode the superseded fixed-role or immutable-Actual model.
+The approved product contract includes configurable tenant roles, operational model revisions, editable/deletable Actual rows, independent Estimate/Quote/Actual types, one rolling current Budget, immutable named BudgetVersion snapshots, tenant Net/Gross basis, project economic buckets, tenant data portability, synchronous scheduled notifications and controllable contract-expense generation.
+
+The shared economic-kernel direction is planning input: one tenant-scoped query, one pure calculation engine and four immutable DTOs. It is not implemented and does not make previous plan/task files current.
+
+`CLARIFICATION COMPLETE` does not mean implementation-ready. The next valid Spec Kit command is `/speckit.plan`; implementation must not begin from task files that still encode superseded role, Actual, replacement, Budget or output assumptions.

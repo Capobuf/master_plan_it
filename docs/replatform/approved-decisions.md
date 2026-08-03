@@ -1,4 +1,4 @@
-# Approved product decisions — Q-001 through Q-033
+# Approved product decisions — Q-001 through Q-041
 
 Status: `APPROVED`  
 Scope: Laravel replatform product clarification  
@@ -40,6 +40,14 @@ Source: Product Owner answers recorded in `clarification-log.md`.
 | Q-031 | Inactive cost centers remain visible historically, are excluded from new selections, are not automatically reassigned, and may be reactivated. A parent with active descendants cannot be deactivated. | Cost-center lifecycle and tree tests. |
 | Q-032 | Closed as duplicate of Q-013. Tenant output identity is configurable; application-shell branding remains Master Plan IT. | No separate implementation. |
 | Q-033 | No additional behavioral telemetry is included at launch. The global overview uses only approved operational indicators. | Dashboard scope and privacy. |
+| Q-034 | Historical years are reconstructed from available current/migrated economic data. A Manual `BudgetVersion` may preserve total-only, partial, or full evidence; missing detail is unavailable, not invented, and no approval status is inferred. | Feature 005, migration, version model, comparisons, tests. |
+| Q-035 | A contract occurrence initially creates an Actual `Da confermare`. Synchronization may update only a system-managed unconfirmed occurrence. Manual modification or confirmation makes it user-authoritative and prevents automatic overwrite. Confirmation stops sync but does not remove the approved version/update/delete abilities. | Feature 003/004, generation contract, revision model, accounting tests. |
+| Q-036 | The current Budget is one rolling tenant/year calculation, not a duplicated monetary archive. Deliberate historical/approved states use immutable named `BudgetVersion` records, and one version may be selected as comparison reference. | Feature 005, reporting query, budget-version contract, comparisons. |
+| Q-037 | Estimate, Quote and Actual are independent row types. No mandatory progression is imposed; multiple rows may coexist when they represent distinct costs. | Feature 003, editor UX, migration, accounting tests. |
+| Q-038 | Each tenant selects the official Budget basis `Net` or `Gross`, default `Net`. Current rows and published versions always preserve Net, VAT and Gross. | Tenant settings, Feature 003/005 datasets, print/export, tests. |
+| Q-039 | `SUPERSEDED BY Q-013` — the earlier Italian-only proposal is not normative. Tenant-facing output uses the configured tenant language; no additional i18n framework is introduced without a concrete need. | Settings, UI/output localization, plan cleanup. |
+| Q-040 | Project buckets are `primary`, `proposed`, `idea`, and `excluded`. Estimate/Quote enter `primary` only without project or for `Approved`; `Proposed` and `Idea` remain separate; `Deferred`/`Rejected` remain visible but excluded. Every Actual attributed to the year remains in `primary` regardless of later project stage. `potential = primary + proposed + idea` is non-official. | Feature 004/005, economic kernel, reports, accounting tests. |
+| Q-041 | `ANSWERED BY PD-GEN-001 / CONSTITUTION C-13` — generated-expense history, deletion with regeneration choice, suppression, resume, resume-and-generate, and one valid missing-year generation reuse the stable source identity and never overwrite silently. | Feature 004 generation contract and tests. |
 
 ## Additional approved product contracts
 

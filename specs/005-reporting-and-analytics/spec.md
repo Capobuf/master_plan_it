@@ -3,133 +3,180 @@
 Status: `CLARIFIED — PLAN REGENERATION REQUIRED`  
 Logical owner: Product Owner with domain approval  
 Actor: tenant user with explicit permission  
-Dependencies: Feature 003, Feature 004, and Feature 007
+Dependencies: Feature 003, Feature 004 and Feature 007  
+Additional decisions: Q-034, Q-036, Q-038, Q-040
 
 ## Problem
 
-The product needs one rolling current economic view, immutable named budget versions, shared what-if scenarios, and consistent reports/exports without treating contracts, revisions, deleted records, or scenario data as current economic sources.
+The product needs one rolling current Budget per tenant/year, immutable named BudgetVersion snapshots, shared what-if scenarios and consistent dashboards/reports/exports without treating contracts, operational revisions, deleted records or scenarios as implicit current economic sources.
+
+The same rules must serve Budget, dashboard, reports, print and export without creating either a monolithic query object or a fragmented calculator for every KPI.
 
 ## Objective
 
-Provide exact tenant-scoped dashboards, current economic position, named budget-version capture/comparison, shared scenarios, print/export, and guided empty states from explicit server-side dataset contracts.
+Provide exact tenant-scoped current Budget, historical/manual evidence, project buckets, Plafond treatment, named version capture/comparison, shared scenarios, print/export and guided empty states from one shared server-side economic dataset contract.
 
 ## User stories
 
-### US-005-01 — Current rolling budget
+### US-005-01 — Current rolling Budget
 
-An authorized user views the current tenant/year position calculated from current non-deleted expense rows.
+An authorized user views one current tenant/year Budget calculated from current non-deleted expense rows, with official Net/Gross basis and separate economic components.
 
-### US-005-02 — Create named budget version
+### US-005-02 — Historical year
 
-An authorized user creates a draft snapshot, optionally adjusts manual snapshot rows where allowed, names it, and publishes it as an immutable version such as `Budget approved`.
+An authorized user reconstructs a previous year from available data or creates a Manual BudgetVersion that explicitly declares total-only, partial or full detail.
 
-### US-005-03 — Compare versions
+### US-005-03 — Create named BudgetVersion
 
-An authorized user compares current values with one version or compares two versions using identical grouping and exact decimal calculations.
+An authorized user captures the current tenant/year dataset or prepares an approved manual draft, names it and publishes it as an immutable version such as `Budget approved`.
 
-### US-005-04 — What-if scenario
+### US-005-04 — Select reference and compare
+
+An authorized user selects a reference version and compares current-versus-version, version-versus-version or compatible cross-year datasets without modifying source data.
+
+### US-005-05 — What-if scenario
 
 An authorized user creates and shares a persistent tenant scenario that never modifies official expenses or current totals.
 
-### US-005-05 — Print and export
+### US-005-06 — Print and export
 
 An authorized user explicitly prints or exports either the current filtered result or the complete selected report/year scope, always for one tenant.
 
 ## Acceptance scenarios
 
-### AC-005-01 — Current dataset
+### AC-005-01 — Current dataset source
 
-Given current, revised, deleted, generated, and suppressed records, the current dashboard reads only current non-deleted expense rows. Contracts/projects, operational revisions, audit, generation exceptions, scenarios, and budget-version snapshot rows are excluded.
+Given current, revised, deleted, generated and suppressed records, the current Budget reads only current non-deleted Expense rows. Projects/contracts are context only. Operational revisions, audit, tombstones, generation exceptions, scenarios and BudgetVersion snapshot rows are excluded.
 
-### AC-005-02 — Publish budget version
+### AC-005-02 — Independent economic components
 
-Given a tenant/year and current filters, publishing captures normalized exact rows, source IDs/revision IDs, grouping, totals, currency/locale/timezone, format version, checksum, actor, and timestamp. The published version is immutable.
+Estimate, Quote and Actual are represented independently. Actual Da confermare and Confermata are separately visible. No mandatory Estimate→Quote→Actual workflow is inferred by the report.
 
-### AC-005-03 — Manual version draft
+### AC-005-03 — Project buckets
 
-Given permission to create a budget version, the actor may prepare a manual draft using the approved schema. Publishing validates exact totals and freezes it. Editing a published baseline is denied; another version must be created.
+Estimate/Quote without project or linked to Approved enter `primary`; Proposed enters `proposed`; Idea enters `idea`; Deferred/Rejected enter `excluded`. Every Actual attributed to the year remains `primary` regardless of later project stage. `potential` equals primary + proposed + idea and is marked non-official.
 
-### AC-005-04 — Comparison
+### AC-005-04 — Plafond
 
-Current-versus-version and version-versus-version comparison aligns rows using stable dimensions, reports additions/removals/changes, and computes exact variances without mutating either dataset.
+For each Plafond, allocated, consumed, residual and overrun reconcile exactly. Primary contribution equals allocated + overrun; consumption covered by allocation is not added again.
 
-### AC-005-05 — Scenario
+### AC-005-05 — Official basis
 
-A scenario belongs to one tenant, is persistent and shared, is visibly marked non-official, and is included only when explicitly selected in scenario views.
+Given tenant basis Net or Gross, the primary displayed/comparison value uses that basis while the dataset retains exact Net, VAT and Gross. Changing the tenant setting does not modify a published BudgetVersion.
 
-### AC-005-06 — Empty tenant
+### AC-005-06 — Publish BudgetVersion
 
-When the tenant/year has no matching economic rows, report pages remain accessible, mathematically defined KPIs show zero, charts/tables are empty, explanatory guidance links to prerequisites, and no example data is invented.
+Given a tenant/year and declared snapshot scope, publishing captures normalized exact rows, source IDs/revision IDs, bucket/component grouping, Net/VAT/Gross totals, official basis, currency/language/timezone, format version, checksum, actor and timestamp. The published version is immutable.
 
-### AC-005-07 — Single-tenant output scope
+### AC-005-07 — Manual historical version
 
-Every dashboard, drill-down, version, scenario, print, CSV, and XLSX contains exactly one tenant. For print/export, the actor explicitly selects either `filtered` or `complete_report_year`; generated metadata identifies that scope. Administrator enters tenant context before economic output. Administrator global overview/export contains only approved operational fields.
+Given incomplete historical evidence, a Manual draft may contain total-only, partial or full detail. Publishing validates available values and marks missing dimensions unavailable. It never invents rows or labels the version Approved without explicit evidence.
 
-### AC-005-08 — Semantic equality
+### AC-005-08 — Reference and comparison
 
-For the filtered scope, screen, KPI, chart, print, CSV, and XLSX use the same active filters and exact totals. For the complete report/year scope, print/CSV/XLSX use the same unfiltered selected report/year dataset and exact totals. No output silently changes between the two scopes.
+A tenant/year may select one BudgetVersion as comparison reference. Current-versus-version and version-versus-version align stable dimensions, expose additions/removals/changes and exact variances. Cross-year comparison is allowed only for compatible dimensions. Selection never substitutes the current data.
+
+### AC-005-09 — Scenario
+
+A scenario belongs to one tenant, is persistent and shared, is visibly non-official and is included only when explicitly selected in scenario views.
+
+### AC-005-10 — Empty tenant
+
+When tenant/year has no matching rows, report pages remain accessible, mathematically defined KPIs show zero, charts/tables are empty, guidance links to prerequisites and no example data is invented.
+
+### AC-005-11 — Single-tenant output scope
+
+Every dashboard, drill-down, version, scenario, print, CSV and XLSX contains exactly one tenant. For print/export, actor explicitly selects `filtered` or `complete_report_year`; metadata identifies scope. Global overview/export contains approved operational fields only.
+
+### AC-005-12 — Semantic equality
+
+For `filtered`, screen/KPI/chart/print/CSV/XLSX use identical active filters and exact totals. For `complete_report_year`, print/CSV/XLSX use the same complete selected dataset. No output silently changes scope or formula.
+
+### AC-005-13 — Shared kernel
+
+Dashboard tenant, current Budget, reports, print/export and BudgetVersion capture consume the same `EconomicDataset`. No consumer recalculates bucket, Plafond or monetary totals.
 
 ## Functional requirements
 
 | ID | Requirement | Acceptance |
 |---|---|---|
-| FR-005-001 | Current dashboard filters shall include tenant, year, and optional cost center plus feature-approved filters. | AC-005-01 |
-| FR-005-002 | Each KPI shall expose formula, source dataset, empty-state behavior, and drill-down. | AC-005-01, AC-005-06 |
+| FR-005-001 | The current Budget shall be one calculated tenant/year context and shall not persist an independently synchronized current total. | AC-005-01 |
+| FR-005-002 | Current dashboard filters shall include tenant, year and optional cost center plus approved filters. | AC-005-01 |
+| FR-005-003 | Each KPI shall expose formula, dataset type, official basis, empty-state behavior and drill-down. | AC-005-02, AC-005-10 |
 | FR-005-010 | Current economic position shall not add project or contract values independently. | AC-005-01 |
-| FR-005-011 | Available/current budget formulas shall be defined once in the query contract and use current Expense data only. | AC-005-01 |
-| FR-005-012 | Operational revisions, audit, deleted records, generation exceptions, scenarios, and budget versions shall be excluded from current totals. | AC-005-01 |
-| FR-005-020 | Table, KPI, chart, print, CSV, and XLSX for one selected dataset shall share one query/result contract. | AC-005-08 |
-| FR-005-021 | A filtered output shall preserve active filters, order, locale, currency, timezone, and selected dataset identity. | AC-005-08 |
-| FR-005-022 | Every economic output shall contain exactly one tenant. | AC-005-07 |
-| FR-005-023 | Global overview/export shall contain only approved operational tenant metadata and no behavioral telemetry or cross-tenant economics. | AC-005-07 |
-| FR-005-024 | An authorized actor shall explicitly select filtered or complete selected report/year scope; complete scope shall ignore transient narrowing filters but preserve tenant, report, year, dataset identity, authorization, ordering contract, locale, currency, and timezone. | AC-005-07, AC-005-08 |
-| FR-005-025 | Output metadata and audit shall record the selected scope; no output shall silently widen or narrow its dataset. | AC-005-07, AC-005-08 |
-| FR-005-030 | Scenario view/manage abilities shall be permission-controlled. Scenarios shall be persistent, tenant-owned, shared, labelled non-official, and excluded from official totals. | AC-005-05 |
-| FR-005-040 | An authorized actor shall create a tenant/year `BudgetVersion` draft from current data or approved manual snapshot rows. | AC-005-02, AC-005-03 |
-| FR-005-041 | Publishing shall freeze the exact snapshot, metadata, totals, source references, checksum, actor, and timestamp. | AC-005-02 |
-| FR-005-042 | Published budget versions shall be immutable; a correction shall create a new version. | AC-005-03 |
-| FR-005-043 | The system shall compare current-versus-version and version-versus-version without modifying source data. | AC-005-04 |
-| FR-005-044 | Budget-version view/create/compare operations shall be separately permission-controlled. | AC-005-02, AC-005-04 |
-| FR-005-050 | Empty reports shall show valid zeros/empty datasets and guidance without fabricated values. | AC-005-06 |
-| FR-005-060 | Report/export generation shall record safe actor, tenant, dataset type, selected output scope, filters, output type, and correlation metadata without logging payload contents. | AC-005-08 |
+| FR-005-011 | Available/current Budget formulas shall be implemented once by the shared economic kernel and use current Expense data only. | AC-005-01, AC-005-13 |
+| FR-005-012 | Operational revisions, audit, deleted records, generation exceptions, scenarios and BudgetVersion rows shall be excluded from current totals. | AC-005-01 |
+| FR-005-013 | Estimate, Quote and Actual shall remain independent dataset components; Actual confirmation states shall remain distinguishable. | AC-005-02 |
+| FR-005-014 | Project buckets and potential shall follow Q-040 exactly. | AC-005-03 |
+| FR-005-015 | Plafond contribution shall equal allocated + max(consumed − allocated, 0); covered consumption shall not be double counted. | AC-005-04 |
+| FR-005-016 | Tenant official basis shall be Net or Gross, default Net; every dataset/version shall retain Net, VAT and Gross. | AC-005-05 |
+| FR-005-020 | Table, KPI, chart, print, CSV and XLSX for one selected dataset/scope shall share one query/result contract. | AC-005-12, AC-005-13 |
+| FR-005-021 | Filtered output shall preserve active filters, order, locale, currency, timezone, official basis and dataset identity. | AC-005-12 |
+| FR-005-022 | Every economic output shall contain exactly one tenant. | AC-005-11 |
+| FR-005-023 | Global overview/export shall contain approved operational tenant metadata only and no behavioral telemetry or cross-tenant economics. | AC-005-11 |
+| FR-005-024 | Actor shall explicitly select filtered or complete selected report/year scope; complete scope ignores only transient narrowing filters and preserves tenant/report/year/dataset/authorization/order/locale/currency/timezone/basis. | AC-005-11, AC-005-12 |
+| FR-005-025 | Output metadata and audit shall record selected scope; no output shall silently widen or narrow its dataset. | AC-005-11, AC-005-12 |
+| FR-005-030 | Scenario view/manage abilities shall be permission-controlled. Scenarios shall be persistent, tenant-owned, shared, labelled non-official and excluded from official totals. | AC-005-09 |
+| FR-005-040 | An authorized actor shall create a tenant/year BudgetVersion draft from current data or approved manual snapshot rows. | AC-005-06, AC-005-07 |
+| FR-005-041 | Publishing shall freeze exact snapshot rows, dimensions, totals, official basis, metadata, source references, checksum, actor and timestamp. | AC-005-06 |
+| FR-005-042 | Published BudgetVersion shall be immutable; correction shall create another version. | AC-005-06 |
+| FR-005-043 | Manual BudgetVersion may be total-only, partial or full; missing dimensions shall be unavailable, not zero or invented. | AC-005-07 |
+| FR-005-044 | No historical version shall be labelled Approved without explicit evidence. | AC-005-07 |
+| FR-005-045 | Tenant/year may select one BudgetVersion reference; selection shall not mutate or substitute current Expense records. | AC-005-08 |
+| FR-005-046 | System shall compare current-versus-version, version-versus-version and dimension-compatible cross-year sources without modifying them. | AC-005-08 |
+| FR-005-047 | BudgetVersion view/create/publish/select-reference/compare operations shall be separately permission-controlled. | AC-005-06, AC-005-08 |
+| FR-005-050 | Empty reports shall show valid zeros/empty datasets and guidance without fabricated values. | AC-005-10 |
+| FR-005-060 | Report/export generation shall record safe actor, tenant, dataset type, selected output scope, filters, basis, output type and correlation metadata without payload contents. | AC-005-12 |
+| FR-005-070 | Dashboard, current Budget, reports, print/export and version capture shall consume the shared economic kernel result; presentation layers shall not recalculate authoritative values. | AC-005-13 |
 
 ## Business invariants
 
 | ID | Rule | Error | Test |
 |---|---|---|---|
 | INV-REP-001 | Current reports never double-count contracts/projects. | DomainConflict | TEST-005-001 |
-| INV-REP-002 | Presentation forms share one semantic dataset for the explicitly selected scope. | DomainConflict | TEST-005-002 |
+| INV-REP-002 | Presentation forms share one semantic dataset for the selected scope. | DomainConflict | TEST-005-002 |
 | INV-REP-003 | Metric formulas are server-side and decimal-safe. | DomainConflict | TEST-005-003 |
-| INV-REP-004 | Permission and tenant filters limit every visible row and output. | Authorization/DomainConflict | TEST-005-004 |
+| INV-REP-004 | Permission and tenant filters limit every row/output. | Authorization/DomainConflict | TEST-005-004 |
 | INV-REP-005 | No economic dataset contains multiple tenants. | DomainConflict | TEST-005-005 |
-| INV-REP-006 | An output never silently changes between filtered and complete selected report/year scope. | DomainConflict | TEST-005-011 |
-| INV-BUD-001 | Published budget versions are immutable. | DomainConflict | TEST-005-006 |
-| INV-BUD-002 | Budget-version rows/totals/checksum are exact and internally consistent. | DomainConflict | TEST-005-007 |
-| INV-BUD-003 | Budget versions never mutate or substitute current Expense records. | DomainConflict | TEST-005-008 |
-| INV-SCN-001 | Scenario values never enter official current totals. | DomainConflict | TEST-005-009 |
-| INV-EMPTY-001 | Empty state never invents economic values. | DomainConflict | TEST-005-010 |
+| INV-REP-006 | Output never silently changes filtered/complete scope. | DomainConflict | TEST-005-006 |
+| INV-ECO-001 | One shared kernel owns current bucket, Plafond and monetary formulas. | DomainConflict | TEST-005-007 |
+| INV-ECO-002 | Estimate, Quote and Actual remain independent components. | DomainConflict | TEST-005-008 |
+| INV-PRJ-004 | Every Actual attributed to the year remains primary despite later project stage. | DomainConflict | TEST-005-009 |
+| INV-PLF-003 | Plafond covered consumption is not counted twice. | DomainConflict | TEST-005-010 |
+| INV-BAS-002 | Net/VAT/Gross remain exact regardless of selected official basis. | DomainConflict | TEST-005-011 |
+| INV-BUD-001 | Published BudgetVersion is immutable. | DomainConflict | TEST-005-012 |
+| INV-BUD-002 | BudgetVersion rows/totals/checksum are exact and internally consistent. | DomainConflict | TEST-005-013 |
+| INV-BUD-003 | BudgetVersion never mutates or substitutes current Expense records. | DomainConflict | TEST-005-014 |
+| INV-BUD-004 | Missing historical dimensions are never fabricated. | DomainConflict | TEST-005-015 |
+| INV-SCN-001 | Scenario values never enter official current totals. | DomainConflict | TEST-005-016 |
+| INV-EMPTY-001 | Empty state never invents economic values. | DomainConflict | TEST-005-017 |
 
 ## Success criteria
 
-- filtered screen/KPI/chart/print/export totals are exactly equal for the same filters;
-- complete report/year print/CSV/XLSX totals are exactly equal to the complete selected dataset;
-- output scope is explicit and cannot cross tenants;
-- a named approved budget version remains unchanged after source expenses change;
-- comparison detects exact additions, removals, and monetary variances;
-- empty-tenant views render without errors or invented data;
-- cross-tenant and missing-permission tests cover reports, versions, scenarios, print, and export.
+- filtered screen/KPI/chart/print/export totals are exactly equal;
+- complete report/year print/CSV/XLSX totals equal the complete selected dataset;
+- current Budget has no independently synchronized total;
+- project buckets and Plafond reconcile exactly;
+- changing official basis changes presentation/comparison basis without losing components;
+- published BudgetVersion remains unchanged after current data/settings change;
+- historical partial versions expose unavailable dimensions explicitly;
+- comparison detects exact additions, removals and monetary variances;
+- dashboard/Budget/report/output parity fixtures prove one shared kernel;
+- cross-tenant and missing-permission tests cover reports, versions, scenarios, print and export.
 
 ## Out of scope
 
-- cross-tenant economic analytics or comparisons;
+- cross-tenant economic analytics/comparisons;
 - behavioral usage analytics;
 - published-version in-place edits;
 - private per-user scenarios;
-- using model revision storage as a budget snapshot;
+- model revision storage used as BudgetVersion;
 - presentation-side recalculation;
-- adding contracts/projects directly to totals;
+- contract/project values added directly to totals;
+- synchronized persisted current Budget totals;
+- mandatory Estimate→Quote→Actual workflow;
 - audit export at launch.
 
 ## Clarification result
 
-Q-019, Q-020, Q-027, Q-028, Q-033, and PD-BUD-001 are closed. Existing Feature 005 plan, tasks, formulas, contracts, and data model must be regenerated before implementation.
+Q-019, Q-020, Q-027, Q-028, Q-033, Q-034, Q-036, Q-038, Q-040 and PD-BUD-001 are closed. Q-039 is superseded by Q-013. Existing Feature 005 plan, tasks, formulas, contracts and physical data model must be regenerated before implementation.
