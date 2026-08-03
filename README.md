@@ -19,7 +19,7 @@ Read in this order:
 6. `docs/replatform/versioning-permissions-and-operations-contract.md`;
 7. `specs/007-tenancy-and-access-control/spec.md`;
 8. feature specifications `001` through `006`;
-9. feature plans and tasks only after they have been regenerated against Constitution 3.0.0.
+9. feature plans and tasks only after they have been regenerated against Constitution 3.0.1.
 
 All product questions `Q-001` through `Q-033` are closed. The approved product contract includes configurable tenant roles, operational model revisions, editable/deletable Actual rows, immutable named budget versions, tenant data portability, synchronous scheduled notifications, and controllable contract-expense generation.
 
