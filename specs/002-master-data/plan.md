@@ -1,100 +1,81 @@
-# Implementation plan — Master data
+# Implementation plan — Feature 002 Master data
 
-## 1. Summary
+Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW`  
+Dependencies: Feature 001 platform; Feature 007 tenancy/RBAC; shared revision infrastructure
 
-Implement manage planning years, hierarchical cost centers and vendors as one vertical slice in the modular Laravel monolith. Domain writes use explicit Actions; reusable reads use Query objects; authorization is checked before loading or mutating protected data.
+## Summary
 
-## 2. Technical context
+Implement planning years, cost centers and vendors as three small tenant-owned aggregates. Deactivation preserves historical readability. Vendors and cost centers use operational revisions. No generic master-data service or third-party tree package.
 
-| Item | Fixed value |
-|---|---|
-| Language/framework | PHP 8.3+, Laravel 13 |
-| Database | MySQL 8 InnoDB, strict mode, utf8mb4 |
-| UI | Blade; Livewire 4 where listed; Alpine local visual state; Tailwind 4; Preline |
-| Test | Pest; Dusk only where listed |
-| Time/locale/currency | UTC storage; Europe/Rome display; `it`; EUR |
-| Money | decimal strings/BCMath; MySQL decimal; no float authority |
-| Hosting | shared PHP/MySQL compatible; precompiled assets; cron; sync queue |
-| Browser target | latest two stable Chromium/Firefox, current Safari |
+## Constitution check
 
-## 3. Constitution check — pre-design
+Passes C-01, C-04, C-05, C-07, C-10 and C-11. Cross-tenant catalogues, observer side effects, role-name conditions and automatic historical reassignment are prohibited.
 
-All C-01..C-10 pass. No internal API, worker daemon, generic repository, observer economic side effect, or independent contract/project total is introduced.
+## Files and responsibilities
 
-## 4. Current-to-target mapping
+### Persistence
 
-The legacy source and target IDs are listed in `docs/replatform/source-traceability.md`. Framework lifecycle is replaced by explicit Actions while economic outputs remain equivalent.
+- `app/Models/PlanningYear.php`;
+- `app/Models/CostCenter.php`;
+- `app/Models/Vendor.php`;
+- tenant-scoped migrations and factories.
 
-## 5. Target structure and dependency rule
+### Actions
 
-Files belong to the smallest real domain area. Models do not call other domain Actions from observers. UI classes may invoke listed Actions/Queries only.
+- `SavePlanningYear`;
+- `CreateCostCenter`, `UpdateCostCenter`, `DeactivateCostCenter`, `ReactivateCostCenter`, `RestoreCostCenterRevision`;
+- `CreateVendor`, `UpdateVendor`, `DeactivateVendor`, `ReactivateVendor`, `RestoreVendorRevision`.
 
-## 6. File implementation map
+A generic `SaveMasterData` Action is prohibited because date overlap, tree and vendor rules differ.
 
-| Target path | Type | Responsibility | Requirements | Test |
-|---|---|---|---|---|
-| `app/Models/PlanningYear.php` | model | planning period | FR-002-001, FR-002-002 | corresponding test |
-| `app/Models/CostCenter.php` | model | adjacency-list hierarchy | FR-002-001, FR-002-002 | corresponding test |
-| `app/Models/Vendor.php` | model | vendor master | FR-002-001, FR-002-002 | corresponding test |
-| `app/Domain/MasterData/Actions/SavePlanningYear.php` | action | range validation | FR-002-001, FR-002-002 | corresponding test |
-| `app/Domain/MasterData/Actions/MoveCostCenter.php` | action | cycle-safe reparent | FR-002-001, FR-002-002 | corresponding test |
-| `app/Domain/MasterData/Queries/CostCenterTreeQuery.php` | query | tree and descendants | FR-002-001, FR-002-002 | corresponding test |
-| `app/Livewire/MasterData/YearIndex.php` | Livewire | year register/editor | FR-002-001, FR-002-002 | corresponding test |
-| `app/Livewire/MasterData/CostCenterTree.php` | Livewire | tree editor | FR-002-001, FR-002-002 | corresponding test |
-| `app/Livewire/MasterData/VendorIndex.php` | Livewire | vendor register | FR-002-001, FR-002-002 | corresponding test |
-| `tests/Feature/MasterData/PlanningYearTest.php` | test | overlap and permission | FR-002-001, FR-002-002 | corresponding test |
-| `tests/Feature/MasterData/CostCenterTreeTest.php` | test | cycles/descendants | FR-002-001, FR-002-002 | corresponding test |
-| `tests/Feature/MasterData/VendorTest.php` | test | deactivation/history | FR-002-001, FR-002-002 | corresponding test |
+### Queries
 
-## 7. Database design
+- `PlanningYearListQuery`;
+- `CostCenterTreeQuery`;
+- `VendorListQuery`;
+- active selectors that include an inactive current value only when editing an existing historical reference.
 
-Create migrations in dependency order and use restrictive foreign keys. Every editable aggregate has `lock_version`. Every migrated table has nullable `legacy_id` plus a scoped unique key. Precise feature columns are specified in `data-model.md` and contracts; no JSON substitutes for relational fields.
+### Policies and UI
 
-## 8. Eloquent rules
+One Policy and one Filament Resource per model. Cost-center hierarchy uses native Filament/Livewire composition first. Revision pages use the shared revision contract.
 
-Models use guarded attributes, enum/date/decimal casts, explicit relationships and query scopes. They contain no economic observer side effects. Factories create valid defaults and named invalid states for tests.
+## Invariants
 
-## 9. Domain operation contract
+`SavePlanningYear` validates date order, locks same-tenant candidate ranges and rejects overlap.
 
-Each write Action exposes one `execute(Data $data, User $actor, ?int $expectedVersion): Result` method, authorizes the operation, validates invariants, opens the transaction, locks rows only when cross-record consistency requires it, persists, audits, and returns a typed result. Domain conflicts use stable error codes.
+Cost-center update validates same-tenant parent, rejects self-parent and cycles. Deactivation locks target and active descendants; an active descendant blocks parent deactivation. No recursive implicit deactivation.
 
-## 10. Transaction and concurrency
+Vendor deactivation preserves existing references and removes the vendor from new selectors. Permanent deletion while referenced is unavailable.
 
-Open transactions inside Actions, not controllers. Use `SELECT ... FOR UPDATE` for replacement targets, referenced plafond consumption snapshots, contract sync source-key checks and migration map creation. Optimistic `lock_version` protects user edits. Deadlock retry is limited to three attempts through a shared transaction helper and logs correlation IDs.
+Vendor and cost-center mutations create revision batches and audit events. Restore invokes the owning Action with current validation and creates a new revision.
 
-## 11. Routes and navigation
+## Database
 
-Use named routes under authenticated/active middleware. Every handler references a policy ability. Livewire query-string state is limited to filters, sort and page; unsaved form data is never placed in URL.
+Use tenant-scoped unique names, restrictive FKs and `lock_version`. MySQL cannot enforce general range overlap or graph acyclicity; Actions and transaction tests own them. Full columns/indexes are in `data-model.md` and the global model overview.
 
-## 12. UI composition
+## Tests
 
-Each screen has page header, breadcrumbs, primary action, filter bar where applicable, content table/form, empty/loading/error states, inline validation and focus restoration. Preline components are wrapped in local Blade components; dynamic dropdowns/modals are reinitialized through `resources/js/preline.ts` after Livewire navigation/render.
+- year date, overlap, concurrency, tenant and permission;
+- cost-center move, cycle, descendant deactivation, selector, restore;
+- vendor uniqueness, deactivate/reactivate, referenced-delete denial, selector, restore;
+- safe other-tenant denial;
+- permission-based Editor/Viewer behavior;
+- revision rows excluded from business selectors.
 
-## 13. Reporting/export boundary
+Dusk is not planned unless custom browser-only tree behavior remains after the native implementation.
 
-Where this feature exposes datasets, the Query object is the sole semantic source. Export and print accept the same immutable filter DTO and row DTOs as the screen.
+## Sequence
 
-## 14. Error model
+1. migrations/models/factories;
+2. permissions/policies;
+3. planning-year Actions/tests;
+4. vendor Actions/tests;
+5. cost-center Actions/tests;
+6. revision integration;
+7. queries/selectors;
+8. Filament Resources;
+9. tenant/concurrency/restore verification.
 
-| Category | User response | Technical behavior |
-|---|---|---|
-| Validation | field-level 422 | no transaction or rollback |
-| Authorization | generic 403 | no existence leakage |
-| Domain conflict | translated invariant message, 409 | rollback; stable error code |
-| Concurrency | reload-required 409 | rollback; current version logged |
-| Unexpected | correlation ID, 500 | sanitized log with stack |
+## Post-design check
 
-## 15. Test strategy
-
-Write unit tests for calculators/value objects, feature tests for Actions/policies/routes, Livewire tests for state/validation, and Dusk only for JavaScript lifecycle, responsive menu geometry, focus and print. Each task lists exact tests.
-
-## 16. Implementation sequence
-
-enums/value objects → migrations → models/factories → invariant tests → services → Actions → policies → Queries → routes/UI → exports/commands → browser smoke → documentation reconciliation.
-
-## 17. Constitution check — post-design
-
-Pass. Complexity deviations: none.
-## Feature 007 dependency
-
-This feature is tenant-bound. Before implementation, read Feature 007 completely and propagate explicit tenant ownership, current-context resolution, role abilities, fail-closed cross-tenant behavior, audit actor+tenant attribution, and isolation tests into every listed file. Product questions still marked `OPEN` in the clarification register cannot be decided by the coding agent.
+Pass. No additional dependency or monetary rule is introduced.
