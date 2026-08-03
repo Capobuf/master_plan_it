@@ -8,10 +8,12 @@ This package is the documentation-only contract for the Laravel replatform, anch
 - Product clarification: Q-001–Q-041 closed; 0 open.
 - `/speckit.plan`: complete and merged.
 - initial `/speckit.tasks`: complete and merged.
-- `/speckit.analyze`: failed on baseline `54bc8c5c72167b47eedc7ae9cc62211310035f8c`.
-- remediation: complete on `tasks/remediate-analysis-3.0.1`, pending review/merge.
-- repeated `/speckit.analyze`: next valid command after remediation merge.
-- `/speckit.implement`: blocked.
+- initial `/speckit.analyze`: failed with 2 CRITICAL, 10 HIGH and 4 MEDIUM findings.
+- first remediation: merged.
+- rerun `/speckit.analyze`: failed with 0 CRITICAL, 8 HIGH and 4 MEDIUM findings on commit `113ae98f7fc8f7c5eb8ffe4e7bd32ef6a49b6c47`.
+- second remediation: complete, pending review/merge.
+- repeated `/speckit.analyze`: next valid command after merge.
+- `/speckit.implement`: blocked until CRITICAL `0` and HIGH `0`.
 
 No package lock, implementation, migration or test was executed by this documentation remediation.
 
@@ -32,33 +34,37 @@ No package lock, implementation, migration or test was executed by this document
 13. `task-readiness-registry.md`;
 14. `task-execution-registry.md`, feature command registers and `task-execution/path-overrides.md`;
 15. `tasks-summary.md`;
-16. `speckit-analyze-2026-08-03.md`;
+16. `speckit-analyze-2026-08-03.md` and `speckit-analyze-2026-08-03-rerun.md`;
 17. `implementation-readiness.md`, `package-validation.md`, `spec-kit-analysis.md`;
-18. the repeated `/speckit.analyze` report.
+18. the next `/speckit.analyze` report.
 
-## Remediation outcomes
+## Second-remediation outcomes
 
-- notification delivery primitive separated from final scheduler registration;
-- tenancy ownership concern separated from the late ability matrix;
-- exact master-data prerequisites added to Expense work;
-- Actual confirmation implementation required before contract synchronization;
-- scenarios implemented before scenario comparison;
-- audit tenant/global view tasks added without audit export;
-- attachment schema/model/policy/query and private lifecycle tasks added;
-- backup dependency gate corrected to an exact Composer require operation;
-- readiness registry supplies sources, task classes, invariants and errors;
-- execution registers supply one exact validation command per task ID and complete path overrides;
-- source traceability maps current task and test IDs;
-- runtime compatibility corrected to PHP 8.3.32 through a technical amendment.
+- one non-overlapping four-part task contract;
+- dependency and class authority only in feature `tasks.md` files;
+- one exact validation command for every task ID;
+- one comprehensive path-expansion manifest;
+- runtime behavior removed from `[VER]` tasks;
+- all narrative dependencies replaced by exact task IDs;
+- complete security matrix delayed until every exact owning implementation exists;
+- Feature 007 audit/password/retention/branding requirements added to traceability;
+- tenant report-branding owner added without shell white-labeling;
+- output tasks consume selected-tenant branding through one immutable DTO;
+- guarded backup dependency command restores Composer files on resolution failure;
+- cutover-readiness evidence has exact requirements, paths, command and result rules.
 
-## Task inventory
+## Proposed task inventory
 
-- 148 exact tasks across 35 user stories;
-- 41 `[P]` tasks after exact prerequisites;
+- 150 tasks across 35 user stories;
+- 42 `[P]` tasks after exact prerequisites;
 - 7 feature task files;
-- normative readiness and execution registries;
+- one source/invariant/error registry;
+- seven exact command registers;
+- one path manifest;
 - one bidirectional source/requirement/task/test ledger;
 - no implementation code.
+
+These outcomes remain proposed until the next `/speckit.analyze` verifies them.
 
 ## Remaining evidence
 
