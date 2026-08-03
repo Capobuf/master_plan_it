@@ -1,47 +1,53 @@
 # Implementation readiness
 
-Status: `PLAN COMPLETE — TASKS AND ANALYSIS REQUIRED`
+Status: `TASKS COMPLETE — ANALYSIS REQUIRED`
 
-Constitution 3.0.1, 41 product decisions, integrated architecture, technical research and Feature 001–007 plans/data models/quickstarts are current on this branch.
+Constitution 3.0.1, Q-001–Q-041, integrated architecture, technical research, physical models, Feature 001–007 plans and regenerated task files are current on this branch.
 
-| Feature | Planned scope | Status |
+| Feature | Planned and tasked scope | Status |
 |---|---|---|
-| 001 Platform foundation | exact runtime direction, Sail/test/CI, auth, settings, audit, scheduler, release | PLAN COMPLETE; dependency lock execution pending |
-| 002 Master data | years/vendors/cost centers, lifecycle, revisions, policies/UI | PLAN COMPLETE |
-| 003 Expense domain | Money/VAT/allocation, one current aggregate, Actual confirmation/revisions/deletion | PLAN COMPLETE |
-| 004 Contracts/projects | project buckets, terms, source keys, system/user ownership, suppression/resume, notifications | PLAN COMPLETE |
-| 005 Reporting/analytics | shared kernel, rolling Budget, scenarios, BudgetVersion, comparison, print/CSV/XLSX | PLAN COMPLETE |
-| 006 Migration/operations | staging/import, portability, conditional backup, immutable deployment | PLAN COMPLETE; NOT CUTOVER READY |
-| 007 Tenancy/access | explicit context, Spatie teams/Shield, lifecycle, protected abilities, isolation | PLAN COMPLETE |
+| 001 Platform foundation | runtime/Sail/test/CI, auth, password operations, settings, audit, scheduler, release | TASKS COMPLETE; real dependency lock pending implementation |
+| 002 Master data | shared revision infrastructure, years, vendors, cost centers, lifecycle and restore | TASKS COMPLETE |
+| 003 Expense domain | Money/VAT/allocation, current aggregate, Actual confirmation, revisions and deletion | TASKS COMPLETE |
+| 004 Contracts/projects | project lifecycle, terms, source keys, controlled synchronization, suppression/resume and notifications | TASKS COMPLETE |
+| 005 Reporting/analytics | shared kernel, rolling Budget, scenarios, BudgetVersion, comparison, print/CSV/XLSX | TASKS COMPLETE |
+| 006 Migration/operations | staging/apply, portability, conditional backup and immutable deployment | TASKS COMPLETE; NOT CUTOVER READY |
+| 007 Tenancy/access | explicit context, tenant lifecycle, configurable RBAC, protected abilities and isolation | TASKS COMPLETE |
+
+## Task-generation validation
+
+- 142 tasks across 35 user stories;
+- 39 tasks marked `[P]` only after declared prerequisites;
+- exact files and symbols identified;
+- tests written before production behavior;
+- focused validation commands and expected outcomes present;
+- forbidden scope and fallback behavior present;
+- former task IDs and superseded implementation assumptions explicitly retired;
+- shared-file ownership and cross-feature critical path documented in `tasks-summary.md`;
+- revision ownership moved to Feature 002 to remove the master-data/Expense cycle;
+- tenancy/RBAC resource ownership assigned to Feature 007, with Feature 001 limited to panel/platform integration.
 
 ## Remaining implementation-readiness gates
 
-1. Product Owner/technical review of this plan branch.
-2. `/speckit.tasks` regenerates every stale task file with exact files/symbols/dependencies/tests/commands/results/forbidden work.
-3. `/speckit.analyze` reports CRITICAL 0 and HIGH 0 for implementation readiness.
-4. First implementation task executes exact Composer/frontend lock resolution and package smoke tests. Static research is not an installation claim.
-5. Implementation proceeds through separate reviewed PRs in the dependency sequence from `replatform-plan.md`.
+1. Product Owner/technical review and merge of this task branch.
+2. `/speckit.analyze` checks consistency, traceability, dependency validity and test coverage and reports CRITICAL 0 and HIGH 0.
+3. The first implementation task performs real Composer/frontend lock resolution and package smoke tests.
+4. Implementation proceeds through separate reviewed PRs in the dependency sequence from `tasks-summary.md` and `replatform-plan.md`.
 
 ## Conditional package gate
 
-`spatie/laravel-backup` 10.3.0 remains conditional because its Composer metadata and documentation disagree on PHP floor. Failure on PHP platform 8.3.32 blocks backup implementation and requires plan/ADR amendment; it does not activate a fallback.
+`spatie/laravel-backup` 10.3.0 remains conditional because its Composer metadata and documentation disagree on the PHP floor. Failure on platform PHP 8.3.32 blocks backup implementation and requires plan/ADR amendment; it does not activate a fallback.
 
-All other pinned package targets also require real lock/smoke before feature code relies on them.
+All pinned dependencies require real lock/smoke before feature code relies on them.
 
 ## Cutover gates
 
-Feature 006 remains not CUTOVER READY until:
-
-- real source export anomaly/dry-run evidence;
-- final hosting capabilities/paths/tools;
-- signed legacy report parity inventory;
-- verified installation backup restore rehearsal;
-- migration reconciliation/sign-off;
-- deployment/rollback rehearsal.
+Feature 006 remains not CUTOVER READY until real source export evidence, final hosting capabilities, signed report inventory, verified restore rehearsal, migration reconciliation/sign-off and deployment/rollback rehearsal are available.
 
 ## Prohibited interpretation
 
-- plan complete is not implementation complete;
-- current `tasks.md` files are stale until `/speckit.tasks` replaces them;
-- no tests/build/package installs/workflows were executed by this documentation plan;
-- old fixed-role, immutable-Actual, replacement-state, fixed-retention, implicit-output or Italian-only assumptions remain superseded.
+- task generation is not application implementation;
+- task checkboxes remain unchecked until their commands and results are actually executed;
+- `/speckit.analyze` has not yet been run against these tasks;
+- no package, code, schema, test, workflow or operational command was executed by this documentation cycle;
+- fixed-role, immutable-Actual, replacement-state, fixed-retention, implicit-output and Italian-only assumptions remain superseded.
