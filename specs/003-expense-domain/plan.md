@@ -1,6 +1,6 @@
 # Implementation plan — Feature 003 Expense domain
 
-Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW`  
+Status: `PLAN COMPLETE AND MERGED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Dependencies: Features 001, 002 and 007; shared revision infrastructure
 
 ## Summary
