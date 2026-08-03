@@ -1,6 +1,6 @@
 # Global execution sequence
 
-Status: `SECOND TASK REMEDIATION COMPLETE — RE-ANALYSIS NEXT`
+Status: `SECOND TASK REMEDIATION COMPLETE — NEXT GATE /speckit.analyze ON INTEGRATED BASE`
 
 ## Spec Kit sequence
 
@@ -13,10 +13,11 @@ Status: `SECOND TASK REMEDIATION COMPLETE — RE-ANALYSIS NEXT`
 | S4 Initial `/speckit.analyze` | FAILED AND RECORDED | 2 CRITICAL, 10 HIGH, 4 MEDIUM |
 | S5 First `/speckit.tasks` remediation | COMPLETE AND MERGED | initial graph/readiness corrections |
 | S6 First repeated `/speckit.analyze` | FAILED AND RECORDED | 0 CRITICAL, 8 HIGH, 4 MEDIUM |
-| S7 Second `/speckit.tasks` remediation | COMPLETE, PENDING REVIEW/MERGE | non-overlapping task contract, exact dependencies/paths, class correction, full traceability and branding owner |
-| S8 Next `/speckit.analyze` | NEXT AFTER MERGE | CRITICAL 0 and HIGH 0 |
-| S9 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
-| S10 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
+| S7 Second `/speckit.tasks` remediation | COMPLETE | non-overlapping task contract, exact dependencies/paths, class correction, full traceability and branding owner |
+| S8 Integration | READ FROM GITHUB PR METADATA | no hard-coded branch state in documentation |
+| S9 Next `/speckit.analyze` | NEXT ON INTEGRATED BASE | CRITICAL 0 and HIGH 0 |
+| S10 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
+| S11 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
 
 ## Proposed implementation critical path
 
