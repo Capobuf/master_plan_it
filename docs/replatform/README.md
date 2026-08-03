@@ -4,7 +4,7 @@ This package is the documentation-only contract for the Laravel replatform, anch
 
 ## Current phase
 
-`/speckit.clarify` is complete: all product questions Q-001 through Q-033 are closed and Constitution 3.0.0 records the approved amendments.
+`/speckit.clarify` is complete: all product questions Q-001 through Q-033 are closed and Constitution 3.0.1 records the approved amendments.
 
 The prior plans and tasks were written before configurable tenant permissions, true operational revision history, deletable Actual rows, named budget versions, tenant data portability, notification scope, and contract-generation controls were approved. Those technical artifacts are therefore not implementation-authoritative until regenerated.
 
