@@ -49,6 +49,18 @@ The physical use of package `team_id`/`tenant_id`, model morphs, cache reset, an
 
 Every tenant business aggregate, operational revision, named budget version, scenario, attachment, generation exception, notification, and tenant audit event has unambiguous tenant ownership. Child records inherit and validate ownership through their aggregate root. Cross-tenant foreign references are invalid before persistence.
 
+## Global platform settings
+
+The physical storage is selected in `/speckit.plan`, using one existing typed platform-setting mechanism rather than a dedicated audit-settings subsystem.
+
+Required setting:
+
+| Key | Scope | Default | Write authority | Semantics |
+|---|---|---:|---|---|
+| `audit_retention_months` | installation-wide | `24` | Administrator only | current value used by the next audit-retention execution |
+
+The setting keeps value, last modifying actor, timestamp, and optimistic version according to the platform-setting contract. Lowering the value requires reinforced confirmation. Increasing it does not recreate previously removed audit events.
+
 ## Tenant settings
 
 Tenant-specific settings include:
@@ -60,7 +72,7 @@ Tenant-specific settings include:
 - report configuration;
 - optional onboarding-checklist completion indicators.
 
-Checklist indicators are guidance only and do not create an alternative domain state.
+Checklist indicators are guidance only and do not create an alternative domain state. Audit retention is global, not tenant-specific.
 
 ## Audit events
 
@@ -73,10 +85,9 @@ Minimum logical columns:
 - subject type and nullable subject ID;
 - minimized old/new or event properties;
 - correlation ID;
-- timestamp;
-- expiration timestamp or retention batch eligibility.
+- timestamp.
 
-Audit retention is 24 months. Retention deletes expired audit events only; it does not delete current business records, named budget versions, or required logical revision identity. Audit export is not implemented at launch.
+The retention command calculates its cutoff from the current global `audit_retention_months` value. It deletes eligible audit events only; it does not delete current business records, named budget versions, or required logical revision identity. Audit export is not implemented at launch and audit events are excluded from tenant portability packages.
 
 ## Operational revisions
 
