@@ -2,14 +2,14 @@
 
 Status: `PRODUCT CLARIFIED — MILESTONES MUST BE REPLANNED`
 
-The previous milestone/task ranges are superseded because Constitution 3.0.0 changes authorization, Expense/Actual lifecycle, history, reporting snapshots, generation controls, portability, notifications, and migration semantics.
+The previous milestone/task ranges are superseded because Constitution 3.0.1 changes authorization, Expense/Actual lifecycle, history, reporting snapshots, generation controls, portability, notifications, audit retention, and migration semantics.
 
 ## Spec Kit sequence
 
 | Step | Command / action | Required result | Gate to next step |
 |---|---|---|---|
-| S0 | Merge product-clarification PR | Constitution 3.0.0, Q-001–Q-033 closed, clarified cross-feature contracts on `laravel-replatform` | PR reviewed and merged; temporary PR ref may be deleted |
-| S1 | Rebase/reconcile PR #2 | Development environment, test layers, CI, and release artifact assumptions aligned with versioned/deletable Actual and configurable permissions | No conflict with Constitution/specs; PR #2 reviewed and merged |
+| S0 | Merge product-clarification PR | Constitution 3.0.1, Q-001–Q-033 closed, clarified cross-feature contracts on `laravel-replatform` | PR reviewed and merged; temporary PR ref may be deleted |
+| S1 | Rebase/reconcile PR #1 and PR #2 | Economic-kernel and development/test/CI assumptions aligned with versioned/deletable Actual, configurable permissions, named budget versions, explicit output scopes, and configurable audit retention | No conflict with Constitution/specs; replacement planning branches reviewed before merge |
 | S2 | `/speckit.plan` | Approved technical decisions for exact packages, architecture, physical data models, contracts, migration, security, testing, shared hosting, and quickstart | All TS-001..TS-006 resolved or explicitly rejected with native alternative; no guessed product rule |
 | S3 | Product Owner review of plan impacts | Approval of any newly exposed product/UX/data/cost/maintenance impact; ordinary technical choices remain technical-lead owned | Approved plan and ADR amendments where required |
 | S4 | `/speckit.tasks` | Exact dependency-ordered tasks by user story with IDs, files, symbols, tests, commands, expected results, and forbidden work | Every task satisfies Definition of Ready and references current requirements/invariants |
@@ -29,7 +29,7 @@ This is dependency guidance, not an executable task list:
 5. projects/contracts/terms, generated source keys, history, suppression/resume/manual year;
 6. current reporting dataset and empty states;
 7. scenarios and named immutable budget versions/comparisons;
-8. scheduler/database/optional-email notifications;
+8. scheduler/database/optional-email notifications and configurable audit retention;
 9. tenant data export/import staging and collision quarantine;
 10. installation backup/restore verification and deployment;
 11. legacy migration rehearsal and cutover.
