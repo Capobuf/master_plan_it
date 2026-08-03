@@ -12,3 +12,6 @@
 | ADR-008 | Contract sync is append-missing, never overwrite-existing | APPROVED | Existing generated rows become user-authoritative. |
 | ADR-009 | Migration through versioned exchange files and staging | APPROVED | No direct Frappe DB assumption. |
 | ADR-010 | Dusk only for JS lifecycle, focus, responsive and print smoke | APPROVED | Avoids duplicating feature tests in a slow suite. |
+| ADR-011 | Explicit tenant ownership in one Laravel application | APPROVED DIRECTION | Product requires multi-tenancy and minimum complexity; final implementation must prove isolation before coding. |
+| ADR-012 | Administrator tenant context without impersonation | APPROVED | Preserves real actor identity and simplifies audit. |
+| ADR-013 | Controlled one-site migration into one selected tenant | APPROVED | Matches the only verified migration case and avoids an unused multi-site platform. |

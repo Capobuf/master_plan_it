@@ -1,42 +1,29 @@
 # Data model — Data migration and operations
 
-## Conventions
+## Verified migration boundary
 
-- Primary keys: unsigned bigint target IDs; immutable `legacy_id` nullable unique with source type when migrated.
-- Timestamps stored UTC; business dates are `date`; display timezone Europe/Rome.
-- Money: `decimal(19,6)` inputs/intermediate persisted values and `decimal(19,2)` computed business results as specified.
-- Foreign-key deletes default to restrict. No cascade delete for economic history.
-- `lock_version` unsigned integer supports optimistic concurrency on editable business records.
+One active Frappe site represents one customer and is imported into one explicitly selected tenant. Manual entry or CSV import may be used. A generalized multi-site migration platform is out of scope.
 
-### `migration_runs`
+## `migration_runs`
 
-Purpose: persistence required by Data migration and operations. Exact columns and migration order are defined in the plan file map. Delete behavior defaults to `restrict`; soft delete is used only for user-authored master/business records that must remain referenceable.
+Required semantic fields include target tenant, source-site identifier, mode (`dry-run`/`apply`), manifest/hash when files are used, status, counts, sums, blocking-error count, approver, timestamps, and correlation ID. Target tenant is immutable after run creation.
 
-### `migration_staging_records`
+## `migration_staging_records`
 
-Purpose: persistence required by Data migration and operations. Exact columns and migration order are defined in the plan file map. Delete behavior defaults to `restrict`; soft delete is used only for user-authored master/business records that must remain referenceable.
+Each staged row belongs to one migration run and therefore one target tenant. Preserve source file/row/DocType/legacy ID/raw values and validation state. A row cannot be applied outside the run tenant.
 
-### `legacy_id_map`
+## `legacy_id_map`
 
-Purpose: persistence required by Data migration and operations. Exact columns and migration order are defined in the plan file map. Delete behavior defaults to `restrict`; soft delete is used only for user-authored master/business records that must remain referenceable.
+Identity mapping is unique on target tenant, source type, and legacy ID. It never substitutes tenant ownership on the target aggregate.
 
-### `migration_errors`
+## `migration_errors`
 
-Purpose: persistence required by Data migration and operations. Exact columns and migration order are defined in the plan file map. Delete behavior defaults to `restrict`; soft delete is used only for user-authored master/business records that must remain referenceable.
+Machine-readable code, source location, sanitized details, severity, resolution state, and target tenant through the run.
 
-### `backup_runs`
+## `backup_runs`
 
-Purpose: persistence required by Data migration and operations. Exact columns and migration order are defined in the plan file map. Delete behavior defaults to `restrict`; soft delete is used only for user-authored master/business records that must remain referenceable.
+Installation backup/restore remains Administrator-only. Exact installation-wide versus tenant-selective behavior remains open under Q-021 and must not be invented in implementation.
 
+## Audit and retention
 
-## Relationships
-
-Relationships are owned by the record carrying the foreign key. Required relationships are non-null after migration reconciliation. Historical references remain valid when a master record is inactive.
-
-## Audit
-
-Create explicit audit entries for state, funding, replacement, project stage, contract term and generated-row changes. Record actor ID, UTC timestamp, operation, old/new structured values and correlation ID. Do not audit derived report reads.
-
-## Migration notes
-
-All imported records retain `(legacy_doctype, legacy_id)`. Transformation errors are quarantined rather than coerced silently.
+Record Administrator identity, selected tenant for migration, operation, manifest/source evidence, reconciliation result, and approval. Do not log full source rows or secrets.

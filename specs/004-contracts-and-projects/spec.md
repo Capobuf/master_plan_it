@@ -1,6 +1,6 @@
 # Feature 004 — Contracts and projects
 
-Status: IMPLEMENTATION READY within documented scope  
+Status: PARTIALLY READY — Q-001 through Q-015 propagated; Q-023 remains open  
 Logical owner: product owner with domain approval  
 Actor: vCIO planner  
 Dependencies: feature 003
@@ -17,18 +17,17 @@ A user can manage project decisions and date-versioned contracts that generate a
 
 - Rewriting unrelated legacy behavior.
 - SPA or public API.
-- Multi-tenant data isolation unless OQ-003 is resolved.
+- Separate tenant databases, custom tenant domains, impersonation, and cross-tenant economic analytics are out of scope; tenant isolation itself is mandatory under Feature 007.
 - Untraced formula changes.
 - Background workers or real-time notifications.
 
 ## Actors
 
-| Role | Operations | Limits |
+| Actor | Scope | Constraint |
 |---|---|---|
-| Administrator | all feature operations | no bypass of domain invariants |
-| Administrator | all normal business operations | cannot alter platform bootstrap secrets |
-| Editor | read and permitted business writes from authorization contract | no settings/role administration |
-| Viewer | read, print and permitted export | no writes |
+| Administrator | global platform operations and all approved operations inside an explicitly selected tenant | keeps Administrator identity; cannot bypass domain invariants or impersonate tenant users |
+| Editor | approved operations within exactly one assigned tenant | no user/global administration, import, migration, backup, restore, or cross-tenant access |
+| Viewer | complete read, print, and export access within exactly one assigned tenant | no writes, global operations, or cross-tenant access |
 
 ## User stories
 
@@ -73,6 +72,10 @@ When the first saves and the second submits stale data
 Then the second receives a concurrency conflict  
 And can reload current data before retrying.
 
+### AC-004-05 — Tenant-owned project, contract, and generation workflow
+
+Given projects/contracts in two tenants, when an Editor manages tenant A stages, terms, renewals, and generation, then every reference and generated expense remains in tenant A; generated identity and already-used history cannot be manually rewritten; tenant B identifiers are denied.
+
 ## Functional requirements
 
 | ID | Requirement | Acceptance |
@@ -89,6 +92,7 @@ And can reload current data before retrying.
 | FR-004-031 | An expense shall reference at most one project or contract. | AC-031 |
 | FR-004-032 | Contracts and projects are not independent economic total sources. | AC-032 |
 
+| FR-004-033 | Projects, contracts, terms, renewals, generated source identities, and generated expense rows shall remain within one tenant. Editor may manage the workflow defined by Q-008 but cannot alter system-generated identity or used history directly. | AC-004-05 |
 ## Non-functional requirements
 
 | ID | Measure | Threshold and verification |
@@ -110,11 +114,17 @@ And can reload current data before retrying.
 | INV-CON-003 | Generated row source key is unique. | DomainConflict | TEST-004-003 |
 | INV-CON-004 | Contract is context/generator only. | DomainConflict | TEST-004-004 |
 
+| INV-TEN-004 | Contract/project generation cannot create or link an expense in another tenant. | DomainConflict | TEST-004-033 |
+
 ## Clarifications
 
 ### Resolved from repository
 
 The feature preserves the verified rules listed in `docs/replatform/source-traceability.md` and `current-state.md`.
+
+### Approved product decisions
+
+Q-008 and Q-010 define Editor workflow powers and tenant ownership. Feature 007 and `docs/replatform/approved-decisions.md` are normative for tenant scope.
 
 ### Proposed target
 
@@ -122,4 +132,4 @@ Optimistic concurrency uses an integer `lock_version`; updates include the expec
 
 ### Unresolved
 
-Only questions listed in `docs/replatform/open-questions.md`; none delegates architecture to the coding agent.
+Questions Q-016 onward in `docs/replatform/product-clarification-register.md` and the remaining items in `docs/replatform/open-questions.md`; none may be resolved implicitly by the coding agent.

@@ -1,26 +1,19 @@
 # Data model — Reporting and analytics
 
-## Conventions
+## Authoritative persistence
 
-- Primary keys: unsigned bigint target IDs; immutable `legacy_id` nullable unique with source type when migrated.
-- Timestamps stored UTC; business dates are `date`; display timezone Europe/Rome.
-- Money: `decimal(19,6)` inputs/intermediate persisted values and `decimal(19,2)` computed business results as specified.
-- Foreign-key deletes default to restrict. No cascade delete for economic history.
-- `lock_version` unsigned integer supports optimistic concurrency on editable business records.
+Reporting creates no authoritative economic tables. Query-time datasets read tenant-owned domain records and apply the same server-side calculations used by screens, print, CSV, and XLSX.
 
-### `no authoritative reporting tables; query-time datasets`
+## Tenant scope
 
-Purpose: persistence required by Reporting and analytics. Exact columns and migration order are defined in the plan file map. Delete behavior defaults to `restrict`; soft delete is used only for user-authored master/business records that must remain referenceable.
+Every economic dataset requires exactly one tenant. Tenant ID/context is an input to the query contract and is never accepted as an unvalidated user-controlled bypass. No report combines economic values across tenants.
 
+The Administrator global overview uses a distinct operational dataset containing only tenant state, Editor/Viewer counts, last activity, entry action, operational alerts, renewals, and import/migration errors. It contains no cross-tenant economic totals.
 
-## Relationships
+## Scenarios
 
-Relationships are owned by the record carrying the foreign key. Required relationships are non-null after migration reconciliation. Historical references remain valid when a master record is inactive.
+Scenario ownership is tenant-bound. Editor may create scenarios and Viewer may not. Persistence behavior remains governed by the existing scenario specification and any still-open clarification; scenario values never mutate official economic rows.
 
 ## Audit
 
-Create explicit audit entries for state, funding, replacement, project stage, contract term and generated-row changes. Record actor ID, UTC timestamp, operation, old/new structured values and correlation ID. Do not audit derived report reads.
-
-## Migration notes
-
-All imported records retain `(legacy_doctype, legacy_id)`. Transformation errors are quarantined rather than coerced silently.
+Report reads are not business-state mutations. Export generation records actor, tenant, filters, output type, and correlation ID without logging exported business payloads.

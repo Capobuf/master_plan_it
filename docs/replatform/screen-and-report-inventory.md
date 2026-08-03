@@ -4,6 +4,8 @@ The repository contains Frappe forms/lists for core DocTypes, workspace/dashboar
 
 | Target surface | Question answered | Main data | Decision | Source authority |
 |---|---|---|---|---|
+| Global tenant overview | Which tenants need administrative attention? | tenant state, user counts, last activity, alerts, renewals, import/migration errors | new Administrator-only operational surface; no economic aggregation | Q-014 / Feature 007 |
+| Tenant context indicator | Which customer context is active? | current tenant name/state | always visible in side navigation and breadcrumbs | Q-015 / Feature 007 |
 | Decision dashboard | What requires attention this year? | Actual, remaining forecast, year-end forecast, extra, plafond, renewals | redesign/merge workspace and dashboards | financial engine datasets |
 | Expense register | Which economic rows exist and in what state? | expense header + rows | redesign | MPIT Expense/Row |
 | Expense editor | What is the official economic effect? | identity, context, rows, totals | redesign | server calculations |

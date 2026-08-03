@@ -116,7 +116,7 @@ This audit evaluates the uploaded package against the authorized repository base
 |---|---|---|
 | Domain | Exact behavior of every legacy report filter not inspected in full | No for core vertical slices; yes before final report parity sign-off |
 | Data | Real production export profile and anomaly counts unavailable | No for implementation; yes for CUTOVER READY |
-| Authorization | Client-to-tenant scoping is not represented by a verified legacy entity | Yes for multi-client production; target first release therefore uses one installation/one client dataset |
+| Authorization | The legacy baseline has no tenant entity; the approved target model is defined by Q-001 through Q-015 and Feature 007 | No for documenting the approved target; yes for implementation readiness until Q-016 through Q-024 are resolved and tenant-isolation tests are fully specified |
 | PDF | Renderer/package selection requires implementation-time compatibility verification against Laravel 13/PHP environment | No; isolated behind `ReportPdfRenderer` contract |
 | Browser support | Exact organization policy unavailable | No; target baseline defined as latest two stable Chromium/Firefox and current Safari |
 
@@ -124,9 +124,10 @@ This audit evaluates the uploaded package against the authorized repository base
 
 | Feature | Rating | Residual decisions |
 |---|---|---|
-| 001 Platform foundation | READY | PDF not involved; no blocking decision |
-| 002 Master data | READY | None for initial single-client installation |
-| 003 Expense domain | READY | None for core expense behavior |
-| 004 Contracts and projects | READY | None for verified term/sync semantics |
-| 005 Reporting and analytics | PARTIALLY READY | Every legacy report filter must be reconciled before parity sign-off |
-| 006 Migration and operations | PARTIALLY READY | Requires real export samples and hosting-specific paths before cutover |
+| 001 Platform foundation | PARTIALLY READY | Tenancy is approved, but inactive-tenant, audit, and destructive-confirmation behavior remains open in Q-016, Q-020, and Q-024. |
+| 002 Master data | PARTIALLY READY | Tenant ownership is approved; inactive vendor and cost-center behavior remains open in Q-030 and Q-031. |
+| 003 Expense domain | PARTIALLY READY | Core economic invariants are stable; attachment retention and reinforced confirmation behavior remain open in Q-018 and Q-024. |
+| 004 Contracts and projects | PARTIALLY READY | Verified term and synchronization semantics are stable; tenant notification scope remains open in Q-023. |
+| 005 Reporting and analytics | PARTIALLY READY | Tenant-scoped reporting is approved; cross-tenant export scope, audit export, empty states, and legacy filter parity remain open. |
+| 006 Migration and operations | PARTIALLY READY | One-site migration is approved; import collisions, backup/restore scope, real export samples, and hosting paths remain open. |
+| 007 Tenancy and access control | CLARIFICATION IN PROGRESS | Q-001 through Q-015 are approved; Q-016 through Q-024 remain HIGH and must be closed before implementation readiness. |

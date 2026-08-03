@@ -1,12 +1,15 @@
 # Implementation readiness
 
-| Feature | Requirements | Domain | Architecture | Data model | UI | Tests | Tasks | Migration | Minimum | Status |
-|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---|
-| 001 Platform foundation | 95 | 92 | 96 | 93 | 92 | 92 | 94 | 90 | 90 | IMPLEMENTATION READY |
-| 002 Master data | 95 | 95 | 94 | 95 | 91 | 92 | 94 | 92 | 91 | IMPLEMENTATION READY |
-| 003 Expense domain | 97 | 97 | 96 | 96 | 93 | 96 | 95 | 93 | 93 | IMPLEMENTATION READY |
-| 004 Contracts/projects | 96 | 96 | 95 | 95 | 92 | 95 | 95 | 92 | 92 | IMPLEMENTATION READY |
-| 005 Reporting/analytics | 91 | 94 | 94 | 92 | 92 | 91 | 92 | 90 | 90 | IMPLEMENTATION READY for documented reports; PARTIAL parity scope |
-| 006 Migration/operations | 92 | 91 | 93 | 94 | 90 | 92 | 93 | 89 | 89 | PARTIALLY READY; requires real export for cutover |
+The original readiness scores predate the approved multi-tenant product change. They are retained as historical depth indicators, not as permission to implement contradictory single-client contracts.
 
-`IMPLEMENTATION READY` means the documented increment can be coded without redesign. It does not mean production data migration or cutover is approved.
+| Feature | Previous minimum | Tenancy convergence | Current status |
+|---|---:|---|---|
+| 001 Platform foundation | 90 | Roles, tenant context, tenant users, settings and shell contracts updated by Q-001–Q-015; remaining HIGH clarifications still affect inactive-tenant and recovery behavior. | PARTIALLY READY |
+| 002 Master data | 91 | Tenant ownership and Editor permissions defined; inactive cost-center/vendor details remain open. | PARTIALLY READY |
+| 003 Expense domain | 93 | Tenant ownership and Editor/Viewer permissions defined; attachment retention remains open. | PARTIALLY READY |
+| 004 Contracts/projects | 92 | Tenant ownership and Editor powers defined; tenant-scoped generation must be included in implementation plan. | PARTIALLY READY |
+| 005 Reporting/analytics | 90 | Tenant-only economic datasets and operational global overview defined; export and empty-state details remain open. | PARTIALLY READY |
+| 006 Migration/operations | 89 | One-site-to-one-tenant manual/CSV scope defined; backup/restore scope and real export anomalies remain open. | PARTIALLY READY; NOT CUTOVER READY |
+| 007 Tenancy/access control | n/a | Q-001–Q-015 approved and propagated; Q-016–Q-024 remain HIGH. | CLARIFICATION IN PROGRESS |
+
+`IMPLEMENTATION READY` cannot be restored while any `BLOCKING` or `HIGH` product clarification that affects the feature remains open. No coding agent may resolve those questions implicitly.

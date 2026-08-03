@@ -17,7 +17,7 @@
 - [x] Define global Administrator overview.
 - [x] Define tenant-context visibility.
 - [ ] Close remaining `BLOCKING` and `HIGH` questions in the clarification register.
-- [ ] Propagate every approved answer into affected Features 001–006.
+- [x] Propagate every approved answer Q-001–Q-015 into affected Features 001–006.
 - [ ] Run final Spec Kit checklist, analysis and convergence.
 
 ## Implementation-planning tasks

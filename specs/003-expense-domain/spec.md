@@ -1,6 +1,6 @@
 # Feature 003 — Expense domain
 
-Status: IMPLEMENTATION READY within documented scope  
+Status: PARTIALLY READY — Q-001 through Q-015 propagated; Q-018 and Q-024 remain open  
 Logical owner: product owner with domain approval  
 Actor: budget editor  
 Dependencies: feature 002
@@ -17,18 +17,17 @@ A user can create auditable expenses and rows with exact VAT, funding, replaceme
 
 - Rewriting unrelated legacy behavior.
 - SPA or public API.
-- Multi-tenant data isolation unless OQ-003 is resolved.
+- Separate tenant databases, custom tenant domains, impersonation, and cross-tenant economic analytics are out of scope; tenant isolation itself is mandatory under Feature 007.
 - Untraced formula changes.
 - Background workers or real-time notifications.
 
 ## Actors
 
-| Role | Operations | Limits |
+| Actor | Scope | Constraint |
 |---|---|---|
-| Administrator | all feature operations | no bypass of domain invariants |
-| Administrator | all normal business operations | cannot alter platform bootstrap secrets |
-| Editor | read and permitted business writes from authorization contract | no settings/role administration |
-| Viewer | read, print and permitted export | no writes |
+| Administrator | global platform operations and all approved operations inside an explicitly selected tenant | keeps Administrator identity; cannot bypass domain invariants or impersonate tenant users |
+| Editor | approved operations within exactly one assigned tenant | no user/global administration, import, migration, backup, restore, or cross-tenant access |
+| Viewer | complete read, print, and export access within exactly one assigned tenant | no writes, global operations, or cross-tenant access |
 
 ## User stories
 
@@ -73,6 +72,10 @@ When the first saves and the second submits stale data
 Then the second receives a concurrency conflict  
 And can reload current data before retrying.
 
+### AC-003-05 — Tenant-owned expense workflow
+
+Given an Editor and Viewer in tenant A plus records in tenant B, when tenant A expenses are created, updated, printed, exported, audited, or accessed through attachments, then only tenant A data is used; Editor receives Q-006 operations, Viewer remains read-only, and recorded Actual/history invariants remain enforced.
+
 ## Functional requirements
 
 | ID | Requirement | Acceptance |
@@ -92,6 +95,7 @@ And can reload current data before retrying.
 | FR-003-052 | Estimate and Quote net amounts cannot be negative; Actual may be negative. | AC-052 |
 | FR-003-060 | Register, detail, print and export shall use server-calculated values. | AC-060 |
 
+| FR-003-061 | Expenses, rows, plafond references, attachments, audit, register, print, and export shall be scoped to one tenant. Editor may perform Q-006 operations; Viewer remains read/print/export only. | AC-003-05 |
 ## Non-functional requirements
 
 | ID | Measure | Threshold and verification |
@@ -118,11 +122,17 @@ And can reload current data before retrying.
 | INV-DATE-001 | Date modes are exclusive. | DomainConflict | TEST-003-001 |
 | INV-DIST-001 | Monthly allocated sum equals row net. | DomainConflict | TEST-003-001 |
 
+| INV-TEN-003 | An expense and every referenced year, cost center, vendor, plafond, project, contract, row, attachment, and audit event share the same tenant. | DomainConflict | TEST-003-061 |
+
 ## Clarifications
 
 ### Resolved from repository
 
 The feature preserves the verified rules listed in `docs/replatform/source-traceability.md` and `current-state.md`.
+
+### Approved product decisions
+
+Q-005, Q-006, Q-009, and Q-010 define Viewer access, Editor economic operations, utilities, and ownership. Feature 007 and `docs/replatform/approved-decisions.md` are normative for tenant scope.
 
 ### Proposed target
 
@@ -130,4 +140,4 @@ Optimistic concurrency uses an integer `lock_version`; updates include the expec
 
 ### Unresolved
 
-Only questions listed in `docs/replatform/open-questions.md`; none delegates architecture to the coding agent.
+Questions Q-016 onward in `docs/replatform/product-clarification-register.md` and the remaining items in `docs/replatform/open-questions.md`; none may be resolved implicitly by the coding agent.

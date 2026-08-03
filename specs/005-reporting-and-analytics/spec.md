@@ -1,6 +1,6 @@
 # Feature 005 — Reporting and analytics
 
-Status: IMPLEMENTATION READY within documented scope  
+Status: PARTIALLY READY — Q-001 through Q-015 propagated; Q-019, Q-020, Q-027, and Q-028 remain open  
 Logical owner: product owner with domain approval  
 Actor: decision maker  
 Dependencies: feature 004
@@ -17,18 +17,17 @@ A user can view current position, forecast, exceptions and exports from one auth
 
 - Rewriting unrelated legacy behavior.
 - SPA or public API.
-- Multi-tenant data isolation unless OQ-003 is resolved.
+- Separate tenant databases, custom tenant domains, impersonation, and cross-tenant economic analytics are out of scope; tenant isolation itself is mandatory under Feature 007.
 - Untraced formula changes.
 - Background workers or real-time notifications.
 
 ## Actors
 
-| Role | Operations | Limits |
+| Actor | Scope | Constraint |
 |---|---|---|
-| Administrator | all feature operations | no bypass of domain invariants |
-| Administrator | all normal business operations | cannot alter platform bootstrap secrets |
-| Editor | read and permitted business writes from authorization contract | no settings/role administration |
-| Viewer | read, print and permitted export | no writes |
+| Administrator | global platform operations and all approved operations inside an explicitly selected tenant | keeps Administrator identity; cannot bypass domain invariants or impersonate tenant users |
+| Editor | approved operations within exactly one assigned tenant | no user/global administration, import, migration, backup, restore, or cross-tenant access |
+| Viewer | complete read, print, and export access within exactly one assigned tenant | no writes, global operations, or cross-tenant access |
 
 ## User stories
 
@@ -77,6 +76,10 @@ When the first saves and the second submits stale data
 Then the second receives a concurrency conflict  
 And can reload current data before retrying.
 
+### AC-005-05 — Tenant-scoped reporting and global operational overview
+
+Given economic data in two tenants, when Administrator, Editor, or Viewer opens a tenant report/export, then the dataset contains one current tenant only. When Administrator opens the global overview, only approved operational tenant metadata appears and no combined economic value is calculated.
+
 ## Functional requirements
 
 | ID | Requirement | Acceptance |
@@ -92,6 +95,8 @@ And can reload current data before retrying.
 | FR-005-021 | Exports shall preserve active filters, order, locale, currency and timezone. | AC-021 |
 | FR-005-030 | Viewer may read/print/export but not mutate data. | AC-030 |
 
+| FR-005-031 | Every economic report, dashboard, drill-down, print, CSV, and XLSX shall contain data from exactly one tenant. | AC-005-05 |
+| FR-005-032 | Administrator global overview shall expose only the operational fields approved by Q-014 and shall not aggregate economic values across tenants. | AC-005-05 |
 ## Non-functional requirements
 
 | ID | Measure | Threshold and verification |
@@ -111,11 +116,17 @@ And can reload current data before retrying.
 | INV-REP-003 | Metric formulas are server-side. | DomainConflict | TEST-005-003 |
 | INV-REP-004 | Filter authorization limits visible rows. | DomainConflict | TEST-005-004 |
 
+| INV-REP-005 | No report or export combines economic data from different tenants. | DomainConflict | TEST-005-031 |
+
 ## Clarifications
 
 ### Resolved from repository
 
 The feature preserves the verified rules listed in `docs/replatform/source-traceability.md` and `current-state.md`.
+
+### Approved product decisions
+
+Q-005, Q-009, Q-010, and Q-014 define read/export rights, ownership, and the non-economic global overview. Feature 007 and `docs/replatform/approved-decisions.md` are normative for tenant scope.
 
 ### Proposed target
 
@@ -123,4 +134,4 @@ Optimistic concurrency uses an integer `lock_version`; updates include the expec
 
 ### Unresolved
 
-Only questions listed in `docs/replatform/open-questions.md`; none delegates architecture to the coding agent.
+Questions Q-016 onward in `docs/replatform/product-clarification-register.md` and the remaining items in `docs/replatform/open-questions.md`; none may be resolved implicitly by the coding agent.

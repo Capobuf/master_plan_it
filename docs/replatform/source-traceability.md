@@ -18,3 +18,9 @@
 | R-CON-001 | Terms cannot overlap | mpit_contract.py::_validate_terms_no_overlap | FR-004-020 | INV-CON-001 | SaveContractTerms | TEST-004-020 | T004-04 |
 | R-CON-002 | Contract sync adds missing, never overwrites | contract_expense_sync.py::_sync_contract_year_expense | FR-004-025 | INV-CON-002 | SynchronizeContractExpenses | TEST-004-025 | T004-07 |
 | R-CON-003 | Contract totals not independently added | financial_engine.py::get_cost_center_financial_summary | FR-005-010 | INV-REP-001 | EconomicPositionQuery | TEST-005-010 | T005-04 |
+| R-TEN-001 | Product roles converge to Administrator, Editor, Viewer | Q-001 | FR-007-002; FR-001-003 | INV-TEN-003 | Policies and tenant context | TEST-007-003 | T007 planning |
+| R-TEN-002 | Tenant business data is isolated and other-tenant access denied | Q-002, Q-010 | FR-007-010; FR-007-016; cross-feature tenant FRs | INV-TEN-001; INV-TEN-004 | Tenant ownership and scoped queries | TEST-007-001; TEST-007-004 | T007 planning |
+| R-TEN-003 | Administrator retains identity and explicitly selects tenant | Q-004, Q-015 | FR-007-004; FR-007-015 | INV-TEN-002 | Tenant context/audit | TEST-007-002 | T007 planning |
+| R-TEN-004 | Editor and Viewer permissions are feature-specific and tenant-bound | Q-005–Q-009 | FR-007-005–FR-007-009; feature authorization contracts | INV-TEN-003 | Policies | TEST-007 role matrix | Cross-feature tenant tasks |
+| R-TEN-005 | Global overview is operational and has no economic aggregation | Q-014 | FR-007-014; FR-005-032 | INV-TEN-007; INV-REP-005 | GlobalTenantOverviewQuery | TEST-007-007; TEST-005-032 | T005-14 |
+| R-MIG-002 | One Frappe site imports into one selected tenant manually or by CSV | Q-011 | FR-007-011; FR-006-013 | INV-MIG-004 | TenantImportAction | TEST-006-013 | T006-14 |

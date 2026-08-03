@@ -34,3 +34,15 @@ All expected values are net EUR rounded to two decimals unless a row explicitly 
 ## Residual allocation rule — PROPOSED TARGET
 
 For `distribution=all`, divide at six decimals, round persisted monthly values to two decimals, and assign the final-cent residual to the last month so monthly persisted values sum exactly to the row net amount. This is a target precision improvement and must be compared with the legacy output before approval if legacy monthly rows are persisted/exported.
+
+## Tenant isolation acceptance matrix — APPROVED TARGET
+
+| Scenario | Actor/context | Expected result |
+|---|---|---|
+| EQ-TEN-001 Same-tenant read | Editor or Viewer requests own tenant record | Allowed according to role; dataset contains only own tenant rows. |
+| EQ-TEN-002 Other-tenant direct link | Editor or Viewer changes a record identifier to another tenant | Denied without disclosing record existence or data. |
+| EQ-TEN-003 Export isolation | Any tenant role exports a filtered report | File contains only current tenant data and matches screen dataset. |
+| EQ-TEN-004 Attachment isolation | User requests another tenant attachment/download URL | Denied; no metadata or file bytes returned. |
+| EQ-TEN-005 Administrator context | Administrator enters a tenant and changes permitted data | Audit records Administrator identity and selected tenant; no impersonation. |
+| EQ-TEN-006 Global overview | Administrator opens global overview | Operational tenant metadata only; no combined economic values. |
+| EQ-TEN-007 Missing context | Tenant-bound route/query/command runs without valid tenant | Fails closed; never returns unscoped data. |

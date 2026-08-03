@@ -1,6 +1,6 @@
 # Master Plan IT Replatform Constitution
 
-Version: 2.0.0  
+Version: 2.1.0  
 Ratified baseline: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`  
 Scope: documentation-only design for the Laravel replatform.
 
@@ -18,7 +18,7 @@ Scope: documentation-only design for the Laravel replatform.
 
 ## C-02 — Monetary correctness
 
-**Rule.** Authoritative monetary values use MySQL `DECIMAL(19,6)` for intermediate/base columns and are rounded to `DECIMAL(19,2)` at persisted business-result boundaries. PHP uses decimal strings plus a Money value object backed by BCMath; floats are forbidden for authoritative calculations. Currency is EUR in the first release.
+**Rule.** Authoritative monetary values use MySQL `DECIMAL(19,6)` for intermediate/base columns and are rounded to `DECIMAL(19,2)` at persisted business-result boundaries. PHP uses decimal strings plus a Money value object backed by BCMath; floats are forbidden for authoritative calculations. Each tenant has one required configured currency. Authoritative calculations never mix currencies and no cross-tenant currency conversion or economic aggregation is part of the approved scope.
 
 **Architecture consequence.** `App\Domain\Money\Money`, `VatBreakdown`, `MoneyCalculator`, and `VatCalculator` centralize arithmetic. Chart payloads may cast copies to JavaScript numbers only after server-side calculation.
 
@@ -60,9 +60,9 @@ Scope: documentation-only design for the Laravel replatform.
 
 ## C-07 — Least privilege and explicit authorization
 
-**Rule.** Every route, Action, export, attachment, and screen has a policy decision. Current roles are preserved initially: Administrator, Administrator, Editor, Viewer. Any difference is a `PROPOSED CHANGE`.
+**Rule.** The product roles are exactly `Administrator`, `Editor`, and `Viewer`. `Administrator` is global, selects tenant context explicitly, keeps their own identity, and may manage tenants and tenant users. `Editor` and `Viewer` belong to exactly one tenant. `Editor` receives only the write abilities approved in the feature contracts. `Viewer` has complete same-tenant read, print, and export access and no write or global administration ability. No role may bypass economic invariants.
 
-**Verification.** Policy matrix and deny-path feature tests.
+**Verification.** Every route, Action, report, export, print, attachment, download, command, and scheduled operation has allow and deny tests for same-tenant and other-tenant access.
 
 ## C-08 — One semantic dataset per report
 
@@ -72,13 +72,21 @@ Scope: documentation-only design for the Laravel replatform.
 
 ## C-09 — Migration is repeatable and reconcilable
 
-**Rule.** Migration consumes versioned export files, stages raw values, transforms deterministically, preserves legacy IDs, supports dry-run, is idempotent, and produces count/sum/error manifests. Direct access to the Frappe database is not assumed.
+**Rule.** The verified migration case is one active Frappe site representing one customer, imported into one explicitly selected tenant. Manual entry and CSV export/import are permitted. When an exchange package is used, migration consumes versioned files, stages raw values, transforms deterministically, preserves legacy IDs, supports dry-run, is idempotent, and produces count/sum/error manifests. A reusable multi-site migration platform is out of scope.
 
-**Verification.** Re-import tests, invalid-row quarantine tests, and reconciliation gates.
+**Verification.** Tenant selection is mandatory before import. Re-import, invalid-row quarantine, tenant ownership, and reconciliation gates are tested. Acceptance requires explicit approval of the imported tenant.
 
 ## C-10 — No decorative abstraction
 
 **Rule.** Do not add repositories, generic service locators, event buses, CQRS, internal APIs, or pseudo-DDD layers without a concrete requirement. Use Eloquent, policies, form requests, query objects, and focused Actions.
+
+## C-11 — Tenant isolation and visible context
+
+**Rule.** Every operational aggregate belongs to one tenant. Cross-tenant references and unscoped access are forbidden. The current tenant is visible in the side navigation and page breadcrumbs. UI hiding never replaces server-side authorization. Administrator does not impersonate tenant users.
+
+**Architecture consequence.** Tenant ownership is explicit in persistence and query contracts. Missing, inactive, invalid, or unauthorized tenant context fails closed and never falls back to unscoped data.
+
+**Verification.** Direct-object-reference, modified-identifier, report, export, print, attachment, download, command, scheduler, and relationship tests prove that another tenant's data cannot be observed or changed.
 
 ## Definition of Ready — task
 

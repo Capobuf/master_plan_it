@@ -1,10 +1,15 @@
 # Data model — Expense domain
 
+## Tenant ownership
+
+Each expense belongs to one tenant. Expense rows inherit ownership from their expense. All referenced year, cost center, vendor, plafond, project, contract, attachment, and audit records must belong to the same tenant. Cross-tenant links are rejected before any calculation or persistence.
+
 ## `expenses`
 
 | Column | MySQL | Nullable/default | Constraint/index | Legacy source |
 |---|---|---|---|---|
 | id | bigint unsigned | no | PK | generated |
+| tenant_id | bigint unsigned | no | FK restrict/index | selected tenant |
 | legacy_id | varchar(140) | yes | unique | MPIT Expense.name |
 | kind | varchar(16) | no | enum check in application/index | expense_kind |
 | title | varchar(255) | no | index | expense_title |

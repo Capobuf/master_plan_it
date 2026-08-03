@@ -1,34 +1,21 @@
 # Data model — Master data
 
-## Conventions
+## Tenant ownership
 
-- Primary keys: unsigned bigint target IDs; immutable `legacy_id` nullable unique with source type when migrated.
-- Timestamps stored UTC; business dates are `date`; display timezone Europe/Rome.
-- Money: `decimal(19,6)` inputs/intermediate persisted values and `decimal(19,2)` computed business results as specified.
-- Foreign-key deletes default to restrict. No cascade delete for economic history.
-- `lock_version` unsigned integer supports optimistic concurrency on editable business records.
+`planning_years`, `cost_centers`, and `vendors` are tenant-owned. Each table has required tenant ownership. Uniqueness and tree relationships are scoped to the same tenant. Cross-tenant parent or business references are invalid.
 
-### `planning_years`
+## `planning_years`
 
-Purpose: persistence required by Master data. Exact columns and migration order are defined in the plan file map. Delete behavior defaults to `restrict`; soft delete is used only for user-authored master/business records that must remain referenceable.
+Required semantic fields: tenant, numeric year, start date, end date, active flag, lock version, timestamps. Periods may not overlap within the same tenant. Only Administrator creates or configures years.
 
-### `cost_centers`
+## `cost_centers`
 
-Purpose: persistence required by Master data. Exact columns and migration order are defined in the plan file map. Delete behavior defaults to `restrict`; soft delete is used only for user-authored master/business records that must remain referenceable.
+Required semantic fields: tenant, unique name within tenant, optional same-tenant parent, active state, lock version, timestamps. Parent graph is acyclic. Editor may create and update cost centers in the assigned tenant.
 
-### `vendors`
+## `vendors`
 
-Purpose: persistence required by Master data. Exact columns and migration order are defined in the plan file map. Delete behavior defaults to `restrict`; soft delete is used only for user-authored master/business records that must remain referenceable.
+Required semantic fields: tenant, unique name within tenant, optional VAT/contact data, active state, lock version, timestamps. Historical references remain readable after deactivation; inactive vendors are excluded from new selection. Editor may create and update vendors in the assigned tenant.
 
+## Audit and migration
 
-## Relationships
-
-Relationships are owned by the record carrying the foreign key. Required relationships are non-null after migration reconciliation. Historical references remain valid when a master record is inactive.
-
-## Audit
-
-Create explicit audit entries for state, funding, replacement, project stage, contract term and generated-row changes. Record actor ID, UTC timestamp, operation, old/new structured values and correlation ID. Do not audit derived report reads.
-
-## Migration notes
-
-All imported records retain `(legacy_doctype, legacy_id)`. Transformation errors are quarantined rather than coerced silently.
+State and structural changes record actor and tenant. Imported legacy IDs are reconciled only inside the selected migration tenant. No global mutable master-data catalogue is approved.

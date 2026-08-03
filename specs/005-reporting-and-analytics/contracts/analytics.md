@@ -5,7 +5,7 @@ Purpose: metrics, formulas, filters and typed payloads.
 
 ## Inputs
 
-All input is represented by a typed Data/Filter object. IDs are target IDs; imported references retain legacy IDs separately. Money enters as normalized decimal strings. Dates use ISO `YYYY-MM-DD`. The actor is explicit and authorization occurs before protected data is returned.
+All input is represented by a typed Data/Filter object. IDs are target IDs; imported references retain legacy IDs separately. Money enters as normalized decimal strings. Dates use ISO `YYYY-MM-DD`. The actor and current tenant context are explicit. Authorization and tenant ownership checks occur before protected data or file metadata is returned.
 
 ## Output
 
@@ -21,13 +21,13 @@ Writes open one transaction inside the owning Action. Lock only cross-record con
 
 ## Authorization
 
-| Ability | Administrator | Administrator | Editor | Viewer |
+| Ability | Administrator | Editor same tenant | Viewer same tenant | User other tenant |
 |---|---:|---:|---:|---:|
-| viewAny/view | yes | yes | yes, scoped | yes, scoped |
-| create/update | yes | yes | only where feature spec grants | no |
-| delete | yes | yes | no unless verified current permission is explicitly preserved | no |
-| export/print | yes | yes | yes, scoped | yes, scoped |
-| administer | yes | feature-specific | no | no |
+| viewAny/view | Allow where contract permits, in explicit tenant context or global operational scope | Allow for assigned tenant | Allow read-only for assigned tenant | Deny |
+| create/update | Allow where contract and invariant permit | Allow only where the feature-specific clause grants | Deny | Deny |
+| delete/archive | Only where explicitly specified; never bypass immutable history | Only where explicitly granted; never immutable history | Deny | Deny |
+| export/print | Tenant-scoped; global exports contain operational metadata only | Tenant-scoped | Tenant-scoped | Deny |
+| administer/global operation | Allow | Deny | Deny | Deny |
 
 ## Audit/logging
 
@@ -45,3 +45,6 @@ Record business state changes, actor, old/new values and correlation ID. Do not 
 ## Feature-specific clauses
 
 Read the local plan and data model. Implement exactly metrics, formulas, filters and typed payloads. Do not reuse this file as a generic abstraction for other domains; shared behavior belongs only in an explicitly listed shared helper.
+## Tenant clauses
+
+Economic analytics are tenant-scoped. Cross-tenant comparisons and currency conversion are not approved scope.

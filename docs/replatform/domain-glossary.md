@@ -2,6 +2,11 @@
 
 | Term | Definition | Label |
 |---|---|---|
+| Tenant | One customer boundary containing all customer business data and tenant settings. | APPROVED TARGET |
+| Administrator | Global role combining legacy System Manager and vCIO Manager responsibilities; manages tenants/users and enters explicit tenant context without impersonation. | APPROVED TARGET |
+| Editor | Single-tenant role with the approved business write abilities and no global administration. | APPROVED TARGET |
+| Viewer | Single-tenant role with complete read, print, and export access and no write ability. | APPROVED TARGET |
+| Tenant context | Explicit current-customer scope used by routes, queries, reports, exports, attachments, commands, and audit. | APPROVED TARGET |
 | Expense | Container for one or more economic rows for a year and cost center. | VERIFIED CURRENT |
 | Expense row | Sole authoritative unit used by totals. | VERIFIED CURRENT |
 | Ordinary | Expense kind supporting Estimate, Quote, Actual and optional project/contract context. | VERIFIED CURRENT |

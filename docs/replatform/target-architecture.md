@@ -11,6 +11,17 @@
 - Vite only at build time; release ZIP contains compiled assets.
 - Queue connection `sync`; scheduler invoked by cron every minute.
 
+
+## Tenant boundary
+
+- One Laravel application serves multiple customer tenants.
+- `Administrator` is global; `Editor` and `Viewer` belong to exactly one tenant.
+- Tenant-bound aggregate roots carry explicit tenant ownership; child ownership is validated through the aggregate.
+- Current tenant context is explicit, visible in side navigation and breadcrumbs, and required by tenant-bound routes.
+- Queries, policies, reports, exports, print, files, commands, and scheduled work fail closed without valid ownership.
+- Administrator keeps their identity when entering a tenant; impersonation is not supported.
+- Separate tenant databases, custom domains, shared mutable business catalogues, and cross-tenant economic analytics are not approved requirements.
+
 ## Modular monolith boundaries
 
 ```
@@ -18,6 +29,7 @@ app/
 ├── Domain/
 │   ├── Shared/
 │   ├── Money/
+│   ├── Tenancy/
 │   ├── MasterData/
 │   ├── Expenses/
 │   ├── Contracts/

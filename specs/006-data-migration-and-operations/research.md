@@ -13,3 +13,7 @@ Verification date: 2026-08-02. The implementation agent must re-check official d
 ## Package ownership
 
 No package may be introduced without listing the exact feature, file and reason here. Laravel standard facilities are mandatory when sufficient. For this feature, third-party runtime packages are limited to Livewire, Preline, Chart.js only where listed in `plan.md`; CSV uses standard streaming. XLSX/PDF remain adapter contracts until selected.
+
+## Required tenancy research
+
+Before implementation, consult current official Laravel authorization/middleware/filesystem/scheduler documentation and official database constraint/index documentation. Validate the simplest implementation that proves tenant isolation; do not choose a tenancy package without a concrete requirement and documented trade-off.

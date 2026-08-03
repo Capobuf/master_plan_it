@@ -1,6 +1,6 @@
 # Feature 002 — Master data
 
-Status: IMPLEMENTATION READY within documented scope  
+Status: PARTIALLY READY — Q-001 through Q-015 propagated; Q-030 and Q-031 remain open  
 Logical owner: product owner with domain approval  
 Actor: authorized business user  
 Dependencies: feature 001
@@ -17,18 +17,17 @@ A user can manage planning years, hierarchical cost centers and vendors while pr
 
 - Rewriting unrelated legacy behavior.
 - SPA or public API.
-- Multi-tenant data isolation unless OQ-003 is resolved.
+- Separate tenant databases, custom tenant domains, impersonation, and cross-tenant economic analytics are out of scope; tenant isolation itself is mandatory under Feature 007.
 - Untraced formula changes.
 - Background workers or real-time notifications.
 
 ## Actors
 
-| Role | Operations | Limits |
+| Actor | Scope | Constraint |
 |---|---|---|
-| Administrator | all feature operations | no bypass of domain invariants |
-| Administrator | all normal business operations | cannot alter platform bootstrap secrets |
-| Editor | read and permitted business writes from authorization contract | no settings/role administration |
-| Viewer | read, print and permitted export | no writes |
+| Administrator | global platform operations and all approved operations inside an explicitly selected tenant | keeps Administrator identity; cannot bypass domain invariants or impersonate tenant users |
+| Editor | approved operations within exactly one assigned tenant | no user/global administration, import, migration, backup, restore, or cross-tenant access |
+| Viewer | complete read, print, and export access within exactly one assigned tenant | no writes, global operations, or cross-tenant access |
 
 ## User stories
 
@@ -73,6 +72,10 @@ When the first saves and the second submits stale data
 Then the second receives a concurrency conflict  
 And can reload current data before retrying.
 
+### AC-002-05 — Tenant-owned master data
+
+Given tenants A and B, when an Editor of tenant A manages vendors or cost centers and reads years, then only tenant A data and same-tenant parents are available; financial-year writes are denied; a reference to tenant B is rejected without leakage.
+
 ## Functional requirements
 
 | ID | Requirement | Acceptance |
@@ -84,8 +87,10 @@ And can reload current data before retrying.
 | FR-002-005 | Group summaries shall include descendants; leaf summaries only the leaf. | AC-005 |
 | FR-002-006 | A vendor shall have unique name, optional VAT ID/contact values and active flag. | AC-006 |
 | FR-002-007 | Inactive vendors remain readable for historical rows but are excluded from new selection. | AC-007 |
-| FR-002-008 | Editor is read-only for years/cost centers and may create/update vendors only if current legacy permissions permit the operation. | AC-008 |
+| FR-002-008 | Editor may create and update vendors and cost centers in the assigned tenant; financial-year creation and configuration are Administrator-only. | AC-008 |
 
+| FR-002-009 | Years, cost centers, and vendors shall belong to one tenant and all names, trees, selections, imports, and exports shall be scoped to that tenant. | AC-002-05 |
+| FR-002-010 | Editor may create and update vendors and cost centers in the same tenant; only Administrator may create or configure financial years. | AC-002-05 |
 ## Non-functional requirements
 
 | ID | Measure | Threshold and verification |
@@ -105,11 +110,17 @@ And can reload current data before retrying.
 | INV-CC-001 | Cost-center graph is acyclic. | DomainConflict | TEST-002-001 |
 | INV-VEN-001 | Historical vendor references survive deactivation. | DomainConflict | TEST-002-001 |
 
+| INV-TEN-002 | A master-data record cannot reference a parent or tenant-owned resource from another tenant. | DomainConflict | TEST-002-009 |
+
 ## Clarifications
 
 ### Resolved from repository
 
 The feature preserves the verified rules listed in `docs/replatform/source-traceability.md` and `current-state.md`.
+
+### Approved product decisions
+
+Q-007 and Q-010 define Editor master-data powers and tenant ownership. Feature 007 and `docs/replatform/approved-decisions.md` are normative for tenant scope.
 
 ### Proposed target
 
@@ -117,4 +128,4 @@ Optimistic concurrency uses an integer `lock_version`; updates include the expec
 
 ### Unresolved
 
-Only questions listed in `docs/replatform/open-questions.md`; none delegates architecture to the coding agent.
+Questions Q-016 onward in `docs/replatform/product-clarification-register.md` and the remaining items in `docs/replatform/open-questions.md`; none may be resolved implicitly by the coding agent.

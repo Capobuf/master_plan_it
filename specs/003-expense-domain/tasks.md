@@ -881,3 +881,21 @@ Parallelizable: yes
 
 **Definition of Done**
 - mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
+
+### T003-22 — Tenant-scope expense aggregate and all access paths
+
+Requirements: FR-003-061  
+Invariants: INV-TEN-003  
+Dependencies: Feature 007 clarification convergence and preceding local task  
+
+**Objective.** Update the feature's migrations/models, policies, Actions/Queries, screens, contracts, exports/files/commands where applicable, and tests so tenant ownership and approved role behavior are explicit and fail closed.
+
+**Required tests.**
+
+1. same-tenant Administrator/Editor/Viewer allow paths according to the feature contract;
+2. other-tenant direct ID and relationship denial without existence leakage;
+3. missing tenant context denial;
+4. tenant-scoped dataset/export/file equality where applicable;
+5. audit records real actor and tenant context.
+
+**Forbidden work.** Do not resolve Q-016 onward, add impersonation, add shared mutable business catalogues, or introduce separate tenant databases/domains without an approved requirement.

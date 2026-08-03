@@ -14,3 +14,6 @@ Feature: `004-contracts-and-projects`
 - [ ] No task asks the coding agent to choose architecture, packages, names or paths.
 - [ ] Quickstart contains future commands only and does not claim execution.
 - [ ] Documentation analysis has no unresolved CRITICAL/HIGH finding.
+- [ ] Every entity/query/screen in this feature has explicit tenant ownership or is documented as global.
+- [ ] Same-tenant allow and other-tenant deny paths are testable.
+- [ ] Reports, exports, attachments, direct links, commands, and scheduled work fail closed without valid tenant context.

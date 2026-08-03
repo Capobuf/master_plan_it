@@ -16,3 +16,6 @@
 | Excess JavaScript | M | Medium | UI library integration | JS ownership rules | UI lead | 001,005 |
 | Incomplete migration | M | Critical | unknown data defects | staged import and reconciliation | Migration lead | 006 |
 | Weak rollback | L | Critical | cutover changes | immutable export, backup, rehearsed rollback | Ops | 006 |
+| Cross-tenant data exposure | M | Critical | Multi-tenant product scope; all existing domain data was previously single-dataset | explicit ownership, fail-closed context, policy/query/report/export/attachment deny tests | Security lead | 001-007 |
+| Wrong tenant context | M | High | Administrator operates across tenants | tenant visible in side navigation and breadcrumbs; explicit switch; audit actor+tenant | Product/UI lead | 001,007 |
+| Incomplete decision propagation | M | High | Q-001–Q-015 affect every feature | convergence scan for legacy roles, OQ-003 and unscoped contracts | Spec owner | 001-007 |

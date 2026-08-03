@@ -1,6 +1,6 @@
 # Feature 001 — Platform foundation
 
-Status: IMPLEMENTATION READY within documented scope  
+Status: PARTIALLY READY — Q-001 through Q-015 propagated; Q-016, Q-020, Q-024, and Q-026 remain open where applicable  
 Logical owner: product owner with domain approval  
 Actor: authenticated user  
 Dependencies: none
@@ -17,18 +17,17 @@ A user can authenticate, load the application shell, enforce roles and run on sh
 
 - Rewriting unrelated legacy behavior.
 - SPA or public API.
-- Multi-tenant data isolation unless OQ-003 is resolved.
+- Separate tenant databases, custom tenant domains, impersonation, and cross-tenant economic analytics are out of scope; tenant isolation itself is mandatory under Feature 007.
 - Untraced formula changes.
 - Background workers or real-time notifications.
 
 ## Actors
 
-| Role | Operations | Limits |
+| Actor | Scope | Constraint |
 |---|---|---|
-| Administrator | all feature operations | no bypass of domain invariants |
-| Administrator | all normal business operations | cannot alter platform bootstrap secrets |
-| Editor | read and permitted business writes from authorization contract | no settings/role administration |
-| Viewer | read, print and permitted export | no writes |
+| Administrator | global platform operations and all approved operations inside an explicitly selected tenant | keeps Administrator identity; cannot bypass domain invariants or impersonate tenant users |
+| Editor | approved operations within exactly one assigned tenant | no user/global administration, import, migration, backup, restore, or cross-tenant access |
+| Viewer | complete read, print, and export access within exactly one assigned tenant | no writes, global operations, or cross-tenant access |
 
 ## User stories
 
@@ -73,19 +72,26 @@ When the first saves and the second submits stale data
 Then the second receives a concurrency conflict  
 And can reload current data before retrying.
 
+### AC-001-05 — Tenant context and role enforcement
+
+Given two active tenants and users for each product role, when protected routes and the application shell are used, then Administrator explicitly selects tenant context, Editor and Viewer remain fixed to their tenant, side navigation and breadcrumbs show the current tenant, and another tenant's route/identifier is denied server-side.
+
 ## Functional requirements
 
 | ID | Requirement | Acceptance |
 |---|---|---|
 | FR-001-001 | The application shall authenticate local users with email and password. | AC-001 |
 | FR-001-002 | Every protected route shall require authentication and an active user. | AC-002 |
-| FR-001-003 | The four legacy roles shall be represented and enforced by policies. | AC-003 |
+| FR-001-003 | The roles shall be exactly Administrator, Editor, and Viewer and shall be enforced server-side. | AC-003 |
 | FR-001-004 | The shell shall expose Dashboard, Expenses, Projects, Contracts, Master Data, Reports and Settings according to permission. | AC-004 |
 | FR-001-005 | Assets shall be precompiled and no Node.js runtime shall be required in production. | AC-005 |
 | FR-001-006 | The scheduler shall be invokable by one cron entry and shall use overlap prevention. | AC-006 |
-| FR-001-007 | Application timezone shall be Europe/Rome, locale Italian, currency EUR. | AC-007 |
-| FR-001-008 | Settings writes shall be restricted to Administrator and Administrator. | AC-008 |
+| FR-001-007 | Platform shall use UTC storage and apply the current tenant language, timezone, currency, and default VAT configuration to tenant-facing output. | AC-007 |
+| FR-001-008 | Global settings, tenant lifecycle, tenant users, and tenant settings writes shall be restricted to Administrator. | AC-008 |
 
+| FR-001-009 | Tenant-bound routes shall require explicit valid tenant context; current tenant shall be visible in side navigation and breadcrumbs. | AC-001-05 |
+| FR-001-010 | Only Administrator shall create, deactivate, reactivate, and manage tenant users; Editor and Viewer belong to exactly one tenant. | AC-001-05 |
+| FR-001-011 | Tenant creation shall require display name, unique code, currency, language, timezone, and default VAT rate; application shell branding remains Master Plan IT. | AC-001-05 |
 ## Non-functional requirements
 
 | ID | Measure | Threshold and verification |
@@ -105,11 +111,17 @@ And can reload current data before retrying.
 | INV-PLT-003 | Production release contains a Vite manifest and compiled assets. | DomainConflict | TEST-001-003 |
 | INV-PLT-004 | No initial feature requires a permanent worker. | DomainConflict | TEST-001-004 |
 
+| INV-TEN-001 | Missing or unauthorized tenant context fails closed and cannot expose another tenant. | DomainConflict | TEST-007-002 |
+
 ## Clarifications
 
 ### Resolved from repository
 
 The feature preserves the verified rules listed in `docs/replatform/source-traceability.md` and `current-state.md`.
+
+### Approved product decisions
+
+Q-001–Q-005 and Q-010, Q-012, Q-013, Q-015 define the three roles, tenant users, explicit context, tenant settings, and shell branding. Feature 007 and `docs/replatform/approved-decisions.md` are normative for tenant scope.
 
 ### Proposed target
 
@@ -117,4 +129,4 @@ Optimistic concurrency uses an integer `lock_version`; updates include the expec
 
 ### Unresolved
 
-Only questions listed in `docs/replatform/open-questions.md`; none delegates architecture to the coding agent.
+Questions Q-016 onward in `docs/replatform/product-clarification-register.md` and the remaining items in `docs/replatform/open-questions.md`; none may be resolved implicitly by the coding agent.

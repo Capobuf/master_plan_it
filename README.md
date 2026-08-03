@@ -13,9 +13,10 @@ Read in this order:
 
 1. `.specify/memory/constitution.md`;
 2. `docs/replatform/README.md`;
-3. `docs/replatform/product-clarification-register.md`;
-4. `docs/replatform/clarification-log.md`;
-5. `specs/007-tenancy-and-access-control/spec.md`;
-6. feature specifications `001` through `006`.
+3. `docs/replatform/approved-decisions.md`;
+4. `docs/replatform/product-clarification-register.md`;
+5. `docs/replatform/clarification-log.md`;
+6. `specs/007-tenancy-and-access-control/spec.md`;
+7. feature specifications `001` through `006`.
 
 The approved product decisions `Q-001` through `Q-015` are propagated into the package. Questions `Q-016` onward remain explicitly open and must not be guessed by an implementation agent.

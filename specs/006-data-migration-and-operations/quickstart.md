@@ -32,3 +32,9 @@ Create one user for each role and the minimum records required for migration run
 ## Cleanup
 
 Drop the disposable test database or run `migrate:fresh` only in the test environment. Never use cleanup commands against production.
+
+## Tenant validation
+
+- Read Feature 007 before coding.
+- Seed at least two tenants and test same-tenant allow plus other-tenant deny.
+- Verify reports, exports, attachments, direct links, and commands never return unscoped data.

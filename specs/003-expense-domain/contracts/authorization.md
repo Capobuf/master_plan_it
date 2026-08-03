@@ -5,7 +5,7 @@ Purpose: authorization matrix, policy abilities, row scoping and deny behavior.
 
 ## Inputs
 
-All input is represented by a typed Data/Filter object. IDs are target IDs; imported references retain legacy IDs separately. Money enters as normalized decimal strings. Dates use ISO `YYYY-MM-DD`. The actor is explicit and authorization occurs before protected data is returned.
+All input is represented by a typed Data/Filter object. IDs are target IDs; imported references retain legacy IDs separately. Money enters as normalized decimal strings. Dates use ISO `YYYY-MM-DD`. The actor and current tenant context are explicit. Authorization and tenant ownership checks occur before protected data or file metadata is returned.
 
 ## Output
 
@@ -21,13 +21,13 @@ Writes open one transaction inside the owning Action. Lock only cross-record con
 
 ## Authorization
 
-| Ability | Administrator | Administrator | Editor | Viewer |
+| Ability | Administrator | Editor same tenant | Viewer same tenant | User other tenant |
 |---|---:|---:|---:|---:|
-| viewAny/view | yes | yes | yes, scoped | yes, scoped |
-| create/update | yes | yes | only where feature spec grants | no |
-| delete | yes | yes | no unless verified current permission is explicitly preserved | no |
-| export/print | yes | yes | yes, scoped | yes, scoped |
-| administer | yes | feature-specific | no | no |
+| viewAny/view | Allow where contract permits, in explicit tenant context or global operational scope | Allow for assigned tenant | Allow read-only for assigned tenant | Deny |
+| create/update | Allow where contract and invariant permit | Allow only where the feature-specific clause grants | Deny | Deny |
+| delete/archive | Only where explicitly specified; never bypass immutable history | Only where explicitly granted; never immutable history | Deny | Deny |
+| export/print | Tenant-scoped; global exports contain operational metadata only | Tenant-scoped | Tenant-scoped | Deny |
+| administer/global operation | Allow | Deny | Deny | Deny |
 
 ## Audit/logging
 
@@ -48,4 +48,8 @@ Read the local plan and data model. Implement exactly authorization matrix, poli
 
 ## Feature-specific policy rules
 
-Administrator and Administrator have full expense operations. Editor may create and update expenses but cannot delete economic history or alter an Actual through replacement. Viewer is read/print/export only.
+- Administrator and Editor may create/update expenses and add Estimate, Quote, and Actual rows in the selected/assigned tenant.
+- Administrator and Editor may replace non-Actual rows and manage plafond.
+- Recorded Actual and economic history cannot be modified, replaced, or deleted by any role.
+- Viewer may read, print, and export all same-tenant expense data and attachments.
+- Import remains Administrator-only under Q-009.

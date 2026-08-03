@@ -1,5 +1,13 @@
 # Migration contract
 
+## Approved product boundary
+
+- Each Frappe site represents one customer.
+- The verified scope is one active site imported into one explicitly selected tenant.
+- Manual entry or CSV export/import are both permitted.
+- Only Administrator may run the operation.
+- A reusable generalized multi-site platform is out of scope.
+
 ## Exchange package
 
 ```
@@ -15,7 +23,7 @@ MPIT Expense Row.csv
 attachments/
 ```
 
-Manifest fields: format_version, source_repository, source_sha, exported_at_utc, file list, row count, SHA-256, delimiter, encoding, attachment count/hash. Reject unknown format versions or hash mismatches before staging.
+The selected target tenant is immutable for the migration run. Manifest fields: format_version, source_repository, source_sha, exported_at_utc, file list, row count, SHA-256, delimiter, encoding, attachment count/hash. Reject unknown format versions or hash mismatches before staging.
 
 ## Field mapping
 
@@ -47,7 +55,7 @@ Stage all → years → cost centers first pass → cost-center parents → vend
 
 ## Idempotency
 
-`migration_runs.manifest_sha256` is unique. `legacy_id_map` is unique on `(source_doctype, legacy_id)`. Apply mode upserts only records created by the same migration lineage and refuses to overwrite user-modified target records.
+`migration_runs.manifest_sha256` is unique. `legacy_id_map` is unique on `(tenant_id, source_doctype, legacy_id)`. Apply mode upserts only records created by the same migration lineage and refuses to overwrite user-modified target records.
 
 ## Dry run and cutover
 
