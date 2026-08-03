@@ -1,102 +1,123 @@
-# Implementation plan — Contracts and projects
+# Implementation plan — Feature 004 Contracts and projects
 
-## 1. Summary
+Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW`  
+Dependencies: Features 001–003 and 007; shared revision/audit infrastructure
 
-Implement manage project decisions and date-versioned contracts that generate authoritative expense rows as one vertical slice in the modular Laravel monolith. Domain writes use explicit Actions; reusable reads use Query objects; authorization is checked before loading or mutating protected data.
+## Summary
 
-## 2. Technical context
+Implement projects as decision context and contracts as term-based generators of Actual rows. A generated occurrence has one immutable source key. Synchronization creates or updates only a system-managed Actual `ToConfirm`; manual modification or confirmation makes it user-authoritative. Deletion may allow regeneration or create a non-economic suppression exception. Contracts/projects never contribute independent monetary totals.
 
-| Item | Fixed value |
-|---|---|
-| Language/framework | PHP 8.3+, Laravel 13 |
-| Database | MySQL 8 InnoDB, strict mode, utf8mb4 |
-| UI | Blade; Livewire 4 where listed; Alpine local visual state; Tailwind 4; Preline |
-| Test | Pest; Dusk only where listed |
-| Time/locale/currency | UTC storage; Europe/Rome display; `it`; EUR |
-| Money | decimal strings/BCMath; MySQL decimal; no float authority |
-| Hosting | shared PHP/MySQL compatible; precompiled assets; cron; sync queue |
-| Browser target | latest two stable Chromium/Firefox, current Safari |
+## Constitution check
 
-## 3. Constitution check — pre-design
+Passes C-03, C-04, C-05, C-07, C-10, C-11, C-12 and C-13. Economic observers, duplicate source rows, silent overwrite, project/contract totals and hidden regeneration are prohibited.
 
-All C-01..C-10 pass. No internal API, worker daemon, generic repository, observer economic side effect, or independent contract/project total is introduced.
+## Target files
 
-## 4. Current-to-target mapping
+### Persistence
 
-The legacy source and target IDs are listed in `docs/replatform/source-traceability.md`. Framework lifecycle is replaced by explicit Actions while economic outputs remain equivalent.
+- `Project`, `Contract`, `ContractTerm`, `ContractGenerationException` models and migrations;
+- enums `ProjectStage`, `BillingCycle`;
+- source key value object/normalizer.
 
-## 5. Target structure and dependency rule
+### Project Actions
 
-Files belong to the smallest real domain area. Models do not call other domain Actions from observers. UI classes may invoke listed Actions/Queries only.
+- `CreateProject`, `UpdateProject`, `ChangeProjectStage`, `DeleteProject`, `RestoreProjectRevision`;
+- `PromoteDeferredProjects` bounded Action and command.
 
-## 6. File implementation map
+### Contract Actions
 
-| Target path | Type | Responsibility | Requirements | Test |
-|---|---|---|---|---|
-| `app/Models/Project.php` | model | project decision context | FR-004-001, FR-004-010 | corresponding test |
-| `app/Models/Contract.php` | model | contract header | FR-004-001, FR-004-010 | corresponding test |
-| `app/Models/ContractTerm.php` | model | date-versioned term | FR-004-001, FR-004-010 | corresponding test |
-| `app/Domain/Projects/Enums/ProjectStage.php` | enum | five stages | FR-004-001, FR-004-010 | corresponding test |
-| `app/Domain/Projects/Actions/ChangeProjectStage.php` | action | stage transition | FR-004-001, FR-004-010 | corresponding test |
-| `app/Domain/Projects/Actions/PromoteDeferredProjects.php` | action | scheduled promotion | FR-004-001, FR-004-010 | corresponding test |
-| `app/Domain/Contracts/Actions/SaveContract.php` | action | term validation/renewal | FR-004-001, FR-004-010 | corresponding test |
-| `app/Domain/Contracts/Actions/SynchronizeContractExpenses.php` | action | append-missing generation | FR-004-001, FR-004-010 | corresponding test |
-| `app/Domain/Contracts/Services/ContractAnnualizer.php` | service | term/year contribution | FR-004-001, FR-004-010 | corresponding test |
-| `app/Console/Commands/PromoteDeferredProjectsCommand.php` | command | idempotent scheduled command | FR-004-001, FR-004-010 | corresponding test |
-| `app/Livewire/Projects/ProjectIndex.php` | Livewire | project register/editor | FR-004-001, FR-004-010 | corresponding test |
-| `app/Livewire/Contracts/ContractEditor.php` | Livewire | term timeline/editor | FR-004-001, FR-004-010 | corresponding test |
-| `tests/Feature/Contracts/ContractSynchronizationTest.php` | test | idempotency/no overwrite | FR-004-001, FR-004-010 | corresponding test |
-| `tests/Feature/Projects/ProjectStageTest.php` | test | stage/scheduler | FR-004-001, FR-004-010 | corresponding test |
+- `CreateContract`, `UpdateContract`, `DeleteContract`, `RestoreContractRevision`;
+- `SynchronizeContractOccurrences`;
+- `DeleteGeneratedExpense` coordinating Feature 003 delete plus regeneration choice;
+- `SuppressContractOccurrence`, `ResumeContractOccurrence`, `ResumeAndGenerateOccurrence`, `GenerateContractOccurrenceForYear`;
+- `ConfirmActual` remains Feature 003-owned.
 
-## 7. Database design
+### Queries/UI
 
-Create migrations in dependency order and use restrictive foreign keys. Every editable aggregate has `lock_version`. Every migrated table has nullable `legacy_id` plus a scoped unique key. Precise feature columns are specified in `data-model.md` and contracts; no JSON substitutes for relational fields.
+- `ProjectListQuery`, `ContractListQuery`, `ContractDetailQuery`, `ContractGenerationHistoryQuery`;
+- one Policy per resource plus explicit generation Gates;
+- Filament Project/Contract Resources, term repeater/timeline and generation-history relation/page.
 
-## 8. Eloquent rules
+No `ContractAnnualizer` service unless tests prove a reusable calculation independent from generation; term values use shared Money/VAT services.
 
-Models use guarded attributes, enum/date/decimal casts, explicit relationships and query scopes. They contain no economic observer side effects. Factories create valid defaults and named invalid states for tests.
+## Project rules
 
-## 9. Domain operation contract
+- stages: Idea, Proposed, Approved, Deferred, Rejected;
+- Deferred requires same-tenant target planning year;
+- promotion command moves eligible Deferred to Proposed once, under optimistic concurrency;
+- project has no persisted total;
+- stage is read by the economic kernel; an Actual remains primary regardless of later stage.
 
-Each write Action exposes one `execute(Data $data, User $actor, ?int $expectedVersion): Result` method, authorizes the operation, validates invariants, opens the transaction, locks rows only when cross-record consistency requires it, persists, audits, and returns a typed result. Domain conflicts use stable error codes.
+## Contract/term transaction
 
-## 10. Transaction and concurrency
+Contract save receives complete intended term set with explicit deletions. It locks the contract/current terms, validates same-tenant vendor/cost center, date order, non-overlap, billing cycle and decimal values, calculates term Net/VAT/Gross and records one revision batch.
 
-Open transactions inside Actions, not controllers. Use `SELECT ... FOR UPDATE` for replacement targets, referenced plafond consumption snapshots, contract sync source-key checks and migration map creation. Optimistic `lock_version` protects user edits. Deadlock retry is limited to three attempts through a shared transaction helper and logs correlation IDs.
+Missing existing terms are not implicitly deleted unless explicitly marked, avoiding UI serialization loss.
 
-## 11. Routes and navigation
+Auto-renew creates at most one successor term with stable lineage and no overlap; it does not generate duplicate expenses.
 
-Use named routes under authenticated/active middleware. Every handler references a policy ability. Livewire query-string state is limited to filters, sort and page; unsaved form data is never placed in URL.
+## Source identity
 
-## 12. UI composition
+Normalized source key includes tenant, contract, term/rule, planning year and occurrence identity. Persist the readable component columns plus a SHA-256 key or canonical string; unique index includes tenant. The key cannot change after occurrence creation.
 
-Each screen has page header, breadcrumbs, primary action, filter bar where applicable, content table/form, empty/loading/error states, inline validation and focus restoration. Preline components are wrapped in local Blade components; dynamic dropdowns/modals are reinitialized through `resources/js/preline.ts` after Livewire navigation/render.
+Generation transaction locks the source-key range/current occurrence and exception. It then:
 
-## 13. Reporting/export boundary
+- returns existing user-authoritative occurrence without mutation;
+- updates allowed derived fields on existing system-managed ToConfirm row;
+- skips a suppressed occurrence;
+- creates exactly one missing ToConfirm Actual through Feature 003 Action;
+- audits result and returns a typed status.
 
-Where this feature exposes datasets, the Query object is the sole semantic source. Export and print accept the same immutable filter DTO and row DTOs as the screen.
+## System-managed boundary
 
-## 14. Error model
+Allowed automatic updates are only fields derived from contract term/rule: description, vendor, cost center, quantity/price/VAT/date/distribution and calculated values. Manual update or confirmation sets `is_system_managed=false`. Synchronization never resets that flag.
 
-| Category | User response | Technical behavior |
-|---|---|---|
-| Validation | field-level 422 | no transaction or rollback |
-| Authorization | generic 403 | no existence leakage |
-| Domain conflict | translated invariant message, 409 | rollback; stable error code |
-| Concurrency | reload-required 409 | rollback; current version logged |
-| Unexpected | correlation ID, 500 | sanitized log with stack |
+Later correction, revision restore or deletion uses Feature 003 Actions and may not alter the immutable source key. Restoring a generated row as system-managed is denied unless the restored snapshot and current history prove it was never manually modified/confirmed; default safe outcome is user-authoritative.
 
-## 15. Test strategy
+## Deletion and suppression
 
-Write unit tests for calculators/value objects, feature tests for Actions/policies/routes, Livewire tests for state/validation, and Dusk only for JavaScript lifecycle, responsive menu geometry, focus and print. Each task lists exact tests.
+`DeleteGeneratedExpense` requires explicit `allow_regeneration` boolean:
 
-## 16. Implementation sequence
+- true: delete current expense; no exception; future sync may recreate;
+- false: delete and insert one generation exception for the source key.
 
-enums/value objects → migrations → models/factories → invariant tests → services → Actions → policies → Queries → routes/UI → exports/commands → browser smoke → documentation reconciliation.
+Resume deletes the exception after authorization/audit. Resume-and-generate performs both inside one transaction. Manual-year generation validates applicability, missing source and suppression state.
 
-## 17. Constitution check — post-design
+## Notifications
 
-Pass. Complexity deviations: none.
-## Feature 007 dependency
+Daily bounded command evaluates renewal thresholds 30/7/1 and expiration, creates deduplicated database notifications for recipients with permission and attempts optional sync email. Mail failure is visible and does not remove the database notification.
 
-This feature is tenant-bound. Before implementation, read Feature 007 completely and propagate explicit tenant ownership, current-context resolution, role abilities, fail-closed cross-tenant behavior, audit actor+tenant attribution, and isolation tests into every listed file. Product questions still marked `OPEN` in the clarification register cannot be decided by the coding agent.
+## Revision behavior
+
+Project/contract/term saves create aggregate revision batches. Restore uses owning Actions and validates current term overlap, tenant references and generated history. Restore never deletes/rewrites generated expenses or exceptions and cannot recreate a duplicate source key.
+
+## Tests
+
+- project stage/deferred target/promotion/idempotency;
+- project bucket fixtures consumed later by kernel;
+- contract term overlap, auto-renew, concurrency and revisions;
+- source-key uniqueness/idempotent create/update;
+- system-managed versus manual/confirmed no-overwrite;
+- delete allow-regeneration versus suppress;
+- resume, resume-and-generate and selected-year applicability;
+- restore cannot duplicate/rewrite generated history;
+- tenant/permission isolation;
+- notification thresholds/dedup/email failure.
+
+Dusk is limited to term editor and regeneration-choice/history controls when browser behavior cannot be proven with Livewire tests.
+
+## Sequence
+
+1. project/contract schemas, enums, factories;
+2. project Actions/tests;
+3. contract term Money/overlap/revision Actions/tests;
+4. source-key and generation exception schema;
+5. synchronization and generation matrix tests;
+6. deletion/suppression/resume Actions;
+7. notifications;
+8. policies/queries/Filament UI;
+9. full accounting/tenant/browser verification.
+
+## Post-design check
+
+Pass. Generation remains explicit, idempotent and subordinate to the Expense aggregate.
