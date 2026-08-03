@@ -1,50 +1,88 @@
-# Contract — Economic Position
+# Contract — Canonical economic dataset
 
 Feature: `005-reporting-and-analytics`  
-Purpose: authoritative columns/formulas/grouping and summary.
+Status: `PROPOSED TARGET — PLAN COMPLETE`  
+Purpose: current Budget, dashboard, reports, print, export and current-side comparison.
 
-## Inputs
+## Input
 
-All input is represented by a typed Data/Filter object. IDs are target IDs; imported references retain legacy IDs separately. Money enters as normalized decimal strings. Dates use ISO `YYYY-MM-DD`. The actor and current tenant context are explicit. Authorization and tenant ownership checks occur before protected data or file metadata is returned.
+`EconomicScope` contains:
+
+- authorized tenant and planning year;
+- dataset identity `current`;
+- official basis `net|gross`;
+- typed filters, grouping and order;
+- output scope `filtered|complete_report_year`;
+- detail mode `none|page|all`;
+- page/per-page only for `page`.
+
+Tenant and authorization are resolved before query execution. User-supplied tenant override is never accepted.
+
+## Current source
+
+Only current non-deleted Expense and ExpenseRow records. Project/contract/master data are read context. Operational versions, audit, deleted rows, generation exceptions, scenarios and BudgetVersion rows are excluded.
 
 ## Output
 
-Return a typed result or dataset. Domain writes return affected IDs, new `lock_version`, calculated values and audit correlation ID. Read datasets declare every column, type, ordering and total; views do not append hidden calculations.
+`EconomicDataset` contains:
 
-## Preconditions and invariants
+- tenant/year/dataset/output metadata;
+- normalized effective filters/grouping/order;
+- official basis and exact Net/VAT/Gross components;
+- `EconomicSummary`;
+- grouped summaries;
+- rows according to detail mode;
+- pagination metadata when applicable.
 
-Apply the feature FR/INV IDs from `../spec.md`. Missing prerequisites produce validation errors; stale versions produce 409; invariant conflicts produce stable `MPIT_005_*` codes; permission failure produces 403 without confirming hidden record existence.
+Every monetary value is a normalized decimal string. Chart adapters may create non-authoritative numeric copies only after server calculation.
 
-## Transaction and idempotency
+## Formula contract
 
-Writes open one transaction inside the owning Action. Lock only cross-record consistency rows. Retrying the same idempotency/source key cannot create duplicates. Rollback removes all partial database side effects; file writes use temporary paths and finalize only after database success, with compensating cleanup on failure.
+`EconomicEngine` alone implements:
+
+- independent Estimate/Quote/Actual components;
+- Actual ToConfirm/Confirmed split;
+- project `primary|proposed|idea|excluded` buckets;
+- all Actual for year in primary;
+- non-official potential;
+- Extra;
+- Plafond allocated/consumed/residual/overrun and no-double-count contribution;
+- Net/VAT/Gross totals and grouping reconciliation.
+
+No consumer or SQL expression duplicates these rules.
+
+## Output scopes
+
+### `filtered`
+
+Uses all authorized active filters displayed by the screen.
+
+### `complete_report_year`
+
+Keeps tenant, report/dataset, year, authorization, ordering contract, language, timezone, currency and basis; removes only transient narrowing filters. The actor selects it explicitly.
+
+Metadata and audit record the scope. No output silently changes scope.
+
+## Empty result
+
+Returns exact defined zero summaries, empty groups/rows and prerequisite guidance codes. It never invents example rows.
+
+## Performance
+
+Dashboard uses detail none; reports use page; capture/export use all. The contract permits lazy row iteration only when summary, ordering, checksum and transaction snapshot remain identical.
 
 ## Authorization
 
-| Ability | Administrator | Editor same tenant | Viewer same tenant | User other tenant |
-|---|---:|---:|---:|---:|
-| viewAny/view | Allow where contract permits, in explicit tenant context or global operational scope | Allow for assigned tenant | Allow read-only for assigned tenant | Deny |
-| create/update | Allow where contract and invariant permit | Allow only where the feature-specific clause grants | Deny | Deny |
-| delete/archive | Only where explicitly specified; never bypass immutable history | Only where explicitly granted; never immutable history | Deny | Deny |
-| export/print | Tenant-scoped; global exports contain operational metadata only | Tenant-scoped | Tenant-scoped | Deny |
-| administer/global operation | Allow | Deny | Deny | Deny |
-
-## Audit/logging
-
-Record business state changes, actor, old/new values and correlation ID. Do not log passwords, session tokens, full attachments or unredacted migration source rows. Expected validation failures are not error logs.
+Separate permissions cover view, filtered export, complete export and print. Every path includes one tenant. Other-tenant IDs return safe not-found/denial.
 
 ## Test contract
 
-1. valid input returns/persists exact expected values;
-2. each invariant has one focused failure test;
-3. unauthorized role cannot read/write outside its scope;
-4. stale version and duplicate idempotency key are deterministic;
-5. transaction rollback leaves no partial records/files;
-6. any screen/export using this contract matches the same dataset.
-
-## Feature-specific clauses
-
-Read the local plan and data model. Implement exactly authoritative columns/formulas/grouping and summary. Do not reuse this file as a generic abstraction for other domains; shared behavior belongs only in an explicitly listed shared helper.
-## Tenant clauses
-
-Economic Position requires one current tenant and cannot accept an unvalidated tenant override. Screen, chart, print, CSV, and XLSX use the same tenant-scoped dataset.
+1. every rule has a pure engine fixture;
+2. query excludes every non-current source;
+3. tenant and permission isolation;
+4. summary equals grouped/row reconciliation;
+5. dashboard/report/print/CSV/XLSX/version capture parity;
+6. filtered and complete scopes are distinct and explicit;
+7. empty result defined;
+8. 10,000-row query count/memory/EXPLAIN recorded;
+9. no Eloquent model escapes as public dataset contract.
