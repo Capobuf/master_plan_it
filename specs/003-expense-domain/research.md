@@ -1,19 +1,23 @@
-# Research — Expense domain
+# Research — Feature 003 Expense domain
 
-Verification date: 2026-08-02. The implementation agent must re-check official documentation if versions have advanced.
+Verification date: 2026-08-03. Package research is centralized in `docs/replatform/technical-research.md`.
 
-| Decision ID | Problem | Decision | Compatibility/source class | Rejected alternative | Revisit condition |
-|---|---|---|---|---|---|
-| RES-003-001 | Framework baseline | Laravel 13 on PHP 8.3+ | Official Laravel deployment docs | Older Laravel baseline | Security/support change |
-| RES-003-002 | Stateful server UI | Blade by default; Livewire 4 only for dynamic expense register, expense editor | Official Livewire lifecycle docs | SPA/Inertia | Proven UX requirement impossible server-side |
-| RES-003-003 | UI components | Tailwind 4 + Preline with central re-init adapter | Official Tailwind/Preline docs | second general UI library | Accessibility/maintenance failure |
-| RES-003-004 | Tests | Pest feature/unit; Dusk only for browser lifecycle | Official Laravel/Pest docs | full browser-only suite | none |
-| RES-003-005 | Hosting | synchronous requests/commands and cron | Laravel scheduler/deployment docs | Redis/worker daemon | hosting contract changes |
+| ID | Decision | Reason | Rejected |
+|---|---|---|---|
+| RES-003-001 | BCMath application value objects | Exact decimal arithmetic without float or additional money package. | floats, database-only calculation |
+| RES-003-002 | Persist inputs at 6 decimals and business outputs at 2 | Matches allocation precision and reporting boundaries. | storing only one amount or arbitrary JSON |
+| RES-003-003 | Independent Estimate/Quote/Actual | Product decision Q-037; no unsupported workflow. | phase state machine |
+| RES-003-004 | One current row plus snapshot revisions | Product/Constitution C-05/C-12. | replacement graph/current duplicates |
+| RES-003-005 | Overtrue 6.0 snapshot + Mansoor UI through application Actions | Compatible target; snapshot is safer than plugin DIFF strategy. | direct package restore or custom version framework |
+| RES-003-006 | Soft delete as infrastructure | Supports active-domain deletion and controlled restore/history access. | hard delete or state enum as deletion |
+| RES-003-007 | Full aggregate save with explicit deletions | Preserves transactional editor UX without accidental missing-row deletion. | one request per field/row or implicit diff delete |
+| RES-003-008 | No deadlock retry initially | Retrying non-idempotent aggregate writes can hide conflicts. | generic three-retry helper |
+| RES-003-009 | Native Filesystem attachment table | Small explicit lifecycle and tenant requirements. | Media Library |
 
-## Package ownership
+## Executable gates
 
-No package may be introduced without listing the exact feature, file and reason here. Laravel standard facilities are mandatory when sufficient. For this feature, third-party runtime packages are limited to Livewire, Preline, Chart.js only where listed in `plan.md`; CSV uses standard streaming. XLSX/PDF remain adapter contracts until selected.
-
-## Required tenancy research
-
-Before implementation, consult current official Laravel authorization/middleware/filesystem/scheduler documentation and official database constraint/index documentation. Validate the simplest implementation that proves tenant isolation; do not choose a tenancy package without a concrete requirement and documented trade-off.
+- package snapshot/actor/batch smoke;
+- restore through owning Action, including deleted aggregate;
+- exact allocation/accounting fixture parity;
+- MySQL source-key and tenant constraint tests;
+- no float/accessor/observer formula architecture test.
