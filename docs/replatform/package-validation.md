@@ -1,6 +1,6 @@
 # Package validation
 
-Status: `SECOND REMEDIATION PACKAGE — RE-ANALYSIS PENDING`
+Status: `SECOND REMEDIATION PACKAGE — RE-ANALYSIS REQUIRED ON INTEGRATED BASE`
 
 Scope: second task remediation based on `laravel-replatform` commit `eb75be04d600f5c9ada954da0593ab0a13d94ff8`.
 
@@ -77,4 +77,4 @@ No Laravel scaffold, Composer/frontend resolution, migration, static/accounting/
 
 ## Next command
 
-After review and merge: repeat `/speckit.analyze` and require CRITICAL `0` and HIGH `0`.
+Integration state is read from GitHub PR metadata. On the integrated remediation base, repeat `/speckit.analyze` and require CRITICAL `0` and HIGH `0`.
