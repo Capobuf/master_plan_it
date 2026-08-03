@@ -80,13 +80,13 @@ Given an Inactive tenant, tenant users cannot log in or access tenant resources.
 
 Given a deactivated tenant user, existing authorship and audit references remain, tenant-owned records remain manageable by authorized users, and open assignments are flagged for manual reassignment.
 
-### AC-007-09 — Single-tenant outputs
+### AC-007-09 — Single-tenant output scope
 
-Given any economic report, print, export, scenario, budget version, or tenant package, the output contains exactly one tenant. Global export includes approved operational metadata only.
+Given any economic report, print, export, scenario, budget version, or tenant package, the output contains exactly one tenant. An authorized actor explicitly chooses either the current filtered result or a complete selected report/year scope. Administrator enters tenant context first. Global export includes approved operational metadata only.
 
-### AC-007-10 — Audit access and retention
+### AC-007-10 — Audit access, configuration, and retention
 
-Given an actor with `audit.view`, same-tenant audit is readable. Audit export is unavailable at launch. Administrator may read global audit. Events older than 24 months are removed by the explicit retention operation without deleting business records or named budget versions.
+Given an actor with `audit.view`, same-tenant audit is readable. Audit export is unavailable at launch. Administrator may read global audit and configure the installation-wide audit-retention period, which defaults to 24 months. The retention operation uses the current setting at execution time and never deletes business records, named budget versions, or required revision identity. Lowering the configured period requires reinforced confirmation because the next run may delete older events; later increasing it does not restore removed events.
 
 ### AC-007-11 — Password management
 
@@ -115,13 +115,14 @@ Given the one active Frappe site and a selected tenant, import keeps that tenant
 | FR-007-013 | Tenant lifecycle shall be Active/Inactive; permanent tenant deletion shall be unavailable. | AC-007-07 |
 | FR-007-014 | Inactive tenant shall deny tenant-user access while Administrator retains otherwise authorized access and reactivation. | AC-007-07 |
 | FR-007-015 | User deactivation shall preserve authorship/audit, retain tenant ownership, and flag open assignments for manual reassignment. | AC-007-08 |
-| FR-007-016 | Economic outputs shall contain exactly one tenant; the global overview/export shall contain operational data only. | AC-007-09 |
-| FR-007-017 | Audit shall be retained 24 months; audit view shall be permission-controlled; audit export shall be absent at launch. | AC-007-10 |
+| FR-007-016 | Every economic output shall contain exactly one tenant and explicitly identify filtered or complete selected report/year scope; the global overview/export shall contain operational data only. | AC-007-09 |
+| FR-007-017 | Audit retention shall default to 24 months and be configurable installation-wide only by Administrator; audit view shall be permission-controlled and audit export absent at launch. | AC-007-10 |
 | FR-007-018 | No tenant-user self-service password recovery shall be exposed; Administrator reset and authenticated self-change shall be supported. | AC-007-11 |
 | FR-007-019 | Global Administrator emergency password reset shall use an explicit interactive Artisan command with hidden input and session invalidation. | AC-007-11 |
 | FR-007-020 | The verified migration shall map one Frappe site to one immutable selected tenant with staging, quarantine, reconciliation, and approval. | AC-007-12 |
 | FR-007-021 | Tenant report/print branding shall use approved tenant settings while the application shell remains Master Plan IT. | AC-007-09 |
 | FR-007-022 | Administrator global overview shall show only approved operational indicators and no behavioral telemetry or cross-tenant economics. | AC-007-09 |
+| FR-007-023 | Reducing the audit-retention setting shall require reinforced confirmation and the next retention run shall use the current configured value without reconstructing previously removed events. | AC-007-10 |
 
 ## Non-functional requirements
 
@@ -143,11 +144,11 @@ Given the one active Frappe site and a selected tenant, import keeps that tenant
 | INV-TEN-003 | A tenant user belongs to exactly one tenant; Administrator has no tenant membership. | DomainConflict | TEST-007-003 |
 | INV-TEN-004 | Every tenant-owned relationship stays inside one tenant. | DomainConflict | TEST-007-004 |
 | INV-TEN-005 | Tenant deactivation never deletes tenant data. | DomainConflict | TEST-007-005 |
-| INV-TEN-006 | No economic output contains more than one tenant. | DomainConflict | TEST-007-006 |
+| INV-TEN-006 | No economic output contains more than one tenant or silently changes between filtered and complete scope. | DomainConflict | TEST-007-006 |
 | INV-TEN-007 | Global overview contains no cross-tenant economic aggregation or behavioral telemetry. | DomainConflict | TEST-007-007 |
 | INV-TEN-008 | Tenant role configuration cannot grant protected platform or invariant-bypass abilities. | Authorization denial | TEST-007-008 |
 | INV-TEN-009 | Deactivated-user history is not reassigned or rewritten automatically. | DomainConflict | TEST-007-009 |
-| INV-TEN-010 | Audit retention never deletes current business records, revision identity, or named budget versions. | DomainConflict | TEST-007-010 |
+| INV-TEN-010 | Configured audit retention never deletes current business records, revision identity, or named budget versions. | DomainConflict | TEST-007-010 |
 
 ## Out of scope
 
