@@ -1,47 +1,51 @@
-# Contract — Financial Rules
+# Contract — Expense financial rules
 
 Feature: `003-expense-domain`  
-Purpose: amount, VAT, funding, date, allocation, lifecycle and totals.
+Status: `PROPOSED TARGET — PLAN COMPLETE`
 
-## Inputs
+## Monetary representation
 
-All input is represented by a typed Data/Filter object. IDs are target IDs; imported references retain legacy IDs separately. Money enters as normalized decimal strings. Dates use ISO `YYYY-MM-DD`. The actor and current tenant context are explicit. Authorization and tenant ownership checks occur before protected data or file metadata is returned.
+Authoritative PHP values are normalized decimal strings and immutable Money/VAT DTOs backed by BCMath. MySQL stores source/intermediate values at `DECIMAL(19,6)` and Net/VAT/Gross business results at `DECIMAL(19,2)`. Float is prohibited except non-authoritative chart copies after calculation.
 
-## Output
+## Amount
 
-Return a typed result or dataset. Domain writes return affected IDs, new `lock_version`, calculated values and audit correlation ID. Read datasets declare every column, type, ordering and total; views do not append hidden calculations.
+When non-zero unit price is supplied, entered amount equals quantity × unit price at high precision. Otherwise entered amount is manual. Invalid scale/range/exponent input returns `INVALID_MONEY`.
 
-## Preconditions and invariants
+Estimate/Quote Net cannot be negative. Actual may be negative. Types are independent and no predecessor is required.
 
-Apply the feature FR/INV IDs from `../spec.md`. Missing prerequisites produce validation errors; stale versions produce 409; invariant conflicts produce stable `MPIT_003_*` codes; permission failure produces 403 without confirming hidden record existence.
+## VAT
 
-## Transaction and idempotency
+A non-zero amount requires row VAT or tenant default. Input declares whether amount includes VAT. `VatCalculator` produces exact Net, VAT and Gross using documented half-up result rounding. Net + VAT must equal Gross at two decimals.
 
-Writes open one transaction inside the owning Action. Lock only cross-record consistency rows. Retrying the same idempotency/source key cannot create duplicates. Rollback removes all partial database side effects; file writes use temporary paths and finalize only after database success, with compensating cleanup on failure.
+Tenant Budget basis selects Net or Gross for primary display/comparison only; all three components remain persisted and versioned.
 
-## Authorization
+## Funding
 
-| Ability | Administrator | Editor same tenant | Viewer same tenant | User other tenant |
-|---|---:|---:|---:|---:|
-| viewAny/view | Allow where contract permits, in explicit tenant context or global operational scope | Allow for assigned tenant | Allow read-only for assigned tenant | Deny |
-| create/update | Allow where contract and invariant permit | Allow only where the feature-specific clause grants | Deny | Deny |
-| delete/archive | Only where explicitly specified; never bypass immutable history | Only where explicitly granted; never immutable history | Deny | Deny |
-| export/print | Tenant-scoped; global exports contain operational metadata only | Tenant-scoped | Tenant-scoped | Deny |
-| administer/global operation | Allow | Deny | Deny | Deny |
+Expense kind is Ordinary or Plafond. Extra and Plafond funding are mutually exclusive. Funded Plafond must be current, kind Plafond, same tenant and planning year; cost center may differ.
 
-## Audit/logging
+Plafond current reporting formula is owned by `EconomicEngine`, not persisted on Expense:
 
-Record business state changes, actor, old/new values and correlation ID. Do not log passwords, session tokens, full attachments or unredacted migration source rows. Expected validation failures are not error logs.
+- residual = max(allocated − consumed, 0);
+- overrun = max(consumed − allocated, 0);
+- primary contribution = allocated + overrun;
+- covered consumption is not counted again.
+
+## Dates/allocation
+
+Row uses either spend date or complete period start/end, never both. Distribution is `all|start|end`.
+
+`MonthlyAllocator` calculates high-precision shares, rounds business month values and applies residual deterministically so monthly sum equals row Net exactly.
+
+## Lifecycle/current totals
+
+Only current non-deleted rows contribute. Operational versions, audit, deleted rows, generation exceptions, scenarios and BudgetVersion rows never enter current totals.
+
+Actual confirmation records status/actor/time and ends system-managed contract synchronization; it does not prohibit later authorized correction/version/restore/delete.
+
+## Server authority
+
+Forms, models, SQL projections, Blade, Livewire, charts and exports cannot reimplement formulas. Expense Actions calculate persisted rows; `EconomicEngine` aggregates them.
 
 ## Test contract
 
-1. valid input returns/persists exact expected values;
-2. each invariant has one focused failure test;
-3. unauthorized role cannot read/write outside its scope;
-4. stale version and duplicate idempotency key are deterministic;
-5. transaction rollback leaves no partial records/files;
-6. any screen/export using this contract matches the same dataset.
-
-## Feature-specific clauses
-
-Read the local plan and data model. Implement exactly amount, VAT, funding, date, allocation, lifecycle and totals. Do not reuse this file as a generic abstraction for other domains; shared behavior belongs only in an explicitly listed shared helper.
+Golden/table cases cover zero, included/excluded VAT, negative Actual, quantity multiplication, half-cent boundaries, six-decimal inputs, each date/distribution mode, allocation residual, Extra/Plafond conflicts, current/deleted/history exclusion and Net/Gross basis. All assertions compare normalized decimal strings exactly.

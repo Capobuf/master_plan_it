@@ -1,66 +1,44 @@
 # Package validation
 
-Validation scope: documentation tree proposed by the product-clarification PR against `laravel-replatform`.
+Status: `DOCUMENTATION PLAN VALIDATED — EXECUTABLE LOCK/TEST VALIDATION PENDING`
 
-## Structural target
+Scope: branch `plan/replatform-3.0.1` against base `72262851ba4cf459654ec1a2684fa870b91664e4`.
 
-After removal of the temporary Q-016–Q-020 workflow and the stale hand-maintained file manifest, the proposed tree contains 107 Markdown files under the approved roots:
+## Convergence
 
-- `.specify/`;
-- `docs/`;
-- `specs/`;
-- root `README.md`.
+- Constitution 3.0.1 read and applied.
+- Q-001 through Q-041 closed; 0 open product questions.
+- Integrated plan, technical research, physical data-model overview, permission catalogue and error catalogue present.
+- Feature 001–007 `plan.md`, `research.md`, `data-model.md` and `quickstart.md` regenerated.
+- Current Expense, operational revisions, audit, deleted records, scenarios, generation exceptions and BudgetVersion remain distinct.
+- Shared economic kernel is one query, one pure engine and four DTOs.
+- RBAC is configurable tenant-scoped; Administrator remains protected without invariant bypass.
+- Actual confirmation stops sync but does not create permanent immutability.
+- Contract generation, suppression/resume/manual year and source-key rules are explicit.
+- Current Budget is rolling; BudgetVersion published snapshots are immutable.
+- Filtered/complete report scopes are explicit and one-tenant.
+- Audit retention is global configurable default 24; audit export absent.
+- Portability excludes audit, notifications, secrets and global settings.
+- Backup/restore is installation-wide; deployment uses immutable artifact.
 
-The PR adds:
+## Technical decisions
 
-- `docs/replatform/versioning-permissions-and-operations-contract.md`;
-- `specs/005-reporting-and-analytics/contracts/budget-versions.md`;
-- `specs/006-data-migration-and-operations/contracts/tenant-data-portability.md`.
+Target versions and boundaries are recorded in `technical-research.md` and ADRs. No package was installed. Exact dependency resolution/smoke is an implementation gate.
 
-It contains no Frappe or Laravel application implementation.
+`spatie/laravel-backup` 10.3.0 is conditional because published metadata and docs disagree on PHP floor. No fallback is approved.
 
-## Product convergence checks
+## Stale artifacts
 
-- Q-001 through Q-033 are answered; priority summary is 33 answered, 0 open.
-- Constitution is amended to 3.0.1 with Product Owner rationale and impact.
-- Protected global Administrator and configurable tenant roles replace fixed role-name authorization.
-- Editor and Viewer remain seeded role templates.
-- Expenses and Actual rows use one current identity plus operational revisions; permitted deletion removes them from current domain datasets.
-- Model revision history, audit, named budget versions, scenarios, generation exceptions, and current economic data are explicitly separate mechanisms.
-- Named budget versions are immutable tenant/year snapshots.
-- Contract generation includes visible occurrence history, delete/regeneration choice, suppression, resume, and one-year manual generation.
-- Installation backup/restore is whole-system; tenant data portability is separate and excludes audit events/global settings at launch.
-- Import target tenant is immutable; collisions/unassignable rows are quarantined; cutover requires zero unresolved blockers or approved exclusions.
-- Notifications are scheduler-driven, database-backed, optionally emailed synchronously, and require no permanent worker.
-- Tenant-user self-service password recovery is out of scope; Administrator reset and emergency global Artisan reset are defined.
-- Empty reporting, inactive vendor/cost-center lifecycle, and no behavioral telemetry are explicit.
-- Economic print/export scope is explicit: filtered current result or complete selected report/year, always one tenant.
-- Audit retention is an Administrator-only global setting with a 24-month default; no audit export exists at launch.
+Current `tasks.md`, legacy checklist/test-equivalence files and any contracts not explicitly regenerated remain non-authoritative until `/speckit.tasks` and `/speckit.analyze`. Old Git history is evidence only.
 
-## Known stale technical artifacts
+## Integrity
 
-`/speckit.clarify` changes product contracts but does not silently rewrite technical decisions. The following artifact classes require `/speckit.plan` and `/speckit.tasks` regeneration before implementation:
+Git object history/PR diff is the documentation integrity source. No hand-maintained whole-tree manifest.
 
-- plans, research notes, tasks, quickstarts, and checklists that reference fixed roles;
-- Feature 003 financial/editor/authorization contracts and accounting cases that reference `Active/Replaced/Cancelled` or immutable Actual;
-- Feature 004 contract-screen/data-model/tasks around generation history and exceptions;
-- Feature 005 dashboard/export/analytics contracts and tasks around versions/scenarios/output scope;
-- Feature 006 data model/reconciliation/deployment/tasks around portability and quarantine;
-- Feature 001/007 plans/tasks around package integration, password behavior, global audit-retention settings, and permission catalogue;
-- source traceability and test-equivalence mappings for amended target behavior.
+## Not performed
 
-These artifacts are not implementation-authoritative until regenerated and analyzed. Their continued presence is transparent technical debt, not an unresolved product question.
+No Laravel scaffold, Composer/frontend resolution, migration, static/accounting/application/browser test, workflow, ZIP build, backup, restore, host preflight, migration dry-run or deployment.
 
-## Integrity source
+## Next command
 
-Git object history and PR diff are the documentation integrity source. A hand-maintained whole-tree hash manifest is removed because every documentation update makes it stale and Git already provides content-addressed integrity. Release/package manifests, when needed, must be generated automatically from the exact artifact.
-
-## Verification limitation
-
-This validation does not claim that:
-
-- package Composer resolution or compatibility spikes ran;
-- Laravel code, migrations, tests, workflows, scheduler, backup, restore, packaging, hosting, or cutover ran;
-- real production export anomalies or hosting details were verified.
-
-The next valid command is `/speckit.plan`, followed by `/speckit.tasks` and `/speckit.analyze`.
+After Product Owner review: `/speckit.tasks`, then `/speckit.analyze`.

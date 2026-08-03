@@ -1,107 +1,91 @@
-# Contract — Named budget versions
+# Contract — Named BudgetVersion
 
 Feature: `005-reporting-and-analytics`  
-Status: `CLARIFIED — PLAN REQUIRED`  
-Purpose: draft, publish, immutable snapshot, comparison, and output semantics.
+Status: `PROPOSED TARGET — PLAN COMPLETE`  
+Purpose: draft, current capture, manual evidence, publish, reference and comparison.
 
-## Dataset identity
+## Identity
 
-A named budget version belongs to exactly one tenant and one planning year. It is not an operational model revision and is not the rolling current budget.
+A BudgetVersion belongs to one tenant, annual Budget context and planning year. It is not an operational model revision and never replaces the rolling current dataset.
 
-Supported source modes:
+Kinds: `manual|approved|snapshot`.  
+Source modes: `manual|current_snapshot`.  
+States: `draft|published`.
 
-- `CurrentSnapshot`: capture the approved current economic dataset and filters;
-- `Manual`: create/edit snapshot rows inside a Draft without changing Expense data.
-
-Supported kinds:
-
-- `Manual`;
-- `Approved`;
-- `Snapshot`.
-
-`kind` describes business intent; `source mode` describes how Draft rows were produced.
+Kind records business intent; source mode records how rows were created.
 
 ## Create draft
 
-Input includes actor, tenant context, year, name, optional description, kind, source mode, normalized filters, and expected source dataset version where required.
+Input: actor, tenant/year, unique normalized name, description, kind, source mode, explicit current scope/filters when applicable.
 
-The Action:
+Current capture uses one MySQL `REPEATABLE READ` transaction and the canonical economic dataset. It copies exact rows/summary/context into draft snapshot rows and computes deterministic checksum.
 
-1. authorizes `budget-version.create`;
-2. validates tenant/year and name uniqueness;
-3. resolves one exact source dataset or empty valid dataset;
-4. copies normalized rows and exact monetary values into Draft snapshot rows;
-5. records source record/revision IDs where available;
-6. calculates exact draft totals and checksum candidate;
-7. writes one transaction and audit event.
+Manual draft may be total-only, partial or full. Dimension availability is explicit. No missing row/label/value is invented.
 
-## Manual draft editing
+## Draft mutation
 
-Only Draft versions may be edited. Manual row editing uses typed fields, decimal strings, tenant-owned references/labels, and the same monetary validation used by approved version calculations. It never creates or updates Expense records.
+Only Draft may be edited. Manual rows use typed dimensions and decimal strings. Current-snapshot draft may be rebuilt only through explicit confirmed Action. Draft mutation never changes Expense data.
 
-A current-snapshot draft may be refreshed only through an explicit `Rebuild draft from current` action that replaces Draft snapshot rows after confirmation. Published versions cannot be rebuilt.
+Optimistic `lock_version` applies to draft header and update Actions.
 
 ## Publish
 
-Publishing:
+`PublishBudgetVersion`:
 
-1. authorizes publish/create ability as finalized in the permission catalogue;
-2. locks the Draft;
-3. validates every row, grouping, total, source metadata, tenant/year, and checksum;
-4. captures currency, language, timezone, filters, format version, actor, and timestamp;
+1. authorizes `budget-version.publish`;
+2. locks draft;
+3. validates tenant/year, kind/source, rows, availability, summary and checksum;
+4. captures official basis, currency, language, timezone, filters/scope, actor/time and format version;
 5. changes status to Published;
-6. prevents every later content mutation.
+6. commits audit metadata without snapshot payload.
 
-If validation fails, nothing is published and the Draft remains unchanged.
+For `approved` kind, explicit actor choice/evidence is required; historical reconstruction never infers approval.
 
 ## Immutability
 
-A Published version cannot be edited, rebuilt, restored through model revision tooling, or have snapshot rows changed. Correcting it requires creating another version, optionally by duplicating the old snapshot into a new Draft.
+Published header content, summary and rows cannot be edited, rebuilt, restored through operational revision tooling or deleted at launch. Correction requires a new draft/version. Duplicate creates a new Draft with new identity/checksum lifecycle.
 
-Deleting a Published version is not part of the launch contract. Optional archival may hide it from default selectors without altering content and must be decided in `/speckit.plan` only if needed for ordinary use.
+## Reference selection
+
+`annual_budgets.reference_budget_version_id` may point to one Published same-tenant/year version. `SelectBudgetReference` uses optimistic locking and audit. Selection does not change current data or version content.
+
+## Dataset resolution
+
+`BudgetVersionDatasetQuery` reads captured rows/summary directly and returns a comparison-compatible DTO. It does not send snapshot rows through `EconomicEngine`; current formulas were already captured at source time, while manual snapshots are authoritative only for their declared dimensions.
 
 ## Comparison
 
-Supported comparisons:
+Supported:
 
-- current rolling dataset versus one Published version;
-- one Published version versus another Published version;
-- current Actual subset versus one Published Approved version.
+- current versus Published version;
+- Published version versus Published version;
+- compatible cross-year sources;
+- current Actual subset versus Approved version through explicit source/filter definition.
 
-Comparison inputs include tenant, left dataset identity, right dataset identity, approved filters/grouping, locale, and currency context.
+`CompareBudgetSources` requires same tenant, checks dimension availability and stable row keys, and returns unchanged/added/removed/changed values. Percentage is unavailable when denominator semantics are undefined or zero.
 
-The result aligns stable dimensions and returns exact left/right values, absolute difference, and percentage only where denominator behavior is defined. Added/removed rows are explicit; missing values are never silently treated as another dimension.
+## Checksum
+
+SHA-256 over canonical versioned serialization of captured context, normalized filters/scope/availability, ordered rows and exact summary. Any draft content change changes checksum. Published checksum is verified on read/export in integrity tests and optionally at runtime on explicit verification, not on every ordinary request unless benchmark permits.
 
 ## Output
 
-Screen, KPI, table, chart, print, CSV, and XLSX consume the same comparison or version dataset contract. Every output visibly identifies:
-
-- tenant;
-- year;
-- version name/kind/status;
-- published timestamp and author;
-- selected comparison side(s);
-- filters;
-- currency/locale/timezone;
-- checksum/format version where appropriate.
-
-## Authorization and tenant isolation
-
-Separate abilities cover view, create Draft, edit Draft, publish, duplicate, compare, print, and export. Every version/snapshot row belongs to the current tenant. Other-tenant IDs fail without existence leakage.
+Screen, comparison, print, CSV and XLSX consume version/comparison DTOs and identify tenant, year, name, kind, source, published actor/time, basis, filters, availability and checksum/format where appropriate.
 
 ## Audit
 
-Audit create, draft rebuild, manual draft edit, publish, duplicate, and optional archive. Do not log entire snapshot payloads; store IDs, counts, exact totals, checksum, filters summary, actor, and correlation ID.
+Audit create, rebuild, manual edit, publish, duplicate and reference selection with IDs, row count, exact summary, checksum and correlation; no full row payload.
 
 ## Test contract
 
-1. current snapshot captures exact approved rows/totals;
-2. manual Draft never mutates Expense data;
-3. Published content is immutable through UI, Actions, direct IDs, and model-version restore paths;
-4. source Expense changes do not change a Published version;
-5. current-versus-version and version-versus-version return exact deterministic differences;
-6. screen/print/CSV/XLSX equality;
-7. empty dataset publishes valid empty snapshot with defined zero totals;
-8. tenant and permission allow/deny coverage;
-9. failed publish rolls back completely;
-10. checksum changes on any Draft content change and matches the Published snapshot.
+- snapshot capture exact and transaction-consistent;
+- manual total-only/partial/full availability;
+- no inferred approval;
+- Published immutability through UI/Action/direct IDs/version package;
+- current changes do not alter Published values;
+- reference same tenant/year only;
+- deterministic checksum;
+- exact current/version and version/version differences;
+- failed publish rollback;
+- one-tenant and permission coverage;
+- print/CSV/XLSX parity.

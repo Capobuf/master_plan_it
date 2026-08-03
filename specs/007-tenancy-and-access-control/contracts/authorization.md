@@ -1,81 +1,62 @@
-# Contract — Authorization
+# Contract — Authorization and tenant context
 
-Status: `CLARIFIED — PLAN REQUIRED`  
-Authority: Constitution C-07, Feature 007, and `docs/replatform/versioning-permissions-and-operations-contract.md`
+Status: `PROPOSED TARGET — PLAN COMPLETE`  
+Authority: Constitution C-07/C-11; Feature 007; `docs/replatform/permission-catalogue.md`
 
-`Allow` always means server-side authorization in a valid scope plus successful domain-invariant validation. Navigation visibility never grants access.
+`Allow` means exact permission plus valid actor, active state, explicit tenant context, same-tenant ownership and successful domain invariants. Navigation visibility never grants access.
 
 ## Protected platform boundary
 
-| Operation | Administrator | Tenant role configuration |
-|---|---:|---:|
-| Create/deactivate/reactivate tenant | Allow | Not assignable |
-| Manage tenant users and tenant roles | Allow | Not assignable |
-| Switch tenant context | Allow | Not assignable |
-| View global operational overview | Allow | Not assignable |
-| Run installation backup/restore | Allow | Not assignable |
-| Run legacy migration or tenant package import | Allow | Not assignable |
-| Manage platform configuration | Allow | Not assignable |
-| Emergency global Administrator password reset | Artisan-only | Not assignable |
-| Bypass tenant/economic/versioning invariants | Deny | Not representable |
+Only protected global Administrator may manage tenants/users/roles, platform settings, global audit view, migration/import, installation backup/restore and global overview. These abilities are absent from tenant role catalogue and cannot be created/assigned through Shield RoleResource.
 
-The protected Administrator role cannot be edited, renamed, tenant-scoped, or deleted.
+Administrator does not receive a generic invariant-bypass `Gate::before`. Inside tenant context, the same Policies and Actions validate business operations.
 
-## Tenant permission catalogue
+## Tenant context
 
-Exact identifiers are finalized in `/speckit.plan`; every permission maps to one or more policy abilities and Actions.
+- tenant users derive exactly one tenant from User and cannot switch;
+- Administrator enters/leaves an explicit tenant context and retains identity;
+- missing/invalid/inactive/unauthorized context fails closed;
+- Spatie team ID is set before authorization and reset between requests/Livewire/console iterations/tests;
+- changing context unsets loaded `roles` and `permissions` relations and resets cache as required;
+- business Queries require a TenantContext and tenant predicate; permission team context alone is not data scoping.
 
-| Permission family | Example abilities | Seeded Editor | Seeded Viewer |
-|---|---|---:|---:|
-| Expense read | list/view/current totals/revision list | Allow | Allow |
-| Expense write | create/update/version/restore/delete | Allow | Deny |
-| Expense output | print/export | Allow | Allow |
-| Attachment read | view/download | Allow | Allow |
-| Attachment write | upload/replace/delete where parent permits | Allow | Deny |
-| Vendor | view/manage/reactivate | Allow | View |
-| Cost center | view/manage/reactivate | Allow | View |
-| Financial year | view/manage | View | View |
-| Project | view/manage/version/restore | Allow | View |
-| Contract | view/manage/version/restore | Allow | View |
-| Contract generation | generate missing year/suppress/resume | Allow | Deny |
-| Reports | dashboard/report/print/export | Allow | Allow |
-| Scenario | view/manage | Allow | View |
-| Budget version | view/create/compare | Allow | View |
-| Audit | same-tenant view | Allow | Allow |
-| Notifications | receive selected event families | Initial defaults defined in plan | Initial defaults defined in plan |
+## Permission catalogue
 
-Administrator may alter seeded tenant templates and create additional roles. Permissions are additive across assigned tenant roles. Absence denies.
+Exact stable identifiers are normative in `permission-catalogue.md`. Roles are tenant-scoped groupings; permissions global/code-owned. Direct user permission management is not exposed.
+
+Seeded Editor and Viewer are initial templates only. Administrator may customize/copy roles. Seed updates do not overwrite customized roles after creation.
 
 ## Resource rules
 
-- Every tenant-owned resource includes or derives one `tenant_id`.
-- A tenant user belongs to exactly one tenant.
-- Role and direct permission assignments are evaluated only inside the current tenant permission scope.
-- Cross-tenant identifiers fail before protected fields, files, revisions, or existence are disclosed.
-- A permission cannot make an invalid cross-tenant relation, duplicate generation source key, invalid monetary value, or prohibited platform operation valid.
-- Deleting or restoring a record requires both the specific permission and all versioning/referential checks.
-- Inactive tenant denies all tenant-user operations even when a role contains the permission.
-- Deactivated user cannot authenticate or exercise permissions.
+- every resource/relationship/file/revision/output includes or derives one tenant;
+- other-tenant ID returns safe not-found/denial before protected fields/existence;
+- inactive tenant denies tenant users even with permission;
+- deactivated user cannot authenticate;
+- permission cannot validate invalid money, duplicate source key, cross-tenant relation or published-version mutation;
+- parent permission is required for attachment access;
+- restore/delete/confirm/publish/generation/output-complete have separate abilities;
+- commands/scheduler explicitly set/reset tenant context for each iteration.
 
-## Password operations
+## Password rules
 
-| Operation | Administrator | Authenticated tenant user | Unauthenticated tenant user |
-|---|---:|---:|---:|
-| Set initial tenant-user password | Allow | Deny | Deny |
-| Reset another tenant user's password | Allow | Deny | Deny |
-| Change own password | Allow | Allow | Deny |
-| Request forgotten-password email | Not provided | Not provided | Not provided |
+Administrator sets/resets tenant-user passwords; authenticated user changes own password. No tenant-user forgotten-password email flow. Passwords/hashes/tokens never enter audit/revisions/notifications/export.
 
-Passwords and password hashes never enter audit, revision history, tenant export, or notification payloads.
+## Policy implementation
+
+One Policy per resource maps methods to stable abilities and same-tenant/current-state checks. Non-CRUD Actions use explicit Gates matching catalogue names. Filament `can*` methods delegate to Policies/Gates.
+
+Global query pages and tenant pages are separate surfaces; no optional tenant filter turns a global page into an economic cross-tenant query.
 
 ## Test contract
 
-For each registered ability, tests cover:
+For every ability family:
 
 1. granted same-tenant allow;
-2. missing-permission deny;
-3. other-tenant deny without existence leakage;
-4. inactive-tenant and deactivated-user deny;
-5. protected platform permission cannot be created/assigned through tenant role management;
-6. permission grant does not bypass the corresponding domain invariant;
-7. role-template changes affect authorization without changing domain code.
+2. missing permission deny;
+3. other-tenant safe deny;
+4. inactive tenant/deactivated user deny;
+5. protected ability cannot be assigned;
+6. permission cannot bypass invariant;
+7. role customization affects access without domain code;
+8. context/cache does not leak across requests/Livewire/commands/tests;
+9. direct URL, relation, file, revision, report/export and scheduler paths covered.

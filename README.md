@@ -7,28 +7,35 @@ Baseline:
 - legacy repository: `Capobuf/master_plan_it`;
 - legacy branch: `refactor/reports`;
 - verified legacy commit: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`;
-- target: Laravel replatform with explicit multi-tenant isolation.
+- planning base: `laravel-replatform` commit `72262851ba4cf459654ec1a2684fa870b91664e4`;
+- active planning branch: `plan/replatform-3.0.1`.
 
-Read in this order:
+All product questions Q-001–Q-041 are closed. Constitution 3.0.1 is authoritative.
+
+## Spec Kit state
+
+- `/speckit.clarify`: complete;
+- `/speckit.plan`: complete on this branch, pending review/merge;
+- `/speckit.tasks`: next valid command after approval;
+- current `tasks.md`: stale and prohibited as implementation authority;
+- `/speckit.analyze`: required after tasks;
+- `/speckit.implement`: blocked.
+
+## Read in order
 
 1. `.specify/memory/constitution.md`;
 2. `docs/replatform/README.md`;
-3. `docs/replatform/approved-decisions.md`;
-4. `docs/replatform/product-clarification-register.md`;
-5. `docs/replatform/clarification-log.md`;
-6. `docs/replatform/versioning-permissions-and-operations-contract.md`;
-7. `docs/replatform/development-and-test-contract.md` after PR #2 is merged;
-8. `docs/replatform/budget-domain-review.md`;
-9. `docs/replatform/economic-engine-architecture.md`;
-10. `docs/replatform/source-traceability.md`;
-11. `specs/007-tenancy-and-access-control/spec.md`;
-12. feature specifications `001` through `006`;
-13. feature plans and tasks only after they have been regenerated against Constitution 3.0.1.
+3. approved decisions/register/log;
+4. cross-cutting product and development contracts;
+5. technical research, ADRs and integrated plan;
+6. target architecture, physical model, permissions and errors;
+7. Budget/kernel design and source traceability;
+8. Feature 007, then Features 001–006 with spec → plan → research → data model/contracts → quickstart;
+9. readiness, validation and convergence review;
+10. regenerated tasks/checklists after the next commands.
 
-All product questions `Q-001` through `Q-041` are closed. Q-039 is superseded by Q-013 and Q-041 is implemented by the already approved PD-GEN-001 / Constitution C-13 contract.
+## Planned target
 
-The approved product contract includes configurable tenant roles, operational model revisions, editable/deletable Actual rows, independent Estimate/Quote/Actual types, one rolling current Budget, immutable named BudgetVersion snapshots, tenant Net/Gross basis, project economic buckets, tenant data portability, synchronous scheduled notifications and controllable contract-expense generation.
+Laravel 13 modular monolith on PHP 8.3/MySQL 8.4, Sail verification, Filament 5, explicit one-database tenancy, configurable tenant RBAC, operational snapshot revisions, one current Expense source, controlled contract generation, shared economic kernel, rolling Budget and immutable BudgetVersion, staged migration/portability, verified whole-installation backup and immutable release artifact.
 
-The shared economic-kernel direction is planning input: one tenant-scoped query, one pure calculation engine and four immutable DTOs. It is not implemented and does not make previous plan/task files current.
-
-`CLARIFICATION COMPLETE` does not mean implementation-ready. The next valid Spec Kit command is `/speckit.plan`; implementation must not begin from task files that still encode superseded role, Actual, replacement, Budget or output assumptions.
+Exact dependencies are researched and targeted but not installed. No code, Composer resolution, schema migration, test, workflow, artifact, backup, restore or deployment was executed by this plan.

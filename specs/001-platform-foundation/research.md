@@ -1,19 +1,27 @@
-# Research — Platform foundation
+# Research — Feature 001 Platform foundation
 
-Verification date: 2026-08-02. The implementation agent must re-check official documentation if versions have advanced.
+Verification date: 2026-08-03. Primary research is centralized in `docs/replatform/technical-research.md`.
 
-| Decision ID | Problem | Decision | Compatibility/source class | Rejected alternative | Revisit condition |
-|---|---|---|---|---|---|
-| RES-001-001 | Framework baseline | Laravel 13 on PHP 8.3+ | Official Laravel deployment docs | Older Laravel baseline | Security/support change |
-| RES-001-002 | Stateful server UI | Blade by default; Livewire 4 only for dynamic login, application shell | Official Livewire lifecycle docs | SPA/Inertia | Proven UX requirement impossible server-side |
-| RES-001-003 | UI components | Tailwind 4 + Preline with central re-init adapter | Official Tailwind/Preline docs | second general UI library | Accessibility/maintenance failure |
-| RES-001-004 | Tests | Pest feature/unit; Dusk only for browser lifecycle | Official Laravel/Pest docs | full browser-only suite | none |
-| RES-001-005 | Hosting | synchronous requests/commands and cron | Laravel scheduler/deployment docs | Redis/worker daemon | hosting contract changes |
+| ID | Decision | Reason | Rejected |
+|---|---|---|---|
+| RES-001-001 | PHP 8.3.32 + Laravel 13.22.0 | Current supported floor and framework release; Composer platform prevents accidental PHP 8.4+ dependencies. | floating PHP/Laravel or `--ignore-platform-reqs` |
+| RES-001-002 | Sail 1.64.0 canonical environment | Official Laravel Docker workflow, same commands for developers/agents/CI. | custom Docker stack without verified need |
+| RES-001-003 | MySQL 8.4.10 only | LTS, minimal compatibility matrix, likely hosting support. | speculative MySQL 9.x matrix |
+| RES-001-004 | Filament 5.7.3 + Livewire 4.3.3 | Compatible current releases; native components cover shell/forms/tables. | Preline or second UI kit |
+| RES-001-005 | Spatie Permission 8.3.0 teams + Shield 4.3.1 | Laravel 13/Filament 5 compatible; tenant-scoped configurable roles. | custom ACL, fixed role branches |
+| RES-001-006 | Typed singleton platform settings | Only one approved global value initially; relational typed validation and concurrency. | generic key/value settings package |
+| RES-001-007 | Application-owned audit table | Dynamic retention/minimization/no-export requirements are small and explicit. | generic audit-log package |
+| RES-001-008 | Persistent separate test DB without reset traits | Approved project safety contract. | RefreshDatabase/DatabaseTruncation |
+| RES-001-009 | Database notifications + sync email | One cron, no worker, visible mail failure. | Redis/WebSockets/queued notifications |
+| RES-001-010 | Immutable release ZIP after quality gates | Hosting runs verified artifact unchanged. | build dependencies/assets on production host |
 
-## Package ownership
+## Executable gates
 
-No package may be introduced without listing the exact feature, file and reason here. Laravel standard facilities are mandatory when sufficient. For this feature, third-party runtime packages are limited to Livewire, Preline, Chart.js only where listed in `plan.md`; CSV uses standard streaming. XLSX/PDF remain adapter contracts until selected.
+- Composer exact resolution on platform PHP 8.3.32;
+- package migration inspection before publish;
+- Spatie team-context request isolation test;
+- Shield permission generation diff reviewed and committed;
+- no destructive DB reset static guard;
+- production artifact content/manifest test.
 
-## Required tenancy research
-
-Before implementation, consult current official Laravel authorization/middleware/filesystem/scheduler documentation and official database constraint/index documentation. Validate the simplest implementation that proves tenant isolation; do not choose a tenancy package without a concrete requirement and documented trade-off.
+A failed gate blocks the feature and requires an ADR amendment. No automatic alternative is selected.

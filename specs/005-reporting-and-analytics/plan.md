@@ -1,101 +1,163 @@
-# Implementation plan — Reporting and analytics
+# Implementation plan — Feature 005 Reporting, BudgetVersion and analytics
 
-## 1. Summary
+Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW`  
+Dependencies: Features 001–004 and 007; shared economic kernel
 
-Implement view current position, forecast, exceptions and exports from one authoritative dataset as one vertical slice in the modular Laravel monolith. Domain writes use explicit Actions; reusable reads use Query objects; authorization is checked before loading or mutating protected data.
+## Summary
 
-## 2. Technical context
+Implement one current rolling Budget dataset, tenant dashboard, report/drill-down, scenarios, immutable named BudgetVersion snapshots, comparisons, dedicated Blade print and CSV/OpenSpout XLSX output. Every current formula is owned by the shared Economics query/engine. No persisted current Budget total, server PDF package or presentation-layer recalculation.
 
-| Item | Fixed value |
-|---|---|
-| Language/framework | PHP 8.3+, Laravel 13 |
-| Database | MySQL 8 InnoDB, strict mode, utf8mb4 |
-| UI | Blade; Livewire 4 where listed; Alpine local visual state; Tailwind 4; Preline |
-| Test | Pest; Dusk only where listed |
-| Time/locale/currency | UTC storage; Europe/Rome display; `it`; EUR |
-| Money | decimal strings/BCMath; MySQL decimal; no float authority |
-| Hosting | shared PHP/MySQL compatible; precompiled assets; cron; sync queue |
-| Browser target | latest two stable Chromium/Firefox, current Safari |
+## Constitution check
 
-## 3. Constitution check — pre-design
+Passes C-02, C-03, C-04, C-07, C-08, C-10, C-11 and C-12. Current data, operational revisions, scenarios and BudgetVersion snapshots remain distinct.
 
-All C-01..C-10 pass. No internal API, worker daemon, generic repository, observer economic side effect, or independent contract/project total is introduced.
+## Target files
 
-## 4. Current-to-target mapping
+### Economic kernel
 
-The legacy source and target IDs are listed in `docs/replatform/source-traceability.md`. Framework lifecycle is replaced by explicit Actions while economic outputs remain equivalent.
+Exactly the six initial files defined in `economic-engine-architecture.md`:
 
-## 5. Target structure and dependency rule
+- four immutable DTOs;
+- `EconomicDatasetQuery`;
+- `EconomicEngine`.
 
-Files belong to the smallest real domain area. Models do not call other domain Actions from observers. UI classes may invoke listed Actions/Queries only.
+Shared Money/VAT/allocation services are reused, not copied.
 
-## 6. File implementation map
+### Current Budget/dashboard/report
 
-| Target path | Type | Responsibility | Requirements | Test |
-|---|---|---|---|---|
-| `app/Domain/Reporting/Data/EconomicPositionRow.php` | DTO | typed dataset row | FR-005-001, FR-005-002 | corresponding test |
-| `app/Domain/Reporting/Queries/EconomicPositionQuery.php` | query | authoritative position dataset | FR-005-001, FR-005-002 | corresponding test |
-| `app/Domain/Reporting/Queries/DashboardQuery.php` | query | KPI composition | FR-005-001, FR-005-002 | corresponding test |
-| `app/Domain/Reporting/Exports/CsvStreamExporter.php` | export | CSV from dataset | FR-005-001, FR-005-002 | corresponding test |
-| `app/Domain/Reporting/Contracts/ReportPdfRenderer.php` | interface | PDF adapter boundary | FR-005-001, FR-005-002 | corresponding test |
-| `app/Http/Controllers/Reports/EconomicPositionController.php` | controller | HTML/print routes | FR-005-001, FR-005-002 | corresponding test |
-| `app/Http/Controllers/Reports/EconomicPositionExportController.php` | controller | CSV/XLSX | FR-005-001, FR-005-002 | corresponding test |
-| `app/Livewire/Dashboard/DashboardPage.php` | Livewire | filters/KPIs/chart | FR-005-001, FR-005-002 | corresponding test |
-| `app/Livewire/Reports/EconomicPositionPage.php` | Livewire | table/filter/drilldown | FR-005-001, FR-005-002 | corresponding test |
-| `resources/js/charts.ts` | JS adapter | Chart.js create/destroy | FR-005-001, FR-005-002 | corresponding test |
-| `tests/Feature/Reporting/EconomicPositionDatasetTest.php` | test | formulas/filters | FR-005-001, FR-005-002 | corresponding test |
-| `tests/Feature/Reporting/ExportParityTest.php` | test | screen/export equality | FR-005-001, FR-005-002 | corresponding test |
-| `tests/Browser/Reporting/EconomicPositionPrintTest.php` | Dusk | print/chart lifecycle | FR-005-001, FR-005-002 | corresponding test |
+- `AnnualBudget` context model and migration;
+- `TenantDashboardQuery` composes one economic dataset plus non-economic alerts;
+- `CurrentBudgetPage` and `EconomicReportPage` Filament Pages;
+- `EconomicReportFilterData` and typed grouping/order enums;
+- Chart.js adapter that renders server-calculated number copies and destroys/recreates charts on Livewire lifecycle.
 
-## 7. Database design
+### Scenarios
 
-Create migrations in dependency order and use restrictive foreign keys. Every editable aggregate has `lock_version`. Every migrated table has nullable `legacy_id` plus a scoped unique key. Precise feature columns are specified in `data-model.md` and contracts; no JSON substitutes for relational fields.
+- `Scenario`, `ScenarioRow` models;
+- create/update/archive/delete Actions;
+- `ScenarioDatasetQuery` returns explicit alternative dataset DTO;
+- no `ScenarioEconomicEngine`.
 
-## 8. Eloquent rules
+### BudgetVersion
 
-Models use guarded attributes, enum/date/decimal casts, explicit relationships and query scopes. They contain no economic observer side effects. Factories create valid defaults and named invalid states for tests.
+- `BudgetVersion`, `BudgetVersionRow` models;
+- `CreateBudgetVersionDraft`, `UpdateManualBudgetVersionDraft`, `RebuildBudgetVersionDraft`, `PublishBudgetVersion`, `DuplicateBudgetVersion`, `SelectBudgetReference`;
+- `BudgetVersionDatasetQuery`;
+- `CompareBudgetSources` consumes already-resolved source DTOs.
 
-## 9. Domain operation contract
+### Output
 
-Each write Action exposes one `execute(Data $data, User $actor, ?int $expectedVersion): Result` method, authorizes the operation, validates invariants, opens the transaction, locks rows only when cross-record consistency requires it, persists, audits, and returns a typed result. Domain conflicts use stable error codes.
+- `EconomicDatasetCsvExporter` using native streamed response;
+- `EconomicDatasetXlsxExporter` using OpenSpout 4.32 writer-only;
+- dedicated `resources/views/reports/economic-print.blade.php` and print CSS;
+- export/print controllers or Filament Actions accepting the same typed dataset request.
 
-## 10. Transaction and concurrency
+No `ReportPdfRenderer` interface at launch because there is no implementation or server-PDF requirement.
 
-Open transactions inside Actions, not controllers. Use `SELECT ... FOR UPDATE` for replacement targets, referenced plafond consumption snapshots, contract sync source-key checks and migration map creation. Optimistic `lock_version` protects user edits. Deadlock retry is limited to three attempts through a shared transaction helper and logs correlation IDs.
+## Current dataset flow
 
-## 11. Routes and navigation
+1. Policy validates tenant, report and requested output scope.
+2. `EconomicScope` is built from tenant/year/basis/filters/groups/order/detail.
+3. `EconomicDatasetQuery` projects current non-deleted rows and invokes `EconomicEngine` once.
+4. Engine classifies components/project buckets/Plafond and returns exact summary/groups/rows.
+5. UI, charts, print and exports consume this DTO unchanged.
 
-Use named routes under authenticated/active middleware. Every handler references a policy ability. Livewire query-string state is limited to filters, sort and page; unsaved form data is never placed in URL.
+`filtered` preserves active narrowing filters. `complete_report_year` preserves tenant, dataset, report, year, authorization, order, language, timezone, currency and basis, but removes transient narrowing filters. The selected scope is explicit in UI and output metadata.
 
-## 12. UI composition
+## Kernel formulas
 
-Each screen has page header, breadcrumbs, primary action, filter bar where applicable, content table/form, empty/loading/error states, inline validation and focus restoration. Preline components are wrapped in local Blade components; dynamic dropdowns/modals are reinitialized through `resources/js/preline.ts` after Livewire navigation/render.
+- types remain Estimate/Quote/Actual;
+- Actual ToConfirm and Confirmed separately accumulated;
+- project buckets follow Q-040;
+- all Actual for year remain primary;
+- potential = primary + proposed + idea, labelled non-official;
+- Plafond allocated/consumed/residual/overrun and primary contribution allocated + overrun;
+- Net/VAT/Gross always retained; official basis selects primary display/comparison values;
+- no contract/project independent amount.
 
-## 13. Reporting/export boundary
+The Engine has private classification/accumulation methods initially. Extraction requires independent invariants/reuse/dependency/change reason.
 
-Where this feature exposes datasets, the Query object is the sole semantic source. Export and print accept the same immutable filter DTO and row DTOs as the screen.
+## BudgetVersion transaction
 
-## 14. Error model
+`CreateBudgetVersionDraft` creates an empty/manual draft or captures current dataset. Current capture runs inside MySQL `REPEATABLE READ`:
 
-| Category | User response | Technical behavior |
-|---|---|---|
-| Validation | field-level 422 | no transaction or rollback |
-| Authorization | generic 403 | no existence leakage |
-| Domain conflict | translated invariant message, 409 | rollback; stable error code |
-| Concurrency | reload-required 409 | rollback; current version logged |
-| Unexpected | correlation ID, 500 | sanitized log with stack |
+1. begin transaction and set isolation before first read;
+2. lock annual Budget context for reference/name coordination, not all expense rows;
+3. establish snapshot with the economic query;
+4. write version header and rows;
+5. calculate canonical checksum over normalized metadata/rows/summary;
+6. audit and commit.
 
-## 15. Test strategy
+`PublishBudgetVersion` locks draft, validates rows, availability, totals and checksum, captures basis/locale/timezone and marks Published. Policies and Actions prohibit later content mutation/deletion. No package model-revision restore path applies.
 
-Write unit tests for calculators/value objects, feature tests for Actions/policies/routes, Livewire tests for state/validation, and Dusk only for JavaScript lifecycle, responsive menu geometry, focus and print. Each task lists exact tests.
+Manual versions store dimension availability explicitly. Total-only/partial data never receives invented labels/zero rows or Approved kind without explicit choice/evidence.
 
-## 16. Implementation sequence
+## Comparison
 
-enums/value objects → migrations → models/factories → invariant tests → services → Actions → policies → Queries → routes/UI → exports/commands → browser smoke → documentation reconciliation.
+Define `BudgetSource` DTO variants current, version and scenario. Resolver Queries return a common comparison dataset containing stable row keys, labels, dimension availability and exact values.
 
-## 17. Constitution check — post-design
+`CompareBudgetSources`:
 
-Pass. Complexity deviations: none.
-## Feature 007 dependency
+- requires same tenant;
+- permits compatible years/dimensions;
+- returns unchanged/added/removed/changed rows;
+- calculates absolute variance and percentage only for defined non-zero denominator;
+- never mutates sources or re-runs current formulas for snapshot rows.
 
-This feature is tenant-bound. Before implementation, read Feature 007 completely and propagate explicit tenant ownership, current-context resolution, role abilities, fail-closed cross-tenant behavior, audit actor+tenant attribution, and isolation tests into every listed file. Product questions still marked `OPEN` in the clarification register cannot be decided by the coding agent.
+## Output design
+
+CSV uses UTF-8, declared separator/newline and decimal strings. XLSX contains presentation values only; formulas are prohibited. OpenSpout receives DTO rows via iterator and does not query Eloquent.
+
+Print HTML renders the same dataset and includes tenant/report/year/scope/basis/filter/version metadata. Browser print/Save as PDF is launch PDF path.
+
+Output limits are explicit per format and fail before partial output; exact thresholds are established by benchmark task, not guessed in UI.
+
+## Performance
+
+Reference 10,000 current rows/tenant/year:
+
+- scalar projection and appropriate composite indexes;
+- one engine pass;
+- dashboard detail none;
+- page detail paginated;
+- complete exports/version capture may use lazy iteration only if it preserves transaction snapshot and checksum order;
+- no persistent current totals/cache;
+- benchmark records SQL count, memory, p95 and EXPLAIN before optimization.
+
+## Tests
+
+### Engine/query
+
+Table fixtures for every type, confirmation state, project stage, Extra, Plafond, basis and rounding. Query tests prove current/deleted/revision/audit/scenario/version exclusion and tenant isolation.
+
+### Version/scenario/comparison
+
+- immutable publish;
+- source changes do not change version;
+- manual total-only/partial/full availability;
+- checksum determinism;
+- current/version/scenario isolation;
+- reference selection;
+- exact added/removed/changed comparison;
+- failed publish rollback.
+
+### Output parity
+
+Same fixture asserts screen dataset, KPI, chart payload, print view, CSV, XLSX and captured version values. Filtered and complete scopes tested separately. XLSX round-trip reads are test-only if a reader dependency is already present; otherwise inspect generated cell XML/values without adding production reader.
+
+Dusk only for chart lifecycle, explicit scope action and browser print smoke.
+
+## Sequence
+
+1. economic DTOs/engine pure tests;
+2. current query integration/index benchmark;
+3. annual Budget context and current pages/dashboard;
+4. scenarios;
+5. BudgetVersion schema/Actions/checksum;
+6. source resolver/comparison;
+7. print/CSV/XLSX adapters;
+8. parity/performance/tenant/browser gates.
+
+## Post-design check
+
+Pass. One semantic kernel is shared without placing persistence, UI, exports or snapshot lifecycle in `EconomicEngine`.

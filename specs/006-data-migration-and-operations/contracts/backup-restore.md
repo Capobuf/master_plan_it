@@ -1,86 +1,75 @@
 # Contract — Installation backup and restore
 
 Feature: `006-data-migration-and-operations`  
-Status: `CLARIFIED — PLAN REQUIRED`  
-Purpose: whole-installation disaster recovery, retention, verification, and failure visibility.
+Status: `PROPOSED TARGET — CONDITIONAL PACKAGE GATE`  
+Purpose: whole-installation disaster recovery, verification and failure visibility.
 
-## Product boundary
+## Boundary
 
-Backup and restore operate on the complete application installation. They are not tenant-selective. Single-tenant export/import is defined separately in `tenant-data-portability.md` and must not be presented as disaster recovery.
+Backup/restore covers the complete installation. It is never tenant-selective. Tenant portability is a separate archive/import function and is not DR.
+
+## Package gate
+
+Target `spatie/laravel-backup` 10.3.0 only if exact Composer resolution succeeds on platform PHP 8.3.32/Laravel 13.22.0. Metadata/documentation PHP-floor discrepancy is a blocking executable gate.
+
+Failure stops backup implementation and requires ADR/plan amendment. No `--ignore-platform-reqs`, silent downgrade, package fork or custom backup fallback.
+
+The package owns archive mechanics only. Application Actions own authorization, scope, status, verification and notifications.
+
+## Host prerequisites
+
+Explicit verified configuration:
+
+- `mysqldump` executable/path and compatible server client;
+- PHP ZipArchive and required extensions;
+- readable application/attachment paths;
+- writable configured backup storage and capacity;
+- command execution/timeout limits;
+- optional off-site storage credentials supplied outside DB/audit.
+
+Missing prerequisite returns `BACKUP_DEPENDENCY_UNAVAILABLE`; no partial success.
 
 ## Scope
 
-A backup contains:
+Include database, attachments/managed files and environment-independent configuration needed to reproduce business behavior. Include manifest, checksums, source commit/version and migration/schema metadata.
 
-- complete application database;
-- attachments and required managed files;
-- environment-independent application configuration required to reconstruct business behavior;
-- manifest, checksums, application/source version, schema/migration state, creation actor/time, and storage metadata.
+Exclude `.env`, app/database/mail/storage secrets, sessions, caches, temporary/build/test data and runtime-specific credentials.
 
-A backup excludes runtime caches, sessions, temporary files, test databases, build workspaces, and secrets that must be provisioned independently. `/speckit.plan` defines exactly which configuration is environment-independent and how secrets are documented without entering the archive.
+## Create
 
-## Package direction
+`CreateInstallationBackup`:
 
-Use a maintained Laravel backup package if the compatibility spike proves Laravel 13/PHP 8.5/MySQL/shared-hosting support, required files, restore documentation, encryption/storage needs, and removal path. The package does not define product scope or restore acceptance.
+1. authorizes protected platform ability;
+2. creates `backup_runs` Requested;
+3. invokes configured package command with correlation ID;
+4. verifies archive existence, manifest/checksum and expected components;
+5. records Created or Failed;
+6. creates failure notification when needed.
 
-## Create backup
+Created is not Verified.
 
-Only Administrator/platform operations may start backup. The operation:
+## Verify
 
-1. obtains a consistency-safe database dump using verified available tools;
-2. captures approved files/configuration;
-3. creates manifest and checksums;
-4. stores atomically in configured backup storage;
-5. records result, size, source version, actor/correlation, and failure diagnostics;
-6. creates failure notification when unsuccessful.
-
-No fallback may report success without a valid database dump and file manifest.
-
-## Restore verification
-
-A backup is `Created` but not `Verified` until restored into an empty verification environment and checked for:
-
-- manifest/checksum validity;
-- schema/migration compatibility;
-- database and attachment restoration;
-- application boot and authenticated smoke;
-- tenant count and selected exact count/sum checks;
-- absence of source secrets in logs/output;
-- source version traceability.
-
-Verification result is persisted and failure is notified. Production restore requires an already Verified backup unless an explicit documented emergency procedure is approved later.
+`VerifyInstallationBackup` requires restore into an empty disposable environment and checks archive/checksums, DB/files, migrations, boot, authentication, tenant count, selected exact economic counts/sums and source-version traceability. Success records Verified; failure records explicit diagnostics/notification.
 
 ## Production restore
 
-Production restore:
+Operator-led procedure only, using a Verified backup under ordinary path. Requires reinforced confirmation showing identity/checksum/source/verification/complete destructive scope. It records start/result/correlation and never claims rollback unless executed and verified.
 
-- requires Administrator/platform authorization;
-- requires reinforced confirmation showing backup identity, verification state, source version, target environment, and destructive scope;
-- runs only against the full installation;
-- records actor, start/end, result, and correlation ID;
-- leaves an explicit failed state and diagnostics; no silent rollback claim is allowed unless rollback was actually executed and verified.
+No one-click web restore Action is exposed at launch.
 
 ## Retention
 
-Retention policy, storage destination, encryption, and off-site copies are technical/operational decisions finalized in `/speckit.plan` from hosting capabilities. Retention deletion must never remove the only Verified recoverable backup without explicit policy safeguards.
+Storage/retention/off-site/encryption depend on verified host profile and are not invented in core plan. Retention must preserve at least one Verified recoverable backup according to operator policy. Artifact deletion is explicit and audited.
 
-## Notifications
+## Tests
 
-Backup and restore-verification failures create deduplicated database notifications for authorized Administrator recipients and optional synchronous email when configured. No queue worker or hidden retry loop.
-
-## Authorization
-
-Tenant role permissions cannot grant installation backup, verification, or restore. Tenant users cannot list backup paths or metadata.
-
-## Test contract
-
-1. complete scope manifest/checksum;
-2. database-dump failure is visible and backup not marked successful;
-3. file failure cleans partial archive or marks it unusable;
-4. restore verification in empty environment is required for Verified state;
-5. production restore rejects unverified backup under ordinary path;
-6. reinforced confirmation contract;
-7. tenant-selective restore route/action absent;
-8. protected authorization and sensitive-log tests;
-9. notification created on backup/verification failure;
-10. retained backup integrity and source-version metadata.
+- package Composer gate;
+- missing/incompatible dump/ZIP/storage preflight;
+- Created versus Verified state;
+- manifest/checksum/file scope;
+- empty-environment restore rehearsal;
+- tenant-selective restore absence;
+- protected permission and secret-log denial;
+- failure notification/dedup;
+- no success on partial database/file archive.

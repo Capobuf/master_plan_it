@@ -1,37 +1,68 @@
-# Data model — Platform foundation
+# Data model — Feature 001 Platform foundation
 
-## Conventions
+Status: `PROPOSED TARGET`  
+Shared conventions: `docs/replatform/data-model-overview.md`
 
-- Primary keys: unsigned bigint target IDs; immutable legacy IDs are retained only where migration requires them.
-- Timestamps are stored UTC; tenant timezone is applied at presentation and business-boundary interpretation.
-- Foreign-key deletes default to restrict. User and tenant deactivation preserve historical references.
-- `lock_version` supports optimistic concurrency on editable business records.
+## Owned tables
 
-## `tenants`
+### `platform_settings`
 
-Semantic contract is defined by Feature 007. Required: stable ID, unique code, display name, `Active`/`Inactive`, currency, language, timezone, default VAT rate. Optional: logo, company data, address, contacts, report header/footer, legacy site identifier. Permanent deletion is unavailable.
+Singleton:
 
-## `users`
+- `id` fixed 1;
+- `audit_retention_months` unsigned smallint default 24;
+- `lock_version` default 1;
+- `updated_by_user_id` nullable FK;
+- timestamps.
 
-- Global account identity and authentication state.
-- Exactly one product role: Administrator, Editor, or Viewer.
-- Administrator has no tenant membership.
-- Editor and Viewer have exactly one required tenant association.
-- Deactivation preserves authorship and audit references.
-- A multi-tenant user pivot is not part of the approved model.
+Only Administrator updates. Lowering requires reinforced confirmation in Action.
 
-## `roles`
+### `users`
 
-Closed product role set: `Administrator`, `Editor`, `Viewer`. Legacy roles are migration inputs only and map according to Q-001.
+- unsigned bigint ID;
+- nullable `tenant_id` FK, null for global platform users;
+- name, globally unique email, password hash;
+- `is_active` boolean;
+- `lock_version`;
+- timestamps.
 
-## `application_settings`
+Tenant users require tenant ID. Protected Administrator role is global through package roles; role name is not stored as a user enum.
 
-Contains technical platform configuration only. Tenant business/local/report settings belong to the tenant and are not mutable global business catalogues.
+### `audit_events`
 
-## Relationships and isolation
+- nullable tenant ID;
+- nullable actor user ID and actor label snapshot;
+- event type;
+- nullable subject morph type/ID;
+- correlation UUID/string indexed;
+- minimized JSON properties;
+- `occurred_at` indexed.
 
-Every tenant-bound route and aggregate requires valid tenant context. Cross-tenant references are invalid. Missing context fails closed. Administrator context is recorded separately from actor identity.
+Append-only except explicit retention deletion. No password/token/file payload. No `expires_at`; cutoff derives from platform setting.
 
-## Audit
+### Laravel notifications
 
-Record actor ID, role, tenant context when applicable, operation, old/new structured values, UTC timestamp, and correlation ID. Do not log passwords, tokens, or attachment bytes.
+Use native table with safe payload. Add indexed `deduplication_key` through application migration if native payload-only indexing is insufficient.
+
+### Package RBAC
+
+Publish Spatie tables after enabling teams with `team_foreign_key=tenant_id`. Roles are nullable-tenant; permissions global. Direct permission assignment to users is not exposed.
+
+## Cross-feature relation
+
+`tenants` is Feature 007-owned. User tenant FK is added only after tenant migration exists, or Feature 001/007 migrations are ordered in the same foundation phase.
+
+## Constraints
+
+- tenant user cannot have null tenant;
+- global Administrator account cannot receive tenant membership;
+- platform setting singleton enforced by seeder/Action and fixed PK;
+- audit JSON size bounded by Action validation;
+- email uniqueness case normalization defined in Action/database collation;
+- user deactivation preserves FK references.
+
+## Indexes
+
+- users: unique normalized email, `(tenant_id,is_active)`;
+- audit: `(occurred_at,id)`, `(tenant_id,occurred_at)`, correlation ID;
+- notifications: `(notifiable_type,notifiable_id,read_at)` and dedup key.

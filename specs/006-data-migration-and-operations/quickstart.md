@@ -1,40 +1,51 @@
-# Verification quickstart — Data migration and operations
+# Verification quickstart — Feature 006 Migration and operations
 
-These are future commands; they were not executed during documentation deepening.
+Future commands; none were executed during planning.
 
-## Prerequisites
+## Import fixture
 
-- Laravel environment installed from the locked dependency files.
-- MySQL test database with strict mode.
-- `.env.testing` uses Europe/Rome display configuration and EUR.
-- Features before 006 migrated and seeded.
+Build a small versioned package with two tenants' source-like rows but select only tenant A target. Include valid rows, duplicate lineage replay, collision, unassignable reference, approved exclusion, attachments, legacy replacement history, scenarios and BudgetVersion snapshots. Include prohibited audit/password fields to verify rejection/exclusion.
 
-## Minimal data
+## Focused tests
 
-Create one user for each role and the minimum records required for migration run status, reconciliation report, backup/restore status. Use factories, not production data.
+```bash
+./vendor/bin/sail artisan test --filter=ImportManifest
+./vendor/bin/sail artisan test --filter=ImportDryRun
+./vendor/bin/sail artisan test --filter=ImportApply
+./vendor/bin/sail artisan test --filter=TenantPortability
+./vendor/bin/sail artisan test --filter=BackupOperation
+./vendor/bin/sail artisan test --filter=DeploymentArtifact
+```
 
-## Verification path
+## Acceptance path
 
-1. Run migrations and the feature seed fixture.
-2. Authenticate as Administrator.
-3. Open the primary screen: `migration run status`.
-4. Execute the main valid operation and record the expected persisted/result values from `spec.md`.
-5. Repeat the mapped invalid, unauthorized, empty and stale-version scenarios.
-6. Run `php artisan test --filter=Datamigrationandoperations` and the listed focused Dusk test only if the feature uses browser JavaScript.
+1. Stage package and verify checksums/source locations.
+2. Dry-run: confirm zero current-domain writes and explicit quarantine.
+3. Attempt apply with blocker and receive `IMPORT_BLOCKERS_PRESENT`.
+4. Approve an exclusion with reason; apply with reinforced confirmation.
+5. Replay same lineage and verify idempotency.
+6. Import a conflicting lineage and verify no overwrite/rename/merge.
+7. Export tenant package and inspect absence of audit, secrets/global settings/other tenant.
+8. Round-trip approved data with exact decimals/checksums.
+9. Resolve backup package on PHP 8.3.32, create archive and record Created.
+10. Restore in disposable empty environment and mark Verified only after smoke/reconciliation.
+11. Build release artifact and verify source commit, Vite manifest, required/prohibited content.
 
-## Success criteria
+## Commands
 
-- All mapped FR/INV tests pass.
-- No failed job/queue dependency exists.
-- Database totals and screen values match the documented dataset.
-- Logs contain no unexpected error or sensitive payload.
+```bash
+./vendor/bin/sail artisan mpit:import-dry-run <package> --tenant=<id>
+./vendor/bin/sail artisan mpit:import-apply <run-id>
+./vendor/bin/sail artisan mpit:backup
+./vendor/bin/sail artisan mpit:backup-verify <run-id>
+```
+
+Final names/options must match implemented command contracts from tasks.
 
 ## Cleanup
 
-Drop the disposable test database or run `migrate:fresh` only in the test environment. Never use cleanup commands against production.
+Disposable restore environment may be destroyed explicitly. Persistent test DB uses run-ID targeted cleanup only; no reset/truncate.
 
-## Tenant validation
+## Success
 
-- Read Feature 007 before coding.
-- Seed at least two tenants and test same-tenant allow plus other-tenant deny.
-- Verify reports, exports, attachments, direct links, and commands never return unscoped data.
+No guessed tenant, silent collision, audit/secret export, unreported partial apply, unverified backup acceptance or production rebuild exists.

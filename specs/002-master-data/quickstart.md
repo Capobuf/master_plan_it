@@ -1,40 +1,34 @@
-# Verification quickstart — Master data
+# Verification quickstart — Feature 002 Master data
 
-These are future commands; they were not executed during documentation deepening.
+Future commands; none were executed during planning.
 
-## Prerequisites
+## Fixture
 
-- Laravel environment installed from the locked dependency files.
-- MySQL test database with strict mode.
-- `.env.testing` uses Europe/Rome display configuration and EUR.
-- Features before 002 migrated and seeded.
+Create two active tenants. In tenant A create two non-overlapping years, a three-level cost-center tree, active/inactive vendors and users with granular permissions. Add historical references to one vendor and cost center.
 
-## Minimal data
+## Focused tests
 
-Create one user for each role and the minimum records required for year register/editor, cost-center tree/editor, vendor register/editor. Use factories, not production data.
+```bash
+./vendor/bin/sail artisan test --filter=PlanningYear
+./vendor/bin/sail artisan test --filter=CostCenter
+./vendor/bin/sail artisan test --filter=Vendor
+./vendor/bin/sail artisan test --filter=MasterDataRevision
+```
 
-## Verification path
+## Acceptance path
 
-1. Run migrations and the feature seed fixture.
-2. Authenticate as Administrator.
-3. Open the primary screen: `year register/editor`.
-4. Execute the main valid operation and record the expected persisted/result values from `spec.md`.
-5. Repeat the mapped invalid, unauthorized, empty and stale-version scenarios.
-6. Run `php artisan test --filter=Masterdata` and the listed focused Dusk test only if the feature uses browser JavaScript.
-
-## Success criteria
-
-- All mapped FR/INV tests pass.
-- No failed job/queue dependency exists.
-- Database totals and screen values match the documented dataset.
-- Logs contain no unexpected error or sensitive payload.
+1. Create a year and reject an overlapping range.
+2. Move a cost center and reject a cycle/other-tenant parent.
+3. Reject parent deactivation while an active descendant exists.
+4. Deactivate vendor/cost center; verify history remains and new selectors exclude them.
+5. Restore a prior vendor/cost-center revision and verify a new revision is created.
+6. Remove a permission and verify direct URL denial.
+7. Confirm no revision table row appears in ordinary master-data queries.
 
 ## Cleanup
 
-Drop the disposable test database or run `migrate:fresh` only in the test environment. Never use cleanup commands against production.
+Use transaction rollback or delete only fixture rows identified by the test run. Never reset or truncate the persistent test database.
 
-## Tenant validation
+## Success
 
-- Read Feature 007 before coding.
-- Seed at least two tenants and test same-tenant allow plus other-tenant deny.
-- Verify reports, exports, attachments, direct links, and commands never return unscoped data.
+All tenant, uniqueness, lifecycle, tree, concurrency and restore tests pass with no cross-tenant disclosure or unexpected log.
