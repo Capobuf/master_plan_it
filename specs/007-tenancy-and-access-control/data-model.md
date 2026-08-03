@@ -1,114 +1,67 @@
-# Data model — Tenancy and access control
+# Data model — Feature 007 Tenancy and access control
 
-Status: `CLARIFIED LOGICAL MODEL — PHYSICAL PLAN REQUIRED`
+Status: `PROPOSED TARGET`  
+Shared conventions: `docs/replatform/data-model-overview.md`
 
 ## `tenants`
 
-Required semantic attributes:
+- unique code and display name;
+- state `active|inactive`;
+- currency, language, timezone, default VAT;
+- official Budget basis `net|gross` default Net;
+- optional company, address, contacts and report branding;
+- optional logo attachment/path according to file contract;
+- lifecycle actors/timestamps;
+- onboarding checklist state only if UI consumes it;
+- `lock_version`, timestamps.
 
-- stable identifier and unique code;
-- display name;
-- `Active` or `Inactive` state;
-- currency, language, timezone, default VAT rate;
-- optional logo, company data, address, contacts, report header/footer;
-- creation, deactivation, and reactivation audit metadata;
-- optional legacy site identifier;
-- timestamps and optimistic `lock_version`.
-
-Permanent tenant deletion is unavailable.
+Permanent deletion unavailable.
 
 ## `users`
 
-- global account identity;
-- email and password hash;
-- active/deactivated state;
-- nullable `tenant_id`: null only for protected global Administrator; required for tenant users;
-- no self-service password-recovery requirement;
-- timestamps and `lock_version`.
+Feature 001 table with nullable tenant ID. Tenant users require one tenant; global Administrator accounts have none. User active state is independent from tenant state.
 
-A tenant user belongs to exactly one tenant. Historical actor references are preserved after deactivation. Passwords/hashes are excluded from audit, revisions, notifications, and tenant export.
+## Package roles/permissions
 
-## Roles and permissions
+Spatie teams schema:
 
-The approved direction uses the standard schema of the selected Laravel permission package with tenant/team scoping enabled.
+- permissions global and stable;
+- roles nullable tenant ID;
+- protected global Administrator role;
+- tenant Editor/Viewer templates and custom roles;
+- role assignments evaluated in current team context;
+- no ordinary direct user-permission UI.
 
-Logical requirements:
+Role uniqueness follows package schema plus tenant/team key. Application Actions reject cross-tenant assignment and protected permission membership.
 
-- one protected global `Administrator` role outside tenant customization;
-- tenant-scoped roles, including seeded `Editor` and `Viewer` templates;
-- one or more tenant roles per tenant user;
-- additive permissions;
-- stable permission catalogue defined by application capabilities;
-- no tenant role assignment for another tenant;
-- no tenant-manageable permission for protected platform operations or invariant bypass;
-- role/permission changes audited with actor and tenant context.
+## Tenant context
 
-The physical use of package `team_id`/`tenant_id`, model morphs, cache reset, and Filament tenancy integration is decided and tested in `/speckit.plan`.
+Request/session state is not authoritative persistence for ownership. Administrator selected tenant ID may be stored in session; every request resolves and authorizes the current Tenant model. Tenant users derive tenant from User and cannot override it.
 
-## Tenant ownership
+## Ownership
 
-Every tenant business aggregate, operational revision, named budget version, scenario, attachment, generation exception, notification, and tenant audit event has unambiguous tenant ownership. Child records inherit and validate ownership through their aggregate root. Cross-tenant foreign references are invalid before persistence.
+Every business aggregate root and explicit alternative dataset carries tenant ID. Important children also carry/derive tenant according to global model overview. Cross-tenant references are rejected before write and every query starts with tenant predicate.
 
-## Global platform settings
+## Global settings/audit/revisions/notifications
 
-The physical storage is selected in `/speckit.plan`, using one existing typed platform-setting mechanism rather than a dedicated audit-settings subsystem.
+Owned by Feature 001/shared model:
 
-Required setting:
+- platform setting audit retention default 24;
+- audit event tenant nullable for global operations;
+- operational version batches tenant-owned;
+- database notification includes tenant/global safe scope.
 
-| Key | Scope | Default | Write authority | Semantics |
-|---|---|---:|---|---|
-| `audit_retention_months` | installation-wide | `24` | Administrator only | current value used by the next audit-retention execution |
+Audit export is unavailable and tenant portability excludes audit/global settings.
 
-The setting keeps value, last modifying actor, timestamp, and optimistic version according to the platform-setting contract. Lowering the value requires reinforced confirmation. Increasing it does not recreate previously removed audit events.
+## Constraints/indexes
 
-## Tenant settings
+- tenant code unique globally;
+- `(state,code)` for global list;
+- users `(tenant_id,is_active)`;
+- package role/team indexes;
+- no tenant-user pivot;
+- no database cascade deleting tenant data.
 
-Tenant-specific settings include:
+## Lifecycle effects
 
-- financial locale and default VAT;
-- report branding and company data;
-- templates/categories where feature contracts permit;
-- notification configuration permitted by the launch contract;
-- report configuration;
-- optional onboarding-checklist completion indicators.
-
-Checklist indicators are guidance only and do not create an alternative domain state. Audit retention is global, not tenant-specific.
-
-## Audit events
-
-Minimum logical columns:
-
-- `id`;
-- nullable `tenant_id` for global events;
-- `actor_id` and actor-context label;
-- `event_type`;
-- subject type and nullable subject ID;
-- minimized old/new or event properties;
-- correlation ID;
-- timestamp.
-
-The retention command calculates its cutoff from the current global `audit_retention_months` value. It deletes eligible audit events only; it does not delete current business records, named budget versions, or required logical revision identity. Audit export is not implemented at launch and audit events are excluded from tenant portability packages.
-
-## Operational revisions
-
-Operational revision storage is supplied by the approved versioning direction, with application-owned metadata where required:
-
-- tenant ownership;
-- versionable type and ID;
-- revision number;
-- operation (`created`, `updated`, `restored`, `deleted`);
-- snapshot or diff according to approved package strategy;
-- actor and timestamp;
-- `revision_batch_uuid` for aggregate operations;
-- optional `restored_from_revision_id`;
-- minimized deleted-record tombstone data.
-
-Revision storage is never queried as current domain state.
-
-## Notifications
-
-Database notifications must preserve recipient, event type, tenant/global scope, subject identity, threshold/date, deduplication key, read timestamp, and safe display payload. Email delivery result may be recorded separately; no silent retry loop or queue-state model is required.
-
-## Legacy identifiers
-
-Imported records preserve stable Frappe identifiers for reconciliation. Identity uniqueness is `(tenant_id, source_type, legacy_id)`. A legacy identifier never substitutes tenant ownership. Collision and unassignable-row state belongs to migration staging/quarantine, not current business tables.
+Tenant deactivation changes only tenant state/lifecycle metadata. It does not update/delete users, business data, files, versions or audit. User deactivation preserves actor references. Open assignments are queried and handled explicitly by owning features.
