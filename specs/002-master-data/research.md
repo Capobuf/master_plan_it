@@ -1,19 +1,19 @@
-# Research — Master data
+# Research — Feature 002 Master data
 
-Verification date: 2026-08-02. The implementation agent must re-check official documentation if versions have advanced.
+Verification date: 2026-08-03. Shared package research is in `docs/replatform/technical-research.md`.
 
-| Decision ID | Problem | Decision | Compatibility/source class | Rejected alternative | Revisit condition |
-|---|---|---|---|---|---|
-| RES-002-001 | Framework baseline | Laravel 13 on PHP 8.3+ | Official Laravel deployment docs | Older Laravel baseline | Security/support change |
-| RES-002-002 | Stateful server UI | Blade by default; Livewire 4 only for dynamic year register/editor, cost-center tree/editor | Official Livewire lifecycle docs | SPA/Inertia | Proven UX requirement impossible server-side |
-| RES-002-003 | UI components | Tailwind 4 + Preline with central re-init adapter | Official Tailwind/Preline docs | second general UI library | Accessibility/maintenance failure |
-| RES-002-004 | Tests | Pest feature/unit; Dusk only for browser lifecycle | Official Laravel/Pest docs | full browser-only suite | none |
-| RES-002-005 | Hosting | synchronous requests/commands and cron | Laravel scheduler/deployment docs | Redis/worker daemon | hosting contract changes |
+| ID | Decision | Reason | Rejected |
+|---|---|---|---|
+| RES-002-001 | Native Eloquent adjacency list for cost centers | One parent relation and bounded SME trees; no extra package needed. | nested-set/tree package |
+| RES-002-002 | Range overlap enforced in Action transaction | MySQL has no portable exclusion constraint for arbitrary date ranges. | trusting form validation only |
+| RES-002-003 | Deactivate/reactivate instead of delete | Historical references must remain readable. | cascade deletion or reassignment |
+| RES-002-004 | Vendor/cost-center snapshot revisions via shared infrastructure | Product requires compare/restore with one current record. | duplicate current copies or custom per-model history tables |
+| RES-002-005 | Planning years use audit/concurrency initially | Product requires controlled configuration but not explicit version restore for years. | speculative year versioning |
+| RES-002-006 | Native Filament Resources | Existing components cover tables/forms and active selectors. | Preline or custom CRUD framework |
 
-## Package ownership
+## Implementation gates
 
-No package may be introduced without listing the exact feature, file and reason here. Laravel standard facilities are mandatory when sufficient. For this feature, third-party runtime packages are limited to Livewire, Preline, Chart.js only where listed in `plan.md`; CSV uses standard streaming. XLSX/PDF remain adapter contracts until selected.
-
-## Required tenancy research
-
-Before implementation, consult current official Laravel authorization/middleware/filesystem/scheduler documentation and official database constraint/index documentation. Validate the simplest implementation that proves tenant isolation; do not choose a tenancy package without a concrete requirement and documented trade-off.
+- cycle and overlap transaction tests on MySQL 8.4;
+- restore of an inactive/renamed record revalidates uniqueness and references;
+- selectors show inactive value only for existing reference, never new selection;
+- no cross-tenant parent/reference path.
