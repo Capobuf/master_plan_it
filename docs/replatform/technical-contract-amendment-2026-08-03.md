@@ -1,7 +1,7 @@
 # Technical contract amendment — 2026-08-03
 
 Status: `APPROVED TECHNICAL CORRECTION`  
-Authority: Constitution 3.0.1, approved runtime matrix and `/speckit.analyze` findings ANALYZE-H-003/H-004/M-003  
+Authority: Constitution 3.0.1, approved runtime matrix and `/speckit.analyze` findings  
 Product impact: none
 
 This document corrects technical contradictions without changing Q-001–Q-041.
@@ -23,31 +23,27 @@ A package that resolves only on PHP 8.4/8.5 is incompatible with the approved la
 
 `spatie/laravel-backup` remains conditionally approved at `10.3.0`.
 
-The executable gate is:
-
-```bash
-composer require spatie/laravel-backup:10.3.0 \
-  --with-all-dependencies \
-  --no-interaction
-```
-
-Required behavior:
+The executable gate is the exact guarded command in `docs/replatform/task-execution/feature-006.md` for T006-012. It must:
 
 1. run with Composer platform PHP `8.3.32`;
-2. verify the resulting `composer.json` and `composer.lock` diff contains only approved dependency changes;
-3. run the package smoke/contract tests;
-4. when resolution fails, restore both Composer files and record `DEPENDENCY_LOCK_FAILED`;
-5. stop Feature 006 backup implementation and open a technical amendment;
-6. do not downgrade, use `--ignore-platform-reqs`, install a fallback package or create a hidden custom backup mechanism.
+2. copy `composer.json` and `composer.lock` before resolution;
+3. run `composer require spatie/laravel-backup:10.3.0 --with-all-dependencies --no-interaction`;
+4. restore both Composer files and exit non-zero when dependency resolution fails;
+5. retain the resolved files only after successful resolution;
+6. run the package smoke/contract tests;
+7. stop Feature 006 backup implementation and open a technical amendment if the gate cannot pass;
+8. never downgrade, use `--ignore-platform-reqs`, install a fallback package or create a hidden custom backup mechanism.
 
 ## A-TECH-003 — Current Spec Kit gate
 
-The planning gate in `versioning-permissions-and-operations-contract.md` is historical. Current state:
-
 - `/speckit.clarify`: complete;
 - `/speckit.plan`: complete and merged;
-- `/speckit.tasks`: remediation in review;
-- `/speckit.analyze`: failed on baseline `54bc8c5c72167b47eedc7ae9cc62211310035f8c` and must be re-run after remediation;
+- initial `/speckit.tasks`: complete and merged;
+- initial `/speckit.analyze`: recorded 2 CRITICAL, 10 HIGH and 4 MEDIUM findings;
+- first remediation: merged;
+- rerun `/speckit.analyze`: recorded 0 CRITICAL, 8 HIGH and 4 MEDIUM findings;
+- second `/speckit.tasks` remediation: complete, pending review/merge;
+- next valid command after merge: `/speckit.analyze`;
 - `/speckit.implement`: blocked until CRITICAL `0` and HIGH `0`.
 
 This amendment is normative until the original contract is next regenerated in full.
