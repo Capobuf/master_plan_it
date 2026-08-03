@@ -1,6 +1,6 @@
 # Implementation plan — Feature 005 Reporting, BudgetVersion and analytics
 
-Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW`  
+Status: `PLAN COMPLETE AND MERGED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Dependencies: Features 001–004 and 007; shared economic kernel
 
 ## Summary
