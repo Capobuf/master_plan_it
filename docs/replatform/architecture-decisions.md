@@ -3,37 +3,49 @@
 | ID | Decision | Status | Rationale |
 |---|---|---|---|
 | ADR-001 | Modular Laravel monolith | APPROVED | Shared-hosting compatibility and minimal operations. |
-| ADR-002 | Current expense rows are the sole current economic source | APPROVED | Preserves verified semantics and prevents double counting; revisions, audit, scenarios, deleted records, and budget snapshots are separate datasets. |
-| ADR-003 | `DECIMAL(19,6)` intermediate and 2-decimal business results | APPROVED | Deterministic money, VAT, allocation, and comparison. |
+| ADR-002 | Current non-deleted expense rows are the sole current economic source | APPROVED | Prevents double counting; revisions, audit, scenarios, deleted records, generation exceptions and budget snapshots are explicit separate datasets. |
+| ADR-003 | `DECIMAL(19,6)` intermediate and 2-decimal business results | APPROVED | Deterministic money, VAT, allocation and comparison. |
 | ADR-004 | Money arithmetic via BCMath value objects | APPROVED | Avoids float drift without a money dependency. |
-| ADR-005 | Filament/Blade by default, Livewire selectively | APPROVED | Server-rendered administration and focused interactivity. |
+| ADR-005 | Filament/Blade by default, Livewire selectively | APPROVED | Server-rendered administration with focused interactivity. |
 | ADR-006 | Chart.js only | APPROVED | One maintained chart integration and printable dataset reuse. |
 | ADR-007 | No permanent worker; synchronous bounded commands | APPROVED | Shared-hosting constraint. |
-| ADR-008 | Contract sync is append-missing, source-key idempotent, suppression-aware, and never overwrites an existing user-edited expense | AMENDED / APPROVED | Supports deletion with optional regeneration, explicit suppression/resume, manual missing-year generation, and user-authoritative generated expenses. |
-| ADR-009 | Migration through versioned exchange files and staging | APPROVED | No direct Frappe database assumption. |
-| ADR-010 | Dusk only for browser-owned lifecycle, focus, responsive, and print/download smoke | APPROVED | Avoids duplicating feature tests in a slow suite. |
-| ADR-011 | Explicit tenant ownership in one Laravel application | APPROVED | Multi-tenancy with minimum operational complexity. |
+| ADR-008 | Contract sync updates only system-managed unconfirmed occurrences; source-key idempotent, suppression-aware and no-overwrite | AMENDED / APPROVED | Manual modification or confirmation makes the Actual user-authoritative without making it permanently immutable. |
+| ADR-009 | Migration through versioned UTF-8 CSV packages and staging | APPROVED | No direct Frappe database assumption; deterministic replay and reconciliation. |
+| ADR-010 | Dusk only for browser-owned lifecycle, focus, responsive and print/download behavior | APPROVED | Avoids duplicating Feature tests in a slow suite. |
+| ADR-011 | Explicit tenant ownership in one Laravel application and one database | APPROVED | Multi-tenancy with minimum operational complexity. |
 | ADR-012 | Administrator tenant context without impersonation | APPROVED | Preserves real actor identity and audit clarity. |
 | ADR-013 | Controlled one-site migration into one selected tenant | APPROVED | Matches verified migration scope. |
-| ADR-014 | Laravel Sail is the canonical development and agent-verification environment | APPROVED | One reproducible environment supplies runtime, Composer, build tools, MySQL and optional Selenium without adding production services. |
-| ADR-015 | Exact runtime and container versions are locked during `/speckit.plan` | APPROVED DIRECTION — CURRENT COMPATIBILITY SPIKE REQUIRED | Prevents floating builds and outdated version assumptions while keeping the project on a currently supported Laravel 13 stack. |
-| ADR-016 | MySQL 8.4 LTS is the minimum database family; any additional current family requires compatibility evidence | APPROVED DIRECTION — SPIKE REQUIRED | Maintains a stable hosting floor without committing to an unverified current-family matrix. |
-| ADR-017 | Tests use static, accounting and application layers with bounded browser coverage | APPROVED | Separates assurance responsibilities without multiplying infrastructures or duplicating browser assertions. |
-| ADR-018 | Automated tests never reset the persistent test database implicitly | APPROVED PROJECT-SPECIFIC DEVIATION | Protects development/test data through an explicit test database, forward migrations, transactions and targeted cleanup; differs intentionally from Laravel's usual `RefreshDatabase` workflow. |
-| ADR-019 | Required GitHub Actions gates produce one immutable release artifact from the verified commit | APPROVED | Hosting receives the tested artifact and does not rebuild dependencies or frontend assets. |
-| ADR-020 | Use database-backed configurable tenant RBAC; protected global Administrator remains outside tenant customization | APPROVED DIRECTION — SPIKE REQUIRED | Product requires configurable permissions without weakening platform and domain invariants. Candidate stack is `spatie/laravel-permission` plus `bezhansalleh/filament-shield`. |
-| ADR-021 | Use true operational model revisions with one current domain record | APPROVED DIRECTION — SPIKE REQUIRED | Avoids duplicate visible records and supports compare/restore. Candidate UI/storage is `mansoor/filament-versionable` backed by `overtrue/laravel-versionable`; aggregate revision batching remains application-owned if required. |
-| ADR-022 | Named budget versions are application-owned immutable snapshots | APPROVED | Model revision packages do not represent an approved economic baseline or multi-record snapshot semantics. |
-| ADR-023 | Installation backup/restore and tenant data portability are separate contracts | APPROVED | Disaster recovery remains reliable and whole-system; tenant export/import supports archive and portability without pretending to be selective restore. |
-| ADR-024 | Notifications use Laravel scheduler, database notifications, and optional synchronous email | APPROVED | Provides useful alerts without Redis, WebSockets, queued workers, or hidden retries. |
-| ADR-025 | Generated-expense suppression is a non-economic exception keyed by immutable generation source | APPROVED | Prevents intentional deletion from being undone while keeping expenses as the only economic source. |
-| ADR-026 | No tenant-user self-service password recovery at launch | APPROVED | Avoids mail dependency and additional attack surface; Administrator reset plus global emergency Artisan command is sufficient. |
-| ADR-027 | Optional onboarding reuses native Filament form/wizard components and existing Actions | APPROVED | Guidance without a custom mandatory state machine or duplicated validation. |
+| ADR-014 | Laravel Sail is the canonical development and agent-verification environment | APPROVED | Reproducible runtime, Composer, build tools, MySQL and optional Selenium without production services. |
+| ADR-015 | Runtime baseline is PHP 8.3.32, Laravel 13.22.0, Sail 1.64.0, Filament 5.7.3 and Livewire 4.3.3 | APPROVED — LOCK VERIFICATION REQUIRED | Current compatible versions at planning date; Composer platform PHP prevents dependency drift to a higher runtime. |
+| ADR-016 | MySQL 8.4.10 LTS is the sole launch database profile | APPROVED | Lowest compatibility/test surface; no unneeded MySQL 9.x matrix before a real hosting requirement. |
+| ADR-017 | Tests use static, accounting and application layers with bounded browser coverage | APPROVED | Separates assurance responsibilities without multiplying infrastructure. |
+| ADR-018 | Automated tests never reset the persistent test database implicitly | APPROVED PROJECT-SPECIFIC DEVIATION | Uses explicit test DB, forward migrations, transactions and targeted cleanup instead of Laravel reset traits. |
+| ADR-019 | Required GitHub Actions gates produce one immutable release artifact from the verified commit | APPROVED | Hosting receives the tested artifact and does not rebuild dependencies/assets. |
+| ADR-020 | Tenant RBAC uses `spatie/laravel-permission` 8.3.0 teams plus `bezhansalleh/filament-shield` 4.3.1 | APPROVED — LOCK VERIFICATION REQUIRED | Compatible with PHP 8.3/Laravel 13/Filament 5; teams map to `tenant_id`; Shield supplies UI/catalogue, not invariants. |
+| ADR-021 | Operational revisions use Mansoor 5.1 + Overtrue 6.0.0 snapshots behind application Actions and revision batches | APPROVED — LOCK VERIFICATION REQUIRED | Supports compare/history while application owns aggregate transaction, restore validation, deletion and tenant rules. |
+| ADR-022 | Named BudgetVersion records are application-owned immutable snapshots | APPROVED | Model revision packages do not represent an approved multi-record economic baseline. |
+| ADR-023 | Installation backup/restore and tenant data portability are separate contracts | APPROVED | Whole-installation recovery remains reliable; portability is staged archive/import, not selective restore. |
+| ADR-024 | Notifications use Laravel scheduler, database notifications and optional synchronous email | APPROVED | Useful alerts without Redis, WebSockets, queues or hidden retries. |
+| ADR-025 | Generated-expense suppression is a non-economic exception keyed by immutable generation source | APPROVED | Intentional deletion remains controllable without adding a monetary source. |
+| ADR-026 | No tenant-user self-service password recovery at launch | APPROVED | Administrator reset plus global emergency Artisan command avoids mail dependency/attack surface. |
+| ADR-027 | Optional onboarding reuses Filament form/wizard and owning Actions | APPROVED | Guidance without a custom mandatory state machine or duplicated validation. |
+| ADR-028 | Shared economic calculation uses one query, one pure engine and four immutable DTOs | APPROVED | One formula implementation without a God Object or calculator-per-KPI fragmentation. |
+| ADR-029 | Platform settings use one typed singleton table; tenant settings use typed tenant columns | APPROVED | A generic settings package/key-value JSON is unnecessary for the approved scope. |
+| ADR-030 | Attachments use Laravel Filesystem plus an application-owned metadata table | APPROVED | Tenant/lifecycle requirements are small and do not justify Media Library. |
+| ADR-031 | Audit uses an application-owned append-only table and dynamic retention cutoff | APPROVED | Minimization, global configurable retention and no export are clearer without an audit package. |
+| ADR-032 | Backup archive target is `spatie/laravel-backup` 10.3.0, conditional on real PHP 8.3.32 Composer resolution | CONDITIONAL APPROVAL | Composer metadata and documentation disagree on PHP floor. Failure blocks Feature 006; no automatic downgrade/custom fallback. |
+| ADR-033 | CSV is authoritative; XLSX output uses OpenSpout 4.32.0 writer-only | APPROVED — LOCK VERIFICATION REQUIRED | OpenSpout 5 requires PHP 8.4; no XLSX import or ODS at launch. |
+| ADR-034 | Launch printing is dedicated Blade HTML; no server PDF renderer package | APPROVED REJECTION | Meets printable-output requirement without Chromium/Python/container/cloud dependency or second CSS engine. |
 
-## Package and version acceptance gate
+## Executable dependency gate
 
-ADR-015, ADR-016, ADR-020 and ADR-021 approve directions, not unverified installations or version claims. `/speckit.plan` must inspect exact current releases, Composer constraints, licenses, runtime/database support, tenancy behavior, restoration semantics, maintenance activity and removal paths.
+Static metadata and primary documentation support these choices, but no package was installed during documentation planning.
 
-A failed spike rejects the package or version choice; it does not weaken the approved product or development contract. Use the smallest native Laravel/Filament alternative when a candidate fails.
+The first implementation change must resolve exact locked dependencies on PHP platform 8.3.32 and run package-focused smoke tests. A failure:
 
-The operational details of ADR-014 through ADR-019 are normative planning input in `development-and-test-contract.md` and become executable only after regenerated plans and tasks.
+1. stops the affected feature;
+2. records the exact conflict;
+3. requires an ADR/plan amendment;
+4. must not silently downgrade, ignore platform requirements, fork a package or introduce a generic fallback framework.
+
+The detailed package boundaries and primary sources are recorded in `technical-research.md`.
