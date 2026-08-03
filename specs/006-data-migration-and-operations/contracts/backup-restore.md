@@ -1,50 +1,86 @@
-# Contract — Backup Restore
+# Contract — Installation backup and restore
 
 Feature: `006-data-migration-and-operations`  
-Purpose: scope, manifest, encryption option, retention and restore verification.
+Status: `CLARIFIED — PLAN REQUIRED`  
+Purpose: whole-installation disaster recovery, retention, verification, and failure visibility.
 
-## Inputs
+## Product boundary
 
-All input is represented by a typed Data/Filter object. IDs are target IDs; imported references retain legacy IDs separately. Money enters as normalized decimal strings. Dates use ISO `YYYY-MM-DD`. The actor and current tenant context are explicit. Authorization and tenant ownership checks occur before protected data or file metadata is returned.
+Backup and restore operate on the complete application installation. They are not tenant-selective. Single-tenant export/import is defined separately in `tenant-data-portability.md` and must not be presented as disaster recovery.
 
-## Output
+## Scope
 
-Return a typed result or dataset. Domain writes return affected IDs, new `lock_version`, calculated values and audit correlation ID. Read datasets declare every column, type, ordering and total; views do not append hidden calculations.
+A backup contains:
 
-## Preconditions and invariants
+- complete application database;
+- attachments and required managed files;
+- environment-independent application configuration required to reconstruct business behavior;
+- manifest, checksums, application/source version, schema/migration state, creation actor/time, and storage metadata.
 
-Apply the feature FR/INV IDs from `../spec.md`. Missing prerequisites produce validation errors; stale versions produce 409; invariant conflicts produce stable `MPIT_006_*` codes; permission failure produces 403 without confirming hidden record existence.
+A backup excludes runtime caches, sessions, temporary files, test databases, build workspaces, and secrets that must be provisioned independently. `/speckit.plan` defines exactly which configuration is environment-independent and how secrets are documented without entering the archive.
 
-## Transaction and idempotency
+## Package direction
 
-Writes open one transaction inside the owning Action. Lock only cross-record consistency rows. Retrying the same idempotency/source key cannot create duplicates. Rollback removes all partial database side effects; file writes use temporary paths and finalize only after database success, with compensating cleanup on failure.
+Use a maintained Laravel backup package if the compatibility spike proves Laravel 13/PHP 8.5/MySQL/shared-hosting support, required files, restore documentation, encryption/storage needs, and removal path. The package does not define product scope or restore acceptance.
+
+## Create backup
+
+Only Administrator/platform operations may start backup. The operation:
+
+1. obtains a consistency-safe database dump using verified available tools;
+2. captures approved files/configuration;
+3. creates manifest and checksums;
+4. stores atomically in configured backup storage;
+5. records result, size, source version, actor/correlation, and failure diagnostics;
+6. creates failure notification when unsuccessful.
+
+No fallback may report success without a valid database dump and file manifest.
+
+## Restore verification
+
+A backup is `Created` but not `Verified` until restored into an empty verification environment and checked for:
+
+- manifest/checksum validity;
+- schema/migration compatibility;
+- database and attachment restoration;
+- application boot and authenticated smoke;
+- tenant count and selected exact count/sum checks;
+- absence of source secrets in logs/output;
+- source version traceability.
+
+Verification result is persisted and failure is notified. Production restore requires an already Verified backup unless an explicit documented emergency procedure is approved later.
+
+## Production restore
+
+Production restore:
+
+- requires Administrator/platform authorization;
+- requires reinforced confirmation showing backup identity, verification state, source version, target environment, and destructive scope;
+- runs only against the full installation;
+- records actor, start/end, result, and correlation ID;
+- leaves an explicit failed state and diagnostics; no silent rollback claim is allowed unless rollback was actually executed and verified.
+
+## Retention
+
+Retention policy, storage destination, encryption, and off-site copies are technical/operational decisions finalized in `/speckit.plan` from hosting capabilities. Retention deletion must never remove the only Verified recoverable backup without explicit policy safeguards.
+
+## Notifications
+
+Backup and restore-verification failures create deduplicated database notifications for authorized Administrator recipients and optional synchronous email when configured. No queue worker or hidden retry loop.
 
 ## Authorization
 
-| Ability | Administrator | Editor same tenant | Viewer same tenant | User other tenant |
-|---|---:|---:|---:|---:|
-| viewAny/view | Allow where contract permits, in explicit tenant context or global operational scope | Allow for assigned tenant | Allow read-only for assigned tenant | Deny |
-| create/update | Allow where contract and invariant permit | Allow only where the feature-specific clause grants | Deny | Deny |
-| delete/archive | Only where explicitly specified; never bypass immutable history | Only where explicitly granted; never immutable history | Deny | Deny |
-| export/print | Tenant-scoped; global exports contain operational metadata only | Tenant-scoped | Tenant-scoped | Deny |
-| administer/global operation | Allow | Deny | Deny | Deny |
-
-## Audit/logging
-
-Record business state changes, actor, old/new values and correlation ID. Do not log passwords, session tokens, full attachments or unredacted migration source rows. Expected validation failures are not error logs.
+Tenant role permissions cannot grant installation backup, verification, or restore. Tenant users cannot list backup paths or metadata.
 
 ## Test contract
 
-1. valid input returns/persists exact expected values;
-2. each invariant has one focused failure test;
-3. unauthorized role cannot read/write outside its scope;
-4. stale version and duplicate idempotency key are deterministic;
-5. transaction rollback leaves no partial records/files;
-6. any screen/export using this contract matches the same dataset.
-
-## Feature-specific clauses
-
-Read the local plan and data model. Implement exactly scope, manifest, encryption option, retention and restore verification. Do not reuse this file as a generic abstraction for other domains; shared behavior belongs only in an explicitly listed shared helper.
-## Open product boundary
-
-Backup and restore are Administrator-only. Whether restore is installation-wide only or tenant-selective remains open under Q-021; implementation must not invent tenant-selective semantics.
+1. complete scope manifest/checksum;
+2. database-dump failure is visible and backup not marked successful;
+3. file failure cleans partial archive or marks it unusable;
+4. restore verification in empty environment is required for Verified state;
+5. production restore rejects unverified backup under ordinary path;
+6. reinforced confirmation contract;
+7. tenant-selective restore route/action absent;
+8. protected authorization and sensitive-log tests;
+9. notification created on backup/verification failure;
+10. retained backup integrity and source-version metadata.
