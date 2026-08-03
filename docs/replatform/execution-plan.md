@@ -1,6 +1,6 @@
 # Global execution sequence
 
-Status: `TASKS COMPLETE — ANALYSIS NEXT`
+Status: `TASK REMEDIATION COMPLETE — RE-ANALYSIS NEXT`
 
 ## Spec Kit sequence
 
@@ -8,31 +8,41 @@ Status: `TASKS COMPLETE — ANALYSIS NEXT`
 |---|---|---|
 | S0 Product clarification/Constitution 3.0.1 | COMPLETE | Q-001–Q-041 closed |
 | S1 Reconcile prior PRs | COMPLETE | development/test and Budget/kernel inputs merged |
-| S2 `/speckit.plan` | COMPLETE AND MERGED | research, ADRs, integrated/feature plans, physical models, contracts and quickstarts |
-| S3 Plan review/merge | COMPLETE | planning commit `6be02f58ccda27c48d9a43f5c2fb3df9dd161a0e` on `laravel-replatform` |
-| S4 `/speckit.tasks` | COMPLETE ON TASK BRANCH | seven dependency/user-story task files plus cross-feature summary |
-| S5 Task review/merge | CURRENT | Product Owner confirms task decomposition and boundaries |
-| S6 `/speckit.analyze` | NEXT AFTER MERGE | CRITICAL 0 and HIGH 0 for implementation readiness |
-| S7 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
-| S8 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
+| S2 `/speckit.plan` | COMPLETE AND MERGED | research, ADRs, plans, physical models, contracts and quickstarts |
+| S3 Initial `/speckit.tasks` | COMPLETE AND MERGED | seven feature task files |
+| S4 Initial `/speckit.analyze` | FAILED AND RECORDED | 2 CRITICAL, 10 HIGH, 4 MEDIUM findings on commit `54bc8c5c72167b47eedc7ae9cc62211310035f8c` |
+| S5 `/speckit.tasks` remediation | COMPLETE ON THIS BRANCH | corrected graph, readiness registry, traceability and technical amendment |
+| S6 Remediation review/merge | CURRENT | Product Owner confirms remediation boundaries |
+| S7 Repeated `/speckit.analyze` | NEXT AFTER MERGE | CRITICAL 0 and HIGH 0 |
+| S8 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
+| S9 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
 
-## Implementation critical path
+## Remediated implementation critical path
 
-1. Feature 001 scaffold, locks, Sail and test/CI guardrails;
-2. Feature 007 tenant schema and explicit context;
-3. Feature 001 authentication and panel integration;
-4. Feature 007 configurable tenant access;
-5. Feature 002 shared revision infrastructure and master data;
-6. Feature 003 Money and current Expense aggregate;
-7. Feature 004 projects, contracts and generated occurrences;
-8. Feature 005 economic kernel, Budget, versions and outputs;
-9. Feature 006 migration, portability, backup and deployment.
+1. Feature 001 scaffold, exact locks, Sail and test/CI guardrails;
+2. Feature 007 tenant schema, context and safe tenant lookup;
+3. Feature 007 reusable tenant-ownership Policy concern;
+4. Feature 001 authentication/shell and Feature 007 tenant/role lifecycle;
+5. Feature 002 shared revisions and exact master-data selectors;
+6. Feature 003 Money, current Expense and attachment foundation;
+7. Feature 003 Actual confirmation;
+8. Feature 004 projects, contracts and generated occurrences;
+9. Feature 005 kernel, Budget, scenarios, comparisons and outputs;
+10. Feature 006 migration, portability, backup and deployment.
 
-The exact task graph, shared-file ownership and MVP checkpoints are in `tasks-summary.md` and the seven feature `tasks.md` files.
+Notification execution is explicitly:
+
+```text
+T001-018 delivery primitive
+→ T004-020 renewal command and T006-014 operation-failure integration
+→ T001-025 final scheduler registration
+```
+
+The exact task graph, task composition and shared ownership are in `tasks-summary.md`, `task-readiness-registry.md` and the seven feature `tasks.md` files.
 
 ## Vertical-slice rule
 
-Every implementation slice includes its schema/rollback constraints, owning Action/query, authorization and tenant isolation, revision/audit behavior where relevant, Filament UI, focused tests, documentation and actual validation results. Package-only, database-only and broad unrelated refactor PRs are prohibited unless the task explicitly owns a verified prerequisite gate.
+Every implementation slice includes schema/rollback constraints, owning Action/query, authorization and tenant isolation, revision/audit behavior where relevant, Filament UI, focused tests, documentation and actual validation results. Package-only, database-only and unrelated refactor PRs are prohibited unless the task explicitly owns a verified prerequisite gate.
 
 ## Rollback principles
 
