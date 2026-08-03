@@ -1,87 +1,99 @@
-# Data model — Reporting, scenarios, and budget versions
+# Data model — Feature 005 Reporting, scenarios and BudgetVersion
 
-Status: `CLARIFIED LOGICAL MODEL — PHYSICAL PLAN REQUIRED`
+Status: `PROPOSED TARGET`  
+Shared conventions: `docs/replatform/data-model-overview.md`
 
 ## Current reporting
 
-Current reporting creates no authoritative economic persistence. Query-time datasets read current non-deleted tenant-owned Expense rows and apply the same server-side exact calculations used by screens, print, CSV, and XLSX.
+No authoritative current monetary table is created. `EconomicDatasetQuery` reads current non-deleted Expense rows and returns DTOs. Operational versions, audit, deleted rows, generation exceptions, scenarios and BudgetVersion rows are excluded.
 
-Current datasets never read operational revisions, audit, deleted records, scenarios, generation exceptions, or budget-version snapshot rows.
+## `annual_budgets`
 
-## `scenarios`
+- tenant ID;
+- planning year ID;
+- nullable selected reference BudgetVersion ID;
+- `lock_version`, timestamps;
+- unique `(tenant_id,planning_year_id)`.
 
-Logical fields:
-
-- `id`, `tenant_id`;
-- name and optional description;
-- status: active/archived;
-- normalized filters and scenario assumptions;
-- created/updated actor and timestamps;
-- `lock_version`.
-
-Scenario detail rows use explicit typed dimensions and decimal monetary strings/columns defined in `/speckit.plan`. They never foreign-key-replace or mutate current Expense rows. Scenarios are tenant-shared and permission-controlled.
+Context only; no total columns.
 
 ## `budget_versions`
 
-| Field | Requirement |
-|---|---|
-| `id` | stable version identity |
-| `tenant_id` | required tenant ownership |
-| `planning_year_id` | required same-tenant year |
-| `name` | tenant/year unique according to the plan's case/normalization rule |
-| `description` | optional |
-| `kind` | `Manual`, `Approved`, or `Snapshot` |
-| `status` | `Draft` or `Published` |
-| `format_version` | required schema version |
-| `filters` | normalized typed JSON or relational filter representation |
-| `currency/language/timezone` | captured output context |
-| `created_by/created_at` | author metadata |
-| `published_by/published_at` | required when Published |
-| `checksum` | exact snapshot integrity |
-| `lock_version` | draft concurrency only |
+- annual budget, tenant and planning-year IDs;
+- tenant/year normalized unique name;
+- optional description;
+- kind `manual|approved|snapshot`;
+- status `draft|published`;
+- source mode `manual|current_snapshot`;
+- official basis `net|gross`;
+- captured currency/language/timezone;
+- normalized dataset/filter/output-scope JSON;
+- dimension-availability JSON;
+- exact summary JSON containing decimal strings;
+- format version and SHA-256 checksum;
+- created/published actors and timestamps;
+- draft `lock_version`.
 
-A Published row is immutable. It may be archived from ordinary selection only if the product plan defines archival without changing snapshot content.
+Published content is immutable by Policy/Action. Reference selection is stored on annual Budget, not in the version.
 
 ## `budget_version_rows`
 
-Snapshot rows are application-owned, not package model revisions.
+- tenant and version IDs;
+- stable row key and sequence;
+- optional source Expense/row and source operational-version IDs;
+- origin `current|manual`;
+- captured type, confirmation state, bucket and funding flags;
+- captured year/cost-center/vendor/project/contract/Plafond labels and nullable source IDs;
+- Net/VAT/Gross at 2 decimals;
+- optional allocation/dimension metadata;
+- timestamps only if required for creation; no later updates on Published rows.
 
-Required semantic fields:
+Labels are captured values and remain readable if current master data changes/deactivates. Snapshot rows never join current totals.
 
-- budget version ID and tenant ID;
-- stable row key and ordered position;
-- grouping dimensions such as year/cost center/category/phase/vendor/project/contract where selected by the approved dataset;
-- display labels captured for historical readability;
-- source Expense/row IDs and source revision IDs when derived from current data;
-- exact `DECIMAL(19,6)` source/intermediate fields where required;
-- exact `DECIMAL(19,2)` business-result fields;
-- row origin: current snapshot or manual draft input;
-- normalized metadata needed for comparison.
+No separate totals table: exact summary JSON is reproducible and checksum-protected. Add a relational totals table only after a measured query need and plan amendment.
 
-Published snapshot rows are immutable and excluded from current totals.
+## `scenarios`
 
-## `budget_version_totals`
+- tenant/year IDs;
+- name/description;
+- state `active|archived`;
+- assumption/filter metadata;
+- created/updated actors;
+- `lock_version`, timestamps.
 
-Persist only if `/speckit.plan` proves that stored totals are needed for integrity/performance. When persisted, every total is reproducible from snapshot rows, identified by stable grouping dimensions, and checked by checksum. Stored totals never replace row-level source of the version dataset.
+## `scenario_rows`
 
-## Comparison result
+- tenant/scenario IDs;
+- optional source current row ID;
+- stable row key;
+- explicit operation/origin;
+- captured typed dimensions and labels;
+- Net/VAT/Gross;
+- timestamps.
 
-Comparison is a computed typed result, not authoritative persistence. It aligns two selected datasets by approved stable dimensions and returns:
+Scenario rows never FK-replace or mutate Expense rows.
 
-- unchanged rows;
-- added/removed rows;
-- changed exact amounts;
-- absolute and percentage variance where denominator semantics are defined;
-- exact totals for each side and difference.
+## Comparison
 
-## Tenant scope
+Computed DTO only; no comparison persistence. Source identity, dimension availability and stable row keys are required to align current/version/scenario datasets.
 
-Every current report, scenario, budget version, snapshot row, comparison, print, and export requires exactly one tenant. Administrator global overview uses a separate operational dataset only.
+## Checksum
 
-## Empty state
+Canonical checksum input is versioned, sorted and normalized:
 
-An empty current or selected dataset is valid. The result contract returns zero only for mathematically defined aggregate values, empty row collections, explanatory missing-prerequisite codes, and available navigation actions. No sample economic row is persisted or returned as data.
+1. format version and captured context;
+2. normalized filters/scope/basis/dimension availability;
+3. ordered rows with decimal strings and labels;
+4. exact summary.
 
-## Audit
+JSON key order and decimal formatting are deterministic. Checksum tests use golden fixtures.
 
-Report reads are not business mutations. Creating/publishing/archiving a scenario or budget version is audited. Export generation records actor, tenant, selected dataset identity, filters, output type, and correlation ID without logging the exported payload.
+## Indexes
+
+- annual Budget unique tenant/year;
+- versions `(tenant_id,planning_year_id,status,created_at)` and normalized name unique;
+- version rows `(budget_version_id,position)` and stable row key;
+- scenarios `(tenant_id,planning_year_id,state)`;
+- scenario rows `(scenario_id,stable_row_key)`.
+
+Draft deletion may cascade snapshot rows. Published deletion is unavailable. Scenario deletion/archive follows permission and reference rules.
