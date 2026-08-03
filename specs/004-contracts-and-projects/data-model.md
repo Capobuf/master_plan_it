@@ -1,40 +1,62 @@
-# Data model — Contracts and projects
+# Data model — Feature 004 Contracts and projects
 
-## Tenant ownership
-
-Projects and contracts belong to one tenant. Terms inherit the contract tenant. Cost centers, vendors, projects, generated expenses, renewals, and source identities must remain in the same tenant.
+Status: `PROPOSED TARGET`  
+Shared conventions: `docs/replatform/data-model-overview.md`
 
 ## `projects`
 
-`id`, required `tenant_id`, unique nullable legacy ID scoped to tenant, title, same-tenant cost-center FK, stage, nullable same-tenant deferred-year FK, nullable dates, description, notes, lock version, timestamps/soft delete.
+- tenant ID;
+- title and optional description;
+- cost center ID;
+- stage `idea|proposed|approved|deferred|rejected`;
+- nullable deferred target planning year ID;
+- `lock_version`, timestamps, `deleted_at`.
+
+No monetary total. Index `(tenant_id,stage,deleted_at)`.
 
 ## `contracts`
 
-`id`, required `tenant_id`, unique nullable legacy ID scoped to tenant, description, same-tenant vendor and cost-center FKs, nullable same-tenant project FK, calculated status, auto-renew flag, calculated dates, notes, attachment reference, lock version, timestamps/soft delete.
+- tenant ID;
+- title;
+- vendor and cost-center IDs;
+- active state and optional renewal/display metadata;
+- `lock_version`, timestamps, `deleted_at`.
+
+No monetary total and no required project FK; generated Expense may reference contract as its exclusive context.
 
 ## `contract_terms`
 
-| Column | Type | Rule |
-|---|---|---|
-| id/contract_id/position | bigint | PK, FK restrict, unique order inside contract |
-| legacy_id | varchar(140) | unique inside tenant/source scope |
-| from_date/to_date | date | from required; periods non-overlap |
-| billing_cycle | varchar(16) | Monthly or Annual |
-| entered_amount | decimal(19,6) | required |
-| includes_vat | boolean | required |
-| vat_rate | decimal(7,4) | strict VAT rule |
-| amount_net/vat/gross | decimal(19,2) | calculated |
-| monthly_amount_net | decimal(19,6) | calculated |
-| is_auto_renewed | boolean | read-only through Action |
-| renewed_from_term_id | bigint | same-tenant self FK restrict, nullable |
-| notes/attachment reference | text/reference | optional and tenant-scoped |
+- tenant and contract IDs;
+- stable rule/line identity;
+- effective start/end dates;
+- billing cycle `monthly|annual`;
+- quantity, unit price or entered amount at 6 decimals;
+- VAT input mode/rate;
+- Net/VAT/Gross at 2 decimals;
+- auto-renew flag and nullable renewed-from term ID;
+- optional notes;
+- `lock_version`, timestamps, `deleted_at`.
 
-## Expense context migration sequence
+Index contract/date range. Non-overlap and derived end dates are Action-owned.
 
-1. Create tenant-owned projects, contracts, and terms inside the selected tenant.
-2. Import or create identity maps scoped to that tenant.
-3. Add nullable project/contract references to tenant-owned expenses.
-4. Backfill through same-tenant identity maps.
-5. Block unresolved or cross-tenant source references.
-6. Add restrictive foreign keys and indexes.
-7. Enforce mutual exclusion and same-tenant ownership in the domain Action.
+## `contract_generation_exceptions`
+
+- tenant, contract, term/rule and planning-year IDs;
+- canonical source key or SHA-256 normalized key;
+- optional reason;
+- actor and timestamp;
+- unique `(tenant_id,source_key)`.
+
+No monetary fields, soft-delete or current totals. Removing the row represents explicit resume and is audited.
+
+## Generated Expense relation
+
+`expense_rows.source_key`, `contract_term_id`, confirmation state and system-managed fields are Feature 003-owned. Source key components are immutable after creation. Existing generated history is derived from contract terms, current/deleted expenses, generation exceptions, revisions and audit; no duplicate history table.
+
+## Revisions
+
+Projects, contracts and terms use snapshot versions plus one revision batch per aggregate operation. Restore invokes owning Actions and cannot rewrite generated occurrence identity or delete exceptions/expenses as a side effect.
+
+## Notifications
+
+Use Laravel notifications table. Deduplication key includes event type, tenant, contract/term, threshold/date and recipient.
