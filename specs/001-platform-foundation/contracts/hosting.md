@@ -1,47 +1,98 @@
 # Contract — Hosting
 
 Feature: `001-platform-foundation`  
-Purpose: shared hosting prerequisites, document root, build artifact, cron, storage, deploy and rollback.
+Status: `PLANNING INPUT — HOST PROFILE AND EXACT VERSIONS REQUIRE VERIFICATION`  
+Purpose: shared-hosting prerequisites, runtime/database compatibility, document root, immutable build artifact, cron, storage and release handoff.
 
-## Inputs
+## Runtime boundary
 
-All input is represented by a typed Data/Filter object. IDs are target IDs; imported references retain legacy IDs separately. Money enters as normalized decimal strings. Dates use ISO `YYYY-MM-DD`. The actor and current tenant context are explicit. Authorization and tenant ownership checks occur before protected data or file metadata is returned.
+- Laravel 13 modular monolith.
+- Exact PHP runtime, extensions and image/package versions are locked by `/speckit.plan` after current compatibility verification.
+- MySQL 8.4 LTS is the minimum accepted database family; an additional current family is supported only after the approved compatibility spike.
+- InnoDB, `utf8mb4` and strict SQL mode are mandatory.
+- Runtime may not require Redis, WebSockets, Node.js, a permanent queue worker or a second application service.
 
-## Output
+A hosting profile is not accepted until its actual PHP runtime/extensions, database family/mode, document root, cron, writable paths, ZIP extraction, command execution and rollback capabilities are verified. No silent compatibility fallback is permitted.
 
-Return a typed result or dataset. Domain writes return affected IDs, new `lock_version`, calculated values and audit correlation ID. Read datasets declare every column, type, ordering and total; views do not append hidden calculations.
+## Build and artifact contract
 
-## Preconditions and invariants
+The production artifact is created by GitHub Actions only from the exact commit that passed every required quality gate in `development-and-test-contract.md`.
 
-Apply the feature FR/INV IDs from `../spec.md`. Missing prerequisites produce validation errors; stale versions produce 409; invariant conflicts produce stable `MPIT_001_*` codes; permission failure produces 403 without confirming hidden record existence.
+The artifact contains:
 
-## Transaction and idempotency
+- production Composer dependencies resolved from the lock file;
+- compiled Vite assets and valid manifest;
+- application source and required public assets;
+- source commit/version and package checksum metadata.
 
-Writes open one transaction inside the owning Action. Lock only cross-record consistency rows. Retrying the same idempotency/source key cannot create duplicates. Rollback removes all partial database side effects; file writes use temporary paths and finalize only after database success, with compensating cleanup on failure.
+It excludes:
 
-## Authorization
+- production secrets and local environment files;
+- test databases or test fixtures not required at runtime;
+- caches generated for another environment;
+- Node runtime dependencies;
+- development-only dependencies and tooling.
 
-| Ability | Administrator | Editor same tenant | Viewer same tenant | User other tenant |
-|---|---:|---:|---:|---:|
-| viewAny/view | Allow where contract permits, in explicit tenant context or global operational scope | Allow for assigned tenant | Allow read-only for assigned tenant | Deny |
-| create/update | Allow where contract and invariant permit | Allow only where the feature-specific clause grants | Deny | Deny |
-| delete/archive | Only where explicitly specified; never bypass immutable history | Only where explicitly granted; never immutable history | Deny | Deny |
-| export/print | Tenant-scoped; global exports contain operational metadata only | Tenant-scoped | Tenant-scoped | Deny |
-| administer/global operation | Allow | Deny | Deny | Deny |
+Hosting deploys the artifact unchanged. It does not run `npm install`, rebuild Vite assets, or select different dependency versions. Feature 006 owns upload/extraction, release activation, backup, health checks and rollback.
 
-## Audit/logging
+## Application configuration
 
-Record business state changes, actor, old/new values and correlation ID. Do not log passwords, session tokens, full attachments or unredacted migration source rows. Expected validation failures are not error logs.
+Configuration is environment-owned and is never embedded in the release ZIP. The hosting profile supplies at least:
 
-## Test contract
+- application key and URL;
+- database credentials;
+- mail configuration when enabled;
+- filesystem/storage paths;
+- scheduler invocation;
+- any verified dump/restore binary path required by the backup contract.
 
-1. valid input returns/persists exact expected values;
-2. each invariant has one focused failure test;
-3. unauthorized role cannot read/write outside its scope;
-4. stale version and duplicate idempotency key are deterministic;
-5. transaction rollback leaves no partial records/files;
-6. any screen/export using this contract matches the same dataset.
+The web document root points to Laravel `public/`. Application source, storage internals, environment files and private tenant files must not be web-accessible.
 
-## Feature-specific clauses
+Writable paths are limited to Laravel-required cache/storage locations and approved tenant file storage. Permission failures are blocking and diagnostic; the application must not broaden permissions silently.
 
-Read the local plan and data model. Implement exactly shared hosting prerequisites, document root, build artifact, cron, storage, deploy and rollback. Do not reuse this file as a generic abstraction for other domains; shared behavior belongs only in an explicitly listed shared helper.
+## Database and migrations
+
+Deployment applies forward migrations through the approved Feature 006 release procedure.
+
+Production and hosting validation never invoke:
+
+- `migrate:fresh`;
+- `db:wipe`;
+- unscoped truncation;
+- destructive database reset.
+
+Every release-eligible database family must pass migrations, the complete accounting layer and representative application smoke tests before packaging.
+
+## Scheduler and process model
+
+One cron entry invokes Laravel scheduler every minute. Scheduled operations are bounded, use overlap prevention where required, resolve tenant/platform scope explicitly and expose failure.
+
+Queue connection defaults to `sync`. No permanent process is required at launch.
+
+## Tenant and authorization boundary
+
+Hosting serves one multi-tenant Laravel application. No custom tenant domain or separate tenant database is required.
+
+Hosting configuration cannot bypass tenant context, policies, configurable permissions, revision boundaries or economic invariants. Files remain tenant-owned and are served only through authorized application paths.
+
+## Acceptance tests
+
+1. extracted artifact contains a valid Vite manifest and every referenced compiled asset;
+2. application boots from the artifact without Node.js or a permanent worker;
+3. production caches build from the deployed artifact;
+4. health smoke validates runtime/extensions and database connectivity without exposing secrets;
+5. scheduler registration is present and does not require a daemon;
+6. document-root checks prevent direct access outside `public/`;
+7. failed required quality jobs cannot publish a release artifact;
+8. artifact records the exact verified source commit and is reused unchanged by deployment;
+9. production migration path is forward-only and contains no reset command;
+10. hosting profile and rollback remain consistent with Feature 006.
+
+## Errors
+
+- unsupported PHP, extension or database profile: fail preflight with exact requirements;
+- missing compiled asset/manifest: fail packaging before publication;
+- unwritable required path: fail preflight without permission broadening;
+- missing cron: profile is not operationally accepted;
+- migration failure: stop deployment and invoke the Feature 006 recovery path;
+- unexpected failure: expose correlation ID and sanitized diagnostics without credentials or tenant payloads.
