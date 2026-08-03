@@ -1,19 +1,24 @@
-# Research — Data migration and operations
+# Research — Feature 006 Migration and operations
 
-Verification date: 2026-08-02. The implementation agent must re-check official documentation if versions have advanced.
+Verification date: 2026-08-03. Shared package research is in `docs/replatform/technical-research.md`.
 
-| Decision ID | Problem | Decision | Compatibility/source class | Rejected alternative | Revisit condition |
-|---|---|---|---|---|---|
-| RES-006-001 | Framework baseline | Laravel 13 on PHP 8.3+ | Official Laravel deployment docs | Older Laravel baseline | Security/support change |
-| RES-006-002 | Stateful server UI | Blade by default; Livewire 4 only for dynamic migration run status, reconciliation report | Official Livewire lifecycle docs | SPA/Inertia | Proven UX requirement impossible server-side |
-| RES-006-003 | UI components | Tailwind 4 + Preline with central re-init adapter | Official Tailwind/Preline docs | second general UI library | Accessibility/maintenance failure |
-| RES-006-004 | Tests | Pest feature/unit; Dusk only for browser lifecycle | Official Laravel/Pest docs | full browser-only suite | none |
-| RES-006-005 | Hosting | synchronous requests/commands and cron | Laravel scheduler/deployment docs | Redis/worker daemon | hosting contract changes |
+| ID | Decision | Reason | Rejected |
+|---|---|---|---|
+| RES-006-001 | UTF-8 CSV + JSON manifest/checksums authoritative | Inspectable, streamable, PHP-native and deterministic. | direct Frappe DB, XLSX authoritative import |
+| RES-006-002 | Dataset-specific staged importers | Dependencies/invariants differ and must call owning Actions. | generic reflection/ORM importer |
+| RES-006-003 | Immutable target + lineage identity map | Repeatability and no cross-tenant/collision ambiguity. | name matching, silent merge/rename |
+| RES-006-004 | Batch apply with explicit progress/failure | Bounded shared-hosting execution; honest partial result. | one unbounded transaction or silent continuation |
+| RES-006-005 | Whole-installation backup only | Approved DR boundary. | selective tenant restore |
+| RES-006-006 | Spatie Backup 10.3 conditional on PHP8.3 Composer gate | Metadata supports target but docs conflict; executable proof required. | automatic downgrade/custom fallback |
+| RES-006-007 | Operator-led restore verification | Restore safety cannot be represented by archive creation alone. | one-click web restore |
+| RES-006-008 | Immutable CI release artifact | Production consumes tested code/assets unchanged. | build on host |
+| RES-006-009 | Exclude audit and transient secrets/settings from portability | Q-020 and privacy/minimization. | complete database dump as tenant package |
 
-## Package ownership
+## Executable gates
 
-No package may be introduced without listing the exact feature, file and reason here. Laravel standard facilities are mandatory when sufficient. For this feature, third-party runtime packages are limited to Livewire, Preline, Chart.js only where listed in `plan.md`; CSV uses standard streaming. XLSX/PDF remain adapter contracts until selected.
-
-## Required tenancy research
-
-Before implementation, consult current official Laravel authorization/middleware/filesystem/scheduler documentation and official database constraint/index documentation. Validate the simplest implementation that proves tenant isolation; do not choose a tenancy package without a concrete requirement and documented trade-off.
+- Composer resolution for backup package on platform PHP 8.3.32;
+- real `mysqldump`/ZipArchive/storage preflight;
+- import package round trip with exact decimals/checksums;
+- dry-run leaves current tables unchanged;
+- restore rehearsal in empty disposable environment;
+- production artifact contains required and excludes prohibited files.
