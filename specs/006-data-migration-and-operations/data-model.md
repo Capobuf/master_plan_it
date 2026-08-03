@@ -1,29 +1,75 @@
-# Data model — Data migration and operations
+# Data model — Feature 006 Migration and operations
 
-## Verified migration boundary
+Status: `PROPOSED TARGET`  
+Shared conventions: `docs/replatform/data-model-overview.md`
 
-One active Frappe site represents one customer and is imported into one explicitly selected tenant. Manual entry or CSV import may be used. A generalized multi-site migration platform is out of scope.
+## `import_runs`
 
-## `migration_runs`
+- type `legacy_migration|tenant_portability`;
+- immutable target tenant ID;
+- source site/package identity and SHA-256 lineage;
+- status `uploaded|staged|dry_run|blocked|approved|applying|completed|failed`;
+- format/schema version;
+- actor, approver, correlation ID and timestamps;
+- summary counts/exact sum JSON;
+- current applied batch/row counters.
 
-Required semantic fields include target tenant, source-site identifier, mode (`dry-run`/`apply`), manifest/hash when files are used, status, counts, sums, blocking-error count, approver, timestamps, and correlation ID. Target tenant is immutable after run creation.
+Unique package lineage rules are scoped to tenant/type. Status transitions are Action-owned.
 
-## `migration_staging_records`
+## `staged_rows`
 
-Each staged row belongs to one migration run and therefore one target tenant. Preserve source file/row/DocType/legacy ID/raw values and validation state. A row cannot be applied outside the run tenant.
+- import run ID;
+- source file/type/line/source ID;
+- bounded safe raw representation;
+- normalized typed JSON;
+- state `pending|valid|quarantined|excluded|applied|failed`;
+- stable error code/safe message;
+- target type/ID when mapped;
+- timestamps.
 
-## `legacy_id_map`
+Indexes by run/state/source identity. Raw values exclude known secrets and oversized file payloads.
 
-Identity mapping is unique on target tenant, source type, and legacy ID. It never substitutes tenant ownership on the target aggregate.
+## `legacy_identity_maps`
 
-## `migration_errors`
+- tenant ID;
+- source type and source ID;
+- target model type/ID;
+- lineage checksum and timestamps;
+- unique `(tenant_id,source_type,source_id)`.
 
-Machine-readable code, source location, sanitized details, severity, resolution state, and target tenant through the run.
+## `import_exclusions`
+
+- run/staged-row IDs;
+- reason;
+- approving Administrator/time;
+- unique per staged row.
+
+## `import_reconciliations`
+
+- run ID;
+- manifest/checksum result;
+- source/target count and exact-decimal sum JSON;
+- attachment counts/checksums;
+- blocker/exclusion summaries;
+- approved actor/time;
+- timestamps.
 
 ## `backup_runs`
 
-Installation backup/restore remains Administrator-only. Exact installation-wide versus tenant-selective behavior remains open under Q-021 and must not be invented in implementation.
+- status `requested|created|verified|failed`;
+- artifact disk/path, checksum, bytes;
+- source commit/version;
+- initiating actor/time;
+- package command result metadata;
+- verification environment/result/time;
+- safe error code/message and correlation ID.
 
-## Audit and retention
+No tenant ID because backup is installation-wide. Archive payload/path is never exposed to tenant roles.
 
-Record Administrator identity, selected tenant for migration, operation, manifest/source evidence, reconciliation result, and approval. Do not log full source rows or secrets.
+## Portability package
+
+No separate export table unless a persistent UI history is required; initial plan records operation in audit and streams/writes manifest package. Audit events/global settings/passwords/secrets are excluded. Operational revision/notification inclusion is explicit in manifest and import schema.
+
+## Deletion/retention
+
+Staging/import run retention is a technical setting decided during tasks only when storage requirements are measured; no silent purge. Backup artifacts follow configured operator retention but a database record remains until approved operational retention. Audit retention does not apply to import reconciliation or backup validity records.
