@@ -14,6 +14,7 @@ Provide repeatable one-tenant legacy migration, complete tenant data portability
 - Installation backup/restore is whole-system disaster recovery.
 - Tenant export/import is a separate archive/portability contract.
 - The verified legacy migration is one active Frappe site into one selected tenant.
+- Audit export is excluded at launch and audit events are not part of tenant portability.
 - No selective tenant restore, generalized multi-site migration platform, background worker, or hidden retry subsystem.
 
 ## User stories
@@ -24,7 +25,7 @@ Administrator imports a versioned package into one immutable selected tenant, re
 
 ### US-006-02 — Tenant export/import
 
-Administrator exports one complete tenant package for archive or portability and may dry-run/import it through controlled staging and collision checks.
+Administrator exports one complete approved tenant business-data package for archive or portability and may dry-run/import it through controlled staging and collision checks.
 
 ### US-006-03 — Installation backup and restore
 
@@ -38,7 +39,7 @@ One cron runs Laravel scheduler. Failed migration/import, backup, and restore ve
 
 ### AC-006-01 — Immutable target tenant
 
-Once a migration/import run starts, target tenant cannot change. Every staged, mapped, quarantined, applied, attachment, revision, and audit record is associated with that tenant.
+Once a migration/import run starts, target tenant cannot change. Every staged, mapped, quarantined, applied, attachment, operational revision, budget version and scenario record is associated with that tenant.
 
 ### AC-006-02 — Identity and replay
 
@@ -50,7 +51,7 @@ Invalid, conflicting, or unassignable rows are quarantined with source location 
 
 ### AC-006-04 — Reconciliation
 
-Reconciliation compares manifest/file hashes, row and attachment counts, exact net sums by year/cost center/phase, source/target identity, and error/exclusion counts. A migration is not accepted without signed approval.
+Reconciliation compares manifest/file hashes, row and attachment counts, exact net sums by year/cost center/type, source/target identity, and error/exclusion counts. A migration is not accepted without signed approval.
 
 ### AC-006-05 — Full installation backup
 
@@ -58,7 +59,7 @@ Backup contains database, attachments, and environment-independent configuration
 
 ### AC-006-06 — Tenant portability package
 
-One tenant export contains approved tenant data, role/assignment metadata, revisions/budget versions/scenarios/audit according to retention, and attachments. It excludes passwords/hashes, sessions, tokens, secrets, and global technical configuration.
+One tenant export contains approved tenant data, role/assignment metadata, retained operational revisions, budget versions, scenarios, generation exceptions, notifications when approved by the plan, and attachments. It excludes audit events, passwords/hashes, sessions, tokens, secrets, and global technical configuration including audit retention.
 
 ### AC-006-07 — Reinforced confirmation
 
@@ -86,7 +87,7 @@ Failed import/migration, backup, or restore verification creates a deduplicated 
 | FR-006-012 | Shared-hosting deployment shall use precompiled assets and one cron entry. | AC-006-08 |
 | FR-006-013 | Verified legacy migration shall import one Frappe site into one selected tenant; a generalized multi-site platform is out of scope. | AC-006-01 |
 | FR-006-014 | Installation restore shall be whole-system only; selective tenant restore shall not be presented. | AC-006-05 |
-| FR-006-015 | Administrator shall export one complete tenant portability package with the approved exclusions. | AC-006-06 |
+| FR-006-015 | Administrator shall export one complete tenant portability package with approved inclusions and exclusions; audit events and global platform settings shall be excluded. | AC-006-06 |
 | FR-006-016 | Tenant package import shall use staging, dry-run, immutable target tenant, collision quarantine, reconciliation, and explicit apply approval. | AC-006-06 |
 | FR-006-017 | Migration/import apply and restore shall use reinforced confirmation. | AC-006-07 |
 | FR-006-018 | Failed migration/import, backup, and restore verification shall create synchronous database notifications and optional email without queue workers. | AC-006-08 |
@@ -103,7 +104,7 @@ Failed import/migration, backup, or restore verification creates a deduplicated 
 | INV-MIG-005 | Collision never triggers silent merge, rename, overwrite, or unknown-tenant assignment. | DomainConflict | TEST-006-005 |
 | INV-OPS-001 | A backup is not valid until restore verification succeeds. | DomainConflict | TEST-006-006 |
 | INV-OPS-002 | Tenant portability import is not selective disaster restore. | DomainConflict | TEST-006-007 |
-| INV-OPS-003 | Tenant package never contains passwords, hashes, sessions, tokens, or application secrets. | DomainConflict | TEST-006-008 |
+| INV-OPS-003 | Tenant package never contains audit events, passwords, hashes, sessions, tokens, application secrets, or global platform settings. | DomainConflict | TEST-006-008 |
 | INV-OPS-004 | Scheduler failure notification is visible and deduplicated; no silent retry loop. | DomainConflict | TEST-006-009 |
 
 ## Cutover evidence still open
@@ -116,4 +117,4 @@ These are operational evidence, not product ambiguity:
 
 ## Clarification result
 
-Q-021, Q-022, Q-023, Q-024, Q-029, and access-recovery dependencies are closed. Existing Feature 006 plan, tasks, migration, backup, deployment, data model, and quickstart must be regenerated before implementation/cutover.
+Q-020, Q-021, Q-022, Q-023, Q-024, Q-029, and access-recovery dependencies are closed. Existing Feature 006 plan, tasks, migration, backup, deployment, data model, and quickstart must be regenerated before implementation/cutover.
