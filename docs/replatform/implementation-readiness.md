@@ -1,42 +1,44 @@
 # Implementation readiness
 
-Status: `TASKS COMPLETE — ANALYSIS REQUIRED`
+Status: `TASK REMEDIATION COMPLETE — RE-ANALYSIS REQUIRED`
 
-Constitution 3.0.1, Q-001–Q-041, integrated architecture, technical research, physical models, Feature 001–007 plans and regenerated task files are current on this branch.
+Constitution 3.0.1, Q-001–Q-041, integrated architecture, technical research, physical models, Feature 001–007 plans and remediated task files are current on this branch.
 
 | Feature | Planned and tasked scope | Status |
 |---|---|---|
-| 001 Platform foundation | runtime/Sail/test/CI, auth, password operations, settings, audit, scheduler, release | TASKS COMPLETE; real dependency lock pending implementation |
-| 002 Master data | shared revision infrastructure, years, vendors, cost centers, lifecycle and restore | TASKS COMPLETE |
-| 003 Expense domain | Money/VAT/allocation, current aggregate, Actual confirmation, revisions and deletion | TASKS COMPLETE |
-| 004 Contracts/projects | project lifecycle, terms, source keys, controlled synchronization, suppression/resume and notifications | TASKS COMPLETE |
-| 005 Reporting/analytics | shared kernel, rolling Budget, scenarios, BudgetVersion, comparison, print/CSV/XLSX | TASKS COMPLETE |
-| 006 Migration/operations | staging/apply, portability, conditional backup and immutable deployment | TASKS COMPLETE; NOT CUTOVER READY |
-| 007 Tenancy/access | explicit context, tenant lifecycle, configurable RBAC, protected abilities and isolation | TASKS COMPLETE |
+| 001 Platform foundation | runtime/Sail/test/CI, auth, password operations, settings, audit view/retention, notification primitive, scheduler, release | REMEDIATED; dependency lock pending implementation |
+| 002 Master data | shared revisions, years, vendors, cost centers, lifecycle and restore | REMEDIATED |
+| 003 Expense domain | Money/VAT/allocation, current aggregate, Actual confirmation, revisions, deletion and attachments | REMEDIATED |
+| 004 Contracts/projects | lifecycle, terms, source keys, controlled sync, suppression/resume and renewal notifications | REMEDIATED |
+| 005 Reporting/analytics | shared kernel, rolling Budget, scenarios, BudgetVersion, comparison, print/CSV/XLSX | REMEDIATED |
+| 006 Migration/operations | staging/apply, portability, conditional backup and immutable deployment | REMEDIATED; NOT CUTOVER READY |
+| 007 Tenancy/access | context, reusable ownership concern, lifecycle, configurable RBAC and final isolation matrix | REMEDIATED |
 
-## Task-generation validation
+## Task-remediation validation
 
-- 142 tasks across 35 user stories;
-- 39 tasks marked `[P]` only after declared prerequisites;
-- exact files and symbols identified;
-- tests written before production behavior;
-- focused validation commands and expected outcomes present;
-- forbidden scope and fallback behavior present;
-- former task IDs and superseded implementation assumptions explicitly retired;
-- shared-file ownership and cross-feature critical path documented in `tasks-summary.md`;
-- revision ownership moved to Feature 002 to remove the master-data/Expense cycle;
-- tenancy/RBAC resource ownership assigned to Feature 007, with Feature 001 limited to panel/platform integration.
+- 148 tasks across 35 user stories;
+- 41 tasks marked `[P]` only after exact prerequisites;
+- stable `[FND]`, `[USn]` and `[VER]` classes;
+- task entry plus readiness-registry record forms the complete constitutional task contract;
+- source links, inherited invariants, stable errors and exact-path expansions recorded;
+- notification and tenancy dependency cycles removed;
+- exact master-data, Actual-confirmation and scenario dependencies propagated into owning task files;
+- audit-view and attachment persistence/policy/UI tasks added;
+- source traceability regenerated with current task/test IDs and requirement coverage ledger;
+- PHP target and backup Composer gate corrected by technical amendment;
+- stale feature header statuses dispositioned by `artifact-status-register.md`.
 
 ## Remaining implementation-readiness gates
 
-1. Product Owner/technical review and merge of this task branch.
-2. `/speckit.analyze` checks consistency, traceability, dependency validity and test coverage and reports CRITICAL 0 and HIGH 0.
-3. The first implementation task performs real Composer/frontend lock resolution and package smoke tests.
-4. Implementation proceeds through separate reviewed PRs in the dependency sequence from `tasks-summary.md` and `replatform-plan.md`.
+1. Product Owner/technical review and merge of this remediation branch.
+2. Repeat `/speckit.analyze` against the merged artifacts.
+3. Require CRITICAL `0` and HIGH `0`; Medium findings must be resolved or explicitly dispositioned.
+4. Only then begin `/speckit.implement` through separate reviewed vertical-slice PRs.
+5. The first implementation task performs real Composer/frontend lock resolution and package smoke tests.
 
 ## Conditional package gate
 
-`spatie/laravel-backup` 10.3.0 remains conditional because its Composer metadata and documentation disagree on the PHP floor. Failure on platform PHP 8.3.32 blocks backup implementation and requires plan/ADR amendment; it does not activate a fallback.
+`spatie/laravel-backup` 10.3.0 remains conditional. T006-012 uses an exact `composer require` operation on platform PHP 8.3.32, verifies both Composer files and restores them on resolution failure. Failure blocks backup implementation and requires a technical amendment; no fallback is approved.
 
 All pinned dependencies require real lock/smoke before feature code relies on them.
 
@@ -46,8 +48,8 @@ Feature 006 remains not CUTOVER READY until real source export evidence, final h
 
 ## Prohibited interpretation
 
-- task generation is not application implementation;
-- task checkboxes remain unchecked until their commands and results are actually executed;
-- `/speckit.analyze` has not yet been run against these tasks;
+- remediation is not application implementation;
+- task checkboxes remain unchecked until commands and results are actually executed;
+- initial analysis findings are proposed resolved, not closed until repeated `/speckit.analyze` confirms them;
 - no package, code, schema, test, workflow or operational command was executed by this documentation cycle;
 - fixed-role, immutable-Actual, replacement-state, fixed-retention, implicit-output and Italian-only assumptions remain superseded.
