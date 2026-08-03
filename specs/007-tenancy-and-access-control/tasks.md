@@ -1,33 +1,60 @@
-# Tasks — Tenancy and access control
+# Tasks — Feature 007 Tenancy and access control
 
-## Clarification tasks
+Status: `PROPOSED TARGET — /speckit.tasks`  
+Input: Constitution 3.0.1; current Feature 007 design; authorization, permission and error catalogues.  
+ID policy: former clarification checklist is superseded. New executable IDs use `T007-001` onward.
 
-- [x] Define the three-role convergence.
-- [x] Define tenant lifecycle without deletion.
-- [x] Define Administrator-only tenant-user management.
-- [x] Define explicit Administrator tenant context without impersonation.
-- [x] Define full read-only Viewer visibility.
-- [x] Define Editor economic permissions.
-- [x] Define master-data permissions.
-- [x] Define project and contract permissions.
-- [x] Define import, export, attachment, scenario and audit permissions.
-- [x] Define tenant-bound and global data.
-- [x] Define single-site migration scope.
-- [x] Define tenant creation fields and branding.
-- [x] Define global Administrator overview.
-- [x] Define tenant-context visibility.
-- [ ] Close the nine remaining `HIGH` questions Q-016 through Q-024 in the clarification register.
-- [x] Propagate every approved answer Q-001–Q-015 into affected Features 001–006.
-- [ ] Run final Spec Kit checklist, analysis and convergence.
+Tests are written first. Feature 007 owns Tenant, TenantContext, tenant lifecycle, tenant user/role Actions, tenant indicator and User/Role/Tenant Resources. Feature 001 later composes these surfaces into the application panel.
 
-## Implementation-planning tasks
+## Phase 1 — Foundational tenant model
 
-These tasks remain deferred until clarification convergence:
+- [ ] T007-001 Write `tests/Feature/Tenancy/TenantSchemaTest.php`, `TenantLifecycleTest.php`; symbols: required creation fields, unique code, Active/Inactive, budget basis Net, no delete and optimistic lock; depends: Feature 001 T001-005; requirements: FR-007-001, FR-007-010, FR-007-013, INV-TEN-005; validate: `php artisan test tests/Feature/Tenancy/TenantSchemaTest.php tests/Feature/Tenancy/TenantLifecycleTest.php`; expected before implementation: focused failures; forbidden: tenant database/domain, delete route or invented required defaults.
+- [ ] T007-002 Create `database/migrations/*_create_tenants_table.php`, `app/Models/Tenant.php`, `database/factories/TenantFactory.php`, tenant-owned user constraint; symbols: `TenantState`, `BudgetBasis`, casts, lock and restrictive relations; depends: T007-001; requirements: FR-007-001, FR-007-010, FR-007-013; tests first: T007-001; validate: `php artisan test tests/Feature/Tenancy/TenantSchemaTest.php`; expected: explicit tenant owner with no deletion capability; forbidden: tenancy package, subdomain, membership pivot or global mutable business catalogue.
+- [ ] T007-003 Implement `app/Domain/Tenancy/Data/TenantContext.php`, `app/Domain/Tenancy/Actions/EnterTenantContext.php`, `LeaveTenantContext.php`, `app/Http/Middleware/ResolveTenantContext.php`, `SetPermissionTeamContext.php`, `EnsureTenantIsActive.php`; symbols: request-scoped immutable context, Administrator enter/leave, fixed tenant-user membership and team reset in `finally`; depends: T007-002, Feature 001 T001-006; requirements: FR-007-004, FR-007-008, FR-007-012, FR-007-014, INV-TEN-001–INV-TEN-003; tests first: `tests/Feature/Tenancy/TenantContextTest.php`, `PermissionTeamContextTest.php`; validate: `php artisan test tests/Feature/Tenancy/TenantContextTest.php tests/Feature/Tenancy/PermissionTeamContextTest.php`; expected: safe missing/invalid/other denial and no request/Livewire/console leakage; forbidden: impersonation, fallback, sole global scope or tenant-user switch.
+- [ ] T007-004 Create tenant-safe lookup guard in `app/Domain/Tenancy/Queries/TenantOwnedRecordQuery.php`, `app/Support/Tenancy/ResolvesTenantOwnedBindings.php`, `tests/Architecture/TenantQueryScopeTest.php`; symbols: required context, tenant predicate before ID and forbidden unscoped controller/resource lookups; depends: T007-003; requirements: FR-007-008, FR-007-009, INV-TEN-001, INV-TEN-004; validate: `php artisan test tests/Architecture/TenantQueryScopeTest.php`; expected: architecture guard catches unsafe access without a repository layer; forbidden: existence leak or generic repository.
 
-- [ ] Validate Laravel-native tenancy against official current documentation.
-- [ ] Produce tenant ownership matrix for all entities.
-- [ ] Produce complete route/action authorization matrix.
-- [ ] Define database constraints and indexes.
-- [ ] Define isolation and direct-object-reference tests.
-- [ ] Define tenant-aware report, export, attachment and scheduled-work tests.
-- [ ] Define controlled one-site migration and reconciliation procedure.
+## Phase 2 — US-007-01 Administrator creates and enters a tenant (P1, MVP)
+
+**Independent test:** create minimum tenant, enter/leave context, preserve actor identity, deactivate without deletion and reactivate.
+
+- [ ] T007-005 [P] [US1] Write `tests/Feature/Tenancy/TenantManagementTest.php`, `AdministratorContextAuditTest.php`; symbols: create/update/deactivate/reactivate, stale lock, reinforced deactivation, enter/leave attribution; depends: T007-003; requirements: FR-007-003, FR-007-004, FR-007-010, FR-007-013, FR-007-014, INV-TEN-002, INV-TEN-005; validate: `php artisan test tests/Feature/Tenancy/TenantManagementTest.php tests/Feature/Tenancy/AdministratorContextAuditTest.php`; expected before implementation: focused failures; forbidden: deletion, impersonation or unapproved read-only fallback.
+- [ ] T007-006 [US1] Implement `CreateTenant`, `UpdateTenant`, `DeactivateTenant`, `ReactivateTenant` under `app/Domain/Tenancy/Actions/`, `app/Filament/Resources/Tenants/TenantResource.php`, Pages, `app/Filament/Actions/EnterTenantAction.php`, `app/Filament/Components/TenantContextIndicator.php`; symbols: defaults, reinforced token, context badge/breadcrumb and Action-only writes; depends: T007-005; requirements: FR-007-003, FR-007-004, FR-007-010–FR-007-014; tests first: T007-005 plus `tests/Livewire/Tenancy/TenantResourceTest.php`; validate: `php artisan test tests/Feature/Tenancy/TenantManagementTest.php tests/Feature/Tenancy/AdministratorContextAuditTest.php tests/Livewire/Tenancy/TenantResourceTest.php`; expected: standalone tenant resource/component ready for Feature 001 panel composition; forbidden: direct form save, implicit master-data creation or mandatory onboarding.
+- [ ] T007-007 [US1] Implement `app/Domain/Tenancy/Queries/TenantOnboardingStatusQuery.php`, `app/Filament/Pages/TenantOnboardingChecklist.php`; symbols: derived optional checklist linking year/cost center/user/branding Actions; depends: T007-006, Feature 002 T002-009; requirements: FR-007-011; tests first: `tests/Livewire/Tenancy/OnboardingChecklistTest.php`; validate: `php artisan test tests/Livewire/Tenancy/OnboardingChecklistTest.php`; expected: non-blocking checklist without duplicate validation state; forbidden: mandatory wizard, samples or hidden auto-create.
+
+## Phase 3 — US-007-02 Administrator configures tenant access (P1)
+
+**Independent test:** create tenant role, assign additive permissions to same-tenant user, edit templates and deny protected assignments.
+
+- [ ] T007-008 [P] [US2] Write `tests/Feature/Authorization/TenantRoleManagementTest.php`, `ProtectedPermissionTest.php`, `tests/Feature/IdentityAccess/TenantUserMembershipTest.php`; symbols: role CRUD, additive assignments, one tenant, templates, Administrator protection and other-tenant deny; depends: T007-003, Feature 001 T001-006; requirements: FR-007-002, FR-007-003, FR-007-005–FR-007-007, INV-TEN-003, INV-TEN-008; validate: `php artisan test tests/Feature/Authorization/TenantRoleManagementTest.php tests/Feature/Authorization/ProtectedPermissionTest.php tests/Feature/IdentityAccess/TenantUserMembershipTest.php`; expected before implementation: focused failures; forbidden: direct permissions, role-name domain branch or cross-tenant role reuse.
+- [ ] T007-009 [US2] Implement tenant role/user Actions under `app/Domain/IdentityAccess/Actions/`: `CreateTenantRole`, `UpdateTenantRole`, `DeleteTenantRole`, `AssignTenantRoles`, `CreateTenantUser`, `UpdateTenantUser`, `DeactivateTenantUser`; symbols: protected filter, same-tenant assignment, authorship preservation and reassignment-needed result; depends: T007-008; requirements: FR-007-002, FR-007-003, FR-007-005–FR-007-007, FR-007-015; tests first: T007-008; validate: `php artisan test tests/Feature/Authorization/TenantRoleManagementTest.php tests/Feature/IdentityAccess/TenantUserMembershipTest.php`; expected: role changes affect authorization without domain-code changes; forbidden: deleting Administrator or automatic authorship rewrite.
+- [ ] T007-010 [US2] Implement Shield-backed `app/Filament/Resources/Roles/RoleResource.php`, `app/Filament/Resources/Users/UserResource.php`, Pages/Forms/Tables and versioned policies; symbols: tenant queries, catalogue labels, protected omission and template duplication; depends: T007-009; requirements: FR-007-003, FR-007-005–FR-007-007; tests first: `tests/Livewire/Authorization/RoleResourceTest.php`, `tests/Livewire/IdentityAccess/UserResourceTest.php`; validate: `php artisan test tests/Livewire/Authorization/RoleResourceTest.php tests/Livewire/IdentityAccess/UserResourceTest.php`; expected: standalone resources ready for Feature 001 registration and unable to submit protected abilities; forbidden: production-time generation, package super-admin bypass or unscoped query.
+
+## Phase 4 — US-007-03 Tenant user performs permitted work (P1)
+
+**Independent test:** each permission family has same-tenant allow, missing permission, inactive state and safe other-tenant deny.
+
+- [ ] T007-011 [P] [US3] Build `tests/Feature/Authorization/AbilityMatrixTest.php`, `tests/Feature/Tenancy/CrossTenantIdorTest.php`, `AttachmentIsolationTest.php`, `ReportIsolationTest.php`, `RevisionIsolationTest.php`, `CommandIsolationTest.php`; symbols: all permission families and safe denial; depends: T007-009 and each owning feature’s first policy/query task; requirements: FR-007-006–FR-007-009, FR-007-014–FR-007-016, INV-TEN-001, INV-TEN-004, INV-TEN-006; validate: `php artisan test tests/Feature/Authorization/AbilityMatrixTest.php tests/Feature/Tenancy`; expected before owning implementations: focused family failures; forbidden: bypassed HTTP/Action tests or navigation-only assertions.
+- [ ] T007-012 [US3] Implement `app/Policies/Concerns/AuthorizesTenantOwnership.php`, Gate registration and ownership checks in each owning Policy/Query; symbols: permission then same-tenant/current validation, safe binding and explicit context; depends: T007-011; requirements: FR-007-006–FR-007-009; tests first: T007-011; validate: `php artisan test tests/Feature/Authorization/AbilityMatrixTest.php tests/Feature/Tenancy`; expected: no permission bypasses domain invariants; forbidden: global `Gate::before` allowing all Administrator operations or generic invariant-free policy.
+- [ ] T007-013 [US3] Add `tests/Architecture/TenantBoundaryTest.php`; symbols: tenant model registry, ownership declaration, command reset, private-file authorization and forbidden unscoped batches; depends: T007-012; requirements: FR-007-008, FR-007-009, NFR-007-INT-01; validate: `php artisan test tests/Architecture/TenantBoundaryTest.php`; expected: new tenant surfaces require explicit ownership; forbidden: runtime reflection scope injection or unexplained suppression.
+
+## Phase 5 — US-007-04 Global operational overview (P2)
+
+- [ ] T007-014 [P] [US4] Write `tests/Feature/Tenancy/GlobalTenantOverviewTest.php`, `tests/Architecture/NoCrossTenantEconomicsTest.php`; symbols: approved fields, Administrator-only access and no economics/telemetry; depends: T007-006; requirements: FR-007-016, FR-007-022, INV-TEN-007; validate: `php artisan test tests/Feature/Tenancy/GlobalTenantOverviewTest.php tests/Architecture/NoCrossTenantEconomicsTest.php`; expected before implementation: focused failures; forbidden: totals, clickstream, ranking or currency conversion.
+- [ ] T007-015 [US4] Implement `app/Domain/Tenancy/Queries/GlobalTenantOverviewQuery.php`, `app/Filament/Pages/GlobalTenantOverview.php`, `app/Filament/Widgets/TenantOperationalStatusWidget.php`; symbols: state, counts, last activity, entry, alerts; depends: T007-014, Feature 001 T001-018; requirements: FR-007-016, FR-007-022; tests first: T007-014; validate: `php artisan test tests/Feature/Tenancy/GlobalTenantOverviewTest.php tests/Architecture/NoCrossTenantEconomicsTest.php`; expected: bounded operational query without economic tables; forbidden: kernel/report reuse or telemetry.
+
+## Phase 6 — US-007-05 Controlled legacy tenant binding (P3)
+
+- [ ] T007-016 [P] [US5] Write `tests/Feature/Migration/ImportTenantOwnershipTest.php`; symbols: immutable target, identity tuple, staged/applied ownership, Administrator operation and cross-tenant deny; depends: T007-003, Feature 006 T006-005; requirements: FR-007-020, INV-TEN-001, INV-TEN-004; validate: `php artisan test tests/Feature/Migration/ImportTenantOwnershipTest.php`; expected before implementation: focused failures; forbidden: default tenant, target mutation or package-created tenant.
+- [ ] T007-017 [US5] Integrate context/Gates into `app/Domain/Migration/Actions/CreateImportRun.php`, `ApplyImportRun.php`, `app/Policies/ImportRunPolicy.php`, `app/Filament/Pages/ImportRunPage.php`; symbols: Administrator-only immutable target; depends: T007-016, Feature 006 T006-009; requirements: FR-007-020; tests first: T007-016; validate: `php artisan test tests/Feature/Migration/ImportTenantOwnershipTest.php`; expected: migration obeys tenant boundaries without tenant-role import permission; forbidden: domain bypass, protected role import or cross-tenant map.
+
+## Phase 7 — Verification
+
+- [ ] T007-018 Run tenancy/RBAC verification and update quickstart, permission catalogue and traceability with actual results; depends: T007-007, T007-010, T007-013, T007-015, T007-017 and owning policy/query tasks; requirements: FR-007-001–FR-007-023; validate: `composer verify`; expected: all permission/tenant tests and bounded context/role Dusk pass; forbidden: uncovered family or unexecuted claim.
+
+## Dependencies and execution order
+
+`Feature 001 T001-005/T001-006 → T007-001 → T007-002 → T007-003 → T007-004 → US1 → US2 → US3`; Feature 001 panel composition follows T007-006/T007-010. US4 follows US1; US5 waits for Feature 006 staging.
+
+## MVP scope
+
+T007-001–T007-006 provide tenant schema, explicit context and Administrator lifecycle/entry. Roles follow as a separate increment.
