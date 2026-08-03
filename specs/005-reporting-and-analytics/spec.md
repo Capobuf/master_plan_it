@@ -33,7 +33,7 @@ An authorized user creates and shares a persistent tenant scenario that never mo
 
 ### US-005-05 — Print and export
 
-An authorized user prints or exports the same filtered dataset shown on screen.
+An authorized user explicitly prints or exports either the current filtered result or the complete selected report/year scope, always for one tenant.
 
 ## Acceptance scenarios
 
@@ -61,13 +61,13 @@ A scenario belongs to one tenant, is persistent and shared, is visibly marked no
 
 When the tenant/year has no matching economic rows, report pages remain accessible, mathematically defined KPIs show zero, charts/tables are empty, explanatory guidance links to prerequisites, and no example data is invented.
 
-### AC-005-07 — Single-tenant output
+### AC-005-07 — Single-tenant output scope
 
-Every dashboard, drill-down, version, scenario, print, CSV, and XLSX contains exactly one tenant. Administrator global overview/export contains only approved operational fields.
+Every dashboard, drill-down, version, scenario, print, CSV, and XLSX contains exactly one tenant. For print/export, the actor explicitly selects either `filtered` or `complete_report_year`; generated metadata identifies that scope. Administrator enters tenant context before economic output. Administrator global overview/export contains only approved operational fields.
 
 ### AC-005-08 — Semantic equality
 
-For identical filters and selected dataset type, screen, KPI, chart, print, CSV, and XLSX use the same server dataset and exact totals.
+For the filtered scope, screen, KPI, chart, print, CSV, and XLSX use the same active filters and exact totals. For the complete report/year scope, print/CSV/XLSX use the same unfiltered selected report/year dataset and exact totals. No output silently changes between the two scopes.
 
 ## Functional requirements
 
@@ -79,9 +79,11 @@ For identical filters and selected dataset type, screen, KPI, chart, print, CSV,
 | FR-005-011 | Available/current budget formulas shall be defined once in the query contract and use current Expense data only. | AC-005-01 |
 | FR-005-012 | Operational revisions, audit, deleted records, generation exceptions, scenarios, and budget versions shall be excluded from current totals. | AC-005-01 |
 | FR-005-020 | Table, KPI, chart, print, CSV, and XLSX for one selected dataset shall share one query/result contract. | AC-005-08 |
-| FR-005-021 | Outputs shall preserve filters, order, locale, currency, timezone, and selected dataset identity. | AC-005-08 |
+| FR-005-021 | A filtered output shall preserve active filters, order, locale, currency, timezone, and selected dataset identity. | AC-005-08 |
 | FR-005-022 | Every economic output shall contain exactly one tenant. | AC-005-07 |
 | FR-005-023 | Global overview/export shall contain only approved operational tenant metadata and no behavioral telemetry or cross-tenant economics. | AC-005-07 |
+| FR-005-024 | An authorized actor shall explicitly select filtered or complete selected report/year scope; complete scope shall ignore transient narrowing filters but preserve tenant, report, year, dataset identity, authorization, ordering contract, locale, currency, and timezone. | AC-005-07, AC-005-08 |
+| FR-005-025 | Output metadata and audit shall record the selected scope; no output shall silently widen or narrow its dataset. | AC-005-07, AC-005-08 |
 | FR-005-030 | Scenario view/manage abilities shall be permission-controlled. Scenarios shall be persistent, tenant-owned, shared, labelled non-official, and excluded from official totals. | AC-005-05 |
 | FR-005-040 | An authorized actor shall create a tenant/year `BudgetVersion` draft from current data or approved manual snapshot rows. | AC-005-02, AC-005-03 |
 | FR-005-041 | Publishing shall freeze the exact snapshot, metadata, totals, source references, checksum, actor, and timestamp. | AC-005-02 |
@@ -89,17 +91,18 @@ For identical filters and selected dataset type, screen, KPI, chart, print, CSV,
 | FR-005-043 | The system shall compare current-versus-version and version-versus-version without modifying source data. | AC-005-04 |
 | FR-005-044 | Budget-version view/create/compare operations shall be separately permission-controlled. | AC-005-02, AC-005-04 |
 | FR-005-050 | Empty reports shall show valid zeros/empty datasets and guidance without fabricated values. | AC-005-06 |
-| FR-005-060 | Report/export generation shall record safe actor, tenant, dataset type, filters, output type, and correlation metadata without logging payload contents. | AC-005-08 |
+| FR-005-060 | Report/export generation shall record safe actor, tenant, dataset type, selected output scope, filters, output type, and correlation metadata without logging payload contents. | AC-005-08 |
 
 ## Business invariants
 
 | ID | Rule | Error | Test |
 |---|---|---|---|
 | INV-REP-001 | Current reports never double-count contracts/projects. | DomainConflict | TEST-005-001 |
-| INV-REP-002 | Presentation forms share one semantic dataset. | DomainConflict | TEST-005-002 |
+| INV-REP-002 | Presentation forms share one semantic dataset for the explicitly selected scope. | DomainConflict | TEST-005-002 |
 | INV-REP-003 | Metric formulas are server-side and decimal-safe. | DomainConflict | TEST-005-003 |
 | INV-REP-004 | Permission and tenant filters limit every visible row and output. | Authorization/DomainConflict | TEST-005-004 |
 | INV-REP-005 | No economic dataset contains multiple tenants. | DomainConflict | TEST-005-005 |
+| INV-REP-006 | An output never silently changes between filtered and complete selected report/year scope. | DomainConflict | TEST-005-011 |
 | INV-BUD-001 | Published budget versions are immutable. | DomainConflict | TEST-005-006 |
 | INV-BUD-002 | Budget-version rows/totals/checksum are exact and internally consistent. | DomainConflict | TEST-005-007 |
 | INV-BUD-003 | Budget versions never mutate or substitute current Expense records. | DomainConflict | TEST-005-008 |
@@ -108,7 +111,9 @@ For identical filters and selected dataset type, screen, KPI, chart, print, CSV,
 
 ## Success criteria
 
-- current register/KPI/chart/print/export totals are exactly equal for the same filters;
+- filtered screen/KPI/chart/print/export totals are exactly equal for the same filters;
+- complete report/year print/CSV/XLSX totals are exactly equal to the complete selected dataset;
+- output scope is explicit and cannot cross tenants;
 - a named approved budget version remains unchanged after source expenses change;
 - comparison detects exact additions, removals, and monetary variances;
 - empty-tenant views render without errors or invented data;
@@ -122,7 +127,8 @@ For identical filters and selected dataset type, screen, KPI, chart, print, CSV,
 - private per-user scenarios;
 - using model revision storage as a budget snapshot;
 - presentation-side recalculation;
-- adding contracts/projects directly to totals.
+- adding contracts/projects directly to totals;
+- audit export at launch.
 
 ## Clarification result
 
