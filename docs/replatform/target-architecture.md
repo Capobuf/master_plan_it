@@ -33,7 +33,7 @@ Four mechanisms remain distinct:
 
 1. current domain records;
 2. operational model revisions;
-3. minimized 24-month audit events;
+3. minimized audit events retained according to the Administrator-only global setting, default 24 months;
 4. named immutable budget-version snapshots.
 
 Candidate operational revision UI/storage is `mansoor/filament-versionable` backed by `overtrue/laravel-versionable`, subject to TS-003. Aggregate operations use application-owned revision batch metadata when the package stores child models independently.
@@ -81,12 +81,14 @@ These directories are logical planning targets, not permission to create one lay
 - Migration/tenant portability stage raw data and invoke public domain Actions; they cannot bypass current invariants.
 - Backup tooling owns archive mechanics only; the application owns scope, verification, status, and authorization.
 - Notifications use native Laravel channels; failure is explicit and no package/queue hook hides it.
+- Audit retention uses one typed global platform setting read by an explicit bounded scheduler command; no tenant-specific duplicate retention configuration is introduced.
 
 ## Persistence groups
 
 The physical plan must cover at minimum:
 
 - tenants, users, tenant roles/permissions/assignments;
+- typed global platform settings, including `audit_retention_months`;
 - tenant-owned master data;
 - current expenses and rows with soft-deletion infrastructure;
 - operational versions plus revision-batch metadata;
