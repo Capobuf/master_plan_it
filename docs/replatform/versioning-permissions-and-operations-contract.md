@@ -3,7 +3,7 @@
 Status: `APPROVED PRODUCT CONTRACT`  
 Decision date: 2026-08-03  
 Applies to: Features 001 through 007  
-Authority: Constitution 3.0.0 and `approved-decisions.md`
+Authority: Constitution 3.0.1 and `approved-decisions.md`
 
 ## 1. Separation of concerns
 
@@ -50,6 +50,7 @@ If `mansoor/filament-versionable` cannot represent one aggregate revision for an
 
 - create/deactivate/reactivate tenants;
 - manage tenant users and tenant roles;
+- configure global platform settings, including audit retention;
 - installation backup/restore;
 - legacy migration and tenant package import;
 - global operational overview;
@@ -96,6 +97,29 @@ notification.receive-renewals
 ```
 
 Exact permission identifiers are finalized by `/speckit.plan`; names must be stable, explicit, and mapped to policy abilities. Tenant role configuration never exposes permission to bypass tenant ownership, monetary rules, source-key uniqueness, or protected platform operations.
+
+### 3.3 Economic output scope
+
+Every economic print or export belongs to exactly one tenant. Administrator must enter that tenant context first.
+
+An authorized actor chooses one explicit scope:
+
+- **Current filtered result**: the output uses the same filters, ordering, selected dataset identity, locale, currency, and timezone currently represented by the screen;
+- **Complete selected report/year**: the output ignores transient narrowing filters only after the actor explicitly selects the complete scope, while retaining the selected tenant, report type, year, dataset identity, and authorization limits.
+
+The action label and generated metadata must identify which scope was used. A full output never means all tenants and never includes hidden data outside the selected report/year contract. Global exports contain approved operational metadata only.
+
+### 3.4 Audit access and retention
+
+- same-tenant audit view requires `audit.view`;
+- Administrator may view tenant and global audit;
+- audit export is excluded at launch, including from the tenant portability package;
+- one global platform setting, `audit_retention_months`, controls retention and defaults to `24`;
+- only Administrator may change the setting;
+- the retention command calculates its cutoff from the setting current at execution time and deletes only eligible audit events;
+- reducing the period requires reinforced confirmation because the next retention run may remove older events;
+- increasing the period does not restore events already removed;
+- retention never deletes current business records, named budget versions, or required logical revision identity.
 
 ## 4. Operational revisions
 
@@ -205,7 +229,7 @@ Backup/restore covers the complete application installation: database, attachmen
 
 ### 7.2 Tenant export package
 
-Administrator may export one complete tenant package for archive or portability. The package excludes passwords, hashes, sessions, tokens, application secrets, and global technical configuration.
+Administrator may export one complete tenant package for archive or portability. The package excludes passwords, hashes, sessions, tokens, application secrets, global technical configuration, and audit events.
 
 Minimum package:
 
@@ -225,7 +249,6 @@ expenses.csv
 expense_rows.csv
 scenarios.csv
 budget_versions.csv
-audit.csv
 attachments/
 checksums.json
 ```
