@@ -1,100 +1,143 @@
-# Implementation plan — Platform foundation
+# Implementation plan — Feature 001 Platform foundation
 
-## 1. Summary
+Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW`  
+Constitution: 3.0.1  
+Dependencies: Feature 007 plan for tenant/RBAC; `docs/replatform/replatform-plan.md`; `development-and-test-contract.md`
 
-Implement authenticate, load the application shell, enforce roles and run on shared PHP hosting as one vertical slice in the modular Laravel monolith. Domain writes use explicit Actions; reusable reads use Query objects; authorization is checked before loading or mutating protected data.
+## Summary
 
-## 2. Technical context
+Create the Laravel/Sail skeleton, non-destructive test/CI foundation, authentication, protected global Administrator, tenant-context shell, typed platform settings, audit pipeline, scheduler and release gates. This feature owns platform bootstrap and global operations; it does not own tenant business models, economic formulas or migration application.
 
-| Item | Fixed value |
+## Technical context
+
+| Item | Decision |
 |---|---|
-| Language/framework | PHP 8.3+, Laravel 13 |
-| Database | MySQL 8 InnoDB, strict mode, utf8mb4 |
-| UI | Blade; Livewire 4 where listed; Alpine local visual state; Tailwind 4; Preline |
-| Test | Pest; Dusk only where listed |
-| Time/locale/currency | UTC storage; Europe/Rome display; `it`; EUR |
-| Money | decimal strings/BCMath; MySQL decimal; no float authority |
-| Hosting | shared PHP/MySQL compatible; precompiled assets; cron; sync queue |
-| Browser target | latest two stable Chromium/Firefox, current Safari |
+| Runtime | PHP 8.3.32; Laravel 13.22.0; Sail 1.64.0 |
+| UI | Filament 5.7.3; Livewire 4.3.3; Blade; no Preline |
+| DB | MySQL 8.4.10; development/test separate logical DBs |
+| Auth/RBAC | Laravel auth; Spatie Permission 8.3.0 teams; Shield 4.3.1 |
+| Operations | sync queue; one scheduler cron; database notifications + optional sync mail |
+| Tests | static/accounting/application; bounded Dusk; no implicit DB reset |
+| Release | immutable ZIP built by Actions from verified commit |
 
-## 3. Constitution check — pre-design
+## Constitution check
 
-All C-01..C-10 pass. No internal API, worker daemon, generic repository, observer economic side effect, or independent contract/project total is introduced.
+Passes C-01, C-04, C-06, C-07, C-10 and C-11. No worker, generic settings package, custom ACL engine, impersonation or role-name business branching.
 
-## 4. Current-to-target mapping
+## Owned persistence
 
-The legacy source and target IDs are listed in `docs/replatform/source-traceability.md`. Framework lifecycle is replaced by explicit Actions while economic outputs remain equivalent.
+- `platform_settings` singleton;
+- `users` platform identity with nullable tenant ID;
+- package role/permission tables configured for `tenant_id` teams;
+- `audit_events`;
+- Laravel `notifications`;
+- optional session tables according to selected Laravel driver.
 
-## 5. Target structure and dependency rule
+Tenant table itself and tenant lifecycle are owned by Feature 007, but platform middleware/providers integrate them.
 
-Files belong to the smallest real domain area. Models do not call other domain Actions from observers. UI classes may invoke listed Actions/Queries only.
+## Target files and symbols
 
-## 6. File implementation map
+### Bootstrap/config
 
-| Target path | Type | Responsibility | Requirements | Test |
-|---|---|---|---|---|
-| `app/Models/User.php` | model | user identity, active flag, roles | FR-001-001, FR-001-002 | corresponding test |
-| `app/Models/Role.php` | model | stable role codes | FR-001-001, FR-001-002 | corresponding test |
-| `app/Models/ApplicationSetting.php` | model | typed global settings | FR-001-001, FR-001-002 | corresponding test |
-| `app/Policies/ApplicationSettingPolicy.php` | policy | settings authorization | FR-001-001, FR-001-002 | corresponding test |
-| `app/Http/Controllers/Auth/AuthenticatedSessionController.php` | controller | login/logout | FR-001-001, FR-001-002 | corresponding test |
-| `app/Http/Middleware/EnsureUserIsActive.php` | middleware | deny inactive accounts | FR-001-001, FR-001-002 | corresponding test |
-| `app/Livewire/Settings/GeneralSettingsForm.php` | Livewire | settings form | FR-001-001, FR-001-002 | corresponding test |
-| `resources/views/layouts/app.blade.php` | Blade | application shell | FR-001-001, FR-001-002 | corresponding test |
-| `resources/js/preline.ts` | JS adapter | single Preline initialization point | FR-001-001, FR-001-002 | corresponding test |
-| `routes/web.php` | routes | protected navigation | FR-001-001, FR-001-002 | corresponding test |
-| `tests/Feature/Auth/AuthenticationTest.php` | test | login/active enforcement | FR-001-001, FR-001-002 | corresponding test |
-| `tests/Feature/Authorization/NavigationPolicyTest.php` | test | role navigation and route denial | FR-001-001, FR-001-002 | corresponding test |
+- `composer.json`: exact runtime/package constraints, `config.platform.php=8.3.32`, quality scripts;
+- `compose.yaml`: `laravel.test`, `mysql`, optional `selenium` profile;
+- `.env.example`, `.env.testing.example`, `phpunit.xml`;
+- `bootstrap/app.php`: middleware aliases/groups;
+- `config/permission.php`, `config/filament-shield.php`, `config/auth.php`, `config/queue.php`;
+- `app/Providers/Filament/AdminPanelProvider.php`;
+- `routes/console.php` scheduler definitions.
 
-## 7. Database design
+### Models/data
 
-Create migrations in dependency order and use restrictive foreign keys. Every editable aggregate has `lock_version`. Every migrated table has nullable `legacy_id` plus a scoped unique key. Precise feature columns are specified in `data-model.md` and contracts; no JSON substitutes for relational fields.
+- `app/Models/User.php`;
+- `app/Models/PlatformSetting.php`;
+- `app/Models/AuditEvent.php`;
+- migrations for platform settings, user tenant/active fields, audit and notifications;
+- seeders `PermissionCatalogueSeeder`, `PlatformAdministratorSeeder`, `PlatformSettingSeeder`.
 
-## 8. Eloquent rules
+### Context/security
 
-Models use guarded attributes, enum/date/decimal casts, explicit relationships and query scopes. They contain no economic observer side effects. Factories create valid defaults and named invalid states for tests.
+- `app/Domain/Tenancy/Data/TenantContext.php` request-scoped holder;
+- `app/Http/Middleware/ResolveTenantContext.php`;
+- `app/Http/Middleware/EnsureActiveUser.php`;
+- `app/Http/Middleware/EnsureTenantIsActive.php`;
+- `app/Http/Middleware/SetPermissionTeamContext.php`;
+- `app/Policies/PlatformSettingPolicy.php`;
+- `app/Providers/AuthServiceProvider.php` protected platform Gates.
 
-## 9. Domain operation contract
+### Actions/commands
 
-Each write Action exposes one `execute(Data $data, User $actor, ?int $expectedVersion): Result` method, authorizes the operation, validates invariants, opens the transaction, locks rows only when cross-record consistency requires it, persists, audits, and returns a typed result. Domain conflicts use stable error codes.
+- `UpdatePlatformSettings` with reinforced-confirmation requirement when lowering retention;
+- `ResetTenantUserPassword`;
+- `ChangeOwnPassword`;
+- `DeactivateUser`;
+- `PruneExpiredAuditEvents` Action + `audit:prune` command;
+- `admin:reset-password` interactive command;
+- notification check commands remain in owning features and are scheduled here.
 
-## 10. Transaction and concurrency
+### Filament/UI
 
-Open transactions inside Actions, not controllers. Use `SELECT ... FOR UPDATE` for replacement targets, referenced plafond consumption snapshots, contract sync source-key checks and migration map creation. Optimistic `lock_version` protects user edits. Deadlock retry is limited to three attempts through a shared transaction helper and logs correlation IDs.
+- authentication page using Filament native auth;
+- `PlatformSettingResource` or one Settings Page, Administrator-only;
+- `UserResource` and tenant role management integration from Feature 007;
+- tenant context indicator in navigation/breadcrumbs;
+- global operational dashboard shell without economics.
 
-## 11. Routes and navigation
+## Action design
 
-Use named routes under authenticated/active middleware. Every handler references a policy ability. Livewire query-string state is limited to filters, sort and page; unsaved form data is never placed in URL.
+`UpdatePlatformSettings` locks singleton row, validates bounded months, verifies Administrator, requires confirmation token when new value is lower, increments lock version and writes audit. It does not immediately prune; next scheduled command uses the current value.
 
-## 12. UI composition
+`PruneExpiredAuditEvents` calculates UTC cutoff at run time, deletes in bounded ID batches, never touches revision/business/version tables and reports count/failure. No silent retry.
 
-Each screen has page header, breadcrumbs, primary action, filter bar where applicable, content table/form, empty/loading/error states, inline validation and focus restoration. Preline components are wrapped in local Blade components; dynamic dropdowns/modals are reinitialized through `resources/js/preline.ts` after Livewire navigation/render.
+Password Actions validate actor scope, hash once, exclude values from logs/audit and invalidate target sessions as specified.
 
-## 13. Reporting/export boundary
+## Scheduler
 
-Where this feature exposes datasets, the Query object is the sole semantic source. Export and print accept the same immutable filter DTO and row DTOs as the screen.
+One cron runs `schedule:run` each minute. Planned schedules:
 
-## 14. Error model
+- audit prune daily;
+- renewal/expiry check daily;
+- backup schedule/monitor according to Feature 006;
+- no queued notification.
 
-| Category | User response | Technical behavior |
-|---|---|---|
-| Validation | field-level 422 | no transaction or rollback |
-| Authorization | generic 403 | no existence leakage |
-| Domain conflict | translated invariant message, 409 | rollback; stable error code |
-| Concurrency | reload-required 409 | rollback; current version logged |
-| Unexpected | correlation ID, 500 | sanitized log with stack |
+Each command uses overlap prevention and explicit lock name. Tenant iteration is bounded and records failures per tenant without hiding command failure.
 
-## 15. Test strategy
+## Test plan
 
-Write unit tests for calculators/value objects, feature tests for Actions/policies/routes, Livewire tests for state/validation, and Dusk only for JavaScript lifecycle, responsive menu geometry, focus and print. Each task lists exact tests.
+- dependency/platform lock guard;
+- Sail/test database guard and forbidden reset architecture test;
+- authentication active/inactive/tenant inactive paths;
+- request-scoped tenant and permission team reset tests;
+- protected permission assignment deny tests;
+- settings default/update/lower confirmation/concurrency tests;
+- audit minimization and prune boundary tests;
+- password no-log/no-export/session invalidation tests;
+- scheduler registration/deduplication tests;
+- Filament navigation and direct-route authorization;
+- release artifact manifest/content structural test.
 
-## 16. Implementation sequence
+Dusk only covers login shell, tenant context visibility, role UI critical path and reinforced retention confirmation.
 
-enums/value objects → migrations → models/factories → invariant tests → services → Actions → policies → Queries → routes/UI → exports/commands → browser smoke → documentation reconciliation.
+## Implementation sequence
 
-## 17. Constitution check — post-design
+1. scaffold exact dependencies and lock files;
+2. Sail/MySQL/test guards and quality workflow;
+3. users/platform settings/audit schema;
+4. auth and active-user middleware;
+5. tenant context/RBAC integration with Feature 007;
+6. settings/password/audit Actions and policies;
+7. Filament shell/resources;
+8. scheduler/notifications plumbing;
+9. release workflow and hosting structural checks;
+10. full platform tests and quickstart.
 
-Pass. Complexity deviations: none.
-## Feature 007 dependency
+## Risks and gates
 
-This feature is tenant-bound. Before implementation, read Feature 007 completely and propagate explicit tenant ownership, current-context resolution, role abilities, fail-closed cross-tenant behavior, audit actor+tenant attribution, and isolation tests into every listed file. Product questions still marked `OPEN` in the clarification register cannot be decided by the coding agent.
+- package resolution failure: `DEPENDENCY_LOCK_FAILED`, stop and amend ADR;
+- permission team leakage: blocks all tenant features;
+- test DB destructive command detected: CI fails;
+- missing cron or Vite manifest: deployment preflight fails.
+
+## Post-design constitution check
+
+Pass. Physical package versions still require real Composer lock execution; this is an implementation gate, not an open product decision.
