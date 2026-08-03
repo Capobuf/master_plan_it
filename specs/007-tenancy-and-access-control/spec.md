@@ -1,6 +1,6 @@
 # Feature 007 — Tenancy and access control
 
-Status: `CLARIFIED — PLAN REGENERATION REQUIRED`  
+Status: `CLARIFIED AND APPROVED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Approved decisions: Q-001 through Q-033 plus PD-REV-001, PD-BUD-001, PD-GEN-001  
 Open product questions: none  
 Normative cross-cutting contract: `../../docs/replatform/versioning-permissions-and-operations-contract.md`
