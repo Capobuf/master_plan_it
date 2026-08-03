@@ -1,523 +1,106 @@
-# Tasks — Platform foundation
+# Tasks — Feature 001 Platform foundation
 
+Status: `PROPOSED TARGET — /speckit.tasks`  
+Input: Constitution 3.0.1; `spec.md`; `plan.md`; `research.md`; `data-model.md`; local contracts; cross-cutting development/test and permission contracts.  
+ID policy: the former `T001-01`–`T001-13` file-by-file list is superseded. This regenerated namespace uses `T001-001` onward because the prior IDs encoded Preline, fixed roles and incomplete stories and cannot be preserved without changing their meaning.
 
-### T001-01 — User identity, active flag, roles
+Every implementation task below is test-first. Confirm the named focused test fails for the intended missing behavior before production code is added. Do not execute any task from this document until `/speckit.analyze` reports zero CRITICAL/HIGH implementation-readiness findings.
 
-User story: US-001-01  
-Requirements: FR-001-001, FR-001-002  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: none  
-Parallelizable: no
+## Phase 1 — Setup
 
-**Objective.** Create or modify `app/Models/User.php` so it owns only: user identity, active flag, roles.
+**Goal:** create the exact reproducible Laravel/Sail baseline and prove dependency compatibility before feature code.
 
-**Files to create**
-- `app/Models/User.php`
+- [ ] T001-001 Create the Laravel 13.22.0 application skeleton and exact PHP dependency constraints in `composer.json` and `composer.lock`; symbols: Composer platform PHP `8.3.32`, Laravel `13.22.0`, Sail `1.64.0`, Filament `5.7.3`, Livewire `4.3.3`, Spatie Permission `8.3.0`, Shield `4.3.1`, Mansoor Versionable `5.1`, Overtrue Versionable `6.0.0`, OpenSpout `4.32.0`; depends: none; requirements: FR-001-005, NFR-001-MAINT-01; tests first: create `tests/Architecture/DependencyContractTest.php` asserting exact constraints and rejection of `--ignore-platform-reqs`; validate: `composer validate --strict && composer update --with-all-dependencies --no-interaction && php artisan about`; expected: lock resolves on PHP 8.3.32 with no unapproved package or server-PDF dependency; forbidden: floating versions, silent downgrade, Preline, Redis, WebSocket or queue-worker package.
+- [ ] T001-002 [P] Create frontend dependency and build locks in `package.json`, `package-lock.json`, `vite.config.js` and `resources/js/app.js`; symbols: Vite production build, Chart.js single dependency, Filament asset entrypoints; depends: T001-001; requirements: FR-001-005, INV-PLT-003; tests first: extend `tests/Architecture/DependencyContractTest.php` to reject a second chart/UI kit and missing lock; validate: `npm ci && npm run build && test -f public/build/manifest.json`; expected: deterministic compiled manifest with no runtime Node requirement; forbidden: CDN runtime dependencies, Preline, server-side formulas or generated assets committed outside the approved build output.
+- [ ] T001-003 Create canonical Sail topology in `compose.yaml`, `docker/8.3/Dockerfile`, `.env.example` and `.env.testing.example`; symbols: services `laravel.test`, `mysql`, optional profile `selenium`, databases `master_plan_it` and `master_plan_it_test`; depends: T001-001; requirements: FR-001-005, INV-PLT-004; tests first: create `tests/Architecture/DevelopmentEnvironmentTest.php` asserting exact services, MySQL 8.4.10, sync queue and absent Redis/worker services; validate: `docker compose config && ./vendor/bin/sail up -d mysql laravel.test && ./vendor/bin/sail php -v && ./vendor/bin/sail mysql --version`; expected: reproducible PHP/MySQL environment and separate persistent test database; forbidden: floating container tags, shared development/test database, production-only fallback or destructive initialization.
+- [ ] T001-004 Configure `phpunit.xml`, Composer scripts in `composer.json`, `phpstan.neon`, `pint.json` and `.github/CODEOWNERS`; symbols: `test:prepare`, `test:static`, `test:accounting`, `test:application`, `test:browser`, `verify`; depends: T001-001, T001-003; requirements: NFR-001-INT-01, NFR-001-LOG-01; tests first: create `tests/Architecture/DevelopmentContractTest.php` rejecting `migrate:fresh`, `db:wipe`, Laravel reset traits, skipped/focused mandatory tests and float authority; validate: `composer test:static`; expected: static guard fails on every prohibited reset or test bypass; forbidden: `RefreshDatabase`, `DatabaseTruncation`, unscoped `TRUNCATE`, empty assertions or silent suite skipping.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+**Checkpoint:** dependency locks, build, Sail and safety guards are reproducible before schema work.
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+## Phase 2 — Foundational platform persistence and security
 
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+**Goal:** create the shared platform tables, models, context wiring and stable error/audit infrastructure required by every story.
 
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+- [ ] T001-005 Create platform migrations and models in `database/migrations/*_create_platform_settings_table.php`, `*_add_tenant_and_active_fields_to_users_table.php`, `*_create_audit_events_table.php`, `*_create_notifications_table.php`, `app/Models/PlatformSetting.php`, `app/Models/AuditEvent.php` and `app/Models/User.php`; symbols: singleton setting row, active user state, nullable tenant membership, append-only audit event, optimistic `lock_version`; depends: T001-003; requirements: FR-001-007, FR-001-017, FR-001-020, INV-PLT-006, INV-PLT-007; tests first: create `tests/Feature/Platform/PlatformSchemaTest.php` for defaults, constraints, minimized fields and forward-only migration; validate: `composer test:prepare && php artisan test tests/Feature/Platform/PlatformSchemaTest.php`; expected: schema migrates without resetting the test database and defaults audit retention to 24; forbidden: generic JSON settings store, password/token audit columns, tenant-specific retention or cascade deletion of users/audit subjects.
+- [ ] T001-006 Configure authorization packages in `config/permission.php`, `config/filament-shield.php`, package migrations and `database/seeders/PermissionCatalogueSeeder.php`; symbols: teams enabled with `tenant_id`, protected global `Administrator`, stable permission catalogue, idempotent Editor/Viewer template seeding; depends: T001-001, T001-005; requirements: FR-001-003, FR-001-008, FR-001-010, INV-PLT-005; tests first: create `tests/Feature/Authorization/PermissionCatalogueTest.php` for package smoke, protected permissions, idempotent seed and tenant-role assignment boundaries; validate: `php artisan test tests/Feature/Authorization/PermissionCatalogueTest.php`; expected: catalogue matches `docs/replatform/permission-catalogue.md` and protected abilities cannot be tenant-assigned; forbidden: role-name business branches, direct user permissions in ordinary UI, runtime permission generation or Administrator invariant bypass.
+- [ ] T001-007 Implement request-scoped platform wiring in `app/Domain/Tenancy/Data/TenantContext.php`, `app/Http/Middleware/EnsureActiveUser.php`, `app/Http/Middleware/ResolveTenantContext.php`, `app/Http/Middleware/EnsureTenantIsActive.php`, `app/Http/Middleware/SetPermissionTeamContext.php` and `bootstrap/app.php`; symbols: fail-closed context resolution, permission-team reset, active-user/tenant guards; depends: T001-005, T001-006 and Feature 007 T007-003; requirements: FR-001-002, FR-001-009, FR-001-012, INV-PLT-001, INV-TEN-001; tests first: create `tests/Feature/Tenancy/TenantContextMiddlewareTest.php` covering missing, invalid, inactive, Administrator and tenant-user contexts plus cache leakage between requests; validate: `php artisan test tests/Feature/Tenancy/TenantContextMiddlewareTest.php`; expected: no route or permission check falls back to unscoped data and team context is cleared after each request; forbidden: global Eloquent tenant scope as sole defense, impersonation or session fallback to the last valid tenant.
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+**Checkpoint:** platform schema, permission catalogue and fail-closed request context are available to all user stories.
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+## Phase 3 — US-001-01 Authenticate (P1, MVP)
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
+**Goal:** authenticate only active local users and route them into the correct valid scope.
 
+**Independent test:** active Administrator reaches global shell; active tenant user reaches own active tenant; invalid credentials, deactivated user and inactive-tenant user are denied without data disclosure.
 
-### T001-02 — Stable role codes
+- [ ] T001-008 [US1] Write authentication tests in `tests/Feature/Auth/AuthenticationTest.php` and `tests/Feature/Auth/NoPasswordRecoveryRouteTest.php`; symbols: login success/failure, active-state denial, tenant-state denial, absent forgot/reset public routes; depends: T001-007; requirements: FR-001-001, FR-001-002, FR-001-012, FR-001-014, INV-PLT-001; validate: `php artisan test tests/Feature/Auth/AuthenticationTest.php tests/Feature/Auth/NoPasswordRecoveryRouteTest.php`; expected before implementation: focused failures for missing Filament auth integration and absent guards; forbidden: mail-based self-service reset or tests that assert only navigation visibility.
+- [ ] T001-009 [US1] Configure Filament authentication and protected panel in `app/Providers/Filament/AdminPanelProvider.php`, `config/auth.php` and `app/Models/User.php`; symbols: `canAccessPanel()`, local email/password authentication, session regeneration and logout; depends: T001-008; requirements: FR-001-001, FR-001-002, FR-001-014; tests first: T001-008; validate: `php artisan test tests/Feature/Auth/AuthenticationTest.php tests/Feature/Auth/NoPasswordRecoveryRouteTest.php`; expected: all US1 authentication paths pass and authentication alone grants no business ability; forbidden: public registration, social login, magic links or bypassing middleware from direct panel URLs.
 
-User story: US-001-01  
-Requirements: FR-001-002, FR-001-003  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: T001-01  
-Parallelizable: no
+**Checkpoint:** US1 is independently usable as the authentication MVP.
 
-**Objective.** Create or modify `app/Models/Role.php` so it owns only: stable role codes.
+## Phase 4 — US-001-02 Permission-aware application shell (P1)
 
-**Files to create**
-- `app/Models/Role.php`
+**Goal:** render only authorized navigation while preserving direct server authorization and visible tenant context.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+**Independent test:** the same actor sees only granted resources, tenant pages always show tenant badge/breadcrumb, and a hidden direct route remains denied.
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+- [ ] T001-010 [P] [US2] Write shell authorization tests in `tests/Feature/Authorization/NavigationPolicyTest.php` and `tests/Livewire/Shell/TenantContextIndicatorTest.php`; symbols: permission-derived navigation, direct-route deny, visible tenant indicator and breadcrumb; depends: T001-009 and Feature 007 T007-006; requirements: FR-001-004, FR-001-009, INV-PLT-002; validate: `php artisan test tests/Feature/Authorization/NavigationPolicyTest.php tests/Livewire/Shell/TenantContextIndicatorTest.php`; expected before implementation: focused failures for missing policy mapping/context indicator; forbidden: role-name assertions other than protected Administrator or tests that treat hidden navigation as authorization.
+- [ ] T001-011 [US2] Implement shell and policy integration in `app/Providers/Filament/AdminPanelProvider.php`, `app/Providers/AuthServiceProvider.php`, `app/Filament/Components/TenantContextIndicator.php` and `resources/views/filament/components/tenant-context-indicator.blade.php`; symbols: policy-based navigation, current tenant badge, breadcrumb context and global/tenant shell distinction; depends: T001-010; requirements: FR-001-004, FR-001-007, FR-001-009; tests first: T001-010; validate: `php artisan test tests/Feature/Authorization/NavigationPolicyTest.php tests/Livewire/Shell/TenantContextIndicatorTest.php`; expected: shell reflects permissions and locale/timezone context without weakening route policies; forbidden: Preline, custom SPA shell, client-side-only authorization or cross-tenant economic widget.
 
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+**Checkpoint:** US2 works independently for any permission catalogue role.
 
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+## Phase 5 — US-001-03 Administrator manages tenant identities and roles (P1)
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+**Goal:** provide protected Administrator operations for tenant users, passwords and configurable roles.
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+**Independent test:** Administrator creates/deactivates a tenant user and assigns tenant roles; tenant users cannot access management; protected abilities cannot be assigned.
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
+- [ ] T001-012 [P] [US3] Write identity/role administration tests in `tests/Feature/IdentityAccess/TenantUserManagementTest.php`, `tests/Feature/Authorization/TenantRoleManagementTest.php` and `tests/Feature/IdentityAccess/PasswordAdministrationTest.php`; symbols: create/update/deactivate user, assignment union, protected ability deny, secret minimization; depends: T001-006 and Feature 007 T007-008; requirements: FR-001-003, FR-001-008, FR-001-010, FR-001-013, FR-001-015, FR-001-017, INV-PLT-005, INV-PLT-006; validate: `php artisan test tests/Feature/IdentityAccess tests/Feature/Authorization/TenantRoleManagementTest.php`; expected before implementation: focused failures for missing Actions/Policies; forbidden: direct password assertions, cross-tenant role assignment or automatic authorship reassignment.
+- [ ] T001-013 [US3] Implement identity Actions in `app/Domain/IdentityAccess/Actions/CreateTenantUser.php`, `UpdateTenantUser.php`, `DeactivateTenantUser.php`, `ResetTenantUserPassword.php` and `AssignTenantRoles.php`; symbols: `execute()` methods with Administrator authorization, same-tenant validation, session invalidation and audit metadata; depends: T001-012 and Feature 007 T007-008; requirements: FR-001-008, FR-001-010, FR-001-013, FR-001-015, FR-001-017; tests first: T001-012; validate: `php artisan test tests/Feature/IdentityAccess tests/Feature/Authorization/TenantRoleManagementTest.php`; expected: transactional user lifecycle preserves authorship and excludes secrets from every side channel; forbidden: observers, plaintext password persistence/logging, automatic assignment transfer or platform-role mutation.
+- [ ] T001-014 [US3] Implement Administrator Filament resources in `app/Filament/Resources/Users/UserResource.php`, `app/Filament/Resources/Roles/RoleResource.php` and their Pages/Forms/Tables classes; symbols: tenant-scoped role editor, user lifecycle actions, password-reset action and protected permission filters; depends: T001-013 and Feature 007 T007-009; requirements: FR-001-003, FR-001-008, FR-001-015; tests first: extend `tests/Livewire/IdentityAccess/UserAndRoleResourceTest.php`; validate: `php artisan test tests/Livewire/IdentityAccess/UserAndRoleResourceTest.php`; expected: UI delegates exclusively to Actions and does not expose protected abilities; forbidden: package-generated policies changed at runtime, direct model saves from forms or tenant-user access to the resources.
 
+**Checkpoint:** US3 is independently testable with two tenants and custom roles.
 
-### T001-03 — Typed global settings
+## Phase 6 — US-001-04 User changes own password (P2)
 
-User story: US-001-01  
-Requirements: FR-001-003, FR-001-004  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: T001-02  
-Parallelizable: no
+**Goal:** allow authenticated self-change and an explicit emergency Administrator command without self-service recovery.
 
-**Objective.** Create or modify `app/Models/ApplicationSetting.php` so it owns only: typed global settings.
+**Independent test:** current password is required, new password changes once and invalidates other sessions; emergency command uses hidden input and invalidates Administrator sessions.
 
-**Files to create**
-- `app/Models/ApplicationSetting.php`
+- [ ] T001-015 [P] [US4] Write password lifecycle tests in `tests/Feature/IdentityAccess/ChangeOwnPasswordTest.php` and `tests/Feature/Console/ResetAdministratorPasswordCommandTest.php`; symbols: current-password check, hidden interactive input, hashing, session invalidation and no audit secret; depends: T001-013; requirements: FR-001-014, FR-001-015, FR-001-016, FR-001-017, INV-PLT-006; validate: `php artisan test tests/Feature/IdentityAccess/ChangeOwnPasswordTest.php tests/Feature/Console/ResetAdministratorPasswordCommandTest.php`; expected before implementation: focused failures; forbidden: email reset token or captured plaintext in console/test logs.
+- [ ] T001-016 [US4] Implement `ChangeOwnPassword` and `ResetAdministratorPasswordCommand` in `app/Domain/IdentityAccess/Actions/ChangeOwnPassword.php` and `app/Console/Commands/ResetAdministratorPasswordCommand.php`, plus Filament profile action in `app/Filament/Pages/Profile.php`; depends: T001-015; requirements: FR-001-015, FR-001-016, FR-001-017; tests first: T001-015; validate: `php artisan test tests/Feature/IdentityAccess/ChangeOwnPasswordTest.php tests/Feature/Console/ResetAdministratorPasswordCommandTest.php`; expected: authenticated self-change and controlled emergency reset work without recovery routes or secret leakage; forbidden: non-interactive default password, password in audit/revision/notification or unchanged sessions.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+## Phase 7 — US-001-05 Scheduler and notifications (P2)
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+**Goal:** run bounded synchronous scheduled operations and preserve visible notification failures.
 
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+**Independent test:** `schedule:list` contains one overlap-protected entry per approved command; duplicate events do not duplicate notifications; mail failure leaves database notification and visible failure metadata.
 
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+- [ ] T001-017 [P] [US5] Write scheduler/notification tests in `tests/Feature/Scheduler/SchedulerRegistrationTest.php`, `tests/Feature/Notifications/NotificationDeduplicationTest.php` and `tests/Feature/Notifications/SynchronousMailFailureTest.php`; symbols: cron schedule, overlap locks, dedup key, database notification and mail result; depends: T001-005; requirements: FR-001-006, FR-001-018, INV-PLT-004; validate: `php artisan test tests/Feature/Scheduler tests/Feature/Notifications`; expected before implementation: focused failures for missing schedule/dedup persistence; forbidden: `ShouldQueue`, retry loop, Redis/WebSocket or swallowing mail failure.
+- [ ] T001-018 [US5] Implement scheduling and notification infrastructure in `routes/console.php`, `app/Domain/Notifications/Actions/DeliverSynchronousNotification.php`, `app/Domain/Notifications/Data/NotificationOccurrence.php` and `app/Models/DatabaseNotification.php`; symbols: approved command registrations, deterministic recipient/event dedup and explicit mail delivery result; depends: T001-017 and owning command tasks Feature 004 T004-016 and Feature 006 T006-014; requirements: FR-001-006, FR-001-018; tests first: T001-017; validate: `php artisan schedule:list && php artisan test tests/Feature/Scheduler tests/Feature/Notifications`; expected: one cron-compatible bounded schedule and durable database notifications with no hidden retries; forbidden: business event polling in HTTP requests or notification payloads containing secrets/full business records.
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+## Phase 8 — US-001-06 Administrator manages platform settings (P2)
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+**Goal:** update the typed audit-retention setting with concurrency, audit and reinforced lowering confirmation.
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
+**Independent test:** only Administrator changes the value; lowering without confirmation fails; next prune uses current value; increasing never reconstructs deleted events.
 
+- [ ] T001-019 [P] [US6] Write settings/prune tests in `tests/Feature/Platform/PlatformSettingTest.php`, `tests/Feature/Audit/AuditRetentionTest.php` and `tests/Livewire/Platform/PlatformSettingPageTest.php`; symbols: default 24, authorization, stale version, reinforced confirmation, bounded prune and protected tables; depends: T001-005, T001-007; requirements: FR-001-019, FR-001-020, FR-001-021, INV-PLT-007; validate: `php artisan test tests/Feature/Platform/PlatformSettingTest.php tests/Feature/Audit/AuditRetentionTest.php tests/Livewire/Platform/PlatformSettingPageTest.php`; expected before implementation: focused failures; forbidden: per-tenant retention, immediate implicit prune or deletion of revision/business/BudgetVersion data.
+- [ ] T001-020 [US6] Implement `UpdatePlatformSettings`, `PruneExpiredAuditEvents` and `AuditPruneCommand` in `app/Domain/Platform/Actions/UpdatePlatformSettings.php`, `app/Domain/Audit/Actions/PruneExpiredAuditEvents.php`, `app/Console/Commands/AuditPruneCommand.php` and `app/Policies/PlatformSettingPolicy.php`; symbols: `execute()`, current-setting cutoff, ID-batched deletion, stable errors `SETTING_STALE`/`REINFORCED_CONFIRMATION_REQUIRED`; depends: T001-019; requirements: FR-001-019, FR-001-020, FR-001-021; tests first: T001-019; validate: `php artisan test tests/Feature/Platform/PlatformSettingTest.php tests/Feature/Audit/AuditRetentionTest.php`; expected: transactionally updated singleton and explicit bounded retention command; forbidden: model observer prune, persisted `expires_at`, silent retry or generic settings service.
+- [ ] T001-021 [US6] Implement Administrator settings UI in `app/Filament/Pages/PlatformSettings.php` and `resources/views/filament/pages/platform-settings.blade.php`; symbols: current value form, lock version, lowering warning and typed reinforced confirmation; depends: T001-020; requirements: FR-001-019, FR-001-020; tests first: T001-019; validate: `php artisan test tests/Livewire/Platform/PlatformSettingPageTest.php`; expected: UI delegates to `UpdatePlatformSettings` and clearly separates save from prune execution; forbidden: direct model mutation, generic key/value editor or exposing settings to tenant roles.
 
-### T001-04 — Settings authorization
+## Phase 9 — Release and cross-cutting validation
 
-User story: US-001-01  
-Requirements: FR-001-004, FR-001-005  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: T001-03  
-Parallelizable: no
+- [ ] T001-022 [P] Create required quality workflow in `.github/workflows/quality.yml`; symbols: static, accounting, application, browser and MySQL 8.4 jobs with dependency caching keyed by locks; depends: T001-004; requirements: FR-001-005, INV-PLT-003; tests first: create `tests/Architecture/WorkflowContractTest.php`; validate: `php artisan test tests/Architecture/WorkflowContractTest.php`; expected: every protected-branch/PR workflow runs mandatory gates without production data reset; forbidden: optional failure on mandatory jobs, unpinned actions or full browser duplication per DB profile.
+- [ ] T001-023 Create immutable release workflow in `.github/workflows/release.yml`, `scripts/build-release.sh` and `tests/Feature/Deployment/ReleaseArtifactContractTest.php`; symbols: exact verified commit input, production Composer install, Vite build, manifest/package checks, ZIP/checksum/provenance metadata; depends: T001-002, T001-022; requirements: FR-001-005, INV-PLT-003; tests first: `ReleaseArtifactContractTest`; validate: `php artisan test tests/Feature/Deployment/ReleaseArtifactContractTest.php && bash scripts/build-release.sh --verify-only`; expected: host-consumable immutable ZIP with no `.env`, test data, Node modules or runtime build step; forbidden: rebuilding on production, mutable latest artifact or publishing from an unverified commit.
+- [ ] T001-024 Run Feature 001 focused verification and record actual results in `specs/001-platform-foundation/quickstart.md` and `docs/replatform/source-traceability.md`; depends: T001-009, T001-011, T001-014, T001-016, T001-018, T001-021, T001-023; requirements: FR-001-001–FR-001-021; validate: `composer verify`; expected: all mandatory non-browser suites pass and bounded Dusk runs for login/context/role/confirmation paths; forbidden: marking complete with skipped checks, unexecuted command claims or weakening tests to match implementation.
 
-**Objective.** Create or modify `app/Policies/ApplicationSettingPolicy.php` so it owns only: settings authorization.
+## Dependencies and execution order
 
-**Files to create**
-- `app/Policies/ApplicationSettingPolicy.php`
+`T001-001 → {T001-002,T001-003} → T001-004 → {T001-005,T001-006} → Feature 007 context tasks → T001-007 → US1 → US2/US3 → US4/US5/US6 → release validation`.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+Parallel work is limited to tasks marked `[P]`; tasks touching `composer.json`, `bootstrap/app.php`, `AdminPanelProvider.php`, permission configuration or shared workflows are serialized.
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+## MVP scope
 
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T001-05 — Login/logout
-
-User story: US-001-01  
-Requirements: FR-001-005, FR-001-006  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: T001-04  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Http/Controllers/Auth/AuthenticatedSessionController.php` so it owns only: login/logout.
-
-**Files to create**
-- `app/Http/Controllers/Auth/AuthenticatedSessionController.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T001-06 — Deny inactive accounts
-
-User story: US-001-01  
-Requirements: FR-001-006, FR-001-007  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: T001-05  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Http/Middleware/EnsureUserIsActive.php` so it owns only: deny inactive accounts.
-
-**Files to create**
-- `app/Http/Middleware/EnsureUserIsActive.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T001-07 — Settings form
-
-User story: US-001-01  
-Requirements: FR-001-007, FR-001-008  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: T001-06  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Livewire/Settings/GeneralSettingsForm.php` so it owns only: settings form.
-
-**Files to create**
-- `app/Livewire/Settings/GeneralSettingsForm.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T001-08 — Application shell
-
-User story: US-001-01  
-Requirements: FR-001-008  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: T001-07  
-Parallelizable: yes
-
-**Objective.** Create or modify `resources/views/layouts/app.blade.php` so it owns only: application shell.
-
-**Files to create**
-- `resources/views/layouts/app.blade.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T001-09 — Single preline initialization point
-
-User story: US-001-01  
-Requirements: FR-001-001, FR-001-002  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: T001-08  
-Parallelizable: no
-
-**Objective.** Create or modify `resources/js/preline.ts` so it owns only: single Preline initialization point.
-
-**Files to create**
-- `resources/js/preline.ts`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T001-10 — Protected navigation
-
-User story: US-001-01  
-Requirements: FR-001-002, FR-001-003  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: T001-09  
-Parallelizable: no
-
-**Objective.** Create or modify `routes/web.php` so it owns only: protected navigation.
-
-**Files to create**
-- `routes/web.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T001-11 — Login/active enforcement
-
-User story: US-001-01  
-Requirements: FR-001-003, FR-001-004  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: T001-10  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/Auth/AuthenticationTest.php` so it owns only: login/active enforcement.
-
-**Files to create**
-- `tests/Feature/Auth/AuthenticationTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T001-12 — Role navigation and route denial
-
-User story: US-001-01  
-Requirements: FR-001-004, FR-001-005  
-Invariants: INV-PLT-001, INV-PLT-002  
-Dependencies: T001-11  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/Authorization/NavigationPolicyTest.php` so it owns only: role navigation and route denial.
-
-**Files to create**
-- `tests/Feature/Authorization/NavigationPolicyTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Auth/AuthenticationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Auth/AuthenticationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-### T001-13 — Tenant context, roles and tenant-user policy foundation
-
-Requirements: FR-001-003, FR-001-008, FR-001-009, FR-001-010, FR-001-011  
-Invariants: INV-TEN-001  
-Dependencies: Feature 007 clarification convergence and preceding local task  
-
-**Objective.** Update the feature's migrations/models, policies, Actions/Queries, screens, contracts, exports/files/commands where applicable, and tests so tenant ownership and approved role behavior are explicit and fail closed.
-
-**Required tests.**
-
-1. same-tenant Administrator/Editor/Viewer allow paths according to the feature contract;
-2. other-tenant direct ID and relationship denial without existence leakage;
-3. missing tenant context denial;
-4. tenant-scoped dataset/export/file equality where applicable;
-5. audit records real actor and tenant context.
-
-**Forbidden work.** Do not resolve any question still marked `OPEN` in the clarification registers, add impersonation, add shared mutable business catalogues, or introduce separate tenant databases/domains without an approved requirement.
+Feature MVP is Phase 1–3: reproducible scaffold, safe test foundation, platform persistence/context and US-001-01 authentication. Tenant context implementation requires the referenced Feature 007 foundation tasks; no fake single-tenant fallback is permitted.
