@@ -35,7 +35,7 @@ This register tracks functional ambiguity discovered while converging the Larave
 | Q-029 | Unassignable legacy data | Migration behavior for records that cannot be assigned to a tenant is undefined. | Reconciliation identifies anomalies but no tenancy blocking rule exists. | Migration approval and data loss prevention. | MEDIUM | Must unassignable records block migration? | OPEN |
 | Q-030 | Inactive vendors | Visibility and reuse of inactive vendors are not fully specified. | Vendor lifecycle exists as master data but tenant context is new. | Expense editing and historical readability. | MEDIUM | How should inactive vendors behave in historical and new records? | OPEN |
 | Q-031 | Removed cost centers | Historical behavior when a cost center is disabled or removed is not fully specified. | Cost-center tree integrity is defined, but tenant lifecycle interaction is absent. | Reporting history and new entries. | MEDIUM | How should inactive cost centers behave? | OPEN |
-| Q-032 | Tenant visual identity | Logo and print header are not currently required. | Current plans fix application-level presentation. | Branding only. | LOW | Is tenant-specific visual identity required at launch? | OPEN |
+| Q-032 | Tenant visual identity | This question duplicated the branding scope already decided by Q-013. | Q-013 approves tenant name, logo, company data, and report header/footer while retaining Master Plan IT shell branding. | Branding only. | LOW | Is tenant-specific visual identity required at launch? | ANSWERED BY Q-013 — tenant report/print identity is included and configurable; optional branding fields remain optional. |
 | Q-033 | Usage indicators | Administrator usage analytics are not established as product scope. | No cross-tenant analytics requirement exists. | Optional global dashboard complexity. | LOW | Are usage indicators required? | OPEN |
 
 ## Priority summary
@@ -45,5 +45,5 @@ This register tracks functional ambiguity discovered while converging the Larave
 | BLOCKING | 11 | 11 | 0 |
 | HIGH | 13 | 4 | 9 |
 | MEDIUM | 7 | 0 | 7 |
-| LOW | 2 | 0 | 2 |
-| **Total** | **33** | **15** | **18** |
+| LOW | 2 | 1 | 1 |
+| **Total** | **33** | **16** | **17** |

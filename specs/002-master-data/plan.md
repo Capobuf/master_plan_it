@@ -97,4 +97,4 @@ enums/value objects → migrations → models/factories → invariant tests → 
 Pass. Complexity deviations: none.
 ## Feature 007 dependency
 
-This feature is tenant-bound. Before implementation, read Feature 007 completely and propagate explicit tenant ownership, current-context resolution, role abilities, fail-closed cross-tenant behavior, audit actor+tenant attribution, and isolation tests into every listed file. Product questions Q-016 onward remain open and cannot be decided by the coding agent.
+This feature is tenant-bound. Before implementation, read Feature 007 completely and propagate explicit tenant ownership, current-context resolution, role abilities, fail-closed cross-tenant behavior, audit actor+tenant attribution, and isolation tests into every listed file. Product questions still marked `OPEN` in the clarification register cannot be decided by the coding agent.

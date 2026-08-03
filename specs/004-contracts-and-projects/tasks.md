@@ -604,4 +604,4 @@ Dependencies: Feature 007 clarification convergence and preceding local task
 4. tenant-scoped dataset/export/file equality where applicable;
 5. audit records real actor and tenant context.
 
-**Forbidden work.** Do not resolve Q-016 onward, add impersonation, add shared mutable business catalogues, or introduce separate tenant databases/domains without an approved requirement.
+**Forbidden work.** Do not resolve any question still marked `OPEN` in the clarification registers, add impersonation, add shared mutable business catalogues, or introduce separate tenant databases/domains without an approved requirement.

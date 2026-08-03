@@ -19,4 +19,4 @@ Read in this order:
 6. `specs/007-tenancy-and-access-control/spec.md`;
 7. feature specifications `001` through `006`.
 
-The approved product decisions `Q-001` through `Q-015` are propagated into the package. Questions `Q-016` onward remain explicitly open and must not be guessed by an implementation agent.
+The approved product decisions `Q-001` through `Q-015` are propagated into the package. All remaining open questions are listed in `docs/replatform/product-clarification-register.md` and must not be guessed by an implementation agent.

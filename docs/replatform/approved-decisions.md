@@ -22,4 +22,4 @@ Source: product-owner answers recorded in the clarification log.
 | Q-014 | Administrator global overview contains tenant list/state, Editor/Viewer counts, last activity, tenant entry, operational alerts, renewals, and import/migration errors; no cross-tenant economic aggregation. | Dashboard contract, reporting boundary, tests. |
 | Q-015 | Current tenant is always visible in side navigation and page breadcrumbs; only Administrator can change it. | Screen shell, tenant-context contract, UX tests. |
 
-These decisions are closed. Questions Q-016 onward remain open and must not be inferred from this document.
+These decisions are closed. Q-032 is also closed as a duplicate already resolved by Q-013. All remaining open questions are listed explicitly in `product-clarification-register.md` and must not be inferred from this document.

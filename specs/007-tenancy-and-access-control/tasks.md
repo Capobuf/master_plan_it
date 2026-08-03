@@ -16,7 +16,7 @@
 - [x] Define tenant creation fields and branding.
 - [x] Define global Administrator overview.
 - [x] Define tenant-context visibility.
-- [ ] Close remaining `BLOCKING` and `HIGH` questions in the clarification register.
+- [ ] Close the nine remaining `HIGH` questions Q-016 through Q-024 in the clarification register.
 - [x] Propagate every approved answer Q-001–Q-015 into affected Features 001–006.
 - [ ] Run final Spec Kit checklist, analysis and convergence.
 

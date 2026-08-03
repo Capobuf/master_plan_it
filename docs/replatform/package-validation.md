@@ -12,7 +12,7 @@ Validation scope: documentation tree prepared for branch `laravel-replatform` af
 
 ## Convergence checks
 
-- Q-001 through Q-015 are recorded as answered.
+- Q-001 through Q-015 are recorded as answered; Q-032 is closed as a duplicate resolved by Q-013.
 - All 11 `BLOCKING` questions are closed.
 - Nine `HIGH` questions Q-016 through Q-024 remain open and implementation readiness is explicitly limited.
 - No duplicated `Administrator | Administrator` authorization matrix remains.

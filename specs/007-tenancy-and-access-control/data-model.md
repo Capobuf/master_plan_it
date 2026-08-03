@@ -23,7 +23,7 @@ Required semantic attributes:
 - one role: Administrator, Editor or Viewer;
 - Editor and Viewer belong to exactly one tenant;
 - Administrator is not tenant-bound;
-- disabled users retain historical authorship and audit references.
+- historical actor references must not be silently rewritten; the exact treatment of records, open assignments, and disabled-user references remains open under Q-017.
 
 A user-to-tenant pivot is not required by the approved product model.
 

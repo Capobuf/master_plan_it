@@ -140,4 +140,4 @@ Optimistic concurrency uses an integer `lock_version`; updates include the expec
 
 ### Unresolved
 
-Questions Q-016 onward in `docs/replatform/product-clarification-register.md` and the remaining items in `docs/replatform/open-questions.md`; none may be resolved implicitly by the coding agent.
+The open items in `docs/replatform/product-clarification-register.md` and `docs/replatform/open-questions.md` remain unresolved; none may be resolved implicitly by the coding agent.

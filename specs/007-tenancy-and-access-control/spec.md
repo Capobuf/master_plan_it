@@ -2,7 +2,7 @@
 
 Status: `CLARIFICATION IN PROGRESS`  
 Approved decisions: Q-001 through Q-015  
-Open product questions: Q-016 onward in `docs/replatform/product-clarification-register.md`
+Open product questions: all items still marked `OPEN` in `docs/replatform/product-clarification-register.md`
 
 ## Problem
 
@@ -154,4 +154,4 @@ Q-001 through Q-015 are normative and are summarized in `docs/replatform/approve
 
 ### Open
 
-Q-016 onward remain open. In particular, implementation must not invent inactive-tenant access, deactivated-user assignment handling, attachment retention/deletion, detailed export scope, audit retention, backup/restore scope, import collisions, notifications, or destructive confirmations.
+The remaining open questions in the clarification register stay unresolved. In particular, implementation must not invent inactive-tenant access, deactivated-user assignment handling, attachment retention/deletion, detailed export scope, audit retention, backup/restore scope, import collisions, notifications, or destructive confirmations.

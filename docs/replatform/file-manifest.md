@@ -1,26 +1,26 @@
 # File manifest
 
-Generated from the converged documentation tree after propagation of Q-001 through Q-015.
+Generated from the converged documentation tree after propagation of approved decisions Q-001 through Q-015 and closure of Q-032 as subsumed by Q-013.
 `docs/replatform/file-manifest.md` is excluded from its own hash list.
 
 | Path | Bytes | SHA-256 |
 |---|---:|---|
 | `.specify/memory/constitution.md` | 8166 | `669182fdbe37939b10ab7459fdba6ea5648e8d2b516ec4454aa28f3b93ed8fa1` |
-| `README.md` | 905 | `da47f2ac867e6969fe40d435095ef51c18c606ee764e634bfbe0b6a139c6812e` |
+| `README.md` | 952 | `77c77a9651fcc8461240d196f976e47a00025ad9aa371d0c18b915aefa4ebf69` |
 | `docs/replatform/AGENTS-speckit-section.md` | 1037 | `417934f2f6f359d2754c3bd383bcbc0e365c407e884c98fa03c80cdb050c6690` |
 | `docs/replatform/README.md` | 692 | `99ddead9526c9b2dfde7072c1b52059531b0df215ac4c32f4e4cd80734e97b04` |
-| `docs/replatform/approved-decisions.md` | 3585 | `be06cce45fa9821f82eb199c9e2fc742f2dcbc3a2794230f5911fbf16fe14f13` |
+| `docs/replatform/approved-decisions.md` | 3703 | `45e37baf8a50311340a4351dff92f82fec5bd95e279dba5b4608e0f208392d85` |
 | `docs/replatform/architecture-decisions.md` | 1788 | `e7a0848fb06d15aa81dd8a3e15514b517d5d0e953959df851d885e2c358cc416` |
 | `docs/replatform/baseline.md` | 627 | `197f1530a99748b4ff6ee738ae2eed862e4d0aee769e9062f052fe3cbe47bb42` |
-| `docs/replatform/clarification-log.md` | 5655 | `0d4d7b07e1d5c8edcc13904a634b77f812bb44d3506712cb0a9021b5d58a037f` |
+| `docs/replatform/clarification-log.md` | 6092 | `9725e7b655a8ec9212db397b35c79d77b42da20f61b0154374f34c8c6edb1315` |
 | `docs/replatform/current-state.md` | 1823 | `67fba160f771ce0eafef128405ea039ef06d6adbc185e74132af851fe9676074` |
 | `docs/replatform/deepening-audit.md` | 16714 | `452a73307b255f4901040547c1c9505afed1668ff77550edfdded465187ef39a` |
 | `docs/replatform/domain-glossary.md` | 2229 | `52dc7e11638ecdc34b93e0e3f901405642812a1715f852c7d7426e03c9e1c0a3` |
 | `docs/replatform/execution-plan.md` | 2090 | `a52e1ec2e684ad4a1e6c9fc5a73936480ef975d7932336c7bf2c3c02d9703651` |
 | `docs/replatform/implementation-readiness.md` | 1663 | `82957ae81141019ec791cda5c88514605bad7369ad27189ca6fc6157b73f3778` |
 | `docs/replatform/open-questions.md` | 1212 | `514dd574b48ac9b94f1dc1f689c8c57659cba212f46e2e38b1a800a78e2084a7` |
-| `docs/replatform/package-validation.md` | 1600 | `4c6a997b21e80f81bcf5bb140b9b1ae4235e87cb537415bfc0666aa472de4bf1` |
-| `docs/replatform/product-clarification-register.md` | 12239 | `103a6e9b5327a8f1d8a1b219325533a38c348a26f7d045e41753fd5c8af98317` |
+| `docs/replatform/package-validation.md` | 1650 | `12f2dda42e97fb67fe184fe097bafe38e94784431be8a9f41c247481e0b82ac4` |
+| `docs/replatform/product-clarification-register.md` | 12447 | `54f735106e7ab34ac0cfeac41f831c2472fc8b03475016ee7045aae099b841bf` |
 | `docs/replatform/risk-register.md` | 2462 | `e0e479906faf64347565a32eec999a5781aed7f21c76af09a0f2c2dcb461f3cd` |
 | `docs/replatform/roadmap.md` | 1367 | `66a6275bacce1492128c47aa6f1ae644e715b3e3903b64f55e23ec7cb0ff5bf8` |
 | `docs/replatform/screen-and-report-inventory.md` | 2762 | `3ff62ed4d147090394c8a9a8c299d2410fe83d25cd43ce330c1550de52d29bbf` |
@@ -36,21 +36,21 @@ Generated from the converged documentation tree after propagation of Q-001 throu
 | `specs/001-platform-foundation/contracts/hosting.md` | 3125 | `ff0295efad96982a5b43b36d9079917dce9b2fd82961a11f71d27c21f9171557` |
 | `specs/001-platform-foundation/contracts/screen-shell.md` | 3410 | `42ef19600aa0e632835b987a423700e38cd4a9cdd97f9f25e79649f25224861e` |
 | `specs/001-platform-foundation/data-model.md` | 1875 | `87cdbb06fae26aa974da2aa8a2b9e1dbe9b5a85aa47246f1af3df860da1464ac` |
-| `specs/001-platform-foundation/plan.md` | 6665 | `b0619a5ec067859543b2aaa7fc8c0e0d0c5d61978eca87e470a83bd36cac742e` |
+| `specs/001-platform-foundation/plan.md` | 6686 | `0a26ffa7b87038cbd7cfc04adb8eec44272e2d3872cda1f7b3c3672284fddab3` |
 | `specs/001-platform-foundation/quickstart.md` | 1572 | `5f9609982712ae9ae561d2134ac98dd0372a466deb3f2d22c21b630eb83a0e9b` |
 | `specs/001-platform-foundation/research.md` | 1844 | `3d269d036e9fe0080a42011ad378fc84543520807ca066b8765f037693244cde` |
-| `specs/001-platform-foundation/spec.md` | 7479 | `f9a5030669e37af18a853500a25db5744a88497257fcba90f043d7e4baf560f1` |
-| `specs/001-platform-foundation/tasks.md` | 22613 | `fbd24e1897cd09b27ca6c54eba6632f715333b5e97d7b15f3f557e54d11ae970` |
+| `specs/001-platform-foundation/spec.md` | 7466 | `267537e506ea2b3ac38df4720ac26c353861eb883d9bfa4d5443c55df099a20a` |
+| `specs/001-platform-foundation/tasks.md` | 22664 | `1bc3ce6a1827823f62b8821e47cbf0b0f55f90a0d0b73db18ab1a90f3b5192b5` |
 | `specs/002-master-data/checklists/requirements.md` | 1475 | `c9f7052130e50bf4ad61185b1c5b1ca62e16aabb65a0797c582bc4fe05215306` |
 | `specs/002-master-data/contracts/authorization.md` | 3439 | `903d7c8e55afe8180be0576cd573e299328308dd16dccea449b41102bc423909` |
 | `specs/002-master-data/contracts/import-export.md` | 3371 | `030e2a949a50b92d32a63deff4ffd5c6afdbc63d6e662ec40b64a120057fb58c` |
 | `specs/002-master-data/contracts/master-data-screens.md` | 3294 | `01487897f6f1b714c8694302e0dae9773e669795cee602ab2af6a5a6d569c40d` |
 | `specs/002-master-data/data-model.md` | 1270 | `1ebcf3eddf4fbeba645f4b304589e91103d0e69bfa15362a44e2b4970bcee064` |
-| `specs/002-master-data/plan.md` | 6614 | `bc5564a2d783a0548d60dd83a9e0eea0ebaa9b8ec217139eadd530fed7f314a4` |
+| `specs/002-master-data/plan.md` | 6635 | `f2a1d2ce02a2d4a50f0fa6488469f1d593d082bee9e62db00d5ed73e26806575` |
 | `specs/002-master-data/quickstart.md` | 1606 | `e5796fcbf7b44548985a72087e1d4edaf32f09352288c98820ee4ec7822e0178` |
 | `specs/002-master-data/research.md` | 1857 | `25af23bb51517f4661f241d5a815b79b005e7a2e7e285b3f7eb8438b37e08036` |
-| `specs/002-master-data/spec.md` | 6779 | `898b49c10efa58bb1d21e7cb8a756b573f52f46736ce0ddff812c378405e4ec7` |
-| `specs/002-master-data/tasks.md` | 22683 | `19ea41d8f2847a39c03fdf16f2136f4215ee179efb7ff185ca557727d38eb575` |
+| `specs/002-master-data/spec.md` | 6766 | `d46fc8099508c8830a87585bc546849cf8444af0daffe73bfbe57627b0fc1cb4` |
+| `specs/002-master-data/tasks.md` | 22734 | `f52717b8d22a82617541dca36531b05f38f8c919fe0649da3a9d208f1fff7c68` |
 | `specs/003-expense-domain/checklists/economic-correctness.md` | 1486 | `efc16cc4d4849c8f8b5b4eff8983905f9336e9027fc9bcad7f12ccf935cd6c54` |
 | `specs/003-expense-domain/checklists/requirements.md` | 1478 | `ee8dcea3fd3b5f6a8ab889fcb778e59c3e61e2752dc82e326eaa7faa647d9f1b` |
 | `specs/003-expense-domain/contracts/authorization.md` | 3537 | `c8392671c396205c1d2a0678112dd6336eb182af3c0b97a3fc84d02e79981782` |
@@ -58,11 +58,11 @@ Generated from the converged documentation tree after propagation of Q-001 throu
 | `specs/003-expense-domain/contracts/expense-register.md` | 3301 | `93c7563071b52279e8efcf1db4e648279edcc222cb6d9f136d890cf7e041d501` |
 | `specs/003-expense-domain/contracts/financial-rules.md` | 3058 | `71be530fcaf1511d83ec1abda86a6447ca24acc8b74d76734c6753ff76b4be1c` |
 | `specs/003-expense-domain/data-model.md` | 3529 | `68038fdd0c572a6884f79265fed2e44bec50e8500ee072339bf25edba0c04899` |
-| `specs/003-expense-domain/plan.md` | 7808 | `894485ad50b8e116b4e280d63c742d949eb3d15bfa9ee1cc37ac7f00b439d9b1` |
+| `specs/003-expense-domain/plan.md` | 7829 | `b6ded951ee8af0baae346fd351b3cdda9f0084b9217226d66836f307c66aef1c` |
 | `specs/003-expense-domain/quickstart.md` | 1593 | `59cae9506325b3a3f8a6de44e8a69d582aadaaf36abdaa2dd14a2a8404df7cf3` |
 | `specs/003-expense-domain/research.md` | 1847 | `13761e66b7d8a6a428181f9bd41020322025042cdb12c2b555a276e58f340c2f` |
-| `specs/003-expense-domain/spec.md` | 7999 | `3a57d447468954efee2e905a91abedbf1247a69ec3cd0190ab5f1d2efe0bc2da` |
-| `specs/003-expense-domain/tasks.md` | 39118 | `0f5585b10bf1160cd96c0ba3e19444afafbeee1f90c9309337019585f300989a` |
+| `specs/003-expense-domain/spec.md` | 7986 | `728527437d03f9f69ae7278ac6d60b29351519ba3d227fc771e96f7d8233477c` |
+| `specs/003-expense-domain/tasks.md` | 39169 | `17e02aeb2e03342e162cff5eae68031e1fcb81722b3ab5502570843c34ebc281` |
 | `specs/004-contracts-and-projects/checklists/economic-correctness.md` | 1494 | `1374a97a5d501050a8a437d9eaa3b28c3d2281dea69caa126aca247cfb1c7881` |
 | `specs/004-contracts-and-projects/checklists/requirements.md` | 1486 | `0eedc4f6285383116678b5eee7c8fe4666c681320811af303ec8154567a9e7e1` |
 | `specs/004-contracts-and-projects/contracts/authorization.md` | 3467 | `e595df77da4862f85ae6cf8bc7df04340ef8fa3294050d493bd0c023cc7c30e3` |
@@ -70,11 +70,11 @@ Generated from the converged documentation tree after propagation of Q-001 throu
 | `specs/004-contracts-and-projects/contracts/generation-sync.md` | 3335 | `70a0eaffe57937da0f6252fa61e23e78e1b071defe705b23af44a5253e2542d5` |
 | `specs/004-contracts-and-projects/contracts/project-screen.md` | 3253 | `a689df7f4bcf8d620c6615690192b727c47a9b0dedc29abfd4e27f400ace0bf6` |
 | `specs/004-contracts-and-projects/data-model.md` | 2044 | `314c30dfdb648319ac038a3fdda8ad728d9ee86266d34f0a9bb191e69449610f` |
-| `specs/004-contracts-and-projects/plan.md` | 6996 | `822b8a4942193f1f79edf62a565feef0813613c9574c768d207e5fcd4ba64f76` |
+| `specs/004-contracts-and-projects/plan.md` | 7017 | `673c4bd46e2576fb7090acac4db8b619a684640a4d5005458ec92d56172a8eb2` |
 | `specs/004-contracts-and-projects/quickstart.md` | 1642 | `f56b3398ba3f85481d50a96f570b9d004427f2d245aeff90483f245e5db44940` |
 | `specs/004-contracts-and-projects/research.md` | 1891 | `4d9cf73275b99ed65f1a9ae0df1f7e84028292b0b8bb42050c6fa0407206f26e` |
-| `specs/004-contracts-and-projects/spec.md` | 7325 | `7ec8c02c43964da2d3d9154c1c248700897138b60b71701a5de8bd85cbb3889f` |
-| `specs/004-contracts-and-projects/tasks.md` | 26713 | `531573dc0ccc6ca8c1910fba00b9e1c909bcbf6904dc719ff70f7c2f6df61adb` |
+| `specs/004-contracts-and-projects/spec.md` | 7312 | `dcd62a501208da0fa02579719b296f9a481c0599d0910f43071d92e1f5ff3ba1` |
+| `specs/004-contracts-and-projects/tasks.md` | 26764 | `25ece11c7f3d6469956ea57fe6f02e5f4193ce25184b2ce64edf72e10240f0a4` |
 | `specs/005-reporting-and-analytics/checklists/requirements.md` | 1487 | `195ed0d820f81a668589afaa648a02c01607f680ac7eb6c724b111bc4ea0d632` |
 | `specs/005-reporting-and-analytics/checklists/ux-accessibility.md` | 1491 | `f7aa7d48b5799a7d8643f0d56c2ac5b1c44eeee123cb0fa7c2c3ea54e87ad030` |
 | `specs/005-reporting-and-analytics/contracts/analytics.md` | 3161 | `c3c7290f21ad5b1413478d0e494e6124e173d15a497482ce068675e899134396` |
@@ -83,11 +83,11 @@ Generated from the converged documentation tree after propagation of Q-001 throu
 | `specs/005-reporting-and-analytics/contracts/economic-position.md` | 3238 | `f892bb910a196b1ea9268167552e77396b707ea55ab7ffccd97e0e23d093a383` |
 | `specs/005-reporting-and-analytics/contracts/export-print.md` | 3216 | `1cb7f5a5ae3d425f2578b8f83e3b06159fa1d492b58d69f5a88211dbfa18fca1` |
 | `specs/005-reporting-and-analytics/data-model.md` | 1200 | `d59fd5928a59db322e225b63f1e1e4d35334d20ff37bd601857afaeca2c87971` |
-| `specs/005-reporting-and-analytics/plan.md` | 6923 | `648bbfe23d8bee5f597c43d331f26050d12ed8535ba424ae761b3d9d8ad3730d` |
+| `specs/005-reporting-and-analytics/plan.md` | 6944 | `6db4d8ff6f36ef723c5a2ae89079661ba89792bf02f77f0577c53a68760e11d6` |
 | `specs/005-reporting-and-analytics/quickstart.md` | 1619 | `5de81b6714a60c0997c0ed0d83bb32a9004dbe0c5f56f3da73dc8e6222a1b283` |
 | `specs/005-reporting-and-analytics/research.md` | 1852 | `fc53ff5f1ef8bef0fb5c589ef99227ce4a6115dde23bc153e2dba2a56bc96a5a` |
-| `specs/005-reporting-and-analytics/spec.md` | 7306 | `e5f395bb3db7ec6d99ef49857de03ea854a7db0ddb3b6af0d7a14c0092c5e3b1` |
-| `specs/005-reporting-and-analytics/tasks.md` | 25011 | `6227858c25827508a8f95fc926dba1646d946c979a5df9aa89e5c8feb49eaa08` |
+| `specs/005-reporting-and-analytics/spec.md` | 7293 | `2ada8bb7c8a2a6d02152b76d4b682590f84f9842da372d32c55950d89bf4c184` |
+| `specs/005-reporting-and-analytics/tasks.md` | 25062 | `ec5fde6c4e4606613b0cf9c089cfd0f762e31774914e602396a29e31e33306a5` |
 | `specs/006-data-migration-and-operations/checklists/migration-integrity.md` | 1500 | `b50fe799ac06858d4c70386fc5bab228d5fcd42f73592029202ade9487741021` |
 | `specs/006-data-migration-and-operations/checklists/requirements.md` | 1493 | `357ae2db769188241534ed4f4d06d5ca5f5748d7586ea25507503ad0108e85a6` |
 | `specs/006-data-migration-and-operations/contracts/backup-restore.md` | 3308 | `91436e2def71dbf0972b79c7bbb4cebe07852be4d8fbc365a31c9c144d6813a5` |
@@ -95,17 +95,17 @@ Generated from the converged documentation tree after propagation of Q-001 throu
 | `specs/006-data-migration-and-operations/contracts/migration.md` | 3947 | `d2165e5dc12bd8c342fb387eaa576a1f707224d404cd063a247f274e339e9db1` |
 | `specs/006-data-migration-and-operations/contracts/reconciliation.md` | 3303 | `1bf82b0ddde93e02be230bd266105a30ea5a5d1e2c0b190e2a731bb13ba04992` |
 | `specs/006-data-migration-and-operations/data-model.md` | 1509 | `ecf056bcdf6308875193584eb1c63008130e2c1df7ba121514a6623580ec1e3c` |
-| `specs/006-data-migration-and-operations/plan.md` | 6817 | `b26b7c882a15a58db8358f1e4e9cea430faabd1ca3b0d9e5c6c7a57dac834e98` |
+| `specs/006-data-migration-and-operations/plan.md` | 6838 | `dd30d890cc61c64aed87d194ee56a7c6ff3fa229e8e439e2d4bfd0b818e07c71` |
 | `specs/006-data-migration-and-operations/quickstart.md` | 1637 | `9ff8b11a6e36ae2c22c9abc88b3e3e9862ed7f91bdd7259b10246cdebf428602` |
 | `specs/006-data-migration-and-operations/research.md` | 1873 | `2e01b2466ab68447e24632d9b5ee853f4e62ea41c5dcddc4c982cd546a1cf488` |
-| `specs/006-data-migration-and-operations/spec.md` | 7254 | `5a0411d32261915be3e61298503976ae42da2dbc57016cc07fa99e77e8fa6e08` |
-| `specs/006-data-migration-and-operations/tasks.md` | 24671 | `e157fc240f0877bed8f77de565ad7d5c86e494bf2b282fe5f0f7e6a6740d2708` |
+| `specs/006-data-migration-and-operations/spec.md` | 7241 | `18347b375fcbf50e1b42ba261844267281dc92803927e8482928e1fcf5efcf17` |
+| `specs/006-data-migration-and-operations/tasks.md` | 24722 | `940f19def79f7355e35f13cfb7df95868c4731063febad6b1fc39686fba3bdff` |
 | `specs/007-tenancy-and-access-control/checklists/requirements.md` | 730 | `7e581fa9f335a9c009cda42cf6ea222b7d1d3bc31ea8c112a247baaa93ef857b` |
 | `specs/007-tenancy-and-access-control/contracts/authorization.md` | 1876 | `7ddc1c736f4056c54633768b0674f07bf9be7cf7deccaf7b7b72f70281a05763` |
 | `specs/007-tenancy-and-access-control/contracts/tenant-context.md` | 1637 | `610002ba9de29a605d16a9d544f1e91df4080fdf8ad49008aedbd153b38b3b59` |
-| `specs/007-tenancy-and-access-control/data-model.md` | 1584 | `9cac0c310e1182a27cb5dd12a710490258ad13a78e4ac463105b5442745b4932` |
+| `specs/007-tenancy-and-access-control/data-model.md` | 1683 | `29d2b04d059ba4dd31bdd6446b86b38751268a98497c0e1f0750980cfc68aae9` |
 | `specs/007-tenancy-and-access-control/plan.md` | 1456 | `f60b566e932b7040c85eba9fb7808bd4551bd5c019a7be2da5e9f3593a75287d` |
 | `specs/007-tenancy-and-access-control/quickstart.md` | 777 | `be116520e04812ed67ac6b064ece062c2af461d2e6b0deb0db516e4d8da9542e` |
 | `specs/007-tenancy-and-access-control/research.md` | 1281 | `f865d7f9093453c7780a69695ffaebddc599e9373ec5148427366bce141126d7` |
-| `specs/007-tenancy-and-access-control/spec.md` | 11631 | `83447a4f8c2d4c6f7f341fb45f63f4788659600a5ef0d545c769a119a272e6c3` |
-| `specs/007-tenancy-and-access-control/tasks.md` | 1528 | `9d985009364ece2ec9c34bbf7544d943176379a45a76eaa26b10692985449cbc` |
+| `specs/007-tenancy-and-access-control/spec.md` | 11698 | `037b1de368fbc7c60c6b69eccc39b64904fd6897e1869e244158cebdc6358806` |
+| `specs/007-tenancy-and-access-control/tasks.md` | 1542 | `09a8600a7177f98a45eca4fa10b558651f7c731faec5cd22805244f0bb635cab` |
