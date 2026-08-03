@@ -11,8 +11,9 @@ This package is the documentation-only contract for the Laravel replatform, anch
 - initial `/speckit.analyze`: failed with 2 CRITICAL, 10 HIGH and 4 MEDIUM findings.
 - first remediation: merged.
 - rerun `/speckit.analyze`: failed with 0 CRITICAL, 8 HIGH and 4 MEDIUM findings on commit `113ae98f7fc8f7c5eb8ffe4e7bd32ef6a49b6c47`.
-- second remediation: complete, pending review/merge.
-- repeated `/speckit.analyze`: next valid command after merge.
+- second remediation: complete.
+- integration state: authoritative only in GitHub PR metadata.
+- next `/speckit.analyze`: run on the integrated remediation base.
 - `/speckit.implement`: blocked until CRITICAL `0` and HIGH `0`.
 
 No package lock, implementation, migration or test was executed by this documentation remediation.
