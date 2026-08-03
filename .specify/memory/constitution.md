@@ -1,9 +1,19 @@
 # Master Plan IT Replatform Constitution
 
-Version: 3.0.0  
+Version: 3.0.1  
 Ratified baseline: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`  
 Amended: 2026-08-03  
 Scope: documentation-only design for the Laravel replatform.
+
+## Amendment 3.0.1
+
+**Rationale.** The Product Owner confirmed that economic outputs may represent either the current filtered result or an explicitly selected complete report/year scope, always for one tenant. The fixed 24-month audit-retention rule is amended to a global Administrator-controlled setting with a 24-month default.
+
+**Affected principles and artifacts.** C-05 and C-08 are amended. Platform settings, audit retention, reporting/export contracts, scheduler behavior, confirmation UX, tests, plans, and tasks require propagation.
+
+**Compatibility and migration impact.** Existing installations initialize `audit_retention_months` to 24. The retention command applies the currently configured period to retained audit events on its next run. Reducing the period may remove older events and requires reinforced confirmation. Increasing it does not restore events already removed. Audit export remains excluded at launch.
+
+**Approval owner.** Product Owner, approved on 2026-08-03.
 
 ## Amendment 3.0.0
 
@@ -55,9 +65,9 @@ Scope: documentation-only design for the Laravel replatform.
 
 Actual rows are editable and deletable when the actor has the required permission. Deletion and restoration never bypass tenant isolation, decimal correctness, source-key uniqueness, contract-generation rules, or referential checks. A restore creates a new current revision; it does not rewrite revision history.
 
-Audit events are retained for 24 months. Business revision history may use the approved versioning package, but package storage is never queried as current business state. Passwords, secrets, sessions, full attachment payloads, and unredacted import rows are never stored in audit or revision metadata.
+Audit retention is controlled by one global platform setting available only to Administrator and defaults to 24 months. The explicit retention operation applies the current setting to audit events without deleting current business records, named budget versions, or required logical revision identity. Reducing the period requires reinforced confirmation because the next retention run may remove older events. Events already removed are not reconstructed when the period is later increased. Business revision history may use the approved versioning package, but package storage is never queried as current business state. Passwords, secrets, sessions, full attachment payloads, and unredacted import rows are never stored in audit or revision metadata.
 
-**Verification.** Current-record uniqueness, revision comparison/restore, Actual correction/deletion, deleted-record exclusion, audit minimization/retention, authorization, and rollback tests.
+**Verification.** Current-record uniqueness, revision comparison/restore, Actual correction/deletion, deleted-record exclusion, audit minimization/configuration/retention, authorization, and rollback tests.
 
 ## C-06 — Shared-hosting-compatible monolith
 
@@ -79,9 +89,9 @@ Audit events are retained for 24 months. Business revision history may use the a
 
 ## C-08 — One semantic dataset per report
 
-**Rule.** Screen table, KPI cards, chart, print, CSV, and XLSX for the same report consume the same query/result contract and filters. Presentation layers cannot recompute totals. Named budget versions and scenarios use their own explicit immutable dataset contracts and are visibly distinguished from current official values.
+**Rule.** Screen table, KPI cards, chart, print, CSV, and XLSX for the same selected report scope consume the same query/result contract and filters. An authorized output explicitly represents either the current filtered dataset or a complete selected report/year scope; it never silently changes scope and never combines tenants. Presentation layers cannot recompute totals. Named budget versions and scenarios use their own explicit immutable dataset contracts and are visibly distinguished from current official values.
 
-**Verification.** Dataset snapshot tests, current-versus-version isolation, and export-versus-screen equality tests.
+**Verification.** Dataset snapshot tests, filtered-versus-complete scope tests, current-versus-version isolation, and export-versus-screen equality tests.
 
 ## C-09 — Migration is repeatable and reconcilable
 
