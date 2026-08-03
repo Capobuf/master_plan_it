@@ -5,16 +5,18 @@ Status: `CLARIFIED TARGET — PACKAGE/PHYSICAL PLAN REQUIRED`
 ## Fixed principles
 
 - Laravel 13 modular monolith.
-- PHP current stable branch supported by Laravel 13/Sail, with exact version locked by the development-foundation plan.
-- MySQL 8.4 LTS and supported current MySQL family according to the approved development/test contract; InnoDB, `utf8mb4`, strict SQL mode.
+- Laravel Sail is the canonical development and agent-verification environment.
+- Exact PHP, Sail, Node build and container versions are locked by `/speckit.plan` after current compatibility verification.
+- MySQL 8.4 LTS is the minimum database family; any additional current family requires explicit compatibility evidence; InnoDB, `utf8mb4`, strict SQL mode.
+- Development and automated tests use separate logical databases on the same MySQL profile; tests never reset the persistent test database implicitly.
 - Filament 5 and Blade as the application/admin UI; Livewire only for stateful interaction; Alpine only for local visual state.
 - Tailwind CSS through the Filament/Vite toolchain; do not retain Preline when Filament already supplies the needed component.
-- Pest for unit/feature/architecture/accounting tests; small Laravel Dusk suite for browser-owned behavior.
+- Pest for static, unit, feature, architecture and accounting tests; small Laravel Dusk suite for browser-owned behavior.
 - Chart.js only for charts.
-- Vite at build time only; production receives compiled assets.
+- Vite at build time only; production receives the immutable artifact built from the verified commit.
 - Queue connection `sync`; one cron invokes Laravel scheduler; no Redis/WebSockets/permanent worker.
 
-Exact runtime/database/CI versions are owned by PR #2 and must be reconciled after this clarification PR.
+Environment, test-layer, CI and release-artifact responsibilities are defined in `development-and-test-contract.md`. Exact versions and executable files remain `/speckit.plan` decisions.
 
 ## Tenant and authorization boundary
 
@@ -82,6 +84,7 @@ These directories are logical planning targets, not permission to create one lay
 - Backup tooling owns archive mechanics only; the application owns scope, verification, status, and authorization.
 - Notifications use native Laravel channels; failure is explicit and no package/queue hook hides it.
 - Audit retention uses one typed global platform setting read by an explicit bounded scheduler command; no tenant-specific duplicate retention configuration is introduced.
+- CI builds the release artifact only after the required test layers pass; hosting deploys that artifact unchanged.
 
 ## Persistence groups
 
