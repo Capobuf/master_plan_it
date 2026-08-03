@@ -1,114 +1,109 @@
 # Target architecture
 
-Status: `CLARIFIED TARGET — PACKAGE/PHYSICAL PLAN REQUIRED`
+Status: `PLANNED — READY FOR /speckit.tasks AFTER REVIEW`  
+Authority: Constitution 3.0.1; `replatform-plan.md`; `technical-research.md`
 
-## Fixed principles
+## Runtime
 
-- Laravel 13 modular monolith.
-- Laravel Sail is the canonical development and agent-verification environment.
-- Exact PHP, Sail, Node build and container versions are locked by `/speckit.plan` after current compatibility verification.
-- MySQL 8.4 LTS is the minimum database family; any additional current family requires explicit compatibility evidence; InnoDB, `utf8mb4`, strict SQL mode.
-- Development and automated tests use separate logical databases on the same MySQL profile; tests never reset the persistent test database implicitly.
-- Filament 5 and Blade as the application/admin UI; Livewire only for stateful interaction; Alpine only for local visual state.
-- Tailwind CSS through the Filament/Vite toolchain; do not retain Preline when Filament already supplies the needed component.
-- Pest for static, unit, feature, architecture and accounting tests; small Laravel Dusk suite for browser-owned behavior.
-- Chart.js only for charts.
-- Vite at build time only; production receives the immutable artifact built from the verified commit.
-- Queue connection `sync`; one cron invokes Laravel scheduler; no Redis/WebSockets/permanent worker.
+- PHP 8.3.32;
+- Laravel 13.22.0;
+- Laravel Sail 1.64.0;
+- MySQL 8.4.10 LTS, InnoDB, utf8mb4, strict mode;
+- Filament 5.7.3, Livewire 4.3.3, Blade, Tailwind via Filament/Vite;
+- Chart.js 4.x locked by frontend lock;
+- sync queue and one scheduler cron;
+- no Redis, WebSockets, permanent worker, runtime Node or second application service.
 
-Environment, test-layer, CI and release-artifact responsibilities are defined in `development-and-test-contract.md`. Exact versions and executable files remain `/speckit.plan` decisions.
+Exact dependency resolution is the first implementation gate; failure blocks and amends the plan, never silently falls back.
 
-## Tenant and authorization boundary
+## Application boundary
 
-- One application/database serves multiple customer tenants with explicit `tenant_id` ownership.
-- `Administrator` is protected and global; it selects tenant context without impersonation.
-- Tenant users belong to exactly one tenant and receive one or more tenant-scoped configurable roles.
-- `Editor` and `Viewer` are seeded role templates, not hard-coded domain branches.
-- Candidate authorization stack is `spatie/laravel-permission` with tenant/team scope plus `bezhansalleh/filament-shield`; exact releases and integration require TS-001/TS-002.
-- Policies/Gates decide ability; domain Actions then enforce tenant, monetary, referential, versioning, and generation invariants.
-- Missing/invalid/inactive/unauthorized context fails closed.
-- Queries, policies, reports, exports, print, files, revisions, commands, notifications, and scheduled work enforce tenant scope.
+One Laravel modular monolith and one database. Tenants use explicit `tenant_id`; tenant users belong to one tenant. Administrator is protected global identity and enters explicit tenant context without impersonation.
 
-## Current state and history boundary
+RBAC: Spatie Permission 8.3.0 teams keyed by `tenant_id` plus Filament Shield 4.3.1. Team context supports permissions but does not replace business query scoping. Policies/Gates authorize; Actions enforce tenant and domain invariants.
 
-Four mechanisms remain distinct:
-
-1. current domain records;
-2. operational model revisions;
-3. minimized audit events retained according to the Administrator-only global setting, default 24 months;
-4. named immutable budget-version snapshots.
-
-Candidate operational revision UI/storage is `mansoor/filament-versionable` backed by `overtrue/laravel-versionable`, subject to TS-003. Aggregate operations use application-owned revision batch metadata when the package stores child models independently.
-
-Current economic queries read only current non-deleted Expense rows. Deleted records, revisions, audit, scenarios, budget snapshots, and generation exceptions are never implicit economic sources.
-
-## Modular monolith boundaries
+## Domain boundaries
 
 ```text
-app/
-├── Domain/
-│   ├── Shared/
-│   ├── Money/
-│   ├── Tenancy/
-│   ├── IdentityAccess/
-│   ├── MasterData/
-│   ├── Expenses/
-│   ├── Contracts/
-│   ├── Projects/
-│   ├── Reporting/
-│   ├── BudgetVersions/
-│   ├── Notifications/
-│   └── Migration/
-├── Filament/
-│   ├── Resources/
-│   ├── Pages/
-│   └── Widgets/
-├── Models/
-├── Policies/
-├── Console/Commands/
-└── Support/
+Domain/
+├── Shared
+├── Money
+├── Tenancy
+├── IdentityAccess
+├── Audit
+├── Revisions
+├── MasterData
+├── Expenses
+├── Projects
+├── Contracts
+├── Economics
+├── BudgetVersions
+├── Scenarios
+├── Reporting
+├── Notifications
+├── Migration
+└── Operations
 ```
 
-These directories are logical planning targets, not permission to create one layer/class per noun. Use the smallest structure that preserves explicit responsibility.
+Directories/classes are created only for concrete responsibility. No repository layer, CQRS, event bus, service locator or empty pseudo-DDD scaffolding.
 
-`Domain/*/Actions` own complex writes and transactions. `Domain/*/Queries` own reusable typed datasets. Eloquent models describe persistence. Policies/Gates own authorization. Filament resources/pages call Actions/Queries and do not calculate authoritative economics.
+- Actions own complex writes/transactions.
+- Queries own reusable tenant-scoped read DTOs.
+- Models own persistence/relations/casts without domain side effects.
+- Filament/Livewire authorize, collect input and render; no authoritative formulas.
+- Packages provide infrastructure/UI only.
 
-## Dependency rules
+## Current/history/data-set separation
 
-- UI depends on policies plus Actions/Queries; domain code does not depend on Filament.
-- Reporting reads current domain data or an explicitly selected scenario/budget-version dataset; it does not mutate source records.
-- Budget-version publication copies exact typed snapshot rows through an application-owned Action; generic model versioning does not publish economic baselines.
-- Contracts invoke Expense generation Actions. Expenses store nullable contract/project context and generation source identity but do not call contract UI/services.
-- Generation exceptions are control state owned by Contracts and never queried as monetary rows.
-- Migration/tenant portability stage raw data and invoke public domain Actions; they cannot bypass current invariants.
-- Backup tooling owns archive mechanics only; the application owns scope, verification, status, and authorization.
-- Notifications use native Laravel channels; failure is explicit and no package/queue hook hides it.
-- Audit retention uses one typed global platform setting read by an explicit bounded scheduler command; no tenant-specific duplicate retention configuration is introduced.
-- CI builds the release artifact only after the required test layers pass; hosting deploys that artifact unchanged.
+Distinct mechanisms:
 
-## Persistence groups
+1. current non-deleted domain records;
+2. operational snapshot versions plus revision batches;
+3. minimized audit events with configurable global retention;
+4. immutable BudgetVersion economic snapshots;
+5. explicit non-official scenarios;
+6. generation exceptions as non-economic control state.
 
-The physical plan must cover at minimum:
+Only current non-deleted Expense rows enter current economic totals.
 
-- tenants, users, tenant roles/permissions/assignments;
-- typed global platform settings, including `audit_retention_months`;
-- tenant-owned master data;
-- current expenses and rows with soft-deletion infrastructure;
-- operational versions plus revision-batch metadata;
-- contracts/projects/terms and generation exceptions/history;
-- scenarios and rows;
-- budget versions and immutable snapshot rows;
-- attachments;
-- minimized audit events and database notifications;
-- migration/import staging, identity maps, quarantine, exclusions, reconciliation;
-- backup/restore status and verification metadata where application persistence is required.
+## Shared economic kernel
 
-## Migration sequencing
+Initial implementation is exactly:
 
-Legacy project/contract identifiers remain separate reconciliation fields until same-tenant target references are created and verified.
+- `EconomicDatasetQuery` for tenant/current/non-deleted I/O/projection;
+- `EconomicEngine` for pure bucket/Plafond/Net-VAT-Gross formulas;
+- four immutable DTOs: scope, line, summary, dataset.
 
-Legacy Expense Row `state` and replacement links are migration inputs only. Planning must deterministically select the accepted current target record and preserve useful non-current evidence as operational revision/audit metadata without placing legacy parallel states into current economic tables.
+Dashboard, current Budget, reports, print/export and current snapshot capture consume the same dataset. Scenarios/BudgetVersion use explicit alternative resolvers; there is no second current engine.
 
-## Package rule
+## Versioning
 
-A candidate package is adopted only after exact compatibility, tenancy behavior, license, maintenance, security, testability, and removal-path verification. Package callbacks/observers may not own economic writes. If a candidate fails, retain the approved product contract and implement the smallest native Laravel/Filament alternative.
+Mansoor 5.1 + Overtrue 6.0 snapshots, subject to executable lock/smoke. Application `revision_batches` correlates aggregate changes. Package restore is not domain authority: Restore Actions rebuild typed input and revalidate current permissions, tenant, references and invariants.
+
+Published BudgetVersion is application-owned and never restored through model-version tooling.
+
+## Data/operations
+
+- typed singleton `platform_settings`; no generic settings package;
+- native Filesystem plus application attachment metadata; no Media Library;
+- application audit table; no audit package/export at launch;
+- native database notifications + optional sync mail;
+- CSV authoritative import/export; OpenSpout 4.32 writer-only for XLSX;
+- dedicated Blade print; no server PDF package;
+- Spatie Backup 10.3 conditional on PHP 8.3 Composer resolution and host preflight.
+
+## Testing/release
+
+Sail canonical environment; separate persistent `master_plan_it_test`; no implicit reset traits/commands. Static, accounting and application layers with bounded Dusk. GitHub Actions builds one immutable ZIP from exact verified commit; host deploys unchanged.
+
+## Performance
+
+Reference 10,000 current rows per tenant/year. Scalar projections, composite tenant/year indexes, one engine pass, dashboard detail-none and server pagination. No current-total cache/materialization before benchmark and EXPLAIN evidence.
+
+## Migration
+
+One Frappe site → one selected tenant via versioned CSV package, staging, identity map, quarantine, dry-run, explicit exclusions, bounded apply batches and reconciliation. Legacy replacement state is migration evidence, not target current lifecycle.
+
+## Remaining cutover evidence
+
+Real source anomalies, final host profile and signed report parity inventory. These do not alter the planned core architecture but block cutover.
