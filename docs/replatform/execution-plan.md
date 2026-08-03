@@ -1,6 +1,6 @@
 # Global execution sequence
 
-Status: `TASK REMEDIATION COMPLETE — RE-ANALYSIS NEXT`
+Status: `SECOND TASK REMEDIATION COMPLETE — RE-ANALYSIS NEXT`
 
 ## Spec Kit sequence
 
@@ -10,25 +10,28 @@ Status: `TASK REMEDIATION COMPLETE — RE-ANALYSIS NEXT`
 | S1 Reconcile prior PRs | COMPLETE | development/test and Budget/kernel inputs merged |
 | S2 `/speckit.plan` | COMPLETE AND MERGED | research, ADRs, plans, physical models, contracts and quickstarts |
 | S3 Initial `/speckit.tasks` | COMPLETE AND MERGED | seven feature task files |
-| S4 Initial `/speckit.analyze` | FAILED AND RECORDED | 2 CRITICAL, 10 HIGH, 4 MEDIUM findings on commit `54bc8c5c72167b47eedc7ae9cc62211310035f8c` |
-| S5 `/speckit.tasks` remediation | COMPLETE ON THIS BRANCH | corrected graph, readiness registry, traceability and technical amendment |
-| S6 Remediation review/merge | CURRENT | Product Owner confirms remediation boundaries |
-| S7 Repeated `/speckit.analyze` | NEXT AFTER MERGE | CRITICAL 0 and HIGH 0 |
-| S8 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
-| S9 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
+| S4 Initial `/speckit.analyze` | FAILED AND RECORDED | 2 CRITICAL, 10 HIGH, 4 MEDIUM |
+| S5 First `/speckit.tasks` remediation | COMPLETE AND MERGED | initial graph/readiness corrections |
+| S6 First repeated `/speckit.analyze` | FAILED AND RECORDED | 0 CRITICAL, 8 HIGH, 4 MEDIUM |
+| S7 Second `/speckit.tasks` remediation | COMPLETE, PENDING REVIEW/MERGE | non-overlapping task contract, exact dependencies/paths, class correction, full traceability and branding owner |
+| S8 Next `/speckit.analyze` | NEXT AFTER MERGE | CRITICAL 0 and HIGH 0 |
+| S9 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
+| S10 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
 
-## Remediated implementation critical path
+## Proposed implementation critical path
 
-1. Feature 001 scaffold, exact locks, Sail and test/CI guardrails;
+1. Feature 001 scaffold, exact locks, Sail and quality/release foundation;
 2. Feature 007 tenant schema, context and safe tenant lookup;
 3. Feature 007 reusable tenant-ownership Policy concern;
 4. Feature 001 authentication/shell and Feature 007 tenant/role lifecycle;
-5. Feature 002 shared revisions and exact master-data selectors;
-6. Feature 003 Money, current Expense and attachment foundation;
-7. Feature 003 Actual confirmation;
-8. Feature 004 projects, contracts and generated occurrences;
-9. Feature 005 kernel, Budget, scenarios, comparisons and outputs;
-10. Feature 006 migration, portability, backup and deployment.
+5. Feature 007 selected-tenant report branding;
+6. Feature 002 shared revisions and exact master-data selectors;
+7. Feature 003 Money, current Expense and attachment foundation;
+8. Feature 003 Actual confirmation;
+9. Feature 004 projects, contracts, generated occurrences and renewal command;
+10. Feature 005 kernel, Budget, scenarios, comparisons and branded outputs;
+11. Feature 006 migration, portability, backup and deployment;
+12. Feature 007 complete cross-feature ability/IDOR and architecture gates.
 
 Notification execution is explicitly:
 
@@ -38,7 +41,7 @@ T001-018 delivery primitive
 → T001-025 final scheduler registration
 ```
 
-The exact task graph, task composition and shared ownership are in `tasks-summary.md`, `task-readiness-registry.md` and the seven feature `tasks.md` files.
+The exact task graph, task composition and shared ownership are in `tasks-summary.md`, `task-readiness-registry.md`, `task-execution-registry.md` and the seven feature `tasks.md` files.
 
 ## Vertical-slice rule
 
