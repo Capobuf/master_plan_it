@@ -1,6 +1,6 @@
 # Implementation plan — Feature 001 Platform foundation
 
-Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW`  
+Status: `PLAN COMPLETE AND MERGED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Constitution: 3.0.1  
 Dependencies: Feature 007 plan for tenant/RBAC; `docs/replatform/replatform-plan.md`; `development-and-test-contract.md`
 
