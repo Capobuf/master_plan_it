@@ -1,607 +1,86 @@
-# Tasks — Contracts and projects
+# Tasks — Feature 004 Contracts and projects
 
+Status: `PROPOSED TARGET — /speckit.tasks`  
+Input: Constitution 3.0.1; current Feature 004 spec/plan/research/data model; generation contract; shared Expense, revision, notification, tenant and permission contracts.  
+ID policy: former `T004-01`–`T004-15` are superseded because they encoded append-missing-only synchronization and a speculative `ContractAnnualizer`. New IDs use `T004-001` onward.
 
-### T004-01 — Project decision context
+Every task is test-first and reuses Feature 003 Money and Expense Actions.
 
-User story: US-004-01  
-Requirements: FR-004-001, FR-004-010  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: none  
-Parallelizable: no
+## Phase 1 — Foundational project/contract persistence
 
-**Objective.** Create or modify `app/Models/Project.php` so it owns only: project decision context.
+- [ ] T004-001 Write schema tests in `tests/Feature/Contracts/ContractProjectSchemaTest.php`; symbols: tenant-owned Project/Contract/ContractTerm/ContractGenerationException, stage/cycle enums, term dates, immutable source components, unique tenant source key, lock versions and no monetary project/contract totals; depends: Feature 003 T003-004 and Feature 007 T007-012; requirements: FR-004-001, FR-004-010, FR-004-011, FR-004-020, FR-004-021, FR-004-026, FR-004-032, FR-004-035, FR-004-036; validate: `php artisan test tests/Feature/Contracts/ContractProjectSchemaTest.php`; expected before implementation: focused failures; forbidden: project/contract total columns, generation amount exception, cross-tenant reference or cascade that bypasses revision Actions.
+- [ ] T004-002 Create migrations/models/factories/enums in `database/migrations/*_create_projects_table.php`, `*_create_contracts_table.php`, `*_create_contract_terms_table.php`, `*_create_contract_generation_exceptions_table.php`, `app/Models/Project.php`, `Contract.php`, `ContractTerm.php`, `ContractGenerationException.php`, factories, `app/Domain/Projects/Enums/ProjectStage.php` and `app/Domain/Contracts/Enums/BillingCycle.php`; depends: T004-001; requirements: FR-004-001, FR-004-010, FR-004-020, FR-004-021, FR-004-026, FR-004-032, FR-004-036; tests first: T004-001; validate: `php artisan test tests/Feature/Contracts/ContractProjectSchemaTest.php`; expected: explicit current models with tenant-scoped source identity and no economic observer; forbidden: separate Addendum model, generic recurrence framework or current generation-history amount table.
+- [ ] T004-003 Configure policies and permissions in `app/Policies/ProjectPolicy.php`, `ContractPolicy.php` and `database/seeders/PermissionCatalogueSeeder.php`; symbols: project/contract manage, revision restore, generation history, synchronize, suppress, resume and generate-year abilities; depends: T004-002 and Feature 007 T007-009; requirements: FR-004-036, FR-004-039, INV-TEN-004; tests first: create `tests/Feature/Contracts/ContractProjectAuthorizationTest.php`; validate: `php artisan test tests/Feature/Contracts/ContractProjectAuthorizationTest.php`; expected: same-tenant grants and safe missing/other/inactive denial for every operation; forbidden: role-name authorization, direct package restore or tenant-role access to platform notification configuration.
 
-**Files to create**
-- `app/Models/Project.php`
+## Phase 2 — US-004-01 Projects (P1, MVP)
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+**Goal:** manage project decisions/revisions and deferred promotion without creating a monetary source.
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+**Independent test:** create/update/change stage/defer/promote/restore project; invalid target year, stale version and other-tenant references fail; later stage changes never remove existing Actual from primary fixtures.
 
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+- [ ] T004-004 [P] [US1] Write project tests in `tests/Feature/Projects/ProjectLifecycleTest.php`, `ProjectRevisionTest.php` and `tests/Accounting/Integration/ProjectBucketFixtureTest.php`; symbols: closed stage enum, Deferred target, promotion idempotency, no total, revision/restore and kernel-facing stage fixture; depends: T004-003 and Feature 003 T003-007; requirements: FR-004-001, FR-004-010–FR-004-015, FR-004-037, INV-PRJ-001–INV-PRJ-003, INV-REV-004; validate: `php artisan test tests/Feature/Projects/ProjectLifecycleTest.php tests/Feature/Projects/ProjectRevisionTest.php tests/Accounting/Integration/ProjectBucketFixtureTest.php`; expected before implementation: focused failures; forbidden: monetary project total, automatic stage changes outside explicit command or restore that rewrites linked Actual.
+- [ ] T004-005 [US1] Implement project Actions in `app/Domain/Projects/Actions/CreateProject.php`, `UpdateProject.php`, `ChangeProjectStage.php`, `DeleteProject.php`, `RestoreProjectRevision.php` and `PromoteDeferredProjects.php`; symbols: transactional tenant validation, deferred target, optimistic version, revision batch, bounded eligible promotion and typed results; depends: T004-004; requirements: FR-004-001, FR-004-010–FR-004-015, FR-004-037; tests first: T004-004; validate: `php artisan test tests/Feature/Projects/ProjectLifecycleTest.php tests/Feature/Projects/ProjectRevisionTest.php`; expected: one current project identity and idempotent promotion; forbidden: economic calculation, changing linked Expense rows, silent stage fallback or direct version revert.
+- [ ] T004-006 [US1] Implement project Queries/UI/command in `app/Domain/Projects/Queries/ProjectListQuery.php`, `app/Filament/Resources/Projects/ProjectResource.php`, revision page and `app/Console/Commands/PromoteDeferredProjectsCommand.php`; symbols: tenant/current list, stage/deferred filters, Action delegation and overlap-protected bounded command; depends: T004-005; requirements: FR-004-001, FR-004-015, FR-004-037; tests first: create `tests/Livewire/Projects/ProjectResourceTest.php` and `tests/Feature/Console/PromoteDeferredProjectsCommandTest.php`; validate: `php artisan test tests/Livewire/Projects/ProjectResourceTest.php tests/Feature/Console/PromoteDeferredProjectsCommandTest.php`; expected: UI/command expose project decisions without independent totals; forbidden: scheduler-owned business logic, direct model saves or bulk unscoped promotion.
 
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+**Checkpoint:** US1 is independently usable as the Feature 004 MVP.
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+## Phase 3 — US-004-02 Contracts and terms (P1)
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+**Goal:** manage non-overlapping term timelines, renewals and revisions.
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
+**Independent test:** save a contract with complete intended terms; missing non-final end resolves before next term; overlap/stale/invalid cycle fails atomically; auto-renew creates at most one successor.
 
+- [ ] T004-007 [P] [US2] Write contract/term tests in `tests/Feature/Contracts/ContractLifecycleTest.php`, `ContractTermOverlapTest.php`, `ContractAutoRenewTest.php` and `ContractRevisionTest.php`; symbols: complete term set with explicit deletion, derived end, Monthly/Annual, exact Money values, auto-renew lineage, revision/restore and tenant/concurrency; depends: T004-003, Feature 003 T003-002 and T003-007; requirements: FR-004-020–FR-004-023, FR-004-037, INV-CON-001, INV-REV-004; validate: `php artisan test tests/Feature/Contracts/ContractLifecycleTest.php tests/Feature/Contracts/ContractTermOverlapTest.php tests/Feature/Contracts/ContractAutoRenewTest.php tests/Feature/Contracts/ContractRevisionTest.php`; expected before implementation: focused failures; forbidden: missing-term implicit delete, floating arithmetic, overlapping renewal or restore rewriting generated occurrences.
+- [ ] T004-008 [US2] Implement contract Actions in `app/Domain/Contracts/Data/SaveContractData.php`, `SaveContractTermData.php`, `app/Domain/Contracts/Actions/CreateContract.php`, `UpdateContract.php`, `DeleteContract.php`, `RestoreContractRevision.php` and `CreateAutoRenewTerm.php`; symbols: contract/term locks, exact Money/VAT, non-overlap, explicit deletion, stable lineage and revision batch; depends: T004-007; requirements: FR-004-020–FR-004-023, FR-004-037; tests first: T004-007; validate: `php artisan test tests/Feature/Contracts/ContractLifecycleTest.php tests/Feature/Contracts/ContractTermOverlapTest.php tests/Feature/Contracts/ContractAutoRenewTest.php tests/Feature/Contracts/ContractRevisionTest.php`; expected: one atomic current contract/timeline with exact terms; forbidden: generic annualizer, economic totals, observer-generated terms or deleting generated history.
+- [ ] T004-009 [US2] Implement contract Queries/UI in `app/Domain/Contracts/Queries/ContractListQuery.php`, `ContractDetailQuery.php`, `app/Filament/Resources/Contracts/ContractResource.php`, term relation manager/timeline and revision page; symbols: current tenant timeline, derived dates, renewal metadata and links to generation history; depends: T004-008; requirements: FR-004-020–FR-004-023, FR-004-030, FR-004-037; tests first: create `tests/Livewire/Contracts/ContractResourceTest.php`; validate: `php artisan test tests/Livewire/Contracts/ContractResourceTest.php`; expected: UI delegates one aggregate Action and never omits existing terms silently; forbidden: client-only overlap validation, direct term save or monetary summary added from contract fields.
 
-### T004-02 — Contract header
+## Phase 4 — US-004-03 Generated Actual lifecycle (P1)
 
-User story: US-004-01  
-Requirements: FR-004-010, FR-004-015  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-01  
-Parallelizable: no
+**Goal:** create/update only system-managed `ToConfirm` occurrences and never overwrite user-authoritative Actual.
 
-**Objective.** Create or modify `app/Models/Contract.php` so it owns only: contract header.
+**Independent test:** first sync creates one Actual; second sync updates allowed derived fields only; manual edit/confirmation prevents later overwrite; source key remains stable and unique.
 
-**Files to create**
-- `app/Models/Contract.php`
+- [ ] T004-010 [P] [US3] Write generation matrix tests in `tests/Accounting/Integration/ContractOccurrenceSynchronizationTest.php`, `tests/Feature/Contracts/SourceKeyTest.php` and `GeneratedActualOwnershipTest.php`; symbols: canonical source components/hash, create/idempotent update, suppression skip, allowed derived fields, user-authoritative no-overwrite, tenant/permission and rollback; depends: T004-008, Feature 003 T003-013 and T003-016; requirements: FR-004-025–FR-004-029, FR-004-034–FR-004-036, FR-004-039, INV-CON-002–INV-CON-004, INV-CON-007, INV-CON-008, INV-TEN-004; validate: `php artisan test tests/Accounting/Integration/ContractOccurrenceSynchronizationTest.php tests/Feature/Contracts/SourceKeyTest.php tests/Feature/Contracts/GeneratedActualOwnershipTest.php`; expected before implementation: focused failures; forbidden: append-missing-only behavior, source-key mutation, contract total contribution or resetting user-authoritative state.
+- [ ] T004-011 [US3] Implement source identity and sync in `app/Domain/Contracts/Data/ContractOccurrenceKey.php`, `ExpectedContractOccurrence.php`, `app/Domain/Contracts/Queries/ExpectedContractOccurrenceQuery.php` and `app/Domain/Contracts/Actions/SynchronizeContractOccurrences.php`; symbols: canonical readable components plus SHA-256, narrow locks, create through `CreateExpense`, update through `UpdateExpense`, suppression/status typed result; depends: T004-010; requirements: FR-004-025–FR-004-029, FR-004-034–FR-004-036; tests first: T004-010; validate: `php artisan test tests/Accounting/Integration/ContractOccurrenceSynchronizationTest.php tests/Feature/Contracts/GeneratedActualOwnershipTest.php`; expected: exactly one occurrence and only system-managed contract-derived updates; forbidden: direct Expense model writes, silent overwrite, duplicate key retry loop or contract/project monetary aggregation.
+- [ ] T004-012 [US3] Add synchronization controls in `app/Filament/Resources/Contracts/Actions/SynchronizeContractOccurrencesAction.php` and contract page status components; symbols: permission-aware sync summary with created/updated/skipped/user-authoritative/suppressed outcomes; depends: T004-011; requirements: FR-004-025–FR-004-030, FR-004-039; tests first: create `tests/Livewire/Contracts/ContractSynchronizationActionTest.php`; validate: `php artisan test tests/Livewire/Contracts/ContractSynchronizationActionTest.php`; expected: UI reports every outcome without claiming overwrite or success on failure; forbidden: background job, hidden retry or direct data mutation.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+## Phase 5 — US-004-04 Generated-expense history (P2)
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+**Goal:** expose expected/current/missing/suppressed history and revision links without making history economic.
 
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+**Independent test:** contract detail lists each expected occurrence once with linked expense, confirmation/ownership/deletion/suppression/resume metadata and tenant-safe links.
 
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+- [ ] T004-013 [P] [US4] Write and implement history dataset in `tests/Feature/Contracts/ContractGenerationHistoryTest.php`, `app/Domain/Contracts/Data/ContractGenerationHistoryRow.php` and `app/Domain/Contracts/Queries/ContractGenerationHistoryQuery.php`; symbols: states Generated/UserModified/DeletedRegenerationAllowed/Suppressed/Missing and actor/time/link fields; depends: T004-011; requirements: FR-004-030, INV-CON-004, INV-CON-005, INV-TEN-004; tests first: history test must fail before Query implementation; validate: `php artisan test tests/Feature/Contracts/ContractGenerationHistoryTest.php`; expected: read-only non-economic tenant dataset with safe links; forbidden: separate history monetary source, querying audit/version payload as current amount or other-tenant existence leak.
+- [ ] T004-014 [US4] Implement generation-history Filament page/relation in `app/Filament/Resources/Contracts/Pages/ContractGenerationHistory.php` and view/components; symbols: state badges, year/rule/source identity, current Expense and revision navigation; depends: T004-013; requirements: FR-004-030; tests first: create `tests/Livewire/Contracts/ContractGenerationHistoryPageTest.php`; validate: `php artisan test tests/Livewire/Contracts/ContractGenerationHistoryPageTest.php`; expected: all approved history fields render and unauthorized links remain absent/server-denied; forbidden: recalculated totals, editable source identity or audit payload display.
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+## Phase 6 — US-004-05 Delete generated expense (P2)
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+**Goal:** require an explicit regeneration choice and coordinate Expense deletion with an optional exception.
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
+**Independent test:** allow-regeneration deletes without exception and future sync recreates; prevent-regeneration atomically deletes and inserts one non-economic exception; failure rolls back both.
 
+- [ ] T004-015 [P] [US5] Write deletion/suppression tests in `tests/Feature/Contracts/DeleteGeneratedExpenseTest.php`; symbols: explicit boolean choice, same transaction, source exception uniqueness, future sync behavior, permission/tenant and file rollback; depends: T004-011, Feature 003 T003-020; requirements: FR-004-031, FR-004-032, FR-004-039, INV-CON-002, INV-CON-005, INV-TEN-004; validate: `php artisan test tests/Feature/Contracts/DeleteGeneratedExpenseTest.php`; expected before implementation: focused failures; forbidden: default choice, exception amount, separate successful delete/failed suppression or silent regeneration.
+- [ ] T004-016 [US5] Implement `DeleteGeneratedExpense` and `SuppressContractOccurrence` in `app/Domain/Contracts/Actions/DeleteGeneratedExpense.php`, `SuppressContractOccurrence.php` and Filament reinforced choice action; symbols: `allowRegeneration` explicit input, Feature 003 delete delegation, exception insert and typed result; depends: T004-015; requirements: FR-004-031, FR-004-032, FR-004-039; tests first: T004-015; validate: `php artisan test tests/Feature/Contracts/DeleteGeneratedExpenseTest.php`; expected: coherent delete/suppress state with one audit correlation; forbidden: direct soft delete, default suppression or exception queried by economics.
 
-### T004-03 — Date-versioned term
+## Phase 7 — US-004-06 Resume or generate one year (P2)
 
-User story: US-004-01  
-Requirements: FR-004-015, FR-004-020  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-02  
-Parallelizable: no
+**Goal:** resume suppression and create one valid missing occurrence without duplication.
 
-**Objective.** Create or modify `app/Models/ContractTerm.php` so it owns only: date-versioned term.
+**Independent test:** resume only removes exception; resume-and-generate creates once; selected-year validates term applicability, missing state and suppression; repeated calls are deterministic.
 
-**Files to create**
-- `app/Models/ContractTerm.php`
+- [ ] T004-017 [P] [US6] Write resume/manual-year tests in `tests/Feature/Contracts/ContractOccurrenceControlTest.php`; symbols: resume, resume-and-generate, generate-year, existing key, active suppression, invalid year/term, idempotency and permission; depends: T004-016; requirements: FR-004-033, FR-004-039, INV-CON-006, INV-TEN-004; validate: `php artisan test tests/Feature/Contracts/ContractOccurrenceControlTest.php`; expected before implementation: focused failures; forbidden: bulk free-form copy, suppression bypass without explicit resume or overwriting existing occurrence.
+- [ ] T004-018 [US6] Implement control Actions/UI in `app/Domain/Contracts/Actions/ResumeContractOccurrence.php`, `ResumeAndGenerateOccurrence.php`, `GenerateContractOccurrenceForYear.php` and contract Filament actions; symbols: applicability validator, exception removal, shared sync/create path and typed existing/missing result; depends: T004-017; requirements: FR-004-033, FR-004-039; tests first: T004-017; validate: `php artisan test tests/Feature/Contracts/ContractOccurrenceControlTest.php`; expected: one valid occurrence and deterministic no-duplicate behavior; forbidden: bypassing source key, direct Expense copy or hidden exception deletion.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+## Phase 8 — Renewal notifications and verification
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+- [ ] T004-019 [P] Write notification tests in `tests/Feature/Notifications/ContractRenewalNotificationTest.php`; symbols: 30/7/1/expired thresholds, recipient permission, dedup key, database-first delivery and visible mail failure; depends: T004-008 and Feature 001 T001-017; requirements: FR-004-038, AC-004-13; validate: `php artisan test tests/Feature/Notifications/ContractRenewalNotificationTest.php`; expected before implementation: focused failures; forbidden: queue, repeated notification for same threshold or all-user broadcast.
+- [ ] T004-020 Implement bounded notification command in `app/Domain/Contracts/Queries/ContractRenewalDueQuery.php`, `app/Console/Commands/CheckContractRenewalsCommand.php` and notification classes; symbols: tenant iteration/context reset, threshold occurrence key and synchronous delivery Action; depends: T004-019 and Feature 001 T001-018; requirements: FR-004-038; tests first: T004-019; validate: `php artisan test tests/Feature/Notifications/ContractRenewalNotificationTest.php && php artisan schedule:list`; expected: deterministic daily checks with database notification preserved on mail failure; forbidden: permanent worker, silent catch or cross-tenant recipient.
+- [ ] T004-021 Run Feature 004 verification and update `specs/004-contracts-and-projects/quickstart.md`, generation contract and source traceability with actual results; depends: T004-006, T004-009, T004-012, T004-014, T004-016, T004-018, T004-020; requirements: FR-004-001–FR-004-039; validate: `php artisan test tests/Feature/Projects tests/Feature/Contracts tests/Feature/Notifications/ContractRenewalNotificationTest.php && composer test:accounting && composer test:static`; expected: generation matrix, revisions, tenant/permission and notifications pass; Dusk only covers term editor and regeneration controls; forbidden: completion with append-missing-only semantics or unexecuted tests.
 
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+## Dependencies and execution order
 
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+`Feature 003 current Actions → T004-001 → T004-002 → T004-003`; US1 and US2 can proceed in parallel after foundation. US3 requires contract terms plus Expense create/update/confirm. US4–US6 depend on synchronization. Notifications depend on valid terms and platform delivery.
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+## MVP scope
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T004-04 — Five stages
-
-User story: US-004-01  
-Requirements: FR-004-020, FR-004-021  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-03  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/Projects/Enums/ProjectStage.php` so it owns only: five stages.
-
-**Files to create**
-- `app/Domain/Projects/Enums/ProjectStage.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T004-05 — Stage transition
-
-User story: US-004-01  
-Requirements: FR-004-021, FR-004-022  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-04  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/Projects/Actions/ChangeProjectStage.php` so it owns only: stage transition.
-
-**Files to create**
-- `app/Domain/Projects/Actions/ChangeProjectStage.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T004-06 — Scheduled promotion
-
-User story: US-004-01  
-Requirements: FR-004-022, FR-004-023  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-05  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/Projects/Actions/PromoteDeferredProjects.php` so it owns only: scheduled promotion.
-
-**Files to create**
-- `app/Domain/Projects/Actions/PromoteDeferredProjects.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T004-07 — Term validation/renewal
-
-User story: US-004-01  
-Requirements: FR-004-023, FR-004-025  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-06  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/Contracts/Actions/SaveContract.php` so it owns only: term validation/renewal.
-
-**Files to create**
-- `app/Domain/Contracts/Actions/SaveContract.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T004-08 — Append-missing generation
-
-User story: US-004-01  
-Requirements: FR-004-025, FR-004-026  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-07  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/Contracts/Actions/SynchronizeContractExpenses.php` so it owns only: append-missing generation.
-
-**Files to create**
-- `app/Domain/Contracts/Actions/SynchronizeContractExpenses.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T004-09 — Term/year contribution
-
-User story: US-004-01  
-Requirements: FR-004-026, FR-004-031  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-08  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/Contracts/Services/ContractAnnualizer.php` so it owns only: term/year contribution.
-
-**Files to create**
-- `app/Domain/Contracts/Services/ContractAnnualizer.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T004-10 — Idempotent scheduled command
-
-User story: US-004-01  
-Requirements: FR-004-031, FR-004-032  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-09  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Console/Commands/PromoteDeferredProjectsCommand.php` so it owns only: idempotent scheduled command.
-
-**Files to create**
-- `app/Console/Commands/PromoteDeferredProjectsCommand.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T004-11 — Project register/editor
-
-User story: US-004-01  
-Requirements: FR-004-032  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-10  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Livewire/Projects/ProjectIndex.php` so it owns only: project register/editor.
-
-**Files to create**
-- `app/Livewire/Projects/ProjectIndex.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T004-12 — Term timeline/editor
-
-User story: US-004-01  
-Requirements: FR-004-001, FR-004-010  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-11  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Livewire/Contracts/ContractEditor.php` so it owns only: term timeline/editor.
-
-**Files to create**
-- `app/Livewire/Contracts/ContractEditor.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T004-13 — Idempotency/no overwrite
-
-User story: US-004-01  
-Requirements: FR-004-010, FR-004-015  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-12  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/Contracts/ContractSynchronizationTest.php` so it owns only: idempotency/no overwrite.
-
-**Files to create**
-- `tests/Feature/Contracts/ContractSynchronizationTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T004-14 — Stage/scheduler
-
-User story: US-004-01  
-Requirements: FR-004-015, FR-004-020  
-Invariants: INV-PRJ-001, INV-PRJ-002  
-Dependencies: T004-13  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/Projects/ProjectStageTest.php` so it owns only: stage/scheduler.
-
-**Files to create**
-- `tests/Feature/Projects/ProjectStageTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Contracts/ContractSynchronizationTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Contracts/ContractSynchronizationTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-### T004-15 — Tenant-scope projects, contracts and generation
-
-Requirements: FR-004-033  
-Invariants: INV-TEN-004  
-Dependencies: Feature 007 clarification convergence and preceding local task  
-
-**Objective.** Update the feature's migrations/models, policies, Actions/Queries, screens, contracts, exports/files/commands where applicable, and tests so tenant ownership and approved role behavior are explicit and fail closed.
-
-**Required tests.**
-
-1. same-tenant Administrator/Editor/Viewer allow paths according to the feature contract;
-2. other-tenant direct ID and relationship denial without existence leakage;
-3. missing tenant context denial;
-4. tenant-scoped dataset/export/file equality where applicable;
-5. audit records real actor and tenant context.
-
-**Forbidden work.** Do not resolve any question still marked `OPEN` in the clarification registers, add impersonation, add shared mutable business catalogues, or introduce separate tenant databases/domains without an approved requirement.
+T004-001–T004-006 deliver independently managed projects. Contract and generation slices follow without changing project behavior.
