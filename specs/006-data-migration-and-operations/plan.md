@@ -1,6 +1,6 @@
 # Implementation plan — Feature 006 Migration and operations
 
-Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW; NOT CUTOVER READY`  
+Status: `PLAN COMPLETE AND MERGED; NOT CUTOVER READY; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Dependencies: Features 001–005 and 007
 
 ## Summary
