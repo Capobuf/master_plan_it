@@ -1,63 +1,70 @@
-# Spec Kit plan convergence review
+# Spec Kit task-generation self-check
 
-Mode: read-only self-check of `/speckit.plan` artifacts. This is not the later `/speckit.analyze` command and does not validate implementation.
+Mode: read-only consistency review performed while generating `/speckit.tasks`. This is not the subsequent official `/speckit.analyze` command and does not validate application implementation.
 
 ## Coverage
 
 | Check | Result |
 |---|---|
 | Product questions | Q-001–Q-041 closed; 0 open |
-| Constitution | 3.0.1 applied before/after design |
-| Integrated plan/research/model | present |
-| Feature plans | 001–007 regenerated |
-| Feature research | 001–007 regenerated |
-| Feature data models | 001–007 regenerated |
-| Feature quickstarts | 001–007 regenerated |
-| RBAC/versioning/backup/XLSX/PDF decisions | resolved with exact target/boundary; executable lock pending |
-| Shared economic kernel | single query/engine/four DTOs; consumer parity contract |
-| Current/history separation | current, revisions, audit, deletion, scenario, generation exceptions, BudgetVersion distinct |
-| Tenant isolation | explicit context/query/policy/Action/DB/test contracts |
-| Migration/operations | staged, idempotent, explicit batch result, backup/portability separated |
+| Constitution | 3.0.1 applied |
+| `/speckit.plan` | complete and merged |
+| Feature task files | 001–007 regenerated |
+| Task inventory | 142 tasks, 35 user stories, 39 `[P]` markers |
+| Exact execution data | paths, symbols, dependencies, FR/INV, tests, commands, expected results and forbidden work present |
+| Dependency graph | acyclic after moving shared revisions to Feature 002 and removing Feature 001/007 ownership duplication |
+| Shared ownership | documented in `tasks-summary.md` |
+| Current/history boundary | current, revisions, audit, deletion, scenarios, exceptions and BudgetVersion remain distinct |
+| Tenant isolation | explicit context, scoped lookup, policy/Action and test tasks |
+| Economic parity | one kernel/query and format-parity tasks |
+| Migration/operations | staging, explicit batches, portability, conditional backup and immutable deployment tasks |
 
-## Superseded assumptions removed from current plan
+## Superseded assumptions excluded from planned implementation
 
-- fixed tenant role behavior;
+- fixed tenant-role behavior;
 - permanent Actual immutability;
-- current `Active/Replaced/Cancelled` target model;
+- current `Active/Replaced/Cancelled` lifecycle;
+- replacement-row graph;
 - mandatory Estimate→Quote→Actual;
-- synchronized persisted current Budget total;
+- persisted synchronized current Budget total;
 - Italian-only output;
 - fixed audit retention;
 - audit export/portability;
-- implicit filtered/complete output scope;
+- implicit filtered/complete scope;
 - Preline/general second UI kit;
 - server PDF renderer;
-- implicit DB reset and unverified MySQL 9 matrix;
+- implicit database reset;
 - blanket deadlock retry.
 
-## Remaining findings
+## Findings resolved during task generation
 
-| ID | Severity | Finding | Disposition |
-|---|---|---|---|
-| PLAN-001 | HIGH until executed | Exact Composer/frontend lock and package smoke not run; backup package has metadata/docs PHP-floor conflict. | First implementation gate; failure blocks/amends plan. |
-| PLAN-002 | HIGH until regenerated | Existing `tasks.md` and old checklists/test-equivalence artifacts remain stale. | Run `/speckit.tasks`; then `/speckit.analyze`. |
-| PLAN-003 | MEDIUM | Some legacy source field mappings require real export samples. | Feature 006 dry-run/cutover evidence; do not guess. |
-| PLAN-004 | MEDIUM | Final host limits/tools/paths unknown. | Keep deployment/backup conditional and not CUTOVER READY. |
-| PLAN-005 | MEDIUM | Exact legacy report parity inventory unsigned. | Core reporting may implement approved current contract; parity/cutover waits for inventory. |
-| PLAN-006 | LOW | 10k-row performance thresholds require executable benchmark. | Measure before cache/preaggregation. |
+| ID | Initial severity | Finding | Resolution |
+|---|---:|---|---|
+| TASK-SELF-001 | HIGH | Feature 002 depended on Expense-owned revision infrastructure while Expense depended on master data. | Shared revision package/schema/orchestration moved to Feature 002 T002-004–T002-006; Feature 003 now integrates only its aggregate. |
+| TASK-SELF-002 | HIGH | TenantContext, tenant indicator and User/Role resources had duplicate Feature 001/007 ownership. | Feature 007 owns tenant domain and resources; Feature 001 owns panel/platform integration. |
+| TASK-SELF-003 | HIGH | Feature 001 scheduler referenced the generated-expense deletion task rather than the renewal command. | Dependency corrected to T004-020; operations failure delivery remains T006-014. |
+| TASK-SELF-004 | MEDIUM | Some BudgetVersion foundation tasks lacked their user-story marker. | Historical-year schema/persistence tasks are now `[US2]`; story-neutral kernel foundation remains unmarked. |
+| TASK-SELF-005 | MEDIUM | Feature 005 current query referenced an outdated Expense task ID. | Dependency corrected to Feature 003 T003-008. |
 
-## Severity interpretation
+## Remaining gates
 
-The two HIGH findings are deliberate next-phase gates, not contradictions inside the proposed architecture. The official `/speckit.analyze` must run after tasks regeneration and require CRITICAL 0/HIGH 0 before implementation begins.
+| ID | Severity before execution | Gate | Disposition |
+|---|---:|---|---|
+| TASK-GATE-001 | HIGH | Exact Composer/frontend lock and package smoke have not run. | T001-001/T001-002; failure blocks and requires ADR amendment. |
+| TASK-GATE-002 | HIGH | Official `/speckit.analyze` has not assessed the merged tasks. | Run after review/merge; require CRITICAL 0 and HIGH 0. |
+| TASK-GATE-003 | MEDIUM | Real legacy samples, host profile and report inventory are unavailable. | Keep Feature 006 not CUTOVER READY. |
+| TASK-GATE-004 | LOW | Performance thresholds require executable code/data. | T005-024 before cache/preaggregation. |
+
+These are phase gates, not unresolved product decisions. No implementation task may be checked complete until its validation command is actually executed and recorded.
 
 ## Phase
 
 - `/speckit.clarify`: COMPLETE;
-- `/speckit.plan`: COMPLETE ON THIS BRANCH, pending review/merge;
-- `/speckit.tasks`: NEXT VALID COMMAND AFTER PLAN APPROVAL;
-- `/speckit.analyze`: follows tasks;
-- `/speckit.implement`: blocked.
+- `/speckit.plan`: COMPLETE AND MERGED;
+- `/speckit.tasks`: COMPLETE ON THIS BRANCH, pending review/merge;
+- `/speckit.analyze`: NEXT VALID COMMAND AFTER MERGE;
+- `/speckit.implement`: BLOCKED.
 
 ## Not performed
 
-No code, package resolution, schema migration, test, workflow, artifact, backup, restore, migration dry-run or deployment.
+No code, dependency resolution, schema migration, test, workflow, artifact, backup, restore, import dry-run or deployment was executed.
