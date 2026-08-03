@@ -16,7 +16,11 @@ Read in this order:
 3. `docs/replatform/approved-decisions.md`;
 4. `docs/replatform/product-clarification-register.md`;
 5. `docs/replatform/clarification-log.md`;
-6. `specs/007-tenancy-and-access-control/spec.md`;
-7. feature specifications `001` through `006`.
+6. `docs/replatform/versioning-permissions-and-operations-contract.md`;
+7. `specs/007-tenancy-and-access-control/spec.md`;
+8. feature specifications `001` through `006`;
+9. feature plans and tasks only after they have been regenerated against Constitution 3.0.0.
 
-The approved product decisions `Q-001` through `Q-015` are propagated into the package. All remaining open questions are listed in `docs/replatform/product-clarification-register.md` and must not be guessed by an implementation agent.
+All product questions `Q-001` through `Q-033` are closed. The approved product contract includes configurable tenant roles, operational model revisions, editable/deletable Actual rows, immutable named budget versions, tenant data portability, synchronous scheduled notifications, and controllable contract-expense generation.
+
+`CLARIFICATION COMPLETE` does not mean the existing plans and tasks are current. The next valid Spec Kit command is `/speckit.plan`; implementation must not begin from task files that still encode the superseded fixed-role or immutable-Actual model.
