@@ -1,47 +1,57 @@
 # Package validation
 
-Status: `TASK PACKAGE VALIDATED — ANALYSIS PENDING`
+Status: `REMEDIATED TASK PACKAGE — RE-ANALYSIS PENDING`
 
-Scope: `tasks/replatform-3.0.1` against `laravel-replatform` commit `6be02f58ccda27c48d9a43f5c2fb3df9dd161a0e`.
+Scope: `tasks/remediate-analysis-3.0.1` against `laravel-replatform` commit `bdd03819d8d2e59f698d42ca33ee706472a3da02`.
 
 ## Task package
 
-- seven feature `tasks.md` files regenerated;
-- one cross-feature `tasks-summary.md` added;
-- 142 unchecked executable tasks;
+- seven feature `tasks.md` files remediated;
+- `task-readiness-registry.md` added as normative task-contract supplement;
+- `technical-contract-amendment-2026-08-03.md` added;
+- `artifact-status-register.md` added;
+- source traceability regenerated;
+- 148 unchecked executable tasks;
 - 35 user stories;
-- 39 `[P]` markers after explicit prerequisites;
-- exact paths, symbols, dependencies, FR/INV mappings, test-first instructions, validation commands, expected results and forbidden work;
-- former task ID namespaces and contents explicitly superseded;
-- no application file, checklist or generated issue modified.
+- 41 `[P]` markers after exact prerequisites;
+- stable `[FND]`, `[USn]` and `[VER]` task classes;
+- no application code or checklist modified.
 
 ## Structural validation
 
-- task IDs are unique inside their feature namespace;
-- every task uses the checklist form `- [ ] Txxx-yyy`;
-- story tasks include `[US#]`; setup/foundation/verification tasks remain story-neutral where genuinely cross-cutting;
-- critical-path dependencies are acyclic;
-- late Feature 006/007 migration integration is explicitly ordered;
-- shared revision infrastructure is owned by Feature 002 and reused by later aggregates;
-- Tenant, TenantContext, tenant lifecycle and User/Role/Tenant resources are owned by Feature 007;
-- Feature 001 owns bootstrap, authentication, password operations, platform settings/audit, scheduler and release integration;
-- Money is owned by Feature 003;
-- contract occurrence generation is owned by Feature 004;
-- the canonical `EconomicDataset` is owned by Feature 005;
-- portability, backup and deployment are owned by Feature 006.
+- task IDs are unique inside each feature namespace;
+- every task uses `- [ ] Txxx-yyy`;
+- each task has a stable class through its entry or readiness registry;
+- the task entry plus readiness-registry record supplies sources, requirements, invariants, exact paths/symbols, dependencies, tests, validation, errors, forbidden work and expected result;
+- notification dependencies are delivery primitive → feature commands → final scheduler registration;
+- tenant dependencies are context/query → reusable ownership concern → owning Policies/Queries → final matrix;
+- exact master-data readiness precedes Expense create/update;
+- `ConfirmActual` implementation precedes contract synchronization;
+- scenario persistence/query precedes scenario comparison;
+- audit-view and attachment-foundation tasks exist;
+- backup gate uses `composer require`, verifies both Composer files and rolls them back on resolution failure;
+- Feature 006/007 migration integration remains explicitly ordered;
+- shared ownership is documented in `tasks-summary.md`.
 
 ## Superseded target checks
 
-The regenerated target contains no planned `ExpenseRowState`, `ReplaceExpenseRow`, `ExpenseRowAudit`, `ContractAnnualizer`, `EconomicPositionQuery` parallel calculator, `ReportPdfRenderer`, Preline dependency, immutable Actual rule, persisted current Budget total or current `Active/Replaced/Cancelled` lifecycle. Mentions may remain only in explicit supersession/forbidden-work statements.
+The target contains no planned `ExpenseRowState`, `ReplaceExpenseRow`, `ExpenseRowAudit`, `ContractAnnualizer`, parallel economic calculator, `ReportPdfRenderer`, Preline dependency, immutable Actual rule, persisted current Budget total or current `Active/Replaced/Cancelled` lifecycle. Mentions may remain only in explicit supersession or forbidden-work statements.
 
 ## Technical gates retained
 
-- dependency locks and package smoke are real implementation tasks, not claimed results;
+- dependency locks and package smoke are implementation tasks, not claimed results;
 - `spatie/laravel-backup` 10.3.0 remains conditional on PHP 8.3.32 Composer resolution;
 - MySQL integration tests remain required;
 - no implicit database reset is allowed;
-- performance thresholds require the planned executable benchmark;
+- performance thresholds require executable measurement;
 - cutover evidence remains external and OPEN.
+
+## Medium-finding disposition
+
+- stale root/replatform phase metadata: corrected;
+- stale feature spec/plan headers: superseded by `artifact-status-register.md` until each feature's next substantive edit;
+- stale contract planning gate: corrected by A-TECH-003;
+- nominal requirement coverage: replaced by the ledger in `source-traceability.md`.
 
 ## Integrity
 
@@ -53,4 +63,4 @@ No Laravel scaffold, Composer/frontend resolution, migration, static/accounting/
 
 ## Next command
 
-After review and merge: `/speckit.analyze`.
+After review and merge: repeat `/speckit.analyze` and require CRITICAL `0` and HIGH `0`.
