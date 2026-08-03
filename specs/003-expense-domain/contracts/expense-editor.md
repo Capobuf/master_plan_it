@@ -1,50 +1,59 @@
-# Contract — Expense Editor
+# Contract — Expense editor
 
 Feature: `003-expense-domain`  
-Purpose: header/row fields, conditional visibility, calculations, save/replacement and concurrency.
+Status: `PROPOSED TARGET — PLAN COMPLETE`
 
-## Inputs
+## Input
 
-All input is represented by a typed Data/Filter object. IDs are target IDs; imported references retain legacy IDs separately. Money enters as normalized decimal strings. Dates use ISO `YYYY-MM-DD`. The actor and current tenant context are explicit. Authorization and tenant ownership checks occur before protected data or file metadata is returned.
+One typed aggregate request contains authorized tenant context, Expense header, intended current rows, explicit row deletions, expected lock versions and attachment operations. Money is normalized decimal strings; dates ISO. Existing row omission alone never means delete.
 
 ## Output
 
-Return a typed result or dataset. Domain writes return affected IDs, new `lock_version`, calculated values and audit correlation ID. Read datasets declare every column, type, ordering and total; views do not append hidden calculations.
+Typed result with Expense/row IDs, calculated Net/VAT/Gross, confirmation/system-managed state, new lock versions, revision batch and audit correlation ID.
 
-## Preconditions and invariants
+## Header/rows
 
-Apply the feature FR/INV IDs from `../spec.md`. Missing prerequisites produce validation errors; stale versions produce 409; invariant conflicts produce stable `MPIT_003_*` codes; permission failure produces 403 without confirming hidden record existence.
+Header: tenant, year, cost center, kind, title/notes and project XOR contract context.
 
-## Transaction and idempotency
+Rows: position, vendor, independent type Estimate/Quote/Actual, description, quantity/unit price/amount, VAT input, calculated components, Extra/Plafond funding, date mode/distribution, Actual confirmation, generated source metadata and attachments.
 
-Writes open one transaction inside the owning Action. Lock only cross-record consistency rows. Retrying the same idempotency/source key cannot create duplicates. Rollback removes all partial database side effects; file writes use temporary paths and finalize only after database success, with compensating cleanup on failure.
+Conditional UI visibility mirrors these fields but server validation is authoritative.
+
+## Save transaction
+
+`CreateExpense`/`UpdateExpense` authorize exact permission, validate same-tenant/current references, lock current aggregate where required, reject stale versions, calculate all values, create one revision batch, persist explicit changes/deletions, link snapshots, audit and commit.
+
+File upload uses temporary/private path and is finalized only with coherent DB result. Cleanup failure is surfaced/recorded; it is not ignored.
+
+No automatic retry and no observer/model-hook economic side effect.
+
+## Lifecycle
+
+- Estimate, Quote and Actual are independent; no mandatory progression.
+- Actor with permission may update/delete Actual.
+- `ConfirmActual` is separate permission/Action; it records actor/time and makes generated row user-authoritative.
+- Confirmation does not make Actual permanently immutable.
+- Delete removes current contribution and ordinary visibility; history remains in revisions/audit.
+- Restore builds typed input from a snapshot, revalidates current rules and creates a new revision.
+- Generated source key is immutable and cannot be changed by editor/restore.
 
 ## Authorization
 
-| Ability | Administrator | Editor same tenant | Viewer same tenant | User other tenant |
-|---|---:|---:|---:|---:|
-| viewAny/view | Allow where contract permits, in explicit tenant context or global operational scope | Allow for assigned tenant | Allow read-only for assigned tenant | Deny |
-| create/update | Allow where contract and invariant permit | Allow only where the feature-specific clause grants | Deny | Deny |
-| delete/archive | Only where explicitly specified; never bypass immutable history | Only where explicitly granted; never immutable history | Deny | Deny |
-| export/print | Tenant-scoped; global exports contain operational metadata only | Tenant-scoped | Tenant-scoped | Deny |
-| administer/global operation | Allow | Deny | Deny | Deny |
+Use stable abilities from `permission-catalogue.md`: view/create/update/delete/view-revisions/restore-revision/confirm-actual/print/export plus attachment abilities. Role names do not grant behavior. Same-tenant, active state and domain invariants remain mandatory.
 
-## Audit/logging
+## Concurrency/errors
 
-Record business state changes, actor, old/new values and correlation ID. Do not log passwords, session tokens, full attachments or unredacted migration source rows. Expected validation failures are not error logs.
+Stale aggregate or row version returns `STALE_VERSION` with no partial write. Other stable codes come from `error-catalogue.md`; other-tenant IDs return safe denial/not-found.
 
 ## Test contract
 
-1. valid input returns/persists exact expected values;
-2. each invariant has one focused failure test;
-3. unauthorized role cannot read/write outside its scope;
-4. stale version and duplicate idempotency key are deterministic;
-5. transaction rollback leaves no partial records/files;
-6. any screen/export using this contract matches the same dataset.
-
-## Feature-specific clauses
-
-Read the local plan and data model. Implement exactly header/row fields, conditional visibility, calculations, save/replacement and concurrency. Do not reuse this file as a generic abstraction for other domains; shared behavior belongs only in an explicitly listed shared helper.
-## Tenant and role clauses
-
-All selectable years, cost centers, vendors, plafond, projects, contracts, attachments, and replacement targets belong to the current tenant. Editor receives the approved Q-006 operations. Recorded Actual and economic history have no edit/delete path.
+- full aggregate create/update and explicit deletion;
+- missing-row omission does not delete;
+- independent row types;
+- exact calculations and conditional validation;
+- Actual update/confirm/delete/restore;
+- generated manual override and source-key immutability;
+- aggregate revision batch;
+- attachment rollback/failure;
+- tenant/permission/concurrency;
+- register/report values equal server result.
