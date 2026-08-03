@@ -1,101 +1,128 @@
-# Implementation plan — Data migration and operations
+# Implementation plan — Feature 006 Migration and operations
 
-## 1. Summary
+Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW; NOT CUTOVER READY`  
+Dependencies: Features 001–005 and 007
 
-Implement import legacy data repeatably, reconcile it, deploy, back up and restore on shared hosting or minimal Docker as one vertical slice in the modular Laravel monolith. Domain writes use explicit Actions; reusable reads use Query objects; authorization is checked before loading or mutating protected data.
+## Summary
 
-## 2. Technical context
+Implement controlled CSV staging/import for one legacy site, tenant portability, whole-installation backup verification and immutable-artifact deployment. Every operation is Administrator-only, synchronous/bounded and diagnostic. This is not a generic ETL platform or selective tenant disaster recovery.
 
-| Item | Fixed value |
-|---|---|
-| Language/framework | PHP 8.3+, Laravel 13 |
-| Database | MySQL 8 InnoDB, strict mode, utf8mb4 |
-| UI | Blade; Livewire 4 where listed; Alpine local visual state; Tailwind 4; Preline |
-| Test | Pest; Dusk only where listed |
-| Time/locale/currency | UTC storage; Europe/Rome display; `it`; EUR |
-| Money | decimal strings/BCMath; MySQL decimal; no float authority |
-| Hosting | shared PHP/MySQL compatible; precompiled assets; cron; sync queue |
-| Browser target | latest two stable Chromium/Firefox, current Safari |
+## Constitution check
 
-## 3. Constitution check — pre-design
+Passes C-01, C-04, C-06, C-07, C-09, C-10 and C-11. Silent merge, guessed tenant, direct legacy DB access, hidden retry, audit export and partial unreported success are prohibited.
 
-All C-01..C-10 pass. No internal API, worker daemon, generic repository, observer economic side effect, or independent contract/project total is introduced.
+## Target files
 
-## 4. Current-to-target mapping
+### Persistence
 
-The legacy source and target IDs are listed in `docs/replatform/source-traceability.md`. Framework lifecycle is replaced by explicit Actions while economic outputs remain equivalent.
+- `ImportRun`, `StagedRow`, `LegacyIdentityMap`, `ImportExclusion`, `ImportReconciliation`, `BackupRun` models/migrations;
+- enums for run/source/status/error severity.
 
-## 5. Target structure and dependency rule
+### Migration/portability Actions
 
-Files belong to the smallest real domain area. Models do not call other domain Actions from observers. UI classes may invoke listed Actions/Queries only.
+- `CreateImportRun`, `StageImportPackage`, `ValidateStagedRows`, `BuildImportReconciliation`, `ApproveImportExclusion`, `ApplyImportRun`;
+- dataset-specific importers for tenant/users/roles/master data/projects/contracts/expenses/scenarios/BudgetVersion/files;
+- `ExportTenantPackage` and manifest/checksum builders.
 
-## 6. File implementation map
+Importers are small per dataset because dependencies and Actions differ. A generic reflection importer is prohibited.
 
-| Target path | Type | Responsibility | Requirements | Test |
-|---|---|---|---|---|
-| `app/Models/MigrationRun.php` | model | manifest/run state | FR-006-001, FR-006-002 | corresponding test |
-| `app/Models/MigrationStagingRecord.php` | model | raw staged row | FR-006-001, FR-006-002 | corresponding test |
-| `app/Models/LegacyIdMap.php` | model | legacy-target identity | FR-006-001, FR-006-002 | corresponding test |
-| `app/Models/MigrationError.php` | model | quarantine | FR-006-001, FR-006-002 | corresponding test |
-| `app/Domain/Migration/Actions/StageManifest.php` | action | validate/hash/stage | FR-006-001, FR-006-002 | corresponding test |
-| `app/Domain/Migration/Actions/TransformStagedRecords.php` | action | ordered domain import | FR-006-001, FR-006-002 | corresponding test |
-| `app/Domain/Migration/Actions/ReconcileMigration.php` | action | counts/sums | FR-006-001, FR-006-002 | corresponding test |
-| `app/Console/Commands/MpitMigrateCommand.php` | command | dry-run/apply | FR-006-001, FR-006-002 | corresponding test |
-| `app/Console/Commands/MpitBackupCommand.php` | command | database/files manifest | FR-006-001, FR-006-002 | corresponding test |
-| `app/Console/Commands/MpitRestoreVerifyCommand.php` | command | restore verification | FR-006-001, FR-006-002 | corresponding test |
-| `tests/Feature/Migration/MigrationIdempotencyTest.php` | test | repeat run | FR-006-001, FR-006-002 | corresponding test |
-| `tests/Feature/Migration/ReconciliationTest.php` | test | count/sum gates | FR-006-001, FR-006-002 | corresponding test |
-| `tests/Feature/Operations/BackupRestoreTest.php` | test | manifest/restore | FR-006-001, FR-006-002 | corresponding test |
+### Backup/operations
 
-## 7. Database design
+- `CreateInstallationBackup`, `VerifyInstallationBackup`, `RecordBackupFailure`;
+- `mpit:backup`, `mpit:backup-verify`, `mpit:import-dry-run`, `mpit:import-apply` commands;
+- deployment remains CI/operator procedure plus structural contracts, not a web auto-updater.
 
-Create migrations in dependency order and use restrictive foreign keys. Every editable aggregate has `lock_version`. Every migrated table has nullable `legacy_id` plus a scoped unique key. Precise feature columns are specified in `data-model.md` and contracts; no JSON substitutes for relational fields.
+### UI
 
-## 8. Eloquent rules
+Administrator Filament Pages for import runs/reconciliation/exclusions, tenant portability export, backup status. Restore is not a one-click web action; UI may display the verified operator procedure/status only.
 
-Models use guarded attributes, enum/date/decimal casts, explicit relationships and query scopes. They contain no economic observer side effects. Factories create valid defaults and named invalid states for tests.
+## Import package
 
-## 9. Domain operation contract
+Authoritative format: UTF-8 CSV files + `manifest.json` + `checksums.json` + attachments directory. XLSX is not accepted for import.
 
-Each write Action exposes one `execute(Data $data, User $actor, ?int $expectedVersion): Result` method, authorizes the operation, validates invariants, opens the transaction, locks rows only when cross-record consistency requires it, persists, audits, and returns a typed result. Domain conflicts use stable error codes.
+Manifest includes format version, source app/commit/site, tenant identity, file list/count/size/SHA-256, currency/language/timezone, schema range and package checksum.
 
-## 10. Transaction and concurrency
+Target tenant is chosen before run creation and immutable thereafter.
 
-Open transactions inside Actions, not controllers. Use `SELECT ... FOR UPDATE` for replacement targets, referenced plafond consumption snapshots, contract sync source-key checks and migration map creation. Optimistic `lock_version` protects user edits. Deadlock retry is limited to three attempts through a shared transaction helper and logs correlation IDs.
+## Staging/dry-run
 
-## 11. Routes and navigation
+Staging preserves safe raw values, source file/line/type/ID and package lineage. Dry-run:
 
-Use named routes under authenticated/active middleware. Every handler references a policy ability. Livewire query-string state is limited to filters, sort and page; unsaved form data is never placed in URL.
+1. validates manifest/checksums/schema;
+2. parses into normalized typed fields;
+3. resolves identity/dependencies in order;
+4. invokes domain validation without current-domain writes;
+5. quarantines invalid/colliding/unassignable rows;
+6. calculates counts and exact decimal sums;
+7. creates reconciliation.
 
-## 12. UI composition
+Source rows are not logged outside bounded staging. Passwords/secrets are rejected, not staged as ordinary fields.
 
-Each screen has page header, breadcrumbs, primary action, filter bar where applicable, content table/form, empty/loading/error states, inline validation and focus restoration. Preline components are wrapped in local Blade components; dynamic dropdowns/modals are reinitialized through `resources/js/preline.ts` after Livewire navigation/render.
+## Apply
 
-## 13. Reporting/export boundary
+Requires exact fresh dry-run checksum/target, zero unresolved blockers, recorded approved exclusions and reinforced confirmation.
 
-Where this feature exposes datasets, the Query object is the sole semantic source. Export and print accept the same immutable filter DTO and row DTOs as the screen.
+Apply uses dependency-ordered domain Actions. Batch size is explicit and each batch transaction is recorded. Failure stops subsequent batches and leaves run `failed` with applied range/counts; no claim of all-or-nothing across an unbounded package. Re-running same lineage is idempotent through identity maps and action/source keys.
 
-## 14. Error model
+The reconciliation after apply compares target counts/sums/attachments and must be approved before migration acceptance.
 
-| Category | User response | Technical behavior |
-|---|---|---|
-| Validation | field-level 422 | no transaction or rollback |
-| Authorization | generic 403 | no existence leakage |
-| Domain conflict | translated invariant message, 409 | rollback; stable error code |
-| Concurrency | reload-required 409 | rollback; current version logged |
-| Unexpected | correlation ID, 500 | sanitized log with stack |
+## Legacy current/history mapping
 
-## 15. Test strategy
+Legacy Expense state/replacement graph is used to select accepted current records deterministically. Prior evidence may seed operational snapshots/audit metadata. It never creates multiple current rows or changes reconciled current totals.
 
-Write unit tests for calculators/value objects, feature tests for Actions/policies/routes, Livewire tests for state/validation, and Dusk only for JavaScript lifecycle, responsive menu geometry, focus and print. Each task lists exact tests.
+## Tenant portability
 
-## 16. Implementation sequence
+Exports one tenant's approved portable data and files. Excludes audit events, passwords/hashes/tokens/sessions/secrets, global configuration and another tenant. Retained operational revisions are minimized; notifications are included only if final plan task proves portability value and safe schema—default target is exclude notifications to reduce transient data.
 
-enums/value objects → migrations → models/factories → invariant tests → services → Actions → policies → Queries → routes/UI → exports/commands → browser smoke → documentation reconciliation.
+Import uses the same staging engine but cannot grant protected platform permissions or overwrite another lineage/manual current record.
 
-## 17. Constitution check — post-design
+## Backup
 
-Pass. Complexity deviations: none.
-## Feature 007 dependency
+Target Spatie Backup 10.3.0 only after real Composer PHP 8.3.32 resolution. `mysqldump`, ZipArchive, storage path/capacity and executable path are explicit host prerequisites.
 
-This feature is tenant-bound. Before implementation, read Feature 007 completely and propagate explicit tenant ownership, current-context resolution, role abilities, fail-closed cross-tenant behavior, audit actor+tenant attribution, and isolation tests into every listed file. Product questions still marked `OPEN` in the clarification register cannot be decided by the coding agent.
+Package creates archive mechanics. Application `backup_runs` distinguishes Requested/Created/Verified/Failed. A Created archive is not valid until checksum/manifest validation and empty-environment restore rehearsal with smoke/reconciliation. Restore is whole-installation and operator-led.
+
+If package resolution fails, Feature 006 backup remains blocked and ADR is amended; no silent downgrade/custom backup path.
+
+## Deployment
+
+GitHub Actions consumes exact verified commit, installs production deps, builds Vite, verifies package contents and produces immutable ZIP/checksums. Host preflight validates runtime/extensions/MySQL/document root/cron/storage/mysqldump. Deployment uses forward migrations and explicit health/tenant/accounting smoke. Rollback separates artifact, DB and shared files.
+
+## Notifications
+
+Import/migration failure, backup failure and restore-verification failure create deduplicated database notification and optional sync mail. Mail failure remains visible.
+
+## Tests
+
+- manifest/checksum/schema/CSV decimal/date parsing;
+- immutable target, lineage idempotency, collisions, quarantine/exclusions;
+- dry-run no current writes;
+- dependency-order apply and explicit partial-batch failure record;
+- legacy current/history reconciliation;
+- portability exclusions and cross-tenant/secret inspection;
+- backup dependency/preflight/archive/checksum/status;
+- restore rehearsal contract with disposable environment fixture;
+- deployment artifact contents and no production reset/build;
+- notifications/dedup/mail failure.
+
+Dusk only for reinforced apply/restore UI and large reconciliation-table browser behavior if needed.
+
+## Sequence
+
+1. import schema/manifest/parser/staging;
+2. dry-run validators and reconciliation;
+3. domain importers and identity maps;
+4. apply/exclusions/idempotency;
+5. tenant export/import round trip;
+6. backup package executable gate and Actions;
+7. release/deployment workflows/contracts;
+8. notifications/UI;
+9. rehearsal/performance/cutover evidence collection.
+
+## Cutover gates
+
+Still required externally: real source export anomalies, final host profile and signed report parity inventory. Core implementation may proceed; production cutover may not.
+
+## Post-design check
+
+Pass. Operations remain bounded application use cases rather than a generalized platform.
