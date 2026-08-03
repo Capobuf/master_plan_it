@@ -27,8 +27,9 @@ Constitution: 3.0.1
 
 - `/speckit.clarify`: COMPLETE;
 - `/speckit.plan`: COMPLETE AND MERGED;
-- `/speckit.tasks`: SECOND REMEDIATION COMPLETE, pending review/merge;
-- `/speckit.analyze`: required after the second remediation is merged;
+- `/speckit.tasks`: SECOND REMEDIATION COMPLETE;
+- integration state: authoritative only in GitHub PR metadata;
+- `/speckit.analyze`: next command on the integrated remediation base;
 - `/speckit.implement`: BLOCKED until an analysis reports CRITICAL `0` and HIGH `0`.
 
 ## Header rule
