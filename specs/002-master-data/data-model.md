@@ -1,21 +1,51 @@
-# Data model — Master data
+# Data model — Feature 002 Master data
 
-## Tenant ownership
-
-`planning_years`, `cost_centers`, and `vendors` are tenant-owned. Each table has required tenant ownership. Uniqueness and tree relationships are scoped to the same tenant. Cross-tenant parent or business references are invalid.
+Status: `PROPOSED TARGET`  
+Shared conventions: `docs/replatform/data-model-overview.md`
 
 ## `planning_years`
 
-Required semantic fields: tenant, numeric year, start date, end date, active flag, lock version, timestamps. Periods may not overlap within the same tenant. Only Administrator creates or configures years.
+- tenant ID;
+- numeric year label;
+- start/end dates;
+- active state;
+- `lock_version`;
+- timestamps;
+- unique `(tenant_id, year_label)`;
+- index `(tenant_id, start_date, end_date)`.
+
+Overlap is enforced by `SavePlanningYear` inside a transaction.
 
 ## `cost_centers`
 
-Required semantic fields: tenant, unique name within tenant, optional same-tenant parent, active state, lock version, timestamps. Parent graph is acyclic. Editor may create and update cost centers in the assigned tenant.
+- tenant ID;
+- nullable parent cost-center ID;
+- name;
+- active state;
+- `lock_version`;
+- timestamps;
+- unique `(tenant_id, name)`;
+- index `(tenant_id, parent_id, active)`.
+
+Parent must share tenant. Cycle and active-descendant checks are Action-owned. Launch lifecycle is deactivate/reactivate, not permanent delete.
 
 ## `vendors`
 
-Required semantic fields: tenant, unique name within tenant, optional VAT/contact data, active state, lock version, timestamps. Historical references remain readable after deactivation; inactive vendors are excluded from new selection. Editor may create and update vendors in the assigned tenant.
+- tenant ID;
+- name;
+- optional VAT number, email, phone, address fields;
+- active state;
+- `lock_version`;
+- timestamps;
+- unique `(tenant_id, name)`;
+- index `(tenant_id, active, name)`.
 
-## Audit and migration
+Referenced vendor is never permanently deleted at launch.
 
-State and structural changes record actor and tenant. Imported legacy IDs are reconciled only inside the selected migration tenant. No global mutable master-data catalogue is approved.
+## Revision ownership
+
+Cost centers and vendors implement Overtrue version snapshots and use `revision_batches`/`revision_batch_items`. Versioned fields exclude timestamps, lock version and technical package metadata. Restore produces a new current version via owning Action.
+
+## Relations
+
+All business FKs are restrictive. Inactive referenced values remain resolvable. Selectors default to active rows and explicitly include the currently referenced inactive row where needed.
