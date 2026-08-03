@@ -22,18 +22,20 @@ It contains no Frappe or Laravel application implementation.
 ## Product convergence checks
 
 - Q-001 through Q-033 are answered; priority summary is 33 answered, 0 open.
-- Constitution is amended to 3.0.0 with Product Owner rationale and impact.
+- Constitution is amended to 3.0.1 with Product Owner rationale and impact.
 - Protected global Administrator and configurable tenant roles replace fixed role-name authorization.
 - Editor and Viewer remain seeded role templates.
 - Expenses and Actual rows use one current identity plus operational revisions; permitted deletion removes them from current domain datasets.
 - Model revision history, audit, named budget versions, scenarios, generation exceptions, and current economic data are explicitly separate mechanisms.
 - Named budget versions are immutable tenant/year snapshots.
 - Contract generation includes visible occurrence history, delete/regeneration choice, suppression, resume, and one-year manual generation.
-- Installation backup/restore is whole-system; tenant data portability is separate.
+- Installation backup/restore is whole-system; tenant data portability is separate and excludes audit events/global settings at launch.
 - Import target tenant is immutable; collisions/unassignable rows are quarantined; cutover requires zero unresolved blockers or approved exclusions.
 - Notifications are scheduler-driven, database-backed, optionally emailed synchronously, and require no permanent worker.
 - Tenant-user self-service password recovery is out of scope; Administrator reset and emergency global Artisan reset are defined.
 - Empty reporting, inactive vendor/cost-center lifecycle, and no behavioral telemetry are explicit.
+- Economic print/export scope is explicit: filtered current result or complete selected report/year, always one tenant.
+- Audit retention is an Administrator-only global setting with a 24-month default; no audit export exists at launch.
 
 ## Known stale technical artifacts
 
@@ -42,9 +44,9 @@ It contains no Frappe or Laravel application implementation.
 - plans, research notes, tasks, quickstarts, and checklists that reference fixed roles;
 - Feature 003 financial/editor/authorization contracts and accounting cases that reference `Active/Replaced/Cancelled` or immutable Actual;
 - Feature 004 contract-screen/data-model/tasks around generation history and exceptions;
-- Feature 005 dashboard/export/analytics contracts and tasks around versions/scenarios;
+- Feature 005 dashboard/export/analytics contracts and tasks around versions/scenarios/output scope;
 - Feature 006 data model/reconciliation/deployment/tasks around portability and quarantine;
-- Feature 001/007 plans/tasks around package integration, password behavior, and permission catalogue;
+- Feature 001/007 plans/tasks around package integration, password behavior, global audit-retention settings, and permission catalogue;
 - source traceability and test-equivalence mappings for amended target behavior.
 
 These artifacts are not implementation-authoritative until regenerated and analyzed. Their continued presence is transparent technical debt, not an unresolved product question.
