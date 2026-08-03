@@ -7,7 +7,7 @@ Dependencies: Feature 007 product contract
 
 ## Objective
 
-Authenticate local users, enforce active account and tenant context, expose a permission-aware Filament application shell, manage users/roles/passwords, run scheduled notifications through one cron, and remain compatible with shared PHP hosting and precompiled assets.
+Authenticate local users, enforce active account and tenant context, expose a permission-aware Filament application shell, manage users/roles/passwords and global platform settings, run scheduled notifications and retention through one cron, and remain compatible with shared PHP hosting and precompiled assets.
 
 ## User stories
 
@@ -29,7 +29,11 @@ An authenticated active user changes their own password. No tenant-user self-ser
 
 ### US-001-05 — Scheduler and notifications
 
-One cron invokes Laravel scheduler for renewals, expirations, retention, backup checks, and other approved bounded commands without a permanent worker.
+One cron invokes Laravel scheduler for renewals, expirations, audit retention, backup checks, and other approved bounded commands without a permanent worker.
+
+### US-001-06 — Administrator manages platform settings
+
+Administrator changes protected installation-wide settings, including audit retention, through validated and audited operations.
 
 ## Acceptance scenarios
 
@@ -55,15 +59,19 @@ Administrator sets/resets tenant-user passwords without logging or exporting the
 
 ### AC-001-06 — Scheduler
 
-One cron executes scheduler with overlap prevention. Commands are bounded, synchronous, explicit on failure, and create approved database notifications/optional email without queue workers.
+One cron executes scheduler with overlap prevention. Commands are bounded, synchronous, explicit on failure, and create approved database notifications/optional email without queue workers. The audit-retention command reads the current global retention setting when it runs.
 
 ### AC-001-07 — Destructive confirmation
 
-Tenant deactivation and comparable protected destructive operations require reinforced confirmation; ordinary saves and low-risk actions use proportional confirmation.
+Tenant deactivation, lowering audit retention, and comparable protected destructive operations require reinforced confirmation; ordinary saves and low-risk actions use proportional confirmation.
 
 ### AC-001-08 — Shared-hosting release
 
 Production uses compiled Vite assets and requires no Node runtime, Redis, WebSockets, or permanent worker.
+
+### AC-001-09 — Audit-retention setting
+
+The platform initializes audit retention to 24 months. Only Administrator can change it. Lowering the value warns that the next retention run may remove older events. Increasing it affects future retention but does not recreate events already removed.
 
 ## Functional requirements
 
@@ -76,7 +84,7 @@ Production uses compiled Vite assets and requires no Node runtime, Redis, WebSoc
 | FR-001-005 | Assets shall be precompiled; production shall not require Node runtime. | AC-001-08 |
 | FR-001-006 | Scheduler shall be invoked by one cron entry with overlap prevention and bounded synchronous commands. | AC-001-06 |
 | FR-001-007 | Platform shall store timestamps in UTC and apply tenant language, timezone, currency, and default VAT to tenant-facing output. | AC-001-02 |
-| FR-001-008 | Tenant lifecycle, tenant users, tenant roles, protected permissions, platform settings, migration, and installation backup/restore shall be Administrator operations. | AC-001-04 |
+| FR-001-008 | Tenant lifecycle, tenant users, tenant roles, protected permissions, platform settings, migration, and installation backup/restore shall be Administrator operations. | AC-001-04, AC-001-09 |
 | FR-001-009 | Tenant-bound routes shall require explicit valid tenant context visible in side navigation and breadcrumbs. | AC-001-02 |
 | FR-001-010 | Tenant user shall belong to exactly one tenant and may receive one or more tenant-scoped roles. | AC-001-04 |
 | FR-001-011 | Tenant creation shall require Q-012 fields; optional onboarding shall reuse standard Actions/validation. | AC-001-07 |
@@ -87,7 +95,9 @@ Production uses compiled Vite assets and requires no Node runtime, Redis, WebSoc
 | FR-001-016 | Global Administrator emergency reset shall use interactive Artisan command with hidden input and session invalidation. | AC-001-05 |
 | FR-001-017 | Passwords/hashes/tokens/sessions shall be excluded from audit, revisions, notifications, and tenant export. | AC-001-05 |
 | FR-001-018 | Approved database notifications and optional synchronous email shall operate without permanent queue worker. | AC-001-06 |
-| FR-001-019 | Reinforced confirmation shall protect tenant deactivation, migration apply, restore, and equivalent high-risk actions. | AC-001-07 |
+| FR-001-019 | Reinforced confirmation shall protect tenant deactivation, migration apply, restore, lowering audit retention, and equivalent high-risk actions. | AC-001-07 |
+| FR-001-020 | One installation-wide `audit_retention_months` platform setting shall default to 24 and be writable only by Administrator. | AC-001-09 |
+| FR-001-021 | Audit retention shall use the current configured period at command execution; increasing the period shall not recreate removed events. | AC-001-06, AC-001-09 |
 
 ## Non-functional requirements
 
@@ -97,7 +107,7 @@ Production uses compiled Vite assets and requires no Node runtime, Redis, WebSoc
 | NFR-001-INT-01 | Integrity | every documented write is transactional and rollback-tested |
 | NFR-001-LOG-01 | Diagnostics | unexpected failures have correlation ID and no sensitive payload; no silent retries/fallbacks |
 | NFR-001-A11Y-01 | Accessibility | controls keyboard reachable and labelled; critical accessibility smoke passes |
-| NFR-001-MAINT-01 | Complexity | use maintained packages/native framework only after compatibility spike; no custom generic ACL/auth/notification framework |
+| NFR-001-MAINT-01 | Complexity | use maintained packages/native framework only after compatibility spike; no custom generic ACL/auth/notification/settings framework |
 
 ## Business invariants
 
@@ -109,6 +119,7 @@ Production uses compiled Vite assets and requires no Node runtime, Redis, WebSoc
 | INV-PLT-004 | Initial runtime requires no permanent worker. | DomainConflict | TEST-001-004 |
 | INV-PLT-005 | Tenant role management cannot grant protected platform or invariant-bypass abilities. | Authorization | TEST-001-005 |
 | INV-PLT-006 | Passwords and secrets never enter audit/revision/export/notification data. | DomainConflict | TEST-001-006 |
+| INV-PLT-007 | Only Administrator changes audit retention, and retention never removes current business or version data. | Authorization/DomainConflict | TEST-001-007 |
 | INV-TEN-001 | Missing/unauthorized tenant context fails closed. | Authorization/NotFound-safe denial | TEST-007-001 |
 
 ## Out of scope
@@ -119,6 +130,7 @@ Production uses compiled Vite assets and requires no Node runtime, Redis, WebSoc
 - impersonation;
 - multi-tenant user membership;
 - tenant self-service user/role administration;
+- per-tenant audit-retention configuration;
 - WebSockets, Redis, permanent worker, real-time notification requirement;
 - role-name business logic beyond protected Administrator.
 
