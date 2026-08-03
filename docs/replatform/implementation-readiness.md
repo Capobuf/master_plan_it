@@ -1,6 +1,6 @@
 # Implementation readiness
 
-Status: `SECOND TASK REMEDIATION COMPLETE — RE-ANALYSIS REQUIRED`
+Status: `SECOND TASK REMEDIATION COMPLETE — RE-ANALYSIS REQUIRED ON INTEGRATED BASE`
 
 Constitution 3.0.1, Q-001–Q-041, integrated architecture, technical research, physical models, Feature 001–007 plans and the second-remediation task package are current on this branch.
 
@@ -34,8 +34,8 @@ These are proposed dispositions, not an analysis PASS.
 
 ## Remaining implementation-readiness gates
 
-1. Product Owner/technical review and merge of the second-remediation PR.
-2. Repeat `/speckit.analyze` against the merged artifacts.
+1. Integration state is read from GitHub PR metadata rather than embedded in these documents.
+2. Repeat `/speckit.analyze` against the integrated remediation base.
 3. Require CRITICAL `0` and HIGH `0`; Medium findings must be resolved or explicitly dispositioned.
 4. Only then begin `/speckit.implement` through separate reviewed vertical-slice PRs.
 5. The first implementation task performs real Composer/frontend lock resolution and package smoke tests.
