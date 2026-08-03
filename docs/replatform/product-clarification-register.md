@@ -42,15 +42,23 @@ This register tracks the product ambiguities discovered during Laravel replatfor
 | Q-031 | Inactive cost centers | MEDIUM | How do inactive centers behave? | ANSWERED — historical visibility, no new selection, no automatic reassignment, controlled tree deactivation. |
 | Q-032 | Tenant visual identity | LOW | Is tenant identity required? | ANSWERED BY Q-013. |
 | Q-033 | Usage indicators | LOW | Are additional usage analytics required? | ANSWERED — no behavioral telemetry at launch. |
+| Q-034 | Historical Budget evidence | HIGH | How are previous years represented when data is incomplete? | ANSWERED — reconstruct from available data; optional Manual BudgetVersion may be total-only/partial/full; missing dimensions stay unavailable and approval is never inferred. |
+| Q-035 | Contract-generated Actual lifecycle | HIGH | When may contract synchronization update a generated Actual? | ANSWERED — only while system-managed and Da confermare; manual edit or confirmation makes it user-authoritative; later version/update/delete remains permission-controlled. |
+| Q-036 | Current Budget identity | BLOCKING | Is Budget a versioned set of documents or one rolling annual view? | ANSWERED — one rolling tenant/year current calculation; immutable named BudgetVersion snapshots preserve deliberate states and references. |
+| Q-037 | Estimate/Quote/Actual relationship | HIGH | Must economic types follow a mandatory progression? | ANSWERED — independent types; no mandatory workflow; multiple rows may coexist for distinct costs. |
+| Q-038 | Official monetary basis | HIGH | Is the official Budget shown Net or Gross? | ANSWERED — tenant selects Net or Gross, default Net; Net/VAT/Gross are always retained. |
+| Q-039 | Product language | MEDIUM | Is launch Italian-only? | SUPERSEDED BY Q-013 — tenant-facing output uses configured tenant language; no speculative extra i18n framework. |
+| Q-040 | Project inclusion | BLOCKING | How do project stages affect current Budget totals? | ANSWERED — primary/proposed/idea/excluded buckets; all Actual for the year remain primary; potential is non-official. |
+| Q-041 | Generated-expense regeneration controls | HIGH | How are deleted generated occurrences suppressed or resumed? | ANSWERED BY PD-GEN-001 / C-13 — explicit regeneration choice, exception, resume and one-year generation with stable source key. |
 
 ## Priority summary
 
-| Priority | Total | Answered | Open |
+| Priority | Total | Answered or superseded | Open |
 |---|---:|---:|---:|
-| BLOCKING | 11 | 11 | 0 |
-| HIGH | 13 | 13 | 0 |
-| MEDIUM | 7 | 7 | 0 |
+| BLOCKING | 13 | 13 | 0 |
+| HIGH | 18 | 18 | 0 |
+| MEDIUM | 8 | 8 | 0 |
 | LOW | 2 | 2 | 0 |
-| **Total** | **33** | **33** | **0** |
+| **Total** | **41** | **41** | **0** |
 
 No implementation agent may reopen or reinterpret these decisions implicitly. A change requires a new Product Owner decision and, where constitutional principles are affected, the amendment procedure.
