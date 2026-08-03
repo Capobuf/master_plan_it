@@ -24,11 +24,12 @@ Constitution: 3.0.1
 
 Each executable task is the combination of:
 
-- its checklist entry in the owning feature `tasks.md`;
-- the matching class/source/invariant/error record in `task-readiness-registry.md`;
-- any exact-path expansion in that registry.
+1. its checklist entry in the owning feature `tasks.md`;
+2. the matching class/source/invariant/error/dependency record in `task-readiness-registry.md`;
+3. its exact validation command in `task-execution/feature-001.md` through `feature-007.md`;
+4. any complete path override in `task-execution/path-overrides.md`.
 
-An explicit dependency override was propagated into the owning task file. The registry no longer conflicts with task-file dependency fields.
+The execution registry supersedes abbreviated validation phrases in task files. Explicit dependency corrections are propagated into the owning task files. A mismatch among these records is a documentation blocker and does not authorize an implementation guess.
 
 ## Remediated critical path
 
@@ -109,11 +110,11 @@ A consumer task may not recreate an owning symbol under another namespace.
 
 ## Findings addressed
 
-| Analyze finding | Disposition |
+| Analyze finding | Proposed disposition |
 |---|---|
 | ANALYZE-C-001 | RESOLVED — delivery primitive and scheduler registration split |
 | ANALYZE-C-002 | RESOLVED — T007-012 foundational concern; matrix moved late with exact dependencies |
-| ANALYZE-H-001 | RESOLVED BY NORMATIVE COMPOSITION — readiness registry plus exact task entries |
+| ANALYZE-H-001 | RESOLVED — complete task contract includes readiness and execution registries |
 | ANALYZE-H-002 | RESOLVED — source traceability regenerated with task/test IDs |
 | ANALYZE-H-003 | RESOLVED — technical amendment sets PHP 8.3.32 target |
 | ANALYZE-H-004 | RESOLVED — exact `composer require` gate in T006-012 |
@@ -124,7 +125,7 @@ A consumer task may not recreate an owning symbol under another namespace.
 | ANALYZE-H-009 | RESOLVED — T003-021–T003-023 implement attachment foundation/UI |
 | ANALYZE-H-010 | RESOLVED — prior self-check superseded and replaced after remediation |
 
-These dispositions are proposed until repeated `/speckit.analyze` verifies them.
+These dispositions remain proposed until repeated `/speckit.analyze` verifies them.
 
 ## Next gate
 
