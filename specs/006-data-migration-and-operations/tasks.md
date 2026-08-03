@@ -1,565 +1,71 @@
-# Tasks — Data migration and operations
+# Tasks — Feature 006 Migration and operations
 
+Status: `PROPOSED TARGET — /speckit.tasks; NOT CUTOVER READY`  
+Input: Constitution 3.0.1; current Feature 006 spec/plan/research/data model/contracts; current domain Actions from Features 001–005/007.  
+ID policy: former `T006-01`–`T006-14` are superseded because they combined migration, portability and disaster recovery in one story and lacked the final package/exclusion contracts. New IDs use `T006-001` onward.
 
-### T006-01 — Manifest/run state
+All import/apply/backup operations are Administrator-only, bounded and diagnostic. Tests precede implementation.
 
-User story: US-006-01  
-Requirements: FR-006-001, FR-006-002  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: none  
-Parallelizable: no
+## Phase 1 — Import/staging foundation
 
-**Objective.** Create or modify `app/Models/MigrationRun.php` so it owns only: manifest/run state.
+- [ ] T006-001 Write import schema tests in `tests/Feature/Migration/ImportSchemaTest.php`; symbols: `ImportRun`, `StagedRow`, `LegacyIdentityMap`, `ImportExclusion`, `ImportReconciliation`, immutable target tenant, lineage/checksum, statuses and exact summary values; depends: Feature 007 T007-003 and Feature 001 T001-005; requirements: FR-006-002, FR-006-003, FR-006-005–FR-006-009, INV-MIG-001–INV-MIG-005; validate: `php artisan test tests/Feature/Migration/ImportSchemaTest.php`; expected before implementation: focused failures; forbidden: nullable/replaceable target tenant, unknown placeholder identities, raw secret columns or generic migration-error table without source location.
+- [ ] T006-002 Create import persistence/enums/factories in `database/migrations/*_create_import_runs_table.php`, `*_create_staged_rows_table.php`, `*_create_legacy_identity_maps_table.php`, `*_create_import_exclusions_table.php`, `*_create_import_reconciliations_table.php`, `app/Models/ImportRun.php`, `StagedRow.php`, `LegacyIdentityMap.php`, `ImportExclusion.php`, `ImportReconciliation.php` and enums under `app/Domain/Migration/Enums/`; depends: T006-001; requirements: FR-006-002, FR-006-003, FR-006-005–FR-006-009; tests first: T006-001; validate: `php artisan test tests/Feature/Migration/ImportSchemaTest.php`; expected: tenant/lineage-scoped staging schema with restrictive target relationships; forbidden: direct legacy DB connection fields, target record overwrite flag or current-domain relationships from raw staging.
+- [ ] T006-003 Write package parser tests in `tests/Feature/Migration/ImportPackageValidationTest.php`; symbols: `manifest.json`, `checksums.json`, UTF-8 CSV declaration, schema range, file/count/size/SHA-256, attachment paths, decimal/date parsing, unknown file/version and password/secret rejection; depends: T006-002; requirements: FR-006-001, FR-006-004, INV-MIG-002, INV-OPS-003; validate: `php artisan test tests/Feature/Migration/ImportPackageValidationTest.php`; expected before implementation: focused failures; forbidden: XLSX import, encoding guess, formula execution, path traversal or staging passwords/secrets.
+- [ ] T006-004 Implement package parsing/staging in `app/Domain/Migration/Data/ImportManifest.php`, `ImportFileDefinition.php`, `app/Domain/Migration/Services/ImportPackageValidator.php`, `CsvRowParser.php`, `app/Domain/Migration/Actions/CreateImportRun.php` and `StageImportPackage.php`; symbols: immutable target/checksum, temporary private extraction, safe row source metadata and typed normalized values; depends: T006-003; requirements: FR-006-001–FR-006-004, FR-006-008; tests first: T006-003; validate: `php artisan test tests/Feature/Migration/ImportPackageValidationTest.php`; expected: valid package stages without current-domain writes and invalid package fails before staging/apply; forbidden: fallback encoding/delimiter, public extraction, Eloquent mass import or target tenant change.
 
-**Files to create**
-- `app/Models/MigrationRun.php`
+**Checkpoint:** authoritative CSV packages can be validated and staged safely without mutating business data.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+## Phase 2 — US-006-01 Dry-run and migration apply (P1, MVP)
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+**Goal:** validate one legacy-site package, quarantine/reconcile it and apply only approved dependency-ordered rows to one immutable tenant.
 
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+**Independent test:** dry-run writes only staging/reconciliation; replay is idempotent; collisions/unassignable rows block apply; approved exclusions are recorded; batch failure is explicit and stops later batches.
 
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+- [ ] T006-005 [P] [US1] Write dry-run/tenant/identity tests in `tests/Feature/Migration/ImportDryRunTest.php`, `ImportTenantOwnershipTest.php`, `ImportIdempotencyTest.php` and `ImportCollisionTest.php`; symbols: immutable target, tenant/source/legacy identity, same-lineage replay, no current writes, quarantine codes and no silent merge/rename/overwrite; depends: T006-004 and Feature 007 T007-003; requirements: FR-006-002–FR-006-009, FR-006-013, INV-MIG-001, INV-MIG-002, INV-MIG-004, INV-MIG-005; validate: `php artisan test tests/Feature/Migration/ImportDryRunTest.php tests/Feature/Migration/ImportTenantOwnershipTest.php tests/Feature/Migration/ImportIdempotencyTest.php tests/Feature/Migration/ImportCollisionTest.php`; expected before implementation: focused failures; forbidden: placeholder tenant/master data, direct current write in dry-run or collision auto-resolution.
+- [ ] T006-006 [US1] Implement validation/reconciliation in `app/Domain/Migration/Actions/ValidateStagedRows.php`, `BuildImportReconciliation.php`, dataset validators under `app/Domain/Migration/Validators/` and `app/Domain/Migration/Queries/ImportReconciliationQuery.php`; symbols: dependency/reference validation, stable error codes, counts/hashes/attachments/exact sums and unresolved blocker list; depends: T006-005; requirements: FR-006-004, FR-006-006, FR-006-007, INV-MIG-003; tests first: T006-005 plus `tests/Feature/Migration/ImportReconciliationTest.php`; validate: `php artisan test tests/Feature/Migration/ImportDryRunTest.php tests/Feature/Migration/ImportReconciliationTest.php`; expected: deterministic dry-run reconciliation with no target-domain writes; forbidden: expected totals calculated by implementation under test, unredacted raw-row logging or warning-only blockers.
+- [ ] T006-007 [US1] Implement explicit dataset importers under `app/Domain/Migration/Importers/` for tenant settings, users/roles, years, cost centers, vendors, projects, contracts/terms, expenses/rows, scenarios, BudgetVersion/revisions and attachments; symbols: one importer per dependency-specific dataset calling owning Actions and returning identity/result DTOs; depends: T006-006 and completed owning Actions Features 001–005; requirements: FR-006-002, FR-006-009, FR-006-013; tests first: create `tests/Feature/Migration/ImporterDependencyOrderTest.php` and `tests/Accounting/Integration/LegacyCurrentHistoryMappingTest.php`; validate: `php artisan test tests/Feature/Migration/ImporterDependencyOrderTest.php tests/Accounting/Integration/LegacyCurrentHistoryMappingTest.php`; expected: deterministic target mapping with one current Expense identity and exact reconciled totals; forbidden: reflection importer, direct model mass insert, protected permission import or legacy replacement state as current target enum.
+- [ ] T006-008 [P] [US1] Write exclusion/apply tests in `tests/Feature/Migration/ImportExclusionTest.php`, `ImportApplyTest.php` and `ImportPartialFailureTest.php`; symbols: explicit approval/reason, exact checksum freshness, reinforced confirmation, zero blockers, recorded batch ranges, stop-on-failure and post-apply reconciliation/sign-off; depends: T006-007; requirements: FR-006-006–FR-006-009, FR-006-017, FR-006-019, INV-MIG-003, INV-MIG-005; validate: `php artisan test tests/Feature/Migration/ImportExclusionTest.php tests/Feature/Migration/ImportApplyTest.php tests/Feature/Migration/ImportPartialFailureTest.php`; expected before implementation: focused failures; forbidden: claiming all-or-nothing across unbounded package, continuing after failed batch or apply without exact fresh dry-run.
+- [ ] T006-009 [US1] Implement approval/apply/UI/commands in `app/Domain/Migration/Actions/ApproveImportExclusion.php`, `ApplyImportRun.php`, `app/Policies/ImportRunPolicy.php`, `app/Console/Commands/ImportDryRunCommand.php`, `ImportApplyCommand.php` and `app/Filament/Pages/ImportRunPage.php`; symbols: Administrator-only reinforced apply, explicit batch transaction/result, current-domain Action delegation and reconciliation page; depends: T006-008 and Feature 007 T007-016; requirements: FR-006-006–FR-006-009, FR-006-013, FR-006-017, FR-006-019; tests first: T006-008 plus `tests/Livewire/Migration/ImportRunPageTest.php`; validate: `php artisan test tests/Feature/Migration/ImportExclusionTest.php tests/Feature/Migration/ImportApplyTest.php tests/Feature/Migration/ImportPartialFailureTest.php tests/Livewire/Migration/ImportRunPageTest.php`; expected: apply is idempotent, bounded and fully diagnostic; forbidden: web request long-running hidden retry, tenant-role apply or bypassing domain invariants.
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+**Checkpoint:** US1 is independently usable as a controlled migration MVP, but production cutover remains blocked by real evidence.
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+## Phase 3 — US-006-02 Tenant export/import (P2)
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
+**Goal:** export one approved tenant package and import it through the same controlled staging engine without representing disaster recovery.
 
+**Independent test:** export contains approved tenant business data/files and exact checksums, excludes audit/secrets/global settings/other tenants/transient notifications, and round-trips decimal/date/snapshot identity through dry-run/apply.
 
-### T006-02 — Raw staged row
+- [ ] T006-010 [P] [US2] Write portability tests in `tests/Feature/Portability/TenantExportPackageTest.php`, `TenantImportRoundTripTest.php` and `PortabilityExclusionTest.php`; symbols: manifest/files/counts/checksums, normalized decimal/date, roles without protected abilities, revisions/BudgetVersion/scenario/generation exception semantics, attachment checksums and exclusions; depends: T006-006 and completed feature data models; requirements: FR-006-015, FR-006-016, INV-OPS-002, INV-OPS-003; validate: `php artisan test tests/Feature/Portability/TenantExportPackageTest.php tests/Feature/Portability/TenantImportRoundTripTest.php tests/Feature/Portability/PortabilityExclusionTest.php`; expected before implementation: focused failures; forbidden: audit.csv, passwords/hashes/tokens, global retention, notifications by default, XLSX authority or selective-restore wording.
+- [ ] T006-011 [US2] Implement export/import surfaces in `app/Domain/Portability/Actions/ExportTenantPackage.php`, manifest/checksum/CSV writers under `app/Domain/Portability/Services/`, import dataset adapters under `app/Domain/Migration/Importers/Portability/`, `app/Policies/TenantPortabilityPolicy.php` and `app/Filament/Pages/TenantPortabilityPage.php`; symbols: one-tenant DTO streaming, private archive, immutable target and staging reuse; depends: T006-010; requirements: FR-006-015, FR-006-016, FR-006-019; tests first: T006-010; validate: `php artisan test tests/Feature/Portability`; expected: exact inspectable archive/import contract distinct from backup; forbidden: exporting Eloquent query without explicit fields, audit/global data, automatic tenant creation or overwriting manual/current records.
 
-User story: US-006-01  
-Requirements: FR-006-002, FR-006-003  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-01  
-Parallelizable: no
+## Phase 4 — US-006-03 Installation backup and restore (P2)
 
-**Objective.** Create or modify `app/Models/MigrationStagingRecord.php` so it owns only: raw staged row.
+**Goal:** create whole-installation backups and mark them valid only after an empty-environment restore rehearsal.
 
-**Files to create**
-- `app/Models/MigrationStagingRecord.php`
+**Independent test:** dependency/preflight/dump/file/checksum failure never reports success; Created differs from Verified; ordinary production restore rejects unverified backup and has no tenant-selective path.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+- [ ] T006-012 [P] [US3] Execute the conditional backup dependency gate and write contract tests in `tests/Feature/Operations/BackupDependencyGateTest.php` and `BackupRestoreContractTest.php`; symbols: Composer platform PHP 8.3.32 resolution of `spatie/laravel-backup` 10.3.0, required `mysqldump`/ZipArchive/storage preflight, Requested/Created/Verified/Failed and absent tenant restore; depends: Feature 001 T001-001 and T001-003; requirements: FR-006-010, FR-006-011, FR-006-014, FR-006-019, INV-OPS-001, INV-OPS-002; validate: `composer update spatie/laravel-backup:10.3.0 --with-all-dependencies --no-interaction && php artisan test tests/Feature/Operations/BackupDependencyGateTest.php tests/Feature/Operations/BackupRestoreContractTest.php`; expected: exact package resolves and tests fail only for missing application wrapper; on resolution failure stop and amend ADR; forbidden: downgrade, custom fallback, `--ignore-platform-reqs` or success without database dump.
+- [ ] T006-013 [US3] Implement backup persistence/Actions/commands/status UI in `database/migrations/*_create_backup_runs_table.php`, `app/Models/BackupRun.php`, `app/Domain/Operations/Actions/CreateInstallationBackup.php`, `VerifyInstallationBackup.php`, `RecordBackupFailure.php`, `app/Console/Commands/BackupCommand.php`, `BackupVerifyCommand.php` and `app/Filament/Pages/BackupStatusPage.php`; symbols: explicit host paths, archive manifest/checksum, source commit, empty-environment verification evidence and operator-led restore procedure; depends: T006-012; requirements: FR-006-010, FR-006-011, FR-006-014, FR-006-017, FR-006-019; tests first: T006-012 plus `tests/Feature/Operations/BackupRunTest.php`; validate: `php artisan test tests/Feature/Operations/BackupDependencyGateTest.php tests/Feature/Operations/BackupRestoreContractTest.php tests/Feature/Operations/BackupRunTest.php`; expected: Created archive is never presented as recoverable until Verified; forbidden: one-click web restore, `.env`/keys/session/cache archive, tenant-selective restore or monitor status replacing rehearsal.
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+## Phase 5 — US-006-04 Scheduled operations and failure visibility (P2)
 
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+**Goal:** create deduplicated database notifications and optional synchronous email for failed import, backup and restore verification.
 
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+**Independent test:** each failed operation creates one authorized-recipient database notification; repeated same occurrence deduplicates; mail failure remains visible and does not retry silently.
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+- [ ] T006-014 [US4] Write and implement failure-notification command integration in `tests/Feature/Notifications/OperationsFailureNotificationTest.php`, `app/Domain/Operations/Actions/NotifyOperationFailure.php`, notification classes and owning command failure branches; symbols: event/operation/tenant-or-global/recipient dedup key, safe display payload and sync-mail result; depends: T006-009, T006-013 and Feature 001 T001-018; requirements: FR-006-018, INV-OPS-004; validate: `php artisan test tests/Feature/Notifications/OperationsFailureNotificationTest.php && php artisan schedule:list`; expected: visible deterministic notification without worker or retry loop; forbidden: source-row/archive path/secret payload, all-user broadcast, queue or swallowed mail exception.
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+## Phase 6 — Deployment artifact and operational verification
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
+- [ ] T006-015 [P] Write deployment contract tests in `tests/Feature/Deployment/SharedHostingPreflightTest.php` and `ImmutableArtifactDeploymentTest.php`; symbols: PHP/extensions/MySQL/document root/cron/storage/mysqldump preflight, verified source commit ZIP, no production npm/build/reset and forward migration/health smoke; depends: Feature 001 T001-023; requirements: FR-006-012; validate: `php artisan test tests/Feature/Deployment/SharedHostingPreflightTest.php tests/Feature/Deployment/ImmutableArtifactDeploymentTest.php`; expected before scripts: focused failures; forbidden: autodetect random PHP/dump path, build on host, destructive rollback claim or Varnish/worker requirement.
+- [ ] T006-016 Implement deployment scripts/contracts in `scripts/hosting-preflight.php`, `scripts/deploy-release.sh`, `scripts/verify-release.sh`, `specs/006-data-migration-and-operations/contracts/deployment.md` and workflow handoff configuration; symbols: explicit environment inputs, artifact checksum/source verification, shared storage activation, forward migrations, tenant/auth/accounting smoke and separate artifact/DB/files rollback record; depends: T006-015; requirements: FR-006-012; tests first: T006-015; validate: `php artisan test tests/Feature/Deployment/SharedHostingPreflightTest.php tests/Feature/Deployment/ImmutableArtifactDeploymentTest.php && bash scripts/verify-release.sh --contract-only`; expected: host consumes unchanged verified artifact and reports exact failure stage; forbidden: silent fallback runtime, production dependency resolution, automatic destructive DB rollback or unverified backup claim.
+- [ ] T006-017 Record real cutover evidence placeholders/status in `docs/replatform/cutover-readiness.md` without inventing values; symbols: OQ-001 export anomalies, OQ-002 final host profile, OQ-004 signed report inventory, backup restore rehearsal, migration sign-off and deployment rollback rehearsal; depends: T006-009, T006-011, T006-013, T006-016; requirements: cutover gates; validate: document review plus `php artisan test tests/Feature/Migration tests/Feature/Portability tests/Feature/Operations tests/Feature/Deployment`; expected: core implementation may be complete while each unavailable real evidence remains explicitly OPEN; forbidden: fabricated counts/paths/provider capabilities or marking CUTOVER READY from synthetic tests.
+- [ ] T006-018 Run complete Feature 006 verification and update quickstart/contracts/traceability with actual command results; depends: T006-009, T006-011, T006-013, T006-014, T006-016, T006-017; requirements: FR-006-001–FR-006-019; validate: `php artisan test tests/Feature/Migration tests/Feature/Portability tests/Feature/Operations tests/Feature/Deployment tests/Feature/Notifications/OperationsFailureNotificationTest.php && composer test:static`; expected: staging/apply/portability/backup/deployment contracts pass while cutover evidence status remains accurate; forbidden: claiming real backup restore, host deploy or production migration when not executed.
 
+## Dependencies and execution order
 
-### T006-03 — Legacy-target identity
+`T006-001 → T006-002 → T006-003 → T006-004 → US1`. Portability depends on staging plus all portable domain schemas. Backup is independent of migration after platform scaffold but conditional on Composer/host tools. Deployment consumes the release artifact and backup contracts. Notifications integrate after owning failure states exist.
 
-User story: US-006-01  
-Requirements: FR-006-003, FR-006-004  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-02  
-Parallelizable: no
+## MVP scope
 
-**Objective.** Create or modify `app/Models/LegacyIdMap.php` so it owns only: legacy-target identity.
-
-**Files to create**
-- `app/Models/LegacyIdMap.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T006-04 — Quarantine
-
-User story: US-006-01  
-Requirements: FR-006-004, FR-006-005  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-03  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Models/MigrationError.php` so it owns only: quarantine.
-
-**Files to create**
-- `app/Models/MigrationError.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T006-05 — Validate/hash/stage
-
-User story: US-006-01  
-Requirements: FR-006-005, FR-006-006  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-04  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/Migration/Actions/StageManifest.php` so it owns only: validate/hash/stage.
-
-**Files to create**
-- `app/Domain/Migration/Actions/StageManifest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T006-06 — Ordered domain import
-
-User story: US-006-01  
-Requirements: FR-006-006, FR-006-007  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-05  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/Migration/Actions/TransformStagedRecords.php` so it owns only: ordered domain import.
-
-**Files to create**
-- `app/Domain/Migration/Actions/TransformStagedRecords.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T006-07 — Counts/sums
-
-User story: US-006-01  
-Requirements: FR-006-007, FR-006-010  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-06  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/Migration/Actions/ReconcileMigration.php` so it owns only: counts/sums.
-
-**Files to create**
-- `app/Domain/Migration/Actions/ReconcileMigration.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T006-08 — Dry-run/apply
-
-User story: US-006-01  
-Requirements: FR-006-010, FR-006-011  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-07  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Console/Commands/MpitMigrateCommand.php` so it owns only: dry-run/apply.
-
-**Files to create**
-- `app/Console/Commands/MpitMigrateCommand.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T006-09 — Database/files manifest
-
-User story: US-006-01  
-Requirements: FR-006-011, FR-006-012  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-08  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Console/Commands/MpitBackupCommand.php` so it owns only: database/files manifest.
-
-**Files to create**
-- `app/Console/Commands/MpitBackupCommand.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T006-10 — Restore verification
-
-User story: US-006-01  
-Requirements: FR-006-012  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-09  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Console/Commands/MpitRestoreVerifyCommand.php` so it owns only: restore verification.
-
-**Files to create**
-- `app/Console/Commands/MpitRestoreVerifyCommand.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T006-11 — Repeat run
-
-User story: US-006-01  
-Requirements: FR-006-001, FR-006-002  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-10  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/Migration/MigrationIdempotencyTest.php` so it owns only: repeat run.
-
-**Files to create**
-- `tests/Feature/Migration/MigrationIdempotencyTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T006-12 — Count/sum gates
-
-User story: US-006-01  
-Requirements: FR-006-002, FR-006-003  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-11  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/Migration/ReconciliationTest.php` so it owns only: count/sum gates.
-
-**Files to create**
-- `tests/Feature/Migration/ReconciliationTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T006-13 — Manifest/restore
-
-User story: US-006-01  
-Requirements: FR-006-003, FR-006-004  
-Invariants: INV-MIG-001, INV-MIG-002  
-Dependencies: T006-12  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/Operations/BackupRestoreTest.php` so it owns only: manifest/restore.
-
-**Files to create**
-- `tests/Feature/Operations/BackupRestoreTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/Migration/MigrationIdempotencyTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/Migration/MigrationIdempotencyTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-### T006-14 — Bind controlled one-site migration to one tenant
-
-Requirements: FR-006-013  
-Invariants: INV-MIG-004  
-Dependencies: Feature 007 clarification convergence and preceding local task  
-
-**Objective.** Update the feature's migrations/models, policies, Actions/Queries, screens, contracts, exports/files/commands where applicable, and tests so tenant ownership and approved role behavior are explicit and fail closed.
-
-**Required tests.**
-
-1. same-tenant Administrator/Editor/Viewer allow paths according to the feature contract;
-2. other-tenant direct ID and relationship denial without existence leakage;
-3. missing tenant context denial;
-4. tenant-scoped dataset/export/file equality where applicable;
-5. audit records real actor and tenant context.
-
-**Forbidden work.** Do not resolve any question still marked `OPEN` in the clarification registers, add impersonation, add shared mutable business catalogues, or introduce separate tenant databases/domains without an approved requirement.
+T006-001–T006-009 deliver a controlled dry-run/apply engine for one selected tenant. It is an implementation MVP, not production cutover readiness.
