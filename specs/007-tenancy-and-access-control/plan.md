@@ -1,6 +1,6 @@
 # Implementation plan — Feature 007 Tenancy and access control
 
-Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW`  
+Status: `PLAN COMPLETE AND MERGED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Dependencies: Feature 001 bootstrap; permission catalogue and shared security contracts
 
 ## Summary
