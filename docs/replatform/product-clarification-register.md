@@ -27,8 +27,8 @@ This register tracks the product ambiguities discovered during Laravel replatfor
 | Q-016 | Inactive tenant behavior | HIGH | What remains accessible? | ANSWERED — tenant users blocked; Administrator retains authorized access and reactivation. |
 | Q-017 | Deactivated-user ownership | HIGH | What happens to records and assignments? | ANSWERED — authorship preserved; tenant ownership unchanged; assignments manually reassigned. |
 | Q-018 | Attachments | HIGH | Who may manage attachments and what is retained? | ANSWERED — permission-controlled current attachment lifecycle; minimum revision/audit metadata retained. |
-| Q-019 | Reports and exports | HIGH | Which scopes are permitted? | ANSWERED — exactly one tenant per economic output; global export operational only. |
-| Q-020 | Audit | HIGH | Which views and retention apply? | ANSWERED — 24 months; view permission; no audit export at launch; Administrator global view. |
+| Q-019 | Reports and exports | HIGH | Which scopes are permitted? | ANSWERED — exactly one tenant per economic output; authorized filtered or explicit complete report/year scope; global export operational only. |
+| Q-020 | Audit | HIGH | Which views and retention apply? | ANSWERED — default 24 months, Administrator-configurable installation setting; view permission; no audit export at launch; Administrator global view. |
 | Q-021 | Backup and restore | HIGH | Is restore installation-wide or tenant-selective? | ANSWERED — installation-wide; tenant data portability is a separate export/import contract. |
 | Q-022 | Import identity/collisions | HIGH | How are rows assigned and collisions resolved? | ANSWERED — immutable tenant; scoped legacy identity; idempotent replay; collision quarantine; no silent resolution. |
 | Q-023 | Notifications | HIGH | Which events and recipients are included? | ANSWERED — renewals, expirations and failed operations; permission-controlled recipients; scheduler/database/optional email; no worker. |
