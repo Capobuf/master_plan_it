@@ -1,9 +1,11 @@
 # `/speckit.tasks` second remediation summary
 
-Status: `SECOND REMEDIATION COMPLETE — REVIEW AND RE-ANALYSIS REQUIRED`  
-Branch: `tasks/remediate-analysis-3.0.1-r2`  
+Status: `SECOND REMEDIATION COMPLETE — NEXT GATE /speckit.analyze ON INTEGRATED BASE`  
+Provenance branch: `tasks/remediate-analysis-3.0.1-r2`  
 Base: `laravel-replatform` commit `eb75be04d600f5c9ada954da0593ab0a13d94ff8`  
 Constitution: 3.0.1
+
+Integration state is authoritative only in GitHub PR metadata. This document records the package content and remains valid before and after integration.
 
 ## Task inventory
 
@@ -126,7 +128,7 @@ A consumer task may not recreate an owning symbol under another namespace.
 | RERUN-H-006 | PROPOSED RESOLVED — Feature 007 audit, password, branding and retention requirements added to source traceability |
 | RERUN-H-007 | PROPOSED RESOLVED — T007-019/T007-020 own tenant branding; T005-021–T005-023 consume it |
 | RERUN-H-008 | PROPOSED RESOLVED — T006-017 has exact requirement IDs, file paths, command and verifiable OPEN/VERIFIED result rules |
-| RERUN-M-001 | PROPOSED RESOLVED — phase metadata updated without branch-obsolete implementation claims |
+| RERUN-M-001 | PROPOSED RESOLVED — phase metadata use integration-stable wording and defer live state to GitHub |
 | RERUN-M-002 | PROPOSED RESOLVED — feature spec/plan headers use stable phase wording |
 | RERUN-M-003 | PROPOSED RESOLVED — T006-012 exact command restores Composer files on resolution failure |
 | RERUN-M-004 | PROPOSED RESOLVED — inventory is stated as proposed until re-analysis, not self-certified as a PASS |
@@ -135,9 +137,10 @@ These dispositions remain proposed until the next `/speckit.analyze` independent
 
 ## Next gate
 
-1. review and merge the second-remediation PR;
-2. run `/speckit.analyze` on the merged branch;
-3. require CRITICAL `0` and HIGH `0`;
-4. keep `/speckit.implement` blocked until that result.
+On the integrated remediation base:
+
+1. run `/speckit.analyze`;
+2. require CRITICAL `0` and HIGH `0`;
+3. keep `/speckit.implement` blocked until that result.
 
 No Composer install, scaffold, migration, test, workflow, artifact, backup, restore, import, deployment or cutover command was executed while remediating the documentation.
