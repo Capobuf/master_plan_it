@@ -19,8 +19,9 @@ This repository branch is intentionally documentation-only. It contains no Frapp
 - first `/speckit.analyze`: recorded 2 CRITICAL, 10 HIGH and 4 MEDIUM findings;
 - first task remediation: MERGED;
 - rerun `/speckit.analyze`: recorded 0 CRITICAL, 8 HIGH and 4 MEDIUM findings;
-- second `/speckit.tasks` remediation: COMPLETE, pending review/merge;
-- next valid command after merge: `/speckit.analyze`;
+- second `/speckit.tasks` remediation: COMPLETE;
+- integration state: authoritative only in GitHub PR metadata;
+- next valid command on the integrated remediation base: `/speckit.analyze`;
 - `/speckit.implement`: BLOCKED until an analysis reports CRITICAL `0` and HIGH `0`.
 
 The proposed remediated graph contains 150 tasks across 35 user stories, with 42 `[P]` tasks after exact prerequisites. These counts are not a readiness PASS; `docs/replatform/tasks-summary.md` records the proposed dispositions and the next analysis must verify them.
