@@ -29,10 +29,12 @@ No package lock, implementation, migration or test was executed by this document
 10. Budget-domain/economic-kernel design and `source-traceability.md`;
 11. Feature 007 spec/plan/contracts/tasks/quickstart;
 12. Feature 001–006 spec/plan/research/data-model/contracts/tasks/quickstart;
-13. `task-readiness-registry.md` and `tasks-summary.md`;
-14. `speckit-analyze-2026-08-03.md`;
-15. `implementation-readiness.md`, `package-validation.md`, `spec-kit-analysis.md`;
-16. the repeated `/speckit.analyze` report.
+13. `task-readiness-registry.md`;
+14. `task-execution-registry.md`, feature command registers and `task-execution/path-overrides.md`;
+15. `tasks-summary.md`;
+16. `speckit-analyze-2026-08-03.md`;
+17. `implementation-readiness.md`, `package-validation.md`, `spec-kit-analysis.md`;
+18. the repeated `/speckit.analyze` report.
 
 ## Remediation outcomes
 
@@ -44,7 +46,8 @@ No package lock, implementation, migration or test was executed by this document
 - audit tenant/global view tasks added without audit export;
 - attachment schema/model/policy/query and private lifecycle tasks added;
 - backup dependency gate corrected to an exact Composer require operation;
-- task-readiness registry supplies sources, task classes, invariants, errors and exact path expansion;
+- readiness registry supplies sources, task classes, invariants and errors;
+- execution registers supply one exact validation command per task ID and complete path overrides;
 - source traceability maps current task and test IDs;
 - runtime compatibility corrected to PHP 8.3.32 through a technical amendment.
 
@@ -53,7 +56,7 @@ No package lock, implementation, migration or test was executed by this document
 - 148 exact tasks across 35 user stories;
 - 41 `[P]` tasks after exact prerequisites;
 - 7 feature task files;
-- one normative readiness registry;
+- normative readiness and execution registries;
 - one bidirectional source/requirement/task/test ledger;
 - no implementation code.
 
