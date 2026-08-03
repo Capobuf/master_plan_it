@@ -1,523 +1,59 @@
-# Tasks — Master data
+# Tasks — Feature 002 Master data
 
+Status: `PROPOSED TARGET — /speckit.tasks`  
+Input: Constitution 3.0.1; current Feature 002 spec/plan/research/data model; shared tenancy, permission, revision and error contracts.  
+ID policy: former `T002-01`–`T002-13` are superseded because they placed all work under one story and mapped incorrect invariants/tests. New executable IDs use `T002-001` onward.
 
-### T002-01 — Planning period
+Tests are mandatory and precede production code.
 
-User story: US-002-01  
-Requirements: FR-002-001, FR-002-002  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: none  
-Parallelizable: no
+## Phase 1 — Foundational master-data persistence
 
-**Objective.** Create or modify `app/Models/PlanningYear.php` so it owns only: planning period.
+- [ ] T002-001 Write schema/model tests in `tests/Feature/MasterData/MasterDataSchemaTest.php`; symbols: tenant-owned `PlanningYear`, `CostCenter`, `Vendor`, scoped uniqueness, restrictive references and `lock_version`; depends: Feature 001 T001-007 and Feature 007 T007-012; requirements: FR-002-001, FR-002-003, FR-002-006, FR-002-010, FR-002-013, INV-TEN-002; validate: `php artisan test tests/Feature/MasterData/MasterDataSchemaTest.php`; expected before implementation: focused failures; forbidden: global catalogue rows, nested-set package, cascade deletion or role-name fields.
+- [ ] T002-002 Create migrations, models and factories in `database/migrations/*_create_planning_years_table.php`, `*_create_cost_centers_table.php`, `*_create_vendors_table.php`, `app/Models/PlanningYear.php`, `CostCenter.php`, `Vendor.php` and corresponding factories; symbols: explicit tenant relations, active state, adjacency parent, optimistic casts; depends: T002-001; requirements: FR-002-001, FR-002-003, FR-002-006, FR-002-010, FR-002-013; tests first: T002-001; validate: `php artisan test tests/Feature/MasterData/MasterDataSchemaTest.php`; expected: forward migration and valid tenant factories with no business side effects; forbidden: generic master-data model, JSON hierarchy, automatic parent reassignment or global tenant scope as sole defense.
+- [ ] T002-003 Configure permissions/policies in `app/Policies/PlanningYearPolicy.php`, `CostCenterPolicy.php`, `VendorPolicy.php` and `database/seeders/PermissionCatalogueSeeder.php`; symbols: explicit view/manage/deactivate/reactivate/restore abilities mapped to current catalogue; depends: T002-002 and Feature 007 T007-009; requirements: FR-002-011, INV-TEN-002; tests first: create `tests/Feature/MasterData/MasterDataAuthorizationTest.php`; validate: `php artisan test tests/Feature/MasterData/MasterDataAuthorizationTest.php`; expected: same-tenant grant, missing-permission deny and safe other-tenant deny for each aggregate; forbidden: checking `Editor`/`Viewer` names, Administrator invariant bypass or direct permissions outside catalogue.
 
-**Files to create**
-- `app/Models/PlanningYear.php`
+**Checkpoint:** three tenant-owned aggregates and policies exist before user-story writes.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+## Phase 2 — US-002-01 Planning years (P1, MVP)
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+**Goal:** manage non-overlapping tenant planning years with exact concurrency behavior.
 
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+**Independent test:** an authorized actor creates/updates a valid year; invalid date order, overlap, other-tenant data and stale version fail atomically.
 
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+- [ ] T002-004 [P] [US1] Write planning-year behavior tests in `tests/Feature/MasterData/PlanningYearTest.php`; symbols: create/update, date order, same-tenant overlap under transaction, active selector, authorization and stale version; depends: T002-003; requirements: FR-002-001, FR-002-002, FR-002-010, FR-002-011, FR-002-013, INV-YEAR-001, INV-YEAR-002; validate: `php artisan test tests/Feature/MasterData/PlanningYearTest.php`; expected before implementation: focused failures; forbidden: SQLite-only overlap behavior, form-only validation or implicit deactivation of another year.
+- [ ] T002-005 [US1] Implement `SavePlanningYearData`, `SavePlanningYear` and `PlanningYearListQuery` in `app/Domain/MasterData/Data/SavePlanningYearData.php`, `Actions/SavePlanningYear.php` and `Queries/PlanningYearListQuery.php`; symbols: `execute()`, same-tenant overlap lock, optimistic update and active/current selection; depends: T002-004; requirements: FR-002-001, FR-002-002, FR-002-010–FR-002-013; tests first: T002-004; validate: `php artisan test tests/Feature/MasterData/PlanningYearTest.php`; expected: one transaction rejects overlapping ranges without partial writes; forbidden: generic `SaveMasterData`, silent normalization of invalid dates or unbounded table lock.
+- [ ] T002-006 [US1] Implement Filament year UI in `app/Filament/Resources/PlanningYears/PlanningYearResource.php` and its Pages/Form/Table classes; symbols: permission-aware create/edit/list, lock-version propagation and localized dates; depends: T002-005; requirements: FR-002-001, FR-002-002, FR-002-011; tests first: create `tests/Livewire/MasterData/PlanningYearResourceTest.php`; validate: `php artisan test tests/Livewire/MasterData/PlanningYearResourceTest.php`; expected: UI delegates to `SavePlanningYear` and exposes stable conflict errors; forbidden: direct Eloquent save, custom SPA editor or hidden overlap fallback.
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+**Checkpoint:** US1 is independently usable and is the Feature 002 MVP.
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+## Phase 3 — US-002-02 Cost-center hierarchy (P1)
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
+**Goal:** manage an acyclic tenant tree, historical visibility and controlled lifecycle/revision restore.
 
+**Independent test:** create/move/deactivate/reactivate/restore one branch; cycles, active descendants, other-tenant parent and stale revisions fail without mutation.
 
-### T002-02 — Adjacency-list hierarchy
+- [ ] T002-007 [P] [US2] Write cost-center tests in `tests/Feature/MasterData/CostCenterTreeTest.php`, `CostCenterLifecycleTest.php` and `CostCenterRevisionTest.php`; symbols: create/update/move, self/cycle detection, descendant summary, deactivation guard, active selector, revision batch/restore and tenant authorization; depends: T002-003 and shared revision task Feature 003 T003-007; requirements: FR-002-003–FR-002-005, FR-002-008–FR-002-013, INV-CC-001, INV-CC-002, INV-MD-REV-001, INV-TEN-002; validate: `php artisan test tests/Feature/MasterData/CostCenterTreeTest.php tests/Feature/MasterData/CostCenterLifecycleTest.php tests/Feature/MasterData/CostCenterRevisionTest.php`; expected before implementation: focused failures; forbidden: recursive implicit deactivation, nested-set dependency, automatic historical reassignment or package direct restore.
+- [ ] T002-008 [US2] Implement cost-center Actions in `app/Domain/MasterData/Actions/CreateCostCenter.php`, `UpdateCostCenter.php`, `DeactivateCostCenter.php`, `ReactivateCostCenter.php`, `RestoreCostCenterRevision.php`; symbols: same-tenant parent validation, bounded ancestry walk, descendant lock, revision batch and current-rule restore; depends: T002-007; requirements: FR-002-003, FR-002-004, FR-002-008, FR-002-009, FR-002-011–FR-002-013; tests first: T002-007; validate: `php artisan test tests/Feature/MasterData/CostCenterTreeTest.php tests/Feature/MasterData/CostCenterLifecycleTest.php tests/Feature/MasterData/CostCenterRevisionTest.php`; expected: one current record with audit/revision history and deterministic stable errors; forbidden: observer version orchestration, deleting referenced nodes or restoring invalid parent relationships.
+- [ ] T002-009 [US2] Implement `CostCenterTreeQuery`, `CostCenterSelectorQuery` and Filament UI in `app/Domain/MasterData/Queries/CostCenterTreeQuery.php`, `CostCenterSelectorQuery.php`, `app/Filament/Resources/CostCenters/CostCenterResource.php` and revision page; symbols: descendants for group summary, leaf-only result, inactive current-value inclusion and history navigation; depends: T002-008; requirements: FR-002-005, FR-002-008, FR-002-010–FR-002-012; tests first: create `tests/Livewire/MasterData/CostCenterResourceTest.php`; validate: `php artisan test tests/Livewire/MasterData/CostCenterResourceTest.php tests/Feature/MasterData/CostCenterTreeTest.php`; expected: native Filament hierarchy works without a second tree framework; forbidden: query over revision storage as current data or client-side-only cycle prevention.
 
-User story: US-002-01  
-Requirements: FR-002-002, FR-002-003  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: T002-01  
-Parallelizable: no
+## Phase 4 — US-002-03 Vendors (P1)
 
-**Objective.** Create or modify `app/Models/CostCenter.php` so it owns only: adjacency-list hierarchy.
+**Goal:** manage vendors while retaining referenced history and excluding inactive vendors from new selections.
 
-**Files to create**
-- `app/Models/CostCenter.php`
+**Independent test:** create/update/deactivate/reactivate/restore vendor; referenced delete, duplicate, stale and cross-tenant operations fail; existing record editor may display its inactive current vendor.
 
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
+- [ ] T002-010 [P] [US3] Write vendor tests in `tests/Feature/MasterData/VendorTest.php`, `VendorLifecycleTest.php` and `VendorRevisionTest.php`; symbols: scoped uniqueness, optional VAT/contact validation, referenced-delete denial, selector semantics, revisions/restore and authorization; depends: T002-003 and shared revision task Feature 003 T003-007; requirements: FR-002-006, FR-002-007, FR-002-010–FR-002-013, INV-VEN-001, INV-MD-REV-001, INV-TEN-002; validate: `php artisan test tests/Feature/MasterData/VendorTest.php tests/Feature/MasterData/VendorLifecycleTest.php tests/Feature/MasterData/VendorRevisionTest.php`; expected before implementation: focused failures; forbidden: permanent delete while referenced, replacing historical labels or allowing inactive vendor in new-record selector.
+- [ ] T002-011 [US3] Implement vendor Actions/queries in `app/Domain/MasterData/Actions/CreateVendor.php`, `UpdateVendor.php`, `DeactivateVendor.php`, `ReactivateVendor.php`, `RestoreVendorRevision.php`, `app/Domain/MasterData/Queries/VendorListQuery.php` and `VendorSelectorQuery.php`; symbols: transactional lifecycle, revision batch, current-value selector exception and same-tenant validation; depends: T002-010; requirements: FR-002-006, FR-002-007, FR-002-010–FR-002-013; tests first: T002-010; validate: `php artisan test tests/Feature/MasterData/VendorTest.php tests/Feature/MasterData/VendorLifecycleTest.php tests/Feature/MasterData/VendorRevisionTest.php`; expected: inactive history remains readable and new selections exclude it; forbidden: generic master-data Action, automatic reactivation or package direct restore.
+- [ ] T002-012 [US3] Implement vendor Filament UI in `app/Filament/Resources/Vendors/VendorResource.php` and revision page/classes; symbols: permission-aware lifecycle actions, active/inactive filters, selector state and restore action delegation; depends: T002-011; requirements: FR-002-007, FR-002-011, FR-002-012; tests first: create `tests/Livewire/MasterData/VendorResourceTest.php`; validate: `php artisan test tests/Livewire/MasterData/VendorResourceTest.php`; expected: UI preserves historical links and delegates all writes to Actions; forbidden: direct delete button for referenced vendors or role-name display logic.
 
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
+## Phase 5 — Cross-cutting validation
 
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
+- [ ] T002-013 Run Feature 002 verification and update `specs/002-master-data/quickstart.md` and `docs/replatform/source-traceability.md` with actual paths/results; depends: T002-006, T002-009, T002-012; requirements: FR-002-001–FR-002-013; validate: `php artisan test tests/Feature/MasterData tests/Livewire/MasterData && composer test:static`; expected: all tenant/permission/concurrency/revision/lifecycle tests pass with no revision rows in business selectors; forbidden: completion claim with skipped MySQL tests or unexecuted commands.
 
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
+## Dependencies and execution order
 
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
+`Feature 001/007 foundation → T002-001 → T002-002 → T002-003`; after that, US1, US2 and US3 test files can be prepared in parallel, but revision-dependent implementation waits for the shared revision infrastructure. Resource files are isolated and may proceed in parallel after their owning Actions.
 
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
+## MVP scope
 
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T002-03 — Vendor master
-
-User story: US-002-01  
-Requirements: FR-002-003, FR-002-004  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: T002-02  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Models/Vendor.php` so it owns only: vendor master.
-
-**Files to create**
-- `app/Models/Vendor.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T002-04 — Range validation
-
-User story: US-002-01  
-Requirements: FR-002-004, FR-002-005  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: T002-03  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/MasterData/Actions/SavePlanningYear.php` so it owns only: range validation.
-
-**Files to create**
-- `app/Domain/MasterData/Actions/SavePlanningYear.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T002-05 — Cycle-safe reparent
-
-User story: US-002-01  
-Requirements: FR-002-005, FR-002-006  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: T002-04  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/MasterData/Actions/MoveCostCenter.php` so it owns only: cycle-safe reparent.
-
-**Files to create**
-- `app/Domain/MasterData/Actions/MoveCostCenter.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T002-06 — Tree and descendants
-
-User story: US-002-01  
-Requirements: FR-002-006, FR-002-007  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: T002-05  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Domain/MasterData/Queries/CostCenterTreeQuery.php` so it owns only: tree and descendants.
-
-**Files to create**
-- `app/Domain/MasterData/Queries/CostCenterTreeQuery.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T002-07 — Year register/editor
-
-User story: US-002-01  
-Requirements: FR-002-007, FR-002-008  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: T002-06  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Livewire/MasterData/YearIndex.php` so it owns only: year register/editor.
-
-**Files to create**
-- `app/Livewire/MasterData/YearIndex.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T002-08 — Tree editor
-
-User story: US-002-01  
-Requirements: FR-002-008  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: T002-07  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Livewire/MasterData/CostCenterTree.php` so it owns only: tree editor.
-
-**Files to create**
-- `app/Livewire/MasterData/CostCenterTree.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T002-09 — Vendor register
-
-User story: US-002-01  
-Requirements: FR-002-001, FR-002-002  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: T002-08  
-Parallelizable: no
-
-**Objective.** Create or modify `app/Livewire/MasterData/VendorIndex.php` so it owns only: vendor register.
-
-**Files to create**
-- `app/Livewire/MasterData/VendorIndex.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T002-10 — Overlap and permission
-
-User story: US-002-01  
-Requirements: FR-002-002, FR-002-003  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: T002-09  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/MasterData/PlanningYearTest.php` so it owns only: overlap and permission.
-
-**Files to create**
-- `tests/Feature/MasterData/PlanningYearTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T002-11 — Cycles/descendants
-
-User story: US-002-01  
-Requirements: FR-002-003, FR-002-004  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: T002-10  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/MasterData/CostCenterTreeTest.php` so it owns only: cycles/descendants.
-
-**Files to create**
-- `tests/Feature/MasterData/CostCenterTreeTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-
-### T002-12 — Deactivation/history
-
-User story: US-002-01  
-Requirements: FR-002-004, FR-002-005  
-Invariants: INV-YEAR-001, INV-YEAR-002  
-Dependencies: T002-11  
-Parallelizable: yes
-
-**Objective.** Create or modify `tests/Feature/MasterData/VendorTest.php` so it owns only: deactivation/history.
-
-**Files to create**
-- `tests/Feature/MasterData/VendorTest.php`
-
-**Symbols**
-- Introduce the class/component represented by the path; public methods must match the contracts in this feature.
-
-**Implementation instructions**
-1. Read the local constitution, this plan, relevant contract and traced legacy source before editing.
-2. Write the mapped test first and confirm it fails for the intended missing behavior.
-3. Implement only the listed responsibility; delegate authorization, calculation and persistence to their owning layers.
-4. Use decimal strings for money, explicit transactions for writes and stable domain error codes.
-5. Update traceability only when the implemented symbol differs from this map, and document the approved reason.
-
-**Test to write first**
-- Path: `tests/Feature/MasterData/PlanningYearTest.php`
-- Assertion: valid path succeeds; invalid invariant fails without partial writes; unauthorized actor is denied where applicable.
-
-**Validation**
-- `php artisan test tests/Feature/MasterData/PlanningYearTest.php`
-- `vendor/bin/pint --test`
-- `vendor/bin/phpstan analyse` when configured.
-
-**Errors to handle**
-- validation, authorization, domain conflict and stale `lock_version` as applicable.
-
-**Do not**
-- add packages, observers with economic writes, internal APIs, float arithmetic or unrelated refactors.
-
-**Definition of Done**
-- mapped test passes; responsibility is not duplicated; requirement/invariant links remain valid; no architecture decision is left in code comments.
-
-### T002-13 — Tenant-own master data and enforce Editor permissions
-
-Requirements: FR-002-008, FR-002-009, FR-002-010  
-Invariants: INV-TEN-002  
-Dependencies: Feature 007 clarification convergence and preceding local task  
-
-**Objective.** Update the feature's migrations/models, policies, Actions/Queries, screens, contracts, exports/files/commands where applicable, and tests so tenant ownership and approved role behavior are explicit and fail closed.
-
-**Required tests.**
-
-1. same-tenant Administrator/Editor/Viewer allow paths according to the feature contract;
-2. other-tenant direct ID and relationship denial without existence leakage;
-3. missing tenant context denial;
-4. tenant-scoped dataset/export/file equality where applicable;
-5. audit records real actor and tenant context.
-
-**Forbidden work.** Do not resolve any question still marked `OPEN` in the clarification registers, add impersonation, add shared mutable business catalogues, or introduce separate tenant databases/domains without an approved requirement.
+T002-001–T002-006 deliver planning-year management independently. Cost centers and vendors are subsequent separate increments.
