@@ -1,0 +1,71 @@
+name: Apply Spec Kit update
+
+on:
+  push:
+    branches:
+      - laravel-replatform
+    paths:
+      - '.spec-kit-chunks/**'
+      - '.github/workflows/apply-spec-kit.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Reconstruct and verify archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat .spec-kit-chunks/part-* | base64 --decode > /tmp/mpit-spec-update.tar.xz
+          echo "0a3d10852b435df84fce554c30ea97d2ef99016766d6d5349433425a4a615d82  /tmp/mpit-spec-update.tar.xz" | sha256sum -c -
+          rm -rf /tmp/mpit-spec
+          mkdir -p /tmp/mpit-spec
+          tar -xJf /tmp/mpit-spec-update.tar.xz -C /tmp/mpit-spec
+
+      - name: Replace documentation tree
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf .specify docs specs
+          rm -f README.md
+          cp -a /tmp/mpit-spec/. .
+          rm -rf .spec-kit-chunks
+          rm -f .github/workflows/apply-spec-kit.yml
+          rmdir .github/workflows 2>/dev/null || true
+          rmdir .github 2>/dev/null || true
+
+      - name: Validate Spec Kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find . -path ./.git -prune -o -type f -print | wc -l)" -eq 105
+          unexpected="$(find . -path ./.git -prune -o -type f ! -name '*.md' -print)"
+          test -z "$unexpected"
+          find . -path ./.git -prune -o -type f -print | while read -r path; do
+            case "$path" in
+              ./README.md|./.specify/*|./docs/*|./specs/*) ;;
+              *) echo "Unexpected path: $path"; exit 1 ;;
+            esac
+          done
+          grep -q 'Q-015' docs/replatform/approved-decisions.md
+          grep -q 'BLOCKING | 11 | 11 | 0' docs/replatform/product-clarification-register.md
+          grep -q 'FR-007-017' specs/007-tenancy-and-access-control/spec.md
+          test -z "$(grep -RIl --include='*.md' '| Administrator | Administrator |' . || true)"
+          test -z "$(grep -RIl --include='*.md' 'Multi-tenant data isolation unless OQ-003 is resolved.' . || true)"
+
+      - name: Commit converged Spec Kit
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "docs: propagate tenancy decisions Q-001 through Q-015"
+          git push origin HEAD:laravel-replatform
