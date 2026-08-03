@@ -15,7 +15,12 @@
 | ADR-011 | Explicit tenant ownership in one Laravel application | APPROVED | Multi-tenancy with minimum operational complexity. |
 | ADR-012 | Administrator tenant context without impersonation | APPROVED | Preserves real actor identity and audit clarity. |
 | ADR-013 | Controlled one-site migration into one selected tenant | APPROVED | Matches verified migration scope. |
-| ADR-014..ADR-019 | Reserved for development/test/CI decisions in PR #2 | RESERVED | Prevents identifier collision while product clarification and development-foundation PRs are reviewed independently. |
+| ADR-014 | Laravel Sail is the canonical development and agent-verification environment | APPROVED | One reproducible environment supplies runtime, Composer, build tools, MySQL and optional Selenium without adding production services. |
+| ADR-015 | Exact runtime and container versions are locked during `/speckit.plan` | APPROVED DIRECTION — CURRENT COMPATIBILITY SPIKE REQUIRED | Prevents floating builds and outdated version assumptions while keeping the project on a currently supported Laravel 13 stack. |
+| ADR-016 | MySQL 8.4 LTS is the minimum database family; any additional current family requires compatibility evidence | APPROVED DIRECTION — SPIKE REQUIRED | Maintains a stable hosting floor without committing to an unverified current-family matrix. |
+| ADR-017 | Tests use static, accounting and application layers with bounded browser coverage | APPROVED | Separates assurance responsibilities without multiplying infrastructures or duplicating browser assertions. |
+| ADR-018 | Automated tests never reset the persistent test database implicitly | APPROVED PROJECT-SPECIFIC DEVIATION | Protects development/test data through an explicit test database, forward migrations, transactions and targeted cleanup; differs intentionally from Laravel's usual `RefreshDatabase` workflow. |
+| ADR-019 | Required GitHub Actions gates produce one immutable release artifact from the verified commit | APPROVED | Hosting receives the tested artifact and does not rebuild dependencies or frontend assets. |
 | ADR-020 | Use database-backed configurable tenant RBAC; protected global Administrator remains outside tenant customization | APPROVED DIRECTION — SPIKE REQUIRED | Product requires configurable permissions without weakening platform and domain invariants. Candidate stack is `spatie/laravel-permission` plus `bezhansalleh/filament-shield`. |
 | ADR-021 | Use true operational model revisions with one current domain record | APPROVED DIRECTION — SPIKE REQUIRED | Avoids duplicate visible records and supports compare/restore. Candidate UI/storage is `mansoor/filament-versionable` backed by `overtrue/laravel-versionable`; aggregate revision batching remains application-owned if required. |
 | ADR-022 | Named budget versions are application-owned immutable snapshots | APPROVED | Model revision packages do not represent an approved economic baseline or multi-record snapshot semantics. |
@@ -25,6 +30,10 @@
 | ADR-026 | No tenant-user self-service password recovery at launch | APPROVED | Avoids mail dependency and additional attack surface; Administrator reset plus global emergency Artisan command is sufficient. |
 | ADR-027 | Optional onboarding reuses native Filament form/wizard components and existing Actions | APPROVED | Guidance without a custom mandatory state machine or duplicated validation. |
 
-## Package acceptance gate
+## Package and version acceptance gate
 
-ADR-020 and ADR-021 approve a direction, not an unverified installation claim. `/speckit.plan` must inspect the exact current package releases, Composer constraints, licenses, tenancy behavior, restoration semantics, maintenance activity, and removal path. A package failing the spike is rejected; its domain contract remains unchanged and must be implemented with the smallest native Laravel/Filament alternative.
+ADR-015, ADR-016, ADR-020 and ADR-021 approve directions, not unverified installations or version claims. `/speckit.plan` must inspect exact current releases, Composer constraints, licenses, runtime/database support, tenancy behavior, restoration semantics, maintenance activity and removal paths.
+
+A failed spike rejects the package or version choice; it does not weaken the approved product or development contract. Use the smallest native Laravel/Filament alternative when a candidate fails.
+
+The operational details of ADR-014 through ADR-019 are normative planning input in `development-and-test-contract.md` and become executable only after regenerated plans and tasks.
