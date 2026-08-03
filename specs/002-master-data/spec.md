@@ -1,6 +1,6 @@
 # Feature 002 — Master data
 
-Status: `CLARIFIED — PLAN REGENERATION REQUIRED`  
+Status: `CLARIFIED AND APPROVED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Logical owner: Product Owner with domain approval  
 Actor: tenant user with explicit permission  
 Dependencies: Feature 001 and Feature 007
