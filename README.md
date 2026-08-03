@@ -22,7 +22,7 @@ All product questions Q-001–Q-041 are closed. Constitution 3.0.1 is authoritat
 - repeated `/speckit.analyze`: next valid command after remediation merge;
 - `/speckit.implement`: blocked until repeated analysis reports CRITICAL 0 and HIGH 0.
 
-The remediated task graph contains 148 tasks across 35 user stories, with 41 `[P]` tasks after exact prerequisites. Setup/foundational and verification tasks use stable `[FND]` and `[VER]` classes through `docs/replatform/task-readiness-registry.md`.
+The remediated task graph contains 148 tasks across 35 user stories, with 41 `[P]` tasks after exact prerequisites. Setup/foundational and verification tasks use stable `[FND]` and `[VER]` classes. Exact commands and remaining path expansions are normative in `docs/replatform/task-execution-registry.md` and its feature registers.
 
 ## Read in order
 
@@ -35,9 +35,11 @@ The remediated task graph contains 148 tasks across 35 user stories, with 41 `[P
 7. target architecture, physical model, permission and error catalogues;
 8. Budget/kernel design and `source-traceability.md`;
 9. Feature 007, then Features 001–006: spec → plan → research → data model/contracts → tasks → quickstart;
-10. `docs/replatform/task-readiness-registry.md` and `tasks-summary.md`;
-11. `docs/replatform/speckit-analyze-2026-08-03.md` and remediation status;
-12. the repeated `/speckit.analyze` result.
+10. `docs/replatform/task-readiness-registry.md`;
+11. `docs/replatform/task-execution-registry.md` and `docs/replatform/task-execution/feature-001.md` through `feature-007.md`, then `path-overrides.md`;
+12. `docs/replatform/tasks-summary.md`;
+13. `docs/replatform/speckit-analyze-2026-08-03.md` and remediation status;
+14. the repeated `/speckit.analyze` result.
 
 ## Planned target
 
