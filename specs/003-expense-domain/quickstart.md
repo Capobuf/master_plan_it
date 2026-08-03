@@ -1,40 +1,48 @@
-# Verification quickstart — Expense domain
+# Verification quickstart — Feature 003 Expense domain
 
-These are future commands; they were not executed during documentation deepening.
+Future commands; none were executed during planning.
 
-## Prerequisites
+## Fixture
 
-- Laravel environment installed from the locked dependency files.
-- MySQL test database with strict mode.
-- `.env.testing` uses Europe/Rome display configuration and EUR.
-- Features before 003 migrated and seeded.
+Create two tenants, years, cost centers, vendors and a Plafond. In tenant A create independent Estimate, Quote, Actual ToConfirm/Confirmed, negative Actual, Extra and Plafond-funded rows. Include one generated row, attachments, revisions and deleted rows.
 
-## Minimal data
+## Pure accounting
 
-Create one user for each role and the minimum records required for expense register, expense editor, expense audit drawer. Use factories, not production data.
+```bash
+./vendor/bin/sail artisan test tests/Accounting/Unit/Money
+./vendor/bin/sail artisan test tests/Accounting/Unit/VatCalculatorTest.php
+./vendor/bin/sail artisan test tests/Accounting/Unit/MonthlyAllocatorTest.php
+```
 
-## Verification path
+## Aggregate integration
 
-1. Run migrations and the feature seed fixture.
-2. Authenticate as Administrator.
-3. Open the primary screen: `expense register`.
-4. Execute the main valid operation and record the expected persisted/result values from `spec.md`.
-5. Repeat the mapped invalid, unauthorized, empty and stale-version scenarios.
-6. Run `php artisan test --filter=Expensedomain` and the listed focused Dusk test only if the feature uses browser JavaScript.
+```bash
+./vendor/bin/sail artisan test --filter=ExpenseAggregate
+./vendor/bin/sail artisan test --filter=ActualConfirmation
+./vendor/bin/sail artisan test --filter=ExpenseRevision
+./vendor/bin/sail artisan test --filter=ExpenseTenantIsolation
+```
 
-## Success criteria
+## Acceptance path
 
-- All mapped FR/INV tests pass.
-- No failed job/queue dependency exists.
-- Database totals and screen values match the documented dataset.
-- Logs contain no unexpected error or sensitive payload.
+1. Create Estimate, Quote and Actual without predecessors.
+2. Verify Net/VAT/Gross and monthly allocation exact strings.
+3. Modify/confirm a generated Actual and verify system-managed becomes false.
+4. Delete a row and confirm every current query/output excludes it.
+5. Compare/restore an aggregate revision and verify a new revision batch.
+6. Submit stale lock version and receive `STALE_VERSION` without partial change.
+7. Attempt other-tenant vendor/Plafond/project/contract/attachment and receive safe denial.
+
+Run focused Dusk only for browser-owned row editor behavior:
+
+```bash
+./vendor/bin/sail artisan dusk --filter=ExpenseEditorTest
+```
 
 ## Cleanup
 
-Drop the disposable test database or run `migrate:fresh` only in the test environment. Never use cleanup commands against production.
+Transaction rollback or run-ID targeted deletion only. Never reset/truncate the persistent test DB.
 
-## Tenant validation
+## Success
 
-- Read Feature 007 before coding.
-- Seed at least two tenants and test same-tenant allow plus other-tenant deny.
-- Verify reports, exports, attachments, direct links, and commands never return unscoped data.
+Accounting fixtures reconcile exactly; no float, replacement-state current row, revision/audit contribution, automatic overwrite or cross-tenant link exists.
