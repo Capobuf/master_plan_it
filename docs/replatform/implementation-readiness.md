@@ -1,18 +1,18 @@
 # Implementation readiness
 
-Status: `IMPLEMENTATION READY ON CONSTITUTION 5.0.0; IMPLEMENTATION NOT STARTED`
+Status: `IMPLEMENTATION IN PROGRESS ON CONSTITUTION 5.0.0; T001-001–T001-007, T007-001–T007-005 AND T007-012 VERIFIED`
 
-Constitution 5.0.0, Q-001–Q-041 and the additional approved attachment, operational-setting and terminal-deletion decisions are encoded across the integrated architecture, physical models and Feature 001–007 artifacts. The current integrated analysis is `speckit-analyze-2026-08-04-constitution-5.0.0.md` and reports 0 CRITICAL, 0 HIGH and 0 MEDIUM findings. The prior analysis on commit `ba3744fbc7043f3f3b036416e6c082e4cb7c6831` remains historical.
+Constitution 5.0.0, Q-001–Q-041 and the additional approved attachment, operational-setting and terminal-deletion decisions are encoded across the integrated architecture, physical models and Feature 001–007 artifacts. `speckit-analyze-2026-08-04-constitution-5.0.0.md` is a historical snapshot of its analyzed documentation tree. Implementation-time analysis has since corrected executable-contract and ownership gaps; the current artifacts, task checkboxes and `.codex/orchestration-plan.md` are the live evidence.
 
 | Feature | Planned and tasked scope | Status |
 |---|---|---|
-| 001 Platform foundation | runtime/Sail/test/CI, auth, password operations, settings, audit view/retention, notification primitive, scheduler, release | IMPLEMENTATION READY; dependency lock is first implementation gate |
+| 001 Platform foundation | runtime/Sail/test/CI, auth, password operations, settings, audit view/retention, notification primitive, scheduler, release | IMPLEMENTATION IN PROGRESS |
 | 002 Master data | shared revisions, years, vendors, cost centers, lifecycle and restore | IMPLEMENTATION READY |
 | 003 Expense domain | Money/VAT/allocation, current aggregate, Actual confirmation, revisions, deletion and attachments | IMPLEMENTATION READY |
 | 004 Contracts/projects | lifecycle, terms, source keys, controlled sync, suppression/resume and renewal notifications | IMPLEMENTATION READY |
 | 005 Reporting/analytics | shared kernel, rolling Budget, scenarios, BudgetVersion, comparison, tenant-branded print/CSV/XLSX | IMPLEMENTATION READY |
 | 006 Migration/operations | staging/apply, portability, conditional backup and immutable deployment | IMPLEMENTATION READY; NOT CUTOVER READY |
-| 007 Tenancy/access | context, ownership concern, lifecycle, configurable RBAC, tenant branding and final isolation matrix | IMPLEMENTATION READY |
+| 007 Tenancy/access | context, ownership concern, lifecycle, configurable RBAC, tenant branding and final isolation matrix | IMPLEMENTATION IN PROGRESS |
 
 ## Verified structural evidence
 
@@ -31,13 +31,13 @@ Constitution 5.0.0, Q-001–Q-041 and the additional approved attachment, operat
 - T006-012 command restores both Composer files on resolution failure;
 - T006-017 has exact requirements, paths, command and verifiable OPEN/VERIFIED evidence rules.
 
-These structural claims were recalculated by the Constitution 5.0.0 integrated analysis. They authorize starting the documented implementation tasks but do not claim runtime verification.
+These structural claims were recalculated by the Constitution 5.0.0 integrated analysis. They are planning evidence only; runtime verification and current task status come from executed commands and the current checkboxes.
 
 ## Implementation entry conditions
 
-1. `/speckit.implement` is now the next valid Spec Kit phase and has not been executed.
+1. `/speckit.implement` is active under the dependency-ordered orchestration plan.
 2. Implementation proceeds through dependency-ordered, separately reviewed vertical slices.
-3. The first implementation task performs real Composer/frontend lock resolution and package smoke tests.
+3. The initial Composer/frontend lock, Sail runtime and foundation gates have been executed; later packages still require their own exact gates.
 4. A later normative documentation change invalidates this readiness result until re-analysis.
 
 ## Conditional package gate
@@ -55,6 +55,6 @@ Feature 006 remains not CUTOVER READY until real source export evidence, final h
 - remediation is not application implementation;
 - task checkboxes remain unchecked until commands and results are actually executed;
 - final analysis findings are closed on the analyzed documentation working tree; later normative documentation changes require re-analysis;
-- no package, code, schema, test, workflow or operational command was executed by this documentation cycle;
+- the historical documentation cycle executed no package or application work; the current implementation phase has created and verified only the checked task scope;
 - fixed-role, immutable-Actual, replacement-state, fixed-retention and implicit-output assumptions remain superseded;
 - tenant-facing output uses the tenant-configured language; technical identifiers remain English; tenant report branding does not white-label the Master Plan IT shell and no additional internationalization framework is approved.

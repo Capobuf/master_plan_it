@@ -13,7 +13,7 @@ Shared conventions: `docs/replatform/data-model-overview.md`
 - `deletion_reason_required` boolean default false, changed only by global Administrator through the dedicated protected ability for an explicitly selected tenant;
 - optional company, address, contacts and report branding;
 - optional logo attachment/path according to file contract;
-- lifecycle actors/timestamps;
+- nullable restrictive `created_by_user_id`; nullable latest-state-transition `state_changed_by_user_id` and `state_changed_at`; ordinary `created_at`/`updated_at` timestamps. Detailed transition history remains in append-only audit rather than duplicated per-transition columns;
 - onboarding checklist state only if UI consumes it;
 - `lock_version`, timestamps.
 

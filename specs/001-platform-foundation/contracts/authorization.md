@@ -21,7 +21,7 @@ Writes open one transaction inside the owning Action. Lock only cross-record con
 
 ## Authorization decision procedure
 
-`Allow` requires every applicable gate below. A failure denies without revealing a protected record's existence. Exact identifiers come only from `../../../docs/replatform/permission-catalogue.md`; role names never select tenant-domain behavior. Editor and Viewer are non-normative seed templates. Administrator is name-protected only at the global platform boundary and has no domain-invariant bypass.
+`Allow` requires every applicable gate below. A failure denies without revealing a protected record's existence. Exact identifiers come only from `../../../docs/replatform/permission-catalogue.md`; role names never select tenant-domain behavior. Editor and Viewer are non-normative seed templates. Administrator is name-protected only at the global platform boundary and has no domain-invariant bypass. Its global role row has nullable tenant ownership; its model-role relationship uses reserved internal Spatie team key `0`, which is never a Tenant and is selected/restored only inside the protected boundary. That boundary rejects a model whose current primary key differs from its original persisted key, then reloads the unchanged identity before evaluating active and tenantless eligibility.
 
 | Gate | Allow condition |
 |---|---|

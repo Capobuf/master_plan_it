@@ -17,7 +17,7 @@ No record may override a field owned by another record. In particular, this regi
 
 ## Stable task classes
 
-- `[FND]`: setup or shared technical foundation. It may create required infrastructure but no user-story-specific behavior.
+- `[FND]`: setup or shared technical foundation. It may create required infrastructure but no user-story-specific behavior. Its beneficiary user story is normative only when the owning `tasks.md` supplies an explicit foundation-story ownership mapping for the task ID.
 - `[USn]`: implementation or test work owned by the numbered user story in the feature spec.
 - `[VER]`: verification, evidence or documentation only. It may not create runtime behavior, production workflows, commands, pages, Actions or services.
 
@@ -25,7 +25,7 @@ No record may override a field owned by another record. In particular, this regi
 
 | Task range | Class | Source links | Inherited invariants | Stable errors |
 |---|---|---|---|---|
-| T001-001–T001-007 | FND | Constitution C-06/C-07; Feature 001 spec/plan; development/test contract; technical research | INV-PLT-001–INV-PLT-007; INV-CTX-001 | DEPENDENCY_LOCK_FAILED, ACCOUNT_INACTIVE, TENANT_CONTEXT_REQUIRED, PERMISSION_DENIED |
+| T001-001–T001-007 | FND | Constitution C-06/C-07; Feature 001 spec/plan; development/test contract; technical research | INV-PLT-001–INV-PLT-007; INV-CTX-001 | DEPENDENCY_LOCK_FAILED, AUTHENTICATION_REQUIRED, ACCOUNT_INACTIVE, TENANT_CONTEXT_REQUIRED, PERMISSION_DENIED |
 | T001-008–T001-009 | US1 | Feature 001 US-001-01; Q-026 | INV-PLT-001, INV-PLT-006 | AUTHENTICATION_REQUIRED, ACCOUNT_INACTIVE, TENANT_INACTIVE |
 | T001-010–T001-011 | US2 | Feature 001 US-001-02; Q-015 | INV-PLT-002, INV-CTX-001 | TENANT_CONTEXT_REQUIRED, PERMISSION_DENIED, RESOURCE_NOT_FOUND |
 | T001-012–T001-014 | US3 | Feature 001 US-001-03; Q-001/Q-003/Q-017/Q-026 | INV-PLT-005, INV-PLT-006, INV-TEN-003 | PLATFORM_ABILITY_PROTECTED, PERMISSION_DENIED, TENANT_RELATION_MISMATCH |

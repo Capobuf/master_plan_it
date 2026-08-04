@@ -1,6 +1,6 @@
 # Feature 007 — Tenancy and access control
 
-Status: `CLARIFIED AND APPROVED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
+Status: `CLARIFIED AND APPROVED; IMPLEMENTATION IN PROGRESS`
 Approved decisions: Q-001 through Q-033 plus PD-REV-001, PD-BUD-001, PD-GEN-001 and approved Feature 003/004 tenant-setting decisions
 Open product questions: none  
 Normative cross-cutting contract: `../../docs/replatform/versioning-permissions-and-operations-contract.md`
@@ -175,4 +175,4 @@ Given a tenant with the default settings, its attachment quota is 2,147,483,648 
 
 ## Clarification result
 
-All product questions are closed. The previous fixed three-role and immutable-Actual assumptions are superseded. The approved configurable-ability, correctable-Actual, attachment-quota and global-Administrator-only deletion-reason-setting outcomes are propagated through the current Feature 007 plan, tasks, authorization contracts, and cross-feature registries. The Constitution 5.0.0 integrated `/speckit.analyze` gate passed; implementation is ready and has not started.
+All product questions are closed. The previous fixed three-role and immutable-Actual assumptions are superseded. The approved configurable-ability, correctable-Actual, attachment-quota and global-Administrator-only deletion-reason-setting outcomes are propagated through the current Feature 007 plan, tasks, authorization contracts, and cross-feature registries. The Constitution 5.0.0 integrated `/speckit.analyze` gate passed; implementation is in progress and task completion remains governed by `tasks.md` evidence.

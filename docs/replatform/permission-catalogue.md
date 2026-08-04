@@ -181,6 +181,10 @@ Assignability is controlled by Administrator; import remains protected platform 
 
 ## Seeded role templates
 
+### Administrator
+
+The protected tenantless global role receives the complete stable catalogue. Protected operations still require the global boundary; tenant operations still require an explicit selected tenant plus their normal Policy, ownership and domain-invariant checks. This is not a `Gate::before` or invariant bypass.
+
 ### Editor
 
 Receives ordinary tenant business permissions: planning-year view but not create/deactivate/reactivate; full vendor and cost-center lifecycle; Expense/attachment/project/contract work; generation controls; reports/export; BudgetVersion/scenario management; and tenant audit view. Protected platform and deletion-reason-setting abilities are excluded. Planning-year lifecycle abilities remain tenant-scoped catalogue entries that Administrator may assign deliberately to a custom role; they are not part of the seeded Editor template.

@@ -1,6 +1,6 @@
 # Feature 001 — Platform foundation
 
-Status: `CLARIFIED AND APPROVED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
+Status: `CLARIFIED AND APPROVED; IMPLEMENTATION IN PROGRESS`
 Logical owner: Product Owner with domain approval  
 Actors: Administrator and tenant users  
 Dependencies: Feature 007 product contract
@@ -147,4 +147,4 @@ The platform initializes audit retention to 24 months and accepts only integer v
 
 ## Clarification result
 
-Q-001 through Q-005, Q-012 through Q-017, Q-020, Q-023 through Q-026, and Q-033 are closed. Their approved outcomes are propagated through the current Feature 001 plan, tasks, contracts, and cross-feature registries. The Constitution 5.0.0 integrated `/speckit.analyze` gate passed; implementation is ready and has not started.
+Q-001 through Q-005, Q-012 through Q-017, Q-020, Q-023 through Q-026, and Q-033 are closed. Their approved outcomes are propagated through the current Feature 001 plan, tasks, contracts, and cross-feature registries. Implementation began with the verified T001-001 dependency/scaffold gate; remaining work and open requirement-quality items are tracked in `tasks.md`, the checklists and `.codex/orchestration-plan.md`.

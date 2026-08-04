@@ -1,6 +1,6 @@
 # Implementation plan — Feature 001 Platform foundation
 
-Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
+Status: `PLAN COMPLETE; IMPLEMENTATION IN PROGRESS`
 Constitution: 5.0.0
 Dependencies: Feature 007 plan for tenant/RBAC; `docs/replatform/replatform-plan.md`; `development-and-test-contract.md`
 
@@ -54,23 +54,25 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
 - `app/Models/AuditEvent.php`;
 - migrations for platform settings, user tenant/active fields, audit and notifications;
 - seeders `PermissionCatalogueSeeder`, `PlatformAdministratorSeeder`, `PlatformSettingSeeder`.
+- `PlatformAdministrator` protects assignment/checks of the tenantless global role through reserved package team key `0`; this key is never persisted as a Tenant and every temporary team change is restored in `finally`. The role receives the complete stable catalogue so the approved actor can perform otherwise valid tenant operations after explicit context selection; Policies, ownership and domain invariants remain mandatory.
 
-### Context/security
+### Context/security integration
 
-- `app/Domain/Tenancy/Data/TenantContext.php` request-scoped holder;
-- `app/Http/Middleware/ResolveTenantContext.php`;
-- `app/Http/Middleware/EnsureActiveUser.php`;
-- `app/Http/Middleware/EnsureTenantIsActive.php`;
-- `app/Http/Middleware/SetPermissionTeamContext.php`;
-- `app/Policies/PlatformSettingPolicy.php`;
-- `app/Providers/AuthServiceProvider.php` protected platform Gates.
+- Feature 007 owns `app/Domain/Tenancy/Data/TenantContext.php`, tenant-context Actions, and
+  `ResolveTenantContext`, `EnsureTenantIsActive`, and `SetPermissionTeamContext` middleware;
+- Feature 001 owns `app/Http/Middleware/EnsureActiveUser.php`,
+  `app/Support/Authorization/PlatformAdministrator.php`,
+  `app/Policies/PlatformSettingPolicy.php`, and protected platform Gate integration in
+  `app/Providers/AuthServiceProvider.php` after the Feature 007 ownership concern exists.
+- `AssignCorrelationId` is global and establishes one validated lowercase UUID v4 in `X-Correlation-ID`, the request/scoped object, exception response and shared log context. Invalid inbound identifiers are replaced; exception hooks preserve the ID through reporting and terminal cleanup prevents leakage.
+- `AppServiceProvider` resolves `TenantContext` only from the value already validated into the request attribute by Feature 007; it never queries or falls back to session. Custom active-user/context/team/active-tenant/presentation middleware run in that order before route substitution.
 
 ### Actions/commands
 
 - `UpdatePlatformSettings` with reinforced-confirmation requirement when lowering retention;
 - `ResetTenantUserPassword`;
 - `ChangeOwnPassword`;
-- `DeactivateUser`;
+- tenant-user lifecycle, including deactivation, remains owned by Feature 007 Actions;
 - `PruneExpiredAuditEvents` Action + `audit:prune` command;
 - `admin:reset-password` interactive command;
 - notification check commands remain in owning features and are scheduled here.

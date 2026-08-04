@@ -26,8 +26,8 @@ Audience/depth: PR reviewer / formal operational-readiness gate
 
 ## Shared-hosting requirement quality
 
-- [x] CHK001 Are PHP, extension, MySQL, document-root, writable-path, cron, and command-access prerequisites explicitly bounded? [Completeness, Spec §FR-001-020; Hosting contract]
+- [x] CHK001 Are PHP, extension, MySQL, document-root, writable-path, cron, and command-access prerequisites explicitly bounded? [Completeness, Spec §FR-001-005–FR-001-006; Hosting contract]
 - [x] CHK002 Is the distinction between build-time Node usage and the prohibited production Node runtime unambiguous? [Clarity, Plan §Runtime]
-- [x] CHK003 Are immutable artifact creation, transfer, checksum validation, activation, and health-check requirements consistently defined with Feature 006 deployment? [Consistency, Spec §FR-001-021; Dependency, Feature 006]
+- [x] CHK003 Are immutable artifact creation, transfer, checksum validation, activation, and health-check requirements consistently defined with Feature 006 deployment? [Consistency, Spec §FR-001-005; AC-001-08; Dependency, Feature 006]
 - [x] CHK004 Are failed preflight, failed migration, failed activation, and post-activation health failure requirements documented without destructive database rollback claims? [Coverage, Exception/Recovery, Hosting contract]
-- [x] CHK005 Are unknown provider capabilities explicitly retained as cutover evidence rather than treated as implementation defaults? [Assumption, Gap, Spec §FR-001-020]
+- [x] CHK005 Are unknown provider capabilities explicitly retained as cutover evidence rather than treated as implementation defaults? [Assumption, Gap, Hosting contract; Feature 006 cutover gates]

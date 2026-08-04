@@ -1,6 +1,6 @@
 # Master Plan IT — Laravel replatform Spec Kit
 
-This repository branch is intentionally documentation-only. It contains no Frappe or Laravel application code.
+This repository branch contains the authoritative Spec Kit replatform contract and an in-progress Laravel implementation. It contains no Frappe application code.
 
 ## Verified baseline
 
@@ -58,4 +58,4 @@ The analyzed graph contains 153 task IDs across 35 user stories, with 43 `[P]` t
 
 Laravel 13 modular monolith on PHP 8.3/MySQL 8.4, Sail verification, Filament 5, explicit one-database tenancy, configurable tenant RBAC, operational snapshot revisions, one current Expense source, controlled contract generation, one shared economic kernel, rolling Budget and immutable BudgetVersion, staged migration/portability, verified whole-installation backup and immutable release artifact.
 
-Spec Kit tooling was installed and updated as documented in `docs/replatform/spec-kit-installation-2026-08-04.md`. No Laravel application package, application code, migration, application test, build, backup, restore, import or deployment command was executed during this documentation remediation.
+Spec Kit tooling was installed and updated as documented in `docs/replatform/spec-kit-installation-2026-08-04.md`. Laravel implementation started on 2026-08-04 with the verified T001-001 scaffold/dependency gate; migrations, frontend build, backup, restore, import, deployment and cutover evidence remain governed by their unchecked tasks.

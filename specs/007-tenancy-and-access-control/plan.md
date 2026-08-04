@@ -1,6 +1,6 @@
 # Implementation plan — Feature 007 Tenancy and access control
 
-Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
+Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION IN PROGRESS`
 Dependencies: Feature 001 bootstrap; permission catalogue and shared security contracts
 
 ## Summary
@@ -24,10 +24,12 @@ Passes C-01, C-04, C-06, C-07, C-10 and C-11. Tenant isolation remains applicati
 ### Context
 
 - immutable request-scoped `TenantContext` containing tenant ID/model and actor;
-- `ResolveTenantContext`: Administrator reads explicit session/route selection; tenant user resolves own tenant;
+- `ResolveTenantContext`: Administrator reads explicit session selection from `tenant_context.tenant_id`; tenant user ignores that key and resolves only their own tenant;
 - `SetPermissionTeamContext`: calls `setPermissionsTeamId`, unsets loaded role/permission relations before/after context change;
 - `EnsureTenantIsActive` and safe route binding/query helpers;
-- `EnterTenantContext`, `LeaveTenantContext` Actions for Administrator with audit.
+- `EnterTenantContext`, `LeaveTenantContext` Actions for Administrator record `tenant.context.entered`/`tenant.context.left` with an explicit correlation ID before mutating the selection session key.
+
+T007-003 carries the immutable context in the request attribute keyed by `TenantContext::class`. T001-007 later owns the scoped container binding and middleware registration/order; it consumes this same attribute rather than introducing another context implementation.
 
 Tenant user cannot switch context. Missing/invalid/unauthorized context does not fall back to an unscoped query.
 
@@ -41,7 +43,7 @@ Tenant user cannot switch context. Missing/invalid/unauthorized context does not
 
 ### Policies/query scope
 
-Every tenant resource Policy checks explicit permission and same tenant/current state. Models do not rely on a global tenant scope as the sole defense; reusable Queries require `TenantContext` and start with tenant predicate. Route model binding uses scoped/custom resolution that avoids existence leak.
+Every tenant resource Policy composes the shared exact-permission, explicit-context and same-tenant ownership boundary first, then evaluates its own current-state and domain invariants. The shared boundary receives `TenantContext` explicitly and does not resolve it from hidden container state. Models do not rely on a global tenant scope as the sole defense; reusable Queries require `TenantContext` and start with tenant predicate. Route model binding uses scoped/custom resolution that avoids existence leak. The application authorization provider is listed in `bootstrap/providers.php` and adds no Administrator `Gate::before` bypass.
 
 ### UI
 
@@ -65,7 +67,8 @@ Configuration before migrations:
 - `teams=true`;
 - `team_foreign_key=tenant_id`;
 - global permissions; nullable-tenant roles;
-- protected Administrator role global;
+- protected Administrator role global with the complete stable catalogue, while every selected-tenant operation remains subject to the same Policy, ownership and domain invariants;
+- the role row remains global (`roles.tenant_id=null`), while its user assignment uses reserved package team key `0` because Spatie requires a non-null relationship team key; `0` is never a Tenant and Feature 001's boundary always restores the prior team context;
 - tenant roles assigned only to users in same tenant.
 
 Team context is set before `SubstituteBindings`/authorization for relevant web requests. Console commands explicitly iterate tenant context and reset it in `finally`. Tests reset permission cache and context between cases.

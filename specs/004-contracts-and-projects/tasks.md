@@ -6,6 +6,8 @@ Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `.
 
 Every task is test-first and reuses Feature 003 Money and Expense Actions. `[FND]`, `[USn]` and `[VER]` classes are defined by the readiness registry. Renewal notification behavior belongs to US-004-02 because it is part of the managed contract lifecycle; `[VER]` is reserved for the final evidence task.
 
+Foundation-story ownership: T004-001–T004-003 benefit US-004-01.
+
 ## Phase 1 — Foundational project/contract persistence
 
 - [ ] T004-001 [FND] Write `tests/Feature/Contracts/ContractProjectSchemaTest.php`; symbols: tenant-owned Project/Contract/ContractTerm/ContractGenerationException, terminal deletion tombstones, stage/cycle enums, term dates, immutable source components, Expense-row source-deletion provenance, unique source key, lock versions and no project/contract monetary totals; depends: T003-004, T007-012, T007-022; requirements: FR-004-001, FR-004-010, FR-004-011, FR-004-020, FR-004-021, FR-004-026, FR-004-032, FR-004-035, FR-004-036, FR-004-040–FR-004-044; validate: schema test; expected before implementation: focused failures; forbidden: recoverable delete state, total columns, generation amount exception, cross-tenant reference, cascading Expense delete or mutable deletion evidence.

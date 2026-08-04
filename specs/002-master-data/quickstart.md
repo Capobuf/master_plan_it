@@ -1,6 +1,6 @@
 # Verification quickstart — Feature 002 Master data
 
-Future commands; none were executed during planning.
+These commands were not executed during the historical planning cycle. Live implementation evidence is recorded in `tasks.md` and `.codex/orchestration-plan.md`.
 
 ## Fixture
 

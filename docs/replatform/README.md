@@ -1,6 +1,6 @@
 # Master Plan IT Laravel replatform documentation
 
-This package is the documentation-only contract for the Laravel replatform, anchored to `baseline.md`.
+This package is the authoritative contract for the in-progress Laravel replatform, anchored to `baseline.md`.
 
 ## Current phase
 
@@ -23,11 +23,11 @@ This package is the documentation-only contract for the Laravel replatform, anch
 - integration state: authoritative only in GitHub PR metadata.
 - final Constitution 3.x analysis on `ba3744fbc7043f3f3b036416e6c082e4cb7c6831`: historical pass with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings.
 - Constitution 5.0.0 clarification/plan/task propagation: complete.
-- current integrated analysis: `speckit-analyze-2026-08-04-constitution-5.0.0.md`, PASS with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings.
-- requirement-quality checklists: 295/295 passed.
-- `/speckit.implement`: next valid phase and not executed.
+- historical integrated analysis snapshot: `speckit-analyze-2026-08-04-constitution-5.0.0.md`, PASS with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings for the documentation tree it analyzed.
+- current requirement-quality checklists: 289/295 passed and 6 explicitly open.
+- `/speckit.implement`: active; verified completion is represented only by the current `tasks.md` checkboxes and `.codex/orchestration-plan.md` integration log.
 
-No package lock, application implementation, migration or application test was executed by this documentation remediation.
+The historical documentation-remediation cycle did not execute application work. Implementation, migrations and tests have since started and their live evidence is recorded in the orchestration plan and task checkboxes.
 
 ## Reading order
 

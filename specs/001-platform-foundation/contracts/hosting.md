@@ -1,13 +1,13 @@
 # Contract — Hosting
 
 Feature: `001-platform-foundation`  
-Status: `PLANNING INPUT — HOST PROFILE AND EXACT VERSIONS REQUIRE VERIFICATION`  
+Status: `IMPLEMENTATION CONTRACT — PACKAGE LOCK AND HOST PROFILE VERIFICATION REMAIN OPEN GATES`
 Purpose: shared-hosting prerequisites, runtime/database compatibility, document root, immutable build artifact, cron, storage and release handoff.
 
 ## Runtime boundary
 
 - Laravel 13 modular monolith.
-- Exact PHP runtime, extensions and image/package versions are locked by `/speckit.plan` after current compatibility verification.
+- PHP 8.3.32 and the package versions in the Feature 001 plan are planned constraints; they become authoritative runtime evidence only after T001-001 resolves the lock and T001-003 completes the Sail smoke check.
 - MySQL 8.4 LTS is the minimum accepted database family; an additional current family is supported only after the approved compatibility spike.
 - InnoDB, `utf8mb4` and strict SQL mode are mandatory.
 - Runtime may not require Redis, WebSockets, Node.js, a permanent queue worker or a second application service.

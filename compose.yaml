@@ -1,0 +1,66 @@
+name: master-plan-it-laravel
+
+services:
+  laravel.test:
+    build:
+      context: ./docker/8.3
+      dockerfile: Dockerfile
+      args:
+        WWWGROUP: '${WWWGROUP:-1000}'
+    image: master-plan-it/php:8.3.32
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    ports:
+      - '8080:80'
+      - '5174:5173'
+    environment:
+      WWWUSER: '${WWWUSER:-1000}'
+      LARAVEL_SAIL: 1
+      XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+      XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+      IGNITION_LOCAL_SITES_PATH: '${PWD}'
+    volumes:
+      - '.:/var/www/html'
+    networks:
+      - sail
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.4.10
+    environment:
+      MYSQL_ROOT_PASSWORD: '${DB_PASSWORD:-password}'
+      MYSQL_DATABASE: master_plan_it
+      MYSQL_USER: sail
+      MYSQL_PASSWORD: '${DB_PASSWORD:-password}'
+    command: >-
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --sql-mode=STRICT_TRANS_TABLES,NO_ZERO_DATE,NO_ZERO_IN_DATE,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+    volumes:
+      - 'sail-mysql:/var/lib/mysql'
+      - './docker/8.3/mysql-init.sh:/docker-entrypoint-initdb.d/10-create-databases.sh:ro'
+    networks:
+      - sail
+    healthcheck:
+      test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD:-password}']
+      retries: 12
+      timeout: 5s
+
+  selenium:
+    image: selenium/standalone-chromium:4.27.0
+    profiles: [dusk]
+    extra_hosts:
+      - 'host.docker.internal:host-gateway'
+    shm_size: 2gb
+    networks:
+      - sail
+
+networks:
+  sail:
+    driver: bridge
+
+volumes:
+  sail-mysql:
+    driver: local

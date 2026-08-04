@@ -7,7 +7,7 @@ Authority: Constitution C-07/C-11; Feature 007; `docs/replatform/permission-cata
 
 ## Protected platform boundary
 
-Only protected global Administrator may manage tenants/users/roles, platform settings, global audit view, migration/import, installation backup/restore and global overview. These abilities are absent from tenant role catalogue and cannot be created/assigned through Shield RoleResource.
+Only protected global Administrator may manage tenants/users/roles, platform settings, global audit view, migration/import, installation backup/restore and global overview. These abilities are absent from tenant role catalogue and cannot be created/assigned through Shield RoleResource. The Administrator remains tenantless: reserved Spatie relationship team key `0` is an internal platform scope, never a Tenant, and its protected boundary restores the prior team after every check or assignment.
 
 Changing a selected tenant's attachment quota is a protected platform-setting operation. It requires global Administrator and `platform.settings.manage`; entering tenant context or holding a tenant role is insufficient.
 

@@ -47,6 +47,7 @@ Legacy sources establish verified behavior or migration evidence. Product decisi
 | R-TEN-003 | Context fails closed and never leaks between requests/commands | Q-004/Q-015/Q-016; C-11 | FR-007-004/008/012/014; INV-TEN-001–003 | T007-003, T007-004, T007-012, T001-007 | context/team/middleware/query tests |
 | R-USR-001 | User deactivation preserves tenant-owned authorship/audit history and reports open assignments for manual reassignment | Q-017; Feature 007 AC-007-08/TEST-007-009; C-05/C-11 | FR-007-015; INV-TEN-009 | T007-008, T007-009 | `TenantUserMembershipTest` deactivation history, tenant ownership and reassignment-needed ID assertions |
 | R-AUD-001 | Audit retention is global configurable default 24; lowering is reinforced; pruning cannot delete current business rows, revision identity or named BudgetVersion rows; permission-controlled view exists; no export | Q-020; Feature 007 AC-007-10/TEST-007-010; C-05 | FR-001-019–021; FR-007-017; FR-007-023; INV-PLT-007; INV-TEN-010 | T001-019–T001-021, T001-025–T001-027 | `AuditRetentionTest` protected-record boundary assertions plus settings, scheduler and audit-view authorization/minimization tests |
+| R-AUD-002 | Every ordinary audit write passes through one bounded, sensitive-key rejecting recorder; Actions retain event-specific property validation and attachment/file bytes remain excluded | Feature 001 data model; C-05; Feature 007 NFR-007-PRIV-01 | FR-001-017; INV-PLT-006; NFR-007-PRIV-01 | T001-005, T001-026–T001-027, T007-011 | platform write-contract negative tests, audit-view minimization and final cross-feature privacy matrix; each Action's task remains responsible for its exact event properties |
 | R-PWD-001 | No public password recovery; Administrator reset, self-change and emergency interactive reset invalidate sessions without exposing secrets | Q-026; Feature 001/007 acceptance; C-05/C-07 | FR-001-014–017; FR-007-018; FR-007-019; INV-PLT-006 | T001-008, T001-012–T001-016 | no-recovery-route, password administration, self-change and console reset tests |
 | R-BRD-001 | Optional tenant branding is Administrator-managed and appears only in selected-tenant report/output content; shell remains Master Plan IT | FR-007-021; Feature 007 data model/plan; Feature 005 output plan | FR-007-021; INV-TEN-001; INV-TEN-004; INV-TEN-006 | T007-001, T007-002, T007-019, T007-020, T005-021–T005-023 | tenant branding, private logo, branding settings, output branding and print tests |
 | R-ATT-001 | Attachments follow exact allowlist/size/single-parent/private authorization; every revision has a complete manifest, unchanged bytes reuse one immutable payload version, restore is atomic, permanent Expense deletion purges payloads, and non-negative quota (including zero) counts distinct non-purged versions once | approved Feature 003 clarification | FR-003-061–069; INV-ATT-001–007; INV-EXP-TEN-001 | T003-005, T003-010, T003-015–T003-024, T007-021–T007-022 | attachment schema/policy/upload/quota-zero/reuse/lifecycle/manifest-restore/private-download tests |
@@ -62,8 +63,12 @@ Legacy sources establish verified behavior or migration evidence. Product decisi
 | Feature | Requirement ranges | Owning task groups | Verification task |
 |---|---|---|---|
 | 001 | FR-001-001–004 | T001-007–T001-016 | T001-024 |
-| 001 | FR-001-005–018 | T001-001–T001-018, T001-022–T001-027 | T001-024 |
-| 001 | FR-001-019–021 | T001-019–T001-021, T001-025–T001-027 | T001-024 |
+| 001 | FR-001-005–006; FR-001-009–010; FR-001-012–018 | T001-001–T001-018, T001-022–T001-025 | T001-024 |
+| 001 | FR-001-007 | T007-001–T007-003, T005-021–T005-023 | T001-024, T005-025, T007-018 |
+| 001 | FR-001-008 | T001-006, T001-012–T001-014, T001-019–T001-021, T006-005–T006-013, T007-005–T007-010 | T001-024, T006-018, T007-018 |
+| 001 | FR-001-011 | T007-001–T007-007 | T001-024, T007-018 |
+| 001 | FR-001-019 | T001-019–T001-021, T006-008–T006-009, T006-012–T006-013, T007-005–T007-006 | T001-024, T006-018, T007-018 |
+| 001 | FR-001-020–021 | T001-019–T001-021, T001-025–T001-027 | T001-024 |
 | 002 | FR-002-001–002 | T002-007–T002-009 | T002-016 |
 | 002 | FR-002-003–005/008–009 | T002-010–T002-012 | T002-016 |
 | 002 | FR-002-006–007 | T002-013–T002-015 | T002-016 |

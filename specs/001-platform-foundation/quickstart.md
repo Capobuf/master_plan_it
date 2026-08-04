@@ -8,7 +8,7 @@ Future commands; none were executed during planning.
 cp .env.example .env
 cp .env.testing.example .env.testing
 ./vendor/bin/sail up -d
-./vendor/bin/sail composer validate --strict
+./vendor/bin/sail composer validate --strict --no-check-all
 ./vendor/bin/sail artisan migrate
 ./vendor/bin/sail artisan migrate --env=testing
 ```
@@ -27,11 +27,22 @@ Verify exact planned versions and PHP platform 8.3.32. Failure blocks implementa
 
 ## Seed minimum platform
 
+Set non-empty, installation-specific values in `.env`; no demo/Administrator account or credential is seeded by default, and the Administrator seeder fails closed when any value is absent:
+
+```dotenv
+PLATFORM_ADMIN_NAME=
+PLATFORM_ADMIN_EMAIL=
+PLATFORM_ADMIN_PASSWORD=
+```
+
 ```bash
 ./vendor/bin/sail artisan db:seed --class=PermissionCatalogueSeeder
 ./vendor/bin/sail artisan db:seed --class=PlatformSettingSeeder
 ./vendor/bin/sail artisan db:seed --class=PlatformAdministratorSeeder
 ```
+
+The Administrator remains tenantless. The implementation uses Spatie team key `0` only as an internal platform-role assignment scope; do not create a Tenant with that ID.
+The configured email must be absent on first provisioning. Later runs are idempotent only for that already protected Administrator; any other existing-user collision fails closed.
 
 Create two tenants through Feature 007 fixture, one tenant role/user for each and one inactive tenant/user.
 
@@ -48,7 +59,7 @@ Create two tenants through Feature 007 fixture, one tenant role/user for each an
 Browser only when shell/role/settings UI is implemented:
 
 ```bash
-./vendor/bin/sail artisan dusk --filter=PlatformShellTest
+./vendor/bin/sail composer test:browser-matrix -- --filter=AccessibilityCompatibilityTest
 ```
 
 ## Manual acceptance
@@ -67,6 +78,7 @@ Browser only when shell/role/settings UI is implemented:
 
 ```bash
 ./vendor/bin/sail composer verify
+./vendor/bin/sail composer test:browser-matrix
 ```
 
 Success requires no destructive DB command, no unexpected log, no sensitive audit payload, no cross-request permission-team leakage and a valid release artifact structural test.
