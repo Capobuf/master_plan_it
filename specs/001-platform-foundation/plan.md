@@ -65,7 +65,7 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
   `app/Policies/PlatformSettingPolicy.php`, and protected platform Gate integration in
   `app/Providers/AuthServiceProvider.php` after the Feature 007 ownership concern exists.
 - `AssignCorrelationId` is global and establishes one validated lowercase UUID v4 in `X-Correlation-ID`, the request/scoped object, exception response and shared log context. Invalid inbound identifiers are replaced; exception hooks preserve the ID through reporting and terminal cleanup prevents leakage.
-- `AppServiceProvider` resolves `TenantContext` only from the value already validated into the request attribute by Feature 007; it never queries or falls back to session. Custom active-user/context/team/active-tenant/presentation middleware run in that order before route substitution.
+- `AppServiceProvider` resolves `TenantContext` only from the value already validated into the request attribute by Feature 007; it never queries or falls back to session. `EnsureActiveUser` runs on every authenticated panel route. Tenant-bound resources then apply the shared Feature 007 context/team/active-tenant/presentation route stack, in that order before route substitution; global dashboard and tenant-administration routes remain usable by an Administrator without a selected tenant. The panel registers active-user and the tenant stack as Livewire-persistent middleware, so Livewire update requests replay only middleware that was present on the original matched route rather than widening tenant requirements to global routes.
 
 ### Actions/commands
 

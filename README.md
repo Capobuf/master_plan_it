@@ -29,11 +29,11 @@ This repository branch contains the authoritative Spec Kit replatform contract a
 - invariant task/test ownership remediation: COMPLETE; integration state authoritative only in GitHub PR metadata; final analysis completed below;
 - integration state: authoritative only in GitHub PR metadata;
 - Constitution 5.0.0 product clarification and cross-artifact remediation: COMPLETE;
-- integrated `/speckit.analyze`: PASS — 0 CRITICAL, 0 HIGH, 0 MEDIUM;
-- `/speckit.checklist`: 295/295 requirement-quality items passed;
-- `/speckit.implement`: next valid phase and not executed.
+- historical integrated `/speckit.analyze`: PASS — 0 CRITICAL, 0 HIGH, 0 MEDIUM; superseded by rolling implementation-time analysis;
+- `/speckit.checklist`: 289/295 requirement-quality items currently passed;
+- `/speckit.implement`: active.
 
-The analyzed graph contains 153 task IDs across 35 user stories, with 43 `[P]` tasks, 300/300 requirement/invariant coverage and 153/153 exact validation-command/readiness coverage. Historical summaries do not override the current report.
+The historical analyzed graph contained 153 task IDs. Rolling analysis added T002-017 to close explicit package-integration ownership, so the live graph contains 154 task IDs across 35 user stories, with 43 `[P]` tasks and exact command/readiness ownership for all 154. Historical summaries do not override current artifacts, task checkboxes or `.codex/orchestration-plan.md`.
 
 ## Read in order
 

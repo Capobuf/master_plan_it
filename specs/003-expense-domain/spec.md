@@ -1,6 +1,6 @@
 # Feature 003 — Expense domain
 
-Status: `CLARIFIED AND APPROVED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
+Status: `CLARIFIED AND APPROVED; ROLLING ANALYSIS ACTIVE; IMPLEMENTATION IN PROGRESS`
 Logical owner: Product Owner with domain approval  
 Actor: tenant user with explicit permission  
 Dependencies: Feature 002 and Feature 007  

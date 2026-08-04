@@ -9,7 +9,7 @@ Create two tenants, years, cost centers, vendors and a Plafond. In tenant A crea
 ## Pure accounting
 
 ```bash
-./vendor/bin/sail artisan test tests/Accounting/Unit/Money
+./vendor/bin/sail artisan test tests/Accounting/Unit/MoneyTest.php
 ./vendor/bin/sail artisan test tests/Accounting/Unit/VatCalculatorTest.php
 ./vendor/bin/sail artisan test tests/Accounting/Unit/MonthlyAllocatorTest.php
 ```

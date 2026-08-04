@@ -3,15 +3,22 @@
 namespace Tests\Feature\Authorization;
 
 use App\Filament\Resources\Tenants\TenantResource;
+use App\Http\Middleware\ApplyTenantPresentationContext;
+use App\Http\Middleware\EnsureActiveUser;
+use App\Http\Middleware\EnsureTenantIsActive;
+use App\Http\Middleware\ResolveTenantContext;
+use App\Http\Middleware\SetPermissionTeamContext;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
 use Database\Seeders\PermissionCatalogueSeeder;
 use Filament\Facades\Filament;
+use Filament\Http\Middleware\Authenticate;
 use Filament\Navigation\NavigationGroup;
 use Filament\Navigation\NavigationItem;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Gate;
+use Livewire\Mechanisms\PersistentMiddleware\PersistentMiddleware;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -86,6 +93,43 @@ class NavigationPolicyTest extends TestCase
         $this->assertNotContains(TenantResource::class, $this->navigationItemKeys());
 
         $this->get('/admin/tenants')->assertForbidden();
+    }
+
+    public function test_global_panel_routes_remain_available_without_a_selected_tenant(): void
+    {
+        $this->get('/admin/login')->assertOk();
+
+        $administrator = User::factory()->create([
+            'tenant_id' => null,
+            'is_active' => true,
+        ]);
+        app(PlatformAdministrator::class)->assign($administrator);
+        $this->actingAs($administrator);
+
+        $this->get('/admin')->assertSuccessful();
+        $this->get('/admin/tenants')->assertSuccessful();
+    }
+
+    public function test_panel_auth_middleware_requires_authentication_then_an_active_user(): void
+    {
+        $panel = Filament::getPanel('admin');
+        $this->assertNotNull($panel);
+
+        $this->assertSame([
+            Authenticate::class,
+            EnsureActiveUser::class,
+        ], $panel->getAuthMiddleware());
+    }
+
+    public function test_panel_persists_active_user_and_tenant_route_security_middleware_for_livewire_updates(): void
+    {
+        $persistentMiddleware = app(PersistentMiddleware::class)->getPersistentMiddleware();
+
+        $this->assertContains(EnsureActiveUser::class, $persistentMiddleware);
+        $this->assertContains(ResolveTenantContext::class, $persistentMiddleware);
+        $this->assertContains(SetPermissionTeamContext::class, $persistentMiddleware);
+        $this->assertContains(EnsureTenantIsActive::class, $persistentMiddleware);
+        $this->assertContains(ApplyTenantPresentationContext::class, $persistentMiddleware);
     }
 
     /** @return list<string> */

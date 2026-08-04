@@ -106,7 +106,7 @@ T007-011 names every prerequisite task ID directly. It no longer depends on test
 | Notification delivery primitive | T001-017/T001-018 | T004-020, T006-014 |
 | Scheduler registration | T001-025 | completed commands only |
 | Audit settings/view | T001-019–T001-021, T001-026/T001-027 | tenant/global authorized readers |
-| Revision storage/orchestration | T002-004–T002-006 | Features 002–004 |
+| Revision storage/orchestration | T002-004–T002-006, T002-017 | Features 002–004 |
 | Master-data selectors | T002-009/T002-012/T002-015 | Expense create/update |
 | Money/VAT/allocation | T003-001/T003-002 | Features 003–005 |
 | Attachment persistence/policy | T003-021/T003-022 | T003-017/T003-018/T003-023 and portability |

@@ -23,8 +23,8 @@ Status: `DOCUMENTATION GATE PASSED ON CONSTITUTION 5.0.0 — IMPLEMENTATION IN P
 | S14 Invariant `/speckit.tasks` remediation | COMPLETE; INTEGRATION STATE IN GITHUB | exact existing task/test/readiness/source owners; unchanged task count and graph |
 | S15 Historical Constitution 3.0.1 final `/speckit.analyze` | COMPLETE AND RECORDED; SUPERSEDED | CRITICAL 0, HIGH 0, MEDIUM 0 on `ba3744fbc7043f3f3b036416e6c082e4cb7c6831`; does not authorize later artifacts |
 | S16 Constitution 4.0.0/5.0.0 clarification and propagation | COMPLETE; CURRENT WORKTREE | fixed calendar years, attachment manifests/quota, operational settings, output/performance/accessibility and terminal source deletion propagated |
-| S17 Current integrated `/speckit.analyze` | COMPLETE AND RECORDED | 0 CRITICAL, 0 HIGH, 0 MEDIUM; 300/300 requirement coverage; 153/153 command/readiness coverage; 295/295 checklist items |
-| S18 `/speckit.implement` | NEXT VALID; NOT EXECUTED | separate vertical-slice PRs with real locks/code/tests |
+| S17 Historical integrated `/speckit.analyze` | COMPLETE AND RECORDED; SUPERSEDED AS LIVE STATUS | 0 CRITICAL, 0 HIGH, 0 MEDIUM; 300/300 requirement coverage; 153/153 command/readiness coverage; 295/295 checklist items at that snapshot |
+| S18 `/speckit.implement` | ACTIVE | coordinator-owned work packages with real locks/code/tests; rolling analysis added T002-017 |
 | S19 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
 
 ## Proposed implementation critical path

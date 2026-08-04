@@ -4,12 +4,19 @@ namespace Tests\Livewire\IdentityAccess;
 
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\TenantState;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
+use App\Filament\Resources\Concerns\UsesTenantContextRoutes;
 use App\Filament\Resources\Users\Pages\CreateUser as CreateUserPage;
 use App\Filament\Resources\Users\Pages\EditUser as EditUserPage;
 use App\Filament\Resources\Users\Pages\ListUsers;
 use App\Filament\Resources\Users\UserResource;
+use App\Http\Middleware\ApplyTenantPresentationContext;
+use App\Http\Middleware\EnsureTenantIsActive;
+use App\Http\Middleware\ResolveTenantContext;
+use App\Http\Middleware\SetPermissionTeamContext;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesTenantOwnership;
 use App\Policies\UserPolicy;
 use App\Support\Authorization\PlatformAdministrator;
 use Database\Seeders\PermissionCatalogueSeeder;
@@ -17,11 +24,15 @@ use Filament\Facades\Filament;
 use Filament\Panel;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
+use ReflectionClass;
 use ReflectionMethod;
+use ReflectionNamedType;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -112,6 +123,93 @@ class UserResourceTest extends TestCase
         $this->assertAllowed($policy->create($administrator));
         $this->assertAllowed($policy->update($administrator, $user));
         $this->assertAllowed($policy->deactivate($administrator, $user));
+    }
+
+    public function test_gate_resolves_the_explicitly_registered_user_policy(): void
+    {
+        $this->administratorContext();
+        $gate = Gate::getFacadeRoot();
+        $reflection = new ReflectionClass($gate);
+        $policies = $reflection->getProperty('policies')->getValue($gate);
+
+        $this->assertSame(UserPolicy::class, $policies[User::class] ?? null);
+        $this->assertSame(UserPolicy::class, Gate::getPolicyFor(new User)::class);
+    }
+
+    public function test_resource_uses_the_shared_method_based_tenant_route_middleware_concern(): void
+    {
+        $resourceSource = file_get_contents((new ReflectionClass(UserResource::class))->getFileName());
+        $concernPath = app_path('Filament/Resources/Concerns/UsesTenantContextRoutes.php');
+
+        $this->assertIsString($resourceSource);
+        $this->assertContains(UsesTenantContextRoutes::class, class_uses_recursive(UserResource::class));
+        $this->assertStringNotContainsString('$routeMiddleware', $resourceSource);
+        $this->assertFileExists($concernPath);
+
+        $concernSource = file_get_contents($concernPath);
+        $this->assertIsString($concernSource);
+        $this->assertStringContainsString('function getRouteMiddleware', $concernSource);
+        $this->assertStringNotContainsString('$routeMiddleware', $concernSource);
+        $this->assertSame(UserResource::class, (new ReflectionMethod(UserResource::class, 'getRouteMiddleware'))->getDeclaringClass()->getName());
+        $this->assertSame([
+            ResolveTenantContext::class,
+            SetPermissionTeamContext::class,
+            EnsureTenantIsActive::class,
+            ApplyTenantPresentationContext::class,
+        ], UserResource::getRouteMiddleware(Panel::make()->id('user-resource-route-middleware')));
+    }
+
+    public function test_resource_query_delegates_tenant_scope_to_the_shared_helper(): void
+    {
+        $querySource = $this->methodSource(UserResource::class, 'getEloquentQuery');
+
+        $this->assertStringContainsString(TenantOwnedRecordQuery::class.'::forTenant', $querySource);
+        $this->assertDoesNotMatchRegularExpression('/\\bUser\\s*::\\s*query\\s*\\(/', $querySource);
+    }
+
+    public function test_policy_receives_explicit_context_and_fails_closed_for_missing_mismatched_or_spoofed_context(): void
+    {
+        [$administrator, $context] = $this->administratorContext();
+        $user = User::factory()->create(['tenant_id' => $context->tenantId]);
+        $reflection = new ReflectionClass(UserPolicy::class);
+        $constructor = $reflection->getConstructor();
+
+        $this->assertNotNull($constructor);
+        $this->assertContains(TenantContext::class, array_map(
+            static function ($parameter): ?string {
+                $type = $parameter->getType();
+
+                return $type instanceof ReflectionNamedType ? $type->getName() : null;
+            },
+            $constructor->getParameters(),
+        ));
+        $this->assertContains(AuthorizesTenantOwnership::class, class_uses_recursive(UserPolicy::class));
+        $policyPath = $reflection->getFileName();
+        $this->assertIsString($policyPath);
+        $policySource = file_get_contents($policyPath);
+        $this->assertIsString($policySource);
+        $this->assertNoTenantContextServiceLocation($policySource);
+
+        $this->actingAs($administrator);
+        $this->app->forgetInstance(TenantContext::class);
+        request()->attributes->remove(TenantContext::class);
+        try {
+            UserResource::getEloquentQuery();
+            $this->fail('The UserResource accepted a request without tenant context.');
+        } catch (AuthorizationException $exception) {
+            $this->assertSame('TENANT_CONTEXT_REQUIRED', $exception->getMessage());
+        }
+
+        $otherActor = User::factory()->create(['tenant_id' => $context->tenantId, 'is_active' => true]);
+        $this->app->instance(TenantContext::class, new TenantContext($context->tenant, $otherActor));
+        $this->assertDenied(app(UserPolicy::class)->view($administrator, $user));
+
+        $forgedTenant = new Tenant;
+        $forgedTenant->forceFill($context->tenant->getAttributes());
+        $this->assertFalse($forgedTenant->exists);
+        $this->assertSame($context->tenantId, (int) $forgedTenant->getKey());
+        $this->app->instance(TenantContext::class, new TenantContext($forgedTenant, $administrator));
+        $this->assertDenied(app(UserPolicy::class)->view($administrator, $user));
     }
 
     public function test_resource_query_contains_only_users_owned_by_the_selected_tenant(): void
@@ -329,7 +427,10 @@ class UserResourceTest extends TestCase
         $this->assertStringContainsString('UpdateTenantUser', $source);
         $this->assertStringContainsString('AssignTenantRoles', $source);
         $this->assertStringContainsString('DeactivateTenantUser', $source);
-        $this->assertDoesNotMatchRegularExpression('/->(?:create|update|save|delete|syncRoles|givePermissionTo)\s*\(/', $source);
+        $this->assertDoesNotMatchRegularExpression(
+            '/(?:(?:User|Role|Permission)::(?:create|forceCreate|updateOrCreate|insert|upsert|destroy)|DB::(?:table|statement|insert|update|delete)|->(?:create|forceCreate|update|updateOrCreate|save|saveQuietly|delete|deleteQuietly|forceDelete|insert|upsert|attach|detach|sync|syncWithoutDetaching|toggle|syncRoles|syncPermissions|givePermissionTo|revokePermissionTo|forceFill))\s*\(/',
+            $source,
+        );
     }
 
     /** @return array{User, TenantContext} */
@@ -379,6 +480,22 @@ class UserResourceTest extends TestCase
         return (new ReflectionMethod($page, $method))->invoke($page, ...$arguments);
     }
 
+    private function methodSource(string $class, string $method): string
+    {
+        $reflection = new ReflectionMethod($class, $method);
+        $path = $reflection->getFileName();
+
+        $this->assertIsString($path);
+        $source = file($path);
+        $this->assertIsArray($source);
+
+        return implode('', array_slice(
+            $source,
+            $reflection->getStartLine() - 1,
+            $reflection->getEndLine() - $reflection->getStartLine() + 1,
+        ));
+    }
+
     private function assertAllowed(bool|Response $result): void
     {
         $this->assertTrue($result instanceof Response ? $result->allowed() : $result);
@@ -387,5 +504,20 @@ class UserResourceTest extends TestCase
     private function assertDenied(bool|Response $result): void
     {
         $this->assertFalse($result instanceof Response ? $result->allowed() : $result);
+    }
+
+    private function assertNoTenantContextServiceLocation(string $policySource): void
+    {
+        $patterns = [
+            '/\b(?:app|resolve|container)\s*\(\s*TenantContext::class/',
+            '/\b(?:app|container)\s*\(\s*\)\s*->\s*(?:make|makeWith|get|offsetGet)\s*\(\s*TenantContext::class/',
+            '/\bContainer::getInstance\s*\(\s*\)\s*->\s*(?:make|makeWith|get|offsetGet)\s*\(\s*TenantContext::class/',
+            '/\bContainer::getInstance\s*\(\s*\)\s*\[\s*TenantContext::class\s*\]/',
+            '/\$this\s*->\s*app\s*(?:->\s*(?:make|makeWith|get|offsetGet)\s*\(\s*TenantContext::class|\[\s*TenantContext::class\s*\])/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            $this->assertDoesNotMatchRegularExpression($pattern, $policySource);
+        }
     }
 }

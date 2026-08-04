@@ -68,18 +68,18 @@ The historical documentation-remediation cycle did not execute application work.
 - guarded backup dependency command restores Composer files on resolution failure;
 - cutover-readiness evidence has exact requirements, paths, command and result rules.
 
-## Verified current task inventory
+## Verified task inventory
 
-- 153 tasks across 35 user stories;
+- 154 current tasks across 35 user stories; the zero-finding pre-implementation snapshot contained 153 before rolling analysis added T002-017;
 - 43 `[P]` tasks after exact prerequisites;
 - 7 feature task files;
 - one source/invariant/error registry;
 - seven exact command registers;
 - one path manifest;
 - one bidirectional source/requirement/task/test ledger;
-- no implementation code.
+- implementation is active; task checkboxes and `.codex/orchestration-plan.md` are the live completion evidence.
 
-The Constitution 5.0.0 integrated analysis verified this inventory and the seven feature packages are implementation-ready. This does not claim application/runtime verification.
+The Constitution 5.0.0 integrated analysis verified its 153-task snapshot. Rolling implementation-time analysis maintains the live 154-task inventory and does not claim unexecuted application/runtime verification.
 
 ## Remaining evidence
 

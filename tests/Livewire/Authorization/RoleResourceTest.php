@@ -4,12 +4,19 @@ namespace Tests\Livewire\Authorization;
 
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\TenantState;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
+use App\Filament\Resources\Concerns\UsesTenantContextRoutes;
 use App\Filament\Resources\Roles\Pages\CreateRole as CreateRolePage;
 use App\Filament\Resources\Roles\Pages\EditRole as EditRolePage;
 use App\Filament\Resources\Roles\Pages\ListRoles;
 use App\Filament\Resources\Roles\RoleResource;
+use App\Http\Middleware\ApplyTenantPresentationContext;
+use App\Http\Middleware\EnsureTenantIsActive;
+use App\Http\Middleware\ResolveTenantContext;
+use App\Http\Middleware\SetPermissionTeamContext;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Policies\Concerns\AuthorizesTenantOwnership;
 use App\Policies\RolePolicy;
 use App\Support\Authorization\PermissionCatalogue;
 use App\Support\Authorization\PlatformAdministrator;
@@ -19,10 +26,14 @@ use Filament\Facades\Filament;
 use Filament\Panel;
 use Filament\Schemas\Schema;
 use Filament\Tables\Table;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Auth\Access\Response;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Gate;
+use ReflectionClass;
 use ReflectionMethod;
+use ReflectionNamedType;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -111,6 +122,93 @@ class RoleResourceTest extends TestCase
         $this->assertAllowed($policy->delete($administrator, $role));
     }
 
+    public function test_gate_resolves_the_explicitly_registered_role_policy(): void
+    {
+        $this->administratorContext();
+        $gate = Gate::getFacadeRoot();
+        $reflection = new ReflectionClass($gate);
+        $policies = $reflection->getProperty('policies')->getValue($gate);
+
+        $this->assertSame(RolePolicy::class, $policies[Role::class] ?? null);
+        $this->assertSame(RolePolicy::class, Gate::getPolicyFor(new Role)::class);
+    }
+
+    public function test_resource_uses_the_shared_method_based_tenant_route_middleware_concern(): void
+    {
+        $resourceSource = file_get_contents((new ReflectionClass(RoleResource::class))->getFileName());
+        $concernPath = app_path('Filament/Resources/Concerns/UsesTenantContextRoutes.php');
+
+        $this->assertIsString($resourceSource);
+        $this->assertContains(UsesTenantContextRoutes::class, class_uses_recursive(RoleResource::class));
+        $this->assertStringNotContainsString('$routeMiddleware', $resourceSource);
+        $this->assertFileExists($concernPath);
+
+        $concernSource = file_get_contents($concernPath);
+        $this->assertIsString($concernSource);
+        $this->assertStringContainsString('function getRouteMiddleware', $concernSource);
+        $this->assertStringNotContainsString('$routeMiddleware', $concernSource);
+        $this->assertSame(RoleResource::class, (new ReflectionMethod(RoleResource::class, 'getRouteMiddleware'))->getDeclaringClass()->getName());
+        $this->assertSame([
+            ResolveTenantContext::class,
+            SetPermissionTeamContext::class,
+            EnsureTenantIsActive::class,
+            ApplyTenantPresentationContext::class,
+        ], RoleResource::getRouteMiddleware(Panel::make()->id('role-resource-route-middleware')));
+    }
+
+    public function test_resource_query_delegates_tenant_scope_to_the_shared_helper(): void
+    {
+        $querySource = $this->methodSource(RoleResource::class, 'getEloquentQuery');
+
+        $this->assertStringContainsString(TenantOwnedRecordQuery::class.'::forTenant', $querySource);
+        $this->assertDoesNotMatchRegularExpression('/\\bRole\\s*::\\s*query\\s*\\(/', $querySource);
+    }
+
+    public function test_policy_receives_explicit_context_and_fails_closed_for_missing_mismatched_or_spoofed_context(): void
+    {
+        [$administrator, $context] = $this->administratorContext();
+        $role = $this->tenantRole($context->tenant, 'Explicit context role', ['dashboard.view']);
+        $reflection = new ReflectionClass(RolePolicy::class);
+        $constructor = $reflection->getConstructor();
+
+        $this->assertNotNull($constructor);
+        $this->assertContains(TenantContext::class, array_map(
+            static function ($parameter): ?string {
+                $type = $parameter->getType();
+
+                return $type instanceof ReflectionNamedType ? $type->getName() : null;
+            },
+            $constructor->getParameters(),
+        ));
+        $this->assertContains(AuthorizesTenantOwnership::class, class_uses_recursive(RolePolicy::class));
+        $policyPath = $reflection->getFileName();
+        $this->assertIsString($policyPath);
+        $policySource = file_get_contents($policyPath);
+        $this->assertIsString($policySource);
+        $this->assertNoTenantContextServiceLocation($policySource);
+
+        $this->actingAs($administrator);
+        $this->app->forgetInstance(TenantContext::class);
+        request()->attributes->remove(TenantContext::class);
+        try {
+            RoleResource::getEloquentQuery();
+            $this->fail('The RoleResource accepted a request without tenant context.');
+        } catch (AuthorizationException $exception) {
+            $this->assertSame('TENANT_CONTEXT_REQUIRED', $exception->getMessage());
+        }
+
+        $otherActor = User::factory()->create(['tenant_id' => $context->tenantId, 'is_active' => true]);
+        $this->app->instance(TenantContext::class, new TenantContext($context->tenant, $otherActor));
+        $this->assertDenied(app(RolePolicy::class)->view($administrator, $role));
+
+        $forgedTenant = new Tenant;
+        $forgedTenant->forceFill($context->tenant->getAttributes());
+        $this->assertFalse($forgedTenant->exists);
+        $this->assertSame($context->tenantId, (int) $forgedTenant->getKey());
+        $this->app->instance(TenantContext::class, new TenantContext($forgedTenant, $administrator));
+        $this->assertDenied(app(RolePolicy::class)->view($administrator, $role));
+    }
+
     public function test_resource_query_contains_only_roles_owned_by_the_selected_tenant(): void
     {
         [$administrator, $context] = $this->administratorContext(inactiveTenant: true);
@@ -145,7 +243,11 @@ class RoleResourceTest extends TestCase
         $this->assertTrue(method_exists($abilities, 'getOptions'));
         $options = $abilities->getOptions();
 
-        $this->assertSame(PermissionCatalogue::tenantAbilities(), array_keys($options));
+        $expectedAbilityKeys = PermissionCatalogue::tenantAbilities();
+        $actualAbilityKeys = array_keys($options);
+        sort($expectedAbilityKeys);
+        sort($actualAbilityKeys);
+        $this->assertSame($expectedAbilityKeys, $actualAbilityKeys);
         $this->assertArrayNotHasKey('persisted.rogue', $options);
         foreach (PermissionCatalogue::protectedAbilities() as $protectedAbility) {
             $this->assertArrayNotHasKey($protectedAbility, $options);
@@ -218,7 +320,7 @@ class RoleResourceTest extends TestCase
     public function test_duplicate_and_delete_table_actions_create_an_independent_tenant_copy_then_use_domain_deletion(): void
     {
         [$administrator, $context] = $this->administratorContext();
-        $source = $this->tenantRole($context->tenant, 'Editor', ['dashboard.view', 'planning-year.view']);
+        $source = $this->tenantRole($context->tenant, 'Quarter Close Steward 47', ['dashboard.view', 'planning-year.view']);
         $this->actingAs($administrator);
         $table = RoleResource::table(Table::make(app(ListRoles::class)));
         $duplicate = $table->getAction('duplicate');
@@ -232,11 +334,11 @@ class RoleResourceTest extends TestCase
         ));
         $duplicateHandler = $duplicate->getActionFunction();
         $this->assertNotNull($duplicateHandler);
-        $duplicateHandler($source, ['name' => 'Editor copy']);
+        $duplicateHandler($source, ['name' => 'Quarter Close Steward 47 copy']);
 
         $copy = Role::query()
             ->where('tenant_id', $context->tenantId)
-            ->where('name', 'Editor copy')
+            ->where('name', 'Quarter Close Steward 47 copy')
             ->firstOrFail();
         $this->assertNotSame($source->getKey(), $copy->getKey());
         $this->assertSame($context->tenantId, (int) $copy->tenant_id);
@@ -271,6 +373,47 @@ class RoleResourceTest extends TestCase
         ]);
     }
 
+    public function test_delete_table_action_preserves_the_only_assigned_role_pivot_and_audit_on_denial(): void
+    {
+        [$administrator, $context] = $this->administratorContext();
+        $onlyRole = $this->tenantRole($context->tenant, 'Only assigned custom role', ['dashboard.view']);
+        $user = User::factory()->create(['tenant_id' => $context->tenantId]);
+        $this->assignRoleDirectly($user, $context->tenantId, $onlyRole);
+        $beforeAuditCount = $context->tenant->auditEvents()->count();
+        $this->actingAs($administrator);
+        $table = RoleResource::table(Table::make(app(ListRoles::class)));
+        $delete = $table->getAction('delete');
+
+        $this->assertNotNull($delete);
+        $deleteHandler = $delete->getActionFunction();
+        $this->assertNotNull($deleteHandler);
+
+        try {
+            $deleteHandler($onlyRole);
+            $this->fail('The RoleResource deleted the only role assigned to a tenant user.');
+        } catch (DomainException $exception) {
+            $this->assertSame('TENANT_ROLE_IN_USE', $exception->getMessage());
+        }
+
+        $this->assertDatabaseHas('roles', [
+            'id' => $onlyRole->getKey(),
+            'tenant_id' => $context->tenantId,
+            'name' => 'Only assigned custom role',
+        ]);
+        $this->assertDatabaseHas('model_has_roles', [
+            'tenant_id' => $context->tenantId,
+            'role_id' => $onlyRole->getKey(),
+            'model_id' => $user->getKey(),
+            'model_type' => $user->getMorphClass(),
+        ]);
+        $this->assertSame($beforeAuditCount, $context->tenant->auditEvents()->count());
+        $this->assertDatabaseMissing('audit_events', [
+            'tenant_id' => $context->tenantId,
+            'event_type' => 'tenant.role.deleted',
+            'subject_id' => $onlyRole->getKey(),
+        ]);
+    }
+
     public function test_role_resource_ui_contains_no_direct_eloquent_write_path(): void
     {
         $paths = [
@@ -293,7 +436,12 @@ class RoleResourceTest extends TestCase
         $this->assertStringContainsString('CreateTenantRole', $source);
         $this->assertStringContainsString('UpdateTenantRole', $source);
         $this->assertStringContainsString('DeleteTenantRole', $source);
-        $this->assertDoesNotMatchRegularExpression('/->(?:create|update|save|delete|syncPermissions)\s*\(/', $source);
+        $this->assertStringNotContainsString("'Editor'", $source);
+        $this->assertStringNotContainsString("'Viewer'", $source);
+        $this->assertDoesNotMatchRegularExpression(
+            '/(?:(?:Role|Permission)::(?:create|forceCreate|updateOrCreate|insert|upsert|destroy)|DB::(?:table|statement|insert|update|delete)|->(?:create|forceCreate|update|updateOrCreate|save|saveQuietly|delete|deleteQuietly|forceDelete|insert|upsert|attach|detach|sync|syncWithoutDetaching|toggle|syncRoles|syncPermissions|givePermissionTo|revokePermissionTo|forceFill))\s*\(/',
+            $source,
+        );
     }
 
     /** @return array{User, TenantContext} */
@@ -323,9 +471,40 @@ class RoleResourceTest extends TestCase
         return $role;
     }
 
+    private function assignRoleDirectly(User $user, int $tenantId, Role $role): void
+    {
+        $registrar = app(PermissionRegistrar::class);
+        $previous = $registrar->getPermissionsTeamId();
+        $registrar->setPermissionsTeamId($tenantId);
+
+        try {
+            $user->assignRole($role);
+        } finally {
+            $user->unsetRelation('roles');
+            $user->unsetRelation('permissions');
+            $registrar->setPermissionsTeamId($previous);
+        }
+    }
+
     private function invokePageHandler(object $page, string $method, mixed ...$arguments): mixed
     {
         return (new ReflectionMethod($page, $method))->invoke($page, ...$arguments);
+    }
+
+    private function methodSource(string $class, string $method): string
+    {
+        $reflection = new ReflectionMethod($class, $method);
+        $path = $reflection->getFileName();
+
+        $this->assertIsString($path);
+        $source = file($path);
+        $this->assertIsArray($source);
+
+        return implode('', array_slice(
+            $source,
+            $reflection->getStartLine() - 1,
+            $reflection->getEndLine() - $reflection->getStartLine() + 1,
+        ));
     }
 
     private function assertAllowed(bool|Response $result): void
@@ -336,5 +515,20 @@ class RoleResourceTest extends TestCase
     private function assertDenied(bool|Response $result): void
     {
         $this->assertFalse($result instanceof Response ? $result->allowed() : $result);
+    }
+
+    private function assertNoTenantContextServiceLocation(string $policySource): void
+    {
+        $patterns = [
+            '/\b(?:app|resolve|container)\s*\(\s*TenantContext::class/',
+            '/\b(?:app|container)\s*\(\s*\)\s*->\s*(?:make|makeWith|get|offsetGet)\s*\(\s*TenantContext::class/',
+            '/\bContainer::getInstance\s*\(\s*\)\s*->\s*(?:make|makeWith|get|offsetGet)\s*\(\s*TenantContext::class/',
+            '/\bContainer::getInstance\s*\(\s*\)\s*\[\s*TenantContext::class\s*\]/',
+            '/\$this\s*->\s*app\s*(?:->\s*(?:make|makeWith|get|offsetGet)\s*\(\s*TenantContext::class|\[\s*TenantContext::class\s*\])/',
+        ];
+
+        foreach ($patterns as $pattern) {
+            $this->assertDoesNotMatchRegularExpression($pattern, $policySource);
+        }
     }
 }

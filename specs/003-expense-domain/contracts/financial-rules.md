@@ -5,11 +5,11 @@ Status: `PROPOSED TARGET — PLAN COMPLETE`
 
 ## Monetary representation
 
-Authoritative PHP values are normalized decimal strings and immutable Money/VAT DTOs backed by BCMath. MySQL stores source/intermediate values at `DECIMAL(19,6)` and Net/VAT/Gross business results at `DECIMAL(19,2)`. Float is prohibited except non-authoritative chart copies after calculation.
+Authoritative PHP values are normalized decimal strings and immutable Money/VAT DTOs backed by BCMath. MySQL stores source/intermediate values at `DECIMAL(19,6)`, Net/VAT/Gross business results at `DECIMAL(19,2)`, and VAT rates at `DECIMAL(12,6)`. The Money range guard uses total precision 19 at the requested scale rather than the scale-six integer limit for every result. Float is prohibited except non-authoritative chart copies after calculation.
 
 ## Amount
 
-When non-zero unit price is supplied, entered amount equals quantity × unit price at high precision. Otherwise entered amount is manual. Invalid scale/range/exponent input returns `INVALID_MONEY`.
+When non-zero unit price is supplied, entered amount equals quantity × unit price. The two scale-six operands are multiplied at twelve-fractional-digit precision and quantized half-up to the six-decimal entered-amount boundary; truncating directly at six decimals is forbidden. Otherwise entered amount is manual. Invalid scale/range/exponent input returns `INVALID_MONEY`.
 
 Estimate/Quote Net cannot be negative. Actual may be negative. Types are independent and no predecessor is required.
 

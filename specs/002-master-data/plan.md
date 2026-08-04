@@ -71,7 +71,7 @@ Dusk is not planned unless custom browser-only tree behavior remains after the n
 3. planning-year Actions/tests;
 4. vendor Actions/tests;
 5. cost-center Actions/tests;
-6. revision integration;
+6. application-owned revision restore integration, after the foundational Overtrue package integration and revision-batch boundary;
 7. queries/selectors;
 8. Filament Resources;
 9. tenant/concurrency/lifecycle/restore verification.

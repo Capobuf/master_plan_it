@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Overtrue\LaravelVersionable\Versionable;
+use Overtrue\LaravelVersionable\VersionStrategy;
 
 #[Fillable([
     'tenant_id',
@@ -22,7 +24,19 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Vendor extends Model
 {
     /** @use HasFactory<VendorFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Versionable;
+
+    /** @var list<string> */
+    protected array $versionable = [
+        'name',
+        'vat_number',
+        'email',
+        'phone',
+        'address',
+        'active',
+    ];
+
+    protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
 
     /**
      * @return array<string, string>

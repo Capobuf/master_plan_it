@@ -13,7 +13,7 @@
 | T007-021–T007-022 | `php artisan test tests/Feature/Tenancy/TenantOperationalSettingsTest.php tests/Feature/Authorization/OperationalSettingsAuthorizationTest.php tests/Livewire/Tenancy/TenantOperationalSettingsPageTest.php` |
 | T007-008 | `php artisan test tests/Feature/Authorization/TenantRoleManagementTest.php tests/Feature/Authorization/ProtectedPermissionTest.php tests/Feature/IdentityAccess/TenantUserMembershipTest.php` |
 | T007-009 | `php artisan test tests/Feature/Authorization/TenantRoleManagementTest.php tests/Feature/Authorization/ProtectedPermissionTest.php tests/Feature/IdentityAccess/TenantUserMembershipTest.php tests/Architecture/WriteRollbackCoverageTest.php` |
-| T007-010 | `php artisan test tests/Livewire/Authorization/RoleResourceTest.php tests/Livewire/IdentityAccess/UserResourceTest.php` |
+| T007-010 | `php artisan test tests/Livewire/Authorization/RoleResourceTest.php tests/Livewire/IdentityAccess/UserResourceTest.php tests/Architecture/TenantQueryScopeTest.php` |
 | T007-011 | `php artisan test tests/Feature/Authorization/AbilityMatrixTest.php tests/Feature/Tenancy/CrossTenantIdorTest.php tests/Feature/Tenancy/AttachmentIsolationTest.php tests/Feature/Tenancy/ReportIsolationTest.php tests/Feature/Tenancy/RevisionIsolationTest.php tests/Feature/Tenancy/CommandIsolationTest.php` |
 | T007-013 | `php artisan test tests/Architecture/TenantBoundaryTest.php` |
 | T007-014–T007-015 | `php artisan test tests/Feature/Tenancy/GlobalTenantOverviewTest.php tests/Architecture/NoCrossTenantEconomicsTest.php` |

@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Overtrue\LaravelVersionable\Versionable;
+use Overtrue\LaravelVersionable\VersionStrategy;
 
 #[Fillable([
     'tenant_id',
@@ -20,7 +22,16 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class CostCenter extends Model
 {
     /** @use HasFactory<CostCenterFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Versionable;
+
+    /** @var list<string> */
+    protected array $versionable = [
+        'parent_id',
+        'name',
+        'active',
+    ];
+
+    protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
 
     /**
      * @return array<string, string>

@@ -15,8 +15,8 @@ Passes C-02, C-03, C-04, C-05, C-07, C-10, C-11 and C-12. Attachment payloads li
 
 ### Money
 
-- `app/Domain/Money/Data/Money.php` immutable decimal string/currency value;
-- `VatBreakdown.php`;
+- `app/Domain/Money/Money.php` immutable normalized decimal string/currency value;
+- `app/Domain/Money/VatBreakdown.php`;
 - `MoneyCalculator.php` BCMath add/subtract/multiply/round;
 - `VatCalculator.php` included/excluded VAT;
 - `MonthlyAllocator.php` exact residual distribution.
@@ -98,9 +98,9 @@ No deadlock retry at launch.
 
 ## Money rules
 
-MySQL input/intermediate `DECIMAL(19,6)`, results `DECIMAL(19,2)`. PHP receives strings. `Money` rejects exponent notation, scale overflow and mixed currencies.
+MySQL input/intermediate `DECIMAL(19,6)`, results `DECIMAL(19,2)`. PHP receives strings. Root-namespace readonly `Money` normalizes accepted sub-scale input, applies total precision 19 at the requested scale (thirteen integer digits at scale six and seventeen at scale two), normalizes accepted three-letter ASCII currency input to uppercase, and rejects exponent notation, range/scale overflow and invalid or mixed currencies. VAT rates use the schema's `DECIMAL(12,6)` capacity. `VatBreakdown` is likewise readonly.
 
-Rounding is half-up at documented result boundaries. Monthly allocation computes high-precision shares, rounds each month and assigns residual deterministically to the last eligible month according to distribution order.
+Rounding is half-up at documented result boundaries. Quantity/unit-price multiplication first computes all twelve possible fractional digits with PHP 8.3 BCMath and then quantizes half-up to the six-decimal intermediate boundary; direct scale-six `bcmul()` truncation and PHP 8.4-only `bcround()` are forbidden. Monthly allocation computes high-precision shares, rounds each month and assigns residual deterministically to the last eligible month according to distribution order. Its ordered `Y-m` mapping contains every eligible month for `all`; `start` and `end` return only their selected month. Spend-date XOR, Expense-row type negativity, VAT/default selection and Budget basis are aggregate responsibilities, not generic Money concerns.
 
 ## Revision integration
 
@@ -119,7 +119,7 @@ Legacy current row selection is deterministic from verified state/replacement ev
 - Money parsing/scale/currency;
 - VAT included/excluded, zero, negative Actual, half-cent boundaries;
 - quantity multiplication;
-- date modes and all/start/end allocation residuals.
+- all/start/end allocation, invalid period/distribution and positive/negative/minimal residuals; aggregate tests own spend-date XOR and type-specific negativity.
 
 ### Aggregate integration
 

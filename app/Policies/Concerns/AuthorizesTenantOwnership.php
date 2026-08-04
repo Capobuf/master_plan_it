@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Model;
 use Spatie\Permission\Exceptions\PermissionDoesNotExist;
 use Spatie\Permission\PermissionRegistrar;
 
-trait AuthorizesTenantOwnership /** @phpstan-ignore trait.unused (Foundation policy boundary consumed by the first tenant-owned feature Policy.) */
+trait AuthorizesTenantOwnership
 {
     protected function authorizeTenantOwnership(
         User $actor,

@@ -5,6 +5,7 @@
 | T002-001–002 | `php artisan test tests/Feature/MasterData/MasterDataSchemaTest.php` |
 | T002-003 | `php artisan test tests/Feature/MasterData/MasterDataAuthorizationTest.php` |
 | T002-004 | `php artisan test tests/Feature/Revisions/VersioningPackageSmokeTest.php` |
+| T002-017 | `php artisan test tests/Feature/Revisions/VersioningPackageSmokeTest.php` |
 | T002-005 | `php artisan test tests/Feature/Revisions/RevisionBatchSchemaTest.php` |
 | T002-006 | `php artisan test tests/Feature/Revisions/RevisionBatchIntegrationTest.php` |
 | T002-007–008 | `php artisan test tests/Feature/MasterData/PlanningYearTest.php tests/Feature/Migration/PlanningYearCalendarBoundaryTest.php` |
