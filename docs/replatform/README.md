@@ -36,8 +36,9 @@ No package lock, implementation, migration or test was executed by this document
 14. `task-execution-registry.md`, feature command registers and `task-execution/path-overrides.md`;
 15. `tasks-summary.md`;
 16. `speckit-analyze-2026-08-03.md` and `speckit-analyze-2026-08-03-rerun.md`;
-17. `implementation-readiness.md`, `package-validation.md`, `spec-kit-analysis.md`;
-18. the next `/speckit.analyze` report.
+17. `workflow-investigation-2026-08-04.md`;
+18. `implementation-readiness.md`, `package-validation.md`, `spec-kit-analysis.md`;
+19. the next `/speckit.analyze` report.
 
 ## Second-remediation outcomes
 
