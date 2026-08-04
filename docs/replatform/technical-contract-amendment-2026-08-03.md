@@ -44,8 +44,10 @@ The executable gate is the exact guarded command in `docs/replatform/task-execut
 - rerun `/speckit.analyze`: recorded 0 CRITICAL, 8 HIGH and 4 MEDIUM findings;
 - second `/speckit.tasks` remediation: complete;
 - Spec Kit 0.15.2 integration and 2026-08-04 task/checklist remediations: complete and merged;
-- latest integrated analysis on `0d3a84c38e177f90e53f74bb84f78594ca00d32d`: recorded 0 CRITICAL, 1 HIGH and 1 MEDIUM finding;
+- second 2026-08-04 rerun on `0d3a84c38e177f90e53f74bb84f78594ca00d32d`: recorded 0 CRITICAL, 1 HIGH and 1 MEDIUM finding;
 - ability-contract `/speckit.plan` remediation: complete and merged;
+- third analysis on `f673513c137e797d52bc5f3099ed3c1c10b4a129`: recorded 0 CRITICAL, 1 HIGH and 0 MEDIUM findings;
+- complete cross-contract C-07/Q-016 propagation: complete and merged;
 - integration state: authoritative only in GitHub PR metadata;
 - next valid command on the latest integrated HEAD: `/speckit.analyze`;
 - `/speckit.implement`: blocked until CRITICAL `0` and HIGH `0`.

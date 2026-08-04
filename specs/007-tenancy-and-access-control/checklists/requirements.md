@@ -8,15 +8,17 @@ Audience/depth: PR reviewer / formal security-readiness gate
 
 ## Preserved cross-feature baseline
 
+This inherited baseline is interpreted through Constitution C-07: role-name items describe initial seed-template defaults only. Exact stable abilities, tenant context, ownership, actor/current state, and domain invariants are the normative authorization inputs.
+
 - [ ] Every tenant-bound entity has explicit ownership.
 - [ ] Every cross-tenant relationship is forbidden and testable.
-- [ ] Every route and action has a role result.
+- [ ] Every route and action has an exact-ability allow/deny result.
 - [ ] Reports, prints and exports are tenant-scoped.
 - [ ] Attachments and downloads are tenant-scoped.
 - [ ] Scheduled work and commands fail closed without tenant ownership.
 - [ ] Administrator identity is preserved when acting in a tenant.
-- [ ] Editor cannot manage users or global operations.
-- [ ] Viewer cannot write data.
+- [ ] Seeded Editor omits protected user/global abilities; customized tenant-role names cannot acquire protected platform abilities.
+- [ ] Seeded Viewer omits write abilities; later authorization follows configured catalogue abilities rather than the template name.
 - [ ] Tenant deletion is unavailable.
 - [ ] Tenant current context is visible in side navigation and breadcrumbs.
 - [ ] Remaining high-priority clarifications are closed before implementation.

@@ -7,7 +7,7 @@ This repository branch is intentionally documentation-only. It contains no Frapp
 - legacy repository: `Capobuf/master_plan_it`;
 - legacy branch: `refactor/reports`;
 - verified legacy commit: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`;
-- latest integrated analysis: `docs/replatform/speckit-analyze-2026-08-04-rerun.md` on commit `0d3a84c38e177f90e53f74bb84f78594ca00d32d` (`CRITICAL 0`, `HIGH 1`, `MEDIUM 1`);
+- latest integrated analysis: `docs/replatform/speckit-analyze-2026-08-04-third.md` on commit `f673513c137e797d52bc5f3099ed3c1c10b4a129` (`CRITICAL 0`, `HIGH 1`, `MEDIUM 0`);
 - Constitution: 3.0.1;
 - product questions: Q-001–Q-041 closed; 0 open.
 
@@ -22,8 +22,9 @@ This repository branch is intentionally documentation-only. It contains no Frapp
 - second `/speckit.tasks` remediation: COMPLETE;
 - Spec Kit 0.15.2 tooling update and Codex integration: COMPLETE AND MERGED;
 - independent 2026-08-04 analysis and task/checklist remediations: COMPLETE AND MERGED;
-- latest rerun: recorded 0 CRITICAL, 1 HIGH and 1 MEDIUM finding;
+- second 2026-08-04 rerun: recorded 0 CRITICAL, 1 HIGH and 1 MEDIUM finding;
 - ability-contract `/speckit.plan` remediation: COMPLETE AND MERGED;
+- complete cross-contract C-07/Q-016 propagation: COMPLETE AND MERGED;
 - integration state: authoritative only in GitHub PR metadata;
 - next valid command: `/speckit.analyze` on the latest integrated `laravel-replatform` HEAD;
 - `/speckit.implement`: BLOCKED until an analysis reports CRITICAL `0` and HIGH `0`.

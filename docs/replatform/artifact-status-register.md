@@ -1,7 +1,7 @@
 # Artifact status register
 
 Status: `AUTHORITATIVE PHASE INDEX`  
-Latest integrated analysis: `speckit-analyze-2026-08-04-rerun.md` on commit `0d3a84c38e177f90e53f74bb84f78594ca00d32d` (`CRITICAL 0`, `HIGH 1`, `MEDIUM 1`)
+Latest integrated analysis: `speckit-analyze-2026-08-04-third.md` on commit `f673513c137e797d52bc5f3099ed3c1c10b4a129` (`CRITICAL 0`, `HIGH 1`, `MEDIUM 0`)
 Constitution: 3.0.1
 
 ## Artifact status
@@ -30,6 +30,7 @@ Constitution: 3.0.1
 - `/speckit.tasks`: LATEST REMEDIATION COMPLETE AND MERGED;
 - `/speckit.checklist`: 13 CHECKLISTS, 71 FEATURE-SPECIFIC ITEMS COMPLETE AND MERGED;
 - authorization `/speckit.plan` remediation: COMPLETE AND MERGED;
+- complete C-07/Q-016 cross-contract propagation: COMPLETE AND MERGED;
 - integration state: authoritative only in GitHub PR metadata;
 - `/speckit.analyze`: NEXT COMMAND ON LATEST INTEGRATED HEAD;
 - `/speckit.implement`: BLOCKED until an analysis reports CRITICAL `0` and HIGH `0`.

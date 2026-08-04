@@ -17,9 +17,11 @@ Status: `AUTHORIZATION REMEDIATION INTEGRATED — NEXT GATE /speckit.analyze ON 
 | S8 Spec Kit/tooling and independent analysis cycle | COMPLETE AND MERGED | Spec Kit 0.15.2; analysis 1 CRITICAL, 5 HIGH, 4 MEDIUM; task/checklist remediations |
 | S9 Second 2026-08-04 `/speckit.analyze` | FAILED AND RECORDED | 0 CRITICAL, 1 HIGH, 1 MEDIUM on `0d3a84c38e177f90e53f74bb84f78594ca00d32d` |
 | S10 Authorization `/speckit.plan` remediation | COMPLETE AND MERGED | ability-based contracts; no Editor/Viewer domain branches |
-| S11 Final `/speckit.analyze` | NEXT ON LATEST INTEGRATED HEAD | CRITICAL 0 and HIGH 0; Medium corrected or dispositioned |
-| S12 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
-| S13 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
+| S11 Third 2026-08-04 `/speckit.analyze` | FAILED AND RECORDED | 0 CRITICAL, 1 HIGH, 0 MEDIUM on `f673513c137e797d52bc5f3099ed3c1c10b4a129` |
+| S12 Complete C-07/Q-016 contract propagation | COMPLETE AND MERGED | no role matrices; exact abilities; inactive-tenant decision current |
+| S13 Final `/speckit.analyze` | NEXT ON LATEST INTEGRATED HEAD | CRITICAL 0 and HIGH 0; Medium corrected or dispositioned |
+| S14 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
+| S15 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
 
 ## Proposed implementation critical path
 
