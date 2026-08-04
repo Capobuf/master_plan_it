@@ -1,9 +1,9 @@
 # Replatform roadmap
 
-1. **001 Platform foundation** — runnable Laravel skeleton, authentication, three-role policy foundation, visual system, and hosting proof.
+1. **001 Platform foundation** — runnable Laravel skeleton, authentication, configurable ability-based policy foundation, visual system, and hosting proof.
 2. **007 Tenancy and access control** — tenant lifecycle, tenant users, explicit context, ownership, global operational overview, and isolation contracts.
 3. **002 Master data** — tenant-owned years, cost centers, vendors, and settings.
-4. **003 Expense domain** — tenant-owned authoritative ledger, decimal money, VAT, replacement, and plafond.
+4. **003 Expense domain** — tenant-owned authoritative current ledger, decimal money, VAT, immutable revision history, correction/restore/delete operations, and plafond.
 5. **004 Contracts and projects** — tenant-owned decision context and generation/synchronization without double counting.
 6. **005 Reporting and analytics** — tenant-scoped decision dashboard and semantic reports; Administrator global overview remains operational only.
 7. **006 Data migration and operations** — controlled one-site-to-one-tenant migration, reconciliation, cutover, backup, and restore.

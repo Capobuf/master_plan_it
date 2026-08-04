@@ -48,8 +48,8 @@ Read the local plan and data model. Implement exactly authorization matrix, poli
 
 ## Feature-specific policy rules
 
-- Administrator and Editor may create/update expenses and add Estimate, Quote, and Actual rows in the selected/assigned tenant.
-- Administrator and Editor may replace non-Actual rows and manage plafond.
-- Recorded Actual and economic history cannot be modified, replaced, or deleted by any role.
+- Expense abilities are permission-catalogue entries, not hard-coded role-name behavior. An actor with the exact same-tenant ability may create or update the current Expense aggregate and its Estimate, Quote, Actual, Extra, and Plafond rows; confirmation is a distinct ability.
+- An actor with the exact same-tenant delete or restore ability may delete or restore the current Expense aggregate or a current row subject to the last-row, reference, tenant, concurrency, audit, and revision invariants.
+- Current Actual rows remain correctable, versionable, restorable, and deletable after recording or confirmation. Prior revision snapshots and audit history are immutable evidence and never enter current economic datasets.
 - Viewer may read, print, and export all same-tenant expense data and attachments.
 - Import remains Administrator-only under Q-009.

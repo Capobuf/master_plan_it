@@ -149,4 +149,4 @@ The scheduler creates deduplicated database notifications and optional synchrono
 
 ## Clarification result
 
-Q-008, Q-023, Q-035, Q-040, Q-041 and PD-GEN-001 are closed. Existing Feature 004 plans, tasks, contract-screen, generation-sync, physical data model and accounting cases must be regenerated before implementation.
+Q-008, Q-023, Q-035, Q-040, Q-041 and PD-GEN-001 are closed. Their approved outcomes are propagated through the current Feature 004 plan, tasks, screen and synchronization contracts, physical data model, accounting cases, and cross-feature registries; implementation remains blocked until the integrated `/speckit.analyze` gate passes.

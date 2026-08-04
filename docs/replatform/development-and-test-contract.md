@@ -1,13 +1,13 @@
 # Development and test contract
 
-Status: `APPROVED PLANNING INPUT — EXACT VERSIONS REQUIRE /speckit.plan`  
+Status: `APPROVED TECHNICAL CONTRACT — PROPAGATED TO CURRENT PLANS AND TASKS`
 Scope: development environment, test architecture, CI quality gates, release artifact handoff  
 Decision date: 2026-08-03  
 Authority: Constitution 3.0.1 and clarified Features 001–007
 
 ## 1. Purpose and boundary
 
-This contract defines how implementation work is developed and verified. It does not select final dependency versions, implement Laravel code, or replace the feature plans and tasks that must be regenerated.
+This contract defines how implementation work is developed and verified. Current dependency targets and validation gates are propagated through the integrated research, plans, and tasks; this contract does not implement Laravel code or override those feature-owned artifacts.
 
 The environment and test system must expose failures rather than hide them. No command may silently reset data, select a fallback runtime, skip a required suite, or publish an artifact from an unverified commit.
 
@@ -25,7 +25,7 @@ Redis, Mailpit, Meilisearch, MinIO, WebSockets and permanent queue workers are e
 
 Native PHP or another local convenience environment may be used during editing, but a change is not verified until the relevant Sail commands pass.
 
-The exact PHP branch, image tag/digest, Sail release, Node build version and MySQL image tags are selected and locked by `/speckit.plan` after checking current Laravel 13 compatibility and the production-hosting floor. Floating `latest` tags are prohibited.
+The exact PHP branch, image tag/digest, Sail release, Node build version and MySQL image tags are selected by the integrated plans and must be locked by their owning setup tasks after checking current Laravel 13 compatibility and the production-hosting floor. Floating `latest` tags are prohibited.
 
 ## 3. Database compatibility contract
 

@@ -1,8 +1,11 @@
 # Deepening audit
 
+Status: `DEPRECATED — HISTORICAL PACKAGE AUDIT`
+Superseded by Q-001–Q-041, the current Feature 001–007 artifacts, `artifact-status-register.md`, and the latest integrated `/speckit.analyze` report. Ratings, open questions, byte counts, and package dispositions below describe the reviewed historical package only and are not current readiness claims.
+
 ## Scope and method
 
-This audit evaluates the uploaded package against the authorized repository baseline and the implementation-ready criteria. It does not claim code execution or test execution.
+This audit evaluated an earlier uploaded package against the then-authorized repository baseline and implementation-ready criteria. It did not claim code execution or test execution.
 
 ## Confirmed package findings
 
