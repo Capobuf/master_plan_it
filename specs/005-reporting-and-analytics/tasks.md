@@ -52,7 +52,7 @@ Tests use exact decimal strings. Presentation code never calculates authoritativ
 
 ## Phase 8 — Performance and verification
 
-- [ ] T005-024 [VER] Create `tests/Performance/EconomicDatasetPerformanceTest.php`, `docs/replatform/performance-baseline.md`; symbols: 10k rows, SQL count, memory, p95 and EXPLAIN for detail modes/output; depends: T005-004, T005-022; validate: performance test; expected: measured baseline with parity; forbidden: cache/materialized totals/preaggregation before evidence.
+- [ ] T005-024 [VER] Create `tests/Performance/EconomicDatasetPerformanceTest.php`, `docs/replatform/performance-baseline.md`; symbols: 10k rows, SQL count, memory, p95 and EXPLAIN for detail modes/output; depends: T005-004, T005-022; requirements: FR-005-020, FR-005-070, INV-REP-002; validate: performance test; expected: measured baseline with parity; forbidden: cache/materialized totals/preaggregation before evidence.
 - [ ] T005-025 [VER] Run Feature 005 verification and update quickstart/contracts/traceability; depends: T005-008, T005-012, T005-015, T005-018, T005-020, T005-023, T005-024; requirements: FR-005-001–FR-005-070, FR-007-021; validate: `composer test:accounting && php artisan test tests/Feature/Reporting tests/Feature/BudgetVersions tests/Feature/Scenarios tests/Livewire/Reporting tests/Livewire/BudgetVersions tests/Livewire/Scenarios && composer test:static`; expected: kernel/output/version/scenario/tenant/branding tests pass; forbidden: duplicated formula or skipped parity format.
 
 ## Dependencies and execution order
