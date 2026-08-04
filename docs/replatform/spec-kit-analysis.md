@@ -1,8 +1,8 @@
-# Spec Kit second-remediation self-check
+# Historical Spec Kit second-remediation self-check
 
-Status: `READ-ONLY SELF-CHECK — NOT /speckit.analyze`
+Status: `DEPRECATED AS CURRENT PHASE AUTHORITY — HISTORICAL READ-ONLY SELF-CHECK`
 
-This review was performed after correcting the findings in `speckit-analyze-2026-08-03-rerun.md`. It validates only the documentation package structure. It does not replace the next official `/speckit.analyze` and does not validate application implementation.
+This review was performed after correcting the findings in `speckit-analyze-2026-08-03-rerun.md`. It validates only that historical documentation package structure. Current results are in the latest dated `/speckit.analyze` report; this file does not validate application implementation.
 
 The former task-generation and first-remediation self-checks are superseded. Their readiness claims must not be cited as a PASS.
 
@@ -63,11 +63,11 @@ These dispositions remain proposed until `/speckit.analyze` independently verifi
 |---|---|
 | Exact Composer/frontend locks and package smoke | implementation T001-001/T001-002; failure blocks and requires technical amendment |
 | Integration | current state is authoritative only in GitHub PR metadata |
-| Official `/speckit.analyze` | next on integrated remediation base; require CRITICAL 0 and HIGH 0 |
+| Official `/speckit.analyze` | At snapshot time: next on the integrated remediation base; require CRITICAL 0 and HIGH 0 |
 | Real legacy samples, host profile and report inventory | Feature 006 remains NOT CUTOVER READY |
 | Performance thresholds | T005-024 after executable data path exists |
 
-## Phase
+## Phase at snapshot time
 
 - `/speckit.clarify`: COMPLETE;
 - `/speckit.plan`: COMPLETE AND MERGED;

@@ -1,18 +1,18 @@
 # Implementation readiness
 
-Status: `SECOND TASK REMEDIATION COMPLETE — RE-ANALYSIS REQUIRED ON INTEGRATED BASE`
+Status: `LATEST ANALYSIS 0 CRITICAL / 1 HIGH / 1 MEDIUM; REMEDIATIONS INTEGRATED; FINAL RE-ANALYSIS REQUIRED`
 
-Constitution 3.0.1, Q-001–Q-041, integrated architecture, technical research, physical models, Feature 001–007 plans and the second-remediation task package are current on this branch.
+Constitution 3.0.1, Q-001–Q-041, integrated architecture, technical research, physical models, Feature 001–007 plans/tasks/checklists, and ability-based authorization contracts are current. This is not an analysis PASS until the next integrated rerun confirms the remediation.
 
 | Feature | Planned and tasked scope | Status |
 |---|---|---|
-| 001 Platform foundation | runtime/Sail/test/CI, auth, password operations, settings, audit view/retention, notification primitive, scheduler, release | SECOND REMEDIATION COMPLETE; dependency lock pending implementation |
-| 002 Master data | shared revisions, years, vendors, cost centers, lifecycle and restore | SECOND REMEDIATION COMPLETE |
-| 003 Expense domain | Money/VAT/allocation, current aggregate, Actual confirmation, revisions, deletion and attachments | SECOND REMEDIATION COMPLETE |
-| 004 Contracts/projects | lifecycle, terms, source keys, controlled sync, suppression/resume and renewal notifications | SECOND REMEDIATION COMPLETE |
-| 005 Reporting/analytics | shared kernel, rolling Budget, scenarios, BudgetVersion, comparison, tenant-branded print/CSV/XLSX | SECOND REMEDIATION COMPLETE |
-| 006 Migration/operations | staging/apply, portability, conditional backup and immutable deployment | SECOND REMEDIATION COMPLETE; NOT CUTOVER READY |
-| 007 Tenancy/access | context, ownership concern, lifecycle, configurable RBAC, tenant branding and final isolation matrix | SECOND REMEDIATION COMPLETE |
+| 001 Platform foundation | runtime/Sail/test/CI, auth, password operations, settings, audit view/retention, notification primitive, scheduler, release | DOCUMENTATION CURRENT; dependency lock pending implementation |
+| 002 Master data | shared revisions, years, vendors, cost centers, lifecycle and restore | DOCUMENTATION CURRENT |
+| 003 Expense domain | Money/VAT/allocation, current aggregate, Actual confirmation, revisions, deletion and attachments | DOCUMENTATION CURRENT |
+| 004 Contracts/projects | lifecycle, terms, source keys, controlled sync, suppression/resume and renewal notifications | DOCUMENTATION CURRENT |
+| 005 Reporting/analytics | shared kernel, rolling Budget, scenarios, BudgetVersion, comparison, tenant-branded print/CSV/XLSX | DOCUMENTATION CURRENT |
+| 006 Migration/operations | staging/apply, portability, conditional backup and immutable deployment | DOCUMENTATION CURRENT; NOT CUTOVER READY |
+| 007 Tenancy/access | context, ownership concern, lifecycle, configurable RBAC, tenant branding and final isolation matrix | DOCUMENTATION CURRENT |
 
 ## Proposed readiness evidence
 
@@ -35,7 +35,7 @@ These are proposed dispositions, not an analysis PASS.
 ## Remaining implementation-readiness gates
 
 1. Integration state is read from GitHub PR metadata rather than embedded in these documents.
-2. Repeat `/speckit.analyze` against the integrated remediation base.
+2. Repeat `/speckit.analyze` against the latest integrated authoritative HEAD.
 3. Require CRITICAL `0` and HIGH `0`; Medium findings must be resolved or explicitly dispositioned.
 4. Only then begin `/speckit.implement` through separate reviewed vertical-slice PRs.
 5. The first implementation task performs real Composer/frontend lock resolution and package smoke tests.
@@ -54,7 +54,7 @@ Feature 006 remains not CUTOVER READY until real source export evidence, final h
 
 - remediation is not application implementation;
 - task checkboxes remain unchecked until commands and results are actually executed;
-- second-remediation findings are proposed resolved, not closed until `/speckit.analyze` confirms them;
+- latest analysis findings are remediated but not closed until `/speckit.analyze` confirms them on the integrated HEAD;
 - no package, code, schema, test, workflow or operational command was executed by this documentation cycle;
 - fixed-role, immutable-Actual, replacement-state, fixed-retention and implicit-output assumptions remain superseded;
 - tenant-facing output uses the tenant-configured language; technical identifiers remain English; tenant report branding does not white-label the Master Plan IT shell and no additional internationalization framework is approved.

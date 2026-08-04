@@ -7,7 +7,7 @@ This repository branch is intentionally documentation-only. It contains no Frapp
 - legacy repository: `Capobuf/master_plan_it`;
 - legacy branch: `refactor/reports`;
 - verified legacy commit: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`;
-- latest merged documentation/analyze base: `laravel-replatform` commit `eb75be04d600f5c9ada954da0593ab0a13d94ff8`;
+- latest integrated analysis: `docs/replatform/speckit-analyze-2026-08-04-rerun.md` on commit `0d3a84c38e177f90e53f74bb84f78594ca00d32d` (`CRITICAL 0`, `HIGH 1`, `MEDIUM 1`);
 - Constitution: 3.0.1;
 - product questions: Q-001–Q-041 closed; 0 open.
 
@@ -20,8 +20,12 @@ This repository branch is intentionally documentation-only. It contains no Frapp
 - first task remediation: MERGED;
 - rerun `/speckit.analyze`: recorded 0 CRITICAL, 8 HIGH and 4 MEDIUM findings;
 - second `/speckit.tasks` remediation: COMPLETE;
+- Spec Kit 0.15.2 tooling update and Codex integration: COMPLETE AND MERGED;
+- independent 2026-08-04 analysis and task/checklist remediations: COMPLETE AND MERGED;
+- latest rerun: recorded 0 CRITICAL, 1 HIGH and 1 MEDIUM finding;
+- ability-contract `/speckit.plan` remediation: COMPLETE AND MERGED;
 - integration state: authoritative only in GitHub PR metadata;
-- next valid command on the integrated remediation base: `/speckit.analyze`;
+- next valid command: `/speckit.analyze` on the latest integrated `laravel-replatform` HEAD;
 - `/speckit.implement`: BLOCKED until an analysis reports CRITICAL `0` and HIGH `0`.
 
 The proposed remediated graph contains 150 tasks across 35 user stories, with 42 `[P]` tasks after exact prerequisites. These counts are not a readiness PASS; `docs/replatform/tasks-summary.md` records the proposed dispositions and the next analysis must verify them.
@@ -40,12 +44,13 @@ The proposed remediated graph contains 150 tasks across 35 user stories, with 42
 10. `docs/replatform/task-readiness-registry.md`;
 11. `docs/replatform/task-execution-registry.md`, feature command registers and `task-execution/path-overrides.md`;
 12. `docs/replatform/tasks-summary.md`;
-13. both `/speckit.analyze` reports;
-14. `implementation-readiness.md`, `package-validation.md` and `spec-kit-analysis.md`;
-15. the next `/speckit.analyze` result.
+13. all dated `/speckit.analyze` reports in chronological order;
+14. the dated task, checklist and authorization-plan remediation records;
+15. `implementation-readiness.md`; treat `package-validation.md`, `tasks-summary.md` and `spec-kit-analysis.md` as labelled historical package records;
+16. the next `/speckit.analyze` result.
 
 ## Planned target
 
 Laravel 13 modular monolith on PHP 8.3/MySQL 8.4, Sail verification, Filament 5, explicit one-database tenancy, configurable tenant RBAC, operational snapshot revisions, one current Expense source, controlled contract generation, one shared economic kernel, rolling Budget and immutable BudgetVersion, staged migration/portability, verified whole-installation backup and immutable release artifact.
 
-No package was installed and no application code, migration, test, workflow, build, backup, restore, import or deployment command was executed during this documentation remediation.
+Spec Kit tooling was installed and updated as documented in `docs/replatform/spec-kit-installation-2026-08-04.md`. No Laravel application package, application code, migration, application test, build, backup, restore, import or deployment command was executed during this documentation remediation.

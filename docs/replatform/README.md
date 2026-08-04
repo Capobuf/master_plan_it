@@ -12,8 +12,12 @@ This package is the documentation-only contract for the Laravel replatform, anch
 - first remediation: merged.
 - rerun `/speckit.analyze`: failed with 0 CRITICAL, 8 HIGH and 4 MEDIUM findings on commit `113ae98f7fc8f7c5eb8ffe4e7bd32ef6a49b6c47`.
 - second remediation: complete.
+- Spec Kit 0.15.2/Codex integration: complete and merged.
+- independent 2026-08-04 analysis: failed with 1 CRITICAL, 5 HIGH and 4 MEDIUM findings; task/checklist remediations merged.
+- latest rerun on `0d3a84c38e177f90e53f74bb84f78594ca00d32d`: failed with 0 CRITICAL, 1 HIGH and 1 MEDIUM finding.
+- ability-contract plan remediation: complete and merged.
 - integration state: authoritative only in GitHub PR metadata.
-- next `/speckit.analyze`: run on the integrated remediation base.
+- next `/speckit.analyze`: run on the latest integrated `laravel-replatform` HEAD.
 - `/speckit.implement`: blocked until CRITICAL `0` and HIGH `0`.
 
 No package lock, implementation, migration or test was executed by this documentation remediation.
@@ -35,11 +39,12 @@ No package lock, implementation, migration or test was executed by this document
 13. `task-readiness-registry.md`;
 14. `task-execution-registry.md`, feature command registers and `task-execution/path-overrides.md`;
 15. `tasks-summary.md`;
-16. `speckit-analyze-2026-08-03.md` and `speckit-analyze-2026-08-03-rerun.md`;
+16. all dated `speckit-analyze-*.md` reports in chronological order;
 17. `workflow-investigation-2026-08-04.md`;
 18. `spec-kit-installation-2026-08-04.md`;
-19. `implementation-readiness.md`, `package-validation.md`, `spec-kit-analysis.md`;
-20. the next `/speckit.analyze` report.
+19. dated task, checklist and authorization-plan remediation records;
+20. `implementation-readiness.md`; `package-validation.md`, `tasks-summary.md`, and `spec-kit-analysis.md` are historical snapshots where labelled;
+21. the next `/speckit.analyze` report.
 
 ## Second-remediation outcomes
 
@@ -67,7 +72,7 @@ No package lock, implementation, migration or test was executed by this document
 - one bidirectional source/requirement/task/test ledger;
 - no implementation code.
 
-These outcomes remain proposed until the next `/speckit.analyze` verifies them.
+The task inventory remains current; readiness remains proposed until the next `/speckit.analyze` verifies the latest integrated remediation.
 
 ## Remaining evidence
 
