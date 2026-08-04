@@ -1,7 +1,7 @@
 # Artifact status register
 
 Status: `AUTHORITATIVE PHASE INDEX`  
-Latest merged analyze base: `laravel-replatform` commit `eb75be04d600f5c9ada954da0593ab0a13d94ff8`  
+Latest integrated analysis: `speckit-analyze-2026-08-04-rerun.md` on commit `0d3a84c38e177f90e53f74bb84f78594ca00d32d` (`CRITICAL 0`, `HIGH 1`, `MEDIUM 1`)
 Constitution: 3.0.1
 
 ## Artifact status
@@ -27,9 +27,11 @@ Constitution: 3.0.1
 
 - `/speckit.clarify`: COMPLETE;
 - `/speckit.plan`: COMPLETE AND MERGED;
-- `/speckit.tasks`: SECOND REMEDIATION COMPLETE;
+- `/speckit.tasks`: LATEST REMEDIATION COMPLETE AND MERGED;
+- `/speckit.checklist`: 13 CHECKLISTS, 71 FEATURE-SPECIFIC ITEMS COMPLETE AND MERGED;
+- authorization `/speckit.plan` remediation: COMPLETE AND MERGED;
 - integration state: authoritative only in GitHub PR metadata;
-- `/speckit.analyze`: next command on the integrated remediation base;
+- `/speckit.analyze`: NEXT COMMAND ON LATEST INTEGRATED HEAD;
 - `/speckit.implement`: BLOCKED until an analysis reports CRITICAL `0` and HIGH `0`.
 
 ## Header rule

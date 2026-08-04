@@ -1,6 +1,6 @@
 # Global execution sequence
 
-Status: `SECOND TASK REMEDIATION COMPLETE — NEXT GATE /speckit.analyze ON INTEGRATED BASE`
+Status: `AUTHORIZATION REMEDIATION INTEGRATED — NEXT GATE /speckit.analyze ON LATEST INTEGRATED HEAD`
 
 ## Spec Kit sequence
 
@@ -13,11 +13,13 @@ Status: `SECOND TASK REMEDIATION COMPLETE — NEXT GATE /speckit.analyze ON INTE
 | S4 Initial `/speckit.analyze` | FAILED AND RECORDED | 2 CRITICAL, 10 HIGH, 4 MEDIUM |
 | S5 First `/speckit.tasks` remediation | COMPLETE AND MERGED | initial graph/readiness corrections |
 | S6 First repeated `/speckit.analyze` | FAILED AND RECORDED | 0 CRITICAL, 8 HIGH, 4 MEDIUM |
-| S7 Second `/speckit.tasks` remediation | COMPLETE | non-overlapping task contract, exact dependencies/paths, class correction, full traceability and branding owner |
-| S8 Integration | READ FROM GITHUB PR METADATA | no hard-coded branch state in documentation |
-| S9 Next `/speckit.analyze` | NEXT ON INTEGRATED BASE | CRITICAL 0 and HIGH 0 |
-| S10 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
-| S11 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
+| S7 Second `/speckit.tasks` remediation | COMPLETE AND MERGED | non-overlapping task contract, exact dependencies/paths, class correction, full traceability and branding owner |
+| S8 Spec Kit/tooling and independent analysis cycle | COMPLETE AND MERGED | Spec Kit 0.15.2; analysis 1 CRITICAL, 5 HIGH, 4 MEDIUM; task/checklist remediations |
+| S9 Second 2026-08-04 `/speckit.analyze` | FAILED AND RECORDED | 0 CRITICAL, 1 HIGH, 1 MEDIUM on `0d3a84c38e177f90e53f74bb84f78594ca00d32d` |
+| S10 Authorization `/speckit.plan` remediation | COMPLETE AND MERGED | ability-based contracts; no Editor/Viewer domain branches |
+| S11 Final `/speckit.analyze` | NEXT ON LATEST INTEGRATED HEAD | CRITICAL 0 and HIGH 0; Medium corrected or dispositioned |
+| S12 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
+| S13 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
 
 ## Proposed implementation critical path
 

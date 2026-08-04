@@ -1,8 +1,10 @@
 # Package validation
 
-Status: `SECOND REMEDIATION PACKAGE — RE-ANALYSIS REQUIRED ON INTEGRATED BASE`
+Status: `DEPRECATED AS CURRENT PHASE AUTHORITY — HISTORICAL SECOND-REMEDIATION PACKAGE SNAPSHOT`
 
 Scope: second task remediation based on `laravel-replatform` commit `eb75be04d600f5c9ada954da0593ab0a13d94ff8`.
+
+This snapshot remains evidence for that package only. Current phase selection and analysis results are owned by `artifact-status-register.md` and the latest dated `/speckit.analyze` report.
 
 ## Task package
 

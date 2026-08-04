@@ -1,11 +1,13 @@
 # `/speckit.tasks` second remediation summary
 
-Status: `SECOND REMEDIATION COMPLETE — NEXT GATE /speckit.analyze ON INTEGRATED BASE`  
+Status: `HISTORICAL SECOND-REMEDIATION SUMMARY — INVENTORY RETAINED; PHASE CLAIM SUPERSEDED`
 Provenance branch: `tasks/remediate-analysis-3.0.1-r2`  
 Base: `laravel-replatform` commit `eb75be04d600f5c9ada954da0593ab0a13d94ff8`  
 Constitution: 3.0.1
 
 Integration state is authoritative only in GitHub PR metadata. This document records the package content and remains valid before and after integration.
+
+Current phase selection and finding counts are owned by `artifact-status-register.md` and the latest dated `/speckit.analyze` report. The 150/35/42 inventory remains current unless a later task diff changes it.
 
 ## Task inventory
 

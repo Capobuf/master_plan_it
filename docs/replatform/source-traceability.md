@@ -1,6 +1,6 @@
 # Bidirectional source traceability
 
-Status: `CURRENT FOR SECOND TASK REMEDIATION — RE-ANALYSIS REQUIRED`  
+Status: `CURRENT AFTER TASK/CHECKLIST/AUTHORIZATION REMEDIATION — FINAL RE-ANALYSIS REQUIRED`
 Authority: Constitution 3.0.1, Q-001–Q-041, approved technical plans and current task/readiness/execution contracts.
 
 Legacy sources establish verified behavior or migration evidence. Product decisions and Constitution establish target changes. Every row maps evidence → requirement/invariant → owning task → focused test. Task IDs refer to the current Feature 001–007 `tasks.md` files.
