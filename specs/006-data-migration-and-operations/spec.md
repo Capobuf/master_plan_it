@@ -1,6 +1,6 @@
 # Feature 006 — Data migration and operations
 
-Status: `PRODUCT CLARIFIED; NOT CUTOVER READY; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
+Status: `PRODUCT CLARIFIED; IMPLEMENTATION READY; NOT CUTOVER READY; IMPLEMENTATION NOT STARTED`
 Logical owner: Product Owner with migration/operations approval  
 Actors: Administrator and deployment operator  
 Dependencies: Features 001, 005, and 007
@@ -69,6 +69,10 @@ Migration apply, tenant package import apply, and installation restore require r
 
 Failed import/migration, backup, or restore verification creates a deduplicated database notification. Email is attempted only when configured. Mail failure remains visible and is not silently retried.
 
+### AC-006-09 — Current domain constraints during import
+
+Given staged planning years, attachments and tenant portable settings, dry-run accepts only calendar-year identities whose derived dates are January 1 through December 31, validates attachment payloads against the exact Feature 003 type/size/checksum/parent rules and the target tenant current-plus-historical quota, and reports every source/target setting mismatch without silent normalization or overwrite. Tenant portability preserves attachment revision manifests/payload versions and approved tenant operational settings; legacy migration creates only evidence actually present in the source package.
+
 ## Functional requirements
 
 | ID | Requirement | Acceptance |
@@ -92,6 +96,9 @@ Failed import/migration, backup, or restore verification creates a deduplicated 
 | FR-006-017 | Migration/import apply and restore shall use reinforced confirmation. | AC-006-07 |
 | FR-006-018 | Failed migration/import, backup, and restore verification shall create synchronous database notifications and optional email without queue workers. | AC-006-08 |
 | FR-006-019 | Import, migration, tenant package import, installation backup/restore, and platform operation permissions shall remain Administrator-only. | AC-006-01, AC-006-05 |
+| FR-006-020 | Planning-year import shall accept a unique calendar-year identity and derive immutable January 1/December 31 boundaries. A source row whose supplied boundaries are not that calendar year shall be quarantined or rejected with a stable error and never silently normalized. | AC-006-03, AC-006-09 |
+| FR-006-021 | Attachment migration/import shall validate the exact Feature 003 extension/detected-MIME pairs, nonempty payload, 10,485,760-byte maximum, checksum, single approved parent, private path and target-tenant quota before apply. Legacy import shall capture only source-supported current attachment evidence; tenant portability shall preserve every included immutable revision manifest, payload version and shared manifest-to-payload reference exactly, storing each distinct payload version once. | AC-006-03, AC-006-04, AC-006-09 |
+| FR-006-022 | Tenant portability shall include the approved tenant attachment quota and deletion-reason-required setting plus structured project/contract/term terminal-deletion and source-deletion provenance. Apply shall use owning Feature 007/004/003 Actions after explicit dry-run resolution, preserve deleted sources only as terminal evidence, and shall never reactivate or restore the same deleted logical identity, silently overwrite a conflicting target setting, or fabricate missing provenance. | AC-006-02, AC-006-06, AC-006-09 |
 
 ## Business invariants
 
@@ -106,6 +113,8 @@ Failed import/migration, backup, or restore verification creates a deduplicated 
 | INV-OPS-002 | Tenant portability import is not selective disaster restore. | DomainConflict | TEST-006-007 |
 | INV-OPS-003 | Tenant package never contains audit events, passwords, hashes, sessions, tokens, application secrets, or global platform settings. | DomainConflict | TEST-006-008 |
 | INV-OPS-004 | Scheduler failure notification is visible and deduplicated; no silent retry loop. | DomainConflict | TEST-006-009 |
+| INV-MIG-006 | Import never creates an editable/non-calendar planning year or silently changes supplied year boundaries. | DomainConflict | TEST-006-010 |
+| INV-MIG-007 | Imported attachment metadata, immutable payload versions, shared manifest references, distinct-payload quota usage, source-deletion provenance and terminal project/contract/term identities reconcile exactly; no duplicate or missing payload/provenance is fabricated and no terminal identity becomes active or restorable. | DomainConflict | TEST-006-011 |
 
 ## Cutover evidence still open
 
@@ -117,4 +126,4 @@ These are operational evidence, not product ambiguity:
 
 ## Clarification result
 
-Q-020, Q-021, Q-022, Q-023, Q-024, Q-029, and access-recovery dependencies are closed. Their approved outcomes are propagated through the current Feature 006 plan, tasks, migration, backup, deployment, data model, quickstart, and cross-feature registries; implementation and cutover remain blocked by their respective documented gates.
+Q-020, Q-021, Q-022, Q-023, Q-024, Q-029, access-recovery dependencies and approved Feature 002–004 domain constraints are closed. Their approved outcomes are propagated through the current Feature 006 plan, tasks, migration, backup, deployment, data model, quickstart, and cross-feature registries. The Constitution 5.0.0 integrated `/speckit.analyze` gate passed, so implementation is ready; cutover remains blocked by the explicit real-evidence gates above.

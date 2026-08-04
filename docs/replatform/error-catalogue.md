@@ -19,8 +19,9 @@ Errors are explicit, user-safe and diagnostic. Validation errors identify fields
 | `VAT_REQUIRED` | 422 | Non-zero amount lacks valid VAT/default. |
 | `AMOUNT_RECONCILIATION_FAILED` | 409 | Net + VAT != Gross or allocation residual mismatch. |
 | `DATE_MODE_CONFLICT` | 422 | Spend date and period mode conflict/incomplete. |
-| `YEAR_OVERLAP` | 422 | Planning years overlap in tenant. |
+| `YEAR_BOUNDARY_INVALID` | 422/quarantine | Planning-year source boundary is not January 1 through December 31 of its year. |
 | `COST_CENTER_CYCLE` | 422 | Parent change creates cycle. |
+| `COST_CENTER_DEPTH_EXCEEDED` | 422 | Cost-center parent would create a level deeper than three. |
 | `ACTIVE_DESCENDANT_EXISTS` | 422 | Parent deactivation blocked. |
 | `MASTER_DATA_INACTIVE` | 422 | Inactive vendor/cost center selected for new work. |
 | `REFERENCED_RECORD_DELETE_DENIED` | 409 | Referenced master data cannot be deleted. |
@@ -29,7 +30,14 @@ Errors are explicit, user-safe and diagnostic. Validation errors identify fields
 | `ACTUAL_CONFIRMATION_INVALID` | 422 | Non-Actual or invalid Actual confirmation request. |
 | `REVISION_RESTORE_INVALID` | 409 | Snapshot cannot satisfy current invariants/references. |
 | `REVISION_BATCH_INCOMPLETE` | 500/correlation | Aggregate changed without complete version correlation. |
+| `ATTACHMENT_TYPE_INVALID` | 422 | Extension/detected MIME pair is absent from the exact allowlist or payload is empty. |
+| `ATTACHMENT_SIZE_INVALID` | 422 | Attachment exceeds 10,485,760 bytes. |
+| `ATTACHMENT_PARENT_INVALID` | 422 | Attachment does not resolve to exactly one same-tenant Expense or ExpenseRow. |
+| `ATTACHMENT_QUOTA_EXCEEDED` | 409 | Operation would create payload bytes beyond the tenant's non-negative distinct-payload quota; zero permits no new payload bytes. |
+| `ATTACHMENT_PAYLOAD_UNAVAILABLE` | 409 | Exact historical payload is missing, corrupt or checksum-invalid; restore rolls back. |
 | `PROJECT_STAGE_INVALID` | 422 | Stage/deferred target invalid. |
+| `PROJECT_REFERENCED_DELETE_DENIED` | 409 | Current Expense still references the Project; no cascade/detach occurs. |
+| `DELETION_REASON_REQUIRED` | 422 | Current tenant setting requires a nonblank project/contract/term deletion reason. |
 | `CONTRACT_TERM_OVERLAP` | 422 | Contract terms overlap. |
 | `GENERATION_SOURCE_DUPLICATE` | 409 | Source key already exists. |
 | `GENERATION_SUPPRESSED` | 409 | Occurrence suppressed until explicit resume. |
@@ -39,7 +47,8 @@ Errors are explicit, user-safe and diagnostic. Validation errors identify fields
 | `BUDGET_VERSION_INCOMPLETE` | 422 | Draft cannot publish due inconsistent totals/availability. |
 | `COMPARISON_DIMENSION_UNAVAILABLE` | 422/UI unavailable | Requested comparison dimension absent from one source. |
 | `OUTPUT_SCOPE_INVALID` | 422 | Scope is not filtered or complete selected report/year. |
-| `EXPORT_LIMIT_EXCEEDED` | 422 | Bounded export limit exceeded; no partial file. |
+| `EXPORT_GENERATION_FAILED` | 500/correlation | Export failed before finalization; no partial artifact is downloadable. |
+| `EXPORT_CLEANUP_FAILED` | visible error/correlation | Private temporary export artifact cleanup failed and is recorded for remediation. |
 | `IMPORT_MANIFEST_INVALID` | 422 | Missing/version/checksum schema error. |
 | `IMPORT_TARGET_IMMUTABLE` | 409 | Run target tenant change attempted. |
 | `IMPORT_COLLISION` | blocked/quarantine | Identity collision requires operator decision. |

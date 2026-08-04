@@ -68,7 +68,9 @@ No tenant ID because backup is installation-wide. Archive payload/path is never 
 
 ## Portability package
 
-No separate export table unless a persistent UI history is required; initial plan records operation in audit and streams/writes manifest package. Audit events/global settings/passwords/secrets are excluded. Operational revision/notification inclusion is explicit in manifest and import schema.
+No separate export table unless a persistent UI history is required; initial plan records operation in audit and streams/writes manifest package. Audit events/global settings/passwords/secrets are excluded. Tenant-owned `attachment_quota_bytes` and `deletion_reason_required` are included, while installation-wide settings are excluded. Operational revision/notification inclusion is explicit in manifest and import schema. Attachment revision manifests and immutable private payload versions are separately checksummed package entries; manifest-to-version references remain shared for unchanged bytes and each distinct version is packaged once, so exact Expense restore capability and quota semantics survive a round trip. Project, contract and contract-term tombstone entries carry stable logical identity, deletion timestamp, optional/required reason evidence and the minimized source-key/provenance fields needed by Feature 004. They are typed as terminal evidence, never as an active row or an operationally restorable revision source.
+
+Planning-year staged values normalize to one calendar-year integer only; derived boundaries are validation results, not target columns. Supplied non-calendar dates remain bounded source evidence on a quarantined row and never become current data.
 
 ## Deletion/retention
 

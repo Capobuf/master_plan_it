@@ -1,12 +1,12 @@
 # Global execution sequence
 
-Status: `DOCUMENTATION GATE PASSED — IMPLEMENTATION NOT STARTED`
+Status: `DOCUMENTATION GATE PASSED ON CONSTITUTION 5.0.0 — IMPLEMENTATION NOT STARTED`
 
 ## Spec Kit sequence
 
 | Step | Status | Required result |
 |---|---|---|
-| S0 Product clarification/Constitution 3.0.1 | COMPLETE | Q-001–Q-041 closed |
+| S0 Product clarification/Constitution 5.0.0 | COMPLETE | legacy Q-001–Q-041 plus current seven-feature clarification decisions closed |
 | S1 Reconcile prior PRs | COMPLETE | development/test and Budget/kernel inputs merged |
 | S2 `/speckit.plan` | COMPLETE AND MERGED | research, ADRs, plans, physical models, contracts and quickstarts |
 | S3 Initial `/speckit.tasks` | COMPLETE AND MERGED | seven feature task files |
@@ -21,9 +21,11 @@ Status: `DOCUMENTATION GATE PASSED — IMPLEMENTATION NOT STARTED`
 | S12 Complete C-07/Q-016 contract propagation | COMPLETE AND MERGED | no role matrices; exact abilities; inactive-tenant decision current |
 | S13 Fourth 2026-08-04 `/speckit.analyze` | FAILED AND RECORDED | 0 CRITICAL, 1 HIGH, 0 MEDIUM on `348a557c58388ff917646dd6a02cb00cbdc1f513`; orphan INV-TEN-009/010 task ownership only |
 | S14 Invariant `/speckit.tasks` remediation | COMPLETE; INTEGRATION STATE IN GITHUB | exact existing task/test/readiness/source owners; unchanged task count and graph |
-| S15 Final `/speckit.analyze` | COMPLETE AND RECORDED | CRITICAL 0, HIGH 0, MEDIUM 0 on `ba3744fbc7043f3f3b036416e6c082e4cb7c6831` |
-| S16 `/speckit.implement` | NEXT VALID; NOT EXECUTED | separate vertical-slice PRs with real locks/code/tests |
-| S17 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
+| S15 Historical Constitution 3.0.1 final `/speckit.analyze` | COMPLETE AND RECORDED; SUPERSEDED | CRITICAL 0, HIGH 0, MEDIUM 0 on `ba3744fbc7043f3f3b036416e6c082e4cb7c6831`; does not authorize later artifacts |
+| S16 Constitution 4.0.0/5.0.0 clarification and propagation | COMPLETE; CURRENT WORKTREE | fixed calendar years, attachment manifests/quota, operational settings, output/performance/accessibility and terminal source deletion propagated |
+| S17 Current integrated `/speckit.analyze` | COMPLETE AND RECORDED | 0 CRITICAL, 0 HIGH, 0 MEDIUM; 300/300 requirement coverage; 153/153 command/readiness coverage; 295/295 checklist items |
+| S18 `/speckit.implement` | NEXT VALID; NOT EXECUTED | separate vertical-slice PRs with real locks/code/tests |
+| S19 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
 
 ## Proposed implementation critical path
 

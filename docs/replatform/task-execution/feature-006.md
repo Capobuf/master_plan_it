@@ -4,7 +4,7 @@
 |---|---|
 | T006-001–T006-002 | `php artisan test tests/Feature/Migration/ImportSchemaTest.php` |
 | T006-003–T006-004 | `php artisan test tests/Feature/Migration/ImportPackageValidationTest.php` |
-| T006-005 | `php artisan test tests/Feature/Migration/ImportDryRunTest.php tests/Feature/Migration/ImportTenantOwnershipTest.php tests/Feature/Migration/ImportIdempotencyTest.php tests/Feature/Migration/ImportCollisionTest.php` |
+| T006-005 | `php artisan test tests/Feature/Migration/ImportDryRunTest.php tests/Feature/Migration/ImportTenantOwnershipTest.php tests/Feature/Migration/ImportIdempotencyTest.php tests/Feature/Migration/ImportCollisionTest.php tests/Feature/Migration/ImportDomainConstraintTest.php` |
 | T006-006 | `php artisan test tests/Feature/Migration/ImportDryRunTest.php tests/Feature/Migration/ImportReconciliationTest.php` |
 | T006-007 | `php artisan test tests/Feature/Migration/ImporterDependencyOrderTest.php tests/Accounting/Integration/LegacyCurrentHistoryMappingTest.php` |
 | T006-008 | `php artisan test tests/Feature/Migration/ImportExclusionTest.php tests/Feature/Migration/ImportApplyTest.php tests/Feature/Migration/ImportPartialFailureTest.php` |

@@ -1,6 +1,6 @@
 # Implementation plan — Feature 006 Migration and operations
 
-Status: `PLAN COMPLETE AND MERGED; NOT CUTOVER READY; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
+Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; NOT CUTOVER READY; IMPLEMENTATION NOT STARTED`
 Dependencies: Features 001–005 and 007
 
 ## Summary
@@ -56,6 +56,8 @@ Staging preserves safe raw values, source file/line/type/ID and package lineage.
 6. calculates counts and exact decimal sums;
 7. creates reconciliation.
 
+Planning-year normalization accepts only a year identity and derives January 1/December 31; supplied non-calendar boundaries are blockers, never silently rewritten. Attachment validation delegates the exact Feature 003 nonempty/type/MIME/size/checksum/parent/quota rules. Legacy packages create only source-supported current attachment evidence, while tenant portability preserves included immutable attachment manifests and payload versions.
+
 Source rows are not logged outside bounded staging. Passwords/secrets are rejected, not staged as ordinary fields.
 
 ## Apply
@@ -72,9 +74,9 @@ Legacy Expense state/replacement graph is used to select accepted current record
 
 ## Tenant portability
 
-Exports one tenant's approved portable data and files. Excludes audit events, passwords/hashes/tokens/sessions/secrets, global configuration and another tenant. Retained operational revisions are minimized; notifications are included only if final plan task proves portability value and safe schema—default target is exclude notifications to reduce transient data.
+Exports one tenant's approved portable data and files, including tenant attachment quota, deletion-reason-required flag, structured source-deletion provenance, terminal project/contract/term identities, and all retained attachment manifests/payload versions needed for exact Expense revision restore. Shared references for unchanged payloads are preserved and each distinct payload version is packaged once. Excludes audit events, passwords/hashes/tokens/sessions/secrets, global configuration and another tenant. Retained operational revisions are minimized; notifications are included only if final plan task proves portability value and safe schema—default target is exclude notifications to reduce transient data.
 
-Import uses the same staging engine but cannot grant protected platform permissions or overwrite another lineage/manual current record.
+Import uses the same staging engine but cannot grant protected platform permissions or overwrite another lineage/manual current record. Tenant operational settings are compared explicitly and applied through Feature 007 Actions only after approved dry-run resolution; a mismatch is never silently overwritten. Payload quota is evaluated against the target tenant before any private file finalization. Feature 004 terminal tombstones are imported only as minimized evidence; neither portability nor legacy import may activate or make restorable the same deleted logical project, contract, or term identity.
 
 ## Backup
 
@@ -94,12 +96,12 @@ Import/migration failure, backup failure and restore-verification failure create
 
 ## Tests
 
-- manifest/checksum/schema/CSV decimal/date parsing;
+- manifest/checksum/schema/CSV decimal/date parsing and fixed-calendar-year rejection;
 - immutable target, lineage idempotency, collisions, quarantine/exclusions;
 - dry-run no current writes;
 - dependency-order apply and explicit partial-batch failure record;
 - legacy current/history reconciliation;
-- portability exclusions and cross-tenant/secret inspection;
+- portability exclusions, operational settings/provenance, terminal-identity non-reactivation, exact attachment revision payloads and cross-tenant/secret inspection;
 - backup dependency/preflight/archive/checksum/status;
 - restore rehearsal contract with disposable environment fixture;
 - deployment artifact contents and no production reset/build;

@@ -1,11 +1,11 @@
 # Implementation plan — Feature 007 Tenancy and access control
 
-Status: `PLAN COMPLETE AND MERGED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
+Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
 Dependencies: Feature 001 bootstrap; permission catalogue and shared security contracts
 
 ## Summary
 
-Implement single-database tenant ownership, explicit Administrator tenant context, protected platform role and configurable tenant roles through Spatie Permission teams and Filament Shield. Every route, query, Action, file, revision, output, command and scheduler path fails closed without valid tenant/ability. No tenancy package, subdomain, impersonation or multi-tenant membership.
+Implement single-database tenant ownership, explicit Administrator tenant context, protected platform role, tenant operational settings and configurable tenant roles through Spatie Permission teams and Filament Shield. Every route, query, Action, file, revision, output, command and scheduler path fails closed without valid tenant/ability. No tenancy package, subdomain, impersonation or multi-tenant membership.
 
 ## Constitution check
 
@@ -17,6 +17,7 @@ Passes C-01, C-04, C-06, C-07, C-10 and C-11. Tenant isolation remains applicati
 
 - `Tenant` model/migration/factory;
 - tenant fields on `User` from Feature 001;
+- tenant attachment quota (default 2 GiB) and deletion-reason-required flag (default false);
 - Spatie Permission migrations configured with `tenant_id` teams;
 - tenant onboarding checklist fields only if a consuming UI is implemented.
 
@@ -48,6 +49,14 @@ Every tenant resource Policy checks explicit permission and same tenant/current 
 - tenant switch/entry action and visible tenant badge/breadcrumb;
 - optional non-blocking onboarding checklist using ordinary Actions;
 - global operational dashboard query with tenant state/user counts/last activity/alerts only, no economics.
+- protected per-tenant attachment-quota control in global Tenant settings;
+- protected global Tenant settings control for deletion-reason required state, guarded by `deletion-reason-setting.manage` and an explicitly selected tenant.
+
+### Operational settings
+
+- `UpdateTenantAttachmentQuota` requires global Administrator plus `platform.settings.manage`, accepts every non-negative byte count representable by unsigned BIGINT including zero, applies no lower application-defined maximum, parses/compares exact decimal strings without float, updates one selected tenant with optimistic locking and never deletes files; Feature 003 derives distinct non-purged payload usage and blocks only operations creating new bytes when over quota or at zero.
+- `UpdateDeletionReasonSetting` requires global Administrator, protected `deletion-reason-setting.manage` and one explicitly selected tenant, accepts only a boolean and affects future project/contract/term deletion validation without rewriting evidence. Tenant roles never receive this ability.
+- an immutable `TenantOperationalSettings` DTO supplies the two approved settings to consuming Actions; consumers do not query Tenant directly.
 
 ## Spatie teams integration
 
@@ -81,7 +90,7 @@ Permanent tenant deletion is unavailable.
 
 ## Tenant creation
 
-Required name, unique code, currency, language, timezone, default VAT and budget basis default Net. Optional company/branding/contact data. Transaction creates tenant, annual-budget/settings defaults as owned by features only through their Actions, seeds role templates and records audit. Optional onboarding checklist links to setup; it does not block navigation or duplicate validation.
+Required name, unique code, currency, language, timezone, default VAT and budget basis default Net. Attachment quota defaults to 2,147,483,648 bytes and deletion reasons default to optional. Optional company/branding/contact data. Transaction creates tenant, annual-budget/settings defaults as owned by features only through their Actions, seeds role templates and records audit. Optional onboarding checklist links to setup; it does not block navigation or duplicate validation.
 
 ## Cross-tenant constraints
 
@@ -101,6 +110,8 @@ No helper may call `Model::find($id)` for a tenant resource without tenant predi
 - global dashboard has no economics/behavioral telemetry;
 - onboarding non-blocking and uses normal Actions;
 - user deactivation authorship/assignment behavior.
+- global-Administrator-only quota and deletion-reason management, explicitly selected tenant scope and cross-tenant denial;
+- lowering quota below derived distinct-payload usage, including to zero, preserves every payload and blocks only new payload-producing operations; zero-byte revisions/restores remain allowed.
 
 Dusk covers visible context and RoleResource critical interaction only.
 
@@ -113,7 +124,8 @@ Dusk covers visible context and RoleResource critical interaction only.
 5. tenant lifecycle/user/role Actions and Policies;
 6. Filament global resources/switch/context UI;
 7. onboarding/global overview;
-8. full cross-feature isolation test matrix.
+8. operational tenant settings and permission boundaries;
+9. full cross-feature isolation test matrix.
 
 ## Post-design check
 

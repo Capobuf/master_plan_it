@@ -1,8 +1,8 @@
 # Revisione del dominio Budget
 
-Stato: `APPROVED PRODUCT CONTRACT — /speckit.plan REQUIRED`  
+Stato: `APPROVED PRODUCT CONTRACT — PROPAGATED; /speckit.analyze PASSED`
 Ambito: Budget annuale, voci economiche, progetti, contratti, Plafond, versioni nominate e confronti  
-Autorità: Constitution 3.0.1; Q-034–Q-040; PD-BUD-001; PD-GEN-001
+Autorità: Constitution 5.0.0; Q-034–Q-040; PD-BUD-001; PD-GEN-001
 
 ## 1. Obiettivo
 
@@ -178,6 +178,6 @@ La direzione tecnica minima è documentata in `economic-engine-architecture.md`:
 - Q-034–Q-038 e Q-040: approvate e riconciliate;
 - Q-039: superseded da Q-013;
 - Q-041: chiusa da PD-GEN-001;
-- `/speckit.plan`: da rigenerare su Constitution 3.0.1;
-- `/speckit.tasks`: bloccato fino all'approvazione del piano;
-- `/speckit.implement`: bloccato.
+- `/speckit.plan`: completo e propagato su Constitution 5.0.0;
+- `/speckit.tasks`: completo e ordinato per dipendenze;
+- `/speckit.implement`: prossimo passo valido; non ancora eseguito.

@@ -6,7 +6,7 @@ Identifiers: unsigned BIGINT PK; tenant-scoped unique constraints; legacy/source
 
 ## Conventions
 
-All app-owned mutable tables include `created_at`, `updated_at`; optimistic models include `lock_version` unsigned integer default 1. Current-domain deletable tables use `deleted_at`; deleted rows are excluded explicitly from every current query.
+All app-owned mutable tables include `created_at`, `updated_at`; optimistic models include `lock_version` unsigned integer default 1. Current-domain deletable tables use `deleted_at`; deleted rows are excluded explicitly from every current query. For projects, contracts and contract terms, `deleted_at` is a terminal evidence tombstone and is never cleared by application restore/import.
 
 Money:
 
@@ -36,6 +36,8 @@ No generic key/value or JSON settings store.
 - currency code, language code, timezone;
 - default VAT rate;
 - budget basis `net|gross` default `net`;
+- `attachment_quota_bytes` unsigned BIGINT default `2147483648`, zero valid, no application-defined ceiling below technical range and exact decimal-string handling outside native signed range;
+- `deletion_reason_required` boolean default false;
 - optional company/address/contact/report branding fields;
 - optional logo attachment reference or dedicated private path;
 - lifecycle actor/timestamps;
@@ -105,26 +107,37 @@ Provides aggregate history without replacing vendor storage.
 
 ### `attachments`
 
-- tenant ID;
-- attachable morph type/ID;
-- disk and private path;
-- original filename, MIME, size, SHA-256;
-- uploaded by;
-- soft delete.
+- tenant ID and stable logical UUID;
+- exactly one parent: Expense or ExpenseRow, constrained to the same tenant/aggregate;
+- active membership state;
+- original filename, detected MIME, byte size, SHA-256;
+- uploaded by/time and deletion evidence.
 
-Unique checksum is not global deduplication. Parent tenant and actor permission are validated in Actions. Attachment payload is never copied into audit/version JSON.
+Parent tenant and actor permission are validated in Actions. Files are private; extension/detected-MIME pair, nonempty content and 10 MiB maximum are required.
+
+### `attachment_revision_manifests` and items
+
+One complete ordered manifest per Expense aggregate revision batch. Items capture parent/logical attachment identity, approved metadata/checksum and one immutable payload-version ID. A manifest is a complete set, not a diff; unchanged attachments reuse an existing payload-version reference.
+
+### `attachment_payload_versions`
+
+- tenant, private disk/path, bytes and SHA-256;
+- creation actor/time and correlation;
+- nullable terminal `purged_at`/unusable path state.
+
+Each distinct non-purged payload version counts once toward quota even when several manifests reference it. Manifest references add no usage. Attachment/row deletion retains historical versions while the Expense exists; permanent Expense deletion purges every related payload. Payload bytes never enter audit/version JSON.
 
 ## Master data
 
 ### `planning_years`
 
 - tenant ID;
-- numeric year label/identifier;
-- start/end dates;
+- numeric calendar-year identity;
 - active state;
 - `lock_version`;
-- unique tenant/year label;
-- overlap prevented by Action transaction/query because MySQL lacks general exclusion constraint.
+- unique tenant/year identity.
+
+January 1 and December 31 are derived boundaries, not editable or persisted start/end fields. Planning years support create/deactivate/reactivate only; no update, delete or revision lifecycle exists.
 
 ### `cost_centers`
 
@@ -132,7 +145,7 @@ Unique checksum is not global deduplication. Parent tenant and actor permission 
 - nullable same-tenant parent ID;
 - name;
 - active state;
-- `lock_version`, soft delete only for unreferenced administrative cleanup if later approved; launch uses deactivate/reactivate;
+- `lock_version`, nullable `deleted_at` for separately authorized irreversible deletion only when there are no descendants and no prohibited current/historical references;
 - unique tenant/name.
 
 Cycle and active-descendant checks are Action-owned.
@@ -143,7 +156,7 @@ Cycle and active-descendant checks are Action-owned.
 - name;
 - optional VAT/contact fields;
 - active state;
-- `lock_version`;
+- `lock_version`, nullable `deleted_at` for separately authorized irreversible deletion only when there are no prohibited current/historical references;
 - unique tenant/name.
 
 ## Projects and contracts
@@ -156,9 +169,10 @@ Cycle and active-descendant checks are Action-owned.
 - stage `idea|proposed|approved|deferred|rejected`;
 - nullable deferred target planning year ID;
 - optional description;
-- `lock_version`, soft delete.
+- nullable deletion reason/deleting actor/time;
+- `lock_version`, terminal `deleted_at`.
 
-No monetary total column.
+No monetary total column. Delete requires zero current linked Expenses and never cascades/detaches/reassigns one. The tombstone is not recoverable through UI, Action, revision restore or import.
 
 ### `contracts`
 
@@ -166,9 +180,10 @@ No monetary total column.
 - vendor ID, cost center ID;
 - title, active state;
 - optional renewal metadata;
-- `lock_version`, soft delete.
+- nullable deletion reason/deleting actor/time;
+- `lock_version`, terminal `deleted_at`.
 
-No monetary total column.
+No monetary total column. Deletion irreversibly stops generation, retains generated Expenses as user-authoritative with structured provenance and cannot be restored/imported active.
 
 ### `contract_terms`
 
@@ -179,9 +194,10 @@ No monetary total column.
 - VAT rate and derived Net/VAT/Gross contract occurrence values;
 - auto-renew flag;
 - source rule identity;
-- `lock_version`, soft delete.
+- nullable deletion reason/deleting actor/time;
+- `lock_version`, terminal `deleted_at`.
 
-Term overlap checked under transaction with contract rows locked.
+Term overlap is checked under transaction with contract rows locked. The same deleted stable term identity cannot be restored by contract revision restore/import and never generates again.
 
 ### `contract_generation_exceptions`
 
@@ -203,9 +219,9 @@ Removal represents resume and is audited.
 - title/description;
 - nullable project ID XOR contract ID;
 - optional legacy identity fields via identity map;
-- `lock_version`, soft delete.
+- `lock_version`, terminal operational `deleted_at`.
 
-No persisted aggregate total; totals are calculated from current rows.
+No persisted aggregate total; totals are calculated from current rows. Permanent Expense deletion is not operationally restorable and purges all current/historical attachment payload versions while retaining minimized evidence only.
 
 ### `expense_rows`
 
@@ -217,6 +233,7 @@ No persisted aggregate total; totals are calculated from current rows.
 - `is_system_managed` and nullable `manual_override_at`;
 - nullable contract term ID;
 - nullable immutable `source_key`, unique within tenant when present;
+- nullable immutable source-deletion provenance fields: source contract/term stable IDs, contract title, term date range, deletion timestamp and supplied reason;
 - quantity, unit price and entered Net source fields at 6 decimals;
 - persisted Net, VAT, Gross at 2 decimals;
 - VAT rate;
@@ -379,8 +396,10 @@ Minimum composite indexes:
 ## Deletion and FK policy
 
 - tenant: no delete;
-- referenced master data: restrict delete, deactivate instead;
-- current domain aggregate: soft delete through Actions;
+- PlanningYear: no delete; deactivate/reactivate only;
+- CostCenter/Vendor: deactivate/reactivate ordinarily; separately permissioned irreversible delete only after exact descendant and current/historical-reference restrictions pass;
+- Expense: Action-owned irreversible operational deletion; purge every attachment payload version and retain minimized evidence only;
+- Project/Contract/ContractTerm: terminal tombstone through Actions; the same deleted logical identity is never reactivated or restored by revision restore/import;
 - aggregate children: no database cascade that bypasses revision/audit; Action explicitly deletes children inside transaction;
 - snapshot rows: cascade only when deleting a draft version; published version deletion unavailable;
 - staging: cascade by import run;

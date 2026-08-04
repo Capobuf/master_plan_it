@@ -1,7 +1,7 @@
 # Technical contract amendment — 2026-08-03
 
-Status: `APPROVED TECHNICAL CORRECTION`  
-Authority: Constitution 3.0.1, approved runtime matrix and `/speckit.analyze` findings  
+Status: `PARTIALLY SUPERSEDED — A-TECH-001/002 REMAIN CURRENT; A-TECH-003 IS HISTORICAL`
+Authority at approval: Constitution 3.0.1, approved runtime matrix and then-current `/speckit.analyze` findings
 Product impact: none
 
 This document corrects technical contradictions without changing Q-001–Q-041.
@@ -34,24 +34,8 @@ The executable gate is the exact guarded command in `docs/replatform/task-execut
 7. stop Feature 006 backup implementation and open a technical amendment if the gate cannot pass;
 8. never downgrade, use `--ignore-platform-reqs`, install a fallback package or create a hidden custom backup mechanism.
 
-## A-TECH-003 — Current Spec Kit gate
+## A-TECH-003 — Historical Spec Kit gate
 
-- `/speckit.clarify`: complete;
-- `/speckit.plan`: complete and merged;
-- initial `/speckit.tasks`: complete and merged;
-- initial `/speckit.analyze`: recorded 2 CRITICAL, 10 HIGH and 4 MEDIUM findings;
-- first remediation: merged;
-- rerun `/speckit.analyze`: recorded 0 CRITICAL, 8 HIGH and 4 MEDIUM findings;
-- second `/speckit.tasks` remediation: complete;
-- Spec Kit 0.15.2 integration and 2026-08-04 task/checklist remediations: complete and merged;
-- second 2026-08-04 rerun on `0d3a84c38e177f90e53f74bb84f78594ca00d32d`: recorded 0 CRITICAL, 1 HIGH and 1 MEDIUM finding;
-- ability-contract `/speckit.plan` remediation: complete and merged;
-- third analysis on `f673513c137e797d52bc5f3099ed3c1c10b4a129`: recorded 0 CRITICAL, 1 HIGH and 0 MEDIUM findings;
-- complete cross-contract C-07/Q-016 propagation: complete and merged;
-- fourth analysis on `348a557c58388ff917646dd6a02cb00cbdc1f513`: recorded 0 CRITICAL, 1 HIGH and 0 MEDIUM findings;
-- invariant task/test ownership remediation: complete; integration state authoritative only in GitHub PR metadata; final analysis completed below;
-- integration state: authoritative only in GitHub PR metadata;
-- final analysis on `ba3744fbc7043f3f3b036416e6c082e4cb7c6831`: recorded 0 CRITICAL, 0 HIGH and 0 MEDIUM findings;
-- next valid command: `/speckit.implement`; identified but not executed.
+The 3.0.1 gate and its former final-pass claim are historical. Constitution 5.0.0 and the 2026-08-04 product clarifications superseded that readiness result. Current status is owned by `implementation-readiness.md`, `artifact-status-register.md`, and the latest dated integrated analysis report; this amendment does not authorize `/speckit.implement` by itself.
 
-This amendment is normative until the original contract is next regenerated in full.
+A-TECH-001 and A-TECH-002 remain normative until superseded by a later explicit technical amendment or successful locked dependency evidence.

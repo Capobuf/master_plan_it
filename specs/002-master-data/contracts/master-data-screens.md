@@ -42,5 +42,7 @@ Read the local plan and data model. Implement exactly year, cost-center and vend
 ## Tenant and ability clauses
 
 - Registers and selectors contain only the current tenant's years, cost centers, and vendors.
-- Vendor, cost-center, and planning-year writes appear only when the actor has the exact matching create/update/deactivate/reactivate ability.
+- Planning years expose only create/deactivate/reactivate controls; their January 1/December 31 boundaries are derived, and delete/update/revision controls do not exist.
+- Vendor and cost-center writes appear only with the exact create/update/delete/deactivate/reactivate/revision ability. Delete is disabled unless reference checks pass; cost-center delete additionally requires no descendants.
+- Cost-center hierarchy renders at most root/child/grandchild and orders siblings by case-insensitive name then ID; no cost-center code field is displayed or accepted.
 - An actor with only the matching view ability receives the same-tenant read-only surface; customized role names do not change this rule.

@@ -1,6 +1,6 @@
 # Architettura del kernel economico
 
-Status: `APPROVED TECHNICAL DIRECTION — PHYSICAL PLAN REQUIRED`  
+Status: `APPROVED TECHNICAL DIRECTION — PROPAGATED TO FEATURE 005 PLAN AND TASKS`
 Scope: Budget corrente, dashboard tenant, report, print, export e lato corrente dei confronti  
 Authority: Constitution C-02, C-03, C-04, C-08 e C-10; Q-034–Q-040
 

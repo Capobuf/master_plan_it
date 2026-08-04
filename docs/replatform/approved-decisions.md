@@ -13,7 +13,7 @@ Source: Product Owner answers recorded in `clarification-log.md`.
 | Q-004 | Administrator selects tenant context explicitly, retains Administrator identity, and does not impersonate. | Shell, tenant context, audit, tests. |
 | Q-005 | The seeded `Viewer` template has complete same-tenant read, attachment download, audit view, report, print, and export permissions and no writes or global operations. | Permission seed, policies, navigation. |
 | Q-006 | The seeded `Editor` template supports ordinary tenant business work. Expenses and Actual rows may be corrected, versioned, and deleted with authorization and audit; one current record is shown and revision history is separate from official datasets. | Expense requirements, versioning, Actions, policies, tests. |
-| Q-007 | The seeded `Editor` template manages vendors and cost centers; financial-year configuration is initially Administrator-only but remains assignable only through the protected permission catalogue. | Master data, permissions, tests. |
+| Q-007 | The seeded `Editor` template manages vendors and cost centers and receives only `planning-year.view`. Planning-year create/deactivate/reactivate remain tenant catalogue abilities that Administrator may deliberately assign to a custom role; they are not protected platform abilities and are omitted from the seeded Editor template. | Master data, permission seed, role-management tests. |
 | Q-008 | The seeded `Editor` template manages projects, contracts, stages, terms, renewals, and permitted generation controls; source identity and duplicate prevention remain system-controlled. | Project/contract contracts, generation tests. |
 | Q-009 | Tenant export/print, scenarios, attachments, and audit view are permission-controlled. Import, migration, installation backup/restore, global user administration, and platform role protection remain Administrator operations. | Reporting, operations, authorization. |
 | Q-010 | Business data is tenant-owned. Global data is limited to tenant registry, user accounts, platform roles/permissions, technical configuration, and system currency/language/timezone lists. | Data models, ownership, migration. |
@@ -24,7 +24,7 @@ Source: Product Owner answers recorded in `clarification-log.md`.
 | Q-015 | Current tenant is always visible in side navigation and breadcrumbs; only Administrator changes tenant context. | Shell and browser tests. |
 | Q-016 | Inactive tenant blocks tenant-user access; Administrator retains otherwise authorized operations in that tenant and may reactivate it. | Authorization and lifecycle tests. |
 | Q-017 | User deactivation preserves authorship and audit. Records remain tenant-owned; no automatic transfer occurs; open assignments require explicit reassignment. | User model, audit, assignments. |
-| Q-018 | Attachments follow the current parent record. Permitted deletion removes the active attachment; minimum audit/revision metadata is retained. Viewer-like roles may download only when granted the permission. | Attachment lifecycle and storage tests. |
+| Q-018 | Attachments follow the current parent record and its permissions. Every Expense revision has a complete application-owned manifest referencing immutable payload versions; unchanged bytes reuse an existing version. Current attachment deletion retains historical payload versions only while the Expense exists. Permanent Expense deletion purges all related payload bytes and leaves only minimized non-payload evidence. Download still requires the exact permission. | Attachment manifest, reuse, quota, restore, purge and authorization tests. |
 | Q-019 | Every economic report, print, and export contains exactly one tenant. Administrator enters tenant context first. An authorized actor may output either the currently filtered dataset or an explicitly selected complete report/year scope. Global export contains operational metadata only. | Report/export contracts, scope controls, parity tests. |
 | Q-020 | Audit retention defaults to 24 months and is configurable installation-wide by Administrator in platform settings. Same-tenant audit view is permission-controlled; audit export is excluded at launch. Administrator may view tenant and global audit. | Platform settings, audit model, retention command, reinforced confirmation, permissions. |
 | Q-021 | Application backup/restore is installation-wide. Complete single-tenant data export/import is a distinct portability function; it is not selective disaster recovery. | Backup contract and tenant portability contract. |
@@ -53,7 +53,7 @@ Source: Product Owner answers recorded in `clarification-log.md`.
 
 ### Operational revision history
 
-Expenses, Actual rows, contracts, projects, relevant master data, and settings expose one current logical record plus revision history. Compare and restore are supported; restoring creates a new current revision. Deleted records leave the active domain and official datasets. Revision/audit storage is not an economic source.
+Expenses, Actual rows, current contracts, current projects, relevant master data, and settings expose one current logical record plus revision history. Compare/restore is available only where the owning domain permits it, and a permitted restore creates a new current revision. Deleted records leave the active domain and official datasets; under PD-DEL-001 the same deleted project, contract or contract-term identity is terminal and non-restorable. Revision/audit storage is not an economic source.
 
 ### Named budget versions
 
@@ -62,5 +62,13 @@ The rolling current budget may be captured into immutable named versions such as
 ### Contract-generated expenses
 
 Contracts show generated expenses and generation history. Deleting a generated expense asks whether the specific occurrence may be generated again. An authorized actor may remove suppression, resume and generate immediately, or generate one valid missing occurrence for a selected year. Duplicate source keys and silent overwrite remain prohibited.
+
+### Tenant operational settings
+
+Attachment quota and deletion-reason-required remain separate per-tenant values. Only the global Administrator may change them, through separate protected abilities and an explicitly selected tenant. Attachment quota is a non-negative exact byte count: zero is valid, purges nothing, blocks only new payload bytes and permits reuse-only revisions/restores; there is no application-defined maximum below technical representability and float is prohibited. `deletion-reason-setting.manage` is never assignable to Editor or a custom tenant role. The reason prompt is always shown, optional by default, and required only for future project/contract/term deletions after that tenant's setting is enabled.
+
+### Terminal source deletion
+
+Deleting a project, contract or contract term is irreversible in the application. Minimized tombstones may remain for audit, provenance and source-key integrity, but UI, Actions, revision restore, import and synchronization cannot reactivate or restore the same deleted logical identity. Contract/term deletion continues to preserve linked generated Expenses as user-authoritative records with immutable deletion provenance.
 
 All product questions in `product-clarification-register.md` are closed. Remaining cutover evidence in `open-questions.md` is operational and must not be guessed.

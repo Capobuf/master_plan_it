@@ -1,6 +1,6 @@
 # Feature 004 — Contracts and projects
 
-Status: `CLARIFIED AND APPROVED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
+Status: `CLARIFIED AND APPROVED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
 Logical owner: Product Owner with domain approval  
 Actor: tenant user with explicit permission  
 Dependencies: Feature 003 and Feature 007  
@@ -10,15 +10,26 @@ Additional decisions: Q-035, Q-040, Q-041
 
 Manage tenant-owned projects and contracts, version their current records, generate Actual expenses through stable source keys, maintain a clear system-managed/user-authoritative boundary, expose generation history and let authorized users suppress, resume or manually create one valid missing occurrence without duplication or silent overwrite.
 
+## Clarifications
+
+### Session 2026-08-04
+
+- Q: Quando può essere eliminato definitivamente un progetto con spese collegate? → A: Solo dopo che tutte le spese correnti collegate sono state eliminate esplicitamente tramite il loro normale flusso. L'eliminazione del progetto non cancella spese a cascata e conserva le evidenze minime di revisioni e audit.
+- Q: Cosa accade alle spese generate quando viene eliminato il contratto? → A: Restano correnti e non vengono eliminate. Conservano una nota storica immutabile che identifica il contratto e la data di eliminazione; l'eliminazione raccoglie la motivazione secondo l'impostazione approvata, interrompe ogni generazione futura e mantiene la source key.
+- Q: La motivazione di cancellazione è obbligatoria per progetti e contratti? → A: Il campo viene sempre richiesto nell'interfaccia ma è facoltativo per impostazione predefinita; un'impostazione può renderlo obbligatorio o nuovamente facoltativo per entrambe le cancellazioni.
+- Q: Qual è l'ambito dell'impostazione e chi può modificarla? → A: È distinta per tenant e modificabile soltanto dall'Administrator globale, per un tenant selezionato esplicitamente, tramite l'abilità protetta dedicata. Editor e ruoli personalizzati non possono riceverla. La motivazione resta facoltativa di default e ha una lunghezza massima di 500 caratteri.
+- Q: Cosa accade se viene eliminato un termine contrattuale che ha già generato spese? → A: Il termine viene eliminato senza cancellare le spese; queste diventano user-authoritative e conservano una nota immutabile sul termine eliminato e la source key. La generazione futura del termine si interrompe e la motivazione segue la stessa impostazione del tenant.
+- Q: Progetti, contratti o termini eliminati possono essere ripristinati? → A: No. L'eliminazione è irreversibile nell'applicazione. Può restare una tombstone tecnica minima per audit, provenienza e vincoli, ma nessuna revisione, importazione o azione può ripristinare o riattivare la stessa identità logica eliminata.
+
 ## User stories
 
 ### US-004-01 — Projects
 
-An authorized actor manages project stages and deferred decisions while revision history preserves one current project identity and the economic dataset classifies linked rows consistently.
+An authorized actor manages project stages and deferred decisions, and may delete a project only after explicitly deleting every linked current Expense, while revision history preserves one current project identity and the economic dataset classifies linked rows consistently.
 
 ### US-004-02 — Contracts and terms
 
-An authorized actor manages a contract and non-overlapping term timeline with renewal and revision history.
+An authorized actor manages a contract and non-overlapping term timeline with renewal and revision history, and may delete the contract after the always-visible reason prompt, whose value is required only when the current setting enables it, without deleting generated Expenses, which retain immutable deletion provenance.
 
 ### US-004-03 — Generated Actual lifecycle
 
@@ -90,6 +101,22 @@ Project, contract and term updates create operational revisions. Restore creates
 
 The scheduler creates deduplicated database notifications and optional synchronous email at 30/7/1 days and expiration for recipients with the configured permission. No permanent worker is required.
 
+### AC-004-14 — Project deletion
+
+Given a project with one or more linked current Expenses, deletion is denied atomically and identifies that linked Expenses must first be deleted through their separately authorized Feature 003 flow. After no current Expense references the project, an actor with the project delete ability is prompted for a deletion reason and may confirm irreversible deletion. The reason may be empty only when the current deletion-reason setting is optional. The operation never cascades to Expenses and retains only approved minimized project revision/tombstone/audit evidence, including the reason when supplied. No restore, revision restore or import may return the deleted project to the active domain.
+
+### AC-004-15 — Contract deletion with generated Expenses
+
+Given a contract with current generated Expenses, an actor with the contract delete ability is prompted for a deletion reason and confirms irreversible deletion. The reason may be empty only when the current deletion-reason setting is optional. The contract and its future generation schedule leave the active domain permanently, but no Expense is deleted. Each linked current generated Expense becomes user-authoritative and receives immutable provenance containing the contract stable identifier and title, deletion timestamp and supplied reason when present; its source key remains unchanged. Contract deletion, provenance writes and generation shutdown succeed atomically or all roll back. No restore, revision restore or import may reactivate the contract or its generation.
+
+### AC-004-16 — Tenant deletion-reason setting
+
+Given the global Administrator with protected `deletion-reason-setting.manage` and one explicitly selected tenant, the Administrator may switch that tenant's setting between optional and required. A tenant user, Editor, custom tenant role, missing ability or mismatched target tenant is denied before the setting is disclosed or changed. The default is optional; a change affects only later project/contract/term deletion attempts and never rewrites prior tombstones, provenance or audit. A supplied reason is trimmed, may not exceed 500 characters, and an empty result is rejected only while the setting is required.
+
+### AC-004-17 — Contract-term deletion with generated Expenses
+
+Given a contract term with current generated Expenses, an actor with the contract update ability explicitly marks the term for irreversible deletion, is prompted for a reason under the current tenant setting, and confirms the aggregate update. The term permanently leaves the current timeline and cannot generate future occurrences. No Expense is deleted: every linked current generated Expense becomes user-authoritative and receives immutable provenance containing the contract and term stable identifiers, contract title, term date range, deletion timestamp and supplied reason when present; every source key remains unchanged. Term deletion, provenance writes and generation shutdown succeed atomically or all roll back. Revision restore and import cannot restore the same deleted stable term identity.
+
 ## Functional requirements
 
 | ID | Requirement | Acceptance |
@@ -115,9 +142,14 @@ The scheduler creates deduplicated database notifications and optional synchrono
 | FR-004-034 | An expense shall reference at most one project or contract. | AC-004-01 |
 | FR-004-035 | Contracts and projects shall not be independent economic total sources. | AC-004-03, AC-004-11 |
 | FR-004-036 | Projects, contracts, terms, exceptions, notifications and generated expenses shall stay within one tenant. | AC-004-01 |
-| FR-004-037 | Project, contract and term revisions shall support compare/restore while retaining one current record. | AC-004-12 |
+| FR-004-037 | Current non-deleted project, contract and term revisions shall support compare/restore while retaining one current record. Revision restore shall never restore or reactivate the same deleted project, contract or term logical identity. | AC-004-12, AC-004-14, AC-004-15, AC-004-17 |
 | FR-004-038 | Renewal/expiry notifications shall run synchronously from Laravel scheduler without queue workers. | AC-004-13 |
 | FR-004-039 | Generation, suppression, resume, manual-year and confirmation actions shall be separately permission-controlled. | AC-004-01, AC-004-05, AC-004-10 |
+| FR-004-040 | Project deletion shall require the distinct project delete ability, explicit confirmation and a deletion-reason prompt, and shall be permitted only when no current Expense references the project. The reason shall be required only when the approved setting enables that requirement. Linked Expenses shall never be deleted, detached, or reassigned as a side effect; prior Expense deletion shall use the Feature 003 flow. Deletion shall be irreversible through UI, Action, revision restore and import while retaining only minimized technical evidence. | AC-004-01, AC-004-14 |
+| FR-004-041 | Contract deletion shall require the distinct contract delete ability, explicit confirmation and a deletion-reason prompt. The reason shall be required only when the approved setting enables that requirement. Deletion shall irreversibly stop every future generation operation without deleting current generated Expenses. Each linked current generated Expense shall atomically become user-authoritative and retain immutable provenance with the contract stable identifier/title, deletion timestamp and supplied reason when present while preserving its source key. No UI, Action, revision restore or import may reactivate the contract. | AC-004-01, AC-004-05, AC-004-15 |
+| FR-004-042 | Each tenant shall own one deletion-reason setting controlling whether the project/contract/term deletion prompt rejects an empty value. The default shall be optional; only global Administrator with protected `deletion-reason-setting.manage` may change it for an explicitly selected tenant. Tenant roles shall never receive this authority, and a change shall affect only future deletion attempts without rewriting prior evidence. | AC-004-01, AC-004-14, AC-004-15, AC-004-16, AC-004-17 |
+| FR-004-043 | A project, contract or contract-term deletion reason shall be trimmed and limited to 500 characters. A blank result shall be accepted only when the current tenant setting is optional. | AC-004-14, AC-004-15, AC-004-16, AC-004-17 |
+| FR-004-044 | Explicit contract-term deletion shall use the tenant deletion-reason policy, irreversibly stop future generation for that term and never delete a generated Expense. Linked current generated Expenses shall atomically become user-authoritative and retain immutable contract/term/date/deletion provenance and unchanged source keys. No UI, Action, revision restore or import may restore or reactivate the same deleted stable term identity. | AC-004-05, AC-004-15, AC-004-16, AC-004-17 |
 
 ## Business invariants
 
@@ -135,7 +167,13 @@ The scheduler creates deduplicated database notifications and optional synchrono
 | INV-CON-007 | User-authoritative generated Actual is never overwritten by synchronization. | DomainConflict | TEST-004-010 |
 | INV-CON-008 | Confirmation stops automatic sync but does not make the Actual permanently immutable. | DomainConflict | TEST-004-011 |
 | INV-REV-004 | Restoring a contract/project revision cannot rewrite generated-expense history or duplicate source keys. | DomainConflict | TEST-004-012 |
-| INV-TEN-004 | Generation cannot create or link another tenant's expense or exception. | Authorization/DomainConflict | TEST-004-013 |
+| INV-CON-TEN-001 | Generation cannot create or link another tenant's expense or exception. | Authorization/DomainConflict | TEST-004-013 |
+| INV-PRJ-004 | A project with any current linked Expense cannot be deleted, and project deletion never cascades, detaches, or reassigns an Expense. | DomainConflict | TEST-004-014 |
+| INV-CON-009 | Contract deletion never deletes a generated Expense, preserves each source key, records immutable deletion provenance and prevents every future occurrence generation. | DomainConflict | TEST-004-015 |
+| INV-DEL-001 | An empty project, contract or contract-term deletion reason is accepted if and only if the current approved setting marks it optional; setting changes never rewrite prior deletion evidence. | DomainConflict | TEST-004-016 |
+| INV-DEL-002 | Only global Administrator may change the explicitly selected tenant's deletion-reason setting; reason validation remains tenant-scoped and a trimmed reason never exceeds 500 characters. | Authorization/DomainConflict | TEST-004-017 |
+| INV-CON-010 | Contract-term deletion never deletes or detaches generated Expense history, never changes a source key, and permanently prevents future generation from the deleted term. | DomainConflict | TEST-004-018 |
+| INV-DEL-003 | The same deleted project, contract or term logical identity never re-enters the active domain through UI, Action, revision restore, import or synchronization; retained tombstones are evidence only. | DomainConflict | TEST-004-019 |
 
 ## Out of scope
 
@@ -143,10 +181,13 @@ The scheduler creates deduplicated database notifications and optional synchrono
 - automatic regeneration after explicit suppression;
 - bulk manual generation that bypasses per-occurrence validation;
 - silent overwrite of manually modified or confirmed generated Actual;
+- cascade deletion, detachment, or reassignment of linked Expenses when deleting a project;
+- cascade deletion of generated Expenses when deleting a contract;
+- cascade deletion of generated Expenses when deleting a contract term;
 - permanent Actual immutability after confirmation;
 - queued/real-time notifications;
 - role-name authorization branches.
 
 ## Clarification result
 
-Q-008, Q-023, Q-035, Q-040, Q-041 and PD-GEN-001 are closed. Their approved outcomes are propagated through the current Feature 004 plan, tasks, screen and synchronization contracts, physical data model, accounting cases, and cross-feature registries; implementation remains blocked until the integrated `/speckit.analyze` gate passes.
+Q-008, Q-023, Q-035, Q-040, Q-041 and PD-GEN-001 remain closed. All six decisions in the 2026-08-04 clarification session are encoded and propagated through the specification, plan, data model, contracts, tasks, checklists, permission catalogue, and cross-feature registries.

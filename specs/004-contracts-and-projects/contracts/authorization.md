@@ -53,6 +53,9 @@ Read the local plan and data model. Implement exactly the authorization decision
 
 - Project reads, lifecycle changes, revision view, and revision restore require the matching `project.*` ability.
 - Contract/term reads, lifecycle changes, revision view, and revision restore require the matching `contract.*` ability.
+- Project delete requires `project.delete`; current linked Expenses deny it before mutation.
+- Contract delete requires `contract.delete`; explicit term deletion uses `contract.update`. Neither operation deletes a generated Expense.
+- protected `deletion-reason-setting.manage` is available only to global Administrator and controls only one explicitly selected tenant's optional/required deletion-reason toggle; it grants no project/contract deletion ability.
 - Generate, suppress, resume, and generation-history operations require their distinct `contract.generate-occurrence`, `contract.suppress-generation`, `contract.resume-generation`, or `contract.view-generation-history` ability.
 - Generated source identities and history already used by generated expenses are system-controlled.
 - Generation commands and scheduler iterations set/reset explicit tenant context and reapply ownership, ability, source-key, and current-state rules for every tenant; no role-name shortcut is permitted.

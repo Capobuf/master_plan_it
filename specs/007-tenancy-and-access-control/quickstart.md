@@ -4,7 +4,7 @@ Future commands; none were executed during planning.
 
 ## Fixture
 
-Create global Administrator, tenants A/B, active/inactive states, custom roles, Editor/Viewer templates and tenant users. Create one resource of every tenant-owned family plus attachments/revisions/report/version/scenario/import identities.
+Create global Administrator, tenants A/B, active/inactive states, custom roles, Editor/Viewer templates and tenant users. Keep tenant A at the 2 GiB attachment-quota default, lower tenant B below its current-plus-historical attachment usage, and verify `deletion-reason-setting.manage` is protected from every tenant role. As Administrator, toggle it only for explicitly selected tenant A. Create one resource of every tenant-owned family plus attachments/revisions/report/version/scenario/import identities.
 
 ## Focused tests
 
@@ -26,6 +26,8 @@ Create global Administrator, tenants A/B, active/inactive states, custom roles, 
 7. Use tenant B IDs in direct URLs, relations, revisions, files, reports, exports and commands; receive safe denial.
 8. Deactivate user and verify authorship remains.
 9. Open global dashboard and confirm no economic aggregation.
+10. As Administrator with `platform.settings.manage`, set only tenant B's attachment quota to zero; verify tenant roles cannot do so, no payload is deleted, new payload bytes are denied and reuse-only revisions remain allowed.
+11. As global Administrator, toggle tenant A's deletion-reason requirement with the dedicated protected ability; verify tenant B is unchanged, tenant-role assignment/access is denied, and prior deletion evidence is unchanged.
 
 Focused browser:
 
@@ -40,4 +42,4 @@ Transactions or run-ID targeted cleanup only. Reset permission cache/context exp
 
 ## Success
 
-No request, Livewire action, command or scheduled operation leaks tenant context/permissions; protected abilities and invariants remain non-assignable.
+No request, Livewire action, command or scheduled operation leaks tenant context/permissions; protected abilities and invariants remain non-assignable. Tenant operational settings have the approved defaults, authority split and prospective-only effects.

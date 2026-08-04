@@ -1,6 +1,6 @@
 # Feature 001 — Platform foundation
 
-Status: `CLARIFIED AND APPROVED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
+Status: `CLARIFIED AND APPROVED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
 Logical owner: Product Owner with domain approval  
 Actors: Administrator and tenant users  
 Dependencies: Feature 007 product contract
@@ -131,7 +131,7 @@ The platform initializes audit retention to 24 months and accepts only integer v
 | INV-PLT-005 | Tenant role management cannot grant protected platform or invariant-bypass abilities. | Authorization | TEST-001-005 |
 | INV-PLT-006 | Passwords and secrets never enter audit/revision/export/notification data. | DomainConflict | TEST-001-006 |
 | INV-PLT-007 | Only Administrator changes audit retention, and retention never removes current business or version data. | Authorization/DomainConflict | TEST-001-007 |
-| INV-TEN-001 | Missing/unauthorized tenant context fails closed. | Authorization/NotFound-safe denial | TEST-007-001 |
+| INV-CTX-001 | Missing/unauthorized tenant context fails closed. | Authorization/NotFound-safe denial | TEST-001-008 |
 
 ## Out of scope
 
@@ -147,4 +147,4 @@ The platform initializes audit retention to 24 months and accepts only integer v
 
 ## Clarification result
 
-Q-001 through Q-005, Q-012 through Q-017, Q-020, Q-023 through Q-026, and Q-033 are closed. Their approved outcomes are propagated through the current Feature 001 plan, tasks, contracts, and cross-feature registries; implementation remains blocked until the integrated `/speckit.analyze` gate passes.
+Q-001 through Q-005, Q-012 through Q-017, Q-020, Q-023 through Q-026, and Q-033 are closed. Their approved outcomes are propagated through the current Feature 001 plan, tasks, contracts, and cross-feature registries. The Constitution 5.0.0 integrated `/speckit.analyze` gate passed; implementation is ready and has not started.

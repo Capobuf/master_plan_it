@@ -42,3 +42,5 @@ Read the local plan and data model. Implement exactly decision-first project edi
 ## Tenant and ability clauses
 
 Project, year, cost center, linked expenses, and contracts are same-tenant only. An actor with `project.view` receives the read surface; stage/field changes require `project.update`; no customized role name grants either operation.
+
+Project deletion requires `project.delete`, explicit confirmation and the current tenant deletion-reason policy. The prompt is always shown; its trimmed value is optional by default, required only when the tenant toggle is enabled, and never exceeds 500 characters. Deletion locks/rejects any current linked Expense, never cascades/detaches/reassigns one and is irreversible through UI, Action, revision restore and import; the terminal tombstone is evidence only.

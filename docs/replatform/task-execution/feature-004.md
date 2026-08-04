@@ -4,10 +4,10 @@
 |---|---|
 | T004-001–002 | `php artisan test tests/Feature/Contracts/ContractProjectSchemaTest.php` |
 | T004-003 | `php artisan test tests/Feature/Contracts/ContractProjectAuthorizationTest.php` |
-| T004-004 | `php artisan test tests/Feature/Projects/ProjectLifecycleTest.php tests/Feature/Projects/ProjectRevisionTest.php tests/Accounting/Integration/ProjectBucketFixtureTest.php` |
-| T004-005 | `php artisan test tests/Feature/Projects/ProjectLifecycleTest.php tests/Feature/Projects/ProjectRevisionTest.php` |
+| T004-004 | `php artisan test tests/Feature/Projects/ProjectLifecycleTest.php tests/Feature/Projects/ProjectDeletionTest.php tests/Feature/Projects/ProjectRevisionTest.php tests/Accounting/Integration/ProjectBucketFixtureTest.php` |
+| T004-005 | `php artisan test tests/Feature/Projects/ProjectLifecycleTest.php tests/Feature/Projects/ProjectDeletionTest.php tests/Feature/Projects/ProjectRevisionTest.php` |
 | T004-006 | `php artisan test tests/Livewire/Projects/ProjectResourceTest.php tests/Feature/Console/PromoteDeferredProjectsCommandTest.php` |
-| T004-007–008 | `php artisan test tests/Feature/Contracts/ContractLifecycleTest.php tests/Feature/Contracts/ContractTermOverlapTest.php tests/Feature/Contracts/ContractAutoRenewTest.php tests/Feature/Contracts/ContractRevisionTest.php` |
+| T004-007–008 | `php artisan test tests/Feature/Contracts/ContractLifecycleTest.php tests/Feature/Contracts/ContractDeletionTest.php tests/Feature/Contracts/ContractTermDeletionTest.php tests/Feature/Contracts/ContractTermOverlapTest.php tests/Feature/Contracts/ContractAutoRenewTest.php tests/Feature/Contracts/ContractRevisionTest.php tests/Feature/Contracts/DeletionReasonSettingTest.php` |
 | T004-009 | `php artisan test tests/Livewire/Contracts/ContractResourceTest.php` |
 | T004-010–011 | `php artisan test tests/Accounting/Integration/ContractOccurrenceSynchronizationTest.php tests/Feature/Contracts/SourceKeyTest.php tests/Feature/Contracts/GeneratedActualOwnershipTest.php` |
 | T004-012 | `php artisan test tests/Livewire/Contracts/ContractSynchronizationActionTest.php` |

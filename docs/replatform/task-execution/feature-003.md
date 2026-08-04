@@ -11,9 +11,9 @@
 | T003-010–011 | `php artisan test tests/Feature/Expenses/CreateExpenseTest.php tests/Feature/Expenses/UpdateExpenseTest.php tests/Accounting/Integration/ExpenseCalculationTest.php` |
 | T003-012 | `php artisan test tests/Livewire/Expenses/ExpenseEditorTest.php` |
 | T003-013–014 | `php artisan test tests/Feature/Expenses/ConfirmActualTest.php tests/Accounting/Integration/GeneratedActualOwnershipTest.php` |
-| T003-015–016 | `php artisan test tests/Feature/Expenses/ExpenseRevisionHistoryTest.php tests/Feature/Expenses/RestoreExpenseRevisionTest.php` |
+| T003-015–016 | `php artisan test tests/Feature/Expenses/ExpenseRevisionHistoryTest.php tests/Feature/Expenses/RestoreExpenseRevisionTest.php tests/Feature/Attachments/RestoreAttachmentManifestTest.php` |
 | T003-017–018 | `php artisan test tests/Feature/Expenses/DeleteExpenseTest.php tests/Feature/Expenses/DeleteExpenseRowTest.php tests/Feature/Attachments/ExpenseAttachmentLifecycleTest.php` |
 | T003-019 | `php artisan test tests/Accounting/Integration/LegacyExpenseMappingTest.php` |
 | T003-020 | `composer test:accounting && php artisan test tests/Feature/Expenses tests/Feature/Revisions tests/Feature/Attachments tests/Livewire/Expenses tests/Livewire/Attachments && composer test:static` |
-| T003-021–022 | `php artisan test tests/Feature/Attachments/AttachmentSchemaPolicyTest.php tests/Feature/Attachments/PrivateAttachmentDownloadTest.php` |
-| T003-023 | `php artisan test tests/Livewire/Attachments/ExpenseAttachmentsRelationManagerTest.php tests/Feature/Attachments/PrivateAttachmentDownloadTest.php` |
+| T003-021–022; T003-024 | `php artisan test tests/Feature/Attachments/AttachmentSchemaPolicyTest.php tests/Feature/Attachments/PrivateAttachmentDownloadTest.php tests/Feature/Attachments/AttachmentUploadValidationTest.php tests/Feature/Attachments/AttachmentQuotaTest.php` |
+| T003-023 | `php artisan test tests/Livewire/Attachments/ExpenseAttachmentsRelationManagerTest.php tests/Feature/Attachments/PrivateAttachmentDownloadTest.php tests/Feature/Attachments/AttachmentQuotaTest.php` |

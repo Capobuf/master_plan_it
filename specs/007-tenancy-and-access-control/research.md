@@ -12,6 +12,8 @@ Verification date: 2026-08-03. Shared package research is in `docs/replatform/te
 | RES-007-006 | Tenant user belongs to one tenant | Approved model; avoids membership pivot/switch complexity. | multi-tenant memberships |
 | RES-007-007 | No impersonation | Real actor+tenant audit and simpler security. | login-as tenant user |
 | RES-007-008 | Native Filament resources/onboarding | Existing components sufficient. | custom SPA or mandatory onboarding state machine |
+| RES-007-009 | Two explicit Tenant operational setting columns and typed DTO/Actions | Only two approved settings exist; explicit schema, authorization and audit are simpler and safer than an open-ended settings engine. | generic key/value tenant settings or consumer-owned Tenant queries |
+| RES-007-010 | Separate protected Administrator abilities for quota and deletion-reason management | Both settings affect one tenant but remain platform-administered; separate identifiers preserve least privilege and explicit audit while tenant roles receive neither. | tenant-role setting control or one undifferentiated settings authority |
 
 ## Executable gates
 
@@ -20,3 +22,5 @@ Verification date: 2026-08-03. Shared package research is in `docs/replatform/te
 - protected role/abilities unavailable in tenant RoleResource;
 - direct-object isolation matrix across all feature resources;
 - no unscoped model lookup in tenant controllers/resources/queries.
+- quota lowering preserves payloads and only blocks new payload-producing Feature 003 operations;
+- cross-tenant or missing-ability operational-setting changes fail safely and never mutate prior evidence.

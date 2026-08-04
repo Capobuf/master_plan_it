@@ -3,7 +3,7 @@
 Status: `APPROVED PRODUCT CONTRACT`  
 Decision date: 2026-08-03  
 Applies to: Features 001 through 007  
-Authority: Constitution 3.0.1 and `approved-decisions.md`
+Authority: Constitution 5.0.0 and `approved-decisions.md`
 
 ## 1. Separation of concerns
 
@@ -34,7 +34,7 @@ A package is not accepted merely because it installs. Before adding it, record:
 
 1. exact version and dependency tree;
 2. license;
-3. Laravel 13, PHP 8.5, Filament 5, and MySQL compatibility;
+3. Laravel 13, the locked PHP 8.3.32 platform, Filament 5, and MySQL compatibility;
 4. tenancy behavior and query scoping;
 5. maintenance/release evidence;
 6. uninstall or replacement path;
@@ -46,7 +46,7 @@ If `mansoor/filament-versionable` cannot represent one aggregate revision for an
 
 ### 3.1 Protected platform role
 
-`Administrator` is global and protected. It cannot be renamed, deleted, or reduced through tenant role management. Platform-only abilities include:
+`Administrator` is global and protected. It cannot be renamed, deleted, or reduced through tenant role management. Protected abilities are the exact identifiers under `Protected platform abilities` in `permission-catalogue.md`; the boundary includes:
 
 - create/deactivate/reactivate tenants;
 - manage tenant users and tenant roles;
@@ -61,42 +61,7 @@ If `mansoor/filament-versionable` cannot represent one aggregate revision for an
 
 `Editor` and `Viewer` are seeded templates. Administrator may create and assign additional tenant roles. Tenant permissions are additive and tenant-scoped. A tenant user belongs to exactly one tenant.
 
-Minimum permission families:
-
-```text
-expense.view
-expense.create
-expense.update
-expense.delete
-expense.restore-revision
-expense.export
-
-vendor.view
-vendor.manage
-cost-center.view
-cost-center.manage
-financial-year.view
-financial-year.manage
-
-project.view
-project.manage
-contract.view
-contract.manage
-contract.generate-expense
-contract.suppress-generation
-
-scenario.view
-scenario.manage
-budget-version.view
-budget-version.create
-
-audit.view
-attachment.view
-attachment.manage
-notification.receive-renewals
-```
-
-Exact permission identifiers are finalized by `/speckit.plan`; names must be stable, explicit, and mapped to policy abilities. Tenant role configuration never exposes permission to bypass tenant ownership, monetary rules, source-key uniqueness, or protected platform operations.
+The sole normative identifier list is `permission-catalogue.md`; generic aliases such as `*.manage` or `financial-year.*` are invalid. Create, update, delete, deactivate, reactivate, revision view/restore, generation, print and export remain distinct where listed. `platform.settings.manage` and `deletion-reason-setting.manage` are protected global-Administrator abilities and are never assignable to Editor or custom tenant roles. Tenant role configuration never exposes permission to bypass tenant ownership, monetary rules, source-key uniqueness or protected platform operations.
 
 ### 3.3 Economic output scope
 
@@ -139,11 +104,13 @@ A form operation that updates an aggregate, such as Expense plus rows, receives 
 
 ### 4.2 Restore
 
-Restore validates current authorization, tenant scope, references, source keys, and business invariants. It creates a new current revision. It never deletes later history or rewrites the original revision.
+Restore validates current authorization, tenant scope, references, source keys, and business invariants. It creates a new current revision. It never deletes later history or rewrites the original revision. Project/contract/term revision restore is current-record-only and cannot reactivate or restore the same terminally deleted logical identity.
+
+Each Expense aggregate revision owns a complete attachment manifest. Manifest entries reference immutable private payload versions; unchanged bytes reuse an existing version rather than create another copy. Quota counts each distinct non-purged payload version once. A data-only revision/restore creates zero new bytes and remains allowed even when quota is zero or current usage is already above it.
 
 ### 4.3 Delete
 
-A permitted delete removes the record from ordinary queries, current reports, exports, totals, relations, and selections. The implementation may use soft deletion as persistence infrastructure, but deleted rows are not active domain records.
+A permitted delete removes the record from ordinary queries, current reports, exports, totals, relations, and selections. Persistence may retain a technical tombstone, but deleted rows are not active domain records. Planning years cannot be deleted. Cost centers/vendors have separately permissioned restricted irreversible deletion. Expense deletion is operationally irreversible and purges its attachment payload versions. Project/contract/term deletion is irreversible in the application and cannot be undone through UI, Action, revision restore, import or synchronization.
 
 The retained tombstone/audit evidence is minimal:
 
@@ -153,7 +120,7 @@ The retained tombstone/audit evidence is minimal:
 - actor, time, reason, and correlation ID;
 - revision metadata.
 
-Full attachment payloads and secrets are not retained for audit.
+Full attachment payloads and secrets are not retained for audit. Attachment payload retention belongs only to the Feature 003 private revision store while its Expense exists; permanent Expense deletion purges it.
 
 ## 5. Named budget versions
 
@@ -239,7 +206,7 @@ tenant.csv
 users.csv
 roles.csv
 role_assignments.csv
-financial_years.csv
+planning_years.csv
 cost_centers.csv
 vendors.csv
 projects.csv
@@ -249,11 +216,13 @@ expenses.csv
 expense_rows.csv
 scenarios.csv
 budget_versions.csv
+attachment_revision_manifests.csv
+attachment_payload_versions.csv
 attachments/
 checksums.json
 ```
 
-CSV UTF-8 is the authoritative exchange format. Optional XLSX is presentation only. Import uses staging, dry-run, immutable target tenant, collision quarantine, checksum verification, and explicit apply approval.
+CSV UTF-8 is the authoritative exchange format. Optional XLSX is presentation only. The package includes the tenant's attachment quota and deletion-reason setting, structured source-deletion provenance, shared manifest-to-payload references and each distinct retained payload version once. Terminally deleted projects/contracts/terms remain evidence only. Import uses staging, dry-run, immutable target tenant, collision quarantine, checksum verification and explicit apply approval; it cannot reactivate or restore the same deleted logical source identity.
 
 ## 8. Notifications
 
@@ -286,8 +255,4 @@ An explicit interactive Artisan command resets the global Administrator password
 
 ## 11. Planning gate
 
-This clarification contract closes product decisions but changes prior plans and tasks. Implementation may not start from stale tasks. The next valid commands are:
-
-1. `/speckit.plan` to reconcile architecture, packages, models, contracts, migrations, security, and testing;
-2. `/speckit.tasks` to replace affected task files with exact executable work;
-3. `/speckit.analyze` to prove zero unresolved product conflicts before `/speckit.implement`.
+This contract is a cross-feature summary. Current feature specs, plans, tasks, the exact permission catalogue and task execution/readiness registries remain normative at their declared ownership boundaries. Implementation may begin only after the current integrated `/speckit.analyze` pass records no unresolved blocking conflict.

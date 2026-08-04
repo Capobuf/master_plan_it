@@ -1,6 +1,6 @@
 # Implementation plan — Feature 005 Reporting, BudgetVersion and analytics
 
-Status: `PLAN COMPLETE AND MERGED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
+Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
 Dependencies: Features 001–004 and 007; shared economic kernel
 
 ## Summary
@@ -47,7 +47,7 @@ Shared Money/VAT/allocation services are reused, not copied.
 
 ### Output
 
-- `EconomicDatasetCsvExporter` using native streamed response;
+- `EconomicDatasetCsvExporter` using incremental writes to a request-scoped private temporary artifact;
 - `EconomicDatasetXlsxExporter` using OpenSpout 4.32 writer-only;
 - dedicated `resources/views/reports/economic-print.blade.php` and print CSS;
 - export/print controllers or Filament Actions accepting the same typed dataset request.
@@ -106,11 +106,11 @@ Define `BudgetSource` DTO variants current, version and scenario. Resolver Queri
 
 ## Output design
 
-CSV uses UTF-8, declared separator/newline and decimal strings. XLSX contains presentation values only; formulas are prohibited. OpenSpout receives DTO rows via iterator and does not query Eloquent.
+CSV uses UTF-8, declared separator/newline and decimal strings. XLSX contains presentation values only; formulas are prohibited. Both exporters receive canonical ordered DTO rows incrementally and never query Eloquent or materialize the complete row collection.
 
 Print HTML renders the same dataset and includes tenant/report/year/scope/basis/filter/version metadata. Browser print/Save as PDF is launch PDF path.
 
-Output limits are explicit per format and fail before partial output; exact thresholds are established by benchmark task, not guessed in UI.
+CSV, XLSX and print have no application-defined row cap and never truncate the selected authorized dataset. CSV/XLSX write to a private request-scoped temporary artifact and begin download only after successful finalization. Failure exposes no partial response, preserves filters/scope, performs immediate cleanup, surfaces/records cleanup failure and suggests narrowing filters without doing so automatically. A successful response removes its artifact.
 
 ## Performance
 
@@ -122,7 +122,9 @@ Reference 10,000 current rows/tenant/year:
 - page detail paginated;
 - complete exports/version capture may use lazy iteration only if it preserves transaction snapshot and checksum order;
 - no persistent current totals/cache;
-- benchmark records SQL count, memory, p95 and EXPLAIN before optimization.
+- verified target hosting must pass page/report p95 ≤2 s, CSV ≤10 s, XLSX ≤20 s, print ≤10 s, peak PHP memory ≤128 MiB and ≤5 SQL queries per measured request;
+- CI enforces parity/scope/order, ≤128 MiB and ≤5 queries, while elapsed times are recorded as non-blocking evidence;
+- no benchmark result introduces a runtime row cap, cache, materialized total or semantic change.
 
 ## Tests
 
@@ -143,9 +145,9 @@ Table fixtures for every type, confirmation state, project stage, Extra, Plafond
 
 ### Output parity
 
-Same fixture asserts screen dataset, KPI, chart payload, print view, CSV, XLSX and captured version values. Filtered and complete scopes tested separately. XLSX round-trip reads are test-only if a reader dependency is already present; otherwise inspect generated cell XML/values without adding production reader.
+Same fixture asserts screen dataset, KPI, chart payload, print view, CSV, XLSX and captured version values. Filtered and complete scopes are tested separately, including output larger than the 10,000-row reference without row-limit rejection. Export failure proves complete-or-error temporary-file cleanup. XLSX round-trip reads are test-only if a reader dependency is already present; otherwise inspect generated cell XML/values without adding production reader.
 
-Dusk only for chart lifecycle, explicit scope action and browser print smoke.
+Dusk covers chart lifecycle, explicit scope action, browser print smoke, keyboard/focus/error behavior, equivalent non-visual chart tables and the 360/768/1280 CSS-pixel matrix in the approved Chrome/Edge/Firefox/Safari versions. WCAG 2.2 AA is the acceptance standard.
 
 ## Sequence
 

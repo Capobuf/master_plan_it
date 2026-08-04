@@ -9,6 +9,8 @@ Shared conventions: `docs/replatform/data-model-overview.md`
 - state `active|inactive`;
 - currency, language, timezone, default VAT;
 - official Budget basis `net|gross` default Net;
+- `attachment_quota_bytes` unsigned BIGINT default `2147483648`, with zero valid and no application-defined ceiling below the technical range, changed only through protected platform settings; values are exposed as normalized decimal strings when native signed-integer range is insufficient;
+- `deletion_reason_required` boolean default false, changed only by global Administrator through the dedicated protected ability for an explicitly selected tenant;
 - optional company, address, contacts and report branding;
 - optional logo attachment/path according to file contract;
 - lifecycle actors/timestamps;
@@ -53,10 +55,13 @@ Owned by Feature 001/shared model:
 
 Audit export is unavailable and tenant portability excludes audit/global settings.
 
+The attachment quota is tenant-owned business configuration and is included in tenant portability. Attachment usage is derived from Feature 003 current and immutable historical payload versions, not stored as an unaudited mutable counter. The deletion-reason flag is tenant-owned configuration and is included in tenant portability; changes apply prospectively only.
+
 ## Constraints/indexes
 
 - tenant code unique globally;
 - `(state,code)` for global list;
+- attachment quota uses exact unsigned byte arithmetic with no float or application-defined maximum; lowering below usage never purges data, and zero blocks only new payload bytes;
 - users `(tenant_id,is_active)`;
 - package role/team indexes;
 - no tenant-user pivot;

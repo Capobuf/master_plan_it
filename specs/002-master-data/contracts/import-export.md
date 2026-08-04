@@ -44,3 +44,5 @@ Read the local plan and data model. Implement exactly column schema, validation,
 - Import requires protected `platform.migration.run` at the global Administrator boundary and an explicit target tenant.
 - Every imported key, parent, and reference is collision-checked inside that tenant and cannot resolve to another tenant.
 - Any actor with the corresponding master-data view ability may export only the same-tenant dataset; a seeded or customized role name grants nothing by itself.
+- Planning-year import accepts a calendar-year identity only. Supplied boundaries must equal January 1 and December 31 of that identity; non-calendar ranges are rejected or quarantined without silent normalization.
+- Cost-center import validates root-as-level-one depth of at most three, same-tenant parents and acyclicity before commit.

@@ -1,15 +1,15 @@
 # Implementation plan — Feature 003 Expense domain
 
-Status: `PLAN COMPLETE AND MERGED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
+Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
 Dependencies: Features 001, 002 and 007; shared revision infrastructure
 
 ## Summary
 
-Implement decimal Money/VAT/allocation primitives and the Expense aggregate with independent Estimate, Quote and Actual rows. The current aggregate has one identity, operational snapshots, soft-delete infrastructure, Actual confirmation and no replacement-state graph. Confirmation stops contract synchronization but does not remove authorized version/update/delete operations.
+Implement decimal Money/VAT/allocation primitives and the Expense aggregate with independent Estimate, Quote and Actual rows. The current aggregate has one identity, operational snapshots, soft-delete infrastructure, Actual confirmation and no replacement-state graph. Private attachments may belong to the Expense or one row, use the approved 10 MiB/type allow-list, and are captured by complete per-revision manifests that reuse immutable payload versions for unchanged bytes under a configurable 2 GiB-per-tenant default quota. Confirmation stops contract synchronization but does not remove authorized version/update/delete operations.
 
 ## Constitution check
 
-Passes C-02, C-03, C-04, C-05, C-07, C-10, C-11 and C-12. Float arithmetic, economic observers, audit-as-source, immutable-Actual target and `Active/Replaced/Cancelled` current state are prohibited.
+Passes C-02, C-03, C-04, C-05, C-07, C-10, C-11 and C-12. Attachment payloads live in dedicated private versioned storage; revision/audit metadata contains references and checksums only. Float arithmetic, economic observers, audit-as-source, immutable-Actual target and `Active/Replaced/Cancelled` current state are prohibited.
 
 ## Target files
 
@@ -30,7 +30,7 @@ Passes C-02, C-03, C-04, C-05, C-07, C-10, C-11 and C-12. Float arithmetic, econ
 
 - `Expense`, `ExpenseRow` and factories;
 - current/non-deleted scopes are explicit query methods, not global magic that can hide migration/admin data;
-- attachments use shared table/Actions.
+- attachments use application-owned current membership, complete revision manifests and immutable private payload-version tables.
 
 ### Actions
 
@@ -39,7 +39,8 @@ Passes C-02, C-03, C-04, C-05, C-07, C-10, C-11 and C-12. Float arithmetic, econ
 - `ConfirmActual`;
 - `DeleteExpense`, `DeleteExpenseRow`;
 - `RestoreExpenseRevision`;
-- attachment upload/delete Actions shared through parent authorization.
+- `UploadAttachment`, `DeleteAttachment`, `RestoreAttachmentSet` and permanent Expense payload-purge coordination through exact parent authorization;
+- global-Administrator tenant quota update remains Feature 007/platform-settings owned and returns a typed value to this feature.
 
 No `ReplaceExpenseRow` Action in the target model.
 
@@ -67,7 +68,8 @@ Each mutation:
 7. writes current models;
 8. links vendor snapshots;
 9. writes minimized audit;
-10. commits.
+10. captures a complete attachment manifest, reusing immutable payload versions for every unchanged attachment;
+11. reserves tenant payload quota under lock only for genuinely new bytes, finalizes new private files with compensation and commits once.
 
 No deadlock retry at launch.
 
@@ -89,6 +91,10 @@ No deadlock retry at launch.
 - confirmation sets status/actor/time and `is_system_managed=false`;
 - delete removes current economic contribution;
 - restore revalidates all current rules and creates a new snapshot.
+- attachment parent is exactly one current same-tenant Expense or row;
+- PDF/JPEG/PNG/CSV/XLSX only, non-empty, matching detected MIME/extension and at most 10,485,760 bytes each;
+- distinct non-purged current plus historical payload versions never exceed the non-negative tenant quota, default 2,147,483,648 bytes; zero disables new payload bytes without purging, repeated manifest references count once and data-only revisions add no usage;
+- attachment/row delete retains revision payloads while the Expense exists; permanent Expense delete purges every payload and is not operationally restorable.
 
 ## Money rules
 
@@ -98,9 +104,9 @@ Rounding is half-up at documented result boundaries. Monthly allocation computes
 
 ## Revision integration
 
-Use Overtrue snapshot strategy. Versioned fields are business values only. One aggregate save links Expense and changed rows to `revision_batches`. The package restore action is disabled/replaced by `RestoreExpenseRevision`, which rebuilds typed input and calls current validation.
+Use Overtrue snapshot strategy for model values. One aggregate save links Expense and changed rows to `revision_batches` and writes an application-owned complete attachment manifest whose entries reference immutable private payload versions outside package/audit metadata. Unchanged attachments reuse their existing versions; only new bytes create a version and reserve quota. The package restore action is disabled/replaced by `RestoreExpenseRevision`, which rebuilds typed input, validates every payload checksum/MIME/size and any new-byte quota reservation, then restores data plus the exact attachment set atomically as a new revision.
 
-Deletion history is accessed from a dedicated page using `withTrashed`; ordinary resource queries never expose deleted rows.
+Deletion history is accessed from a dedicated page using `withTrashed`; ordinary resource queries never expose deleted rows. Deleting an attachment or row changes current membership but keeps versioned copies while the Expense exists. Permanent Expense deletion purges all payload paths, leaves only minimized metadata/checksums and cannot be reversed through revision restore.
 
 ## Migration mapping
 
@@ -124,7 +130,7 @@ Legacy current row selection is deterministic from verified state/replacement ev
 - project/contract XOR;
 - tenant/permission/concurrency;
 - aggregate revision batch, compare/restore/deleted exclusion;
-- attachments transaction/failure handling;
+- attachment allow-list/size/parent/authorization, complete revision sets, restore atomicity, quota concurrency and permanent-purge compensation;
 - legacy mapping fixtures.
 
 Dusk only for row-editor JS/focus/action menu and reinforced delete confirmation if not provable below browser.
@@ -134,12 +140,13 @@ Dusk only for row-editor JS/focus/action menu and reinforced delete confirmation
 1. Money/VAT/allocation tests and value objects;
 2. migrations/models/factories;
 3. revision package smoke and batch infrastructure;
-4. create/update/delete/restore Actions;
-5. Actual confirmation/generated ownership behavior;
-6. Policies/queries;
-7. Filament editor/register/history;
-8. migration mapping fixtures;
-9. full accounting/tenant/browser gate.
+4. attachment schema, quota integration and validation/authorization tests;
+5. create/update/delete/restore Actions including attachment manifests/payloads;
+6. Actual confirmation/generated ownership behavior;
+7. Policies/queries;
+8. Filament editor/register/history;
+9. migration mapping fixtures;
+10. full accounting/tenant/browser gate.
 
 ## Post-design check
 

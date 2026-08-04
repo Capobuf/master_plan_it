@@ -1,20 +1,45 @@
 <!--
 Sync Impact Report
-- Version change: 3.0.1 -> 4.0.0
+- Version change: 4.0.0 -> 5.0.0
 - Modified principles: C-05 — Current state, revisions, deletion, and audit;
-  C-12 — Explicit versioning contracts
-- Added sections: Amendment 4.0.0
+  C-09 — Migration is repeatable and reconcilable;
+  C-12 — Explicit versioning contracts;
+  C-13 — Contract generation remains controllable and idempotent
+- Added sections: Amendment 5.0.0
 - Removed sections: none
-- Follow-up: propagate the fixed-calendar planning-year exception through Feature 002
-  specification, plan, tasks, data model, contracts, tests, and cross-feature registries
+- Follow-up: propagate terminal project/contract/contract-term identity rules through
+  Features 004/006, plans, tasks, contracts, tests, portability and cross-feature registries
 - Deferred placeholders: none
 -->
 # Master Plan IT Replatform Constitution
 
-Version: 4.0.0
+Version: 5.0.0
 Ratified baseline: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`  
 Amended: 2026-08-04
 Scope: documentation-only design for the Laravel replatform.
+
+## Amendment 5.0.0
+
+**Rationale.** The Product Owner established that deletion of a project, contract, or contract
+term is irreversible in the application. A minimized tombstone may remain as evidence, but the
+same deleted logical identity cannot be restored or reactivated by UI, domain Action, revision
+restore, import, portability, or synchronization. This narrows the previous general restoration
+rule and is therefore a backward-incompatible governance change.
+
+**Affected principles and artifacts.** C-05, C-09, C-12, and C-13 are amended. Feature 004 owns
+terminal deletion, linked-Expense survival, source-key integrity and immutable deletion
+provenance. Feature 006 owns migration and portability preservation without reactivation. Their
+specifications, plans, tasks, data models, contracts, tests and cross-feature registries require
+propagation.
+
+**Compatibility and migration impact.** Existing or imported terminal project, contract, and
+contract-term tombstones remain evidence-only. They cannot become active or restorable records.
+Deleting a contract or term does not delete generated Expenses: those Expenses remain
+user-authoritative, retain their source key and immutable source-deletion provenance, and stop
+receiving generation updates from the deleted source. Project deletion continues to require
+removal of every current linked Expense before the terminal deletion may succeed.
+
+**Approval owner.** Product Owner, approved on 2026-08-04.
 
 ## Amendment 4.0.0
 
@@ -92,7 +117,13 @@ deactivatable, reactivatable, historically readable, and permanently non-deletab
 
 ## C-05 — Current state, revisions, deletion, and audit
 
-**Rule.** Expenses, Actual rows, contracts, projects, revision-enabled master data, and approved configuration may be corrected through versioned domain operations. The operational UI and official current datasets expose one current record, not parallel `Replaced` or `Cancelled` copies. A correction creates a new revision of the same logical record. A permitted deletion removes the record from the active domain and every current economic dataset; only the minimum tombstone, revision metadata, and audit evidence required by the approved retention contract remain outside the economic domain.
+**Rule.** Expenses, Actual rows, current contracts, current projects, revision-enabled master data,
+and approved configuration may be corrected through versioned domain operations. The operational
+UI and official current datasets expose one current record, not parallel `Replaced` or
+`Cancelled` copies. A correction creates a new revision of the same logical record. A permitted
+deletion removes the record from the active domain and every current economic dataset; only the
+minimum tombstone, revision metadata, and audit evidence required by the approved retention
+contract remain outside the economic domain.
 
 Planning years are the explicit master-data exception. Their logical identity is the tenant-scoped
 calendar year; January 1 and December 31 boundaries are derived and immutable. Users may create,
@@ -101,9 +132,20 @@ or compare and restore operational revisions. Every allowed lifecycle mutation r
 
 Actual rows are editable and deletable when the actor has the required permission. Deletion and restoration never bypass tenant isolation, decimal correctness, source-key uniqueness, contract-generation rules, or referential checks. A restore creates a new current revision; it does not rewrite revision history.
 
+Project, contract, and contract-term deletion is terminal for that logical identity. No UI,
+domain Action, revision restore, import, portability operation, or synchronization may clear its
+tombstone or recreate it as the same active identity. Project deletion is permitted only after
+every current linked Expense has been removed and never cascades, detaches, or reassigns those
+Expenses. Contract or term deletion preserves linked generated Expenses as user-authoritative
+records with their immutable source key and source-deletion provenance; generation from the
+terminal source stops.
+
 Audit retention is controlled by one global platform setting available only to Administrator and defaults to 24 months. The explicit retention operation applies the current setting to audit events without deleting current business records, named budget versions, or required logical revision identity. Reducing the period requires reinforced confirmation because the next retention run may remove older events. Events already removed are not reconstructed when the period is later increased. Business revision history may use the approved versioning package, but package storage is never queried as current business state. Passwords, secrets, sessions, full attachment payloads, and unredacted import rows are never stored in audit or revision metadata.
 
-**Verification.** Current-record uniqueness, revision comparison/restore, Actual correction/deletion, deleted-record exclusion, audit minimization/configuration/retention, authorization, and rollback tests.
+**Verification.** Current-record uniqueness, permitted revision comparison/restore, terminal
+project/contract/term non-reactivation, linked-Expense survival/provenance, Actual
+correction/deletion, deleted-record exclusion, audit minimization/configuration/retention,
+authorization, and rollback tests.
 
 ## C-06 — Shared-hosting-compatible monolith
 
@@ -131,9 +173,9 @@ Audit retention is controlled by one global platform setting available only to A
 
 ## C-09 — Migration is repeatable and reconcilable
 
-**Rule.** The verified migration case is one active Frappe site representing one customer, imported into one explicitly selected tenant. Manual entry and CSV export/import are permitted. When an exchange package is used, migration consumes versioned files, stages raw values, transforms deterministically, preserves legacy IDs, supports dry-run, is idempotent, and produces count/sum/error manifests. The target tenant is immutable for the run. Collisions never trigger silent merge, rename, or overwrite. Unassignable or conflicting rows are quarantined and block cutover until corrected or explicitly excluded with approval. A reusable multi-site migration platform is out of scope.
+**Rule.** The verified migration case is one active Frappe site representing one customer, imported into one explicitly selected tenant. Manual entry and CSV export/import are permitted. When an exchange package is used, migration consumes versioned files, stages raw values, transforms deterministically, preserves legacy IDs, supports dry-run, is idempotent, and produces count/sum/error manifests. The target tenant is immutable for the run. Collisions never trigger silent merge, rename, or overwrite. Unassignable or conflicting rows are quarantined and block cutover until corrected or explicitly excluded with approval. Terminal project, contract, and contract-term identities may be preserved only as minimized evidence and MUST NOT become active or restorable through migration or tenant portability. A reusable multi-site migration platform is out of scope.
 
-**Verification.** Re-import, collision quarantine, tenant ownership, exclusion approval, and reconciliation gates are tested.
+**Verification.** Re-import, collision quarantine, tenant ownership, exclusion approval, terminal-identity non-reactivation, and reconciliation gates are tested.
 
 ## C-10 — No decorative abstraction
 
@@ -151,20 +193,25 @@ Audit retention is controlled by one global platform setting available only to A
 
 **Rule.** Operational model revision history and named budget versions are different concepts.
 
-- Operational revisions track changes to one logical record and support compare/restore without duplicating current domain records.
+- Operational revisions track changes to one logical record without duplicating current domain records. Compare/restore is exposed only when the owning domain permits it.
 - Planning years are excluded from operational revisions because their calendar boundaries are derived and immutable; their permitted lifecycle changes remain audit events.
+- Project, contract, and contract-term revisions are restorable only while the source is current. Once deleted, that same logical identity is terminal and its revisions are evidence-only.
 - A named `BudgetVersion` is an immutable tenant-and-year economic snapshot deliberately created for approval, history, manual baseline, or comparison.
-- Restoring a model revision creates a new current revision.
+- A permitted model-revision restore creates a new current revision; it never clears a terminal source tombstone.
 - Published budget versions are never edited in place; a changed baseline is a new named version.
 - Plugins may store and present revisions, but aggregate snapshot creation, tenant scoping, exact monetary values, and comparison semantics remain application-owned.
 
-**Verification.** Revision and budget-version tests prove identity continuity, snapshot immutability, exact totals, tenant scope, and exclusion from current calculations.
+**Verification.** Revision and budget-version tests prove identity continuity, terminal-source
+non-reactivation, snapshot immutability, exact totals, tenant scope, and exclusion from current
+calculations.
 
 ## C-13 — Contract generation remains controllable and idempotent
 
-**Rule.** Every contract-generated expense has an immutable source key and a visible link from the contract to the generated expense and its revision history. Deleting a generated expense asks whether that occurrence may be generated again. A generation exception suppresses only the chosen occurrence and is not economic data. Administrator or an authorized tenant role may resume future generation, resume and generate immediately, or manually generate one valid missing occurrence for a selected year. No action may create a duplicate source key or overwrite a user-edited expense silently.
+**Rule.** Every contract-generated expense has an immutable source key and a visible link from the contract to the generated expense and its revision history. Deleting a generated expense asks whether that occurrence may be generated again. A generation exception suppresses only the chosen occurrence and is not economic data. Administrator or an authorized tenant role may resume future generation, resume and generate immediately, or manually generate one valid missing occurrence for a selected year. Deleting a contract or term stops all generation from that terminal source without deleting linked generated Expenses; no later control may resume or regenerate from that deleted source identity. No action may create a duplicate source key or overwrite a user-edited expense silently.
 
-**Verification.** Delete-with-regeneration, delete-with-suppression, resume, manual-year generation, duplicate prevention, contract history, and no-overwrite tests.
+**Verification.** Delete-with-regeneration, delete-with-suppression, resume, manual-year generation,
+terminal-source stop/non-reactivation, linked-Expense survival, duplicate prevention, contract
+history, and no-overwrite tests.
 
 ## Definition of Ready — task
 

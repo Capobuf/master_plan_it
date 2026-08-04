@@ -55,4 +55,6 @@ Read the local plan and data model. Implement exactly the authorization decision
 - An actor with the exact same-tenant ability may create/update/delete/restore the current Expense aggregate and its Estimate, Quote, Actual, Extra, and Plafond rows subject to last-row, reference, tenant, concurrency, audit, and revision invariants.
 - Current Actual rows remain correctable, versionable, restorable, and deletable after recording or confirmation. Prior revision snapshots and audit history are immutable evidence and never enter current economic datasets.
 - `attachment.view`, `attachment.upload`, and `attachment.delete` additionally require the corresponding parent Expense ability and same-tenant current parent.
+- Only the global Administrator may change a tenant's attachment quota through the protected platform setting; tenant roles cannot receive that operation.
+- Revision attachment downloads require `expense.view-revisions`, `attachment.view`, same-tenant parent authorization and an existing non-purged payload. A permanently deleted Expense exposes minimized metadata only.
 - Import requires protected `platform.migration.run` under Q-009 and cannot be assigned to a tenant role.

@@ -37,7 +37,9 @@ Stage all → years → cost centers → parents → vendors → projects → co
 
 Legacy `Active/Replaced/Cancelled` and replacement links select one accepted current target row deterministically. Useful non-current evidence may seed operational snapshots/audit metadata; it never recreates parallel current rows. Legacy Actual becomes versionable/deletable target Actual.
 
-Money is parsed as decimal strings and recomputed by target calculators. Current accepted Net totals must reconcile at two decimals by year/cost center/type and approved dimensions. Contracts/projects are not added independently.
+Planning years map to one year integer; target boundaries are derived as January 1 and December 31. Any supplied source boundaries that do not match are quarantined with a stable error and are never silently normalized. Money is parsed as decimal strings and recomputed by target calculators. Current accepted Net totals must reconcile at two decimals by year/cost center/type and approved dimensions. Contracts/projects are not added independently.
+
+Each attachment must be nonempty, at most 10,485,760 bytes, use an approved PDF/JPEG/PNG/CSV/XLSX extension and matching detected MIME, match its SHA-256, resolve to exactly one same-tenant Expense or ExpenseRow, and fit the target tenant quota before private finalization. Legacy import creates the current attachment/initial manifest evidence present in the package; it does not invent earlier payload versions.
 
 ## Dry-run
 
@@ -55,8 +57,8 @@ Post-apply reconciliation and signed acceptance are mandatory.
 
 ## Reconciliation
 
-Compare files/checksums, identities, entity/current counts, attachment checksums, exact sums, source-key counts, blockers/exclusions and tenant ownership.
+Compare files/checksums, identities, entity/current counts, current and historical attachment payload/manifests/checksums where supplied, quota result, exact sums, source-key/provenance counts, blockers/exclusions and tenant ownership.
 
 ## Tests
 
-Immutable tenant; checksum; lineage replay; collision quarantine; blocker/exclusion; current-history mapping; exact Money parity/no double count; source-key/files; dry-run no writes; protected authorization; explicit partial-batch failure and replay.
+Immutable tenant; checksum; lineage replay; collision quarantine; blocker/exclusion; fixed-calendar-year rejection; current-history mapping; exact Money parity/no double count; source-key/provenance/files; exact attachment validation/quota; dry-run no writes; protected authorization; explicit partial-batch failure and replay.

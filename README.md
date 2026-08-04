@@ -7,8 +7,8 @@ This repository branch is intentionally documentation-only. It contains no Frapp
 - legacy repository: `Capobuf/master_plan_it`;
 - legacy branch: `refactor/reports`;
 - verified legacy commit: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`;
-- latest integrated analysis: `docs/replatform/speckit-analyze-2026-08-04-final.md` on commit `ba3744fbc7043f3f3b036416e6c082e4cb7c6831` (`CRITICAL 0`, `HIGH 0`, `MEDIUM 0`);
-- Constitution: 3.0.1;
+- latest integrated analysis: `docs/replatform/speckit-analyze-2026-08-04-constitution-5.0.0.md`, PASS with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings;
+- Constitution: 5.0.0;
 - product questions: Q-001–Q-041 closed; 0 open.
 
 ## Spec Kit state
@@ -28,10 +28,12 @@ This repository branch is intentionally documentation-only. It contains no Frapp
 - fourth 2026-08-04 analysis: recorded 0 CRITICAL, 1 HIGH and 0 MEDIUM findings;
 - invariant task/test ownership remediation: COMPLETE; integration state authoritative only in GitHub PR metadata; final analysis completed below;
 - integration state: authoritative only in GitHub PR metadata;
-- final 2026-08-04 `/speckit.analyze`: PASS with CRITICAL `0`, HIGH `0` and MEDIUM `0`;
-- next valid command: `/speckit.implement`; identified but not executed.
+- Constitution 5.0.0 product clarification and cross-artifact remediation: COMPLETE;
+- integrated `/speckit.analyze`: PASS — 0 CRITICAL, 0 HIGH, 0 MEDIUM;
+- `/speckit.checklist`: 295/295 requirement-quality items passed;
+- `/speckit.implement`: next valid phase and not executed.
 
-The verified graph contains 150 tasks across 35 user stories, with 42 `[P]` tasks after exact prerequisites. `docs/replatform/tasks-summary.md` records their composition; the final integrated analysis confirms the documentation-readiness gate only and does not claim runtime execution.
+The analyzed graph contains 153 task IDs across 35 user stories, with 43 `[P]` tasks, 300/300 requirement/invariant coverage and 153/153 exact validation-command/readiness coverage. Historical summaries do not override the current report.
 
 ## Read in order
 
@@ -50,7 +52,7 @@ The verified graph contains 150 tasks across 35 user stories, with 42 `[P]` task
 13. all dated `/speckit.analyze` reports in chronological order;
 14. the dated task, checklist and authorization-plan remediation records;
 15. `implementation-readiness.md`; treat `package-validation.md`, `tasks-summary.md` and `spec-kit-analysis.md` as labelled historical package records;
-16. the next `/speckit.analyze` result.
+16. `docs/replatform/speckit-analyze-2026-08-04-constitution-5.0.0.md`.
 
 ## Planned target
 

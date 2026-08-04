@@ -26,6 +26,7 @@ platform.tenants.reactivate
 platform.users.manage
 platform.roles.manage
 platform.settings.manage
+deletion-reason-setting.manage
 platform.audit.view-global
 platform.migration.run
 platform.portability.import
@@ -49,7 +50,6 @@ notification.view
 ```text
 planning-year.view
 planning-year.create
-planning-year.update
 planning-year.deactivate
 planning-year.reactivate
 ```
@@ -60,6 +60,7 @@ planning-year.reactivate
 cost-center.view
 cost-center.create
 cost-center.update
+cost-center.delete
 cost-center.deactivate
 cost-center.reactivate
 cost-center.view-revisions
@@ -72,6 +73,7 @@ cost-center.restore-revision
 vendor.view
 vendor.create
 vendor.update
+vendor.delete
 vendor.deactivate
 vendor.reactivate
 vendor.view-revisions
@@ -103,6 +105,10 @@ attachment.delete
 ```
 
 Parent-resource permission is also required.
+
+Attachment-quota management is not a tenant ability. It uses protected `platform.settings.manage` and global Administrator validation.
+
+Deletion-reason configuration uses the separate protected `deletion-reason-setting.manage` ability. It is held only by the global Administrator, applies to one explicitly selected tenant at a time and grants no project, contract or term delete ability.
 
 ### Projects
 
@@ -177,7 +183,7 @@ Assignability is controlled by Administrator; import remains protected platform 
 
 ### Editor
 
-Receives ordinary tenant business permissions: full master-data lifecycle except protected platform settings, Expense/attachment/project/contract work, generation controls, reports/export, BudgetVersion/scenario management and tenant audit view.
+Receives ordinary tenant business permissions: planning-year view but not create/deactivate/reactivate; full vendor and cost-center lifecycle; Expense/attachment/project/contract work; generation controls; reports/export; BudgetVersion/scenario management; and tenant audit view. Protected platform and deletion-reason-setting abilities are excluded. Planning-year lifecycle abilities remain tenant-scoped catalogue entries that Administrator may assign deliberately to a custom role; they are not part of the seeded Editor template.
 
 ### Viewer
 

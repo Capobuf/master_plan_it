@@ -3,7 +3,7 @@
 Status: `APPROVED TECHNICAL CONTRACT — PROPAGATED TO CURRENT PLANS AND TASKS`
 Scope: development environment, test architecture, CI quality gates, release artifact handoff  
 Decision date: 2026-08-03  
-Authority: Constitution 3.0.1 and clarified Features 001–007
+Authority: Constitution 5.0.0 and clarified Features 001–007
 
 ## 1. Purpose and boundary
 
@@ -177,7 +177,7 @@ The production host receives that artifact unchanged and does not run `npm insta
 
 ## 9. Required implementation surfaces
 
-The regenerated plan must map at least:
+The integrated plan and task package map at least:
 
 - `compose.yaml` and required Sail runtime customization;
 - `.env.example`, `.env.testing.example`, `phpunit.xml`;
@@ -189,7 +189,7 @@ The regenerated plan must map at least:
 - `.github/workflows/quality.yml` and release workflow;
 - `.github/CODEOWNERS`.
 
-Exact files and symbols become executable only through regenerated `/speckit.plan` and `/speckit.tasks` artifacts.
+Exact files and symbols are executable only through the current feature-owned `/speckit.plan` and `/speckit.tasks` artifacts plus their task-readiness, execution-command and path-override registries.
 
 ## 10. Official references verified 2026-08-03
 

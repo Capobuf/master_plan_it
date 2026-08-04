@@ -39,6 +39,18 @@ Record business state changes, actor, old/new values and correlation ID. Do not 
 ## Feature-specific clauses
 
 Read the local plan and data model. Implement exactly layout, navigation, focus, responsive and active route behavior. Do not reuse this file as a generic abstraction for other domains; shared behavior belongs only in an explicitly listed shared helper.
+
+## Accessibility and compatibility
+
+- Every operation is keyboard reachable with visible focus, programmatic name, WCAG 2.2 AA contrast and identifiable validation errors.
+- Charts expose an equivalent non-visual table or text representation using the same server-calculated values.
+- The shell and feature surfaces remain usable at 360, 768 and 1280 CSS-pixel viewports.
+- The browser matrix is the latest two stable Chrome, Edge and Firefox releases plus current stable Safari.
+- Ordinary logout invalidates only the active session; password change/reset follow their separate all-session invalidation contract.
+
+## Audit-retention setting UX
+
+The Administrator may enter only an integer from 1 through 120 months; initial value is 24. Lowering the value requires reinforced confirmation with a generic warning that older events may be deleted by the next prune. The UI must not calculate or display a cutoff date or count of eligible events.
 ## Tenant context clauses
 
 - Current tenant name/state is always visible in side navigation and page breadcrumbs.

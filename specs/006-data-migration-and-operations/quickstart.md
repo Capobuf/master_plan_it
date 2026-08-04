@@ -4,7 +4,7 @@ Future commands; none were executed during planning.
 
 ## Import fixture
 
-Build a small versioned package with two tenants' source-like rows but select only tenant A target. Include valid rows, duplicate lineage replay, collision, unassignable reference, approved exclusion, attachments, legacy replacement history, scenarios and BudgetVersion snapshots. Include prohibited audit/password fields to verify rejection/exclusion.
+Build a small versioned package with two tenants' source-like rows but select only tenant A target. Include valid and non-calendar planning-year rows, duplicate lineage replay, collision, unassignable reference, approved exclusion, valid/invalid/over-quota attachments, legacy replacement history, structured deleted-contract provenance, tenant operational settings, attachment revision manifests/payload versions, scenarios and BudgetVersion snapshots. Include prohibited audit/password fields to verify rejection/exclusion.
 
 ## Focused tests
 
@@ -23,13 +23,15 @@ Build a small versioned package with two tenants' source-like rows but select on
 2. Dry-run: confirm zero current-domain writes and explicit quarantine.
 3. Attempt apply with blocker and receive `IMPORT_BLOCKERS_PRESENT`.
 4. Approve an exclusion with reason; apply with reinforced confirmation.
-5. Replay same lineage and verify idempotency.
-6. Import a conflicting lineage and verify no overwrite/rename/merge.
-7. Export tenant package and inspect absence of audit, secrets/global settings/other tenant.
-8. Round-trip approved data with exact decimals/checksums.
-9. Resolve backup package on PHP 8.3.32, create archive and record Created.
-10. Restore in disposable empty environment and mark Verified only after smoke/reconciliation.
-11. Build release artifact and verify source commit, Vite manifest, required/prohibited content.
+5. Verify non-calendar boundaries, invalid MIME/size/checksum/parent, over-quota payloads and conflicting tenant settings remain explicit blockers with no silent normalization/overwrite.
+6. Round-trip the tenant package and restore an attachment revision exactly; compare every manifest/payload checksum and shared reference, verify each distinct payload was packaged once, then compare quota/reason setting and source-deletion provenance. Confirm terminally deleted projects/contracts/terms remain evidence only and cannot become active.
+7. Replay same lineage and verify idempotency.
+8. Import a conflicting lineage and verify no overwrite/rename/merge.
+9. Export tenant package and inspect absence of audit, secrets/global settings/other tenant.
+10. Round-trip approved data with exact decimals/checksums.
+11. Resolve backup package on PHP 8.3.32, create archive and record Created.
+12. Restore in disposable empty environment and mark Verified only after smoke/reconciliation.
+13. Build release artifact and verify source commit, Vite manifest, required/prohibited content.
 
 ## Commands
 

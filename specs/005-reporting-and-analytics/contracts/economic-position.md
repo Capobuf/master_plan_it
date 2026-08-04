@@ -84,5 +84,6 @@ Separate permissions cover view, filtered export, complete export and print. Eve
 5. dashboard/report/print/CSV/XLSX/version capture parity;
 6. filtered and complete scopes are distinct and explicit;
 7. empty result defined;
-8. 10,000-row query count/memory/EXPLAIN recorded;
+8. 10,000-row target-host time, query, memory and EXPLAIN gates pass; CI blocks query/memory/parity regressions and records time;
 9. no Eloquent model escapes as public dataset contract.
+10. a larger output is complete and exact without row-limit rejection or full collection materialization.

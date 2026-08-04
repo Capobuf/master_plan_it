@@ -23,7 +23,7 @@ Conditional UI visibility mirrors these fields but server validation is authorit
 
 `CreateExpense`/`UpdateExpense` authorize exact permission, validate same-tenant/current references, lock current aggregate where required, reject stale versions, calculate all values, create one revision batch, persist explicit changes/deletions, link snapshots, audit and commit.
 
-File upload uses temporary/private path and is finalized only with coherent DB result. Cleanup failure is surfaced/recorded; it is not ignored.
+File upload validates non-empty bytes, 10 MiB maximum and exact PDF/JPEG/PNG/CSV/XLSX extension/detected-MIME pairs on a temporary private path. It authorizes exactly one current same-tenant Expense or ExpenseRow parent, locks/reserves the tenant's distinct-payload quota using exact unsigned arithmetic with no application cap or float, and finalizes only with a coherent DB result. Cleanup failure is surfaced/recorded; it is not ignored.
 
 No automatic retry and no observer/model-hook economic side effect.
 
@@ -34,7 +34,9 @@ No automatic retry and no observer/model-hook economic side effect.
 - `ConfirmActual` is separate permission/Action; it records actor/time and makes generated row user-authoritative.
 - Confirmation does not make Actual permanently immutable.
 - Delete removes current contribution and ordinary visibility; history remains in revisions/audit.
-- Restore builds typed input from a snapshot, revalidates current rules and creates a new revision.
+- Every aggregate revision records a complete attachment manifest. An unchanged attachment reuses its existing immutable private payload version; audit/package metadata stores references/checksums, not bytes.
+- Restore builds typed input plus the exact attachment manifest, revalidates current rules and every payload, reserves quota only for genuinely new bytes, and creates a new data-and-file revision atomically. A data-only revision/restore that reuses all payload versions adds no usage and remains allowed above usage or at a configured zero-byte quota; zero never purges existing payloads.
+- Attachment or row deletion retains versioned payloads while the Expense exists. Permanent Expense deletion purges every payload and cannot be operationally restored.
 - Generated source key is immutable and cannot be changed by editor/restore.
 
 ## Authorization
@@ -54,6 +56,6 @@ Stale aggregate or row version returns `STALE_VERSION` with no partial write. Ot
 - Actual update/confirm/delete/restore;
 - generated manual override and source-key immutability;
 - aggregate revision batch;
-- attachment rollback/failure;
+- attachment allow-list/size/parent/quota, complete revision set, unchanged-payload reuse, exact restore, rollback/orphan and permanent-purge behavior;
 - tenant/permission/concurrency;
 - register/report values equal server result.

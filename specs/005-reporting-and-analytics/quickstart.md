@@ -25,8 +25,8 @@ Seed two tenants. In tenant A create 10,000 current rows covering all types, con
 5. Publish manual total-only/partial version and verify missing dimensions are unavailable.
 6. Change current data/settings and verify Published version unchanged.
 7. Compare current/version and version/version with additions/removals/changes.
-8. Export filtered and complete report/year; verify scope metadata and exact parity.
-9. Generate CSV/XLSX and inspect exact decimal values.
+8. Export filtered and complete report/year, including more than 10,000 rows; verify scope metadata, no application row cap and exact parity.
+9. Generate CSV/XLSX through private temporary artifacts, inspect exact decimal values, and inject failure to prove no partial download plus cleanup/error guidance.
 10. Open print view and use browser print smoke; no server PDF service.
 11. Verify other-tenant IDs and data are inaccessible.
 
@@ -38,7 +38,7 @@ Browser focus:
 
 ## Performance evidence
 
-Record query count, memory, wall time and EXPLAIN for dashboard, paginated report and complete capture/export at 10,000 rows. Do not introduce cache/preaggregation unless thresholds fail and a plan amendment is approved.
+On verified target hosting, record and require page/report p95 ≤2 s, CSV ≤10 s, XLSX ≤20 s, print ≤10 s, peak PHP memory ≤128 MiB and ≤5 SQL queries at 10,000 rows. In CI, require parity/scope/order, memory and query ceilings while recording time without failing on runner variability. Do not introduce row caps, cache or preaggregation without a plan amendment.
 
 ## Cleanup
 

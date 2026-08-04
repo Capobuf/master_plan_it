@@ -14,6 +14,10 @@ Verification date: 2026-08-03. Primary research is centralized in `docs/replatfo
 | RES-001-008 | Persistent separate test DB without reset traits | Approved project safety contract. | RefreshDatabase/DatabaseTruncation |
 | RES-001-009 | Database notifications + sync email | One cron, no worker, visible mail failure. | Redis/WebSockets/queued notifications |
 | RES-001-010 | Immutable release ZIP after quality gates | Hosting runs verified artifact unchanged. | build dependencies/assets on production host |
+| RES-001-011 | Audit retention integer 1–120 months, default 24 | Gives the Administrator a bounded setting while preserving the approved default. | unbounded value or fixed 24 months |
+| RES-001-012 | Generic retention-reduction warning without preview | Product selected a warning that discloses neither cutoff nor eligible-event count. | calculated cutoff/count preview |
+| RES-001-013 | Ordinary logout revokes only the current session | Avoids unexpected logout on other devices; password change/reset retain their distinct all-session behavior. | ordinary logout revoking every session |
+| RES-001-014 | WCAG 2.2 AA and explicit browser/viewport matrix | Provides measurable launch compatibility and accessibility acceptance. | unspecified “responsive/accessibile” claim |
 
 ## Executable gates
 

@@ -62,7 +62,23 @@ Expense and ExpenseRow use vendor snapshot versions. `revision_batches` correlat
 
 ## Attachments
 
-Shared `attachments` table with tenant, parent morph, private path, metadata, checksum, actor and soft delete. Expense and rows may be attachable according to UI contract; parent permissions always apply.
+### `attachments`
+
+Current logical membership stores tenant ID; exactly one polymorphic parent restricted to current `Expense` or `ExpenseRow`; stable logical attachment UUID; current original name, detected MIME, bytes and SHA-256; upload actor; timestamps; and `deleted_at`.
+
+Parent and row/Expense tenant must match. Allowed pairs are `.pdf`/`application/pdf`, `.jpg|.jpeg`/`image/jpeg`, `.png`/`image/png`, `.csv`/`text/csv`, and `.xlsx`/`application/vnd.openxmlformats-officedocument.spreadsheetml.sheet`; byte size is 1 through 10,485,760. Private paths are never public URLs.
+
+### `attachment_revision_manifests`
+
+One row per aggregate revision batch records tenant, Expense, revision batch UUID, deterministic manifest checksum and timestamps. Ordered items capture parent kind/logical ID, attachment logical UUID, original name, MIME, bytes, SHA-256 and immutable payload-version ID. Every aggregate revision has a complete set, not a diff. Several manifest items or manifests may reference the same payload-version row when the attachment bytes are unchanged.
+
+### `attachment_payload_versions`
+
+Each row represents one immutable private payload version with tenant, request/revision correlation, private disk/path, bytes, SHA-256, created actor/time and nullable `purged_at`. Manifest items reference it; a new manifest reuses the existing version for unchanged bytes and never creates a physical copy merely to record another revision. Payload bytes never appear in audit or package revision metadata. Removing an attachment/row leaves referenced payload versions intact while the Expense exists. Permanent Expense deletion removes every private payload, nulls unusable paths/marks purge, and retains only approved minimized metadata/checksums.
+
+### Quota
+
+Feature 007/platform settings owns non-negative unsigned-BIGINT `attachment_quota_bytes` per tenant, default 2,147,483,648, editable only by global Administrator; zero is valid and there is no application cap below the column's technical range. Input, usage sums and comparisons use normalized unsigned decimal strings/BCMath when values exceed native signed integers; float is prohibited. Upload/restore locks the tenant quota/usage boundary and counts each distinct non-purged payload-version row once before finalization; manifest references add no usage. It reserves only genuinely new bytes. Lowering below usage, including to zero, deletes nothing and blocks operations that create payload bytes until usage is within quota or quota is raised; data-only revision/restore that reuses every required payload version remains allowed.
 
 ## Legacy identity
 

@@ -15,7 +15,7 @@ This register tracks the product ambiguities discovered during Laravel replatfor
 | Q-004 | Administrator tenant access | BLOCKING | How does Administrator operate within a tenant? | ANSWERED — explicit context, own identity, no impersonation. |
 | Q-005 | Read-only visibility | BLOCKING | What does the Viewer template receive? | ANSWERED — complete same-tenant read/print/export/download/audit-view permissions. |
 | Q-006 | Expense and Actual lifecycle | BLOCKING | Which economic operations are permitted? | ANSWERED — permission-controlled create, correct, version, restore, and delete; one current record; revisions outside current totals. |
-| Q-007 | Master data | BLOCKING | Which master data may tenant roles manage? | ANSWERED — seeded Editor manages vendors/cost centers; financial-year permission is protected by the catalogue. |
+| Q-007 | Master data | BLOCKING | Which master data may tenant roles manage? | ANSWERED — seeded Editor manages vendors/cost centers and only views planning years; Administrator may deliberately assign planning-year lifecycle abilities to a custom tenant role. |
 | Q-008 | Projects and contracts | BLOCKING | Which project/contract operations are permitted? | ANSWERED — seeded Editor manages ordinary lifecycle and approved generation controls. |
 | Q-009 | Operational utilities | BLOCKING | Which utilities are tenant or platform operations? | ANSWERED — tenant utilities are permission-controlled; global import/migration/backup/restore/user administration remain Administrator operations. |
 | Q-010 | Global and tenant data | BLOCKING | Which data is global or tenant-owned? | ANSWERED — business data tenant-owned; only platform identity/configuration/reference lists global. |
@@ -26,7 +26,7 @@ This register tracks the product ambiguities discovered during Laravel replatfor
 | Q-015 | Tenant context visibility | HIGH | How visible is current tenant context? | ANSWERED — always in navigation and breadcrumbs. |
 | Q-016 | Inactive tenant behavior | HIGH | What remains accessible? | ANSWERED — tenant users blocked; Administrator retains authorized access and reactivation. |
 | Q-017 | Deactivated-user ownership | HIGH | What happens to records and assignments? | ANSWERED — authorship preserved; tenant ownership unchanged; assignments manually reassigned. |
-| Q-018 | Attachments | HIGH | Who may manage attachments and what is retained? | ANSWERED — permission-controlled current attachment lifecycle; minimum revision/audit metadata retained. |
+| Q-018 | Attachments | HIGH | Who may manage attachments and what is retained? | ANSWERED — permission-controlled current lifecycle; complete revision manifests retain/reuse immutable payload versions while the Expense exists; permanent Expense deletion purges payload bytes and leaves only minimized non-payload evidence. |
 | Q-019 | Reports and exports | HIGH | Which scopes are permitted? | ANSWERED — exactly one tenant per economic output; authorized filtered or explicit complete report/year scope; global export operational only. |
 | Q-020 | Audit | HIGH | Which views and retention apply? | ANSWERED — default 24 months, Administrator-configurable installation setting; view permission; no audit export at launch; Administrator global view. |
 | Q-021 | Backup and restore | HIGH | Is restore installation-wide or tenant-selective? | ANSWERED — installation-wide; tenant data portability is a separate export/import contract. |

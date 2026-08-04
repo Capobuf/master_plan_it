@@ -1,7 +1,7 @@
 # Target architecture
 
-Status: `PROPOSED TARGET — PLANNED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`
-Authority: Constitution 3.0.1; `replatform-plan.md`; `technical-research.md`
+Status: `PROPOSED TARGET — PLANNED; /speckit.analyze PASSED; IMPLEMENTATION READY`
+Authority: Constitution 5.0.0; `replatform-plan.md`; `technical-research.md`
 
 ## Runtime
 
@@ -85,7 +85,7 @@ Published BudgetVersion is application-owned and never restored through model-ve
 ## Data/operations
 
 - typed singleton `platform_settings`; no generic settings package;
-- native Filesystem plus application attachment metadata; no Media Library;
+- native Filesystem plus application-owned current attachment membership, complete revision manifests and immutable private payload versions; unchanged bytes reuse one version, distinct retained versions count once toward quota, and permanent Expense deletion purges their bytes; no Media Library;
 - application audit table; no audit package/export at launch;
 - native database notifications + optional sync mail;
 - CSV authoritative import/export; OpenSpout 4.32 writer-only for XLSX;

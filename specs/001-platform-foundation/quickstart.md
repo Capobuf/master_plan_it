@@ -57,9 +57,11 @@ Browser only when shell/role/settings UI is implemented:
 2. Enter tenant A and verify tenant label/breadcrumb.
 3. Directly request tenant B object and receive safe denial.
 4. Assign/remove a tenant permission and verify behavior changes without code change.
-5. Lower audit retention and verify reinforced confirmation; do not run prune against shared data.
-6. Deactivate a user/tenant and verify login/access rules.
-7. Build production assets and inspect Vite manifest.
+5. Verify audit retention accepts only integers 1–120, defaults to 24, and lowering shows a generic reinforced warning without cutoff/count preview; do not run prune against shared data.
+6. Log out one session and verify another session remains active; then verify password change/reset invalidates all target sessions.
+7. Exercise keyboard/focus/error/chart-alternative behavior at 360, 768 and 1280 CSS pixels across the approved browser matrix.
+8. Deactivate a user/tenant and verify login/access rules.
+9. Build production assets and inspect Vite manifest.
 
 ## Full gate
 

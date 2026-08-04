@@ -42,3 +42,7 @@ Read the local plan and data model. Implement exactly contract header, terms tim
 ## Tenant and ability clauses
 
 Vendor, cost center, project, terms, renewals, attachments, and linked/generated expenses are same-tenant only. An actor with the exact lifecycle/generation ability may invoke only that operation; generated source identity and used history remain system-controlled regardless of permission.
+
+Contract/term deletion requires the matching `contract.delete` or `contract.update` ability, explicit selection and the current tenant deletion-reason policy. The prompt is always shown; its trimmed value is optional by default, required only when the toggle is enabled, and never exceeds 500 characters.
+
+Deleting a contract or explicit term irreversibly stops its future generation but never deletes a generated Expense. Linked current occurrences atomically become user-authoritative and retain immutable contract/term/date/deletion provenance plus unchanged source keys. UI, Action, revision restore and import cannot reactivate or restore the same deleted logical source identity. Partial provenance, partial deletion and cascade Expense deletion are forbidden.

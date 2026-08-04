@@ -1,7 +1,7 @@
 # Implementation plan — Feature 001 Platform foundation
 
-Status: `PLAN COMPLETE AND MERGED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
-Constitution: 3.0.1  
+Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
+Constitution: 5.0.0
 Dependencies: Feature 007 plan for tenant/RBAC; `docs/replatform/replatform-plan.md`; `development-and-test-contract.md`
 
 ## Summary
@@ -85,11 +85,11 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
 
 ## Action design
 
-`UpdatePlatformSettings` locks singleton row, validates bounded months, verifies Administrator, requires confirmation token when new value is lower, increments lock version and writes audit. It does not immediately prune; next scheduled command uses the current value.
+`UpdatePlatformSettings` locks the singleton row, validates an integer from 1 through 120 months (default 24), verifies Administrator, and requires a confirmation token when the new value is lower. The confirmation presents a generic warning that older audit events may be deleted on the next prune; it exposes neither a calculated cutoff date nor an eligible-event count. The Action increments lock version and writes audit. It does not immediately prune; the next scheduled command uses the current value.
 
 `PruneExpiredAuditEvents` calculates UTC cutoff at run time, deletes in bounded ID batches, never touches revision/business/version tables and reports count/failure. No silent retry.
 
-Password Actions validate actor scope, hash once, exclude values from logs/audit and invalidate target sessions as specified.
+Ordinary logout invalidates only the current session. Password-change and Administrator password-reset Actions validate actor scope, hash once, exclude values from logs/audit and invalidate all target sessions under their separate security contracts.
 
 ## Scheduler
 
@@ -116,7 +116,7 @@ Each command uses overlap prevention and explicit lock name. Tenant iteration is
 - Filament navigation and direct-route authorization;
 - release artifact manifest/content structural test.
 
-Dusk only covers login shell, tenant context visibility, role UI critical path and reinforced retention confirmation.
+Dusk covers login/logout session scope, tenant context visibility, role UI critical path, reinforced generic retention confirmation, and the critical WCAG 2.2 AA/browser/viewport matrix. Component and browser tests prove keyboard reachability, visible focus, programmatic labels, contrast, identifiable errors and non-visual chart alternatives at 360, 768 and 1280 CSS pixels in the latest two stable Chrome, Edge and Firefox releases and current stable Safari.
 
 ## Implementation sequence
 

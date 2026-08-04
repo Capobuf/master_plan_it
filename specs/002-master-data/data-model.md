@@ -6,15 +6,14 @@ Shared conventions: `docs/replatform/data-model-overview.md`
 ## `planning_years`
 
 - tenant ID;
-- numeric year label;
-- start/end dates;
+- numeric calendar-year label;
 - active state;
 - `lock_version`;
 - timestamps;
 - unique `(tenant_id, year_label)`;
-- index `(tenant_id, start_date, end_date)`.
+- index `(tenant_id, active, year_label)`.
 
-Overlap is enforced by `SavePlanningYear` inside a transaction.
+January 1 and December 31 are derived from `year_label` and are not editable columns. Planning years support create/deactivate/reactivate only, remain historically resolvable, are never permanently deleted and have no operational revision rows.
 
 ## `cost_centers`
 
@@ -27,7 +26,7 @@ Overlap is enforced by `SavePlanningYear` inside a transaction.
 - unique `(tenant_id, name)`;
 - index `(tenant_id, parent_id, active)`.
 
-Parent must share tenant. Cycle and active-descendant checks are Action-owned. Launch lifecycle is deactivate/reactivate, not permanent delete.
+Parent must share tenant. Cycle, active-descendant and depth checks are Action-owned. Root is level one and level four is rejected. Siblings are read by case-insensitive ascending name then ID. Delete is allowed only with no current/historical domain reference and no descendant; deactivation/reactivation remains available.
 
 ## `vendors`
 
@@ -40,7 +39,7 @@ Parent must share tenant. Cycle and active-descendant checks are Action-owned. L
 - unique `(tenant_id, name)`;
 - index `(tenant_id, active, name)`.
 
-Referenced vendor is never permanently deleted at launch.
+Delete is allowed only when no current or historical domain record references the vendor; otherwise deactivate/reactivate preserves historical readability.
 
 ## Revision ownership
 

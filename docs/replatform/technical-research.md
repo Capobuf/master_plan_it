@@ -3,7 +3,7 @@
 Status: `TECHNICAL DECISIONS COMPLETE — EXECUTABLE LOCK VERIFICATION PENDING IMPLEMENTATION`  
 Research date: 2026-08-03  
 Scope: runtime, database, UI, RBAC, revision history, backup, spreadsheet, print/PDF, storage and shared hosting  
-Authority: Constitution 3.0.1; `development-and-test-contract.md`; `versioning-permissions-and-operations-contract.md`
+Authority: Constitution 5.0.0; `development-and-test-contract.md`; `versioning-permissions-and-operations-contract.md`
 
 ## Metodo
 
@@ -28,7 +28,7 @@ Le versioni sotto sono target esatti del piano. Il primo task di implementazione
 | Backup archive | `spatie/laravel-backup` 10.3.0 | CONDITIONAL APPROVAL | Metadata Composer dichiara PHP ^8.3 e Illuminate 13, ma README/documentazione dichiarano PHP 8.4. Questa incoerenza impone una risoluzione Composer reale su 8.3.32 prima dell'adozione. Nessun fallback automatico. |
 | XLSX | `openspout/openspout` 4.32.0 | APPROVED WRITER-ONLY | La linea 5.8 richiede PHP 8.4/8.5 ed è esclusa. La linea 4.32 è il target PHP 8.3. CSV resta formato autorevole di scambio/import. |
 | PDF | nessun package | APPROVED REJECTION | I driver server-side richiedono Chromium, Gotenberg, Python/WeasyPrint o un renderer PHP con limiti CSS. Non esiste un requisito di file PDF server-side; Blade print usa lo stesso dataset ed è compatibile shared hosting. |
-| Attachments | Laravel Filesystem + tabella applicativa | APPROVED | Nessuna media library: metadati, tenant scope, checksum e lifecycle sono limitati e applicazione-owned. |
+| Attachments | Laravel Filesystem + manifesti/versioni payload applicativi | APPROVED | Nessuna media library: appartenenza corrente, manifesti completi di revisione, versioni payload immutabili, riuso, quota, purge e tenant scope restano application-owned. |
 | Platform settings | tabella singleton applicativa | APPROVED | Un solo campo tipizzato iniziale `audit_retention_months`; un generic key/value settings package sarebbe decorativo. |
 | Audit | tabella applicativa append-only con retention | APPROVED | Nessun audit package. Eventi minimizzati, nessun payload file/segreto e retention dinamica per `occurred_at`. |
 | Notifications | Laravel database notifications + mail sync | APPROVED | Nessun worker/Redis/WebSocket; deduplication applicativa. |
@@ -99,8 +99,9 @@ Usare Overtrue 6.0.0 con strategia snapshot e Mansoor 5.1 come pagina/lista diff
 - il pulsante restore del plugin non chiama direttamente `version->revert()`;
 - `Restore*Revision` legge lo snapshot, costruisce input tipizzato e richiama la normale Action di update/restore;
 - restore valida current tenant, permissions, references, source keys, money, tree/term constraints e `lock_version`;
-- delete usa soft delete come infrastruttura ma il record è assente dal current domain;
-- una pagina applicativa gestisce history di record eliminati, poiché la resource ordinaria non li espone.
+- delete può usare `deleted_at` come infrastruttura ma il record è assente dal current domain;
+- Expense e master data ripristinabili seguono le rispettive Actions; per progetto, contratto e periodo contrattuale il tombstone è terminale e nessuna UI, Action, revisione o import può riattivare la stessa identità logica;
+- le pagine di history sono application-owned e mostrano soltanto le operazioni consentite per quello specifico tipo di record.
 
 ### Rejection criteria
 
@@ -170,7 +171,7 @@ Tabella `platform_settings` singleton con colonne tipizzate e `lock_version`. No
 
 ### Attachments
 
-Tabella `attachments` con tenant, polymorphic parent, disk/path, original name, MIME, size, SHA-256, actor e soft delete. File privati serviti tramite controller/Action autorizzato; logo/report public assets restano separati.
+La membership corrente degli allegati appartiene a Expense o ExpenseRow ed è tenant-scoped. Ogni revisione dell’aggregate Expense salva un manifesto completo ordinato; ogni voce del manifesto punta a una versione payload privata e immutabile con disk/path, nome originale, MIME rilevato, size e SHA-256. Un allegato invariato riusa la stessa versione payload e non consuma nuova quota. Ogni payload distinto non purgato conta una sola volta; i riferimenti dei manifesti non aggiungono consumo. La cancellazione corrente conserva le versioni storiche finché esiste l’Expense; la cancellazione permanente dell’Expense elimina tutti i payload collegati e lascia solo evidenza minimizzata senza bytes. Download e restore passano da controller/Actions autorizzati; logo report e relativo lifecycle restano separati.
 
 ### Audit
 

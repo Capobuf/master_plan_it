@@ -10,7 +10,7 @@ Shared conventions: `docs/replatform/data-model-overview.md`
 Singleton:
 
 - `id` fixed 1;
-- `audit_retention_months` unsigned smallint default 24;
+- `audit_retention_months` unsigned smallint default 24, validated and constrained to integer values 1 through 120;
 - `lock_version` default 1;
 - `updated_by_user_id` nullable FK;
 - timestamps.

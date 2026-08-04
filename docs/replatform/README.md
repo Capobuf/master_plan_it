@@ -4,7 +4,7 @@ This package is the documentation-only contract for the Laravel replatform, anch
 
 ## Current phase
 
-- Constitution: 3.0.1.
+- Constitution: 5.0.0.
 - Product clarification: Q-001–Q-041 closed; 0 open.
 - `/speckit.plan`: complete and merged.
 - initial `/speckit.tasks`: complete and merged.
@@ -21,10 +21,13 @@ This package is the documentation-only contract for the Laravel replatform, anch
 - fourth analysis on `348a557c58388ff917646dd6a02cb00cbdc1f513`: failed with 0 CRITICAL, 1 HIGH and 0 MEDIUM findings.
 - invariant task/test ownership remediation: complete; integration state authoritative only in GitHub PR metadata; final analysis completed below.
 - integration state: authoritative only in GitHub PR metadata.
-- final analysis on `ba3744fbc7043f3f3b036416e6c082e4cb7c6831`: passed with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings.
-- next valid command: `/speckit.implement`; identified but not executed.
+- final Constitution 3.x analysis on `ba3744fbc7043f3f3b036416e6c082e4cb7c6831`: historical pass with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings.
+- Constitution 5.0.0 clarification/plan/task propagation: complete.
+- current integrated analysis: `speckit-analyze-2026-08-04-constitution-5.0.0.md`, PASS with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings.
+- requirement-quality checklists: 295/295 passed.
+- `/speckit.implement`: next valid phase and not executed.
 
-No package lock, implementation, migration or test was executed by this documentation remediation.
+No package lock, application implementation, migration or application test was executed by this documentation remediation.
 
 ## Reading order
 
@@ -48,7 +51,7 @@ No package lock, implementation, migration or test was executed by this document
 18. `spec-kit-installation-2026-08-04.md`;
 19. dated task, checklist and authorization-plan remediation records;
 20. `implementation-readiness.md`; `package-validation.md`, `tasks-summary.md`, and `spec-kit-analysis.md` are historical snapshots where labelled;
-21. `speckit-analyze-2026-08-04-final.md`.
+21. `speckit-analyze-2026-08-04-constitution-5.0.0.md`; the older `speckit-analyze-2026-08-04-final.md` is historical.
 
 ## Second-remediation outcomes
 
@@ -65,10 +68,10 @@ No package lock, implementation, migration or test was executed by this document
 - guarded backup dependency command restores Composer files on resolution failure;
 - cutover-readiness evidence has exact requirements, paths, command and result rules.
 
-## Proposed task inventory
+## Verified current task inventory
 
-- 150 tasks across 35 user stories;
-- 42 `[P]` tasks after exact prerequisites;
+- 153 tasks across 35 user stories;
+- 43 `[P]` tasks after exact prerequisites;
 - 7 feature task files;
 - one source/invariant/error registry;
 - seven exact command registers;
@@ -76,7 +79,7 @@ No package lock, implementation, migration or test was executed by this document
 - one bidirectional source/requirement/task/test ledger;
 - no implementation code.
 
-The task inventory remains current; readiness remains proposed until the next `/speckit.analyze` verifies the latest integrated remediation.
+The Constitution 5.0.0 integrated analysis verified this inventory and the seven feature packages are implementation-ready. This does not claim application/runtime verification.
 
 ## Remaining evidence
 

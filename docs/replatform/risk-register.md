@@ -30,5 +30,5 @@
 | Semantic report drift | H | High | multiple output scopes and dataset types | one dataset contract per selected type/scope, parity fixtures, no DOM-only tests | Reporting lead | 005 |
 | Audit removed earlier than expected | M | High | Administrator may lower the global retention period | reinforced confirmation, preview cutoff/count, explicit bounded retention command, audit of setting change | Security/Ops | 001,007 |
 | Livewire/plugin UI conflict | M | Medium | Filament plugins and DOM lifecycle | native Filament integration, small Dusk coverage, no custom JS ownership overlap | UI lead | 001-005 |
-| Incomplete decision propagation | H | High | Constitution 3.0.1 supersedes plans/tasks across all features | explicit stale-artifact list; `/speckit.plan`, `/speckit.tasks`, `/speckit.analyze` gates | Spec owner | 001-007 |
+| Incomplete decision propagation | H | High | Constitution 5.0.0 and approved cross-feature clarifications supersede earlier plans/tasks | explicit stale-artifact list; `/speckit.plan`, `/speckit.tasks`, `/speckit.analyze` gates | Spec owner | 001-007 |
 | Cutover evidence unavailable | M | High | real export, hosting, report inventory not yet supplied | keep Feature 006 not CUTOVER READY; no guessed evidence | Product/Ops/Migration | 005-006 |

@@ -9,6 +9,8 @@ Authority: Constitution C-07/C-11; Feature 007; `docs/replatform/permission-cata
 
 Only protected global Administrator may manage tenants/users/roles, platform settings, global audit view, migration/import, installation backup/restore and global overview. These abilities are absent from tenant role catalogue and cannot be created/assigned through Shield RoleResource.
 
+Changing a selected tenant's attachment quota is a protected platform-setting operation. It requires global Administrator and `platform.settings.manage`; entering tenant context or holding a tenant role is insufficient.
+
 Administrator does not receive a generic invariant-bypass `Gate::before`. Inside tenant context, the same Policies and Actions validate business operations.
 
 ## Tenant context
@@ -35,6 +37,8 @@ Seeded Editor and Viewer are initial templates only. Administrator may customize
 - permission cannot validate invalid money, duplicate source key, cross-tenant relation or published-version mutation;
 - parent permission is required for attachment access;
 - restore/delete/confirm/publish/generation/output-complete have separate abilities;
+- protected `deletion-reason-setting.manage` is available only to global Administrator, changes only one explicitly selected tenant's prospective reason-required flag and does not authorize deletion itself;
+- `cost-center.delete` and `vendor.delete` are distinct from update/deactivate, while planning years expose no update/delete/revision ability;
 - commands/scheduler explicitly set/reset tenant context for each iteration.
 
 ## Password rules
@@ -60,3 +64,5 @@ For every ability family:
 7. role customization affects access without domain code;
 8. context/cache does not leak across requests/Livewire/commands/tests;
 9. direct URL, relation, file, revision, report/export and scheduler paths covered.
+10. quota management is Administrator-only and isolated to the selected tenant;
+11. deletion-reason setting management requires global Administrator plus the exact protected ability and explicit target tenant, and never changes prior evidence.

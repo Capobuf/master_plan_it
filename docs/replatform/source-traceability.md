@@ -1,7 +1,7 @@
 # Bidirectional source traceability
 
-Status: `CURRENT — FINAL DOCUMENTATION GATE PASSED`
-Authority: Constitution 3.0.1, Q-001–Q-041, approved technical plans and current task/readiness/execution contracts.
+Status: `CURRENT — CONSTITUTION 5.0.0 INTEGRATED ANALYSIS PASSED`
+Authority: Constitution 5.0.0, approved clarification records, technical plans and current task/readiness/execution contracts.
 
 Legacy sources establish verified behavior or migration evidence. Product decisions and Constitution establish target changes. Every row maps evidence → requirement/invariant → owning task → focused test. Task IDs refer to the current Feature 001–007 `tasks.md` files.
 
@@ -33,6 +33,10 @@ Legacy sources establish verified behavior or migration evidence. Product decisi
 | R-BAS-001 | Tenant Budget basis is Net or Gross; all components remain stored | Q-038 | FR-003-022/042; FR-005-016; INV-BAS-001/002 | T003-001–T003-011, T005-001–T005-007 | VAT/Expense calculation and Budget parity tests |
 | R-REP-001 | Screen, KPI, chart, print, CSV and XLSX share one dataset/scope | C-08; Q-019 | FR-005-020–025/070; INV-REP-002–006 | T005-003, T005-004, T005-006–T005-008, T005-021–T005-023 | dataset, parity, scope, CSV/XLSX and Dusk tests |
 | R-SCN-001 | Scenarios are explicit non-official tenant datasets | Q-027; C-03/C-08 | FR-005-030; INV-SCN-001 | T005-019, T005-020, T005-016–T005-018 | `ScenarioIsolationTest`, `CompareBudgetSourcesTest` |
+| R-YEAR-001 | Planning years are immutable calendar identities with derived January 1/December 31 boundaries and create/deactivate/reactivate only | approved Feature 002 clarification; Constitution 5.0.0 C-05/C-12 | FR-002-001/002/013/014/018; INV-YEAR-001–004 | T002-001–T002-003, T002-007–T002-009, T006-003, T006-005–T006-007 | `PlanningYearTest`, `PlanningYearCalendarBoundaryTest`, `ImportDomainConstraintTest` |
+| R-MD-DEL-001 | CostCenter/Vendor delete is distinct, permissioned and allowed only without prohibited current/historical references; CostCenter also requires no descendants | approved Feature 002 clarification | FR-002-015–017; INV-CC-003/004; INV-MD-DEL-001 | T002-001–T002-003, T002-010–T002-015 | cost-center/vendor lifecycle, authorization and revision tests |
+| R-SRCDEL-001 | Project/contract/term deletion is irreversible for the same logical identity and never cascades; contract/term deletion retains generated Expenses, source keys and immutable deletion provenance while stopping generation; tombstones cannot be restored or imported as active | Constitution 5.0.0 C-05/C-09/C-12/C-13; approved Feature 004 clarification | FR-004-037/040–044, FR-006-022; INV-PRJ-004; INV-CON-009/010; INV-DEL-003; INV-MIG-007 | T004-001–T004-013, T006-005–T006-011, T007-021–T007-022 | project/contract/term terminal-deletion, restore/import denial, deletion-reason setting, synchronization, portability and generation-history tests |
+| R-REP-002 | Economic outputs are uncapped and complete-or-error; absolute timing gates run on verified target hosting while CI gates parity/scope/order/memory/query | approved Feature 005 clarification | FR-005-026/027; NFR-005-PERF-01; INV-REP-007–009 | T005-021–T005-025 | output parity/artifact lifecycle and deterministic performance tests |
 
 ## Security, identity, branding and operations rules
 
@@ -45,10 +49,11 @@ Legacy sources establish verified behavior or migration evidence. Product decisi
 | R-AUD-001 | Audit retention is global configurable default 24; lowering is reinforced; pruning cannot delete current business rows, revision identity or named BudgetVersion rows; permission-controlled view exists; no export | Q-020; Feature 007 AC-007-10/TEST-007-010; C-05 | FR-001-019–021; FR-007-017; FR-007-023; INV-PLT-007; INV-TEN-010 | T001-019–T001-021, T001-025–T001-027 | `AuditRetentionTest` protected-record boundary assertions plus settings, scheduler and audit-view authorization/minimization tests |
 | R-PWD-001 | No public password recovery; Administrator reset, self-change and emergency interactive reset invalidate sessions without exposing secrets | Q-026; Feature 001/007 acceptance; C-05/C-07 | FR-001-014–017; FR-007-018; FR-007-019; INV-PLT-006 | T001-008, T001-012–T001-016 | no-recovery-route, password administration, self-change and console reset tests |
 | R-BRD-001 | Optional tenant branding is Administrator-managed and appears only in selected-tenant report/output content; shell remains Master Plan IT | FR-007-021; Feature 007 data model/plan; Feature 005 output plan | FR-007-021; INV-TEN-001; INV-TEN-004; INV-TEN-006 | T007-001, T007-002, T007-019, T007-020, T005-021–T005-023 | tenant branding, private logo, branding settings, output branding and print tests |
-| R-ATT-001 | Attachments follow current parent permission and private lifecycle | Q-018 | FR-003-061/062; INV-TEN-003 | T003-021–T003-023, T003-017, T003-018 | attachment schema/policy/download/lifecycle/Livewire tests |
+| R-ATT-001 | Attachments follow exact allowlist/size/single-parent/private authorization; every revision has a complete manifest, unchanged bytes reuse one immutable payload version, restore is atomic, permanent Expense deletion purges payloads, and non-negative quota (including zero) counts distinct non-purged versions once | approved Feature 003 clarification | FR-003-061–069; INV-ATT-001–007; INV-EXP-TEN-001 | T003-005, T003-010, T003-015–T003-024, T007-021–T007-022 | attachment schema/policy/upload/quota-zero/reuse/lifecycle/manifest-restore/private-download tests |
+| R-SET-001 | Attachment quota and per-tenant deletion-reason requirement are changed only by global Administrator through separate protected abilities; neither change rewrites/deletes prior evidence or payloads | approved Feature 003/004 clarification | FR-007-024–026; INV-TEN-011/012 | T007-001, T007-002, T007-005, T007-021, T007-022, T007-011, T007-018 | operational-settings schema, protected-catalogue/role omission, authorization, page and ability-matrix tests |
 | R-NOT-001 | Database-first synchronous notifications, optional email, no worker | Q-023; C-06 | FR-001-006/018; FR-004-038; FR-006-018; INV-PLT-004; INV-OPS-004 | T001-017, T001-018, T004-019, T004-020, T006-014, T001-025 | dedup/mail failure, renewal, operation failure and scheduler tests |
-| R-MIG-001 | One legacy site imports into one immutable selected tenant | Q-011/Q-022/Q-029; C-09 | FR-006-001–013/017/019; FR-007-020; INV-MIG-001–005 | T006-001–T006-009, T007-016, T007-017 | package, dry-run, collision, reconciliation, apply and tenant ownership tests |
-| R-PORT-001 | Tenant portability excludes audit, secrets and global settings | Q-021; C-05/C-09 | FR-006-015/016/019; INV-OPS-002/003 | T006-010, T006-011 | export package, round-trip and exclusion tests |
+| R-MIG-001 | One legacy site imports into one immutable selected tenant while satisfying fixed-year, attachment, quota and source-evidence constraints | Q-011/Q-022/Q-029; C-09; Features 002–004 | FR-006-001–013/017/019–022; FR-007-020; INV-MIG-001–007 | T006-001–T006-009, T007-016, T007-017 | package, domain-constraint dry-run, collision, reconciliation, apply and tenant ownership tests |
+| R-PORT-001 | Tenant portability excludes audit/secrets/global settings and preserves tenant operational settings, structured source-deletion provenance and exact retained attachment revision payloads | Q-021; C-05/C-09; Features 003/004/007 | FR-006-015/016/019–022; INV-MIG-006/007; INV-OPS-002/003 | T006-010, T006-011 | export package, exact round-trip and exclusion tests |
 | R-BKP-001 | Installation backup is Created then Verified by empty restore rehearsal | Q-021/Q-024 | FR-006-010/011/014/017/019; INV-OPS-001/002 | T006-012, T006-013 | dependency gate, backup/restore contract and BackupRun tests |
 | R-DEP-001 | Production consumes one immutable prebuilt artifact | C-06; development/test contract | FR-001-005; FR-006-012; INV-PLT-003 | T001-022, T001-023, T006-015, T006-016 | workflow, release artifact, preflight and immutable deployment tests |
 
@@ -63,28 +68,32 @@ Legacy sources establish verified behavior or migration evidence. Product decisi
 | 002 | FR-002-003–005/008–009 | T002-010–T002-012 | T002-016 |
 | 002 | FR-002-006–007 | T002-013–T002-015 | T002-016 |
 | 002 | FR-002-010–013 | T002-001–T002-016 | T002-016 |
+| 002 | FR-002-014–018 | T002-001–T002-003, T002-007–T002-016 | T002-016 |
 | 003 | FR-003-001–002; FR-003-010–014; FR-003-040–042; FR-003-050–052; FR-003-063 | T003-001–T003-012 | T003-020 |
 | 003 | FR-003-020–022/060 | T003-007–T003-009 | T003-020 |
 | 003 | FR-003-030–035 | T003-013–T003-018 | T003-020 |
-| 003 | FR-003-061–062 | T003-021–T003-023, T003-017–T003-018 | T003-020 |
+| 003 | FR-003-061–069 | T003-005, T003-010, T003-015–T003-024 | T003-020 |
 | 004 | FR-004-001/010–015/037 | T004-001–T004-006 | T004-021 |
 | 004 | FR-004-020–023/038 | T004-007–T004-009, T004-019–T004-020 | T004-021 |
 | 004 | FR-004-025–039 except FR-004-038 | T004-010–T004-018 | T004-021 |
+| 004 | FR-004-040–044 | T004-001–T004-013, T007-021–T007-022 | T004-021 |
 | 005 | FR-005-001–003; FR-005-010–016; FR-005-050; FR-005-070 | T005-001–T005-008 | T005-025 |
-| 005 | FR-005-020–025/060 and cross-feature FR-007-021 | T005-003–T005-004, T005-021–T005-023, T007-019–T007-020 | T005-025 |
+| 005 | FR-005-020–027/060 and cross-feature FR-007-021 | T005-003–T005-004, T005-021–T005-024, T007-019–T007-020 | T005-025 |
 | 005 | FR-005-030 | T005-019–T005-020 | T005-025 |
 | 005 | FR-005-040–047 | T005-009–T005-018 | T005-025 |
 | 006 | FR-006-001–009/013/017/019 | T006-001–T006-009, T006-017 | T006-018 |
 | 006 | FR-006-010–012/014 | T006-012–T006-017 | T006-018 |
 | 006 | FR-006-015–016 | T006-010–T006-011 | T006-018 |
 | 006 | FR-006-018 | T006-014 | T006-018 |
+| 006 | FR-006-020–022 | T006-003, T006-005–T006-011, T007-022 | T006-018 |
 | 007 | FR-007-001–015 | T007-001–T007-013, T007-019–T007-020 | T007-018 |
 | 007 | FR-007-016/022 | T007-014–T007-015 | T007-018 |
 | 007 | FR-007-017/023 | T001-019–T001-021, T001-025–T001-027 | T007-018 |
 | 007 | FR-007-018/019 | T001-008, T001-012–T001-016 | T007-018 |
 | 007 | FR-007-020 | T007-016–T007-017 | T007-018 |
 | 007 | FR-007-021 | T007-001, T007-002, T007-019, T007-020, T005-021–T005-023 | T007-018 |
+| 007 | FR-007-024–026 | T007-001, T007-002, T007-005, T007-011, T007-021, T007-022 | T007-018 |
 
 ## Coverage gate
 
-No row permits implementation of unstated behavior. A task is executable only when its owning task entry, readiness row, exact command and any required path expansion agree. The final `/speckit.analyze` on integrated commit `ba3744fbc7043f3f3b036416e6c082e4cb7c6831` reported CRITICAL `0`, HIGH `0` and MEDIUM `0`; `/speckit.implement` is the next valid command and was not executed.
+No row permits implementation of unstated behavior. A task is executable only when its owning task entry, readiness row, exact command and any required path expansion agree. The Constitution 5.0.0 integrated `/speckit.analyze` report records no blocking finding; a later normative change requires another analysis before implementation continues from the changed contract.

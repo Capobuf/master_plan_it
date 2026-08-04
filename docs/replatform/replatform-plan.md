@@ -1,10 +1,9 @@
 # Piano integrato Laravel replatform
 
-Status: `PROPOSED TARGET — /speckit.plan`  
-Branch: `plan/replatform-3.0.1`  
-Base: `72262851ba4cf459654ec1a2684fa870b91664e4`  
-Constitution: 3.0.1  
-Product decisions: Q-001–Q-041, PD-REV-001, PD-BUD-001, PD-GEN-001
+Status: `CURRENT INTEGRATED DESIGN — /speckit.analyze PASSED; IMPLEMENTATION READY`
+Historical authoring branch/base: `plan/replatform-3.0.1` / `72262851ba4cf459654ec1a2684fa870b91664e4`
+Constitution: 5.0.0
+Product decisions: Q-001–Q-041, PD-REV-001, PD-BUD-001, PD-GEN-001, PD-SET-001, PD-DEL-001
 
 ## 1. Obiettivo
 
@@ -139,7 +138,7 @@ Directories are created only when the first concrete class exists. Most domains 
 
 ### Models
 
-Persistence relations, casts, scopes without business side effects, soft-delete infrastructure and optimistic lock fields. No authoritative totals, sync, audit or revision side effects in observers/accessors.
+Persistence relations, casts, scopes without business side effects, domain-specific deletion infrastructure and optimistic lock fields. Expense/master-data restoration and terminal project/contract/term tombstones follow their owning contracts; a generic soft-delete UI is not authoritative. No totals, sync, audit or revision side effects in observers/accessors.
 
 ### Actions
 

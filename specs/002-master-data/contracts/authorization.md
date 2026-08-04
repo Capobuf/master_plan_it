@@ -51,8 +51,8 @@ Read the local plan and data model. Implement exactly the authorization decision
 
 ## Feature-specific policy rules
 
-- Planning-year reads and lifecycle operations require the matching `planning-year.*` ability.
-- Cost-center reads, lifecycle, revision-view, and revision-restore operations require the matching `cost-center.*` ability.
-- Vendor reads, lifecycle, revision-view, and revision-restore operations require the matching `vendor.*` ability.
+- Planning-year reads and create/deactivate/reactivate operations require the exact matching ability; update/delete/revision abilities do not exist.
+- Cost-center reads, lifecycle, delete, revision-view, and revision-restore operations require distinct matching `cost-center.*` abilities.
+- Vendor reads, lifecycle, delete, revision-view, and revision-restore operations require distinct matching `vendor.*` abilities.
 - Import remains protected by `platform.migration.run`; tenant role templates do not receive that platform ability.
 - Every selector, parent, revision, import reference, and output remains same-tenant after ability allow; cross-tenant identity is denied safely.
