@@ -9,6 +9,16 @@ Dependencies: Feature 007 product contract
 
 Authenticate local users, enforce active account and tenant context, expose a permission-aware Filament application shell, manage users/roles/passwords and global platform settings, run scheduled notifications and retention through one cron, and remain compatible with shared PHP hosting and precompiled assets.
 
+## Clarifications
+
+### Session 2026-08-04
+
+- Q: Quale intervallo deve accettare l'impostazione globale di conservazione degli eventi di audit? → A: Da 1 a 120 mesi, con valore predefinito 24 mesi.
+- Q: Quale standard di accessibilità deve costituire il criterio verificabile per l'interfaccia applicativa e i report? → A: WCAG 2.2 livello AA.
+- Q: Quale matrice minima di browser e dimensioni dello schermo deve essere supportata e verificata? → A: Ultime 2 versioni stabili di Chrome, Edge e Firefox; Safari corrente; viewport 360, 768 e 1280 px.
+- Q: Quando un utente esegue il logout ordinario, quali sessioni devono essere invalidate? → A: Solo la sessione corrente; cambio e reset password invalidano le sessioni secondo i rispettivi requisiti.
+- Q: Prima di confermare una riduzione della conservazione audit, quali conseguenze deve mostrare l'interfaccia? → A: Solo un avviso generico di possibile eliminazione.
+
 ## User stories
 
 ### US-001-01 — Authenticate
@@ -39,7 +49,7 @@ Administrator changes protected installation-wide settings, including audit rete
 
 ### AC-001-01 — Authentication
 
-Valid active user credentials authenticate. Invalid credentials, deactivated user, and tenant user in an Inactive tenant are denied. Authentication alone grants no business ability.
+Valid active user credentials authenticate. Invalid credentials, deactivated user, and tenant user in an Inactive tenant are denied. Authentication alone grants no business ability. Ordinary logout invalidates only the current session and rotates the request's session state; it does not terminate the user's other active sessions.
 
 ### AC-001-02 — Tenant context
 
@@ -63,7 +73,7 @@ One cron executes scheduler with overlap prevention. Commands are bounded, synch
 
 ### AC-001-07 — Destructive confirmation
 
-Tenant deactivation, lowering audit retention, and comparable protected destructive operations require reinforced confirmation; ordinary saves and low-risk actions use proportional confirmation.
+Tenant deactivation, lowering audit retention, and comparable protected destructive operations require reinforced confirmation; ordinary saves and low-risk actions use proportional confirmation. For audit-retention reduction, the interface shows a generic warning that older events may be removed by the next run; no cutoff-date or eligible-count preview is required.
 
 ### AC-001-08 — Shared-hosting release
 
@@ -71,13 +81,13 @@ Production uses compiled Vite assets and requires no Node runtime, Redis, WebSoc
 
 ### AC-001-09 — Audit-retention setting
 
-The platform initializes audit retention to 24 months. Only Administrator can change it. Lowering the value warns that the next retention run may remove older events. Increasing it affects future retention but does not recreate events already removed.
+The platform initializes audit retention to 24 months and accepts only integer values from 1 through 120 months. Only Administrator can change it. Lowering the value shows a generic warning that the next retention run may remove older events, without a cutoff-date or eligible-count preview. Increasing it affects future retention but does not recreate events already removed.
 
 ## Functional requirements
 
 | ID | Requirement | Acceptance |
 |---|---|---|
-| FR-001-001 | Application shall authenticate local users with email and password. | AC-001-01 |
+| FR-001-001 | Application shall authenticate local users with email and password and shall provide ordinary logout that invalidates only the current session. | AC-001-01 |
 | FR-001-002 | Every protected route shall require authentication, active user, and valid scope. | AC-001-01, AC-001-02 |
 | FR-001-003 | `Administrator` shall be protected global role; tenant roles/permissions shall be configurable; Editor/Viewer shall be seeded templates. | AC-001-04 |
 | FR-001-004 | Shell shall expose navigation according to explicit abilities while every route/Action remains server-authorized. | AC-001-03 |
@@ -95,8 +105,8 @@ The platform initializes audit retention to 24 months. Only Administrator can ch
 | FR-001-016 | Global Administrator emergency reset shall use interactive Artisan command with hidden input and session invalidation. | AC-001-05 |
 | FR-001-017 | Passwords/hashes/tokens/sessions shall be excluded from audit, revisions, notifications, and tenant export. | AC-001-05 |
 | FR-001-018 | Approved database notifications and optional synchronous email shall operate without permanent queue worker. | AC-001-06 |
-| FR-001-019 | Reinforced confirmation shall protect tenant deactivation, migration apply, restore, lowering audit retention, and equivalent high-risk actions. | AC-001-07 |
-| FR-001-020 | One installation-wide `audit_retention_months` platform setting shall default to 24 and be writable only by Administrator. | AC-001-09 |
+| FR-001-019 | Reinforced confirmation shall protect tenant deactivation, migration apply, restore, lowering audit retention, and equivalent high-risk actions; audit-retention reduction shall show a generic possible-deletion warning without requiring a cutoff-date or eligible-count preview. | AC-001-07 |
+| FR-001-020 | One installation-wide `audit_retention_months` platform setting shall accept integer values from 1 through 120, default to 24, and be writable only by Administrator. | AC-001-09 |
 | FR-001-021 | Audit retention shall use the current configured period at command execution; increasing the period shall not recreate removed events. | AC-001-06, AC-001-09 |
 
 ## Non-functional requirements
@@ -106,7 +116,8 @@ The platform initializes audit retention to 24 months. Only Administrator can ch
 | NFR-001-SEC-01 | Authorization | every registered ability has same-tenant allow, missing-permission deny, other-tenant deny, inactive/deactivated deny tests |
 | NFR-001-INT-01 | Integrity | every documented write is transactional and rollback-tested |
 | NFR-001-LOG-01 | Diagnostics | unexpected failures have correlation ID and no sensitive payload; no silent retries/fallbacks |
-| NFR-001-A11Y-01 | Accessibility | controls keyboard reachable and labelled; critical accessibility smoke passes |
+| NFR-001-A11Y-01 | Accessibility | shared application and report flows shall satisfy WCAG 2.2 level AA acceptance checks, including keyboard reachability, visible focus, programmatic labels, contrast, error identification and non-visual alternatives for charts |
+| NFR-001-COMPAT-01 | Browser and responsive compatibility | verify the latest two stable Chrome, Edge and Firefox versions, the current Safari version, and responsive behavior at 360, 768 and 1280 CSS pixels |
 | NFR-001-MAINT-01 | Complexity | use maintained packages/native framework only after compatibility spike; no custom generic ACL/auth/notification/settings framework |
 
 ## Business invariants

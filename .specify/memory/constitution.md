@@ -1,9 +1,40 @@
+<!--
+Sync Impact Report
+- Version change: 3.0.1 -> 4.0.0
+- Modified principles: C-05 — Current state, revisions, deletion, and audit;
+  C-12 — Explicit versioning contracts
+- Added sections: Amendment 4.0.0
+- Removed sections: none
+- Follow-up: propagate the fixed-calendar planning-year exception through Feature 002
+  specification, plan, tasks, data model, contracts, tests, and cross-feature registries
+- Deferred placeholders: none
+-->
 # Master Plan IT Replatform Constitution
 
-Version: 3.0.1  
+Version: 4.0.0
 Ratified baseline: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`  
-Amended: 2026-08-03  
+Amended: 2026-08-04
 Scope: documentation-only design for the Laravel replatform.
+
+## Amendment 4.0.0
+
+**Rationale.** The Product Owner removed user-configurable planning-year date ranges as
+unnecessary complexity. A planning year is identified by its calendar year, always starts on
+January 1, always ends on December 31, and exposes no operation that edits those dates. Because
+there is no editable date state, planning years do not participate in operational revision
+comparison or restoration.
+
+**Affected principles and artifacts.** C-05 and C-12 are amended with an explicit
+planning-year exception. Feature 002 specification, plan, tasks, data model, contracts, tests,
+authorization catalogue, migration rules, and cross-feature registries require propagation.
+
+**Compatibility and migration impact.** Imported or existing planning years must be validated
+against calendar-year boundaries. Non-calendar source ranges cannot be silently normalized and
+must be quarantined for an explicit migration decision. Existing expense and reporting references
+retain the planning year's logical identity. Planning years remain tenant-scoped, auditable,
+deactivatable, reactivatable, historically readable, and permanently non-deletable.
+
+**Approval owner.** Product Owner, approved on 2026-08-04.
 
 ## Amendment 3.0.1
 
@@ -61,7 +92,12 @@ Scope: documentation-only design for the Laravel replatform.
 
 ## C-05 — Current state, revisions, deletion, and audit
 
-**Rule.** Expenses, Actual rows, contracts, projects, master data, and approved configuration may be corrected through versioned domain operations. The operational UI and official current datasets expose one current record, not parallel `Replaced` or `Cancelled` copies. A correction creates a new revision of the same logical record. A permitted deletion removes the record from the active domain and every current economic dataset; only the minimum tombstone, revision metadata, and audit evidence required by the approved retention contract remain outside the economic domain.
+**Rule.** Expenses, Actual rows, contracts, projects, revision-enabled master data, and approved configuration may be corrected through versioned domain operations. The operational UI and official current datasets expose one current record, not parallel `Replaced` or `Cancelled` copies. A correction creates a new revision of the same logical record. A permitted deletion removes the record from the active domain and every current economic dataset; only the minimum tombstone, revision metadata, and audit evidence required by the approved retention contract remain outside the economic domain.
+
+Planning years are the explicit master-data exception. Their logical identity is the tenant-scoped
+calendar year; January 1 and December 31 boundaries are derived and immutable. Users may create,
+deactivate, and reactivate a planning year, but cannot edit its boundaries, permanently delete it,
+or compare and restore operational revisions. Every allowed lifecycle mutation remains audited.
 
 Actual rows are editable and deletable when the actor has the required permission. Deletion and restoration never bypass tenant isolation, decimal correctness, source-key uniqueness, contract-generation rules, or referential checks. A restore creates a new current revision; it does not rewrite revision history.
 
@@ -116,6 +152,7 @@ Audit retention is controlled by one global platform setting available only to A
 **Rule.** Operational model revision history and named budget versions are different concepts.
 
 - Operational revisions track changes to one logical record and support compare/restore without duplicating current domain records.
+- Planning years are excluded from operational revisions because their calendar boundaries are derived and immutable; their permitted lifecycle changes remain audit events.
 - A named `BudgetVersion` is an immutable tenant-and-year economic snapshot deliberately created for approval, history, manual baseline, or comparison.
 - Restoring a model revision creates a new current revision.
 - Published budget versions are never edited in place; a changed baseline is a new named version.
