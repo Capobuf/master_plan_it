@@ -1,6 +1,6 @@
 # Bidirectional source traceability
 
-Status: `CURRENT AFTER INVARIANT TASK-OWNERSHIP REMEDIATION — FINAL RE-ANALYSIS REQUIRED`
+Status: `CURRENT — FINAL DOCUMENTATION GATE PASSED`
 Authority: Constitution 3.0.1, Q-001–Q-041, approved technical plans and current task/readiness/execution contracts.
 
 Legacy sources establish verified behavior or migration evidence. Product decisions and Constitution establish target changes. Every row maps evidence → requirement/invariant → owning task → focused test. Task IDs refer to the current Feature 001–007 `tasks.md` files.
@@ -87,4 +87,4 @@ Legacy sources establish verified behavior or migration evidence. Product decisi
 
 ## Coverage gate
 
-No row permits implementation of unstated behavior. A task is executable only when its owning task entry, readiness row, exact command and any required path expansion agree. `/speckit.analyze` must be repeated after this remediation and must report CRITICAL `0` and HIGH `0` before `/speckit.implement`.
+No row permits implementation of unstated behavior. A task is executable only when its owning task entry, readiness row, exact command and any required path expansion agree. The final `/speckit.analyze` on integrated commit `ba3744fbc7043f3f3b036416e6c082e4cb7c6831` reported CRITICAL `0`, HIGH `0` and MEDIUM `0`; `/speckit.implement` is the next valid command and was not executed.
