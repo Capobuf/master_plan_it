@@ -19,10 +19,10 @@ This package is the documentation-only contract for the Laravel replatform, anch
 - third analysis on `f673513c137e797d52bc5f3099ed3c1c10b4a129`: failed with 0 CRITICAL, 1 HIGH and 0 MEDIUM findings.
 - complete cross-contract C-07/Q-016 plan propagation: complete and merged.
 - fourth analysis on `348a557c58388ff917646dd6a02cb00cbdc1f513`: failed with 0 CRITICAL, 1 HIGH and 0 MEDIUM findings.
-- invariant task/test ownership remediation: complete; integration state authoritative only in GitHub PR metadata; final analysis required.
+- invariant task/test ownership remediation: complete; integration state authoritative only in GitHub PR metadata; final analysis completed below.
 - integration state: authoritative only in GitHub PR metadata.
-- next `/speckit.analyze`: run on the latest integrated `laravel-replatform` HEAD.
-- `/speckit.implement`: blocked until CRITICAL `0` and HIGH `0`.
+- final analysis on `ba3744fbc7043f3f3b036416e6c082e4cb7c6831`: passed with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings.
+- next valid command: `/speckit.implement`; identified but not executed.
 
 No package lock, implementation, migration or test was executed by this documentation remediation.
 
@@ -48,7 +48,7 @@ No package lock, implementation, migration or test was executed by this document
 18. `spec-kit-installation-2026-08-04.md`;
 19. dated task, checklist and authorization-plan remediation records;
 20. `implementation-readiness.md`; `package-validation.md`, `tasks-summary.md`, and `spec-kit-analysis.md` are historical snapshots where labelled;
-21. the next `/speckit.analyze` report.
+21. `speckit-analyze-2026-08-04-final.md`.
 
 ## Second-remediation outcomes
 

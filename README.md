@@ -7,7 +7,7 @@ This repository branch is intentionally documentation-only. It contains no Frapp
 - legacy repository: `Capobuf/master_plan_it`;
 - legacy branch: `refactor/reports`;
 - verified legacy commit: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`;
-- latest integrated analysis: `docs/replatform/speckit-analyze-2026-08-04-fourth.md` on commit `348a557c58388ff917646dd6a02cb00cbdc1f513` (`CRITICAL 0`, `HIGH 1`, `MEDIUM 0`);
+- latest integrated analysis: `docs/replatform/speckit-analyze-2026-08-04-final.md` on commit `ba3744fbc7043f3f3b036416e6c082e4cb7c6831` (`CRITICAL 0`, `HIGH 0`, `MEDIUM 0`);
 - Constitution: 3.0.1;
 - product questions: Q-001–Q-041 closed; 0 open.
 
@@ -26,12 +26,12 @@ This repository branch is intentionally documentation-only. It contains no Frapp
 - ability-contract `/speckit.plan` remediation: COMPLETE AND MERGED;
 - complete cross-contract C-07/Q-016 propagation: COMPLETE AND MERGED;
 - fourth 2026-08-04 analysis: recorded 0 CRITICAL, 1 HIGH and 0 MEDIUM findings;
-- invariant task/test ownership remediation: COMPLETE; integration state authoritative only in GitHub PR metadata; final analysis required;
+- invariant task/test ownership remediation: COMPLETE; integration state authoritative only in GitHub PR metadata; final analysis completed below;
 - integration state: authoritative only in GitHub PR metadata;
-- next valid command: `/speckit.analyze` on the latest integrated `laravel-replatform` HEAD;
-- `/speckit.implement`: BLOCKED until an analysis reports CRITICAL `0` and HIGH `0`.
+- final 2026-08-04 `/speckit.analyze`: PASS with CRITICAL `0`, HIGH `0` and MEDIUM `0`;
+- next valid command: `/speckit.implement`; identified but not executed.
 
-The proposed remediated graph contains 150 tasks across 35 user stories, with 42 `[P]` tasks after exact prerequisites. These counts are not a readiness PASS; `docs/replatform/tasks-summary.md` records the proposed dispositions and the next analysis must verify them.
+The verified graph contains 150 tasks across 35 user stories, with 42 `[P]` tasks after exact prerequisites. `docs/replatform/tasks-summary.md` records their composition; the final integrated analysis confirms the documentation-readiness gate only and does not claim runtime execution.
 
 ## Read in order
 
