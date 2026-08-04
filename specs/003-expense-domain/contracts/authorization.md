@@ -1,7 +1,7 @@
 # Contract — Authorization
 
 Feature: `003-expense-domain`  
-Purpose: authorization matrix, policy abilities, row scoping and deny behavior.
+Purpose: ability decision procedure, policy mapping, row scoping, and deny behavior.
 
 ## Inputs
 
@@ -19,15 +19,18 @@ Apply the feature FR/INV IDs from `../spec.md`. Missing prerequisites produce va
 
 Writes open one transaction inside the owning Action. Lock only cross-record consistency rows. Retrying the same idempotency/source key cannot create duplicates. Rollback removes all partial database side effects; file writes use temporary paths and finalize only after database success, with compensating cleanup on failure.
 
-## Authorization
+## Authorization decision procedure
 
-| Ability | Administrator | Editor same tenant | Viewer same tenant | User other tenant |
-|---|---:|---:|---:|---:|
-| viewAny/view | Allow where contract permits, in explicit tenant context or global operational scope | Allow for assigned tenant | Allow read-only for assigned tenant | Deny |
-| create/update | Allow where contract and invariant permit | Allow only where the feature-specific clause grants | Deny | Deny |
-| delete/archive | Only where explicitly specified; never bypass immutable history | Only where explicitly granted; never immutable history | Deny | Deny |
-| export/print | Tenant-scoped; global exports contain operational metadata only | Tenant-scoped | Tenant-scoped | Deny |
-| administer/global operation | Allow | Deny | Deny | Deny |
+`Allow` requires every applicable gate below. A failure denies without revealing a protected record's existence. Exact identifiers come only from `../../../docs/replatform/permission-catalogue.md`; role names never select tenant-domain behavior. Editor and Viewer are non-normative seed templates. Administrator is name-protected only at the global platform boundary and has no domain-invariant bypass.
+
+| Gate | Allow condition |
+|---|---|
+| Actor | Authenticated, active actor; a tenant user belongs to exactly one active tenant. |
+| Operation | Actor has the exact stable ability for this operation; create/update/delete/restore/confirm/publish/generate/print/export are not implied by one another. |
+| Context | Tenant operation has one explicit active `TenantContext`; protected platform operation is executed by global Administrator. |
+| Ownership | Resource, parent, related identifiers, files, revisions, and output scope belong to the selected/assigned tenant. |
+| State and invariants | Current state, optimistic lock, references, domain invariants, and feature-specific preconditions pass after permission allow. |
+| Deny behavior | Missing ability/context, inactive state, or foreign identity fails closed before protected fields, metadata, or existence are disclosed. |
 
 ## Audit/logging
 
@@ -37,19 +40,19 @@ Record business state changes, actor, old/new values and correlation ID. Do not 
 
 1. valid input returns/persists exact expected values;
 2. each invariant has one focused failure test;
-3. unauthorized role cannot read/write outside its scope;
+3. an actor missing the exact ability or valid tenant context cannot read/write outside its scope;
 4. stale version and duplicate idempotency key are deterministic;
 5. transaction rollback leaves no partial records/files;
 6. any screen/export using this contract matches the same dataset.
 
 ## Feature-specific clauses
 
-Read the local plan and data model. Implement exactly authorization matrix, policy abilities, row scoping and deny behavior. Do not reuse this file as a generic abstraction for other domains; shared behavior belongs only in an explicitly listed shared helper.
+Read the local plan and data model. Implement exactly the authorization decision procedure, policy abilities, row scoping, and deny behavior. Do not reuse this file as a generic abstraction for other domains; shared behavior belongs only in an explicitly listed shared helper.
 
 ## Feature-specific policy rules
 
-- Expense abilities are permission-catalogue entries, not hard-coded role-name behavior. An actor with the exact same-tenant ability may create or update the current Expense aggregate and its Estimate, Quote, Actual, Extra, and Plafond rows; confirmation is a distinct ability.
-- An actor with the exact same-tenant delete or restore ability may delete or restore the current Expense aggregate or a current row subject to the last-row, reference, tenant, concurrency, audit, and revision invariants.
+- `expense.view`, `expense.create`, `expense.update`, `expense.delete`, `expense.view-revisions`, `expense.restore-revision`, `expense.confirm-actual`, `expense.print`, and `expense.export` are separate permission-catalogue entries; no tenant-role name grants an operation.
+- An actor with the exact same-tenant ability may create/update/delete/restore the current Expense aggregate and its Estimate, Quote, Actual, Extra, and Plafond rows subject to last-row, reference, tenant, concurrency, audit, and revision invariants.
 - Current Actual rows remain correctable, versionable, restorable, and deletable after recording or confirmation. Prior revision snapshots and audit history are immutable evidence and never enter current economic datasets.
-- Viewer may read, print, and export all same-tenant expense data and attachments.
-- Import remains Administrator-only under Q-009.
+- `attachment.view`, `attachment.upload`, and `attachment.delete` additionally require the corresponding parent Expense ability and same-tenant current parent.
+- Import requires protected `platform.migration.run` under Q-009 and cannot be assigned to a tenant role.
