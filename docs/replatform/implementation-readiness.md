@@ -1,6 +1,6 @@
 # Implementation readiness
 
-Status: `LATEST ANALYSIS 0 CRITICAL / 1 HIGH / 0 MEDIUM; COMPLETE C-07/Q-016 REMEDIATION INTEGRATED; FINAL RE-ANALYSIS REQUIRED`
+Status: `LATEST ANALYSIS 0 CRITICAL / 1 HIGH / 0 MEDIUM; INVARIANT TASK-OWNERSHIP REMEDIATION COMPLETE; FINAL RE-ANALYSIS REQUIRED`
 
 Constitution 3.0.1, Q-001–Q-041, integrated architecture, technical research, physical models, Feature 001–007 plans/tasks/checklists, and ability-based authorization contracts are current. This is not an analysis PASS until the next integrated rerun confirms the remediation.
 
@@ -26,6 +26,7 @@ Constitution 3.0.1, Q-001–Q-041, integrated architecture, technical research, 
 - notification and tenancy graphs acyclic;
 - complete matrix delayed until exact terminal implementations exist;
 - Feature 007 audit, password, retention and branding requirements traced to task/test owners;
+- INV-TEN-009 and INV-TEN-010 assigned to exact existing task, test, readiness and source-traceability owners without changing task count or dependencies;
 - T007-019/T007-020 own tenant branding and T005-021–T005-023 consume it;
 - T006-012 command restores both Composer files on resolution failure;
 - T006-017 has exact requirements, paths, command and verifiable OPEN/VERIFIED evidence rules.
