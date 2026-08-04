@@ -2,7 +2,7 @@
 
 Status: `NORMATIVE TASK SUPPLEMENT — SOURCES, INVARIANTS AND ERRORS ONLY`  
 Applies to: Feature 001–007 task IDs on Constitution 3.0.1  
-Latest analysis baseline: `docs/replatform/speckit-analyze-2026-08-04-rerun.md`
+Latest analysis baseline: `docs/replatform/speckit-analyze-2026-08-04-third.md`
 
 ## Non-overlapping task contract
 

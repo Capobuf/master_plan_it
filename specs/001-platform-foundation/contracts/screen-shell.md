@@ -21,13 +21,7 @@ Writes open one transaction inside the owning Action. Lock only cross-record con
 
 ## Authorization
 
-| Ability | Administrator | Editor same tenant | Viewer same tenant | User other tenant |
-|---|---:|---:|---:|---:|
-| viewAny/view | Allow where contract permits, in explicit tenant context or global operational scope | Allow for assigned tenant | Allow read-only for assigned tenant | Deny |
-| create/update | Allow where contract and invariant permit | Allow only where the feature-specific clause grants | Deny | Deny |
-| delete/archive | Only where explicitly specified; never bypass immutable history | Only where explicitly granted; never immutable history | Deny | Deny |
-| export/print | Tenant-scoped; global exports contain operational metadata only | Tenant-scoped | Tenant-scoped | Deny |
-| administer/global operation | Allow | Deny | Deny | Deny |
+This interface inherits the exact ability/context/ownership/state decision procedure from `authorization.md`. Editor and Viewer names are seed-template examples only and never select behavior. Navigation visibility does not grant access; each destination reauthorizes its own stable ability and tenant boundary. Missing ability/context, inactive state, or foreign identity fails closed without existence disclosure.
 
 ## Audit/logging
 
@@ -37,7 +31,7 @@ Record business state changes, actor, old/new values and correlation ID. Do not 
 
 1. valid input returns/persists exact expected values;
 2. each invariant has one focused failure test;
-3. unauthorized role cannot read/write outside its scope;
+3. an actor missing the exact ability or valid tenant context cannot read/write outside its scope;
 4. stale version and duplicate idempotency key are deterministic;
 5. transaction rollback leaves no partial records/files;
 6. any screen/export using this contract matches the same dataset.
@@ -48,6 +42,6 @@ Read the local plan and data model. Implement exactly layout, navigation, focus,
 ## Tenant context clauses
 
 - Current tenant name/state is always visible in side navigation and page breadcrumbs.
-- Only Administrator sees and uses the tenant switch control.
-- Editor and Viewer see their assigned tenant and cannot change it.
+- Only the protected global Administrator boundary exposes tenant enter/leave controls.
+- Tenant users derive their one assigned tenant and cannot switch, regardless of customized tenant-role names or assignments.
 - Application shell retains Master Plan IT branding; tenant branding applies to reports/print only.

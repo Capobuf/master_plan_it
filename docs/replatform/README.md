@@ -14,8 +14,10 @@ This package is the documentation-only contract for the Laravel replatform, anch
 - second remediation: complete.
 - Spec Kit 0.15.2/Codex integration: complete and merged.
 - independent 2026-08-04 analysis: failed with 1 CRITICAL, 5 HIGH and 4 MEDIUM findings; task/checklist remediations merged.
-- latest rerun on `0d3a84c38e177f90e53f74bb84f78594ca00d32d`: failed with 0 CRITICAL, 1 HIGH and 1 MEDIUM finding.
+- second 2026-08-04 rerun on `0d3a84c38e177f90e53f74bb84f78594ca00d32d`: failed with 0 CRITICAL, 1 HIGH and 1 MEDIUM finding.
 - ability-contract plan remediation: complete and merged.
+- third analysis on `f673513c137e797d52bc5f3099ed3c1c10b4a129`: failed with 0 CRITICAL, 1 HIGH and 0 MEDIUM findings.
+- complete cross-contract C-07/Q-016 plan propagation: complete and merged.
 - integration state: authoritative only in GitHub PR metadata.
 - next `/speckit.analyze`: run on the latest integrated `laravel-replatform` HEAD.
 - `/speckit.implement`: blocked until CRITICAL `0` and HIGH `0`.

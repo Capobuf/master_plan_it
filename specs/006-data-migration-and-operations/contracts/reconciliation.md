@@ -21,13 +21,7 @@ Writes open one transaction inside the owning Action. Lock only cross-record con
 
 ## Authorization
 
-| Ability | Administrator | Editor same tenant | Viewer same tenant | User other tenant |
-|---|---:|---:|---:|---:|
-| viewAny/view | Allow where contract permits, in explicit tenant context or global operational scope | Allow for assigned tenant | Allow read-only for assigned tenant | Deny |
-| create/update | Allow where contract and invariant permit | Allow only where the feature-specific clause grants | Deny | Deny |
-| delete/archive | Only where explicitly specified; never bypass immutable history | Only where explicitly granted; never immutable history | Deny | Deny |
-| export/print | Tenant-scoped; global exports contain operational metadata only | Tenant-scoped | Tenant-scoped | Deny |
-| administer/global operation | Allow | Deny | Deny | Deny |
+This interface inherits the protected-platform and tenant-context decision procedure from `../../007-tenancy-and-access-control/contracts/authorization.md`. Create/dry-run/apply/exclusion approval/reconciliation view or export require protected `platform.migration.run`; tenant role abilities cannot grant migration source or global operation access. The selected target tenant is explicit and immutable. Missing protected ability/context, inactive state, or foreign identity fails closed without existence disclosure.
 
 ## Audit/logging
 
@@ -37,7 +31,7 @@ Record business state changes, actor, old/new values and correlation ID. Do not 
 
 1. valid input returns/persists exact expected values;
 2. each invariant has one focused failure test;
-3. unauthorized role cannot read/write outside its scope;
+3. an actor missing the protected ability or valid target tenant cannot read/write outside its scope;
 4. stale version and duplicate idempotency key are deterministic;
 5. transaction rollback leaves no partial records/files;
 6. any screen/export using this contract matches the same dataset.
@@ -48,4 +42,4 @@ Read the local plan and data model. Implement exactly counts, sums, hashes, tole
 
 ## Feature-specific policy rules
 
-Only Administrator may create, execute, approve, or export migration reconciliation. A migration run has one immutable target tenant. Editor and Viewer cannot access migration source rows or global operation data.
+Protected `platform.migration.run` at the global Administrator boundary is required to create, execute, approve, view, or export migration reconciliation. A migration run has one immutable target tenant. Tenant roles cannot receive migration source-row or global-operation access.

@@ -3,8 +3,8 @@
 ## Representation
 
 - The current tenant name is visible in side navigation and page breadcrumbs.
-- Administrator can switch tenant context through an explicit control.
-- Editor and Viewer cannot switch context.
+- Protected global Administrator can enter or leave tenant context through an explicit control while retaining identity.
+- Tenant users derive their one assigned tenant and cannot switch context; tenant-role names and permission customization do not change that boundary.
 
 ## Missing or invalid context
 
@@ -36,7 +36,7 @@ After session expiry, authorization and tenant context must be re-established. C
 
 ## Inactive tenant
 
-The exact read/write behaviour for inactive tenants remains open under Q-016 and must not be invented during implementation.
+Q-016 is closed: an inactive tenant blocks tenant-user access. Protected global Administrator retains otherwise authorized access in that explicit tenant context and may reactivate the tenant; there is no invented Administrator read-only fallback mode.
 
 ## Commands and jobs
 
