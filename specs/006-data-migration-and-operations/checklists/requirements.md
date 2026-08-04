@@ -2,6 +2,12 @@
 
 Feature: `006-data-migration-and-operations`
 
+Purpose: requirement-quality gate for backup, restore, deployment, notification, and cutover requirements
+Created: 2026-08-04
+Audience/depth: PR reviewer / formal operational-readiness gate
+
+## Preserved cross-feature baseline
+
 - [ ] Every statement is labelled VERIFIED CURRENT, PROPOSED TARGET or another permitted evidence label where current/target could be confused.
 - [ ] Every FR is atomic, has an acceptance scenario and maps to at least one test and task.
 - [ ] Every invariant has a stable ID, error behavior, transaction boundary and focused test.
@@ -17,3 +23,12 @@ Feature: `006-data-migration-and-operations`
 - [ ] Every entity/query/screen in this feature has explicit tenant ownership or is documented as global.
 - [ ] Same-tenant allow and other-tenant deny paths are testable.
 - [ ] Reports, exports, attachments, direct links, commands, and scheduled work fail closed without valid tenant context.
+
+## Operations/release requirement quality
+
+- [ ] CHK001 Are backup states, archive contents/exclusions, manifest/checksum, source commit, and recoverability evidence explicitly defined? [Completeness, Spec §FR-006-010–FR-006-011, §FR-006-014, §FR-006-017]
+- [ ] CHK002 Is Created versus Verified backup status unambiguous, including the empty-environment restore rehearsal required for Verified? [Clarity, Backup/restore contract]
+- [ ] CHK003 Are preflight, immutable artifact, forward migration, activation, health check, rollback record, and failure-stage requirements consistent across deployment artifacts? [Consistency, Spec §FR-006-012]
+- [ ] CHK004 Are operation-failure recipient selection, deduplication, safe payload, database visibility, optional synchronous mail, and mail-failure behavior complete? [Coverage, Spec §FR-006-018]
+- [ ] CHK005 Are every cutover evidence field and the prohibition on `CUTOVER READY` with open evidence objectively specified? [Measurability, Spec §FR-006-019]
+- [ ] CHK006 Are host secret, permission, path, quota, unavailable-runner, and external dependency failures classified without weakening commands or checks? [Gap, Exception Flow, Deployment contract]
