@@ -67,7 +67,7 @@ Every task is test-first. `[FND]` identifies setup/shared infrastructure, `[USn]
 
 ## Phase 10 — Verification
 
-- [ ] T001-024 [VER] Run Feature 001 verification and update quickstart/traceability with actual results; depends: T001-009, T001-011, T001-014, T001-016, T001-018, T001-021, T001-023, T001-025, T001-027; requirements: FR-001-001–FR-001-021, FR-007-017–FR-007-019, FR-007-023; validate: `composer verify`; expected: mandatory suites and bounded Dusk pass; forbidden: skipped checks, unexecuted claims or weakened tests.
+- [ ] T001-024 [VER] Run Feature 001 verification and record actual results in every exact documentation path listed in `../../docs/replatform/task-execution/path-overrides.md`; depends: T001-009, T001-011, T001-014, T001-016, T001-018, T001-021, T001-023, T001-025, T001-027; requirements: FR-001-001–FR-001-021, FR-007-017–FR-007-019, FR-007-023; validate: `composer verify`; expected: mandatory suites and bounded Dusk pass; forbidden: skipped checks, unexecuted claims or weakened tests.
 
 ## Dependencies and execution order
 

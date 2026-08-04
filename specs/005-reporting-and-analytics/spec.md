@@ -179,4 +179,4 @@ Dashboard tenant, current Budget, reports, print/export and BudgetVersion captur
 
 ## Clarification result
 
-Q-019, Q-020, Q-027, Q-028, Q-033, Q-034, Q-036, Q-038, Q-040 and PD-BUD-001 are closed. Q-039 is superseded by Q-013. Existing Feature 005 plan, tasks, formulas, contracts and physical data model must be regenerated before implementation.
+Q-019, Q-020, Q-027, Q-028, Q-033, Q-034, Q-036, Q-038, Q-040 and PD-BUD-001 are closed; Q-039 is superseded by Q-013. Their approved outcomes are propagated through the current Feature 005 plan, tasks, formulas, contracts, physical data model, and cross-feature registries; implementation remains blocked until the integrated `/speckit.analyze` gate passes.

@@ -57,4 +57,4 @@ Feature 006 remains not CUTOVER READY until real source export evidence, final h
 - second-remediation findings are proposed resolved, not closed until `/speckit.analyze` confirms them;
 - no package, code, schema, test, workflow or operational command was executed by this documentation cycle;
 - fixed-role, immutable-Actual, replacement-state, fixed-retention and implicit-output assumptions remain superseded;
-- application UI remains initially Italian while technical identifiers remain English; tenant report branding does not white-label the Master Plan IT shell.
+- tenant-facing output uses the tenant-configured language; technical identifiers remain English; tenant report branding does not white-label the Master Plan IT shell and no additional internationalization framework is approved.

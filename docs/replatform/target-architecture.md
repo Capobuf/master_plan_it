@@ -1,6 +1,6 @@
 # Target architecture
 
-Status: `PLANNED — READY FOR /speckit.tasks AFTER REVIEW`  
+Status: `PROPOSED TARGET — PLANNED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`
 Authority: Constitution 3.0.1; `replatform-plan.md`; `technical-research.md`
 
 ## Runtime

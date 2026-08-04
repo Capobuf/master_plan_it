@@ -1,6 +1,9 @@
-# Manual Spec Kit methodology
+# Historical manual Spec Kit methodology
 
-This package was **structured according to the methodology and conceptual templates of GitHub Spec Kit**. No Spec Kit CLI and no Codex CLI were used.
+Status: `DEPRECATED — HISTORICAL METHOD RECORD`
+Superseded by the installed official Spec Kit integration documented in `spec-kit-installation-2026-08-04.md` and by the current analyze/remediation cycle.
+
+The original package described below was structured according to the methodology and conceptual templates of GitHub Spec Kit; that historical package did not use the Spec Kit CLI or Codex CLI. This statement does not describe the current repository integration.
 
 ## Replicated phases
 

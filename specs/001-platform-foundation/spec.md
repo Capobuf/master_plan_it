@@ -136,4 +136,4 @@ The platform initializes audit retention to 24 months. Only Administrator can ch
 
 ## Clarification result
 
-Q-001 through Q-005, Q-012 through Q-017, Q-020, Q-023 through Q-026, and Q-033 are closed. Existing Feature 001 plan/tasks/contracts must be regenerated. PR #2 contains separate development/test/CI decisions and must be rebased and reconciled after this product clarification PR merges.
+Q-001 through Q-005, Q-012 through Q-017, Q-020, Q-023 through Q-026, and Q-033 are closed. Their approved outcomes are propagated through the current Feature 001 plan, tasks, contracts, and cross-feature registries; implementation remains blocked until the integrated `/speckit.analyze` gate passes.

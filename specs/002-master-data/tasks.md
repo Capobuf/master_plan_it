@@ -35,7 +35,7 @@ Tests precede production code. Feature 002 owns shared operational revision batc
 
 ## Phase 5 — Verification
 
-- [ ] T002-016 [VER] Run Feature 002 verification and update quickstart/source traceability with actual results; depends: T002-009, T002-012, T002-015; requirements: FR-002-001–FR-002-013; validate: `php artisan test tests/Feature/MasterData tests/Feature/Revisions tests/Livewire/MasterData && composer test:static`; expected: tenant/concurrency/revision/lifecycle tests pass; forbidden: skipped MySQL tests or unexecuted commands.
+- [ ] T002-016 [VER] Run Feature 002 verification and record actual results in every exact documentation path listed in `../../docs/replatform/task-execution/path-overrides.md`; depends: T002-009, T002-012, T002-015; requirements: FR-002-001–FR-002-013; validate: `php artisan test tests/Feature/MasterData tests/Feature/Revisions tests/Livewire/MasterData && composer test:static`; expected: tenant/concurrency/revision/lifecycle tests pass; forbidden: skipped MySQL tests or unexecuted commands.
 
 ## Dependencies and execution order
 

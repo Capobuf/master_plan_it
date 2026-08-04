@@ -85,4 +85,4 @@ Invalid dates, overlaps, duplicate names, cycles, stale `lock_version`, and forb
 
 ## Clarification result
 
-Q-030 and Q-031 are closed. The prior plan/tasks and authorization matrices must be regenerated against configurable permissions and operational revisions before implementation.
+Q-030 and Q-031 are closed. Their approved configurable-permission and operational-revision outcomes are propagated through the current Feature 002 plan, tasks, authorization contracts, and cross-feature registries; implementation remains blocked until the integrated `/speckit.analyze` gate passes.

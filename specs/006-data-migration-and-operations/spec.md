@@ -117,4 +117,4 @@ These are operational evidence, not product ambiguity:
 
 ## Clarification result
 
-Q-020, Q-021, Q-022, Q-023, Q-024, Q-029, and access-recovery dependencies are closed. Existing Feature 006 plan, tasks, migration, backup, deployment, data model, and quickstart must be regenerated before implementation/cutover.
+Q-020, Q-021, Q-022, Q-023, Q-024, Q-029, and access-recovery dependencies are closed. Their approved outcomes are propagated through the current Feature 006 plan, tasks, migration, backup, deployment, data model, quickstart, and cross-feature registries; implementation and cutover remain blocked by their respective documented gates.

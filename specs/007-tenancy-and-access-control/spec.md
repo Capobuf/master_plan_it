@@ -166,4 +166,4 @@ Given the one active Frappe site and a selected tenant, import keeps that tenant
 
 ## Clarification result
 
-All product questions are closed. The previous fixed three-role and immutable-Actual assumptions are superseded. Existing Feature 007 plan/tasks and every affected authorization matrix require regeneration through `/speckit.plan` and `/speckit.tasks` before implementation.
+All product questions are closed. The previous fixed three-role and immutable-Actual assumptions are superseded, and the approved configurable-ability and correctable-Actual outcomes are propagated through the current Feature 007 plan, tasks, authorization contracts, and cross-feature registries; implementation remains blocked until the integrated `/speckit.analyze` gate passes.

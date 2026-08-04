@@ -143,4 +143,4 @@ Legacy Estimate/Quote/Actual relationships must not be converted into a mandator
 
 ## Clarification result
 
-Q-006, Q-018, Q-024, Q-035, Q-037 and Q-038 are resolved. Previous plans, data models, financial-rule contracts, authorization matrices, accounting cases and tasks must be regenerated before implementation.
+Q-006, Q-018, Q-024, Q-035, Q-037 and Q-038 are resolved. Their approved outcomes are propagated through the current Feature 003 plan, data model, financial and authorization contracts, accounting cases, tasks, and cross-feature registries; implementation remains blocked until the integrated `/speckit.analyze` gate passes.
