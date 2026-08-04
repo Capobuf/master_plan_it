@@ -1,37 +1,39 @@
-# `/speckit.tasks` remediation summary
+# `/speckit.tasks` second remediation summary
 
-Status: `REMEDIATION COMPLETE — REVIEW AND RE-ANALYSIS REQUIRED`  
-Branch: `tasks/remediate-analysis-3.0.1`  
-Base: `laravel-replatform` commit `bdd03819d8d2e59f698d42ca33ee706472a3da02`  
+Status: `SECOND REMEDIATION COMPLETE — NEXT GATE /speckit.analyze ON INTEGRATED BASE`  
+Provenance branch: `tasks/remediate-analysis-3.0.1-r2`  
+Base: `laravel-replatform` commit `eb75be04d600f5c9ada954da0593ab0a13d94ff8`  
 Constitution: 3.0.1
+
+Integration state is authoritative only in GitHub PR metadata. This document records the package content and remains valid before and after integration.
 
 ## Task inventory
 
-| Feature | Tasks | `[P]` tasks | User stories | Remediation impact |
+| Feature | Tasks | `[P]` tasks | User stories | Second-remediation impact |
 |---|---:|---:|---:|---|
-| 001 Platform foundation | 27 | 8 | 6 | notification primitive split from scheduler; audit view added |
-| 002 Master data | 16 | 3 | 3 | readiness classes and exact shared-revision contract |
-| 003 Expense domain | 23 | 7 | 5 | exact master-data prerequisites; attachment foundation/UI added |
-| 004 Contracts/projects | 21 | 7 | 6 | confirmation implementation required; notification cycle removed |
-| 005 Reporting/analytics | 25 | 6 | 6 | scenario implementation precedes comparison |
-| 006 Migration/operations | 18 | 5 | 4 | Composer backup gate corrected; notification cycle removed |
-| 007 Tenancy/access | 18 | 5 | 5 | reusable ownership concern split from late ability matrix |
-| **Total** | **148** | **41** | **35** | — |
+| 001 Platform foundation | 27 | 8 | 6 | workflow/release reclassified as foundation; scheduler/audit assigned to US5/US6; Feature 007 audit/password requirements mapped |
+| 002 Master data | 16 | 3 | 3 | path ownership aligned with the execution manifest |
+| 003 Expense domain | 23 | 7 | 5 | path ownership aligned; deletion/fixture targets fully expanded |
+| 004 Contracts/projects | 21 | 7 | 6 | renewal notification tests/implementation assigned to contract lifecycle US2 |
+| 005 Reporting/analytics | 25 | 6 | 6 | selected-tenant branding DTO consumed by report/output tasks |
+| 006 Migration/operations | 18 | 5 | 4 | exact portable-schema dependencies; deployment foundation class; guarded Composer rollback; executable cutover evidence test |
+| 007 Tenancy/access | 20 | 6 | 5 | tenant branding owner added; complete matrix delayed until every exact owning implementation exists |
+| **Total** | **150** | **42** | **35** | — |
 
 `[P]` means the named files/symbols can be worked on concurrently only after every exact prerequisite is complete. It never permits concurrent edits to shared Composer/configuration/provider/workflow files.
 
-## Normative task composition
+## Non-overlapping task contract
 
-Each executable task is the combination of:
+Each executable task is the combination of four records with distinct ownership:
 
-1. its checklist entry in the owning feature `tasks.md`;
-2. the matching class/source/invariant/error/dependency record in `task-readiness-registry.md`;
-3. its exact validation command in `task-execution/feature-001.md` through `feature-007.md`;
-4. any complete path override in `task-execution/path-overrides.md`.
+1. the owning feature `tasks.md` owns ID, class, objective, exact dependency IDs, requirements, sequence, tests-first order, expected result and forbidden work;
+2. `task-readiness-registry.md` owns source links, inherited invariants and stable errors only;
+3. `task-execution/feature-001.md` through `feature-007.md` own exact validation commands only;
+4. `task-execution/path-overrides.md` owns complete expansions for abbreviated path lists only.
 
-The execution registry supersedes abbreviated validation phrases in task files. Explicit dependency corrections are propagated into the owning task files. A mismatch among these records is a documentation blocker and does not authorize an implementation guess.
+No dependency or class override exists outside the owning `tasks.md`. A mismatch is a documentation blocker and never authorizes an implementation guess.
 
-## Remediated critical path
+## Current critical path
 
 ```text
 T001-001 scaffold and exact locks
@@ -44,6 +46,8 @@ T007-012 reusable tenant-ownership Policy concern
         ↓
 Feature 001 auth/shell + Feature 007 tenant/role lifecycle
         ↓
+T007-019/T007-020 selected-tenant report branding
+        ↓
 T002-001–T002-006 shared revisions and master-data foundation
         ↓
 T002-009/T002-012/T002-015 exact selectors/resources
@@ -52,11 +56,13 @@ T003 Money/current Expense + attachment foundation
         ↓
 T003-014 ConfirmActual
         ↓
-T004 projects/contracts/generated occurrences
+T004 projects/contracts/generated occurrences/renewal command
         ↓
-T005 kernel/Budget/scenarios/comparisons/output
+T005 kernel/Budget/scenarios/comparisons/output with tenant branding
         ↓
 T006 migration/portability/backup/deployment
+        ↓
+T007-011/T007-013 complete cross-feature security gates
 ```
 
 ## Notification graph
@@ -64,7 +70,7 @@ T006 migration/portability/backup/deployment
 ```text
 T001-017 tests delivery primitive
 → T001-018 implements delivery primitive
-→ {T004-019/T004-020 renewal command, T006-014 operation-failure integration}
+→ {T004-019/T004-020 renewal behavior, T006-014 operation-failure behavior}
 → T001-025 final scheduler registration
 ```
 
@@ -76,12 +82,13 @@ No dependency returns from T001-018 to T004-020 or T006-014.
 T007-003 context
 → T007-004 safe tenant lookup
 → T007-012 reusable ownership Policy concern
-→ owning feature schemas/Policies/Queries
+→ every exact owning feature implementation
 → T007-011 complete ability/IDOR matrix
 → T007-013 architecture boundary
+→ T007-018 final verification
 ```
 
-The complete matrix is a late integration gate and does not block master-data, Expense or contract schemas.
+T007-011 names every prerequisite task ID directly. It no longer depends on test-only placeholders or narrative phrases.
 
 ## Shared ownership
 
@@ -91,11 +98,12 @@ The complete matrix is a late integration gate and does not block master-data, E
 | Sail/test/quality configuration | T001-003, T001-004, T001-022 | every feature |
 | Permission catalogue | T001-006 | Feature 007 and all Policies |
 | Tenant/TenantContext/middleware | T007-001–T007-004 | all tenant features |
+| Tenant report branding | T007-019/T007-020 | T005-021–T005-023, T006-007, T006-010 |
 | Reusable tenant Policy concern | T007-012 | owning feature Policies |
 | Complete ability matrix | T007-011/T007-013 | final security gate only |
 | Notification delivery primitive | T001-017/T001-018 | T004-020, T006-014 |
 | Scheduler registration | T001-025 | completed commands only |
-| Audit view | T001-026/T001-027 | tenant/global authorized readers |
+| Audit settings/view | T001-019–T001-021, T001-026/T001-027 | tenant/global authorized readers |
 | Revision storage/orchestration | T002-004–T002-006 | Features 002–004 |
 | Master-data selectors | T002-009/T002-012/T002-015 | Expense create/update |
 | Money/VAT/allocation | T003-001/T003-002 | Features 003–005 |
@@ -108,30 +116,31 @@ The complete matrix is a late integration gate and does not block master-data, E
 
 A consumer task may not recreate an owning symbol under another namespace.
 
-## Findings addressed
+## Rerun findings addressed
 
-| Analyze finding | Proposed disposition |
+| Rerun finding | Proposed disposition |
 |---|---|
-| ANALYZE-C-001 | RESOLVED — delivery primitive and scheduler registration split |
-| ANALYZE-C-002 | RESOLVED — T007-012 foundational concern; matrix moved late with exact dependencies |
-| ANALYZE-H-001 | RESOLVED — complete task contract includes readiness and execution registries |
-| ANALYZE-H-002 | RESOLVED — source traceability regenerated with task/test IDs |
-| ANALYZE-H-003 | RESOLVED — technical amendment sets PHP 8.3.32 target |
-| ANALYZE-H-004 | RESOLVED — exact `composer require` gate in T006-012 |
-| ANALYZE-H-005 | RESOLVED — T003-010 depends on T002-009/T002-012/T002-015 |
-| ANALYZE-H-006 | RESOLVED — T004-010/T004-011 depend on T003-014 |
-| ANALYZE-H-007 | RESOLVED — T005-020 precedes T005-016/T005-017 |
-| ANALYZE-H-008 | RESOLVED — T001-026/T001-027 implement audit views with no export |
-| ANALYZE-H-009 | RESOLVED — T003-021–T003-023 implement attachment foundation/UI |
-| ANALYZE-H-010 | RESOLVED — prior self-check superseded and replaced after remediation |
+| RERUN-H-001 | PROPOSED RESOLVED — one four-part contract with non-overlapping field ownership |
+| RERUN-H-002 | PROPOSED RESOLVED — one comprehensive path manifest; duplicate readiness path table removed |
+| RERUN-H-003 | PROPOSED RESOLVED — runtime behavior moved from `[VER]` to `[FND]` or owning `[USn]` |
+| RERUN-H-004 | PROPOSED RESOLVED — narrative dependencies replaced by exact task IDs in owning task files |
+| RERUN-H-005 | PROPOSED RESOLVED — T007-011 depends on terminal owning implementations, including T001-027 and output/attachment/command implementations |
+| RERUN-H-006 | PROPOSED RESOLVED — Feature 007 audit, password, branding and retention requirements added to source traceability |
+| RERUN-H-007 | PROPOSED RESOLVED — T007-019/T007-020 own tenant branding; T005-021–T005-023 consume it |
+| RERUN-H-008 | PROPOSED RESOLVED — T006-017 has exact requirement IDs, file paths, command and verifiable OPEN/VERIFIED result rules |
+| RERUN-M-001 | PROPOSED RESOLVED — phase metadata use integration-stable wording and defer live state to GitHub |
+| RERUN-M-002 | PROPOSED RESOLVED — feature spec/plan headers use stable phase wording |
+| RERUN-M-003 | PROPOSED RESOLVED — T006-012 exact command restores Composer files on resolution failure |
+| RERUN-M-004 | PROPOSED RESOLVED — inventory is stated as proposed until re-analysis, not self-certified as a PASS |
 
-These dispositions remain proposed until repeated `/speckit.analyze` verifies them.
+These dispositions remain proposed until the next `/speckit.analyze` independently verifies them.
 
 ## Next gate
 
-1. review and merge the remediation PR;
-2. run `/speckit.analyze` on the merged branch;
-3. require CRITICAL `0` and HIGH `0`;
-4. keep `/speckit.implement` blocked until that result.
+On the integrated remediation base:
+
+1. run `/speckit.analyze`;
+2. require CRITICAL `0` and HIGH `0`;
+3. keep `/speckit.implement` blocked until that result.
 
 No Composer install, scaffold, migration, test, workflow, artifact, backup, restore, import, deployment or cutover command was executed while remediating the documentation.

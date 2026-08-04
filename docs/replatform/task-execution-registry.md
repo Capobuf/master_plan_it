@@ -1,17 +1,21 @@
 # Task execution registry
 
-Status: `NORMATIVE TASK CONTRACT — EXACT COMMANDS AND PATHS`
+Status: `NORMATIVE TASK SUPPLEMENT — EXACT COMMANDS AND PATH EXPANSIONS`
 
-A Ready task consists of:
+## Contract composition
 
-1. its owning feature entry in `specs/<feature>/tasks.md`;
-2. its class/source/invariant/error/dependency record in `task-readiness-registry.md`;
-3. its exact validation command in `task-execution/feature-<NNN>.md`;
-4. any exact-path override in `task-execution/path-overrides.md`.
+A Ready task is the non-overlapping combination of:
 
-The execution files supersede abbreviated phrases such as `same tests`, `focused tests`, `schema test` or `Resource test`. A task without one matching exact command is not Ready. Any disagreement among these records is a documentation blocker; the implementation agent must stop rather than guess.
+1. its owning entry in `specs/<feature>/tasks.md` for ID, class, objective, exact dependency IDs, requirements, sequence, tests-first order, expected result and forbidden work;
+2. `docs/replatform/task-readiness-registry.md` for source links, inherited invariants and stable errors;
+3. one exact command entry in `task-execution/feature-001.md` through `feature-007.md`;
+4. one row in `task-execution/path-overrides.md` only when the owning task uses abbreviated filenames or a directory shorthand.
 
-Registers:
+The command files supersede abbreviated validation phrases such as `same tests`, `focused tests`, `schema test` or `Resource test`. The path manifest supersedes only abbreviated path lists; it does not change objectives, symbols, dependencies or requirements.
+
+No file in this execution registry may override dependencies or task classes. No dependency override exists outside the owning `tasks.md` file. Any disagreement among the four records is a documentation blocker and the implementation agent must stop rather than choose a precedence rule.
+
+## Registers
 
 - `task-execution/feature-001.md`;
 - `task-execution/feature-002.md`;
@@ -22,4 +26,6 @@ Registers:
 - `task-execution/feature-007.md`;
 - `task-execution/path-overrides.md`.
 
-No command in these files has been executed. They are implementation contracts only.
+## Execution rule
+
+A task cannot be checked complete until its exact command has actually run and its result is recorded in the owning quickstart/verification artifact. No command in these files was executed while generating or remediating the documentation.

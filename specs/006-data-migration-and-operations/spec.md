@@ -1,6 +1,6 @@
 # Feature 006 — Data migration and operations
 
-Status: `PRODUCT CLARIFIED; NOT CUTOVER READY — PLAN REGENERATION REQUIRED`  
+Status: `PRODUCT CLARIFIED; NOT CUTOVER READY; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Logical owner: Product Owner with migration/operations approval  
 Actors: Administrator and deployment operator  
 Dependencies: Features 001, 005, and 007

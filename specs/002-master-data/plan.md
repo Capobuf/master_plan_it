@@ -1,6 +1,6 @@
 # Implementation plan — Feature 002 Master data
 
-Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW`  
+Status: `PLAN COMPLETE AND MERGED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Dependencies: Feature 001 platform; Feature 007 tenancy/RBAC; shared revision infrastructure
 
 ## Summary

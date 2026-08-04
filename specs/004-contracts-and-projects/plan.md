@@ -1,6 +1,6 @@
 # Implementation plan — Feature 004 Contracts and projects
 
-Status: `READY FOR /speckit.tasks AFTER PLAN REVIEW`  
+Status: `PLAN COMPLETE AND MERGED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Dependencies: Features 001–003 and 007; shared revision/audit infrastructure
 
 ## Summary

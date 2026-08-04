@@ -1,6 +1,6 @@
 # Feature 005 — Reporting, budget versions, and analytics
 
-Status: `CLARIFIED — PLAN REGENERATION REQUIRED`  
+Status: `CLARIFIED AND APPROVED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Logical owner: Product Owner with domain approval  
 Actor: tenant user with explicit permission  
 Dependencies: Feature 003, Feature 004 and Feature 007  

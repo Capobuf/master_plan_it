@@ -1,37 +1,43 @@
 # Package validation
 
-Status: `REMEDIATED TASK PACKAGE — RE-ANALYSIS PENDING`
+Status: `SECOND REMEDIATION PACKAGE — RE-ANALYSIS REQUIRED ON INTEGRATED BASE`
 
-Scope: `tasks/remediate-analysis-3.0.1` against `laravel-replatform` commit `bdd03819d8d2e59f698d42ca33ee706472a3da02`.
+Scope: second task remediation based on `laravel-replatform` commit `eb75be04d600f5c9ada954da0593ab0a13d94ff8`.
 
 ## Task package
 
-- seven feature `tasks.md` files remediated;
-- `task-readiness-registry.md` added as normative task-contract supplement;
-- `technical-contract-amendment-2026-08-03.md` added;
-- `artifact-status-register.md` added;
-- source traceability regenerated;
-- 148 unchecked executable tasks;
+- seven feature `tasks.md` files aligned to one task contract;
+- `task-readiness-registry.md` limited to sources, invariants and stable errors;
+- seven exact command registers;
+- one exact path-expansion manifest;
+- technical and phase metadata updated;
+- source traceability completed for Feature 007 audit/password/retention/branding requirements;
+- 150 unchecked tasks;
 - 35 user stories;
-- 41 `[P]` markers after exact prerequisites;
-- stable `[FND]`, `[USn]` and `[VER]` task classes;
+- 42 `[P]` markers after exact prerequisites;
 - no application code or checklist modified.
 
 ## Structural validation
 
 - task IDs are unique inside each feature namespace;
 - every task uses `- [ ] Txxx-yyy`;
-- each task has a stable class through its entry or readiness registry;
-- the task entry plus readiness-registry record supplies sources, requirements, invariants, exact paths/symbols, dependencies, tests, validation, errors, forbidden work and expected result;
+- each task has one class in its owning task file or one non-ambiguous readiness range;
+- dependencies and task classes exist only in owning feature task files;
+- no dependency field intentionally contains prose, ranges, wildcards or unnamed prerequisites;
+- every task ID has one exact command entry;
+- every abbreviated target list has one complete row in `task-execution/path-overrides.md`;
+- `[VER]` tasks create evidence/documentation only;
 - notification dependencies are delivery primitive → feature commands → final scheduler registration;
-- tenant dependencies are context/query → reusable ownership concern → owning Policies/Queries → final matrix;
+- complete tenant matrix follows exact owning implementation tasks;
 - exact master-data readiness precedes Expense create/update;
-- `ConfirmActual` implementation precedes contract synchronization;
+- `ConfirmActual` precedes contract synchronization;
 - scenario persistence/query precedes scenario comparison;
-- audit-view and attachment-foundation tasks exist;
-- backup gate uses `composer require`, verifies both Composer files and rolls them back on resolution failure;
-- Feature 006/007 migration integration remains explicitly ordered;
+- tenant branding has one owner and one immutable consumer DTO;
+- backup gate uses guarded `composer require` and restores both Composer files on resolution failure;
+- T006-017 uses exact requirement IDs and executable document/operation tests;
 - shared ownership is documented in `tasks-summary.md`.
+
+These validations are a package self-check and do not replace `/speckit.analyze`.
 
 ## Superseded target checks
 
@@ -46,12 +52,20 @@ The target contains no planned `ExpenseRowState`, `ReplaceExpenseRow`, `ExpenseR
 - performance thresholds require executable measurement;
 - cutover evidence remains external and OPEN.
 
-## Medium-finding disposition
+## Rerun-finding disposition
 
-- stale root/replatform phase metadata: corrected;
-- stale feature spec/plan headers: superseded by `artifact-status-register.md` until each feature's next substantive edit;
-- stale contract planning gate: corrected by A-TECH-003;
-- nominal requirement coverage: replaced by the ledger in `source-traceability.md`.
+- contradictory registry ownership: corrected by non-overlapping field ownership;
+- incomplete paths: corrected by the sole path manifest;
+- `[VER]` runtime work: reclassified;
+- narrative prerequisites: replaced with exact IDs;
+- early matrix: moved after terminal implementations;
+- Feature 007 traceability: completed;
+- tenant branding: assigned to T007-019/T007-020 and consumed by T005-021–T005-023;
+- T006-017: exact requirements/command/result added;
+- stale metadata and feature headers: corrected with stable wording;
+- Composer rollback command: made executable.
+
+Every disposition remains proposed until `/speckit.analyze` confirms it.
 
 ## Integrity
 
@@ -63,4 +77,4 @@ No Laravel scaffold, Composer/frontend resolution, migration, static/accounting/
 
 ## Next command
 
-After review and merge: repeat `/speckit.analyze` and require CRITICAL `0` and HIGH `0`.
+Integration state is read from GitHub PR metadata. On the integrated remediation base, repeat `/speckit.analyze` and require CRITICAL `0` and HIGH `0`.

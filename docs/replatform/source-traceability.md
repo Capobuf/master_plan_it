@@ -1,9 +1,9 @@
 # Bidirectional source traceability
 
-Status: `CURRENT FOR REMEDIATED TASKS — RE-ANALYSIS REQUIRED`  
-Authority: Constitution 3.0.1, Q-001–Q-041, approved technical plans and `task-readiness-registry.md`.
+Status: `CURRENT FOR SECOND TASK REMEDIATION — RE-ANALYSIS REQUIRED`  
+Authority: Constitution 3.0.1, Q-001–Q-041, approved technical plans and current task/readiness/execution contracts.
 
-Legacy sources establish verified behavior or migration evidence. Product decisions and Constitution establish target changes. Every row below maps evidence → requirement/invariant → owning task → focused test. Task IDs refer to the remediated Feature 001–007 `tasks.md` files.
+Legacy sources establish verified behavior or migration evidence. Product decisions and Constitution establish target changes. Every row maps evidence → requirement/invariant → owning task → focused test. Task IDs refer to the current Feature 001–007 `tasks.md` files.
 
 ## Economic and domain rules
 
@@ -34,14 +34,16 @@ Legacy sources establish verified behavior or migration evidence. Product decisi
 | R-REP-001 | Screen, KPI, chart, print, CSV and XLSX share one dataset/scope | C-08; Q-019 | FR-005-020–025/070; INV-REP-002–006 | T005-003, T005-004, T005-006–T005-008, T005-021–T005-023 | dataset, parity, scope, CSV/XLSX and Dusk tests |
 | R-SCN-001 | Scenarios are explicit non-official tenant datasets | Q-027; C-03/C-08 | FR-005-030; INV-SCN-001 | T005-019, T005-020, T005-016–T005-018 | `ScenarioIsolationTest`, `CompareBudgetSourcesTest` |
 
-## Security, operations and lifecycle rules
+## Security, identity, branding and operations rules
 
 | Rule ID | Rule | Source/evidence | Requirement / invariant | Owning tasks | Focused tests |
 |---|---|---|---|---|---|
 | R-TEN-001 | Protected Administrator plus configurable tenant roles | Q-001–Q-009; C-07 | FR-007-002–008; INV-TEN-001–008 | T001-006, T007-003, T007-008–T007-013 | permission catalogue, role management, ability matrix and IDOR tests |
 | R-TEN-002 | Every economic dataset/output contains exactly one tenant | Q-010/Q-019; C-11 | FR-005-022–025; FR-007-016; INV-REP-004–006; INV-TEN-006/007 | T005-003–T005-004, T005-021–T005-023, T007-011–T007-015 | dataset authorization, output scope, report isolation and no-cross-tenant-economics tests |
 | R-TEN-003 | Context fails closed and never leaks between requests/commands | Q-004/Q-015/Q-016; C-11 | FR-007-004/008/012/014; INV-TEN-001–003 | T007-003, T007-004, T007-012, T001-007 | context/team/middleware/query tests |
-| R-AUD-001 | Audit retention is global configurable default 24; no export | Q-020; C-05 | FR-001-019–021; INV-PLT-007 | T001-019–T001-021, T001-025–T001-027 | settings, retention, audit-view authorization/minimization tests |
+| R-AUD-001 | Audit retention is global configurable default 24; lowering is reinforced; permission-controlled view exists; no export | Q-020; C-05 | FR-001-019–021; FR-007-017; FR-007-023; INV-PLT-007 | T001-019–T001-021, T001-025–T001-027 | settings, retention, scheduler, audit-view authorization/minimization tests |
+| R-PWD-001 | No public password recovery; Administrator reset, self-change and emergency interactive reset invalidate sessions without exposing secrets | Q-026; Feature 001/007 acceptance; C-05/C-07 | FR-001-014–017; FR-007-018; FR-007-019; INV-PLT-006 | T001-008, T001-012–T001-016 | no-recovery-route, password administration, self-change and console reset tests |
+| R-BRD-001 | Optional tenant branding is Administrator-managed and appears only in selected-tenant report/output content; shell remains Master Plan IT | FR-007-021; Feature 007 data model/plan; Feature 005 output plan | FR-007-021; INV-TEN-001; INV-TEN-004; INV-TEN-006 | T007-001, T007-002, T007-019, T007-020, T005-021–T005-023 | tenant branding, private logo, branding settings, output branding and print tests |
 | R-ATT-001 | Attachments follow current parent permission and private lifecycle | Q-018 | FR-003-061/062; INV-TEN-003 | T003-021–T003-023, T003-017, T003-018 | attachment schema/policy/download/lifecycle/Livewire tests |
 | R-NOT-001 | Database-first synchronous notifications, optional email, no worker | Q-023; C-06 | FR-001-006/018; FR-004-038; FR-006-018; INV-PLT-004; INV-OPS-004 | T001-017, T001-018, T004-019, T004-020, T006-014, T001-025 | dedup/mail failure, renewal, operation failure and scheduler tests |
 | R-MIG-001 | One legacy site imports into one immutable selected tenant | Q-011/Q-022/Q-029; C-09 | FR-006-001–013/017/019; FR-007-020; INV-MIG-001–005 | T006-001–T006-009, T007-016, T007-017 | package, dry-run, collision, reconciliation, apply and tenant ownership tests |
@@ -54,8 +56,8 @@ Legacy sources establish verified behavior or migration evidence. Product decisi
 | Feature | Requirement ranges | Owning task groups | Verification task |
 |---|---|---|---|
 | 001 | FR-001-001–004 | T001-007–T001-016 | T001-024 |
-| 001 | FR-001-005–018 | T001-001–T001-018, T001-022–T001-025 | T001-024 |
-| 001 | FR-001-019–021 | T001-019–T001-021, T001-026–T001-027 | T001-024 |
+| 001 | FR-001-005–018 | T001-001–T001-018, T001-022–T001-027 | T001-024 |
+| 001 | FR-001-019–021 | T001-019–T001-021, T001-025–T001-027 | T001-024 |
 | 002 | FR-002-001–002 | T002-007–T002-009 | T002-016 |
 | 002 | FR-002-003–005/008–009 | T002-010–T002-012 | T002-016 |
 | 002 | FR-002-006–007 | T002-013–T002-015 | T002-016 |
@@ -65,20 +67,23 @@ Legacy sources establish verified behavior or migration evidence. Product decisi
 | 003 | FR-003-030–035 | T003-013–T003-018 | T003-020 |
 | 003 | FR-003-061–062 | T003-021–T003-023, T003-017–T003-018 | T003-020 |
 | 004 | FR-004-001/010–015/037 | T004-001–T004-006 | T004-021 |
-| 004 | FR-004-020–023 | T004-007–T004-009 | T004-021 |
-| 004 | FR-004-025–039 | T004-010–T004-020 | T004-021 |
+| 004 | FR-004-020–023/038 | T004-007–T004-009, T004-019–T004-020 | T004-021 |
+| 004 | FR-004-025–039 except FR-004-038 | T004-010–T004-018 | T004-021 |
 | 005 | FR-005-001–016/050/070 | T005-001–T005-008 | T005-025 |
-| 005 | FR-005-020–025/060 | T005-003–T005-004, T005-021–T005-023 | T005-025 |
+| 005 | FR-005-020–025/060 and cross-feature FR-007-021 | T005-003–T005-004, T005-021–T005-023, T007-019–T007-020 | T005-025 |
 | 005 | FR-005-030 | T005-019–T005-020 | T005-025 |
 | 005 | FR-005-040–047 | T005-009–T005-018 | T005-025 |
-| 006 | FR-006-001–009/013/017/019 | T006-001–T006-009 | T006-018 |
-| 006 | FR-006-010–012/014 | T006-012–T006-016 | T006-018 |
+| 006 | FR-006-001–009/013/017/019 | T006-001–T006-009, T006-017 | T006-018 |
+| 006 | FR-006-010–012/014 | T006-012–T006-017 | T006-018 |
 | 006 | FR-006-015–016 | T006-010–T006-011 | T006-018 |
 | 006 | FR-006-018 | T006-014 | T006-018 |
-| 007 | FR-007-001–015 | T007-001–T007-013 | T007-018 |
+| 007 | FR-007-001–015 | T007-001–T007-013, T007-019–T007-020 | T007-018 |
 | 007 | FR-007-016/022 | T007-014–T007-015 | T007-018 |
+| 007 | FR-007-017/023 | T001-019–T001-021, T001-025–T001-027 | T007-018 |
+| 007 | FR-007-018/019 | T001-008, T001-012–T001-016 | T007-018 |
 | 007 | FR-007-020 | T007-016–T007-017 | T007-018 |
+| 007 | FR-007-021 | T007-001, T007-002, T007-019, T007-020, T005-021–T005-023 | T007-018 |
 
 ## Coverage gate
 
-No row is permission to implement an unstated behavior. A task is executable only with its feature entry and readiness-registry record. `/speckit.analyze` must be repeated after this remediation and must report CRITICAL `0` and HIGH `0` before `/speckit.implement`.
+No row permits implementation of unstated behavior. A task is executable only when its owning task entry, readiness row, exact command and any required path expansion agree. `/speckit.analyze` must be repeated after this remediation and must report CRITICAL `0` and HIGH `0` before `/speckit.implement`.

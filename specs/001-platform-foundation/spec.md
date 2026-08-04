@@ -1,6 +1,6 @@
 # Feature 001 — Platform foundation
 
-Status: `CLARIFIED — PLAN REGENERATION REQUIRED`  
+Status: `CLARIFIED AND APPROVED; IMPLEMENTATION BLOCKED UNTIL /speckit.analyze PASSES`  
 Logical owner: Product Owner with domain approval  
 Actors: Administrator and tenant users  
 Dependencies: Feature 007 product contract
