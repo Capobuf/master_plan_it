@@ -18,6 +18,8 @@ This package is the documentation-only contract for the Laravel replatform, anch
 - ability-contract plan remediation: complete and merged.
 - third analysis on `f673513c137e797d52bc5f3099ed3c1c10b4a129`: failed with 0 CRITICAL, 1 HIGH and 0 MEDIUM findings.
 - complete cross-contract C-07/Q-016 plan propagation: complete and merged.
+- fourth analysis on `348a557c58388ff917646dd6a02cb00cbdc1f513`: failed with 0 CRITICAL, 1 HIGH and 0 MEDIUM findings.
+- invariant task/test ownership remediation: complete; integration state authoritative only in GitHub PR metadata; final analysis required.
 - integration state: authoritative only in GitHub PR metadata.
 - next `/speckit.analyze`: run on the latest integrated `laravel-replatform` HEAD.
 - `/speckit.implement`: blocked until CRITICAL `0` and HIGH `0`.

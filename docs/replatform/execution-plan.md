@@ -1,6 +1,6 @@
 # Global execution sequence
 
-Status: `AUTHORIZATION REMEDIATION INTEGRATED — NEXT GATE /speckit.analyze ON LATEST INTEGRATED HEAD`
+Status: `INVARIANT TASK-OWNERSHIP REMEDIATION COMPLETE — FINAL /speckit.analyze REQUIRED AFTER INTEGRATION`
 
 ## Spec Kit sequence
 
@@ -19,9 +19,11 @@ Status: `AUTHORIZATION REMEDIATION INTEGRATED — NEXT GATE /speckit.analyze ON 
 | S10 Authorization `/speckit.plan` remediation | COMPLETE AND MERGED | ability-based contracts; no Editor/Viewer domain branches |
 | S11 Third 2026-08-04 `/speckit.analyze` | FAILED AND RECORDED | 0 CRITICAL, 1 HIGH, 0 MEDIUM on `f673513c137e797d52bc5f3099ed3c1c10b4a129` |
 | S12 Complete C-07/Q-016 contract propagation | COMPLETE AND MERGED | no role matrices; exact abilities; inactive-tenant decision current |
-| S13 Final `/speckit.analyze` | NEXT ON LATEST INTEGRATED HEAD | CRITICAL 0 and HIGH 0; Medium corrected or dispositioned |
-| S14 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
-| S15 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
+| S13 Fourth 2026-08-04 `/speckit.analyze` | FAILED AND RECORDED | 0 CRITICAL, 1 HIGH, 0 MEDIUM on `348a557c58388ff917646dd6a02cb00cbdc1f513`; orphan INV-TEN-009/010 task ownership only |
+| S14 Invariant `/speckit.tasks` remediation | COMPLETE; INTEGRATION STATE IN GITHUB | exact existing task/test/readiness/source owners; unchanged task count and graph |
+| S15 Final `/speckit.analyze` | AFTER S14 INTEGRATION | CRITICAL 0 and HIGH 0; Medium corrected or dispositioned |
+| S16 `/speckit.implement` | BLOCKED | separate vertical-slice PRs with real locks/code/tests |
+| S17 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
 
 ## Proposed implementation critical path
 
