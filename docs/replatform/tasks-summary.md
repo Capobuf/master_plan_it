@@ -7,7 +7,7 @@ Constitution: 3.0.1
 
 Integration state is authoritative only in GitHub PR metadata. This document records the package content and remains valid before and after integration.
 
-Current phase selection and finding counts are owned by `artifact-status-register.md` and the latest dated `/speckit.analyze` report. The 150/35/42 inventory remains current unless a later task diff changes it.
+Current phase selection and finding counts are owned by `artifact-status-register.md` and the current `/speckit.analyze` result. The table below is historical. The 2026-08-05 vertical-slice remediation adds T001-028/T001-029 and T005-026/T005-027 without renumbering or changing prior checkboxes: the live inventory is 158 tasks across 35 user stories, by feature `29/17/24/21/27/18/22`, with 43 `[P]` tasks.
 
 ## Task inventory
 
@@ -35,32 +35,26 @@ Each executable task is the combination of four records with distinct ownership:
 
 No dependency or class override exists outside the owning `tasks.md`. A mismatch is a documentation blocker and never authorizes an implementation guess.
 
-## Current critical path
+## Current critical path (2026-08-05 remediation)
 
 ```text
-T001-001 scaffold and exact locks
+accepted platform/tenant/auth/authorization foundation
         ↓
-T001-005/T001-006 platform persistence and permission catalogue
+Slice 0: T001-028 → T001-029 operational UI contract/lock/shell
         ↓
-T007-001–T007-004 tenant/context/query foundation
+Slice 1A: T003-007 → T003-008 → T003-009 manual Expense register
         ↓
-T007-012 reusable tenant-ownership Policy concern
+Slice 1B: T003-010 → T003-011 → T003-012 manual Expense create/edit
         ↓
-Feature 001 auth/shell + Feature 007 tenant/role lifecycle
+Slice 2: T005-001 → T005-002 → T005-003 → T005-004 → T005-006 → T005-007 → T005-008
         ↓
-T007-019/T007-020 selected-tenant report branding
+Slice 3: T005-026 hardened Expense → current Budget checkpoint
         ↓
-T002-001–T002-006 shared revisions and master-data foundation
+attachments/remaining Expense lifecycle
         ↓
-T002-009/T002-012/T002-015 exact selectors/resources
+Feature 004 projects/contracts/generation → T005-027 project-stage query enrichment
         ↓
-T003 Money/current Expense + attachment foundation
-        ↓
-T003-014 ConfirmActual
-        ↓
-T004 projects/contracts/generated occurrences/renewal command
-        ↓
-T005 kernel/Budget/scenarios/comparisons/output with tenant branding
+BudgetVersion/scenarios/comparisons/output
         ↓
 T006 migration/portability/backup/deployment
         ↓
@@ -96,7 +90,7 @@ T007-011 names every prerequisite task ID directly. It no longer depends on test
 
 | Surface | Owning tasks | Consumers |
 |---|---|---|
-| Composer/frontend locks | T001-001, T001-002 | every feature |
+| Composer/frontend locks | T001-001, T001-002, T001-029 | every feature; T001-029 is the sole Preline/Tailwind remediation writer |
 | Sail/test/quality configuration | T001-003, T001-004, T001-022 | every feature |
 | Permission catalogue | T001-006 | Feature 007 and all Policies |
 | Tenant/TenantContext/middleware | T007-001–T007-004 | all tenant features |
@@ -112,7 +106,7 @@ T007-011 names every prerequisite task ID directly. It no longer depends on test
 | Attachment persistence/policy | T003-021/T003-022 | T003-017/T003-018/T003-023 and portability |
 | Current Expense Actions/Queries | T003-007–T003-018 | Features 004–006 |
 | Contract occurrence generation | T004-010–T004-018 | Feature 005 and migration |
-| Economic dataset/kernel | T005-001–T005-004 | dashboard, Budget, output and version capture |
+| Economic dataset/kernel | T005-001–T005-004; T005-027 project-context enrichment | dashboard, Budget, output and version capture |
 | Scenario dataset | T005-019/T005-020 | comparison T005-016/T005-017 |
 | Release artifact | T001-022/T001-023 | T006-015/T006-016 |
 

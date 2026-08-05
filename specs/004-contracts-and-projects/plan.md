@@ -36,7 +36,7 @@ Passes C-03, C-04, C-05, C-07, C-10, C-11, C-12 and C-13. Economic observers, du
 
 - `ProjectListQuery`, `ContractListQuery`, `ContractDetailQuery`, `ContractGenerationHistoryQuery`;
 - one Policy per resource plus explicit generation Gates;
-- Filament Project/Contract Resources, term repeater/timeline and generation-history relation/page.
+- operational Livewire Project/Contract list/editor/timeline/history components rendered by Blade/Preline in the shared tenant layout.
 
 No `ContractAnnualizer` service unless tests prove a reusable calculation independent from generation; term values use shared Money/VAT services.
 
@@ -127,7 +127,7 @@ Dusk is limited to term editor and regeneration-choice/history controls when bro
 6. project/contract/term deletion provenance and tenant reason-setting Actions/tests;
 7. generated-expense deletion/suppression/resume Actions;
 8. notifications;
-9. policies/queries/Filament UI;
+9. policies/queries/operational Livewire/Blade/Preline UI;
 10. full accounting/tenant/browser verification.
 
 ## Post-design check

@@ -26,6 +26,7 @@ This package is the authoritative contract for the in-progress Laravel replatfor
 - historical integrated analysis snapshot: `speckit-analyze-2026-08-04-constitution-5.0.0.md`, PASS with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings for the documentation tree it analyzed.
 - current requirement-quality checklists: 289/295 passed and 6 explicitly open.
 - `/speckit.implement`: active; verified completion is represented only by the current `tasks.md` checkboxes and `.codex/orchestration-plan.md` integration log.
+- 2026-08-05 ADR-035 frontend and Expense→Budget Slice 0–3 plan/task remediation: current; independent final analyze PASS with 0 CRITICAL, 0 HIGH, 0 MEDIUM and 0 LOW findings; T001-028 is the next unchecked entry task.
 
 The historical documentation-remediation cycle did not execute application work. Implementation, migrations and tests have since started and their live evidence is recorded in the orchestration plan and task checkboxes.
 
@@ -68,9 +69,9 @@ The historical documentation-remediation cycle did not execute application work.
 - guarded backup dependency command restores Composer files on resolution failure;
 - cutover-readiness evidence has exact requirements, paths, command and result rules.
 
-## Verified task inventory
+## Live task inventory
 
-- 154 current tasks across 35 user stories; the zero-finding pre-implementation snapshot contained 153 before rolling analysis added T002-017;
+- 158 current tasks across 35 user stories; the historical snapshot contained 153, rolling analysis added T002-017 and the current remediation added T001-028/T001-029/T005-026/T005-027;
 - 43 `[P]` tasks after exact prerequisites;
 - 7 feature task files;
 - one source/invariant/error registry;
@@ -79,7 +80,7 @@ The historical documentation-remediation cycle did not execute application work.
 - one bidirectional source/requirement/task/test ledger;
 - implementation is active; task checkboxes and `.codex/orchestration-plan.md` are the live completion evidence.
 
-The Constitution 5.0.0 integrated analysis verified its 153-task snapshot. Rolling implementation-time analysis maintains the live 154-task inventory and does not claim unexecuted application/runtime verification.
+The Constitution 5.0.0 integrated analysis verified its 153-task snapshot. The independent 2026-08-05 documentation gate verified the live 158-task graph with 0 CRITICAL, 0 HIGH, 0 MEDIUM and 0 LOW findings; it does not claim unexecuted application/runtime/browser verification.
 
 ## Remaining evidence
 

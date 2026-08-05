@@ -106,7 +106,7 @@ A form operation that updates an aggregate, such as Expense plus rows, receives 
 
 Restore validates current authorization, tenant scope, references, source keys, and business invariants. It creates a new current revision. It never deletes later history or rewrites the original revision. Project/contract/term revision restore is current-record-only and cannot reactivate or restore the same terminally deleted logical identity.
 
-Each Expense aggregate revision owns a complete attachment manifest. Manifest entries reference immutable private payload versions; unchanged bytes reuse an existing version rather than create another copy. Quota counts each distinct non-purged payload version once. A data-only revision/restore creates zero new bytes and remains allowed even when quota is zero or current usage is already above it.
+At attachment-capability activation, T003-024 backfills a verified complete empty attachment manifest for every earlier data-only Expense revision before any upload becomes available; every subsequent aggregate revision owns a complete manifest. Manifest entries reference immutable private payload versions; unchanged bytes reuse an existing version rather than create another copy. Quota counts each distinct non-purged payload version once. A data-only revision/restore creates zero new bytes and remains allowed even when quota is zero or current usage is already above it.
 
 ### 4.3 Delete
 

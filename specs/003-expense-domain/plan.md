@@ -49,7 +49,7 @@ No `ReplaceExpenseRow` Action in the target model.
 - `ExpenseRegisterQuery` returns register DTOs and server totals;
 - `ExpenseDetailQuery` includes rows, attachments and revision summary;
 - `ExpensePolicy`;
-- Filament `ExpenseResource`, relation manager/custom editor for rows, revision/history page.
+- operational Livewire register/editor/history components rendered by Blade/Preline in the T001-029 layout; no Filament ownership for tenant-facing Expense screens.
 
 ## Aggregate transaction
 
@@ -68,8 +68,10 @@ Each mutation:
 7. writes current models;
 8. links vendor snapshots;
 9. writes minimized audit;
-10. captures a complete attachment manifest, reusing immutable payload versions for every unchanged attachment;
-11. reserves tenant payload quota under lock only for genuinely new bytes, finalizes new private files with compensation and commits once.
+10. after T003-024 attachment activation, captures a complete attachment manifest, reusing immutable payload versions for every unchanged attachment;
+11. after that activation, reserves tenant payload quota under lock only for genuinely new bytes, finalizes new private files with compensation and commits once.
+
+Before attachment activation, Slice 1 creates only data revisions and exposes no file operation. T003-024 must backfill a verified complete empty manifest for every such revision before enabling the first upload; failure blocks attachment capability without invalidating the already usable data-only slice.
 
 No deadlock retry at launch.
 
@@ -104,7 +106,7 @@ Rounding is half-up at documented result boundaries. Quantity/unit-price multipl
 
 ## Revision integration
 
-Use Overtrue snapshot strategy for model values. One aggregate save links Expense and changed rows to `revision_batches` and writes an application-owned complete attachment manifest whose entries reference immutable private payload versions outside package/audit metadata. Unchanged attachments reuse their existing versions; only new bytes create a version and reserve quota. The package restore action is disabled/replaced by `RestoreExpenseRevision`, which rebuilds typed input, validates every payload checksum/MIME/size and any new-byte quota reservation, then restores data plus the exact attachment set atomically as a new revision.
+Use Overtrue snapshot strategy for model values. One aggregate save links Expense and changed rows to `revision_batches`. T003-024 creates the attachment-capability boundary: it backfills verified empty manifests for earlier data-only batches before uploads are enabled, then every aggregate save writes an application-owned complete attachment manifest whose entries reference immutable private payload versions outside package/audit metadata. Unchanged attachments reuse their existing versions; only new bytes create a version and reserve quota. The package restore action is disabled/replaced by `RestoreExpenseRevision`, which rebuilds typed input, validates every payload checksum/MIME/size and any new-byte quota reservation, then restores data plus the exact attachment set atomically as a new revision.
 
 Deletion history is accessed from a dedicated page using `withTrashed`; ordinary resource queries never expose deleted rows. Deleting an attachment or row changes current membership but keeps versioned copies while the Expense exists. Permanent Expense deletion purges all payload paths, leaves only minimized metadata/checksums and cannot be reversed through revision restore.
 
@@ -138,15 +140,15 @@ Dusk only for row-editor JS/focus/action menu and reinforced delete confirmation
 ## Sequence
 
 1. Money/VAT/allocation tests and value objects;
-2. migrations/models/factories;
-3. revision package smoke and batch infrastructure;
-4. attachment schema, quota integration and validation/authorization tests;
-5. create/update/delete/restore Actions including attachment manifests/payloads;
-6. Actual confirmation/generated ownership behavior;
-7. Policies/queries;
-8. Filament editor/register/history;
-9. migration mapping fixtures;
-10. full accounting/tenant/browser gate.
+2. migrations/models/factories, revision package smoke and Policies;
+3. Slice 1 current queries plus operational Livewire/Blade/Preline register;
+4. Slice 1 manual create/update Actions and operational editor using planning year/vendor/cost center selectors;
+5. Slice 2 current Budget consumers from Feature 005, independently of Feature 004;
+6. Slice 3 cross-flow hardening;
+7. attachment schema/quota/integration, remaining delete/restore/history and Actual confirmation;
+8. Feature 004 generation integration, migration fixtures and full gates.
+
+The first manual Expense revision is data-only and does not wait for attachment storage. T003-024 later attaches complete immutable payload manifests to the existing Create/Update Actions before attachment-capable revisions are accepted. Operational screens use the ADR-035 stack; accepted Filament authentication and administrative surfaces remain unchanged.
 
 ## Post-design check
 

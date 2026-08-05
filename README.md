@@ -7,7 +7,7 @@ This repository branch contains the authoritative Spec Kit replatform contract a
 - legacy repository: `Capobuf/master_plan_it`;
 - legacy branch: `refactor/reports`;
 - verified legacy commit: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`;
-- latest integrated analysis: `docs/replatform/speckit-analyze-2026-08-04-constitution-5.0.0.md`, PASS with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings;
+- latest historical integrated analysis: `docs/replatform/speckit-analyze-2026-08-04-constitution-5.0.0.md`, PASS on its analyzed tree; the live 2026-08-05 frontend/vertical-slice remediation is governed by current artifacts and `.codex/orchestration-plan.md`, with its independent final analyze gate passed at 0 CRITICAL, 0 HIGH, 0 MEDIUM and 0 LOW findings;
 - Constitution: 5.0.0;
 - product questions: Q-001–Q-041 closed; 0 open.
 
@@ -33,7 +33,7 @@ This repository branch contains the authoritative Spec Kit replatform contract a
 - `/speckit.checklist`: 289/295 requirement-quality items currently passed;
 - `/speckit.implement`: active.
 
-The historical analyzed graph contained 153 task IDs. Rolling analysis added T002-017 to close explicit package-integration ownership, so the live graph contains 154 task IDs across 35 user stories, with 43 `[P]` tasks and exact command/readiness ownership for all 154. Historical summaries do not override current artifacts, task checkboxes or `.codex/orchestration-plan.md`.
+The historical analyzed graph contained 153 task IDs. Rolling analysis added T002-017; the 2026-08-05 remediation adds T001-028/T001-029 and T005-026/T005-027. The live graph contains 158 task IDs across 35 user stories, with 43 `[P]` tasks and exact command/readiness ownership. Historical summaries do not override current artifacts, task checkboxes or `.codex/orchestration-plan.md`.
 
 ## Read in order
 
@@ -56,6 +56,6 @@ The historical analyzed graph contained 153 task IDs. Rolling analysis added T00
 
 ## Planned target
 
-Laravel 13 modular monolith on PHP 8.3/MySQL 8.4, Sail verification, Filament 5, explicit one-database tenancy, configurable tenant RBAC, operational snapshot revisions, one current Expense source, controlled contract generation, one shared economic kernel, rolling Budget and immutable BudgetVersion, staged migration/portability, verified whole-installation backup and immutable release artifact.
+Laravel 13 modular monolith on PHP 8.3/MySQL 8.4, Sail verification, Filament 5 for accepted administration, Blade/Livewire 4/Alpine/Tailwind CSS 4/mandatory Preline for tenant operations, Chart.js, explicit one-database tenancy, configurable tenant RBAC, operational snapshot revisions, one current Expense source, one shared economic kernel, rolling Budget, later controlled contract generation/BudgetVersion/output, staged migration/portability, verified whole-installation backup and immutable release artifact. The first planned usable slice is manual Expense → current economic dataset → current Budget.
 
 Spec Kit tooling was installed and updated as documented in `docs/replatform/spec-kit-installation-2026-08-04.md`. Laravel implementation started on 2026-08-04 with the verified T001-001 scaffold/dependency gate; migrations, frontend build, backup, restore, import, deployment and cutover evidence remain governed by their unchecked tasks.

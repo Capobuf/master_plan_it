@@ -25,6 +25,14 @@ cp .env.testing.example .env.testing
 
 Verify exact planned versions and PHP platform 8.3.32. Failure blocks implementation.
 
+The separate operational-frontend gate is T001-028/T001-029. It must verify the exact Preline/Tailwind lock, applicable Preline license, Vite manifest, absence of runtime CDN assets and the Livewire morph/navigation reinitialization contract before any Expense or Budget UI task starts:
+
+```bash
+npm ci && npm run build
+php artisan test tests/Architecture/FrontendStackContractTest.php tests/Livewire/Shell/OperationalShellTest.php
+php artisan dusk tests/Browser/Shell/OperationalShellSmokeTest.php
+```
+
 ## Seed minimum platform
 
 Set non-empty, installation-specific values in `.env`; no demo/Administrator account or credential is seeded by default, and the Administrator seeder fails closed when any value is absent:

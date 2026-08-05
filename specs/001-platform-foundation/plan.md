@@ -13,7 +13,7 @@ Create the Laravel/Sail skeleton, non-destructive test/CI foundation, authentica
 | Item | Decision |
 |---|---|
 | Runtime | PHP 8.3.32; Laravel 13.22.0; Sail 1.64.0 |
-| UI | Filament 5.7.3; Livewire 4.3.3; Blade; no Preline |
+| UI | Administrative: Filament 5.7.3. Tenant-facing operational: Blade, Livewire 4.3.3, Alpine, Tailwind CSS 4, mandatory Preline UI; Chart.js for server-fed charts. T001-028/T001-029 own exact lock/build/browser verification. |
 | DB | MySQL 8.4.10; development/test separate logical DBs |
 | Auth/RBAC | Laravel auth; Spatie Permission 8.3.0 teams; Shield 4.3.1 |
 | Operations | sync queue; one scheduler cron; database notifications + optional sync mail |
@@ -84,6 +84,10 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
 - `UserResource` and tenant role management integration from Feature 007;
 - tenant context indicator in navigation/breadcrumbs;
 - global operational dashboard shell without economics.
+
+### Operational UI boundary
+
+Filament remains authoritative for the accepted authentication and administrative surfaces above. Expense, Budget, reporting and later operational project/contract screens use the single operational Blade layout from T001-029 and reuse the same authenticated session, tenant context, Policies, middleware, Actions, Queries and DTOs. Livewire owns server state/validation/authorization/loading and Action invocation; Blade owns markup; Preline owns its documented visual components; Alpine owns only local transient state; Chart.js consumes server-calculated presentation payloads. Livewire DOM updates must explicitly reinitialize Preline and destroy/recreate JavaScript-owned resources without duplicating listeners or chart instances.
 
 ## Action design
 

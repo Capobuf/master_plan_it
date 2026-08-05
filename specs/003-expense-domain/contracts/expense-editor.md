@@ -5,7 +5,7 @@ Status: `PROPOSED TARGET — PLAN COMPLETE`
 
 ## Input
 
-One typed aggregate request contains authorized tenant context, Expense header, intended current rows, explicit row deletions, expected lock versions and attachment operations. Money is normalized decimal strings; dates ISO. Existing row omission alone never means delete.
+One typed aggregate request contains authorized tenant context, Expense header, intended current rows, explicit row deletions and expected lock versions. Money is normalized decimal strings; dates ISO. Existing row omission alone never means delete. T003-024 later extends the accepted request with attachment operations; the Slice 1 manual create/edit contract does not claim attachment capability.
 
 ## Output
 
@@ -34,7 +34,7 @@ No automatic retry and no observer/model-hook economic side effect.
 - `ConfirmActual` is separate permission/Action; it records actor/time and makes generated row user-authoritative.
 - Confirmation does not make Actual permanently immutable.
 - Delete removes current contribution and ordinary visibility; history remains in revisions/audit.
-- Every aggregate revision records a complete attachment manifest. An unchanged attachment reuses its existing immutable private payload version; audit/package metadata stores references/checksums, not bytes.
+- Before attachment capability is enabled, T003-024 backfills a verified complete empty manifest for every earlier Slice 1 data-only revision; uploads remain disabled until that succeeds. Every subsequent aggregate revision records a complete attachment manifest. An unchanged attachment reuses its existing immutable private payload version; audit/package metadata stores references/checksums, not bytes.
 - Restore builds typed input plus the exact attachment manifest, revalidates current rules and every payload, reserves quota only for genuinely new bytes, and creates a new data-and-file revision atomically. A data-only revision/restore that reuses all payload versions adds no usage and remains allowed above usage or at a configured zero-byte quota; zero never purges existing payloads.
 - Attachment or row deletion retains versioned payloads while the Expense exists. Permanent Expense deletion purges every payload and cannot be operationally restored.
 - Generated source key is immutable and cannot be changed by editor/restore.

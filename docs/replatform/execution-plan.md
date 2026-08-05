@@ -24,23 +24,22 @@ Status: `DOCUMENTATION GATE PASSED ON CONSTITUTION 5.0.0 — IMPLEMENTATION IN P
 | S15 Historical Constitution 3.0.1 final `/speckit.analyze` | COMPLETE AND RECORDED; SUPERSEDED | CRITICAL 0, HIGH 0, MEDIUM 0 on `ba3744fbc7043f3f3b036416e6c082e4cb7c6831`; does not authorize later artifacts |
 | S16 Constitution 4.0.0/5.0.0 clarification and propagation | COMPLETE; CURRENT WORKTREE | fixed calendar years, attachment manifests/quota, operational settings, output/performance/accessibility and terminal source deletion propagated |
 | S17 Historical integrated `/speckit.analyze` | COMPLETE AND RECORDED; SUPERSEDED AS LIVE STATUS | 0 CRITICAL, 0 HIGH, 0 MEDIUM; 300/300 requirement coverage; 153/153 command/readiness coverage; 295/295 checklist items at that snapshot |
-| S18 `/speckit.implement` | ACTIVE | coordinator-owned work packages with real locks/code/tests; rolling analysis added T002-017 |
-| S19 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
+| S18 2026-08-05 frontend/vertical-slice `/speckit.plan` + `/speckit.tasks` remediation | CURRENT; INDEPENDENT ANALYZE PASS | ADR-035, Slice 0–3, exact task/registry/command/path updates; 0 CRITICAL, 0 HIGH, 0 MEDIUM and 0 LOW findings; no application implementation |
+| S19 `/speckit.implement` | ACTIVE AFTER S18 ANALYZE PASS | bounded one-to-three-task work packages beginning with T001-028 |
+| S20 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
 
 ## Proposed implementation critical path
 
-1. Feature 001 scaffold, exact locks, Sail and quality/release foundation;
-2. Feature 007 tenant schema, context and safe tenant lookup;
-3. Feature 007 reusable tenant-ownership Policy concern;
-4. Feature 001 authentication/shell and Feature 007 tenant/role lifecycle;
-5. Feature 007 selected-tenant report branding;
-6. Feature 002 shared revisions and exact master-data selectors;
-7. Feature 003 Money, current Expense and attachment foundation;
-8. Feature 003 Actual confirmation;
-9. Feature 004 projects, contracts, generated occurrences and renewal command;
-10. Feature 005 kernel, Budget, scenarios, comparisons and branded outputs;
-11. Feature 006 migration, portability, backup and deployment;
-12. Feature 007 complete cross-feature ability/IDOR and architecture gates.
+1. retain the accepted scaffold, tenant context, authentication, authorization, Money and master-data foundations;
+2. Slice 0 T001-028/T001-029 operational frontend contract, lock, lifecycle, layout and navigation bridge;
+3. Slice 1 T003-007–T003-012 manual Expense list/create/edit through current Queries and Actions;
+4. Slice 2 T005-001–T005-008 economic kernel/dataset and real current Budget KPI/table/Chart.js;
+5. Slice 3 T005-026 end-to-end authorization/isolation/parity/responsive/browser/performance hardening;
+6. attachments and remaining Expense lifecycle;
+7. Feature 004 projects/contracts/generated occurrences, then T005-027 project-stage dataset enrichment;
+8. BudgetVersion, scenarios, comparisons and branded outputs;
+9. Feature 006 migration, portability, backup and deployment;
+10. Feature 007 complete cross-feature ability/IDOR and architecture gates.
 
 Notification execution is explicitly:
 
@@ -54,7 +53,7 @@ The exact task graph, task composition and shared ownership are in `tasks-summar
 
 ## Vertical-slice rule
 
-Every implementation slice includes schema/rollback constraints, owning Action/query, authorization and tenant isolation, revision/audit behavior where relevant, Filament UI, focused tests, documentation and actual validation results. Package-only, database-only and unrelated refactor PRs are prohibited unless the task explicitly owns a verified prerequisite gate.
+Every implementation slice includes schema/rollback constraints, owning Action/query, authorization and tenant isolation, revision/audit behavior where relevant, the ADR-035 UI appropriate to its administrative or operational boundary, focused tests, documentation and actual validation results. One invocation covers one visible result and one to three tightly coupled tasks with a bounded write set. Package-only, database-only and unrelated refactor PRs are prohibited unless the task explicitly owns a verified prerequisite gate.
 
 ## Rollback principles
 

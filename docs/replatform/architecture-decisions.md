@@ -6,7 +6,7 @@
 | ADR-002 | Current non-deleted expense rows are the sole current economic source | APPROVED | Prevents double counting; revisions, audit, scenarios, deleted records, generation exceptions and budget snapshots are explicit separate datasets. |
 | ADR-003 | `DECIMAL(19,6)` intermediate and 2-decimal business results | APPROVED | Deterministic money, VAT, allocation and comparison. |
 | ADR-004 | Money arithmetic via BCMath value objects | APPROVED | Avoids float drift without a money dependency. |
-| ADR-005 | Filament/Blade by default, Livewire selectively | APPROVED | Server-rendered administration with focused interactivity. |
+| ADR-005 | Filament/Blade by default, Livewire selectively | AMENDED BY ADR-035 | Historical foundation choice retained for authentication, global administration, tenant/user/RBAC administration, technical settings and suitable simple CRUD; it no longer governs tenant-facing operational screens. |
 | ADR-006 | Chart.js only | APPROVED | One maintained chart integration and printable dataset reuse. |
 | ADR-007 | No permanent worker; synchronous bounded commands | APPROVED | Shared-hosting constraint. |
 | ADR-008 | Contract sync updates only system-managed unconfirmed occurrences; source-key idempotent, suppression-aware and no-overwrite | AMENDED / APPROVED | Manual modification or confirmation makes the Actual user-authoritative without making it permanently immutable. |
@@ -36,6 +36,7 @@
 | ADR-032 | Backup archive target is `spatie/laravel-backup` 10.3.0, conditional on real PHP 8.3.32 Composer resolution | CONDITIONAL APPROVAL | Composer metadata and documentation disagree on PHP floor. Failure blocks Feature 006; no automatic downgrade/custom fallback. |
 | ADR-033 | CSV is authoritative; XLSX output uses OpenSpout 4.32.0 writer-only | APPROVED — LOCK VERIFICATION REQUIRED | OpenSpout 5 requires PHP 8.4; no XLSX import or ODS at launch. |
 | ADR-034 | Launch printing is dedicated Blade HTML; no server PDF renderer package | APPROVED REJECTION | Meets printable-output requirement without Chromium/Python/container/cloud dependency or second CSS engine. |
+| ADR-035 | Tenant-facing operational UI uses Blade + Livewire 4 + Alpine + Tailwind CSS 4 + mandatory Preline UI, with Chart.js for charts; Filament 5 remains bounded to the accepted administrative surfaces | APPROVED — FRONTEND LOCK/BUILD/BROWSER GATE REQUIRED | Preserves one Laravel authentication/session/tenant/authorization/domain stack while giving Expense, Budget, reporting and later operational project/contract screens a purpose-built server-rendered UI. Livewire owns server state and Actions, Blade markup, Preline visual behavior, Alpine only local transient state, and Chart.js only server-calculated presentation payloads. |
 
 ## Executable dependency gate
 

@@ -24,3 +24,5 @@
 | T001-024 | `composer verify && composer test:browser-matrix` |
 | T001-025 | `php artisan schedule:list && php artisan test tests/Feature/Scheduler/SchedulerRegistrationTest.php` |
 | T001-026–027 | `php artisan test tests/Feature/Audit/AuditViewAuthorizationTest.php tests/Feature/Audit/AuditViewMinimizationTest.php tests/Livewire/Audit/AuditLogPageTest.php` |
+| T001-028 | `php -l tests/Browser/Shell/OperationalShellSmokeTest.php && php artisan test tests/Architecture/FrontendStackContractTest.php tests/Livewire/Shell/OperationalShellTest.php` |
+| T001-029 | `npm ci && npm run build && php artisan test tests/Architecture/FrontendStackContractTest.php tests/Livewire/Shell/OperationalShellTest.php && php artisan dusk tests/Browser/Shell/OperationalShellSmokeTest.php` |

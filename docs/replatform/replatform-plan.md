@@ -7,7 +7,7 @@ Product decisions: Q-001–Q-041, PD-REV-001, PD-BUD-001, PD-GEN-001, PD-SET-001
 
 ## 1. Obiettivo
 
-Implementare Master Plan IT come modular monolith Laravel 13/Filament 5, multi-tenant in un solo database, con:
+Implementare Master Plan IT come modular monolith Laravel 13, multi-tenant in un solo database, con Filament 5 confinato all'amministrazione accettata e stack operativo ADR-035 Blade/Livewire/Alpine/Tailwind/Preline:
 
 - una sola sorgente economica corrente: Expense e righe correnti/non eliminate;
 - revision history operativa separata;
@@ -27,7 +27,8 @@ Implementare Master Plan IT come modular monolith Laravel 13/Filament 5, multi-t
 - MySQL 8.4.10 LTS;
 - Filament 5.7.3;
 - Livewire 4.3.3;
-- Tailwind fornito dal toolchain Filament;
+- Blade e Alpine per markup/stato locale operativo;
+- Tailwind CSS 4 + Preline UI obbligatorio per le superfici tenant-facing, bloccati e compilati da Vite attraverso T001-028/T001-029;
 - Chart.js 4.x bloccato dal lock frontend;
 - Pest + Larastan/PHPStan + Pint + Dusk limitato;
 - `spatie/laravel-permission` 8.3.0;
@@ -148,9 +149,9 @@ One use case, explicit typed input, policy/tenant/invariant checks, one document
 
 Reusable tenant-scoped read datasets. They never mutate and never bypass permission/scope. Reporting queries return DTOs, not Eloquent models as public contracts.
 
-### Filament/Livewire
+### Filament / operational Livewire
 
-Collect/validate UI input, authorize, call Actions/Queries, render returned state. No formulas or persistence orchestration.
+Filament raccoglie/renderizza le superfici di autenticazione e amministrazione approvate. Nelle superfici operative Livewire possiede stato server, validazione, authorization, caricamento e invocazione Actions/Queries; Blade il markup; Preline i comportamenti visuali documentati; Alpine solo stato locale transitorio; Chart.js solo payload di presentazione server-calcolati. Nessuno possiede formule o orchestration di persistenza. Dopo morph/navigation Livewire, Preline viene reinizializzato in modo idempotente e le risorse JavaScript-owned vengono distrutte prima della ricreazione.
 
 ### Packages
 
@@ -285,12 +286,13 @@ No direct production Frappe DB connection, placeholder data or silent row loss.
 |---|---|---|---|
 | P0 | scaffold/runtime/Sail/test/CI | none | dependency lock + static suite |
 | P1 | tenants/users/context/RBAC/settings/audit shell | P0 | cross-tenant and permission suite |
-| P2 | years/vendors/cost centers/attachments/revision infrastructure | P1 | lifecycle/tree/restore tests |
-| P3 | Money + Expense aggregate + Actual confirmation/revisions | P2 | complete accounting core |
-| P4 | projects/contracts/terms/generation/notifications | P3 | generation matrix |
-| P5 | economic kernel + dashboard/current Budget | P3/P4 | parity and performance profile |
-| P6 | scenarios/BudgetVersion/comparisons/print/CSV/XLSX | P5 | immutability/output parity |
-| P7 | migration/tenant portability/backup/deployment | P1–P6 | dry-run/restore/deployment rehearsal |
+| P2 / Slice 0 | operational UI foundation; years/vendors/cost centers and minimum shared revision prerequisites | P1 | Preline lock/build/lifecycle, operational shell and browser smoke |
+| P3 / Slice 1 | Money + manual Expense register/create/edit and current Expense query | P2 | usable authorized tenant-facing Expense flow |
+| P4 / Slice 2 | minimum pure economic engine + current Budget filters/KPI/table/Chart.js | P3 | one-dataset parity and browser lifecycle |
+| P5 / Slice 3 | responsive/keyboard/focus/loading/error/direct-route/isolation/performance hardening; then attachments and remaining Expense lifecycle | P4 | vertical-slice checkpoint |
+| P6 | projects/contracts/terms/generation/notifications and post-Feature-004 project-stage query enrichment | P5 | generation matrix and no-new-economic-source parity |
+| P7 | scenarios/BudgetVersion/comparisons/print/CSV/XLSX | P4 plus exact feature prerequisites | immutability/output parity |
+| P8 | migration/tenant portability/backup/deployment | P1–P7 | dry-run/restore/deployment rehearsal |
 
 `/speckit.tasks` must decompose these phases by user story and exact symbols; this table is not an executable task list.
 
@@ -313,7 +315,7 @@ They block cutover and exact deployment/report parity, not the approved architec
 - persistent current Budget totals;
 - revision/audit tables queried as current;
 - generic repositories, CQRS, event sourcing, internal APIs;
-- additional UI kits;
+- UI kits outside the approved Filament-administration / Preline-operational boundary;
 - server PDF dependency at launch;
 - XLSX import;
 - implicit database reset;

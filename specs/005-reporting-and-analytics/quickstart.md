@@ -4,7 +4,7 @@ Future commands; none were executed during planning.
 
 ## Fixture
 
-Seed two tenants. In tenant A create 10,000 current rows covering all types, confirmation states, project stages, Extra and Plafond cases; include deleted/revision/scenario/version rows that must be excluded. Create manual total-only/partial/full BudgetVersion drafts.
+Seed two tenants. The Slice 2 fixture starts with current manual Estimate/Quote/Actual rows, Net/VAT/Gross, Extra and Plafond cases plus deleted/revision rows that must be excluded; it does not require Feature 004, scenarios or BudgetVersion. T005-026 adds a representative manual-Expense performance fixture. After T004-005, T005-027 adds project-stage cases. The later full-feature fixture reaches 10,000 rows and adds scenario/version exclusions plus manual total-only/partial/full BudgetVersion drafts.
 
 ## Focused tests
 
@@ -18,8 +18,8 @@ Seed two tenants. In tenant A create 10,000 current rows covering all types, con
 
 ## Acceptance path
 
-1. Open dashboard/current Budget and verify one economic query result supplies KPI/table/chart.
-2. Verify project buckets, Actual state and Plafond reconciliation.
+1. Enter the authorized tenant, create/edit a manual Expense, open current Budget and verify one economic query result supplies KPI/table/chart.
+2. Verify independent Estimate/Quote/Actual, Net/VAT/Gross and Plafond reconciliation without Feature 004; verify project buckets later through T005-027.
 3. Switch tenant official Net/Gross basis without changing stored components.
 4. Publish a current snapshot during a concurrent Expense update and verify one consistent snapshot.
 5. Publish manual total-only/partial version and verify missing dimensions are unavailable.
@@ -33,7 +33,7 @@ Seed two tenants. In tenant A create 10,000 current rows covering all types, con
 Browser focus:
 
 ```bash
-./vendor/bin/sail artisan dusk --filter=EconomicReportBrowserTest
+./vendor/bin/sail artisan dusk tests/Browser/Reporting/ExpenseBudgetVerticalSliceTest.php
 ```
 
 ## Performance evidence

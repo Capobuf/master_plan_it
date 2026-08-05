@@ -3,7 +3,7 @@
 Status: `CLARIFIED AND APPROVED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
 Logical owner: Product Owner with domain approval  
 Actor: tenant user with explicit permission  
-Dependencies: Feature 003, Feature 004 and Feature 007  
+Dependencies: Feature 003 and Feature 007 for the current manual-Expense Budget; Feature 004 only for later project-stage enrichment and generation-aware fixtures
 Additional decisions: Q-034, Q-036, Q-038, Q-040
 
 ## Problem

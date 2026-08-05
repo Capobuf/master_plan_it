@@ -108,6 +108,7 @@ The platform initializes audit retention to 24 months and accepts only integer v
 | FR-001-019 | Reinforced confirmation shall protect tenant deactivation, migration apply, restore, lowering audit retention, and equivalent high-risk actions; audit-retention reduction shall show a generic possible-deletion warning without requiring a cutoff-date or eligible-count preview. | AC-001-07 |
 | FR-001-020 | One installation-wide `audit_retention_months` platform setting shall accept integer values from 1 through 120, default to 24, and be writable only by Administrator. | AC-001-09 |
 | FR-001-021 | Audit retention shall use the current configured period at command execution; increasing the period shall not recreate removed events. | AC-001-06, AC-001-09 |
+| FR-001-022 | Authenticated tenant-facing operational screens shall share the existing session, tenant context and authorization while using the ADR-035 Blade/Livewire/Alpine/Tailwind/Preline stack; frontend dependencies are locked and built by Vite with no runtime CDN. | AC-001-02, AC-001-08 |
 
 ## Non-functional requirements
 
@@ -131,6 +132,7 @@ The platform initializes audit retention to 24 months and accepts only integer v
 | INV-PLT-005 | Tenant role management cannot grant protected platform or invariant-bypass abilities. | Authorization | TEST-001-005 |
 | INV-PLT-006 | Passwords and secrets never enter audit/revision/export/notification data. | DomainConflict | TEST-001-006 |
 | INV-PLT-007 | Only Administrator changes audit retention, and retention never removes current business or version data. | Authorization/DomainConflict | TEST-001-007 |
+| INV-PLT-008 | Livewire DOM changes reinitialize Preline idempotently; Alpine never duplicates server or Preline state; Chart.js instances are destroyed/recreated from server-calculated payloads and no browser layer calculates authoritative economics. | DomainConflict | TEST-001-009 |
 | INV-CTX-001 | Missing/unauthorized tenant context fails closed. | Authorization/NotFound-safe denial | TEST-001-008 |
 
 ## Out of scope

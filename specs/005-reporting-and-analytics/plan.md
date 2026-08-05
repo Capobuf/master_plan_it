@@ -1,7 +1,7 @@
 # Implementation plan — Feature 005 Reporting, BudgetVersion and analytics
 
 Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
-Dependencies: Features 001–004 and 007; shared economic kernel
+Dependencies: Features 001, 003 and 007 for the manual-Expense current Budget; Feature 004 only for later project-stage enrichment; shared economic kernel
 
 ## Summary
 
@@ -27,7 +27,7 @@ Shared Money/VAT/allocation services are reused, not copied.
 
 - `AnnualBudget` context model and migration;
 - `TenantDashboardQuery` composes one economic dataset plus non-economic alerts;
-- `CurrentBudgetPage` and `EconomicReportPage` Filament Pages;
+- operational Livewire `CurrentBudgetPage` and `EconomicReportPage` rendered by Blade/Preline within the shared tenant layout;
 - `EconomicReportFilterData` and typed grouping/order enums;
 - Chart.js adapter that renders server-calculated number copies and destroys/recreates charts on Livewire lifecycle.
 
@@ -50,7 +50,7 @@ Shared Money/VAT/allocation services are reused, not copied.
 - `EconomicDatasetCsvExporter` using incremental writes to a request-scoped private temporary artifact;
 - `EconomicDatasetXlsxExporter` using OpenSpout 4.32 writer-only;
 - dedicated `resources/views/reports/economic-print.blade.php` and print CSS;
-- export/print controllers or Filament Actions accepting the same typed dataset request.
+- export/print controllers and operational Livewire interactions accepting the same typed dataset request.
 
 No `ReportPdfRenderer` interface at launch because there is no implementation or server-PDF requirement.
 
@@ -151,14 +151,12 @@ Dusk covers chart lifecycle, explicit scope action, browser print smoke, keyboar
 
 ## Sequence
 
-1. economic DTOs/engine pure tests;
-2. current query integration/index benchmark;
-3. annual Budget context and current pages/dashboard;
-4. scenarios;
-5. BudgetVersion schema/Actions/checksum;
-6. source resolver/comparison;
-7. print/CSV/XLSX adapters;
-8. parity/performance/tenant/browser gates.
+1. Slice 2 pure economic DTO/engine tests over manual Expense inputs, then the current manual-Expense query and indexes;
+2. operational current Budget filters/KPI/table/Chart.js using exactly that dataset, without AnnualBudget/BudgetVersion or Feature 004 as prerequisites;
+3. Slice 3 parity/authorization/isolation/responsive/keyboard/focus/loading/error/browser and representative-performance hardening;
+4. Feature 004 project-stage query enrichment without creating a new monetary source;
+5. scenarios and BudgetVersion schema/Actions/checksum;
+6. source resolver/comparison, then print/CSV/XLSX adapters and their full gates.
 
 ## Post-design check
 

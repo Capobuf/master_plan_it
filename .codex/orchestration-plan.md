@@ -1,7 +1,7 @@
 # Implementation orchestration plan
 
-Status: ACTIVE — coordinator-owned; no commits, pushes, branches or PRs authorized.
-Baseline date: 2026-08-04 (Europe/Rome).
+Status: ACTIVE — 2026-08-05 vertical-slice remediation recorded; coordinator-owned; no commits, pushes, branches or PRs authorized.
+Baseline date: 2026-08-05 (Europe/Rome).
 
 ## Verified baseline
 
@@ -23,6 +23,8 @@ The current audit rejected the historical all-PASS claim. Before code work, the 
 
 All 153 implementation tasks were unchecked at baseline: Feature 001 T001-001–T001-027 (27), Feature 002 T002-001–T002-016 (16), Feature 003 T003-001–T003-024 (24), Feature 004 T004-001–T004-021 (21), Feature 005 T005-001–T005-025 (25), Feature 006 T006-001–T006-018 (18), Feature 007 T007-001–T007-022 (22). A checkbox may change only after coordinator diff review and the exact registered validation succeeds.
 
+That sentence is retained as historical baseline evidence. Rolling work added T002-017 and this remediation adds T001-028/T001-029 plus T005-026/T005-027. The live graph is 158 tasks by feature `29/17/24/21/27/18/22`; current checkboxes remain authoritative.
+
 ## Waves and dependency order
 
 | Wave | Work packages | Parallel rule | Exit gate |
@@ -32,17 +34,20 @@ All 153 implementation tasks were unchecked at baseline: Feature 001 T001-001–
 | 3 | T001-004 development/test contract; T001-005 platform persistence | parallel after Wave 2, disjoint quality/test vs migration/model write sets | static gate; platform schema gate |
 | 4 | T001-006 package authorization, then T007-001–004 and T007-012 tenant/policy foundation | sequential where permission seeder, context, provider and middleware files are shared | catalogue, tenancy, presentation, policy and architecture tests |
 | 5 | T001-007–009 authentication/context; T007-005–010 and T007-019–022 tenant lifecycle/RBAC/settings | dependency ordered; AdminPanel/Auth provider and permission seeder remain single-writer | auth/session, tenant lifecycle, RBAC and setting tests |
-| 6 | T002-001–016 master data/revisions and T003-001–002 Money kernel | only independent Money tests/code may run beside master-data packages | feature-focused suites and T002 verification |
-| 7 | T003-003–024 Expense/attachments | sequential aggregate/action packages; test-only `[P]` packages may precede their sole writer | accounting, expense, revision and private attachment gates |
-| 8 | T004-001–021 contracts/projects | dependency ordered; scheduler ownership stays pending until terminal implementation | contract/project/generation tests and verification |
-| 9 | T005-001–025 reporting/budgets/output | pure economic kernel before persistence/output; performance evidence remains `[VER]` | parity, scope, output, browser and target-host gates |
-| 10 | T006-001–018 migration/portability/backup/deployment | import and deployment foundations may separate; backup package waits for clarified cadence/command | dry-run/apply/round-trip/restore/deployment/cutover evidence |
-| 11 | remaining T001-010–027 and T007-011/013/018 integration/final gates | shared shell/provider/scheduler files strictly sequential | all feature verification registers pass |
-| 12 | Spec Kit converge, residual task append/implementation, full regression | no parallel writers during final convergence | zero demonstrable spec/code gaps and clean final audit |
+| 6 | complete only exact accepted prerequisites for T001-028 and the manual Expense selectors/Policies | shared provider/permission/route files remain single-writer | prerequisites' registered gates |
+| 7 / Slice 0 | T001-028 → T001-029 operational frontend contract/lock/lifecycle/layout/nav | frontend lock/routes/shared shell have one writer; Terra medium implementation, Sol medium visual review only when needed | build + focused architecture/Livewire + real browser smoke |
+| 8 / Slice 1 | T003-007–009 register and T003-010–012 manual create/edit | query and Action work may separate only with disjoint paths; UI follows T001-029 | authorized usable manual Expense path |
+| 9 / Slice 2 | T005-001–004 → T005-006–008 current Budget | no Feature 004 or AnnualBudget prerequisite; Sol high reviews economic parity | kernel/query/page/chart parity and browser lifecycle |
+| 10 / Slice 3 | T005-026 bounded end-to-end hardening | one writer for shared Expense/Budget UI and chart paths | direct-route/isolation/loading/error/keyboard/responsive/performance checkpoint |
+| 11 | attachments/remaining Expense lifecycle, then T004-001–021 and T005-027 | Feature 004 follows the usable slice; shared ContractShow writers serialize | attachment and generation gates; project-stage query enrichment |
+| 12 | BudgetVersion/scenarios/output, then T006 operations and final T007 gates | dependency ordered; no full-graph invocation | feature verification and cutover evidence |
+| 13 | Spec Kit converge, residual task append/implementation, full regression | no parallel writers during final convergence | zero demonstrable spec/code gaps and clean final audit |
 
 The exact task-level graph remains the `depends:` field in the seven `tasks.md` files. No wave overrides it.
 
-## Active Wave 5 work packages
+## Historical/ongoing pre-remediation Wave 5 work packages
+
+This table preserves prior execution evidence. It does not override the 2026-08-05 Slice 0–3 order or the stable model/review rules in the development contract; no new delegation may be inferred from its older broad Sol-review annotations.
 
 | Package | Agent | Write set | Forbidden writes | Depends / ordering | Verification and acceptance |
 |---|---|---|---|---|---|
@@ -74,13 +79,19 @@ WP5-TENANT-TEST and WP5-RBAC-TEST may write concurrently because their paths are
 
 This Wave 6 test-first package starts early because both dependencies are already accepted and its write set is disjoint. Its T002-002 production writer starts only after coordinator acceptance of the RED contract.
 
-Rolling analysis added T002-017 after the independent version-smoke review proved that no production task owned the locked package configuration, published schema or direct-restore boundary. The current task inventory is therefore 154; the 153-task figure above remains the verified historical baseline.
+Rolling analysis added T002-017 after the independent version-smoke review proved that no production task owned the locked package configuration, published schema or direct-restore boundary. The inventory at that historical point was therefore 154; the 153-task figure above remains the verified historical baseline.
 
 ## Agent work-package contract
 
-Each implementation agent receives one objective, exact task IDs, consulted Spec Kit artifacts, allowed write paths, forbidden paths, exact validation command and acceptance condition. Default bounded implementation packages use `gpt-5.6-terra` with high reasoning; cross-cutting/security/architecture packages use `gpt-5.6-sol` with high reasoning. Exploration uses Terra/medium read-only; Spec Kit and test review use Sol/high read-only.
+The single authoritative model/reasoning, spawn, parallelism, context-packet, review, reopen and token-control matrix is `docs/replatform/development-and-test-contract.md#agent-orchestration-and-model-selection-contract`. This plan only records concrete packages and spawns. Every return states assigned task, consulted artifacts, analysis, files read/changed, modifications, commands and actual results, avoided assumptions, risks, incomplete items and out-of-scope changes. Agents never create commits; the coordinator alone integrates, resolves conflicts, updates checkboxes and declares completion.
 
-Every return must state: assigned task, artifacts consulted, analysis, files read, files changed, modifications, commands, tests, actual results, avoided assumptions/doubts, residual risks, incomplete items and any out-of-scope changes. Agents may not edit specs, registries, this plan, dependencies outside the assigned task, or create commits. The coordinator alone integrates, resolves conflicts, updates checkboxes and declares completion.
+## 2026-08-05 remediation spawn ledger
+
+| Timestamp | Work package | Scope / model rationale | Mode and path boundary | Commands / result / findings | Coordinator decision / token control |
+|---|---|---|---|---|---|
+| 2026-08-05T13:24:38+02:00 | WP-REM-FRONTEND-AUDIT | Frontend dependency, version, Vite, Preline/Livewire lifecycle and licensing audit; GPT-5.6 Terra medium because this was bounded ordinary frontend research | read-only; read package manifests/locks, CSS/JS/Vite, provider/shell and primary frontend documentation; allowed writes: none; forbidden writes: entire repository | npm metadata plus repository searches; verified Preline absent, current pins Chart.js 4.5.1/Tailwind 4.1.17/Vite 6.4.3, proposed gated Preline 4.2.0/Tailwind 4.2.4/forms 0.5.11, lifecycle/license risks | accepted as technical input to ADR-035/T001-028/T001-029; ledger timestamp is recording time; no second frontend audit and no invented token count |
+| 2026-08-05T13:24:38+02:00 | WP-REM-GRAPH-AUDIT | Independent cross-artifact/task-graph audit; GPT-5.6 Sol high because it covered normative consistency, economic dependencies and historical checkboxes | read-only cross-artifact auditor; read constitution, integrated docs/registries, Features 001/003/004/005 and orchestration; allowed writes: none; forbidden writes: entire repository | prerequisite/status/rg plus graph scripts; baseline 154 tasks, 0 duplicate IDs/missing deps/cycles, 154/154 command/readiness; found Preline bans, false Feature 004 and attachment blockers, Filament operational ownership and duplicate row-editor owner | findings applied at source; four new IDs only; historical task evidence preserved; ledger timestamp is recording time; global reread delegated once to reduce coordinator context duplication |
+| 2026-08-05T13:42:14+02:00 | WP-REM-FINAL-ANALYZE | Independent final cross-artifact analysis of the remediated Slice 0–3; GPT-5.6 Sol high because it audited normative consistency, exact ownership and dependency closure | read-only final reviewer; read amended authoritative artifacts, task/command/readiness/path registries and bounded context packet; allowed writes: none; forbidden writes: entire repository | 158 unique tasks `29/17/24/21/27/18/22`, 43 `[P]`, 158/158 command/readiness, 179/179 explicit functional-requirement coverage, 0 duplicates/missing dependencies/cycles; final findings CRITICAL 0, HIGH 0, MEDIUM 0, LOW 0 | GO for manual Expense → EconomicDataset/EconomicEngine → current Budget; T005-026 has no Feature 004 ancestor; findings corrected at source before verdict; ledger timestamp is recording time; no invented token count |
 
 ## Package controls
 
@@ -199,3 +210,4 @@ Progress from focused PHPUnit/architecture/accounting/browser checks to Composer
 - 2026-08-05: T002-006 accepted after coordinator implementation and replay. `BeginRevisionBatch` and `LinkVersionToRevisionBatch` implement the reusable revision-batch primitives (persisted actor/context anti-spoof, same-tenant root verification, closed operation, UUID correlation, audit on begin, restrictive same-tenant version linking and unique sequence), `RevisionHistoryQuery` returns a tenant-safe readonly `RevisionHistoryRow` compare DTO, and `RevisionPolicy` denies direct restore while permitting same-tenant view. Focused integration gate plus `WriteRollbackCoverageTest` passed 13/13 (531 assertions) with the expected write count raised to 17; Feature 002 master-data/revisions plus Expense schema regressions passed 102/102 (1,072). Pint and host PHPStan pass.
 - 2026-08-05: T003-005 accepted after coordinator implementation and replay. Expense and ExpenseRow now use Overtrue SNAPSHOT versioning with exact business-field allowlists; `ExpenseRevisionSnapshot` is a final readonly typed DTO; header/row versions link to one shared revision batch with distinct ordered items; direct package restore is denied with `REVISION_RESTORE_INVALID`; and payload/technical flags never enter version or audit metadata. The `ExpenseFactory` was corrected to derive planning year/cost center from the same tenant. Focused versioning integration passed 5/5 (26 assertions); Expense schema plus Feature 002 master-data/revision regressions passed 96/96 (1,015). Pint and host PHPStan pass.
 - 2026-08-05: T001-012 and T003-003 test-first contracts verified GREEN after their sole production writers (T001-013/T001-014 and T003-004) were already accepted. Coordinator reran the exact registered commands on Sail/MySQL. T001-012 exact identity integration command passed 9/9 (120 assertions); T003-003 exact schema command passed 74/74 (637 assertions). Both checkboxes updated to [X] after coordinator diff review confirmed no out-of-scope change and the working tree contained only the two checkbox edits plus this log entry.
+- 2026-08-05: ADR-035/frontend and manual Expense→current Budget documentation remediation passed the independent final analyze gate with 0 CRITICAL, 0 HIGH, 0 MEDIUM and 0 LOW findings. The live graph has 158 unique tasks, 158/158 command/readiness coverage, no missing dependency or cycle, and T005-026 has no Feature 004 ancestor. This is documentation evidence only; T001-028/T001-029 and all subsequent application/browser gates remain unexecuted and unchecked.

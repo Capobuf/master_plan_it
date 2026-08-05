@@ -200,3 +200,29 @@ Exact files and symbols are executable only through the current feature-owned `/
 - GitHub build artifact attestations: `https://docs.github.com/en/actions/how-tos/secure-your-work/use-artifact-attestations/use-artifact-attestations`.
 
 These references support the framework/tool capabilities. The non-destructive persistent test-database rule and exact quality layering are project decisions.
+
+## Agent orchestration and model-selection contract
+
+This is the single authoritative matrix for delegated work. `.codex/orchestration-plan.md` records concrete spawns and work packages but references, rather than duplicates, these rules.
+
+| Model / reasoning | Required use | Not the default for |
+|---|---|---|
+| GPT-5.6 Sol / high | coordination; Spec Kit plan/tasks/analyze; cross-artifact and architecture conflicts; tenancy, authorization, security, Money, economic invariants, revisioning, destructive operations, critical migration; final vertical-slice and economic-dataset-parity review | mechanical edits or repetitive markup |
+| GPT-5.6 Sol / medium | first visual reference screen, UX architecture, Budget visual review, complex frontend design judgment without critical invariants | ordinary implementation |
+| GPT-5.6 Terra / high | bounded domain Actions, persistence, migrations, economic queries, complex authorized Livewire state, Feature/integration tests and non-mechanical local refactors | mechanical work |
+| GPT-5.6 Terra / medium | default implementation for Blade, Preline, Tailwind, ordinary Livewire, Chart.js wiring, simple CRUD, ordinary Livewire tests, responsive frontend and bounded bugs | critical Money/tenancy/security decisions |
+| GPT-5.6 Luna / medium or low | mechanical formatting, repetitive fixtures, UI copy, translation, file lists, simple scans and non-normative repetitive documentation | production domain PHP, authorization, tenancy, Money, migrations, complex Livewire state, non-trivial application JavaScript or technical decisions |
+
+`xhigh` and `max` are forbidden by default. They require a documented failed `high` attempt, evidence that reasoning rather than an incomplete contract caused the failure, coordinator rationale, and Product Owner approval when materially more costly. Reasoning is never raised automatically.
+
+No model fallback is silent. Record requested and available models plus risk before using only these upward substitutions: Luna → Terra medium; Terra medium → Terra high; Terra high → Sol high. If Sol high is required for security, Money, tenancy or normative analysis and unavailable, stop that work package.
+
+Spawn only for a bounded independent analysis, a separable write set, real parallelism, proportionate independent review, or context reduction. Do not spawn when delegation costs more than the task, repeats resolved work, needs unbounded repository context, overlaps another writer, repeats a completed review, or is purely administrative. Every spawn receives a context packet containing work-package objective, branch/verified HEAD, task/requirement/invariant IDs, decisions, required reads, allowed and forbidden paths, exact command, expected result, known risks and report format.
+
+Future implementation allows at most two concurrent writers with completely disjoint write sets and one additional read-only reviewer. Composer files, the frontend lock, providers, routes, shared middleware/fixtures, rollback map, permission catalogue, task registries and Spec Kit artifacts each have at most one writer at a time. The coordinator alone changes task checkboxes and normative registries after diff review and the exact registered validation.
+
+One independent review is the default. Sol high review is mandatory for Money, tenancy, authorization, security, destructive operations, revision restore, contract-generation idempotency and economic-dataset parity. Ordinary UI uses Terra medium implementation, coordinator review and focused Livewire/browser tests. Sol medium visual review is reserved for the first reference screen, Budget, the operational global layout or material interaction-design problems. A second independent reviewer is allowed only after a material first-review finding and for a precise critical remediation.
+
+A task may pass through at most two implementation-review cycles. After two reopenings, stop, inspect and correct the requirement/plan/task source, run `/speckit.analyze`, and only then issue a new work package; never run a third implementation against the unchanged contract.
+
+Context and token control are outcome-based: one objective and one visible result per work package; one to three tightly coupled tasks per implementation invocation; only necessary files; reuse current recorded research; no duplicate review without cause; medium reasoning for ordinary frontend; focused suite during a task, layer suite at checkpoints, full suite only at declared gates; stop on incomplete contracts; never modify tests merely to chase code; do not rerun global analysis after every file. Every spawn is appended to the orchestration ledger with timestamp, work-package ID, scope, chosen model/reasoning and rationale, mode, read/allowed/forbidden paths, commands/results, findings, coordinator decision and any relevant token-control decision without invented token counts.

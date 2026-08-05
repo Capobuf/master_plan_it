@@ -6,6 +6,8 @@ Future commands; none were executed during planning.
 
 Create two tenants, years, cost centers, vendors and a Plafond. In tenant A create independent Estimate, Quote, Actual ToConfirm/Confirmed, negative Actual, Extra and Plafond-funded rows. Include one generated row, Expense-level and row-level attachments, multiple file-set revisions and deleted rows. Set an explicit small test quota while retaining the production-default assertion of 2 GiB.
 
+For the first vertical-slice checkpoint, stop before attachment/generated/history fixtures: use the existing tenant context plus planning year/vendor/cost center and create only manual Estimate, Quote and Actual rows. Attachment-capable revision verification starts only after T003-024.
+
 ## Pure accounting
 
 ```bash
@@ -36,10 +38,10 @@ Create two tenants, years, cost centers, vendors and a Plafond. In tenant A crea
 9. Submit stale lock version and receive `STALE_VERSION` without partial change.
 10. Attempt other-tenant vendor/Plafond/project/contract/attachment and receive safe denial.
 
-Run focused Dusk only for browser-owned row editor behavior:
+After T001-029, run focused Dusk only for browser-owned operational row-editor behavior:
 
 ```bash
-./vendor/bin/sail artisan dusk --filter=ExpenseEditorTest
+./vendor/bin/sail artisan dusk tests/Browser/Reporting/ExpenseBudgetVerticalSliceTest.php
 ```
 
 ## Cleanup

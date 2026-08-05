@@ -1,7 +1,7 @@
 # Ricerca tecnica per `/speckit.plan`
 
 Status: `TECHNICAL DECISIONS COMPLETE — EXECUTABLE LOCK VERIFICATION PENDING IMPLEMENTATION`  
-Research date: 2026-08-03  
+Research date: 2026-08-03; frontend amendment verified 2026-08-05
 Scope: runtime, database, UI, RBAC, revision history, backup, spreadsheet, print/PDF, storage and shared hosting  
 Authority: Constitution 5.0.0; `development-and-test-contract.md`; `versioning-permissions-and-operations-contract.md`
 
@@ -21,7 +21,10 @@ Le versioni sotto sono target esatti del piano. Il primo task di implementazione
 | MySQL | 8.4.10 | APPROVED | LTS corrente pubblicata 2026-06-16. Nessuna matrice 9.x al lancio: aggiungerla senza hosting/prodotto concreto aumenterebbe costi e superficie di test. |
 | Filament | 5.7.3 | APPROVED | Compatibile PHP ^8.2; componenti Filament bloccati alla stessa versione. |
 | Livewire | 4.3.3 | APPROVED | Compatibile Laravel 13; soddisfa il vincolo Filament ^4.1. |
-| Chart.js | 4.x bloccata dal lock frontend | APPROVED DIRECTION | Unica libreria chart. La patch esatta viene registrata dal lock frontend durante scaffold; nessuna seconda libreria. |
+| Alpine.js | 3.15.12 bundled by locked Livewire 4.3.3 artifact | APPROVED BOUNDARY | Version string verified in the installed Livewire distribution; only local transient state, no second Alpine instance without a demonstrated gate and no duplication of Livewire/Preline state. |
+| Tailwind CSS | 4.2.4 target T001-029; 4.1.17 corrente | APPROVED — LOCK GATE | CSS-first/Vite; l'upgrade resta non verificato finché T001-028/T001-029 non passano build e browser smoke. |
+| Preline UI | 4.2.0 | APPROVED MANDATORY — LOCK/LICENSE/LIFECYCLE GATE | Superfici operative tenant-facing; supporto dichiarato Tailwind 4.2.x, import locale Vite e reinit Livewire; licenza MIT + Preline UI Fair Use da registrare nel gate. |
+| Chart.js | 4.5.1 | APPROVED | Unica libreria chart applicativa, già bloccata dal lock corrente; nessuna importazione della dipendenza transitiva ApexCharts di Preline. |
 | RBAC | `spatie/laravel-permission` 8.3.0 | APPROVED | PHP ^8.3, Illuminate 12/13, MIT. Teams enabled prima delle migrations con `team_foreign_key = tenant_id`. |
 | Filament RBAC UI | `bezhansalleh/filament-shield` 4.3.1 | APPROVED | PHP 8.2/8.3, Filament 4/5, Illuminate 11/12/13 e Spatie Permission 6/7/8. Usa catalogue/policy generation, non decide invarianti. |
 | Model versions | `mansoor/filament-versionable` 5.1 + `overtrue/laravel-versionable` 6.0.0 | APPROVED WITH BOUNDARY | Compatibili Filament 5/Laravel 13/PHP 8.3, MIT. Strategia `SNAPSHOT`; la documentazione del plugin segnala bug reports per `DIFF`. Il restore UI del package non è autorità di dominio. |
@@ -171,7 +174,7 @@ Tabella `platform_settings` singleton con colonne tipizzate e `lock_version`. No
 
 ### Attachments
 
-La membership corrente degli allegati appartiene a Expense o ExpenseRow ed è tenant-scoped. Ogni revisione dell’aggregate Expense salva un manifesto completo ordinato; ogni voce del manifesto punta a una versione payload privata e immutabile con disk/path, nome originale, MIME rilevato, size e SHA-256. Un allegato invariato riusa la stessa versione payload e non consuma nuova quota. Ogni payload distinto non purgato conta una sola volta; i riferimenti dei manifesti non aggiungono consumo. La cancellazione corrente conserva le versioni storiche finché esiste l’Expense; la cancellazione permanente dell’Expense elimina tutti i payload collegati e lascia solo evidenza minimizzata senza bytes. Download e restore passano da controller/Actions autorizzati; logo report e relativo lifecycle restano separati.
+La membership corrente degli allegati appartiene a Expense o ExpenseRow ed è tenant-scoped. Prima di abilitare gli upload, T003-024 salva e verifica un manifesto vuoto completo per ogni revisione data-only creata dalla prima slice; dopo tale gate ogni revisione dell’aggregate Expense salva atomicamente un manifesto completo ordinato. Ogni voce punta a una versione payload privata e immutabile con disk/path, nome originale, MIME rilevato, size e SHA-256. Un allegato invariato riusa la stessa versione payload e non consuma nuova quota. Ogni payload distinto non purgato conta una sola volta; i riferimenti dei manifesti non aggiungono consumo. La cancellazione corrente conserva le versioni storiche finché esiste l’Expense; la cancellazione permanente dell’Expense elimina tutti i payload collegati e lascia solo evidenza minimizzata senza bytes. Download e restore passano da controller/Actions autorizzati; logo report e relativo lifecycle restano separati.
 
 ### Audit
 
@@ -186,7 +189,15 @@ Tabella `audit_events` con actor, tenant nullable, event type, subject, correlat
 - OpenSpout 5.x;
 - queue/Redis/WebSocket packages;
 - automatic backup restore packages;
-- additional UI kits oltre Filament/Tailwind.
+- UI kit ulteriori oltre lo stack approvato Filament (solo superfici amministrative) + Preline UI (superfici operative tenant-facing).
+
+## Frontend operativo tenant-facing — decisione 2026-08-05
+
+La decisione precedente che escludeva Preline è superseded da ADR-035. Il target da verificare e bloccare nel frontend lock è `preline` 4.2.0 con Tailwind CSS e `@tailwindcss/vite` 4.2.4 e, per i form Preline effettivamente usati, `@tailwindcss/forms` 0.5.11. Le versioni correnti del repository restano Chart.js 4.5.1, Tailwind 4.1.17 e Vite 6.4.3 finché T001-028/T001-029 non eseguono il lock/build gate: questa remediation non dichiara ancora compatibilità installata.
+
+L'integrazione target è locale e compilata da Vite, mai CDN: CSS Tailwind CSS-first con i source Preline, import JavaScript di Preline, e reinizializzazione idempotente di `HSStaticMethods.autoInit()` dopo navigazioni e morph/update Livewire. Ogni componente con risorse proprie deve distruggerle prima della sostituzione DOM; Chart.js mantiene un solo adapter `chart.js/auto`, distrugge l'istanza precedente e riceve esclusivamente valori già calcolati dal server. Alpine gestisce solo stato locale/transitorio non posseduto da Livewire o Preline.
+
+Preline 4.2.0 dichiara supporto a Tailwind 4.2.x ed è mantenuto; il package usa licenza duale MIT + Preline UI Fair Use License. T001-028 deve rendere esplicita l'accettazione/licensing applicabile prima del lock. La dipendenza transitiva ApexCharts di Preline non autorizza una seconda libreria chart: non deve essere importata o usata, e Chart.js resta l'unico chart adapter applicativo.
 
 ## Fonti primarie verificate
 
@@ -201,3 +212,8 @@ Tabella `audit_events` con actor, tenant nullable, event type, subject, correlat
 - Spatie Laravel Backup Packagist/docs;
 - OpenSpout Packagist;
 - Spatie Laravel PDF driver matrix.
+- Preline Livewire integration, changelog and license: `https://preline.co/docs/frameworks-livewire.html`, `https://preline.co/docs/changelog.html`, `https://preline.co/license.html`;
+- Tailwind CSS Vite installation: `https://tailwindcss.com/docs/installation/using-vite`;
+- Livewire JavaScript lifecycle and morph hooks: `https://livewire.laravel.com/docs/javascript`;
+- Alpine lifecycle: `https://alpinejs.dev/globals/alpine-data`;
+- Chart.js integration: `https://www.chartjs.org/docs/latest/getting-started/integration.html`.

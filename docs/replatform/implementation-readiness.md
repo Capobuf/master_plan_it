@@ -2,21 +2,21 @@
 
 Status: `IMPLEMENTATION IN PROGRESS ON CONSTITUTION 5.0.0; LIVE TASK CHECKBOXES ARE AUTHORITATIVE`
 
-Constitution 5.0.0, Q-001–Q-041 and the additional approved attachment, operational-setting and terminal-deletion decisions are encoded across the integrated architecture, physical models and Feature 001–007 artifacts. `speckit-analyze-2026-08-04-constitution-5.0.0.md` is a historical snapshot of its analyzed documentation tree. Implementation-time analysis has since corrected executable-contract and ownership gaps; the current artifacts, task checkboxes and `.codex/orchestration-plan.md` are the live evidence.
+Constitution 5.0.0, Q-001–Q-041 and the additional approved ADR-035 frontend, attachment, operational-setting and terminal-deletion decisions are encoded across the integrated architecture and Feature 001–007 artifacts. `speckit-analyze-2026-08-04-constitution-5.0.0.md` is a historical snapshot. The current artifacts, task checkboxes and `.codex/orchestration-plan.md` are live evidence; no Preline/application implementation is claimed by this documentation remediation.
 
 | Feature | Planned and tasked scope | Status |
 |---|---|---|
-| 001 Platform foundation | runtime/Sail/test/CI, auth, password operations, settings, audit view/retention, notification primitive, scheduler, release | IMPLEMENTATION IN PROGRESS |
+| 001 Platform foundation | runtime/Sail/test/CI, accepted Filament administration, auth, operational Preline foundation, settings/audit/notifications/release | IMPLEMENTATION IN PROGRESS; T001-028/T001-029 NOT STARTED |
 | 002 Master data | shared revisions, years, vendors, cost centers, lifecycle and restore | IMPLEMENTATION IN PROGRESS |
-| 003 Expense domain | Money/VAT/allocation, current aggregate, Actual confirmation, revisions, deletion and attachments | IMPLEMENTATION IN PROGRESS; MONEY CONTRACT REMEDIATION ACTIVE |
-| 004 Contracts/projects | lifecycle, terms, source keys, controlled sync, suppression/resume and renewal notifications | IMPLEMENTATION READY |
-| 005 Reporting/analytics | shared kernel, rolling Budget, scenarios, BudgetVersion, comparison, tenant-branded print/CSV/XLSX | IMPLEMENTATION READY |
+| 003 Expense domain | Money/VAT/allocation, manual register/create/edit first, then Actual confirmation/revisions/deletion/attachments | IMPLEMENTATION IN PROGRESS; SLICE 1 PLANNED |
+| 004 Contracts/projects | lifecycle, terms, source keys, controlled sync, suppression/resume and renewal notifications | POST-SLICE IMPLEMENTATION READY |
+| 005 Reporting/analytics | manual-Expense current kernel/Budget first; later project enrichment, scenarios, BudgetVersion, comparison and output | SLICE 2/3 READY AFTER EXACT PREREQUISITES |
 | 006 Migration/operations | staging/apply, portability, conditional backup and immutable deployment | IMPLEMENTATION READY; NOT CUTOVER READY |
 | 007 Tenancy/access | context, ownership concern, lifecycle, configurable RBAC, tenant branding and final isolation matrix | IMPLEMENTATION IN PROGRESS |
 
 ## Verified structural evidence
 
-- 154 current tasks across 35 user stories after rolling analysis added T002-017; the historical analysis snapshot contains 153;
+- 158 current tasks across 35 user stories after rolling analysis added T002-017 and the vertical-slice remediation added four tasks; the historical analysis snapshot contains 153;
 - 43 tasks marked `[P]` only after exact prerequisites;
 - `[FND]`, `[USn]` and `[VER]` classes with runtime behavior prohibited in `[VER]`;
 - task fields divided among four non-overlapping records;
@@ -31,13 +31,13 @@ Constitution 5.0.0, Q-001–Q-041 and the additional approved attachment, operat
 - T006-012 command restores both Composer files on resolution failure;
 - T006-017 has exact requirements, paths, command and verifiable OPEN/VERIFIED evidence rules.
 
-These structural claims were recalculated by the Constitution 5.0.0 integrated analysis. They are planning evidence only; runtime verification and current task status come from executed commands and the current checkboxes.
+These structural claims were recalculated for the live 158-task graph by the independent 2026-08-05 final analysis, which passed with 0 CRITICAL, 0 HIGH, 0 MEDIUM and 0 LOW findings. They are planning evidence only; runtime verification and current task status come from executed commands and the current checkboxes.
 
 ## Implementation entry conditions
 
 1. `/speckit.implement` is active under the dependency-ordered orchestration plan.
-2. Implementation proceeds through dependency-ordered, separately reviewed vertical slices.
-3. The initial Composer/frontend lock, Sail runtime and foundation gates have been executed; later packages still require their own exact gates.
+2. The independent documentation analysis gate for Slice 0–3 is PASS; implementation proceeds through dependency-ordered, separately reviewed vertical slices.
+3. The initial frontend lock/build exists, but Preline is absent. T001-028/T001-029 must execute the exact license/lock/build/Livewire/browser gates before operational UI implementation.
 4. A later normative documentation change invalidates this readiness result until re-analysis.
 
 ## Conditional package gate

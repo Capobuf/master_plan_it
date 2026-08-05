@@ -20,7 +20,7 @@ Tenant and authorization are resolved before query execution. User-supplied tena
 
 ## Current source
 
-Only current non-deleted Expense and ExpenseRow records. Project/contract/master data are read context. Operational versions, audit, deleted rows, generation exceptions, scenarios and BudgetVersion rows are excluded.
+Only current non-deleted Expense and ExpenseRow records. Manual rows without project/contract context are a complete valid current dataset and do not require Feature 004. Project/contract/master data are optional read context; T005-027 adds project-stage projection after Feature 004. Operational versions, audit, deleted rows, generation exceptions, scenarios and BudgetVersion rows are excluded.
 
 ## Output
 

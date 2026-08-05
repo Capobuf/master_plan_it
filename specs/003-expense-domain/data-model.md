@@ -73,7 +73,7 @@ Parent and row/Expense tenant must match. Allowed pairs are `.pdf`/`application/
 
 ### `attachment_revision_manifests`
 
-One row per aggregate revision batch records tenant, Expense, revision batch UUID, deterministic manifest checksum and timestamps. Ordered items capture parent kind/logical ID, attachment logical UUID, original name, MIME, bytes, SHA-256 and immutable payload-version ID. Every aggregate revision has a complete set, not a diff. Several manifest items or manifests may reference the same payload-version row when the attachment bytes are unchanged.
+One row per aggregate revision batch records tenant, Expense, revision batch UUID, deterministic manifest checksum and timestamps. Ordered items capture parent kind/logical ID, attachment logical UUID, original name, MIME, bytes, SHA-256 and immutable payload-version ID. T003-024 backfills a verified empty manifest row for every pre-capability data-only revision before enabling uploads; thereafter every aggregate revision writes its complete set, never a diff. Several manifest items or manifests may reference the same payload-version row when the attachment bytes are unchanged.
 
 ### `attachment_payload_versions`
 
