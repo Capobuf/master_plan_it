@@ -21,7 +21,7 @@ use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use Mockery;
-use Mockery\Expectation;
+use Mockery\ExpectationInterface;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -137,7 +137,7 @@ class PlatformIdentityIntegrationTest extends TestCase
         $auditCount = DB::table('audit_events')->count();
         $domainAction = Mockery::spy(app(ResetTenantUserPassword::class));
         $domainExpectation = $domainAction->shouldReceive('execute');
-        $this->assertInstanceOf(Expectation::class, $domainExpectation);
+        $this->assertInstanceOf(ExpectationInterface::class, $domainExpectation);
         $domainExpectation
             ->withArgs(fn (User $actor, TenantContext $selectedContext, User $record, string $submittedSecret, string $submittedCorrelationId): bool => $actor->is($administrator)
                 && $selectedContext === $context

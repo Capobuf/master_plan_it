@@ -3,7 +3,9 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Components\TenantContextIndicator;
+use App\Filament\Resources\Roles\RoleResource;
 use App\Filament\Resources\Tenants\TenantResource;
+use App\Filament\Resources\Users\UserResource;
 use App\Http\Controllers\Auth\LogoutController as ApplicationLogoutController;
 use App\Http\Middleware\ApplyTenantPresentationContext;
 use App\Http\Middleware\EnsureActiveUser;
@@ -61,6 +63,8 @@ final class AdminPanelProvider extends PanelProvider
             ])
             ->resources([
                 TenantResource::class,
+                UserResource::class,
+                RoleResource::class,
             ])
             ->middleware([
                 EncryptCookies::class,

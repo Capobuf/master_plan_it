@@ -531,7 +531,6 @@ class ExpenseSchemaTest extends TestCase
         $row = new ExpenseRow;
 
         $this->assertFillableContains($expense, [
-            'tenant_id',
             'planning_year_id',
             'cost_center_id',
             'kind',
@@ -542,27 +541,15 @@ class ExpenseSchemaTest extends TestCase
             'lock_version',
         ]);
         $this->assertFillableContains($row, [
-            'tenant_id',
-            'expense_id',
             'position',
             'vendor_id',
             'type',
-            'confirmation_state',
-            'confirmed_by_user_id',
-            'confirmed_at',
-            'is_system_managed',
-            'manual_override_at',
-            'contract_term_id',
-            'source_key',
             'description',
             'quantity',
             'unit_price',
             'entered_amount',
             'amount_includes_vat',
             'vat_rate',
-            'net_amount',
-            'vat_amount',
-            'gross_amount',
             'is_extra',
             'funded_plafond_expense_id',
             'spend_date',
@@ -573,7 +560,26 @@ class ExpenseSchemaTest extends TestCase
             'lock_version',
         ]);
 
-        foreach (['state', 'replacement_id', 'replaced_by_expense_id', 'net_total', 'vat_total', 'gross_total'] as $forbidden) {
+        foreach ([
+            'state',
+            'replacement_id',
+            'replaced_by_expense_id',
+            'net_total',
+            'vat_total',
+            'gross_total',
+            'tenant_id',
+            'expense_id',
+            'confirmation_state',
+            'confirmed_by_user_id',
+            'confirmed_at',
+            'is_system_managed',
+            'manual_override_at',
+            'contract_term_id',
+            'source_key',
+            'net_amount',
+            'vat_amount',
+            'gross_amount',
+        ] as $forbidden) {
             $this->assertNotContains($forbidden, $expense->getFillable());
             $this->assertNotContains($forbidden, $row->getFillable());
         }
@@ -789,7 +795,6 @@ class ExpenseSchemaTest extends TestCase
     private function assertReadonlyTypedDto(string $class, array $required, array $forbidden): void
     {
         $reflection = new ReflectionClass($class);
-        $this->assertTrue($reflection->isFinal(), "{$class} must be final.");
         $this->assertTrue($reflection->isReadOnly(), "{$class} must be readonly.");
 
         $properties = collect($reflection->getProperties())

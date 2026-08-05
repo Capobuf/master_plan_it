@@ -55,7 +55,11 @@ final class UserResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return app(UserPolicy::class)->viewAny(self::authenticatedActor())->allowed();
+        try {
+            return app(UserPolicy::class)->viewAny(self::authenticatedActor())->allowed();
+        } catch (AuthorizationException) {
+            return false;
+        }
     }
 
     public static function canCreate(): bool

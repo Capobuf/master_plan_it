@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Mockery;
-use Mockery\Expectation;
+use Mockery\ExpectationInterface;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger as MonologLogger;
 use Monolog\LogRecord;
@@ -87,12 +87,12 @@ class PasswordAdministrationTest extends TestCase
         $realHasher = app('hash');
         $hasherSpy = Mockery::spy($realHasher);
         $hashExpectation = $hasherSpy->shouldReceive('make');
-        $this->assertInstanceOf(Expectation::class, $hashExpectation);
+        $this->assertInstanceOf(ExpectationInterface::class, $hashExpectation);
         $hashExpectation->with($secret)->once()->passthru();
         Hash::swap($hasherSpy);
         $invalidationSpy = Mockery::spy(app(InvalidateUserSessions::class));
         $invalidationExpectation = $invalidationSpy->shouldReceive('execute');
-        $this->assertInstanceOf(Expectation::class, $invalidationExpectation);
+        $this->assertInstanceOf(ExpectationInterface::class, $invalidationExpectation);
         $invalidationExpectation
             ->withArgs(fn (User $user): bool => $user->is($target))
             ->once()

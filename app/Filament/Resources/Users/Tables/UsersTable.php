@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Users\Tables;
 
 use App\Domain\IdentityAccess\Actions\DeactivateTenantUser;
+use App\Filament\Resources\Users\Actions\ResetTenantUserPasswordAction;
 use App\Filament\Resources\Users\UserResource;
 use App\Models\User;
 use App\Policies\UserPolicy;
@@ -23,6 +24,7 @@ final class UsersTable
                 IconColumn::make('is_active')->boolean(),
             ])
             ->recordActions([
+                ResetTenantUserPasswordAction::make(),
                 Action::make('edit')
                     ->label('Edit')
                     ->authorize(fn (User $record): bool => UserResource::canEdit($record))

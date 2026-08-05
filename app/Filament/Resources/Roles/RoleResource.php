@@ -54,7 +54,11 @@ final class RoleResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return app(RolePolicy::class)->viewAny(self::authenticatedActor())->allowed();
+        try {
+            return app(RolePolicy::class)->viewAny(self::authenticatedActor())->allowed();
+        } catch (AuthorizationException) {
+            return false;
+        }
     }
 
     public static function canCreate(): bool

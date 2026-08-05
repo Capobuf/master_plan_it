@@ -2,7 +2,7 @@
 
 return [
     'schema' => 3,
-    'expectedDomainWriteCount' => 13,
+    'expectedDomainWriteCount' => 15,
     'writes' => [
         'app/Domain/Tenancy/Actions/EnterTenantContext.php' => [
             'actionClass' => 'App\\Domain\\Tenancy\\Actions\\EnterTenantContext',
@@ -182,6 +182,34 @@ return [
             ],
             'testFile' => 'tests/Feature/IdentityAccess/TenantUserMembershipTest.php',
             'testMethod' => 'test_deactivate_tenant_user_audit_failure_rolls_back_state_and_preserves_history',
+            'failureTrigger' => 'throw new ',
+            'failureExpectation' => 'expectException(',
+            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseMissing('],
+        ],
+        'app/Domain/IdentityAccess/Actions/InvalidateUserSessions.php' => [
+            'actionClass' => 'App\\Domain\\IdentityAccess\\Actions\\InvalidateUserSessions',
+            'actionReference' => 'InvalidateUserSessions::class',
+            'actionInvocation' => [
+                'mode' => 'assigned-container',
+                'variable' => '$action',
+                'method' => 'execute',
+            ],
+            'testFile' => 'tests/Feature/IdentityAccess/PasswordAdministrationTest.php',
+            'testMethod' => 'test_invalidate_user_sessions_write_failure_rolls_back_target_sessions_without_password_or_audit_mutation',
+            'failureTrigger' => 'throw new ',
+            'failureExpectation' => 'expectException(',
+            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseMissing(', 'assertDatabaseCount('],
+        ],
+        'app/Domain/IdentityAccess/Actions/ResetTenantUserPassword.php' => [
+            'actionClass' => 'App\\Domain\\IdentityAccess\\Actions\\ResetTenantUserPassword',
+            'actionReference' => 'ResetTenantUserPassword::class',
+            'actionInvocation' => [
+                'mode' => 'assigned-container',
+                'variable' => '$action',
+                'method' => 'execute',
+            ],
+            'testFile' => 'tests/Feature/IdentityAccess/PasswordAdministrationTest.php',
+            'testMethod' => 'test_reset_tenant_user_password_audit_failure_rolls_back_password_sessions_and_audit',
             'failureTrigger' => 'throw new ',
             'failureExpectation' => 'expectException(',
             'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseMissing('],
