@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Overtrue\LaravelVersionable\Versionable;
+use Overtrue\LaravelVersionable\VersionStrategy;
 
 #[Fillable([
     'planning_year_id',
@@ -24,7 +26,18 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class Expense extends Model
 {
     /** @use HasFactory<ExpenseFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Versionable;
+
+    /** @var list<string> */
+    protected array $versionable = [
+        'kind',
+        'title',
+        'notes',
+        'project_id',
+        'contract_id',
+    ];
+
+    protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
 
     /**
      * @return array<string, string>

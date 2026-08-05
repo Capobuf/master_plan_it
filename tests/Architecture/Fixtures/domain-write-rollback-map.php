@@ -2,7 +2,7 @@
 
 return [
     'schema' => 3,
-    'expectedDomainWriteCount' => 15,
+    'expectedDomainWriteCount' => 17,
     'writes' => [
         'app/Domain/Tenancy/Actions/EnterTenantContext.php' => [
             'actionClass' => 'App\\Domain\\Tenancy\\Actions\\EnterTenantContext',
@@ -213,6 +213,34 @@ return [
             'failureTrigger' => 'throw new ',
             'failureExpectation' => 'expectException(',
             'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseMissing('],
+        ],
+        'app/Domain/Revisions/Actions/BeginRevisionBatch.php' => [
+            'actionClass' => 'App\\Domain\\Revisions\\Actions\\BeginRevisionBatch',
+            'actionReference' => 'BeginRevisionBatch::class',
+            'actionInvocation' => [
+                'mode' => 'assigned-container',
+                'variable' => '$action',
+                'method' => 'execute',
+            ],
+            'testFile' => 'tests/Feature/Revisions/RevisionBatchIntegrationTest.php',
+            'testMethod' => 'test_begin_revision_batch_audit_failure_rolls_back_the_batch',
+            'failureTrigger' => 'throw new ',
+            'failureExpectation' => 'expectException(',
+            'rollbackAssertions' => ['assertDatabaseCount(', 'assertDatabaseMissing('],
+        ],
+        'app/Domain/Revisions/Actions/LinkVersionToRevisionBatch.php' => [
+            'actionClass' => 'App\\Domain\\Revisions\\Actions\\LinkVersionToRevisionBatch',
+            'actionReference' => 'LinkVersionToRevisionBatch::class',
+            'actionInvocation' => [
+                'mode' => 'assigned-container',
+                'variable' => '$action',
+                'method' => 'execute',
+            ],
+            'testFile' => 'tests/Feature/Revisions/RevisionBatchIntegrationTest.php',
+            'testMethod' => 'test_link_failure_rolls_back_without_an_item_or_partial_batch_mutation',
+            'failureTrigger' => 'throw new ',
+            'failureExpectation' => 'expectException(',
+            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseCount('],
         ],
     ],
 ];

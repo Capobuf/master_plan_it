@@ -10,6 +10,20 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class RevisionBatch extends Model
 {
+    /** @var list<string> */
+    protected $fillable = [
+        'tenant_id',
+        'actor_user_id',
+        'root_subject_type',
+        'root_subject_id',
+        'operation',
+        'reason',
+        'correlation_id',
+        'restored_from_batch_id',
+        'restored_from_version_id',
+        'occurred_at',
+    ];
+
     /**
      * @return array<string, string>
      */

@@ -8,6 +8,15 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class RevisionBatchItem extends Model
 {
+    /** @var list<string> */
+    protected $fillable = [
+        'revision_batch_id',
+        'version_id',
+        'versionable_type',
+        'versionable_id',
+        'sequence',
+    ];
+
     /**
      * @return array<string, string>
      */

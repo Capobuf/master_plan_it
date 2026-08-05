@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Overtrue\LaravelVersionable\Versionable;
+use Overtrue\LaravelVersionable\VersionStrategy;
 
 #[Fillable([
     'position',
@@ -34,7 +36,32 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 class ExpenseRow extends Model
 {
     /** @use HasFactory<ExpenseRowFactory> */
-    use HasFactory, SoftDeletes;
+    use HasFactory, SoftDeletes, Versionable;
+
+    /** @var list<string> */
+    protected array $versionable = [
+        'position',
+        'vendor_id',
+        'type',
+        'description',
+        'quantity',
+        'unit_price',
+        'entered_amount',
+        'amount_includes_vat',
+        'vat_rate',
+        'net_amount',
+        'vat_amount',
+        'gross_amount',
+        'is_extra',
+        'funded_plafond_expense_id',
+        'spend_date',
+        'period_start',
+        'period_end',
+        'distribution',
+        'external_reference',
+    ];
+
+    protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
 
     /**
      * @return array<string, string>

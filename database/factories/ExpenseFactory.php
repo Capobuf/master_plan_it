@@ -21,12 +21,23 @@ class ExpenseFactory extends Factory
      */
     public function definition(): array
     {
-        $tenant = Tenant::factory()->create();
-
         return [
-            'tenant_id' => $tenant->getKey(),
-            'planning_year_id' => PlanningYear::factory()->create(['tenant_id' => $tenant->getKey()])->getKey(),
-            'cost_center_id' => CostCenter::factory()->create(['tenant_id' => $tenant->getKey()])->getKey(),
+            'tenant_id' => Tenant::factory(),
+            'planning_year_id' => function (array $attributes): int {
+                $tenantId = $attributes['tenant_id'];
+                $year = PlanningYear::query()
+                    ->where('tenant_id', $tenantId)
+                    ->where('year_label', 2026)
+                    ->first();
+
+                return ($year ?? PlanningYear::factory()->create([
+                    'tenant_id' => $tenantId,
+                    'year_label' => 2026,
+                ]))->getKey();
+            },
+            'cost_center_id' => function (array $attributes): int {
+                return CostCenter::factory()->create(['tenant_id' => $attributes['tenant_id']])->getKey();
+            },
             'kind' => ExpenseKind::Ordinary,
             'title' => fake()->sentence(3),
             'notes' => null,
