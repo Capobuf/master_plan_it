@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Authorization;
 
+use App\Domain\Tenancy\Actions\EnterTenantContext;
 use App\Filament\Resources\Tenants\TenantResource;
+use App\Http\Middleware\ApplyOptionalTenantContext;
 use App\Http\Middleware\ApplyTenantPresentationContext;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\EnsureTenantIsActive;
@@ -110,6 +112,31 @@ class NavigationPolicyTest extends TestCase
         $this->get('/admin/tenants')->assertSuccessful();
     }
 
+    public function test_global_dashboard_rehydrates_an_administrator_tenant_selection_for_the_shell(): void
+    {
+        $administrator = User::factory()->create([
+            'tenant_id' => null,
+            'is_active' => true,
+        ]);
+        app(PlatformAdministrator::class)->assign($administrator);
+        $tenant = Tenant::factory()->create([
+            'name' => 'Selected dashboard tenant',
+            'code' => 'DASH-01',
+        ]);
+        $this->actingAs($administrator);
+
+        $this->withSession([
+            EnterTenantContext::SESSION_KEY => $tenant->getKey(),
+        ]);
+
+        $response = $this->get('/admin');
+
+        $response
+            ->assertSuccessful()
+            ->assertSee('Selected dashboard tenant (DASH-01)')
+            ->assertDontSee('No tenant selected');
+    }
+
     public function test_panel_auth_middleware_requires_authentication_then_an_active_user(): void
     {
         $panel = Filament::getPanel('admin');
@@ -119,6 +146,7 @@ class NavigationPolicyTest extends TestCase
             Authenticate::class,
             EnsureActiveUser::class,
         ], $panel->getAuthMiddleware());
+        $this->assertContains(ApplyOptionalTenantContext::class, $panel->getMiddleware());
     }
 
     public function test_panel_persists_active_user_and_tenant_route_security_middleware_for_livewire_updates(): void

@@ -18,23 +18,32 @@ final class ResolveTenantContext
 
     public function handle(Request $request, Closure $next): Response
     {
+        $context = $this->resolveIfPresent($request);
+
+        if (! $context instanceof TenantContext) {
+            throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
+        }
+
+        $request->attributes->set(TenantContext::class, $context);
+
+        return $next($request);
+    }
+
+    public function resolveIfPresent(Request $request): ?TenantContext
+    {
         $actor = $request->user();
 
         if (! $actor instanceof User || ! $actor->exists) {
-            throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
+            return null;
         }
 
         $tenant = $actor->tenant_id === null
             ? $this->resolveAdministratorSelection($request, $actor)
             : Tenant::query()->find((int) $actor->tenant_id);
 
-        if ($tenant === null) {
-            throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
-        }
-
-        $request->attributes->set(TenantContext::class, new TenantContext($tenant, $actor));
-
-        return $next($request);
+        return $tenant instanceof Tenant
+            ? new TenantContext($tenant, $actor)
+            : null;
     }
 
     private function resolveAdministratorSelection(Request $request, User $actor): ?Tenant

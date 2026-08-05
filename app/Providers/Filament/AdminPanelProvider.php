@@ -3,10 +3,12 @@
 namespace App\Providers\Filament;
 
 use App\Filament\Components\TenantContextIndicator;
+use App\Filament\Pages\Profile;
 use App\Filament\Resources\Roles\RoleResource;
 use App\Filament\Resources\Tenants\TenantResource;
 use App\Filament\Resources\Users\UserResource;
 use App\Http\Controllers\Auth\LogoutController as ApplicationLogoutController;
+use App\Http\Middleware\ApplyOptionalTenantContext;
 use App\Http\Middleware\ApplyTenantPresentationContext;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\EnsureTenantIsActive;
@@ -60,6 +62,7 @@ final class AdminPanelProvider extends PanelProvider
             ->login()
             ->pages([
                 Dashboard::class,
+                Profile::class,
             ])
             ->resources([
                 TenantResource::class,
@@ -76,6 +79,7 @@ final class AdminPanelProvider extends PanelProvider
                 SubstituteBindings::class,
                 DisableBladeIconComponents::class,
                 DispatchServingFilamentEvent::class,
+                ApplyOptionalTenantContext::class,
             ])
             ->authMiddleware([
                 Authenticate::class,

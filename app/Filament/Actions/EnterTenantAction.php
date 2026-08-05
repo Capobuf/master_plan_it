@@ -7,6 +7,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Diagnostics\CorrelationId;
 use Filament\Actions\Action;
+use Filament\Pages\Dashboard;
 use Illuminate\Auth\Access\AuthorizationException;
 
 final class EnterTenantAction extends Action
@@ -23,6 +24,7 @@ final class EnterTenantAction extends Action
         $this
             ->label('Enter tenant')
             ->authorize('view')
+            ->successRedirectUrl(fn (): string => Dashboard::getUrl())
             ->action(function (Tenant $record): void {
                 $actor = auth()->user();
 
