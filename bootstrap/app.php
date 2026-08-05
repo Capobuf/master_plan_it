@@ -24,6 +24,10 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->redirectGuestsTo(
+            fn (Request $request): string => route('filament.admin.auth.login'),
+        );
+
         $middleware->append(AssignCorrelationId::class);
         $middleware->alias([
             'active-user' => EnsureActiveUser::class,

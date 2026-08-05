@@ -1,6 +1,7 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
 @source '../../node_modules/preline/dist/*.js';
+@import '../../node_modules/preline/variants.css';
 
 @import '../../vendor/filament/support/resources/css/index.css';
 @import '../../vendor/filament/actions/resources/css/index.css';
@@ -20,5 +21,12 @@
 
     :focus-visible {
         @apply outline-2 outline-offset-2 outline-blue-700;
+    }
+}
+
+@layer components {
+    .operational-table-scroll {
+        overscroll-behavior-inline: contain;
+        scrollbar-color: rgb(148 163 184) transparent;
     }
 }

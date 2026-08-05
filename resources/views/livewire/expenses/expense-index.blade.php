@@ -1,32 +1,24 @@
 <section aria-label="Registro spese correnti" aria-busy="false" wire:loading.attr="aria-busy">
-    <nav aria-label="Breadcrumb" class="text-xs font-medium text-slate-500">
-        <span>Panoramica</span>
-        <span class="mx-2 text-slate-300" aria-hidden="true">›</span>
-        <span>Spese</span>
-        <span class="mx-2 text-slate-300" aria-hidden="true">›</span>
-        <span class="rounded bg-slate-100 px-2 py-1 text-slate-700">Registro spese</span>
-    </nav>
+    <x-operational.breadcrumb :items="[
+        ['label' => 'Panoramica', 'href' => route('operational.index')],
+        ['label' => 'Spese'],
+        ['label' => 'Registro spese'],
+    ]" />
 
-    <div class="mt-5 flex flex-col gap-4 border-b border-slate-200 pb-6 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-            <div class="flex flex-wrap items-center gap-2">
-                <h1 class="text-2xl font-bold tracking-tight text-slate-950 sm:text-3xl">Registro spese</h1>
-                <span class="inline-flex rounded-full bg-blue-50 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-700 ring-1 ring-inset ring-blue-200">Dataset corrente</span>
-            </div>
-            <p class="mt-2 text-sm text-slate-600">Consulta le spese correnti del tenant e i totali calcolati dal server.</p>
-        </div>
-        <div class="flex items-center gap-2">
+    <x-operational.page-header class="mt-5" title="Registro spese" description="Consulta le spese correnti del tenant e i totali calcolati dal server.">
+        <x-slot:badge><x-operational.status-badge tone="info">Dataset corrente</x-operational.status-badge></x-slot:badge>
+        <x-slot:actions>
             <span class="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 shadow-sm">
                 <svg aria-hidden="true" viewBox="0 0 24 24" class="size-4 text-slate-400" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 3h14v18l-3-2-4 2-4-2-3 2Z"/><path d="M8 8h8m-8 4h8"/></svg>
                 {{ $total }} {{ $total === 1 ? 'spesa' : 'spese' }}
             </span>
-            <span class="inline-flex rounded-lg bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-500">Sola lettura</span>
-        </div>
-    </div>
+            <x-operational.status-badge tone="neutral" class="rounded-lg px-3 py-2 text-xs normal-case tracking-normal">Sola lettura</x-operational.status-badge>
+        </x-slot:actions>
+    </x-operational.page-header>
 
     <div class="mt-6 grid min-w-0 gap-5 xl:grid-cols-[minmax(0,1fr)_18rem]">
         <div class="min-w-0 space-y-4">
-            <form wire:submit="applyFilters" class="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+            <x-operational.filter-panel wire:submit="applyFilters">
                 <fieldset wire:loading.attr="disabled" class="flex flex-col gap-4 disabled:cursor-wait disabled:opacity-60 lg:flex-row lg:items-end">
                     <label class="block min-w-0 flex-1 text-xs font-semibold text-slate-600">
                         Anno di pianificazione
@@ -53,7 +45,7 @@
                         Applica
                     </button>
                 </fieldset>
-            </form>
+            </x-operational.filter-panel>
 
             <div class="flex items-center gap-3 rounded-lg border border-blue-200 bg-blue-50/70 px-4 py-3 text-xs text-blue-800">
                 <svg aria-hidden="true" viewBox="0 0 24 24" class="size-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 11v5m0-8h.01"/></svg>
@@ -78,12 +70,12 @@
             @elseif ($rows === [])
                 <x-operational.empty-state title="Nessuna spesa corrente" description="Non ci sono spese correnti per il tenant e l'anno selezionati. Prova un altro anno quando disponibile." />
             @else
-                <div class="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <x-operational.table-container>
                     <div class="flex flex-col gap-2 border-b border-slate-100 px-4 py-3 text-xs text-slate-500 sm:flex-row sm:items-center sm:justify-between">
                         <p>Mostra fino a <span class="font-semibold text-slate-700">15</span> righe per pagina</p>
                         <p><span class="font-semibold text-slate-700">{{ $total }}</span> risultati · pagina {{ $page }} di {{ $lastPage }}</p>
                     </div>
-                    <div class="overflow-x-auto">
+                    <div class="operational-table-scroll overflow-x-auto">
                         <table class="w-full divide-y divide-slate-200 text-xs">
                             <thead class="bg-slate-50 text-left text-[10px] font-bold uppercase tracking-wide text-slate-500">
                                 <tr>
@@ -107,7 +99,7 @@
                                         </td>
                                         <td class="hidden whitespace-nowrap px-4 py-3 md:table-cell">{{ $row['year'] }}</td>
                                         <td class="hidden max-w-52 px-4 py-3 md:table-cell"><span class="block truncate">{{ $row['cost_center'] }}</span></td>
-                                        <td class="hidden whitespace-nowrap px-4 py-3 lg:table-cell"><span class="inline-flex rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-700 ring-1 ring-inset ring-blue-200">{{ $row['kind'] }}</span></td>
+                                        <td class="hidden whitespace-nowrap px-4 py-3 lg:table-cell"><x-operational.status-badge tone="info">{{ $row['kind'] }}</x-operational.status-badge></td>
                                         <td class="hidden px-4 py-3 text-right font-mono lg:table-cell">{{ $row['row_count'] }}</td>
                                         <td class="hidden whitespace-nowrap px-4 py-3 text-right xl:table-cell"><x-operational.money :amount="$row['net']" /></td>
                                         <td class="whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-900"><x-operational.money :amount="$row['gross']" /></td>
@@ -117,20 +109,13 @@
                             </tbody>
                         </table>
                     </div>
-                    <nav aria-label="Paginazione registro spese" class="flex items-center justify-between border-t border-slate-100 px-4 py-3 text-xs">
-                        <p class="text-slate-500">{{ $total }} spese correnti</p>
-                        <div class="flex gap-2">
-                            <button type="button" wire:click="previousPage" wire:loading.attr="disabled" @disabled($page <= 1) class="inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white font-semibold text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-40" aria-label="Pagina precedente">‹</button>
-                            <span class="inline-flex size-8 items-center justify-center rounded-lg bg-blue-600 font-semibold text-white">{{ $page }}</span>
-                            <button type="button" wire:click="nextPage" wire:loading.attr="disabled" @disabled($page >= $lastPage) class="inline-flex size-8 items-center justify-center rounded-lg border border-slate-200 bg-white font-semibold text-slate-600 shadow-sm hover:bg-slate-50 disabled:opacity-40" aria-label="Pagina successiva">›</button>
-                        </div>
-                    </nav>
-                </div>
+                    <x-operational.pagination :page="$page" :last-page="$lastPage" :total="$total" label="spese correnti" aria-label="Paginazione registro spese" />
+                </x-operational.table-container>
             @endif
         </div>
 
         <aside class="space-y-4" aria-label="Riepilogo spese">
-            <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <x-operational.card class="p-5">
                 <p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Riepilogo spese</p>
                 <p class="mt-1 text-xs text-slate-500">Filtro corrente</p>
                 <dl class="mt-5 space-y-4">
@@ -143,16 +128,16 @@
                         <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">IVA</dt><dd class="mt-1 text-sm font-semibold text-slate-800"><x-operational.money :amount="$totals['vat']" /></dd></div>
                     </div>
                 </dl>
-            </section>
+            </x-operational.card>
 
-            <section class="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
+            <x-operational.card class="p-5">
                 <p class="text-[10px] font-bold uppercase tracking-wide text-slate-500">Dataset</p>
                 <ul class="mt-4 space-y-3 text-xs">
-                    <li class="flex items-center justify-between gap-3"><span class="text-slate-500">Stato</span><span class="rounded-full bg-emerald-50 px-2 py-1 font-semibold text-emerald-700">Corrente</span></li>
+                    <li class="flex items-center justify-between gap-3"><span class="text-slate-500">Stato</span><x-operational.status-badge tone="success">Corrente</x-operational.status-badge></li>
                     <li class="flex items-center justify-between gap-3"><span class="text-slate-500">Spese</span><span class="font-mono font-semibold text-slate-800">{{ $total }}</span></li>
                     <li class="flex items-center justify-between gap-3"><span class="text-slate-500">Storico</span><span class="font-semibold text-slate-400">Escluso</span></li>
                 </ul>
-            </section>
+            </x-operational.card>
         </aside>
     </div>
 </section>

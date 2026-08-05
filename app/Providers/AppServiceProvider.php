@@ -3,11 +3,14 @@
 namespace App\Providers;
 
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Http\Middleware\ApplyOptionalTenantContext;
 use App\Support\Diagnostics\CorrelationId;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\ServiceProvider;
+use Livewire\Livewire;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -40,6 +43,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        Livewire::setUpdateRoute(
+            fn ($handle, string $path) => Route::post($path, $handle)
+                ->middleware(['web', ApplyOptionalTenantContext::class]),
+        );
     }
 }
