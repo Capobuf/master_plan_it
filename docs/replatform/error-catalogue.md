@@ -14,6 +14,7 @@ Errors are explicit, user-safe and diagnostic. Validation errors identify fields
 | `PERMISSION_DENIED` | 403 | Required explicit ability absent. |
 | `PLATFORM_ABILITY_PROTECTED` | 422/403 | Tenant role attempted protected platform ability. |
 | `STALE_VERSION` | 409 | `lock_version` no longer current. |
+| `UNEXPECTED_ERROR` | 500/correlation | Unexpected failure shown with a safe message, stable code and correlation ID when available; no sensitive payload or hidden retry. |
 | `TENANT_RELATION_MISMATCH` | 422 | Related records do not share tenant. |
 | `INVALID_MONEY` | 422 | Invalid decimal/scale/range. |
 | `VAT_REQUIRED` | 422 | Non-zero amount lacks valid VAT/default. |

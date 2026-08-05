@@ -21,14 +21,18 @@ trait AuthorizesTenantOwnership
         PermissionRegistrar $permissionRegistrar,
         PlatformAdministrator $platformAdministrator,
     ): Response {
+        $actorKey = $actor->getKey();
+        $actorOriginalKey = $actor->getRawOriginal($actor->getKeyName());
         $persistedActor = $actor->exists
+            && $actorKey !== null
+            && $actorKey === $actorOriginalKey
             ? User::query()
-                ->whereKey($actor->getKey())
+                ->whereKey($actorOriginalKey)
                 ->where('is_active', true)
                 ->first()
             : null;
 
-        if (! $persistedActor instanceof User || ! $this->hasExactAbility(
+        if (! $persistedActor instanceof User || ! $this->hasTenantOwnershipExactAbility(
             $persistedActor,
             $ability,
             $permissionRegistrar,
@@ -41,7 +45,13 @@ trait AuthorizesTenantOwnership
             return Response::deny('TENANT_CONTEXT_REQUIRED');
         }
 
-        if (! $context->actor->exists || $context->actor->getKey() !== $persistedActor->getKey()) {
+        $contextActorKey = $context->actor->getKey();
+        $contextActorOriginalKey = $context->actor->getRawOriginal($context->actor->getKeyName());
+
+        if (! $context->actor->exists
+            || $contextActorKey === null
+            || $contextActorKey !== $contextActorOriginalKey
+            || $contextActorKey !== $persistedActor->getKey()) {
             return Response::deny('PERMISSION_DENIED');
         }
 
@@ -53,18 +63,29 @@ trait AuthorizesTenantOwnership
             return Response::deny('PERMISSION_DENIED');
         }
 
+        $tenantKey = $context->tenant->getKey();
+        $tenantOriginalKey = $context->tenant->getRawOriginal($context->tenant->getKeyName());
+
         if (! $context->tenant->exists
-            || $context->tenant->getKey() === null
-            || (int) $context->tenant->getKey() !== $context->tenantId
-            || ! Tenant::query()->whereKey($context->tenantId)->exists()
+            || $tenantKey === null
+            || $tenantOriginalKey === null
+            || $tenantKey !== $tenantOriginalKey
+            || (int) $tenantOriginalKey !== $context->tenantId
+            || ! Tenant::query()->whereKey($tenantOriginalKey)->exists()
         ) {
             return Response::deny('TENANT_CONTEXT_REQUIRED');
         }
 
-        $resourceExists = $resource->exists && $resource->getKey() !== null
+        $resourceKey = $resource->getKey();
+        $resourceOriginalKey = $resource->getRawOriginal($resource->getKeyName());
+
+        $resourceExists = $resource->exists
+            && $resourceKey !== null
+            && $resourceOriginalKey !== null
+            && $resourceKey === $resourceOriginalKey
             && $resource->newQuery()
                 ->where($resource->qualifyColumn('tenant_id'), $context->tenantId)
-                ->whereKey($resource->getKey())
+                ->whereKey($resourceOriginalKey)
                 ->exists();
 
         if (! $resourceExists) {
@@ -74,7 +95,7 @@ trait AuthorizesTenantOwnership
         return Response::allow();
     }
 
-    private function hasExactAbility(
+    private function hasTenantOwnershipExactAbility(
         User $actor,
         string $ability,
         PermissionRegistrar $permissionRegistrar,

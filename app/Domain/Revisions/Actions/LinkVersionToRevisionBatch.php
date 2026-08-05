@@ -15,15 +15,15 @@ final class LinkVersionToRevisionBatch
     {
         return DB::transaction(function () use ($batch, $sequence, $version): RevisionBatchItem {
             $persistedBatch = $this->persistedBatch($batch);
-            $this->assertSameTenantVersion($persistedBatch, $version);
+            $persistedVersion = $this->persistedVersion($version);
+            $this->assertSameTenantVersion($persistedBatch, $persistedVersion);
             $this->assertSequenceAvailable($persistedBatch, $sequence);
-            $versionable = $version->versionable;
 
             return RevisionBatchItem::query()->create([
                 'revision_batch_id' => $persistedBatch->getKey(),
-                'version_id' => $version->getKey(),
-                'versionable_type' => (string) $version->getAttribute('versionable_type'),
-                'versionable_id' => (int) $version->getAttribute('versionable_id'),
+                'version_id' => $persistedVersion->getKey(),
+                'versionable_type' => (string) $persistedVersion->getAttribute('versionable_type'),
+                'versionable_id' => (int) $persistedVersion->getAttribute('versionable_id'),
                 'sequence' => $sequence,
             ]);
         });
@@ -31,11 +31,14 @@ final class LinkVersionToRevisionBatch
 
     private function persistedBatch(RevisionBatch $batch): RevisionBatch
     {
-        if (! $batch->exists || $batch->getKey() === null) {
+        $key = $batch->getKey();
+        $originalKey = $batch->getRawOriginal($batch->getKeyName());
+
+        if (! $batch->exists || $key === null || $originalKey === null || $key !== $originalKey) {
             throw new DomainException('TENANT_RELATION_MISMATCH');
         }
 
-        $persisted = RevisionBatch::query()->lockForUpdate()->find($batch->getKey());
+        $persisted = RevisionBatch::query()->lockForUpdate()->find($originalKey);
 
         if ($persisted === null) {
             throw new DomainException('TENANT_RELATION_MISMATCH');
@@ -44,13 +47,27 @@ final class LinkVersionToRevisionBatch
         return $persisted;
     }
 
-    private function assertSameTenantVersion(RevisionBatch $batch, ApplicationVersion $version): void
+    private function persistedVersion(ApplicationVersion $version): ApplicationVersion
     {
-        if (! $version->exists || $version->getKey() === null) {
+        $key = $version->getKey();
+        $originalKey = $version->getRawOriginal($version->getKeyName());
+
+        if (! $version->exists || $key === null || $originalKey === null || $key !== $originalKey) {
             throw new DomainException('TENANT_RELATION_MISMATCH');
         }
 
-        $versionable = $version->versionable;
+        $persisted = ApplicationVersion::query()->whereKey($originalKey)->first();
+
+        if (! $persisted instanceof ApplicationVersion) {
+            throw new DomainException('TENANT_RELATION_MISMATCH');
+        }
+
+        return $persisted;
+    }
+
+    private function assertSameTenantVersion(RevisionBatch $batch, ApplicationVersion $version): void
+    {
+        $versionable = $version->versionable()->withTrashed()->first();
 
         if (! $versionable instanceof Model) {
             throw new DomainException('TENANT_RELATION_MISMATCH');

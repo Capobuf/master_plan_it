@@ -1,4 +1,6 @@
 @import 'tailwindcss';
+@plugin '@tailwindcss/forms';
+@source '../../node_modules/preline/dist/*.js';
 
 @import '../../vendor/filament/support/resources/css/index.css';
 @import '../../vendor/filament/actions/resources/css/index.css';
@@ -10,3 +12,13 @@
 @import '../../vendor/filament/widgets/resources/css/index.css';
 
 @variant dark (&:where(.dark, .dark *));
+
+@layer base {
+    [x-cloak] {
+        display: none !important;
+    }
+
+    :focus-visible {
+        @apply outline-2 outline-offset-2 outline-blue-700;
+    }
+}

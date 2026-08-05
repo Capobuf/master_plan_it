@@ -120,6 +120,50 @@ class TenantOwnershipPolicyConcernTest extends TestCase
         $this->assertDenied($membershipMismatch, 'PERMISSION_DENIED');
     }
 
+    public function test_an_actor_current_key_spoofed_to_a_persisted_administrator_is_denied_without_changing_the_team(): void
+    {
+        [$tenant, $actor] = $this->tenantActorWithAbility(self::ABILITY);
+        $resource = User::factory()->create(['tenant_id' => $tenant->getKey()]);
+        $administrator = User::factory()->create(['tenant_id' => null]);
+        app(PlatformAdministrator::class)->assign($administrator);
+        $actor->forceFill([$actor->getKeyName() => $administrator->getKey()]);
+        $registrar = app(PermissionRegistrar::class);
+
+        $response = $this->policy()->check(
+            $actor,
+            self::ABILITY,
+            new TenantContext($tenant, $actor),
+            $resource,
+        );
+
+        $this->assertDenied($response, 'PERMISSION_DENIED');
+        $this->assertNotSame($actor->getRawOriginal($actor->getKeyName()), $actor->getKey());
+        $this->assertSame($tenant->getKey(), $registrar->getPermissionsTeamId());
+    }
+
+    public function test_a_context_actor_current_key_spoofed_to_the_real_actor_is_denied_without_changing_the_team(): void
+    {
+        [$tenant, $actor] = $this->tenantActorWithAbility(self::ABILITY);
+        $resource = User::factory()->create(['tenant_id' => $tenant->getKey()]);
+        $contextActor = User::factory()->create(['tenant_id' => $tenant->getKey()]);
+        $contextActor->forceFill([$contextActor->getKeyName() => $actor->getKey()]);
+        $registrar = app(PermissionRegistrar::class);
+
+        $response = $this->policy()->check(
+            $actor,
+            self::ABILITY,
+            new TenantContext($tenant, $contextActor),
+            $resource,
+        );
+
+        $this->assertDenied($response, 'PERMISSION_DENIED');
+        $this->assertNotSame(
+            $contextActor->getRawOriginal($contextActor->getKeyName()),
+            $contextActor->getKey(),
+        );
+        $this->assertSame($tenant->getKey(), $registrar->getPermissionsTeamId());
+    }
+
     public function test_a_cross_team_ability_cannot_authorize_an_actor_context_and_resource_from_another_tenant(): void
     {
         $tenantA = Tenant::factory()->create();
@@ -193,6 +237,49 @@ class TenantOwnershipPolicyConcernTest extends TestCase
         );
 
         $this->assertNotFound($tamperedResponse);
+    }
+
+    public function test_a_foreign_resource_with_a_current_key_mutated_to_a_same_tenant_resource_is_safely_not_found(): void
+    {
+        [$tenant, $actor] = $this->tenantActorWithAbility(self::ABILITY);
+        $sameTenantResource = User::factory()->create(['tenant_id' => $tenant->getKey()]);
+        $foreignTenant = Tenant::factory()->create();
+        $foreignResource = User::factory()->create(['tenant_id' => $foreignTenant->getKey()]);
+        $foreignOriginalKey = $foreignResource->getRawOriginal($foreignResource->getKeyName());
+        $foreignResource->forceFill([$foreignResource->getKeyName() => $sameTenantResource->getKey()]);
+        $registrar = app(PermissionRegistrar::class);
+
+        $response = $this->policy()->check(
+            $actor,
+            self::ABILITY,
+            new TenantContext($tenant, $actor),
+            $foreignResource,
+        );
+
+        $this->assertNotFound($response);
+        $this->assertNotSame($foreignOriginalKey, $foreignResource->getKey());
+        $this->assertSame($tenant->getKey(), $registrar->getPermissionsTeamId());
+    }
+
+    public function test_a_persisted_selected_tenant_with_a_mutated_current_key_fails_closed_without_changing_the_team(): void
+    {
+        $originalTenant = Tenant::factory()->create();
+        $selectedTenant = Tenant::factory()->create();
+        $actor = User::factory()->create(['tenant_id' => $selectedTenant->getKey()]);
+        $this->grantRole($actor, $selectedTenant, self::ABILITY, 'Selected tenant reader');
+        $resource = User::factory()->create(['tenant_id' => $selectedTenant->getKey()]);
+        $originalTenant->forceFill([$originalTenant->getKeyName() => $selectedTenant->getKey()]);
+        $context = new TenantContext($originalTenant, $actor);
+        $registrar = app(PermissionRegistrar::class);
+
+        $response = $this->policy()->check($actor, self::ABILITY, $context, $resource);
+
+        $this->assertDenied($response, 'TENANT_CONTEXT_REQUIRED');
+        $this->assertNotSame(
+            $originalTenant->getRawOriginal($originalTenant->getKeyName()),
+            $originalTenant->getKey(),
+        );
+        $this->assertSame($selectedTenant->getKey(), $registrar->getPermissionsTeamId());
     }
 
     public function test_unknown_abilities_fail_closed_for_tenant_users_and_administrators_without_leaking_team_scope(): void

@@ -4,9 +4,12 @@ namespace App\Providers\Filament;
 
 use App\Filament\Components\TenantContextIndicator;
 use App\Filament\Pages\Profile;
+use App\Filament\Resources\CostCenters\CostCenterResource;
+use App\Filament\Resources\PlanningYears\PlanningYearResource;
 use App\Filament\Resources\Roles\RoleResource;
 use App\Filament\Resources\Tenants\TenantResource;
 use App\Filament\Resources\Users\UserResource;
+use App\Filament\Resources\Vendors\VendorResource;
 use App\Http\Controllers\Auth\LogoutController as ApplicationLogoutController;
 use App\Http\Middleware\ApplyOptionalTenantContext;
 use App\Http\Middleware\ApplyTenantPresentationContext;
@@ -68,6 +71,9 @@ final class AdminPanelProvider extends PanelProvider
                 TenantResource::class,
                 UserResource::class,
                 RoleResource::class,
+                PlanningYearResource::class,
+                CostCenterResource::class,
+                VendorResource::class,
             ])
             ->middleware([
                 EncryptCookies::class,

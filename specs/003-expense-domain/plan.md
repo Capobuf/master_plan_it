@@ -47,9 +47,9 @@ No `ReplaceExpenseRow` Action in the target model.
 ### Queries/UI
 
 - `ExpenseRegisterQuery` returns register DTOs and server totals;
-- `ExpenseDetailQuery` includes rows, attachments and revision summary;
+- `ExpenseDetailQuery` includes only current header and rows in the selected Slice 1; attachment and revision enrichment remains owned by their later tasks and is not queried or claimed early;
 - `ExpensePolicy`;
-- operational Livewire register/editor/history components rendered by Blade/Preline in the T001-029 layout; no Filament ownership for tenant-facing Expense screens.
+- operational Livewire register/editor/history components rendered by Blade/Preline in the T001-029 layout; the shared navigation and home expose the Expense module only with `expense.view`, omit links to forbidden dashboard routes, and retain direct-route authorization; no Filament ownership for tenant-facing Expense screens.
 
 ## Aggregate transaction
 

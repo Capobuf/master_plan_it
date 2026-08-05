@@ -14,7 +14,7 @@
 | T001-012 | `php artisan test tests/Feature/IdentityAccess/PlatformIdentityIntegrationTest.php tests/Feature/IdentityAccess/PasswordAdministrationTest.php` |
 | T001-013 | `php artisan test tests/Feature/IdentityAccess/PasswordAdministrationTest.php tests/Architecture/WriteRollbackCoverageTest.php` |
 | T001-014 | `php artisan test tests/Feature/IdentityAccess/PlatformIdentityIntegrationTest.php tests/Feature/IdentityAccess/PasswordAdministrationTest.php` |
-| T001-015–016 | `php artisan test tests/Feature/IdentityAccess/ChangeOwnPasswordTest.php tests/Feature/Console/ResetAdministratorPasswordCommandTest.php` |
+| T001-015–016 | `php artisan test tests/Feature/IdentityAccess/ChangeOwnPasswordTest.php tests/Feature/Console/ResetAdministratorPasswordCommandTest.php tests/Architecture/WriteRollbackCoverageTest.php` |
 | T001-017–018 | `php artisan test tests/Feature/Notifications/NotificationDeduplicationTest.php tests/Feature/Notifications/SynchronousMailFailureTest.php` |
 | T001-019 | `php artisan test tests/Feature/Platform/PlatformSettingTest.php tests/Feature/Audit/AuditRetentionTest.php tests/Livewire/Platform/PlatformSettingPageTest.php` |
 | T001-020 | `php artisan test tests/Feature/Platform/PlatformSettingTest.php tests/Feature/Audit/AuditRetentionTest.php tests/Architecture/AuditWriteContractTest.php` |
@@ -24,5 +24,5 @@
 | T001-024 | `composer verify && composer test:browser-matrix` |
 | T001-025 | `php artisan schedule:list && php artisan test tests/Feature/Scheduler/SchedulerRegistrationTest.php` |
 | T001-026–027 | `php artisan test tests/Feature/Audit/AuditViewAuthorizationTest.php tests/Feature/Audit/AuditViewMinimizationTest.php tests/Livewire/Audit/AuditLogPageTest.php` |
-| T001-028 | `php -l tests/Browser/Shell/OperationalShellSmokeTest.php && php artisan test tests/Architecture/FrontendStackContractTest.php tests/Livewire/Shell/OperationalShellTest.php` |
-| T001-029 | `npm ci && npm run build && php artisan test tests/Architecture/FrontendStackContractTest.php tests/Livewire/Shell/OperationalShellTest.php && php artisan dusk tests/Browser/Shell/OperationalShellSmokeTest.php` |
+| T001-028 | `php -l tests/Browser/Shell/OperationalShellSmokeTest.php && php artisan test tests/Architecture/DevelopmentContractTest.php tests/Architecture/FrontendStackContractTest.php tests/Livewire/Shell/OperationalShellTest.php` |
+| T001-029 | `npm ci && npm run build && php artisan test tests/Architecture/DevelopmentContractTest.php tests/Architecture/FrontendStackContractTest.php tests/Livewire/Shell/OperationalShellTest.php && php artisan dusk tests/Browser/Shell/OperationalShellSmokeTest.php` |

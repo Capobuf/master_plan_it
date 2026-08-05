@@ -30,24 +30,24 @@ A generic `SaveMasterData` Action is prohibited because date overlap, tree and v
 
 ### Queries
 
-- `PlanningYearListQuery`;
-- `CostCenterTreeQuery`;
-- `VendorListQuery`;
-- active selectors that include an inactive current value only when editing an existing historical reference.
+- `PlanningYearListQuery`, which rejects an inactive tenant context and exposes an active selector with an optional same-tenant current ID so one explicitly referenced inactive year remains selectable;
+- `CostCenterTreeQuery`, which rejects an inactive tenant context;
+- `VendorListQuery`, which rejects an inactive tenant context;
+- active selectors that include an inactive current value only when editing an existing same-tenant historical reference; arbitrary inactive or foreign IDs never widen the selector.
 
 ### Policies and UI
 
-One Policy and one Filament Resource per model. Cost-center hierarchy uses native Filament/Livewire composition first. Revision pages use the shared revision contract.
+One Policy and one Filament Resource per model. Because the accepted admin panel uses an explicit resource list rather than discovery, T002-009, T002-012 and T002-015 each register their newly delivered Resource exactly once in `AdminPanelProvider`; those three provider writes are serialized in that order and verified through the owning Resource test. Cost-center hierarchy uses native Filament/Livewire composition first. Revision pages use the shared revision contract.
 
 ## Invariants
 
-`CreatePlanningYear` accepts one numeric calendar-year identity, derives January 1/December 31 boundaries and rejects a duplicate tenant/year. No Action accepts date updates, permanent deletion, revision comparison or revision restore. Deactivate/reactivate preserves historical references and audit.
+`CreatePlanningYear` accepts one numeric calendar-year identity, derives January 1/December 31 boundaries and rejects a duplicate tenant/year. No Action accepts date updates, permanent deletion, revision comparison or revision restore. Deactivate/reactivate preserves historical references and audit. All Planning Year read/write paths require an active persisted tenant context. Each of the three lifecycle Actions has an injected audit-failure rollback test and an exact entry in the shared domain-write rollback map.
 
-Cost-center update validates same-tenant parent, rejects self-parent/cycles and locks the ancestry needed to enforce three levels with root at level one. Reads order siblings by case-insensitive name then ID. Deactivation locks target and active descendants; an active descendant blocks parent deactivation. No recursive implicit deactivation. Delete requires zero current/historical domain references and zero descendants.
+Cost-center update and restore validate same-tenant parent, reject self-parent/cycles and lock both the proposed ancestry and affected subtree needed to enforce three levels with root at level one; changing a parent must account for the deepest descendant, not only the target's own new depth. A submitted non-null parent identifier that is missing, foreign or soft-deleted is denied and is never normalized to a root. Reads require an active persisted tenant context and order siblings by case-insensitive name then ID. Deactivation locks target and active descendants; an active descendant blocks parent deactivation. No recursive implicit deactivation. Delete requires zero current/historical domain references and zero descendants.
 
-Vendor deactivation preserves existing references and removes the vendor from new selectors. Delete requires zero current/historical domain references.
+Vendor deactivation preserves existing references and removes the vendor from new selectors. Vendor reads require an active persisted tenant context. Delete requires zero current/historical domain references.
 
-Vendor and cost-center mutations create revision batches and audit events. Restore invokes the owning Action with current validation and creates a new revision.
+Vendor and cost-center mutations create revision batches and audit events. Shared revision primitives reject mutable in-memory identity: actor, context, root, batch and version current keys must equal their raw originals and the root/version are reloaded from persisted state. A batch root must use the approved Overtrue `Versionable` trait; an arbitrary tenant-owned model is not a revision root. `restored_from_version_id` is mandatory only for `restore`, forbidden for every other operation and reloaded as a persisted Version belonging to the exact root. Version linking supports a persisted soft-deleted versionable so deletion can run first and link the exact delete snapshot, never the prior live snapshot. Restore invokes the owning Action with current validation, reloads the selected persisted version and creates a new revision; mutated in-memory contents are never restoration input. Every Cost Center and Vendor domain-write Action has an injected audit/revision failure rollback assertion and an exact shared rollback-map entry; writes to that one map are serialized after Planning Year, then Cost Center, then Vendor.
 
 ## Database
 
@@ -56,11 +56,14 @@ Use tenant-scoped unique names, restrictive FKs and `lock_version`. MySQL owns t
 ## Tests
 
 - year calendar derivation, immutable dates, uniqueness, lifecycle, no revision/delete surface, concurrency, tenant and permission;
-- cost-center move, cycle, three-level boundary, sibling order, descendant deactivation, constrained delete, selector and restore;
-- vendor uniqueness, deactivate/reactivate, constrained delete, selector and restore;
+- arbitrary non-Versionable root rejection; revision-root/batch/version identity spoofing; exact-root restore-source validation; in-memory payload tampering and soft-deleted versionable linking;
+- cost-center update/restore with subtree-height boundary, cycle, three-level boundary, missing/foreign/soft-deleted submitted-parent denial, sibling order, descendant deactivation, constrained delete with exact delete snapshot, selector and persisted-version restore;
+- vendor uniqueness, deactivate/reactivate, constrained delete with exact delete snapshot, selector and persisted-version restore;
 - safe other-tenant denial;
 - ability-based behavior, including planning-year view-only in the seeded Editor template and deliberately assignable lifecycle abilities for custom roles;
 - revision rows excluded from business selectors.
+
+Every Cost Center write rollback test snapshots and reasserts the business record plus `versions`, `revision_batches` and `audit_events`; a structurally mapped method without those observable state assertions is insufficient.
 
 Dusk is not planned unless custom browser-only tree behavior remains after the native implementation.
 

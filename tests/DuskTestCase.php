@@ -52,7 +52,8 @@ abstract class DuskTestCase extends BaseTestCase
         if (self::normalizedBrowser($browser) !== self::normalizedBrowser($profile['browser'])) {
             throw new RuntimeException("WebDriver returned browser {$browser}, expected {$profile['browser']}.");
         }
-        if ($version !== trim($profile['version'])) {
+        $expectedVersion = trim($profile['version']);
+        if ($version !== $expectedVersion && ! str_starts_with($version, $expectedVersion.'.')) {
             throw new RuntimeException("WebDriver returned version {$version}, expected {$profile['version']}.");
         }
     }

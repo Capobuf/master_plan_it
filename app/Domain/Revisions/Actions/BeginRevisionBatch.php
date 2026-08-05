@@ -9,11 +9,13 @@ use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\RevisionBatch;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\Version as ApplicationVersion;
 use Carbon\CarbonImmutable;
 use DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Overtrue\LaravelVersionable\Versionable;
 
 final class BeginRevisionBatch
 {
@@ -29,20 +31,21 @@ final class BeginRevisionBatch
         ?int $restoredFromVersionId,
     ): RevisionBatch {
         [$persistedActor, $tenant] = $this->verifyPersistedContext($actor, $context);
-        $this->assertSameTenantRoot($root, $tenant);
+        $persistedRoot = $this->persistedSameTenantRoot($root, $tenant);
+        $restoreSource = $this->persistedRestoreSource($operation, $restoredFromVersionId, $persistedRoot);
         $occurredAt = CarbonImmutable::now('UTC');
 
-        return DB::transaction(function () use ($correlationId, $occurredAt, $operation, $persistedActor, $reason, $restoredFromVersionId, $root, $tenant): RevisionBatch {
+        return DB::transaction(function () use ($correlationId, $occurredAt, $operation, $persistedActor, $persistedRoot, $reason, $restoreSource, $tenant): RevisionBatch {
             $batch = RevisionBatch::query()->create([
                 'tenant_id' => $tenant->getKey(),
                 'actor_user_id' => $persistedActor->getKey(),
-                'root_subject_type' => $root->getMorphClass(),
-                'root_subject_id' => $root->getKey(),
+                'root_subject_type' => $persistedRoot->getMorphClass(),
+                'root_subject_id' => $persistedRoot->getKey(),
                 'operation' => $operation,
                 'reason' => $reason,
                 'correlation_id' => $correlationId,
                 'restored_from_batch_id' => null,
-                'restored_from_version_id' => $restoredFromVersionId,
+                'restored_from_version_id' => $restoreSource?->getKey(),
                 'occurred_at' => $occurredAt,
             ]);
 
@@ -110,14 +113,53 @@ final class BeginRevisionBatch
         return Tenant::query()->whereKey($originalKey)->first();
     }
 
-    private function assertSameTenantRoot(Model $root, Tenant $tenant): void
+    private function persistedSameTenantRoot(Model $root, Tenant $tenant): Model
     {
-        if (! $root->exists || $root->getKey() === null || ! isset($root->tenant_id)) {
+        $key = $root->getKey();
+        $originalKey = $root->getRawOriginal($root->getKeyName());
+
+        if (! $root->exists || $key === null || $originalKey === null || $key !== $originalKey) {
             throw new DomainException('TENANT_RELATION_MISMATCH');
         }
 
-        if ((int) $root->tenant_id !== (int) $tenant->getKey()) {
+        $persistedRoot = $root->newQuery()->whereKey($originalKey)->first();
+        $persistedTenantId = $persistedRoot?->getAttribute('tenant_id');
+
+        if (! $persistedRoot instanceof Model
+            || ! in_array(Versionable::class, class_uses_recursive($persistedRoot), true)
+            || $persistedTenantId === null
+            || (int) $persistedTenantId !== (int) $tenant->getKey()) {
             throw new DomainException('TENANT_RELATION_MISMATCH');
         }
+
+        return $persistedRoot;
+    }
+
+    private function persistedRestoreSource(
+        RevisionOperation $operation,
+        ?int $restoredFromVersionId,
+        Model $persistedRoot,
+    ): ?ApplicationVersion {
+        if ($operation !== RevisionOperation::Restore) {
+            if ($restoredFromVersionId !== null) {
+                throw new DomainException('TENANT_RELATION_MISMATCH');
+            }
+
+            return null;
+        }
+
+        if ($restoredFromVersionId === null) {
+            throw new DomainException('TENANT_RELATION_MISMATCH');
+        }
+
+        $source = ApplicationVersion::query()->whereKey($restoredFromVersionId)->first();
+
+        if (! $source instanceof ApplicationVersion
+            || $source->getAttribute('versionable_type') !== $persistedRoot->getMorphClass()
+            || (int) $source->getAttribute('versionable_id') !== (int) $persistedRoot->getKey()) {
+            throw new DomainException('TENANT_RELATION_MISMATCH');
+        }
+
+        return $source;
     }
 }

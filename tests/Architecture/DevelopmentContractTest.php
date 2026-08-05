@@ -414,6 +414,29 @@ PHP;
         $this->addToAssertionCount(1);
     }
 
+    public function test_dusk_capability_validation_accepts_a_delimited_browser_series_only(): void
+    {
+        $profile = ['browser' => 'chrome', 'version' => '131.0', 'driverUrl' => 'http://webdriver.invalid'];
+
+        DuskTestCase::assertResolvedCapabilities(
+            $profile,
+            DesiredCapabilities::createFromW3cCapabilities([
+                'browserName' => 'chrome',
+                'browserVersion' => '131.0.6778.204',
+            ]),
+        );
+        $this->addToAssertionCount(1);
+
+        $this->expectException(\RuntimeException::class);
+        DuskTestCase::assertResolvedCapabilities(
+            $profile,
+            DesiredCapabilities::createFromW3cCapabilities([
+                'browserName' => 'chrome',
+                'browserVersion' => '131.01.6778.204',
+            ]),
+        );
+    }
+
     public function test_authoritative_domain_code_contains_no_float_arithmetic(): void
     {
         $root = dirname(__DIR__, 2);

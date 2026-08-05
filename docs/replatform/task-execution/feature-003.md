@@ -7,7 +7,7 @@
 | T003-005 | `php artisan test tests/Feature/Revisions/ExpenseVersioningIntegrationTest.php` |
 | T003-006 | `php artisan test tests/Feature/Expenses/ExpenseAuthorizationTest.php` |
 | T003-007–008 | `php artisan test tests/Accounting/Integration/CurrentExpenseDatasetTest.php tests/Feature/Expenses/ExpenseRegisterTest.php` |
-| T003-009 | `php artisan test tests/Accounting/Integration/CurrentExpenseDatasetTest.php tests/Feature/Expenses/ExpenseRegisterTest.php tests/Livewire/Expenses/ExpenseRegisterPageTest.php` |
+| T003-009 | `php artisan test tests/Accounting/Integration/CurrentExpenseDatasetTest.php tests/Feature/Expenses/ExpenseRegisterTest.php tests/Livewire/Expenses/ExpenseRegisterPageTest.php tests/Livewire/Shell/OperationalShellTest.php && vendor/bin/phpstan analyse --no-progress app/Domain/Expenses/Data app/Domain/Expenses/Queries app/Livewire/Expenses app/Providers/AuthServiceProvider.php routes/operational.php && APP_URL=http://laravel.test MPIT_BROWSER_PROFILE=chrome-current MPIT_CHROME_CURRENT_VERSION=131.0 MPIT_CHROME_CURRENT_DRIVER_URL=http://selenium:4444/wd/hub php artisan dusk tests/Browser/Expenses/ExpenseRegisterVisualSmokeTest.php` |
 | T003-010–011 | `php artisan test tests/Feature/Expenses/CreateExpenseTest.php tests/Feature/Expenses/UpdateExpenseTest.php tests/Accounting/Integration/ExpenseCalculationTest.php` |
 | T003-012 | `php artisan test tests/Feature/Expenses/CreateExpenseTest.php tests/Feature/Expenses/UpdateExpenseTest.php tests/Livewire/Expenses/ExpenseEditorTest.php` |
 | T003-013–014 | `php artisan test tests/Feature/Expenses/ConfirmActualTest.php tests/Accounting/Integration/GeneratedActualOwnershipTest.php` |

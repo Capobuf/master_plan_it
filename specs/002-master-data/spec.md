@@ -49,7 +49,7 @@ Given a cost center referenced by existing records, when it is deactivated, hist
 
 ### AC-002-04 — Revisions
 
-Given an authorized update to a vendor or cost center, one current record remains and revision history records the change. Restoring a valid revision creates a new current revision and revalidates uniqueness, tenant ownership, references, and tree integrity.
+Given an authorized update, lifecycle change, restore, or deletion of a vendor or cost center, revision history links the exact persisted snapshot created by that operation. Restoring a valid persisted revision creates a new current revision and revalidates uniqueness, tenant ownership, references, and tree integrity. Mutating an in-memory root, batch, version identifier, relation, or version payload cannot redirect or alter the operation.
 
 ### AC-002-05 — Validation and concurrency
 
@@ -82,12 +82,12 @@ Given an actor with the corresponding delete ability, a vendor may be permanentl
 | FR-002-009 | A cost-center parent with an active descendant shall not be deactivated; branch deactivation requires explicit descendant operations. | AC-002-03 |
 | FR-002-010 | Years, cost centers, vendors, revisions, imports, exports, and selections shall be scoped to one tenant. | AC-002-01 |
 | FR-002-011 | Every exposed operation shall be permission-controlled. Planning years expose distinct view/create/deactivate/reactivate abilities; the seeded Editor receives view only, while Administrator may deliberately assign lifecycle abilities to a custom tenant role. Vendor and cost-center create/update/delete/deactivate/reactivate/restore abilities remain distinct. Seeded Viewer behavior is defined by Feature 007. | AC-002-01, AC-002-04, AC-002-06, AC-002-08 |
-| FR-002-012 | Vendor and cost-center operational revisions shall preserve one current record and support compare/restore under the cross-cutting versioning contract. | AC-002-04 |
+| FR-002-012 | Vendor and cost-center operational revisions shall preserve one current record and support compare/restore under the cross-cutting versioning contract. A revision-batch root shall be a persisted tenant-owned model using the approved Versionable boundary; roots, batches and versions shall be resolved from immutable current/raw-original identity and persisted state. `restored_from_version_id` shall exist only for a restore operation and shall identify a persisted Version of that exact root. Deletion shall link the snapshot created by the actual soft-delete operation, including when its versionable parent is already soft-deleted. | AC-002-04 |
 | FR-002-013 | Optimistic updates shall require and increment `lock_version`. | AC-002-05 |
 | FR-002-014 | Planning years shall support explicit permission-controlled create/deactivate/reactivate operations; inactive years shall remain historically readable, be excluded from new selections, and never be permanently deleted. Date update and operational revision compare/restore operations shall not exist. | AC-002-06 |
 | FR-002-015 | A cost-center hierarchy shall have a maximum depth of three levels, counting a root as level one; parent assignment that would create level four shall fail atomically. | AC-002-07 |
 | FR-002-016 | Cost-center siblings shall be ordered by case-insensitive ascending name and then by ID; this ordering shall not require a separate cost-center code field. | AC-002-07 |
-| FR-002-017 | A vendor may be permanently deleted only when no current or historical domain record references it. A cost center may be permanently deleted only under the same reference condition and when it has no descendants. Successful deletion shall preserve audit evidence. | AC-002-08 |
+| FR-002-017 | A vendor may be permanently deleted only when no current or historical domain record references it. A cost center may be permanently deleted only under the same reference condition and when it has no descendants. Successful deletion shall preserve audit evidence and link the exact revision snapshot created by that delete. | AC-002-08 |
 | FR-002-018 | Import or migration input that supplies planning-year boundaries other than January 1 through December 31 of its calendar-year identifier shall be rejected or quarantined without silent normalization. | AC-002-05 |
 
 ## Business invariants

@@ -89,6 +89,8 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
 
 Filament remains authoritative for the accepted authentication and administrative surfaces above. Expense, Budget, reporting and later operational project/contract screens use the single operational Blade layout from T001-029 and reuse the same authenticated session, tenant context, Policies, middleware, Actions, Queries and DTOs. Livewire owns server state/validation/authorization/loading and Action invocation; Blade owns markup; Preline owns its documented visual components; Alpine owns only local transient state; Chart.js consumes server-calculated presentation payloads. Livewire DOM updates must explicitly reinitialize Preline and destroy/recreate JavaScript-owned resources without duplicating listeners or chart instances.
 
+The shared modal contract is server-state aware: Escape closes ordinary modals and cancels an unsubmitted destructive confirmation; while a non-interruptible server request is active, close, Escape and duplicate actions are disabled. Closing restores focus to the opener, and validation failure focuses the first invalid field. The shared state contract requires perceivable loading with `aria-busy`, mathematically valid and guided empty states, non-disclosing denial, stale-conflict input preservation with explicit reload or re-execution, and safe unexpected-error presentation using `UNEXPECTED_ERROR` plus the request correlation ID when available. T001-028/T001-029 own the shared contract, T003-009/T003-012 and T005-006/T005-007 apply it, and T005-026 owns end-to-end runtime verification for the selected milestone.
+
 ## Action design
 
 `UpdatePlatformSettings` locks the singleton row, validates an integer from 1 through 120 months (default 24), verifies Administrator, and requires a confirmation token when the new value is lower. The confirmation presents a generic warning that older audit events may be deleted on the next prune; it exposes neither a calculated cutoff date nor an eligible-event count. The Action increments lock version and writes audit. It does not immediately prune; the next scheduled command uses the current value.
@@ -103,7 +105,7 @@ One cron runs `schedule:run` each minute. Planned schedules:
 
 - audit prune daily;
 - renewal/expiry check daily;
-- backup schedule/monitor according to Feature 006;
+- backup cadence, monitoring threshold and final command names are `DEFERRED — POST-MILESTONE` to T001-025 and T006-012–T006-013; no provisional schedule or command belongs to the manual Expense-to-current-Budget dependency closure;
 - no queued notification.
 
 Each command uses overlap prevention and explicit lock name. Tenant iteration is bounded and records failures per tenant without hiding command failure.
