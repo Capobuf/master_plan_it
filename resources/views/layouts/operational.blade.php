@@ -50,16 +50,22 @@
                     <p class="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Analisi e controllo</p>
                     <div class="mt-2 space-y-1">
                         @can('viewAny', \App\Models\CostCenter::class)
-                            <a href="{{ url('/admin/cost-centers') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 transition hover:bg-white/8 hover:text-white">
-                                <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/></svg>
-                                Centri di costo
-                            </a>
+                            <span class="flex cursor-not-allowed items-center justify-between gap-3 rounded-lg px-3 py-2 text-slate-500" aria-disabled="true">
+                                <span class="flex items-center gap-3">
+                                    <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="8"/><path d="M12 4v16M4 12h16"/></svg>
+                                    Centri di costo
+                                </span>
+                                <span class="rounded bg-white/8 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide">In arrivo</span>
+                            </span>
                         @endcan
                         @can('viewAny', \App\Models\Vendor::class)
-                            <a href="{{ url('/admin/vendors') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 transition hover:bg-white/8 hover:text-white">
-                                <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V7l8-4 8 4v14"/><path d="M8 10h2m4 0h2M8 14h2m4 0h2M9 21v-3h6v3"/></svg>
-                                Fornitori
-                            </a>
+                            <span class="flex cursor-not-allowed items-center justify-between gap-3 rounded-lg px-3 py-2 text-slate-500" aria-disabled="true">
+                                <span class="flex items-center gap-3">
+                                    <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 21V7l8-4 8 4v14"/><path d="M8 10h2m4 0h2M8 14h2m4 0h2M9 21v-3h6v3"/></svg>
+                                    Fornitori
+                                </span>
+                                <span class="rounded bg-white/8 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide">In arrivo</span>
+                            </span>
                         @endcan
                         @can('viewAny', \App\Models\Expense::class)
                             <a href="{{ route('operational.expenses.index') }}" @if (request()->routeIs('operational.expenses.*')) aria-current="page" @endif class="flex items-center gap-3 rounded-lg px-3 py-2.5 font-medium text-slate-200 transition hover:bg-white/8 hover:text-white aria-[current=page]:bg-blue-600 aria-[current=page]:text-white aria-[current=page]:shadow-lg aria-[current=page]:shadow-blue-950/30">
@@ -74,10 +80,13 @@
                     <p class="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Pianificazione</p>
                     <div class="mt-2 space-y-1">
                         @can('viewAny', \App\Models\PlanningYear::class)
-                            <a href="{{ url('/admin/planning-years') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 transition hover:bg-white/8 hover:text-white">
-                                <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4m8-4v4M3 10h18"/></svg>
-                                Anni di pianificazione
-                            </a>
+                            <span class="flex cursor-not-allowed items-center justify-between gap-3 rounded-lg px-3 py-2 text-slate-500" aria-disabled="true">
+                                <span class="flex items-center gap-3">
+                                    <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M8 3v4m8-4v4M3 10h18"/></svg>
+                                    Anni di pianificazione
+                                </span>
+                                <span class="rounded bg-white/8 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide">In arrivo</span>
+                            </span>
                         @endcan
                         <span class="flex cursor-not-allowed items-center justify-between gap-3 rounded-lg px-3 py-2 text-slate-500" aria-disabled="true">
                             <span class="flex items-center gap-3">
@@ -89,15 +98,17 @@
                     </div>
                 </div>
 
-                <div>
-                    <p class="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Amministrazione</p>
-                    <div class="mt-2 space-y-1">
-                        <a href="{{ url('/admin') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 transition hover:bg-white/8 hover:text-white">
-                            <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7Z"/><path d="M9 12h6m-3-3v6"/></svg>
-                            Console Filament
-                        </a>
+                @if ($actor !== null && $actor->tenant_id === null)
+                    <div>
+                        <p class="px-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-slate-500">Amministrazione piattaforma</p>
+                        <div class="mt-2 space-y-1">
+                            <a href="{{ url('/admin') }}" class="flex items-center gap-3 rounded-lg px-3 py-2 text-slate-300 transition hover:bg-white/8 hover:text-white">
+                                <svg aria-hidden="true" viewBox="0 0 24 24" class="size-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3 4 7v5c0 5 3.5 8 8 9 4.5-1 8-4 8-9V7Z"/><path d="M9 12h6m-3-3v6"/></svg>
+                                Console amministrativa
+                            </a>
+                        </div>
                     </div>
-                </div>
+                @endif
             </nav>
 
             <div class="border-t border-white/10 px-5 py-4 text-xs text-slate-400">
@@ -187,8 +198,6 @@
                             <x-operational.empty-state
                                 title="Nessun modulo operativo disponibile"
                                 description="Il tuo account non dispone ancora di moduli operativi per questo tenant."
-                                action-label="Apri amministrazione"
-                                :action-href="url('/admin')"
                             />
                         </div>
                     @endcan
@@ -213,7 +222,9 @@
                                     <button type="button" dusk="workspace-help-close" autofocus aria-label="Chiudi informazioni workspace" data-hs-overlay="#operational-workspace-help" class="rounded-lg px-2 py-1 text-sm font-medium text-blue-700 hover:bg-blue-50">Chiudi</button>
                                 </div>
                                 <p class="mt-3 text-sm leading-6 text-slate-600">Il workspace usa sempre il tenant mostrato nella barra superiore. I collegamenti sono filtrati per permission e ogni richiesta viene autorizzata nuovamente dal server.</p>
-                                <p class="mt-3 text-sm leading-6 text-slate-600">La console Filament resta disponibile per le funzioni amministrative già implementate.</p>
+                                @if ($actor !== null && $actor->tenant_id === null)
+                                    <p class="mt-3 text-sm leading-6 text-slate-600">La console amministrativa è separata dal workspace operativo ed è riservata all'amministratore di piattaforma.</p>
+                                @endif
                             </div>
                         </div>
                     </div>

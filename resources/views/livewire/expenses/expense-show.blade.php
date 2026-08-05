@@ -82,9 +82,9 @@
                                             <td class="hidden px-4 py-3 font-mono text-slate-500 sm:table-cell">{{ $row['position'] }}</td>
                                             <td class="max-w-sm px-4 py-3 font-medium text-slate-900">{{ $row['description'] }}</td>
                                             <td class="hidden px-4 py-3 md:table-cell"><span class="inline-flex rounded-full bg-slate-100 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-slate-600">{{ $row['type'] }}</span></td>
-                                            <td class="hidden whitespace-nowrap px-4 py-3 text-right font-mono sm:table-cell">€ {{ $row['net_amount'] }}</td>
-                                            <td class="hidden whitespace-nowrap px-4 py-3 text-right font-mono lg:table-cell">€ {{ $row['vat_amount'] }}</td>
-                                            <td class="whitespace-nowrap px-4 py-3 text-right font-mono font-semibold text-slate-900">€ {{ $row['gross_amount'] }}</td>
+                                            <td class="hidden whitespace-nowrap px-4 py-3 text-right sm:table-cell"><x-operational.money :amount="$row['net_amount']" /></td>
+                                            <td class="hidden whitespace-nowrap px-4 py-3 text-right lg:table-cell"><x-operational.money :amount="$row['vat_amount']" /></td>
+                                            <td class="whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-900"><x-operational.money :amount="$row['gross_amount']" /></td>
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -100,10 +100,10 @@
                     <dl class="mt-5 space-y-4">
                         <div class="border-b border-slate-100 pb-4">
                             <dt class="text-xs text-slate-500">Totale lordo</dt>
-                            <dd class="mt-1 font-mono text-2xl font-bold tracking-tight text-slate-950">€ {{ $detail['gross'] }}</dd>
+                            <dd class="mt-1 text-2xl font-bold tracking-tight text-slate-950"><x-operational.money :amount="$detail['gross']" /></dd>
                         </div>
-                        <div class="flex items-center justify-between gap-3"><dt class="text-xs text-slate-500">Netto</dt><dd class="font-mono text-sm font-semibold text-slate-800">€ {{ $detail['net'] }}</dd></div>
-                        <div class="flex items-center justify-between gap-3"><dt class="text-xs text-slate-500">IVA</dt><dd class="font-mono text-sm font-semibold text-slate-800">€ {{ $detail['vat'] }}</dd></div>
+                        <div class="flex items-center justify-between gap-3"><dt class="text-xs text-slate-500">Netto</dt><dd class="text-sm font-semibold text-slate-800"><x-operational.money :amount="$detail['net']" /></dd></div>
+                        <div class="flex items-center justify-between gap-3"><dt class="text-xs text-slate-500">IVA</dt><dd class="text-sm font-semibold text-slate-800"><x-operational.money :amount="$detail['vat']" /></dd></div>
                     </dl>
                 </section>
 

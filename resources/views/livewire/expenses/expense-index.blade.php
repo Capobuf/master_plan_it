@@ -109,8 +109,8 @@
                                         <td class="hidden max-w-52 px-4 py-3 md:table-cell"><span class="block truncate">{{ $row['cost_center'] }}</span></td>
                                         <td class="hidden whitespace-nowrap px-4 py-3 lg:table-cell"><span class="inline-flex rounded-full bg-blue-50 px-2 py-1 text-[10px] font-bold uppercase tracking-wide text-blue-700 ring-1 ring-inset ring-blue-200">{{ $row['kind'] }}</span></td>
                                         <td class="hidden px-4 py-3 text-right font-mono lg:table-cell">{{ $row['row_count'] }}</td>
-                                        <td class="hidden whitespace-nowrap px-4 py-3 text-right font-mono xl:table-cell">€ {{ $row['net'] }}</td>
-                                        <td class="whitespace-nowrap px-4 py-3 text-right font-mono font-semibold text-slate-900">€ {{ $row['gross'] }}</td>
+                                        <td class="hidden whitespace-nowrap px-4 py-3 text-right xl:table-cell"><x-operational.money :amount="$row['net']" /></td>
+                                        <td class="whitespace-nowrap px-4 py-3 text-right font-semibold text-slate-900"><x-operational.money :amount="$row['gross']" /></td>
                                         <td class="px-3 py-3 text-right"><a href="{{ route('operational.expenses.show', ['expense' => $row['id']]) }}" aria-label="Apri {{ $row['title'] }}" class="inline-flex size-8 items-center justify-center rounded-lg text-slate-500 hover:bg-blue-100 hover:text-blue-700">→</a></td>
                                     </tr>
                                 @endforeach
@@ -136,11 +136,11 @@
                 <dl class="mt-5 space-y-4">
                     <div class="border-b border-slate-100 pb-4">
                         <dt class="text-xs text-slate-500">Totale lordo</dt>
-                        <dd class="mt-1 font-mono text-2xl font-bold tracking-tight text-slate-950">€ {{ $totals['gross'] }}</dd>
+                        <dd class="mt-1 text-2xl font-bold tracking-tight text-slate-950"><x-operational.money :amount="$totals['gross']" /></dd>
                     </div>
                     <div class="grid grid-cols-2 gap-3">
-                        <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Netto</dt><dd class="mt-1 font-mono text-sm font-semibold text-slate-800">€ {{ $totals['net'] }}</dd></div>
-                        <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">IVA</dt><dd class="mt-1 font-mono text-sm font-semibold text-slate-800">€ {{ $totals['vat'] }}</dd></div>
+                        <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Netto</dt><dd class="mt-1 text-sm font-semibold text-slate-800"><x-operational.money :amount="$totals['net']" /></dd></div>
+                        <div><dt class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">IVA</dt><dd class="mt-1 text-sm font-semibold text-slate-800"><x-operational.money :amount="$totals['vat']" /></dd></div>
                     </div>
                 </dl>
             </section>
