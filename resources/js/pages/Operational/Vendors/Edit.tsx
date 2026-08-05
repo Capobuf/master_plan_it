@@ -1,0 +1,1 @@
+import { Head } from '@inertiajs/react'; import { VendorForm } from './Form'; export default function Edit({ vendor }: any) { return <><Head title="Edit vendor"/><VendorForm vendor={vendor} method="put"/></>; }

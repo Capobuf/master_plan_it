@@ -5,7 +5,6 @@ namespace Tests\Feature\Auth;
 use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
 use Database\Seeders\PermissionCatalogueSeeder;
-use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -33,13 +32,9 @@ class LogoutSessionScopeTest extends TestCase
             'last_activity' => now()->timestamp,
         ]);
 
-        $panel = Filament::getPanel('admin');
-        $this->assertNotNull($panel);
-        Filament::setCurrentPanel($panel);
+        $response = $this->actingAs($administrator)->post(route('logout'));
 
-        $response = $this->actingAs($administrator)->post($panel->getLogoutUrl());
-
-        $response->assertRedirect($panel->getLoginUrl());
+        $response->assertRedirect(route('login'));
         $this->assertGuest();
         $this->assertNotSame($currentSessionId, session()->getId());
         $this->assertDatabaseHas('sessions', [

@@ -1,0 +1,1 @@
+import { Head } from '@inertiajs/react'; import { UserForm } from './Form'; export default function Create({ roles }: { roles?: any[] }) { return <><Head title="Add user"/><UserForm roles={roles} method="post"/></>; }

@@ -138,7 +138,6 @@ class DevelopmentContractTest extends TestCase
         $this->assertContains('tests/Architecture', $suiteDirectories);
         $this->assertContains('tests/Accounting', $suiteDirectories);
         $this->assertContains('tests/Feature', $suiteDirectories);
-        $this->assertContains('tests/Livewire', $suiteDirectories);
     }
 
     public function test_static_configuration_and_code_ownership_are_blocking(): void

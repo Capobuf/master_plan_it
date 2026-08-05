@@ -55,27 +55,27 @@ class ExpenseRegisterVisualSmokeTest extends DuskTestCase
                     ->resize(1280, 900)
                     ->loginAs($actor)
                     ->visit('/operational')
-                    ->waitFor('@operational-shell')
-                    ->clickLink('Spese')
-                    ->waitForText('Registro spese')
+                    ->waitForText('Dashboard')
+                    ->clickLink('Expenses')
+                    ->waitForText('Expense register')
                     ->assertSee('Cloud platform services')
-                    ->assertSee('17300.00')
+                    ->assertSee("17'300,00 €")
                     ->assertScript('return document.documentElement.scrollWidth <= document.documentElement.clientWidth;', true)
                     ->screenshot('expense-register-desktop')
-                    ->clickLink('Cloud platform services')
+                    ->click('tbody tr')
                     ->waitForText('Managed database capacity')
                     ->assertSee('Northwind Operations')
-                    ->assertSee('21106.00');
+                    ->assertSee("21'106,00 €");
 
                 $browser->script('window.scrollTo(0, 0)');
 
                 $browser
                     ->assertScript('return document.documentElement.scrollWidth <= document.documentElement.clientWidth;', true)
-                    ->assertPresent('[aria-label="Riepilogo spesa"]')
+                    ->assertPresent('dl')
                     ->screenshot('expense-detail-desktop')
                     ->resize(390, 844)
                     ->visit('/operational/expenses')
-                    ->waitForText('Registro spese')
+                    ->waitForText('Expense register')
                     ->assertScript('return document.documentElement.scrollWidth <= document.documentElement.clientWidth;', true)
                     ->screenshot('expense-register-mobile');
             });

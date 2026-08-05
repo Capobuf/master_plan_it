@@ -27,8 +27,7 @@ final class PlanningYearListQuery
         User $actor,
         TenantContext $context,
         ?int $currentPlanningYearId = null,
-    ): Builder
-    {
+    ): Builder {
         return $this->forTenant($actor, $context)
             ->where(function (Builder $query) use ($currentPlanningYearId): void {
                 $query->where('active', true);

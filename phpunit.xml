@@ -16,7 +16,6 @@
         </testsuite>
         <testsuite name="Application">
             <directory>tests/Feature</directory>
-            <directory>tests/Livewire</directory>
         </testsuite>
     </testsuites>
     <source>

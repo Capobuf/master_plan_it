@@ -8,12 +8,9 @@
     "require": {
         "php": "^8.3",
         "ext-bcmath": "*",
-        "bezhansalleh/filament-shield": "4.3.1",
-        "filament/filament": "5.7.3",
+        "inertiajs/inertia-laravel": "3.3.1",
         "laravel/framework": "13.22.0",
         "laravel/tinker": "3.0.2",
-        "livewire/livewire": "4.3.3",
-        "mansoor/filament-versionable": "5.1.0",
         "openspout/openspout": "4.32.0",
         "overtrue/laravel-versionable": "6.0.0",
         "spatie/laravel-permission": "8.3.0"

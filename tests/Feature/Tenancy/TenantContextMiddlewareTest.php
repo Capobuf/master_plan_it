@@ -142,6 +142,7 @@ class TenantContextMiddlewareTest extends TestCase
 
     public function test_aliases_and_priority_place_the_context_chain_between_authentication_and_route_binding(): void
     {
+        app(Kernel::class);
         $aliases = $this->app['router']->getMiddleware();
 
         $this->assertSame(EnsureActiveUser::class, $aliases['active-user'] ?? null);

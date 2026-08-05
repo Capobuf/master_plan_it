@@ -1,32 +1,30 @@
 @import 'tailwindcss';
 @plugin '@tailwindcss/forms';
-@source '../../node_modules/preline/dist/*.js';
-@import '../../node_modules/preline/variants.css';
 
-@import '../../vendor/filament/support/resources/css/index.css';
-@import '../../vendor/filament/actions/resources/css/index.css';
-@import '../../vendor/filament/forms/resources/css/index.css';
-@import '../../vendor/filament/infolists/resources/css/index.css';
-@import '../../vendor/filament/notifications/resources/css/index.css';
-@import '../../vendor/filament/schemas/resources/css/index.css';
-@import '../../vendor/filament/tables/resources/css/index.css';
-@import '../../vendor/filament/widgets/resources/css/index.css';
-
-@variant dark (&:where(.dark, .dark *));
+@theme {
+  --font-sans: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --color-brand-50: #eff6ff; --color-brand-100: #dbeafe; --color-brand-500: #2563eb;
+  --color-brand-600: #1d4ed8; --color-brand-700: #1e40af; --color-brand-950: #071b3a;
+}
 
 @layer base {
-    [x-cloak] {
-        display: none !important;
-    }
-
-    :focus-visible {
-        @apply outline-2 outline-offset-2 outline-blue-700;
-    }
+  html { @apply overflow-x-hidden bg-slate-50 text-slate-800 antialiased; }
+  body { @apply min-h-screen overflow-x-hidden; }
+  button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { @apply outline-2 outline-offset-2 outline-brand-600; }
 }
 
 @layer components {
-    .operational-table-scroll {
-        overscroll-behavior-inline: contain;
-        scrollbar-color: rgb(148 163 184) transparent;
-    }
+  .mp-card { @apply rounded-2xl border border-slate-200 bg-white shadow-sm; }
+  .mp-card-body { @apply p-5 sm:p-6; }
+  .mp-label { @apply mb-1.5 block text-sm font-medium text-slate-700; }
+  .mp-input { @apply block w-full rounded-lg border-slate-300 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm placeholder:text-slate-400 focus:border-brand-500 focus:ring-brand-500 disabled:bg-slate-100; }
+  .mp-button { @apply inline-flex min-h-10 items-center justify-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:pointer-events-none disabled:opacity-50; }
+  .mp-button-primary { @apply bg-brand-700 text-white hover:bg-brand-600; }
+  .mp-button-secondary { @apply border border-slate-300 bg-white text-slate-700 hover:bg-slate-50; }
+  .mp-button-danger { @apply bg-red-600 text-white hover:bg-red-700; }
+  .mp-table { @apply min-w-full divide-y divide-slate-200 text-left text-sm; }
+  .mp-table th { @apply whitespace-nowrap px-5 py-3 text-xs font-semibold uppercase tracking-wide text-slate-500; }
+  .mp-table td { @apply whitespace-nowrap px-5 py-4 text-slate-700; }
+  .operational-table-scroll { position: relative; overscroll-behavior-inline: contain; scrollbar-color: rgb(148 163 184) transparent; }
 }

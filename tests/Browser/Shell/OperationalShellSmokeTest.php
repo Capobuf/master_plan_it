@@ -5,7 +5,6 @@ namespace Tests\Browser\Shell;
 use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\PermissionCatalogueSeeder;
-use Facebook\WebDriver\WebDriverKeys;
 use Laravel\Dusk\Browser;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -13,7 +12,7 @@ use Tests\DuskTestCase;
 
 class OperationalShellSmokeTest extends DuskTestCase
 {
-    public function test_operational_shell_is_keyboard_accessible_responsive_and_reinitializes_preline(): void
+    public function test_operational_react_shell_is_responsive_and_keyboard_accessible(): void
     {
         app(PermissionCatalogueSeeder::class)->run();
         $tenant = Tenant::factory()->create([
@@ -24,26 +23,25 @@ class OperationalShellSmokeTest extends DuskTestCase
         $this->assignDashboardAbility($actor, $tenant);
 
         try {
-            $this->browse(function (Browser $browser) use ($actor, $tenant): void {
+            $this->browse(function (Browser $browser) use ($actor): void {
                 foreach ([360, 768, 1280] as $viewport) {
                     $browser
                         ->resize($viewport, 900)
                         ->loginAs($actor)
                         ->visit('/operational')
-                        ->waitFor('@operational-shell')
-                        ->assertSee("Browser tenant ({$tenant->code})")
-                        ->assertSee('Workspace help')
-                        ->assertDontSee('Open interaction example')
-                        ->assertDontSee('Submit')
-                        ->assertScript('return document.documentElement.scrollWidth <= document.documentElement.clientWidth;', true)
-                        ->assertScript('return Boolean(window.__operationalPrelineLifecycle?.initialized);', true)
-                        ->click('@workspace-help-open');
+                        ->waitForText('Dashboard')
+                        ->assertSee('Browser tenant')
+                        ->assertScript('return document.documentElement.scrollWidth <= document.documentElement.clientWidth;', true);
 
-                    $browser
-                        ->waitFor('@workspace-help')
-                        ->keys('@workspace-help-close', WebDriverKeys::ESCAPE)
-                        ->waitUntil("document.querySelector('[dusk=workspace-help]')?.classList.contains('hidden')")
-                        ->assertScript('return document.activeElement?.matches("[dusk=workspace-help-open]");', true);
+                    if ($viewport < 1280) {
+                        $browser
+                            ->keys('button[aria-label="Open navigation"]', '{enter}')
+                            ->waitFor('button[aria-label="Close navigation"]')
+                            ->assertVisible('button[aria-label="Close navigation"]')
+                            ->click('button[aria-label="Close navigation"]');
+                    } else {
+                        $browser->assertVisible('nav[aria-label="Main navigation"]');
+                    }
                 }
             });
         } finally {

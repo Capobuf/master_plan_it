@@ -1,0 +1,1 @@
+import { Head } from '@inertiajs/react'; import { UserForm } from './Form'; export default function Edit({ user, roles }: any) { return <><Head title="Edit user"/><UserForm user={user} roles={roles} method="put"/></>; }

@@ -35,18 +35,10 @@ class PermissionCatalogueTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_permission_teams_use_the_tenant_key_and_prohibit_shield_super_admin_bypass(): void
+    public function test_permission_teams_use_the_tenant_key_without_a_role_name_bypass(): void
     {
         $this->assertTrue(config('permission.teams'));
         $this->assertSame('tenant_id', config('permission.column_names.team_foreign_key'));
-        $this->assertFalse(config('filament-shield.super_admin.enabled'));
-        $this->assertFalse(config('filament-shield.permissions.generate'));
-        $this->assertFalse(config('filament-shield.policies.generate'));
-        $this->assertSame(
-            [],
-            array_values(array_intersect(self::protectedPlatformAbilities(), array_keys(config('filament-shield.custom_permissions')))),
-        );
-
         $this->assertTrue(Schema::hasColumns('roles', ['id', 'tenant_id', 'name', 'guard_name']));
         $this->assertTrue(Schema::hasColumns('model_has_roles', ['role_id', 'tenant_id', 'model_id', 'model_type']));
         $this->assertTrue(Schema::hasColumns('model_has_permissions', ['permission_id', 'tenant_id', 'model_id', 'model_type']));
@@ -295,11 +287,12 @@ class PermissionCatalogueTest extends TestCase
             'model_id' => $tenantUserId,
             'model_type' => $tenantUser->getMorphClass(),
         ]);
-        $this->assertSame(1, DB::table('model_has_roles')->where([
+        $this->assertDatabaseHas('model_has_roles', [
             'tenant_id' => PlatformAdministrator::PLATFORM_TEAM_ID,
             'role_id' => $role->getKey(),
+            'model_id' => $administrator->getKey(),
             'model_type' => $tenantUser->getMorphClass(),
-        ])->count());
+        ]);
     }
 
     public function test_platform_administrator_assignment_rejects_a_tenant_user_force_filled_with_an_active_tenantless_victim_primary_key(): void

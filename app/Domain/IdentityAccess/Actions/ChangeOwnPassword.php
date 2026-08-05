@@ -7,6 +7,7 @@ use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\Authorization\PlatformAdministrator;
 use DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
@@ -17,11 +18,12 @@ final class ChangeOwnPassword
     public function __construct(
         private readonly InvalidateUserSessions $invalidateUserSessions,
         private readonly AuditRecorder $auditRecorder,
+        private readonly PlatformAdministrator $platformAdministrator,
     ) {}
 
     public function execute(
         User $actor,
-        TenantContext $context,
+        ?TenantContext $context,
         string $currentPassword,
         string $newPassword,
         string $correlationId,
@@ -42,7 +44,7 @@ final class ChangeOwnPassword
                 correlationId: $correlationId,
                 properties: new AuditProperties([]),
                 actor: $persistedActor,
-                tenantId: (int) $tenant->getKey(),
+                tenantId: $tenant === null ? null : (int) $tenant->getKey(),
                 subject: $persistedActor,
             );
 
@@ -50,13 +52,24 @@ final class ChangeOwnPassword
         });
     }
 
-    /** @return array{User, Tenant} */
-    private function authorize(User $actor, TenantContext $context): array
+    /** @return array{User, ?Tenant} */
+    private function authorize(User $actor, ?TenantContext $context): array
     {
         $persistedActor = $this->persistedActor($actor);
 
         if ($persistedActor === null) {
             throw new AuthorizationException('PERMISSION_DENIED');
+        }
+
+        if ($context === null) {
+            if (
+                $persistedActor->tenant_id !== null
+                || ! $this->platformAdministrator->hasProtectedRole($persistedActor)
+            ) {
+                throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
+            }
+
+            return [$persistedActor, null];
         }
 
         if ($this->persistedActor($context->actor)?->getKey() !== $persistedActor->getKey()) {
@@ -67,6 +80,14 @@ final class ChangeOwnPassword
 
         if ($tenant === null) {
             throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
+        }
+
+        if (
+            $persistedActor->tenant_id === null
+                ? ! $this->platformAdministrator->hasProtectedRole($persistedActor)
+                : (int) $persistedActor->tenant_id !== (int) $tenant->getKey()
+        ) {
+            throw new AuthorizationException('PERMISSION_DENIED');
         }
 
         return [$persistedActor, $tenant];

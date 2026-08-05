@@ -19,12 +19,9 @@ class DependencyContractTest extends TestCase
         $expected = [
             'php' => '^8.3',
             'ext-bcmath' => '*',
-            'bezhansalleh/filament-shield' => '4.3.1',
-            'filament/filament' => '5.7.3',
+            'inertiajs/inertia-laravel' => '3.3.1',
             'laravel/framework' => '13.22.0',
             'laravel/tinker' => '3.0.2',
-            'livewire/livewire' => '4.3.3',
-            'mansoor/filament-versionable' => '5.1.0',
             'openspout/openspout' => '4.32.0',
             'overtrue/laravel-versionable' => '6.0.0',
             'spatie/laravel-permission' => '8.3.0',
@@ -96,12 +93,24 @@ class DependencyContractTest extends TestCase
         $this->assertSame('module', $package['type'] ?? null);
         $this->assertSame('vite', $package['scripts']['dev'] ?? null);
         $this->assertSame('vite build', $package['scripts']['build'] ?? null);
-        $this->assertSame(['chart.js' => '4.5.1'], $package['dependencies'] ?? null);
+        $this->assertSame([
+            '@inertiajs/react' => '3.6.1',
+            'chart.js' => '4.5.1',
+            'clsx' => '2.1.1',
+            'react' => '19.2.8',
+            'react-dom' => '19.2.8',
+            'tailwind-merge' => '3.6.0',
+        ], $package['dependencies'] ?? null);
         $this->assertSame(
             [
-                '@tailwindcss/vite' => '4.1.17',
+                '@tailwindcss/forms' => '0.5.11',
+                '@tailwindcss/vite' => '4.2.4',
+                '@types/react' => '19.2.18',
+                '@types/react-dom' => '19.2.4',
+                '@vitejs/plugin-react' => '4.7.0',
                 'laravel-vite-plugin' => '1.3.0',
-                'tailwindcss' => '4.1.17',
+                'tailwindcss' => '4.2.4',
+                'typescript' => '7.0.2',
                 'vite' => '6.4.3',
             ],
             $package['devDependencies'] ?? null,
@@ -112,18 +121,19 @@ class DependencyContractTest extends TestCase
 
         $viteConfig = file_get_contents($root.'/vite.config.js');
         $this->assertStringContainsString("'resources/css/app.css'", $viteConfig);
-        $this->assertStringContainsString("'resources/js/app.js'", $viteConfig);
+        $this->assertStringContainsString("'resources/js/app.tsx'", $viteConfig);
+        $this->assertStringContainsString("from '@vitejs/plugin-react'", $viteConfig);
         $this->assertStringContainsString("from 'laravel-vite-plugin'", $viteConfig);
         $this->assertStringContainsString("from '@tailwindcss/vite'", $viteConfig);
 
-        $this->assertFileExists($root.'/resources/js/app.js');
+        $this->assertFileExists($root.'/resources/js/app.tsx');
         $this->assertStringNotContainsString(
             'http://',
-            file_get_contents($root.'/resources/js/app.js'),
+            file_get_contents($root.'/resources/js/app.tsx'),
         );
         $this->assertStringNotContainsString(
             'https://',
-            file_get_contents($root.'/resources/js/app.js'),
+            file_get_contents($root.'/resources/js/app.tsx'),
         );
     }
 }

@@ -266,7 +266,6 @@ final class TenantQueryScopeTest extends TestCase
         $roots = [
             $root.'/app/Http/Controllers',
             $root.'/app/Http/Resources',
-            $root.'/app/Filament/Resources',
             $root.'/app/Domain',
         ];
         $files = [];
@@ -301,8 +300,7 @@ final class TenantQueryScopeTest extends TestCase
     {
         return preg_match('#^app/Domain/[^/]+/Queries(?:/.+)?/[^/]+\.php$#', $relative) === 1
             || str_starts_with($relative, 'app/Http/Controllers/')
-            || str_starts_with($relative, 'app/Http/Resources/')
-            || str_starts_with($relative, 'app/Filament/Resources/');
+            || str_starts_with($relative, 'app/Http/Resources/');
     }
 
     /**

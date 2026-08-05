@@ -2,17 +2,17 @@
 
 namespace App\Http\Controllers\Auth;
 
-use Filament\Auth\Http\Responses\Contracts\LogoutResponse;
-use Filament\Facades\Filament;
 use Illuminate\Auth\SessionGuard;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use LogicException;
 
 final class LogoutController
 {
-    public function __invoke(Request $request): LogoutResponse
+    public function __invoke(Request $request): RedirectResponse
     {
-        $guard = Filament::auth();
+        $guard = Auth::guard('web');
 
         if (! $guard instanceof SessionGuard) {
             throw new LogicException('Ordinary logout requires a session authentication guard.');
@@ -23,6 +23,6 @@ final class LogoutController
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return app(LogoutResponse::class);
+        return redirect()->route('login');
     }
 }

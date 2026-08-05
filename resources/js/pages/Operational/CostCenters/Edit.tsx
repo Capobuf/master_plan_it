@@ -1,0 +1,1 @@
+import { Head } from '@inertiajs/react'; import { CostCenterForm } from './Form'; export default function Edit({ costCenter, parents }: any) { return <><Head title="Edit cost center"/><CostCenterForm costCenter={costCenter} parents={parents} method="put"/></>; }

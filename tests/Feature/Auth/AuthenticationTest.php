@@ -7,12 +7,9 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
 use Database\Seeders\PermissionCatalogueSeeder;
-use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
-use Livewire\Component;
-use Livewire\Features\SupportTesting\Testable;
-use Livewire\Livewire;
+use Illuminate\Testing\TestResponse;
 use Tests\TestCase;
 
 class AuthenticationTest extends TestCase
@@ -26,7 +23,8 @@ class AuthenticationTest extends TestCase
         $sessionIdBeforeAuthentication = session()->getId();
 
         $this->authenticate($administrator, $password)
-            ->assertHasNoFormErrors();
+            ->assertRedirect(route('home'))
+            ->assertSessionHasNoErrors();
 
         $this->assertAuthenticatedAs($administrator);
         $this->assertNull(auth()->user()?->tenant_id);
@@ -45,7 +43,8 @@ class AuthenticationTest extends TestCase
         $sessionIdBeforeAuthentication = session()->getId();
 
         $this->authenticate($tenantUser, $password)
-            ->assertHasNoFormErrors();
+            ->assertRedirect(route('home'))
+            ->assertSessionHasNoErrors();
 
         $this->assertAuthenticatedAs($tenantUser);
         $this->assertSame($tenant->getKey(), auth()->user()?->tenant_id);
@@ -60,7 +59,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->authenticate($user, 'incorrect-local-password')
-            ->assertHasFormErrors(['email']);
+            ->assertSessionHasErrors(['email']);
 
         $this->assertGuest();
     }
@@ -73,7 +72,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->authenticate($user, $password)
-            ->assertHasFormErrors(['email']);
+            ->assertSessionHasErrors(['email']);
 
         $this->assertGuest();
     }
@@ -89,7 +88,7 @@ class AuthenticationTest extends TestCase
         ]);
 
         $this->authenticate($user, $password)
-            ->assertHasFormErrors(['email']);
+            ->assertSessionHasErrors(['email']);
 
         $this->assertGuest();
     }
@@ -108,21 +107,11 @@ class AuthenticationTest extends TestCase
         return $administrator;
     }
 
-    /** @return Testable<Component> */
-    private function authenticate(User $user, string $password): Testable
+    private function authenticate(User $user, string $password): TestResponse
     {
-        $panel = Filament::getPanel('admin');
-        $this->assertNotNull($panel);
-        Filament::setCurrentPanel($panel);
-
-        $loginPage = $panel->getLoginRouteAction();
-        $this->assertIsString($loginPage);
-
-        return Livewire::test($loginPage)
-            ->fillForm([
-                'email' => $user->email,
-                'password' => $password,
-            ])
-            ->call('authenticate');
+        return $this->post(route('login.store'), [
+            'email' => $user->email,
+            'password' => $password,
+        ]);
     }
 }

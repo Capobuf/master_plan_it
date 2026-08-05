@@ -89,7 +89,7 @@ class TenantPresentationContextTest extends TestCase
         }
     }
 
-    public function test_http_livewire_equivalent_and_console_style_iterations_do_not_leak_presentation_state(): void
+    public function test_http_component_and_console_style_iterations_do_not_leak_presentation_state(): void
     {
         $originalLocale = App::currentLocale();
         $originalTimezone = date_default_timezone_get();

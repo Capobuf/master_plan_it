@@ -4,15 +4,44 @@ namespace App\Domain\Revisions\Queries;
 
 use App\Domain\Revisions\Data\RevisionHistoryRow;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Models\RevisionBatch;
 use App\Models\RevisionBatchItem;
 use App\Models\Tenant;
 use App\Models\Version as ApplicationVersion;
 use DomainException;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 
 final class RevisionHistoryQuery
 {
+    /**
+     * @return EloquentCollection<int, RevisionBatch>
+     */
+    public function forSubject(TenantContext $context, Model $subject): EloquentCollection
+    {
+        $subjectKey = $subject->getKey();
+        $originalKey = $subject->getRawOriginal($subject->getKeyName());
+
+        if (
+            ! $subject->exists
+            || $subjectKey === null
+            || $subjectKey !== $originalKey
+            || (int) $subject->getAttribute('tenant_id') !== $context->tenantId
+        ) {
+            throw new DomainException('TENANT_RELATION_MISMATCH');
+        }
+
+        return TenantOwnedRecordQuery::forTenant($context, RevisionBatch::class)
+            ->where('root_subject_type', $subject->getMorphClass())
+            ->where('root_subject_id', $subjectKey)
+            ->with('actor:id,name')
+            ->latest('occurred_at')
+            ->get();
+    }
+
     /**
      * @return Collection<int, RevisionHistoryRow>
      */
@@ -60,15 +89,14 @@ final class RevisionHistoryQuery
             throw new DomainException('TENANT_RELATION_MISMATCH');
         }
 
-        $persistedBatch = RevisionBatch::query()
-            ->where('tenant_id', $context->tenantId)
-            ->whereKey($batch->getKey())
-            ->first();
-
-        if ($persistedBatch === null) {
+        try {
+            return TenantOwnedRecordQuery::findOrFail(
+                $context,
+                RevisionBatch::class,
+                $batch->getKey(),
+            );
+        } catch (ModelNotFoundException) {
             throw new DomainException('TENANT_RELATION_MISMATCH');
         }
-
-        return $persistedBatch;
     }
 }

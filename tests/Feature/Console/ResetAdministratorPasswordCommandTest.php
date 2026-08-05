@@ -83,6 +83,7 @@ class ResetAdministratorPasswordCommandTest extends TestCase
         $command->expectsQuestion('New Administrator password', 'emergency-reset-secret');
         $command->expectsOutputToContain('Administrator password reset');
         $command->assertExitCode(SymfonyCommand::SUCCESS);
+        $command->run();
 
         $administrator->refresh();
         $this->assertTrue(Hash::check('emergency-reset-secret', (string) $administrator->password));
@@ -111,6 +112,7 @@ class ResetAdministratorPasswordCommandTest extends TestCase
         $command = $this->artisan('admin:reset-password');
         $command->expectsQuestion('New Administrator password', '');
         $command->assertExitCode(SymfonyCommand::FAILURE);
+        $command->run();
 
         $administrator->refresh();
         $this->assertSame($previousHash, $administrator->password);
@@ -124,6 +126,7 @@ class ResetAdministratorPasswordCommandTest extends TestCase
         $command = $this->artisan('admin:reset-password');
         $command->expectsQuestion('New Administrator password', 'emergency-reset-secret');
         $command->assertExitCode(SymfonyCommand::FAILURE);
+        $command->run();
 
         $this->assertDatabaseCount('audit_events', $auditCount);
     }
