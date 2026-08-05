@@ -50,15 +50,20 @@ final class VatCalculator
             throw new DomainException('INVALID_MONEY');
         }
 
-        [, $fraction] = array_pad(explode('.', $rate, 2), 2, '');
+        [$integer, $fraction] = array_pad(explode('.', $rate, 2), 2, '');
 
         if (strlen($fraction) > 6) {
             throw new DomainException('INVALID_MONEY');
         }
 
-        $integer = ltrim(strtok($rate, '.'), '0');
+        $integer = ltrim($integer, '0');
+        $integer = $integer === '' ? '0' : $integer;
 
-        return ($integer === '' ? '0' : $integer).'.'.str_pad($fraction, 6, '0');
+        if (strlen($integer) > 6) {
+            throw new DomainException('INVALID_MONEY');
+        }
+
+        return $integer.'.'.str_pad($fraction, 6, '0');
     }
 
     private function roundedMoney(string $amount, string $currency): Money

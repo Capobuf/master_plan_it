@@ -34,6 +34,22 @@ class MoneyTest extends TestCase
         }
     }
 
+    public function test_it_accepts_the_decimal_19_2_boundaries_and_rejects_range_overflow(): void
+    {
+        $this->assertSame(
+            '99999999999999999.99',
+            Money::fromDecimal('99999999999999999.99', 'EUR', 2)->amount(),
+        );
+        $this->assertSame(
+            '-99999999999999999.99',
+            Money::fromDecimal('-99999999999999999.99', 'EUR', 2)->amount(),
+        );
+
+        foreach (['100000000000000000.00', '-100000000000000000.00'] as $amount) {
+            $this->assertInvalidMoney(static fn (): Money => Money::fromDecimal($amount, 'EUR', 2));
+        }
+    }
+
     public function test_it_rejects_malformed_exponent_and_over_scale_decimal_input(): void
     {
         foreach (['', ' 1.000000', '1e3', '12.1234567'] as $amount) {
@@ -81,6 +97,30 @@ class MoneyTest extends TestCase
 
         $this->assertSame('100.01', $calculator->round(Money::fromDecimal('100.005000', 'EUR'), 2)->amount());
         $this->assertSame('-100.01', $calculator->round(Money::fromDecimal('-100.005000', 'EUR'), 2)->amount());
+    }
+
+    public function test_rounding_the_maximum_decimal_19_6_value_can_produce_a_valid_decimal_19_2_result(): void
+    {
+        $calculator = new MoneyCalculator;
+
+        $this->assertSame(
+            '10000000000000.00',
+            $calculator->round(Money::fromDecimal('9999999999999.999999', 'EUR'), 2)->amount(),
+        );
+    }
+
+    public function test_multiplication_quantizes_the_full_precision_product_half_up_to_six_decimals(): void
+    {
+        $calculator = new MoneyCalculator;
+
+        $this->assertSame(
+            '0.111111',
+            $calculator->multiply(Money::fromDecimal('0.333333', 'EUR'), '0.333333')->amount(),
+        );
+        $this->assertSame(
+            '-0.111111',
+            $calculator->multiply(Money::fromDecimal('-0.333333', 'EUR'), '0.333333')->amount(),
+        );
     }
 
     public function test_mixed_currencies_are_rejected_instead_of_converted(): void

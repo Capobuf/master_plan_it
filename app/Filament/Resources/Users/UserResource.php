@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Users;
 
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
+use App\Filament\Resources\Concerns\UsesTenantContextRoutes;
 use App\Filament\Resources\Users\Pages\CreateUser;
 use App\Filament\Resources\Users\Pages\EditUser;
 use App\Filament\Resources\Users\Pages\ListUsers;
@@ -23,6 +25,8 @@ use Spatie\Permission\Models\Role;
 
 final class UserResource extends Resource
 {
+    use UsesTenantContextRoutes;
+
     protected static ?string $model = User::class;
 
     protected static ?string $recordTitleAttribute = 'name';
@@ -45,8 +49,7 @@ final class UserResource extends Resource
         app(UserPolicy::class)->viewAny(self::authenticatedActor())->authorize();
         $context = self::tenantContext();
 
-        return User::query()
-            ->where('tenant_id', $context->tenantId)
+        return TenantOwnedRecordQuery::forTenant($context, User::class)
             ->orderBy('id');
     }
 

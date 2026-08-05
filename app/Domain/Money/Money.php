@@ -32,7 +32,7 @@ final readonly class Money
         $integer = ltrim($integer, '0');
         $integer = $integer === '' ? '0' : $integer;
 
-        if (strlen($integer) > 13) {
+        if (strlen($integer) > 19 - $scale) {
             throw new DomainException('INVALID_MONEY');
         }
 

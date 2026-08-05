@@ -86,12 +86,14 @@ Owned by Overtrue migration, snapshot strategy. Only approved business fields ar
 
 - tenant ID;
 - actor user ID;
-- operation `create|update|restore|delete|reactivate`;
+- closed operation `create|update|deactivate|reactivate|restore|delete`;
 - root subject type/ID;
 - optional source batch/version for restore;
 - optional reason;
 - correlation ID unique;
 - occurred timestamp.
+
+Identity and morph IDs are unsigned BIGINT, correlation is UUID, and the history index is `(tenant_id,root_subject_type,root_subject_id,occurred_at)`.
 
 ### `revision_batch_items`
 
@@ -100,6 +102,7 @@ Owned by Overtrue migration, snapshot strategy. Only approved business fields ar
 - versionable type/ID;
 - item sequence;
 - unique `(revision_batch_id, version_id)`.
+- unique `(revision_batch_id, sequence)`.
 
 Provides aggregate history without replacing vendor storage.
 

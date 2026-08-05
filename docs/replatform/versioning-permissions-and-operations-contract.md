@@ -93,7 +93,7 @@ The action label and generated metadata must identify which scope was used. A fu
 A logical record has one current identity. The register shows the current record once. Revision history is accessed from the detail page and shows:
 
 - revision number;
-- operation: create, update, restore, delete;
+- operation: create, update, deactivate, reactivate, restore, delete;
 - actor and timestamp;
 - changed fields;
 - optional reason where required;

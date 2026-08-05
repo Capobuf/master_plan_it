@@ -5,6 +5,7 @@ namespace Tests\Accounting\Unit;
 use App\Domain\Money\Money;
 use App\Domain\Money\Services\VatCalculator;
 use App\Domain\Money\VatBreakdown;
+use DomainException;
 use PHPUnit\Framework\TestCase;
 
 class VatCalculatorTest extends TestCase
@@ -67,6 +68,29 @@ class VatCalculatorTest extends TestCase
         );
 
         $this->assertBreakdown($breakdown, '0.00', '0.00', '0.00', 'EUR');
+    }
+
+    public function test_maximum_decimal_12_6_vat_rate_is_accepted_when_the_result_is_calculable(): void
+    {
+        $breakdown = (new VatCalculator)->fromExcludedAmount(
+            Money::fromDecimal('0.010000', 'EUR'),
+            '999999.999999',
+        );
+
+        $this->assertBreakdown($breakdown, '0.01', '100.00', '100.01', 'EUR');
+    }
+
+    public function test_vat_rate_above_decimal_12_6_is_rejected_without_a_breakdown(): void
+    {
+        try {
+            (new VatCalculator)->fromExcludedAmount(
+                Money::fromDecimal('0.010000', 'EUR'),
+                '1000000.000000',
+            );
+            $this->fail('Out-of-range VAT rate was accepted.');
+        } catch (DomainException $exception) {
+            $this->assertSame('INVALID_MONEY', $exception->getMessage());
+        }
     }
 
     private function assertBreakdown(

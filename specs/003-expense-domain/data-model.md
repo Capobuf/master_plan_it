@@ -10,7 +10,7 @@ Shared conventions: `docs/replatform/data-model-overview.md`
 - cost center ID;
 - kind `ordinary|plafond`;
 - title and optional notes;
-- nullable project ID XOR contract ID;
+- nullable project ID XOR contract ID; both may be null but never both non-null;
 - `lock_version` default 1;
 - timestamps and `deleted_at`.
 
@@ -29,9 +29,9 @@ Indexes: `(tenant_id,planning_year_id,deleted_at)`, `(tenant_id,cost_center_id,d
 - `is_system_managed` and manual override timestamp;
 - nullable contract term ID and immutable source key;
 - description;
-- quantity/unit price/entered amount at `DECIMAL(19,6)`;
-- amount-includes-VAT flag and VAT rate;
-- Net/VAT/Gross at `DECIMAL(19,2)`;
+- optional quantity/unit price and required entered amount at `DECIMAL(19,6)`;
+- amount-includes-VAT flag and required VAT rate at `DECIMAL(12,6)`;
+- required Net/VAT/Gross at `DECIMAL(19,2)`;
 - Extra flag;
 - nullable funded Plafond expense ID;
 - spend date or period start/end and distribution;
@@ -40,21 +40,24 @@ Indexes: `(tenant_id,planning_year_id,deleted_at)`, `(tenant_id,cost_center_id,d
 
 Unique source key per tenant when present. Position is unique among current rows of an expense through Action validation; soft-deleted positions may be reused.
 
+Planning-year and vendor links are restrictive composite tenant references. A dedicated forward migration upgrades both existing `(tenant_id,id)` supporting indexes to unique keys before `expenses`/`expense_rows` are created.
+
 ## Contextual constraints
 
 - funded Plafond references an `expenses.kind=plafond` row in same tenant/year;
 - project and contract derive from header and are mutually exclusive;
 - generated row contract/term/source key cannot change after creation;
 - manual edit/confirmation sets system-managed false;
-- confirmation fields valid only for Actual;
-- non-Actual cannot carry confirmation fields;
+- Actual is either `to_confirm` with no confirmed actor/time or `confirmed` with both; non-Actual carries no confirmation state/actor/time;
 - current aggregate retains at least one current row.
 
-MySQL check constraints cover closed enums/basic nullable combinations. Tenant/year/kind/reference and aggregate invariants remain Action-owned.
+MySQL check constraints cover the closed enum domains, project/contract XOR, exact spend-date-versus-complete-period shape, the confirmation matrix and Extra/funded nullable conflict. Period ordering, vendor-active/required-for-Ordinary, tenant/year/kind Plafond validity, actor authorization, source immutability and aggregate cardinality remain Action-owned.
+
+`SaveExpenseData` and `SaveExpenseRowData` are constructible readonly typed editor-input DTOs with the exact promoted property/type sets fixed by RES-003-015. They carry editable header/row values plus nullable expected lock identity for updates; they do not carry tenant/aggregate ownership, calculated Net/VAT/Gross, confirmation/system metadata or generated source identity, all of which are supplied or derived by the owning Action. The Eloquent `$fillable` surface matches only those editor-controlled persistence values; internal fields require explicit Action persistence.
 
 ## Money casts
 
-Eloquent does not cast authoritative money to float. Custom casts return normalized decimal strings or Money DTOs. Database-decimal string output is asserted.
+Eloquent does not cast authoritative money to float. Native decimal casts or custom casts return normalized decimal strings or Money DTOs. Database-decimal string output is asserted without requiring one particular non-float cast implementation.
 
 ## Revisions
 

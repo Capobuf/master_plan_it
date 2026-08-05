@@ -10,8 +10,10 @@
 | T001-006 | `php artisan test tests/Feature/Authorization/PermissionCatalogueTest.php` |
 | T001-007 | `php artisan test tests/Feature/Tenancy/TenantContextMiddlewareTest.php tests/Feature/Diagnostics/CorrelationIdTest.php` |
 | T001-008–009 | `php artisan test tests/Feature/Auth/AuthenticationTest.php tests/Feature/Auth/LogoutSessionScopeTest.php tests/Feature/Auth/NoPasswordRecoveryRouteTest.php` |
-| T001-010–011 | `php artisan test tests/Feature/Authorization/NavigationPolicyTest.php tests/Livewire/Shell/TenantContextIndicatorTest.php && composer test:browser-matrix -- --filter=AccessibilityCompatibilityTest` |
-| T001-012–014 | `php artisan test tests/Feature/IdentityAccess/PlatformIdentityIntegrationTest.php tests/Feature/IdentityAccess/PasswordAdministrationTest.php` |
+| T001-010–011 | `php artisan test tests/Feature/Authorization/NavigationPolicyTest.php tests/Livewire/Shell/TenantContextIndicatorTest.php tests/Architecture/DevelopmentContractTest.php --filter='NavigationPolicyTest|TenantContextIndicatorTest|browser' && php -l tests/Browser/Shell/AccessibilityCompatibilityTest.php` |
+| T001-012 | `php artisan test tests/Feature/IdentityAccess/PlatformIdentityIntegrationTest.php tests/Feature/IdentityAccess/PasswordAdministrationTest.php` |
+| T001-013 | `php artisan test tests/Feature/IdentityAccess/PasswordAdministrationTest.php tests/Architecture/WriteRollbackCoverageTest.php` |
+| T001-014 | `php artisan test tests/Feature/IdentityAccess/PlatformIdentityIntegrationTest.php tests/Feature/IdentityAccess/PasswordAdministrationTest.php` |
 | T001-015–016 | `php artisan test tests/Feature/IdentityAccess/ChangeOwnPasswordTest.php tests/Feature/Console/ResetAdministratorPasswordCommandTest.php` |
 | T001-017–018 | `php artisan test tests/Feature/Notifications/NotificationDeduplicationTest.php tests/Feature/Notifications/SynchronousMailFailureTest.php` |
 | T001-019 | `php artisan test tests/Feature/Platform/PlatformSettingTest.php tests/Feature/Audit/AuditRetentionTest.php tests/Livewire/Platform/PlatformSettingPageTest.php` |

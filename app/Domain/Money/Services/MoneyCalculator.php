@@ -24,9 +24,10 @@ final class MoneyCalculator
     public function multiply(Money $money, string $multiplier): Money
     {
         $normalizedMultiplier = Money::fromDecimal($multiplier, $money->currency());
+        $product = bcmul($money->amount(), $normalizedMultiplier->amount(), 12);
 
         return Money::fromDecimal(
-            bcmul($money->amount(), $normalizedMultiplier->amount(), 6),
+            $this->roundDecimal($product, 6),
             $money->currency(),
         );
     }
@@ -37,11 +38,19 @@ final class MoneyCalculator
             throw new DomainException('INVALID_MONEY');
         }
 
-        $amount = $money->amount();
+        return Money::fromDecimal(
+            $this->roundDecimal($money->amount(), $scale),
+            $money->currency(),
+            $scale,
+        );
+    }
+
+    private function roundDecimal(string $amount, int $scale): string
+    {
         $negative = str_starts_with($amount, '-');
         $absoluteAmount = ltrim($amount, '-');
         [$integer, $fraction] = array_pad(explode('.', $absoluteAmount, 2), 2, '');
-        $fraction = str_pad($fraction, 6, '0');
+        $fraction = str_pad($fraction, $scale + 1, '0');
         $rounded = $integer.($scale > 0 ? '.'.substr($fraction, 0, $scale) : '');
 
         if ((int) ($fraction[$scale] ?? '0') >= 5) {
@@ -53,7 +62,7 @@ final class MoneyCalculator
             $rounded = '-'.$rounded;
         }
 
-        return Money::fromDecimal($rounded, $money->currency(), $scale);
+        return $rounded;
     }
 
     private function assertSameCurrency(Money $first, Money $second): void

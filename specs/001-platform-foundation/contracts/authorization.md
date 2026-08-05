@@ -54,5 +54,5 @@ Read the local plan and data model. Implement exactly the authorization decision
 - `platform.tenants.*`, `platform.users.manage`, `platform.roles.manage`, `platform.settings.manage`, and `platform.audit.view-global` are protected platform abilities available only at the global Administrator boundary.
 - `dashboard.view`, `audit.view`, and `notification.view` authorize their same-tenant read surfaces; absence denies regardless of the actor's tenant-role name.
 - Authenticated users may change their own password under the password contract; Administrator password reset uses the protected user-management boundary and never exposes credentials.
-- Ordinary logout revokes only the request's current session. Own-password change and Administrator reset revoke all sessions for the affected user and are not aliases of ordinary logout.
+- Ordinary logout revokes only the request's current session and preserves the account-wide remember token. Own-password change and Administrator reset revoke every database session and rotate that token for the affected persisted user; they are not aliases of ordinary logout.
 - No protected or tenant ability bypasses economic, current-state, authorization, or tenant-isolation invariants.

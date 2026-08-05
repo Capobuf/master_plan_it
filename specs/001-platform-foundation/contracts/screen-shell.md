@@ -46,7 +46,7 @@ Read the local plan and data model. Implement exactly layout, navigation, focus,
 - Charts expose an equivalent non-visual table or text representation using the same server-calculated values.
 - The shell and feature surfaces remain usable at 360, 768 and 1280 CSS-pixel viewports.
 - The browser matrix is the latest two stable Chrome, Edge and Firefox releases plus current stable Safari.
-- Ordinary logout invalidates only the active session; password change/reset follow their separate all-session invalidation contract.
+- Ordinary logout invalidates only the active session and preserves the account-wide remember token; password change/reset delete all database sessions for the affected user and rotate that token atomically.
 
 ## Audit-retention setting UX
 

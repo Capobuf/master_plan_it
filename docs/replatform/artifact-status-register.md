@@ -10,7 +10,7 @@ Constitution: 5.0.0
 |---|---|
 | Feature 001 `spec.md` / `plan.md` | CURRENT ON CONSTITUTION 5.0.0; implementation in progress |
 | Feature 002 `spec.md` / `plan.md` | CURRENT ON CONSTITUTION 5.0.0; implementation in progress |
-| Feature 003 `spec.md` / `plan.md` | LATEST ATTACHMENT/QUOTA DECISIONS PROPAGATED; IMPLEMENTATION READY; implementation not started |
+| Feature 003 `spec.md` / `plan.md` | LATEST PERSISTENCE/ATTACHMENT/QUOTA DECISIONS PROPAGATED; rolling analysis active; implementation in progress |
 | Feature 004 `spec.md` / `plan.md` | LATEST TERMINAL-DELETION/SETTING DECISIONS PROPAGATED; IMPLEMENTATION READY; implementation not started |
 | Feature 005 `spec.md` / `plan.md` | CURRENT ON CONSTITUTION 5.0.0; IMPLEMENTATION READY; implementation not started |
 | Feature 006 `spec.md` / `plan.md` | IMPLEMENTATION READY; NOT CUTOVER READY; implementation not started |

@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Roles;
 
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
+use App\Filament\Resources\Concerns\UsesTenantContextRoutes;
 use App\Filament\Resources\Roles\Pages\CreateRole;
 use App\Filament\Resources\Roles\Pages\EditRole;
 use App\Filament\Resources\Roles\Pages\ListRoles;
@@ -21,6 +23,8 @@ use Spatie\Permission\Models\Role;
 
 final class RoleResource extends Resource
 {
+    use UsesTenantContextRoutes;
+
     protected static ?string $model = Role::class;
 
     protected static ?string $recordTitleAttribute = 'name';
@@ -43,8 +47,7 @@ final class RoleResource extends Resource
         app(RolePolicy::class)->viewAny(self::authenticatedActor())->authorize();
         $context = self::tenantContext();
 
-        return Role::query()
-            ->where('tenant_id', $context->tenantId)
+        return TenantOwnedRecordQuery::forTenant($context, Role::class)
             ->where('guard_name', 'web')
             ->orderBy('id');
     }

@@ -7,7 +7,7 @@
 | T002-004 | `php artisan test tests/Feature/Revisions/VersioningPackageSmokeTest.php` |
 | T002-017 | `php artisan test tests/Feature/Revisions/VersioningPackageSmokeTest.php` |
 | T002-005 | `php artisan test tests/Feature/Revisions/RevisionBatchSchemaTest.php` |
-| T002-006 | `php artisan test tests/Feature/Revisions/RevisionBatchIntegrationTest.php` |
+| T002-006 | `php artisan test tests/Feature/Revisions/RevisionBatchIntegrationTest.php tests/Architecture/WriteRollbackCoverageTest.php` |
 | T002-007–008 | `php artisan test tests/Feature/MasterData/PlanningYearTest.php tests/Feature/Migration/PlanningYearCalendarBoundaryTest.php` |
 | T002-009 | `php artisan test tests/Livewire/MasterData/PlanningYearResourceTest.php` |
 | T002-010–011 | `php artisan test tests/Feature/MasterData/CostCenterTreeTest.php tests/Feature/MasterData/CostCenterLifecycleTest.php tests/Feature/MasterData/CostCenterRevisionTest.php` |

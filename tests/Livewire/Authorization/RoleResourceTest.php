@@ -4,7 +4,6 @@ namespace Tests\Livewire\Authorization;
 
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\TenantState;
-use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Filament\Resources\Concerns\UsesTenantContextRoutes;
 use App\Filament\Resources\Roles\Pages\CreateRole as CreateRolePage;
 use App\Filament\Resources\Roles\Pages\EditRole as EditRolePage;
@@ -135,32 +134,47 @@ class RoleResourceTest extends TestCase
 
     public function test_resource_uses_the_shared_method_based_tenant_route_middleware_concern(): void
     {
-        $resourceSource = file_get_contents((new ReflectionClass(RoleResource::class))->getFileName());
-        $concernPath = app_path('Filament/Resources/Concerns/UsesTenantContextRoutes.php');
+        $resourceReflection = new ReflectionClass(RoleResource::class);
+        $concernReflection = new ReflectionClass(UsesTenantContextRoutes::class);
 
-        $this->assertIsString($resourceSource);
-        $this->assertContains(UsesTenantContextRoutes::class, class_uses_recursive(RoleResource::class));
-        $this->assertStringNotContainsString('$routeMiddleware', $resourceSource);
-        $this->assertFileExists($concernPath);
+        $this->assertTrue($concernReflection->hasMethod('getRouteMiddleware'));
+        $concernMethod = $concernReflection->getMethod('getRouteMiddleware');
+        $resourceMethod = $resourceReflection->getMethod('getRouteMiddleware');
 
-        $concernSource = file_get_contents($concernPath);
-        $this->assertIsString($concernSource);
-        $this->assertStringContainsString('function getRouteMiddleware', $concernSource);
-        $this->assertStringNotContainsString('$routeMiddleware', $concernSource);
-        $this->assertSame(RoleResource::class, (new ReflectionMethod(RoleResource::class, 'getRouteMiddleware'))->getDeclaringClass()->getName());
-        $this->assertSame([
+        $this->assertContains(UsesTenantContextRoutes::class, $resourceReflection->getTraitNames());
+        $this->assertFalse($concernReflection->hasProperty('routeMiddleware'));
+        $this->assertSame(UsesTenantContextRoutes::class, $concernMethod->getDeclaringClass()->getName());
+        $this->assertTrue($concernMethod->isPublic());
+        $this->assertTrue($concernMethod->isStatic());
+        $this->assertNotSame(
+            RoleResource::class,
+            $resourceReflection->getProperty('routeMiddleware')->getDeclaringClass()->getName(),
+        );
+        $this->assertSame($concernMethod->getFileName(), $resourceMethod->getFileName());
+        $this->assertSame($concernMethod->getStartLine(), $resourceMethod->getStartLine());
+
+        $expectedMiddleware = [
             ResolveTenantContext::class,
             SetPermissionTeamContext::class,
             EnsureTenantIsActive::class,
             ApplyTenantPresentationContext::class,
-        ], RoleResource::getRouteMiddleware(Panel::make()->id('role-resource-route-middleware')));
+        ];
+        $panel = Panel::make()->id('role-resource-route-middleware');
+
+        $this->assertSame($expectedMiddleware, $concernMethod->invoke(null, $panel));
+        $this->assertSame($expectedMiddleware, RoleResource::getRouteMiddleware($panel));
     }
 
     public function test_resource_query_delegates_tenant_scope_to_the_shared_helper(): void
     {
         $querySource = $this->methodSource(RoleResource::class, 'getEloquentQuery');
+        $resourceSource = $this->classSource(RoleResource::class);
 
-        $this->assertStringContainsString(TenantOwnedRecordQuery::class.'::forTenant', $querySource);
+        $this->assertStringContainsString('TenantOwnedRecordQuery::forTenant', $querySource);
+        $this->assertMatchesRegularExpression(
+            '/^use App\\\\Domain\\\\Tenancy\\\\Queries\\\\TenantOwnedRecordQuery;$/m',
+            $resourceSource,
+        );
         $this->assertDoesNotMatchRegularExpression('/\\bRole\\s*::\\s*query\\s*\\(/', $querySource);
     }
 
@@ -505,6 +519,17 @@ class RoleResourceTest extends TestCase
             $reflection->getStartLine() - 1,
             $reflection->getEndLine() - $reflection->getStartLine() + 1,
         ));
+    }
+
+    private function classSource(string $class): string
+    {
+        $path = (new ReflectionClass($class))->getFileName();
+
+        $this->assertIsString($path);
+        $source = file_get_contents($path);
+        $this->assertIsString($source);
+
+        return $source;
     }
 
     private function assertAllowed(bool|Response $result): void

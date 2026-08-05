@@ -91,7 +91,7 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
 
 `PruneExpiredAuditEvents` calculates UTC cutoff at run time, deletes in bounded ID batches, never touches revision/business/version tables and reports count/failure. No silent retry.
 
-Ordinary logout invalidates only the current session. Password-change and Administrator password-reset Actions validate actor scope, hash once, exclude values from logs/audit and invalidate all target sessions under their separate security contracts.
+Ordinary logout invalidates only the current session. Password-change and Administrator password-reset Actions validate persisted actor/context/target identity, hash once, exclude values from logs/audit/revisions/notifications, and delegate to one shared invalidator that deletes all target database sessions and rotates the target remember token atomically. Administrator reset writes exactly one minimized `tenant.user.password-reset` audit event.
 
 ## Scheduler
 
