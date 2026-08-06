@@ -17,15 +17,14 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rules\Password;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
 
 final class TenantUserController extends Controller
 {
     public function __construct(private readonly AuthorizeApplicationAbility $authorizeAbility) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request): View
     {
         $context = $this->tenantContext($request);
         $search = trim((string) $request->query('q', ''));
@@ -42,16 +41,16 @@ final class TenantUserController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return Inertia::render('Operational/Users/Index', [
+        return view('operational.users.index', [
             'users' => $this->paginatedUsers($users),
             'filters' => ['q' => $search],
             'abilities' => $this->abilities($request),
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request): View
     {
-        return Inertia::render('Operational/Users/Create', [
+        return view('operational.users.create', [
             'roles' => $this->roleOptions($this->tenantContext($request)),
             'abilities' => $this->abilities($request),
         ]);
@@ -83,13 +82,13 @@ final class TenantUserController extends Controller
             ->with('success', 'User created.');
     }
 
-    public function edit(Request $request, int $user): Response
+    public function edit(Request $request, int $user): View
     {
         $context = $this->tenantContext($request);
         $target = $this->user($context, $user);
         $target->unsetRelation('roles');
 
-        return Inertia::render('Operational/Users/Edit', [
+        return view('operational.users.edit', [
             'user' => $this->userProps($target, true),
             'roles' => $this->roleOptions($context),
             'abilities' => $this->abilities($request),

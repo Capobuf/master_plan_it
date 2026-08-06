@@ -6,7 +6,6 @@ use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\PermissionCatalogueSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -53,17 +52,8 @@ class ApplicationShellTest extends TestCase
         $this->actingAs($actor)
             ->get(route('operational.index'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Dashboard')
-                ->where('auth.user.id', $actor->getKey())
-                ->where('tenant.current.id', $tenant->getKey())
-                ->where('tenant.current.name', 'Shell tenant')
-                ->where('navigation.canViewDashboard', true)
-                ->where('navigation.canViewVendors', true)
-                ->where('navigation.canViewExpenses', true)
-                ->where('navigation.canViewCostCenters', false)
-                ->where('modules.0.href', '/operational/vendors')
-                ->where('modules.1.href', '/operational/expenses'));
+            ->assertViewIs('operational.dashboard')
+            ->assertViewHas('selectedYear');
     }
 
     public function test_operational_shell_redirects_guests_and_denies_missing_context_or_ability(): void

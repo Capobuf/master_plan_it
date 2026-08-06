@@ -10,14 +10,13 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rules\Password;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
 
 final class ProfileController extends Controller
 {
-    public function edit(): Response
+    public function edit(): View
     {
-        return Inertia::render('Profile/Edit');
+        return view('profile.edit');
     }
 
     public function updatePassword(Request $request, ChangeOwnPassword $changeOwnPassword): RedirectResponse

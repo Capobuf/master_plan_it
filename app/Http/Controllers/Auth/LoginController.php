@@ -14,17 +14,16 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Contracts\View\View;
 use LogicException;
 
 final class LoginController extends Controller
 {
     public function __construct(private readonly PlatformAdministrator $platformAdministrator) {}
 
-    public function create(): Response
+    public function create(): View
     {
-        return Inertia::render('Auth/Login');
+        return view('auth.login');
     }
 
     public function store(Request $request): RedirectResponse

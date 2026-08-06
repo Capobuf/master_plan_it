@@ -13,14 +13,13 @@ use App\Http\Middleware\AuthorizeApplicationAbility;
 use App\Models\Tenant;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
 
 final class TenantController extends Controller
 {
     public function __construct(private readonly AuthorizeApplicationAbility $authorizeAbility) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request): View
     {
         $tenants = Tenant::query()
             ->orderByRaw('LOWER(name)')
@@ -29,15 +28,15 @@ final class TenantController extends Controller
             ->map(fn (Tenant $tenant): array => $this->tenantProps($tenant))
             ->all();
 
-        return Inertia::render('Platform/Tenants/Index', [
+        return view('platform.tenants.index', [
             'tenants' => $tenants,
             'abilities' => $this->abilities($request),
         ]);
     }
 
-    public function create(): Response
+    public function create(): View
     {
-        return Inertia::render('Platform/Tenants/Create');
+        return view('platform.tenants.create');
     }
 
     public function store(Request $request, CreateTenant $createTenant): RedirectResponse
@@ -55,9 +54,9 @@ final class TenantController extends Controller
             ->with('success', 'Tenant created.');
     }
 
-    public function edit(Tenant $tenant): Response
+    public function edit(Tenant $tenant): View
     {
-        return Inertia::render('Platform/Tenants/Edit', [
+        return view('platform.tenants.edit', [
             'record' => $this->tenantProps($tenant),
         ]);
     }

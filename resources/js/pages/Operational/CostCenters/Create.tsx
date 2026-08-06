@@ -1,1 +1,0 @@
-import { Head } from '@inertiajs/react'; import { CostCenterForm } from './Form'; export default function Create({ parents }: any) { return <><Head title="Add cost center"/><CostCenterForm parents={parents} method="post"/></>; }

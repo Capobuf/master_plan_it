@@ -28,7 +28,7 @@ final class SynchronizeContractOccurrences
         $this->contractPolicy($context)->generateOccurrence($actor, $contract)->authorize();
         [$actor] = $this->persistedContractContext($actor, $context);
         return DB::transaction(function () use ($actor, $context, $contract, $correlationId): array {
-            $contract=Contract::query()->where('tenant_id',$context->tenantId)->lockForUpdate()->find($contract->getKey());if(!$contract instanceof Contract){throw new \DomainException('GENERATION_NOT_APPLICABLE');}
+            $contract=Contract::query()->where('tenant_id',$context->tenantId)->lockForUpdate()->find($contract->getKey());if(!$contract instanceof Contract || ! $contract->active){throw new \DomainException('GENERATION_NOT_APPLICABLE');}
             $counts = ['created' => 0, 'updated' => 0, 'skipped' => 0];
             foreach (app(ExpectedContractOccurrenceQuery::class)->forContract($contract) as $expected) {
                 $occurrenceCorrelationId = (string) Str::uuid();

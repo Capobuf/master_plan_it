@@ -5,6 +5,7 @@ namespace App\Domain\Contracts\Queries;
 use App\Domain\Contracts\Data\ContractOccurrenceKey;
 use App\Domain\Contracts\Data\ExpectedContractOccurrence;
 use App\Domain\Contracts\Enums\BillingCycle;
+use App\Domain\Expenses\Enums\ActualConfirmationState;
 use App\Models\Contract;
 use App\Models\ContractGenerationException;
 use App\Models\ContractTerm;
@@ -29,7 +30,9 @@ final class ExpectedContractOccurrenceQuery
                     (int) $contract->getKey(), (int) $term->getKey(), $date->year, $date->toDateString(), $key,
                     (string) $term->net_amount, (string) $term->vat_amount, (string) $term->gross_amount,
                     $exceptions->has($key), $row instanceof ExpenseRow ? (int) $row->expense_id : null,
-                    $row instanceof ExpenseRow ? ($row->confirmation_state?->value ?? (string) $row->confirmation_state) : null,
+                    $row instanceof ExpenseRow && $row->confirmation_state instanceof ActualConfirmationState
+                        ? $row->confirmation_state->value
+                        : null,
                 );
             }
         }

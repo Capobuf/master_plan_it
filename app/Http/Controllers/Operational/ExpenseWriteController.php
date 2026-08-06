@@ -22,15 +22,15 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
+use BackedEnum;
 
 final class ExpenseWriteController extends Controller
 {
-    public function create(Request $request): Response
+    public function create(Request $request): View
     {
         app(ExpensePolicy::class)->create($this->actor($request))->authorize();
-        return Inertia::render('Operational/Expenses/Create', $this->formProps($this->tenantContext($request), null));
+        return view('operational.expenses.create', $this->formProps($this->tenantContext($request), null));
     }
 
     public function store(Request $request, CreateExpense $action): RedirectResponse
@@ -40,18 +40,18 @@ final class ExpenseWriteController extends Controller
         return redirect()->route('operational.expenses.show', $expense)->with('success', 'Expense created.');
     }
 
-    public function edit(Request $request, int $expense): Response
+    public function edit(Request $request, int $expense): View
     {
         $target = $this->expense($this->tenantContext($request), $expense);
         app(ExpensePolicy::class)->update($this->actor($request), $target)->authorize();
-        return Inertia::render('Operational/Expenses/Edit', $this->formProps($this->tenantContext($request), $target->load(['planningYear','costCenter','rows.vendor', 'contract'])));
+        return view('operational.expenses.edit', $this->formProps($this->tenantContext($request), $target->load(['planningYear','costCenter','rows.vendor', 'contract'])));
     }
 
     public function update(Request $request, int $expense, UpdateExpense $action): RedirectResponse
     {
-        [$data, $rows] = $this->validatedData($request, true);
+        [$data, $rows, $deletedRows] = $this->validatedData($request, true);
         $context = $this->tenantContext($request);
-        $action->execute($this->actor($request), $context, $this->expense($context, $expense), $data, $rows, $this->correlationId($request));
+        $action->execute($this->actor($request), $context, $this->expense($context, $expense), $data, $rows, $this->correlationId($request), $deletedRows);
         return redirect()->route('operational.expenses.show', $expense)->with('success', 'Expense updated.');
     }
 
@@ -76,16 +76,21 @@ final class ExpenseWriteController extends Controller
         return back()->with('success', 'Actual confirmed.');
     }
 
-    /** @return array{SaveExpenseData,list<SaveExpenseRowData>} */
+    /** @return array{SaveExpenseData,list<SaveExpenseRowData>,list<array{id: int, lock_version: int}>} */
     private function validatedData(Request $request, bool $updating): array
     {
-        $rules = ['planning_year_id' => ['required','integer'], 'cost_center_id' => ['required','integer'], 'kind' => ['required',Rule::enum(ExpenseKind::class)], 'title' => ['required','string','max:255'], 'notes' => ['nullable','string'], 'contract_id' => ['nullable','integer'], 'rows' => ['required','array','min:1'], 'rows.*.id' => ['nullable','integer'], 'rows.*.position' => ['required','integer','min:1'], 'rows.*.vendor_id' => ['nullable','integer'], 'rows.*.type' => ['required',Rule::enum(ExpenseType::class)], 'rows.*.description' => ['required','string','max:255'], 'rows.*.quantity' => ['nullable','string'], 'rows.*.unit_price' => ['nullable','string'], 'rows.*.entered_amount' => ['required','string'], 'rows.*.amount_includes_vat' => ['required','boolean'], 'rows.*.vat_rate' => ['nullable','string'], 'rows.*.is_extra' => ['required','boolean'], 'rows.*.funded_plafond_expense_id' => ['nullable','integer'], 'rows.*.spend_date' => ['nullable','date_format:Y-m-d'], 'rows.*.period_start' => ['nullable','date_format:Y-m-d'], 'rows.*.period_end' => ['nullable','date_format:Y-m-d'], 'rows.*.distribution' => ['nullable',Rule::enum(Distribution::class)], 'rows.*.external_reference' => ['nullable','string','max:255'], 'rows.*.lock_version' => ['nullable','integer','min:1']];
+        $rules = ['planning_year_id' => ['required','integer'], 'cost_center_id' => ['required','integer'], 'kind' => ['required',Rule::enum(ExpenseKind::class)], 'title' => ['required','string','max:255'], 'notes' => ['nullable','string'], 'contract_id' => ['nullable','integer'], 'rows' => ['required','array','min:1'], 'rows.*.id' => ['nullable','integer'], 'rows.*.position' => ['required','integer','min:1'], 'rows.*.vendor_id' => ['nullable','integer'], 'rows.*.type' => ['required',Rule::enum(ExpenseType::class)], 'rows.*.description' => ['required','string','max:255'], 'rows.*.quantity' => ['nullable','string'], 'rows.*.unit_price' => ['nullable','string'], 'rows.*.entered_amount' => ['required','string'], 'rows.*.amount_includes_vat' => ['required','boolean'], 'rows.*.vat_rate' => ['nullable','string'], 'rows.*.is_extra' => ['required','boolean'], 'rows.*.funded_plafond_expense_id' => ['nullable','integer'], 'rows.*.spend_date' => ['nullable','date_format:Y-m-d'], 'rows.*.period_start' => ['nullable','date_format:Y-m-d'], 'rows.*.period_end' => ['nullable','date_format:Y-m-d'], 'rows.*.distribution' => ['nullable',Rule::enum(Distribution::class)], 'rows.*.external_reference' => ['nullable','string','max:255'], 'rows.*.lock_version' => ['nullable','integer','min:1'], 'deleted_rows' => ['sometimes','array'], 'deleted_rows.*.id' => ['required','integer','distinct'], 'deleted_rows.*.lock_version' => ['required','integer','min:1']];
         if ($updating) { $rules['lock_version'] = ['required','integer','min:1']; }
         $v = $request->validate($rules);
         foreach($v['rows'] as $index=>$row){if(isset($row['id'])&&!isset($row['lock_version'])){throw ValidationException::withMessages(["rows.{$index}.lock_version"=>'The row changed or its lock version is missing.']);}}
         $data = new SaveExpenseData((int) $v['planning_year_id'], (int) $v['cost_center_id'], ExpenseKind::from($v['kind']), $v['title'], $v['notes'] ?? null, null, isset($v['contract_id']) ? (int) $v['contract_id'] : null, isset($v['lock_version']) ? (int) $v['lock_version'] : null);
         $rows = array_map(fn ($r) => new SaveExpenseRowData(isset($r['id']) ? (int) $r['id'] : null, (int) $r['position'], isset($r['vendor_id']) ? (int) $r['vendor_id'] : null, ExpenseType::from($r['type']), $r['description'], $r['quantity'] ?? null, $r['unit_price'] ?? null, $r['entered_amount'], (bool) $r['amount_includes_vat'], $r['vat_rate'] ?? '', (bool) $r['is_extra'], isset($r['funded_plafond_expense_id']) ? (int) $r['funded_plafond_expense_id'] : null, $r['spend_date'] ?? null, $r['period_start'] ?? null, $r['period_end'] ?? null, isset($r['distribution']) ? Distribution::from($r['distribution']) : null, $r['external_reference'] ?? null, isset($r['lock_version']) ? (int) $r['lock_version'] : null), $v['rows']);
-        return [$data, $rows];
+        $deletedRows = array_map(static fn (array $row): array => [
+            'id' => (int) $row['id'],
+            'lock_version' => (int) $row['lock_version'],
+        ], $v['deleted_rows'] ?? []);
+
+        return [$data, $rows, $deletedRows];
     }
 
     private function expense(TenantContext $context, int $id): Expense { return Expense::query()->where('tenant_id', $context->tenantId)->findOrFail($id); }
@@ -93,15 +98,149 @@ final class ExpenseWriteController extends Controller
     /** @return array<string,mixed> */
     private function formProps(TenantContext $context, ?Expense $expense): array
     {
-        $options = fn ($query) => $query->where('tenant_id', $context->tenantId)->orderBy('name')->get(['id','name'])->map(fn ($x) => ['value'=>(int)$x->id,'label'=>(string)$x->name])->all();
-        return ['expense' => $expense === null ? null : $this->expenseProps($expense, $context->currencyCode), 'planningYears' => \App\Models\PlanningYear::query()->where('tenant_id',$context->tenantId)->orderBy('year_label')->get()->map(fn($x)=>['value'=>(int)$x->id,'label'=>(string)$x->year_label,'active'=>(bool)$x->active])->all(), 'costCenters' => $options(\App\Models\CostCenter::query()), 'vendors' => $options(\App\Models\Vendor::query()), 'plafonds' => Expense::query()->where('tenant_id',$context->tenantId)->where('kind','plafond')->get(['id','title'])->map(fn($x)=>['value'=>(int)$x->id,'label'=>$x->title])->all(), 'contracts' => \App\Models\Contract::query()->where('tenant_id',$context->tenantId)->orderBy('title')->get(['id','title'])->map(fn($x)=>['value'=>(int)$x->id,'label'=>$x->title])->all(), 'defaults'=>['vatRate'=>$context->defaultVatRate]];
+        $currentVendorIds = $expense?->rows->pluck('vendor_id')->filter()->map(static fn (mixed $id): int => (int) $id)->all() ?? [];
+        $currentPlanningYearId = $expense?->planning_year_id;
+        $currentCostCenterId = $expense?->cost_center_id;
+        $currentContractId = $expense?->contract_id;
+        $options = fn ($query, array $currentIds = []) => $query
+            ->where('tenant_id', $context->tenantId)
+            ->where(fn ($builder) => $builder->where('active', true)->orWhereIn('id', $currentIds))
+            ->orderBy('name')
+            ->get(['id','name'])
+            ->map(fn ($x) => ['value'=>(int)$x->id,'label'=>(string)$x->name])
+            ->all();
+
+        $planningYears = \App\Models\PlanningYear::query()
+            ->where('tenant_id', $context->tenantId)
+            ->where(function ($query) use ($currentPlanningYearId): void {
+                $query->where('active', true);
+                if ($currentPlanningYearId !== null) {
+                    $query->orWhere('id', $currentPlanningYearId);
+                }
+            })
+            ->orderBy('year_label')
+            ->get()
+            ->map(fn ($year) => ['value' => (int) $year->id, 'label' => (string) $year->year_label, 'active' => (bool) $year->active])
+            ->all();
+        $plafonds = Expense::query()
+            ->where('tenant_id', $context->tenantId)
+            ->where('kind', ExpenseKind::Plafond->value)
+            ->orderBy('title')
+            ->get(['id', 'planning_year_id', 'title'])
+            ->map(fn (Expense $plafond): array => [
+                'value' => (int) $plafond->id,
+                'label' => (string) $plafond->title,
+                'planningYearId' => (int) $plafond->planning_year_id,
+            ])
+            ->all();
+        $contracts = \App\Models\Contract::query()
+            ->where('tenant_id', $context->tenantId)
+            ->where(function ($query) use ($currentContractId): void {
+                $query->where('active', true);
+                if ($currentContractId !== null) {
+                    $query->orWhere('id', $currentContractId);
+                }
+            })
+            ->orderBy('title')
+            ->get(['id', 'title'])
+            ->map(fn ($contract): array => ['value' => (int) $contract->id, 'label' => (string) $contract->title])
+            ->all();
+
+        return [
+            'expense' => $expense === null ? null : $this->expenseProps($expense, $context->currencyCode),
+            'planningYears' => $planningYears,
+            'costCenters' => $options(\App\Models\CostCenter::query(), $currentCostCenterId === null ? [] : [(int) $currentCostCenterId]),
+            'vendors' => $options(\App\Models\Vendor::query(), $currentVendorIds),
+            'plafonds' => $plafonds,
+            'contracts' => $contracts,
+            'defaults' => ['vatRate' => $context->defaultVatRate],
+        ];
     }
 
     /** @return array<string,mixed> */
     private function expenseProps(Expense $expense, string $currency): array
     {
         $sourceContract=$expense->contract_id===null?null:\App\Models\Contract::withTrashed()->where('tenant_id',$expense->tenant_id)->find($expense->contract_id);
-        $rows = $expense->rows->map(fn(ExpenseRow $r)=>['id'=>(int)$r->id,'localKey'=>'row-'.$r->id,'position'=>(int)$r->position,'vendorId'=>$r->vendor_id===null?null:(int)$r->vendor_id,'vendorName'=>$r->vendor?->name,'type'=>$r->type->value,'confirmationState'=>$r->confirmation_state?->value,'description'=>$r->description,'quantity'=>$r->quantity,'unitPrice'=>$r->unit_price,'enteredAmount'=>$r->entered_amount,'amountIncludesVat'=>(bool)$r->amount_includes_vat,'vatRate'=>$r->vat_rate,'isExtra'=>(bool)$r->is_extra,'fundedPlafondExpenseId'=>$r->funded_plafond_expense_id,'spendDate'=>$r->spend_date,'periodStart'=>$r->period_start,'periodEnd'=>$r->period_end,'distribution'=>$r->distribution?->value,'externalReference'=>$r->external_reference,'lockVersion'=>(int)$r->lock_version,'isSystemManaged'=>(bool)$r->is_system_managed,'sourceKey'=>$r->source_key,'contractTermId'=>$r->contract_term_id,'net'=>MoneyFormatter::format($r->net_amount,$currency),'vat'=>MoneyFormatter::format($r->vat_amount,$currency),'gross'=>MoneyFormatter::format($r->gross_amount,$currency)])->all();
-        $net='0.00';$vat='0.00';$gross='0.00';foreach($expense->rows as $row){$net=bcadd($net,(string)$row->net_amount,2);$vat=bcadd($vat,(string)$row->vat_amount,2);$gross=bcadd($gross,(string)$row->gross_amount,2);}return ['id'=>(int)$expense->id,'planningYearId'=>(int)$expense->planning_year_id,'planningYearLabel'=>$expense->planningYear?->year_label,'costCenterId'=>(int)$expense->cost_center_id,'costCenterName'=>$expense->costCenter?->name,'kind'=>$expense->kind->value,'title'=>$expense->title,'notes'=>$expense->notes,'contractId'=>$expense->contract_id,'contractTitle'=>$sourceContract?->title,'contractIsCurrent'=>$sourceContract!==null&&$sourceContract->deleted_at===null,'contractHref'=>$sourceContract!==null&&$sourceContract->deleted_at===null?route('operational.contracts.show',$sourceContract):null,'lockVersion'=>(int)$expense->lock_version,'rows'=>$rows,'net'=>MoneyFormatter::format($net,$currency),'vat'=>MoneyFormatter::format($vat,$currency),'gross'=>MoneyFormatter::format($gross,$currency)];
+        $rows = $expense->rows->map(fn (ExpenseRow $row): array => $this->expenseRowProps($row, $currency))->all();
+        $net='0.00';$vat='0.00';$gross='0.00';foreach($expense->rows as $row){$net=bcadd($net,$this->decimalValue($row->net_amount, 2),2);$vat=bcadd($vat,$this->decimalValue($row->vat_amount, 2),2);$gross=bcadd($gross,$this->decimalValue($row->gross_amount, 2),2);}return ['id'=>(int)$expense->id,'planningYearId'=>(int)$expense->planning_year_id,'planningYearLabel'=>$expense->planningYear?->year_label,'costCenterId'=>(int)$expense->cost_center_id,'costCenterName'=>$expense->costCenter?->name,'kind'=>$this->enumValue($expense->kind),'title'=>$expense->title,'notes'=>$expense->notes,'contractId'=>$expense->contract_id,'contractTitle'=>$sourceContract?->title,'contractIsCurrent'=>$sourceContract!==null&&$sourceContract->deleted_at===null,'contractHref'=>$sourceContract!==null&&$sourceContract->deleted_at===null?route('operational.contracts.show',$sourceContract):null,'lockVersion'=>(int)$expense->lock_version,'rows'=>$rows,'net'=>MoneyFormatter::format($net,$currency),'vat'=>MoneyFormatter::format($vat,$currency),'gross'=>MoneyFormatter::format($gross,$currency)];
+    }
+
+    /**
+     * @return array{
+     *     id: int,
+     *     localKey: string,
+     *     position: int,
+     *     vendorId: int|null,
+     *     vendorName: string|null,
+     *     type: string,
+     *     confirmationState: string|null,
+     *     description: string,
+     *     quantity: string|null,
+     *     unitPrice: string|null,
+     *     enteredAmount: string,
+     *     amountIncludesVat: bool,
+     *     vatRate: string,
+     *     isExtra: bool,
+     *     fundedPlafondExpenseId: int|null,
+     *     spendDate: string|null,
+     *     periodStart: string|null,
+     *     periodEnd: string|null,
+     *     distribution: string|null,
+     *     externalReference: string|null,
+     *     lockVersion: int,
+     *     isSystemManaged: bool,
+     *     sourceKey: string|null,
+     *     contractTermId: int|null,
+     *     net: string,
+     *     vat: string,
+     *     gross: string
+     * }
+     */
+    private function expenseRowProps(ExpenseRow $row, string $currency): array
+    {
+        return [
+            'id' => (int) $row->id,
+            'localKey' => 'row-'.$row->id,
+            'position' => (int) $row->position,
+            'vendorId' => $row->vendor_id === null ? null : (int) $row->vendor_id,
+            'vendorName' => $row->vendor?->name,
+            'type' => $this->enumValue($row->type),
+            'confirmationState' => $this->nullableEnumValue($row->confirmation_state),
+            'description' => $row->description,
+            'quantity' => $row->quantity === null ? null : $this->decimalValue($row->quantity, 6),
+            'unitPrice' => $row->unit_price === null ? null : $this->decimalValue($row->unit_price, 6),
+            'enteredAmount' => $this->decimalValue($row->entered_amount, 6),
+            'amountIncludesVat' => (bool) $row->amount_includes_vat,
+            'vatRate' => $this->decimalValue($row->vat_rate, 6),
+            'isExtra' => (bool) $row->is_extra,
+            'fundedPlafondExpenseId' => $row->funded_plafond_expense_id,
+            'spendDate' => $row->spend_date,
+            'periodStart' => $row->period_start,
+            'periodEnd' => $row->period_end,
+            'distribution' => $this->nullableEnumValue($row->distribution),
+            'externalReference' => $row->external_reference,
+            'lockVersion' => (int) $row->lock_version,
+            'isSystemManaged' => (bool) $row->is_system_managed,
+            'sourceKey' => $row->source_key,
+            'contractTermId' => $row->contract_term_id,
+            'net' => MoneyFormatter::format($this->decimalValue($row->net_amount, 2), $currency),
+            'vat' => MoneyFormatter::format($this->decimalValue($row->vat_amount, 2), $currency),
+            'gross' => MoneyFormatter::format($this->decimalValue($row->gross_amount, 2), $currency),
+        ];
+    }
+
+    private function enumValue(BackedEnum|string $value): string
+    {
+        return $value instanceof BackedEnum ? (string) $value->value : $value;
+    }
+
+    private function nullableEnumValue(BackedEnum|string|null $value): ?string
+    {
+        return $value === null ? null : $this->enumValue($value);
+    }
+
+    private function decimalValue(string|float $value, int $scale): string
+    {
+        return is_string($value) ? $value : number_format($value, $scale, '.', '');
     }
 }

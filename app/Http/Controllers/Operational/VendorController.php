@@ -24,14 +24,13 @@ use Carbon\CarbonInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\Contracts\View\View;
 
 final class VendorController extends Controller
 {
     public function __construct(private readonly AuthorizeApplicationAbility $authorizeAbility) {}
 
-    public function index(Request $request, VendorListQuery $vendorList): Response
+    public function index(Request $request, VendorListQuery $vendorList): View
     {
         $actor = $this->actor($request);
         $context = $this->tenantContext($request);
@@ -45,16 +44,16 @@ final class VendorController extends Controller
             ->paginate(15)
             ->withQueryString();
 
-        return Inertia::render('Operational/Vendors/Index', [
+        return view('operational.vendors.index', [
             'vendors' => $this->paginatedVendors($vendors),
             'filters' => ['q' => $search, 'status' => $status],
             'abilities' => $this->abilities($request),
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request): View
     {
-        return Inertia::render('Operational/Vendors/Create', [
+        return view('operational.vendors.create', [
             'abilities' => $this->abilities($request),
         ]);
     }
@@ -79,11 +78,11 @@ final class VendorController extends Controller
             ->with('success', 'Vendor created.');
     }
 
-    public function edit(Request $request, int $vendor): Response
+    public function edit(Request $request, int $vendor): View
     {
         $target = $this->vendor($this->tenantContext($request), $vendor);
 
-        return Inertia::render('Operational/Vendors/Edit', [
+        return view('operational.vendors.edit', [
             'vendor' => $this->vendorProps($target),
             'abilities' => $this->abilities($request),
         ]);
@@ -161,13 +160,13 @@ final class VendorController extends Controller
         Request $request,
         int $vendor,
         RevisionHistoryQuery $revisionHistory,
-    ): Response {
+    ): View {
         $actor = $this->actor($request);
         $context = $this->tenantContext($request);
         $target = $this->vendor($context, $vendor);
         app(VendorPolicy::class)->viewRevisions($actor, $target)->authorize();
 
-        return Inertia::render('Operational/Vendors/History', [
+        return view('operational.vendors.history', [
             'vendor' => $this->vendorProps($target),
             'history' => $this->historyProps($context, $target, $revisionHistory),
             'canRestore' => app(VendorPolicy::class)->restoreRevision($actor, $target)->allowed(),

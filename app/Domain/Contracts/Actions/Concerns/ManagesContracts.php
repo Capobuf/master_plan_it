@@ -17,6 +17,7 @@ use App\Domain\Tenancy\Enums\TenantState;
 use App\Models\Contract;
 use App\Models\ContractTerm;
 use App\Models\CostCenter;
+use App\Models\ExpenseRow;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
@@ -61,7 +62,8 @@ trait ManagesContracts
         $contract->fill(['vendor_id' => $data->vendorId, 'cost_center_id' => $data->costCenterId, 'title' => trim($data->title), 'description' => $data->description, 'active' => $data->active, 'renewal_date' => $data->renewalDate, 'renewal_notice_days' => $data->renewalNoticeDays, 'renewal_notes' => $data->renewalNotes]);
         $contract->tenant_id = $tenant->getKey();
         $contract->save();
-        $existing = $contract->terms()->lockForUpdate()->get()->keyBy(fn (ContractTerm $term): int => (int) $term->getKey());
+        $existing = $contract->terms()->lockForUpdate()->get();
+        $existing = $existing->keyBy('id');
         $periods = [];
         $kept = [];
         $changed = [$contract];
@@ -96,26 +98,122 @@ trait ManagesContracts
         return $changed;
     }
 
-    /** @return list<\App\Models\ExpenseRow> */
-    private function terminalizeTerm(ContractTerm $term, ?User $actor, ?string $reason): array
+    /** @return list<ExpenseRow> */
+    private function terminalizeTerm(Contract $contract, ContractTerm $term, User $actor, ?string $reason, CarbonImmutable $deletedAt, bool $contractIsDeleted): array
     {
-        $rows=$term->expenseRows()->where('is_system_managed',true)->lockForUpdate()->get();foreach($rows as $row){$row->fill(['is_system_managed'=>false,'manual_override_at'=>now('UTC'),'lock_version'=>$row->lock_version+1])->save();}
-        $term->fill(['deleted_by_user_id' => $actor?->getKey(), 'deleted_by_at' => now('UTC'), 'deletion_reason' => $reason])->save();
+        $rows = ExpenseRow::query()
+            ->where('tenant_id', $contract->tenant_id)
+            ->where('contract_term_id', $term->getKey())
+            ->whereNotNull('source_key')
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($rows as $row) {
+            if ($row->source_deleted_contract_id === null) {
+                $row->forceFill([
+                    'source_deleted_contract_id' => $contract->getKey(),
+                    'source_deleted_contract_title' => $contract->title,
+                ]);
+            }
+            if ($row->source_term_deleted_at === null) {
+                $row->forceFill([
+                    'source_deleted_term_id' => $term->getKey(),
+                    'source_deleted_term_rule_key' => $term->source_rule_key,
+                    'source_deleted_term_start' => $term->effective_start,
+                    'source_deleted_term_end' => $term->effective_end,
+                    'source_term_deleted_at' => $deletedAt,
+                    'source_term_deletion_reason' => $reason,
+                ]);
+            }
+            if ($contractIsDeleted && $row->source_contract_deleted_at === null) {
+                $row->forceFill([
+                    'source_contract_deleted_at' => $deletedAt,
+                    'source_contract_deletion_reason' => $reason,
+                ]);
+            }
+            if ($row->is_system_managed) {
+                $row->forceFill(['is_system_managed' => false, 'manual_override_at' => $deletedAt]);
+            }
+            if ($row->isDirty()) {
+                $row->forceFill(['lock_version' => $row->lock_version + 1])->save();
+            }
+        }
+
+        $term->fill([
+            'deleted_by_user_id' => $actor->getKey(),
+            'deleted_by_at' => $deletedAt,
+            'deletion_reason' => $reason,
+            'lock_version' => $term->lock_version + 1,
+        ])->save();
         $term->delete();
         return $rows->all();
     }
 
-    /** @param list<Contract|ContractTerm> $models */
+    /** @return list<ExpenseRow> */
+    private function terminalizeContractSources(Contract $contract, ?string $reason, CarbonImmutable $deletedAt): array
+    {
+        $rows = ExpenseRow::query()
+            ->where('tenant_id', $contract->tenant_id)
+            ->whereNotNull('source_key')
+            ->whereHas('expense', fn ($query) => $query->where('tenant_id', $contract->tenant_id)->where('contract_id', $contract->getKey()))
+            ->lockForUpdate()
+            ->get();
+
+        foreach ($rows as $row) {
+            if ($row->source_deleted_contract_id === null) {
+                $row->forceFill([
+                    'source_deleted_contract_id' => $contract->getKey(),
+                    'source_deleted_contract_title' => $contract->title,
+                ]);
+            }
+            if ($row->source_contract_deleted_at === null) {
+                $row->forceFill([
+                    'source_contract_deleted_at' => $deletedAt,
+                    'source_contract_deletion_reason' => $reason,
+                ]);
+            }
+            if ($row->is_system_managed) {
+                $row->forceFill(['is_system_managed' => false, 'manual_override_at' => $deletedAt]);
+            }
+            if ($row->isDirty()) {
+                $row->forceFill(['lock_version' => $row->lock_version + 1])->save();
+            }
+        }
+
+        return $rows->filter(fn (ExpenseRow $row): bool => $row->wasChanged())->all();
+    }
+
+    private function deletionReason(Tenant $tenant, ?string $reason): ?string
+    {
+        $normalized = trim((string) $reason);
+        if (mb_strlen($normalized) > 500) {
+            $this->contractFail('deletion_reason', 'The deletion reason may not exceed 500 characters.');
+        }
+        if ($tenant->deletion_reason_required && $normalized === '') {
+            $this->contractFail('deletion_reason', 'A deletion reason is required.');
+        }
+
+        return $normalized === '' ? null : $normalized;
+    }
+
+    /** @param list<Contract|ContractTerm|ExpenseRow> $models */
     private function contractRevisions(User $actor, TenantContext $context, RevisionOperation $operation, string $correlationId, Contract $contract, array $models, ?string $reason = null): void
     {
         $batch = app(BeginRevisionBatch::class)->execute($actor, $context, $operation, $reason, $correlationId, $contract, null);
         $sequence = 1;
+        $seen = [];
         foreach ($models as $model) {
+            $identity = $model->getMorphClass().'#'.$model->getKey();
+            if (isset($seen[$identity])) {
+                continue;
+            }
+            $seen[$identity] = true;
             $version = $model->latestVersions()->first();
             if ($version instanceof Version) { app(LinkVersionToRevisionBatch::class)->execute($batch, $version, $sequence++); }
         }
     }
 
+    /** @param array<string, mixed> $properties */
     private function contractAudit(string $event, string $correlationId, User $actor, Tenant $tenant, Contract $contract, array $properties = []): void
     {
         app(AuditRecorder::class)->record($event, $correlationId, new AuditProperties($properties), $actor, (int) $tenant->getKey(), $contract);

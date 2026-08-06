@@ -2,6 +2,7 @@
 
 namespace App\Domain\Tenancy\Data;
 
+use App\Domain\Tenancy\Enums\BudgetBasis;
 use App\Models\Tenant;
 use App\Models\User;
 
@@ -17,6 +18,8 @@ final readonly class TenantContext
 
     public string $defaultVatRate;
 
+    public BudgetBasis $budgetBasis;
+
     public function __construct(
         public Tenant $tenant,
         public User $actor,
@@ -26,5 +29,6 @@ final readonly class TenantContext
         $this->timezone = (string) $tenant->timezone;
         $this->currencyCode = (string) $tenant->currency_code;
         $this->defaultVatRate = (string) $tenant->default_vat_rate;
+        $this->budgetBasis = BudgetBasis::from((string) $tenant->getRawOriginal('budget_basis'));
     }
 }

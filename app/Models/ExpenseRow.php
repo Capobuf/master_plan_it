@@ -77,6 +77,16 @@ class ExpenseRow extends Model
         'contract_source_rule_key',
         'contract_occurrence_date',
         'source_key',
+        'source_deleted_contract_id',
+        'source_deleted_contract_title',
+        'source_contract_deleted_at',
+        'source_contract_deletion_reason',
+        'source_deleted_term_id',
+        'source_deleted_term_rule_key',
+        'source_deleted_term_start',
+        'source_deleted_term_end',
+        'source_term_deleted_at',
+        'source_term_deletion_reason',
         'lock_version',
     ];
 
@@ -98,6 +108,17 @@ class ExpenseRow extends Model
             'confirmed_at' => 'datetime',
             'manual_override_at' => 'datetime',
             'contract_occurrence_date' => 'date',
+            'source_contract_deleted_at' => 'datetime',
+            'source_deleted_term_start' => 'date',
+            'source_deleted_term_end' => 'date',
+            'source_term_deleted_at' => 'datetime',
+            'quantity' => 'decimal:6',
+            'unit_price' => 'decimal:6',
+            'entered_amount' => 'decimal:6',
+            'vat_rate' => 'decimal:6',
+            'net_amount' => 'decimal:2',
+            'vat_amount' => 'decimal:2',
+            'gross_amount' => 'decimal:2',
         ];
     }
 
@@ -141,6 +162,9 @@ class ExpenseRow extends Model
         return $this->belongsTo(User::class, 'confirmed_by_user_id');
     }
 
+    /**
+     * @return BelongsTo<ContractTerm, $this>
+     */
     public function contractTerm(): BelongsTo
     {
         return $this->belongsTo(ContractTerm::class);

@@ -52,8 +52,12 @@ trait ManagesExpenseAggregate
         return [$persistedActor, $tenant];
     }
 
-    /** @param list<SaveExpenseRowData> $rows */
-    private function saveAggregate(Expense $expense, Tenant $tenant, SaveExpenseData $data, array $rows, User $actor): array
+    /**
+     * @param list<SaveExpenseRowData> $rows
+     * @param list<array{id: int, lock_version: int}> $deletedRows
+     * @return list<Expense|ExpenseRow>
+     */
+    private function saveAggregate(Expense $expense, Tenant $tenant, SaveExpenseData $data, array $rows, User $actor, array $deletedRows = []): array
     {
         $validated = app(ExpenseAggregateValidator::class)->validate($tenant, $data, $rows, $expense->exists ? $expense : null);
         $expense->fill($validated['header']);
@@ -61,7 +65,22 @@ trait ManagesExpenseAggregate
         $expense->save();
 
         $existing = $expense->rows()->lockForUpdate()->get()->keyBy(fn (ExpenseRow $row): int => (int) $row->getKey());
-        $kept = [];
+        $submittedIds = array_filter(array_column($validated['rows'], 'id'));
+        $deletedIds = array_column($deletedRows, 'id');
+        $positions = [];
+        foreach ($existing as $existingRow) {
+            if (! in_array((int) $existingRow->getKey(), $submittedIds, true)
+                && ! in_array((int) $existingRow->getKey(), $deletedIds, true)) {
+                $positions[(int) $existingRow->position] = true;
+            }
+        }
+        foreach ($validated['rows'] as $attributes) {
+            if (isset($positions[$attributes['position']])) {
+                throw new DomainException('TENANT_RELATION_MISMATCH');
+            }
+            $positions[$attributes['position']] = true;
+        }
+        $submitted = [];
         $changed = [$expense];
         foreach ($validated['rows'] as $attributes) {
             $id = $attributes['id'];
@@ -84,29 +103,44 @@ trait ManagesExpenseAggregate
             }
             if (! $row->exists) {
                 $attributes['confirmation_state'] = $attributes['type'] === ExpenseType::Actual
-                    ? ActualConfirmationState::Confirmed : null;
-                $attributes['confirmed_by_user_id'] = $attributes['type'] === ExpenseType::Actual ? $actor->getKey() : null;
-                $attributes['confirmed_at'] = $attributes['type'] === ExpenseType::Actual ? CarbonImmutable::now('UTC') : null;
+                    ? ActualConfirmationState::ToConfirm : null;
+                $attributes['confirmed_by_user_id'] = null;
+                $attributes['confirmed_at'] = null;
                 $attributes['is_system_managed'] = false;
                 $row->tenant_id = $tenant->getKey();
                 $row->expense_id = $expense->getKey();
             } else {
                 if($oldType!==$attributes['type']){
-                    if($attributes['type']===ExpenseType::Actual){$attributes['confirmation_state']=ActualConfirmationState::Confirmed;$attributes['confirmed_by_user_id']=$actor->getKey();$attributes['confirmed_at']=CarbonImmutable::now('UTC');$attributes['is_system_managed']=false;$attributes['manual_override_at']=null;}
+                    if($attributes['type']===ExpenseType::Actual){$attributes['confirmation_state']=ActualConfirmationState::ToConfirm;$attributes['confirmed_by_user_id']=null;$attributes['confirmed_at']=null;$attributes['is_system_managed']=false;$attributes['manual_override_at']=null;}
                     else{$attributes['confirmation_state']=null;$attributes['confirmed_by_user_id']=null;$attributes['confirmed_at']=null;$attributes['is_system_managed']=false;$attributes['manual_override_at']=null;}
                 }
                 $attributes['lock_version'] = (int) $row->lock_version + 1;
             }
             $row->fill($attributes);
             $row->save();
-            $kept[(int) $row->getKey()] = true;
+            $submitted[(int) $row->getKey()] = true;
             $changed[] = $row;
         }
-        foreach ($existing as $row) {
-            if (! isset($kept[(int) $row->getKey()])) {
-                $row->delete();
-                $changed[] = $row;
+
+        $deleted = [];
+        foreach ($deletedRows as $deletedRow) {
+            $row = $existing->get($deletedRow['id']);
+            if (! $row instanceof ExpenseRow || isset($submitted[(int) $row->getKey()])) {
+                throw new DomainException('TENANT_RELATION_MISMATCH');
             }
+            if ((int) $row->lock_version !== $deletedRow['lock_version']) {
+                throw new DomainException('STALE_VERSION');
+            }
+            $deleted[(int) $row->getKey()] = $row;
+        }
+
+        if ($existing->count() - count($deleted) + count(array_filter($rows, static fn (SaveExpenseRowData $row): bool => $row->id === null)) < 1) {
+            throw new DomainException('TENANT_RELATION_MISMATCH');
+        }
+
+        foreach ($deleted as $row) {
+            $row->delete();
+            $changed[] = $row;
         }
         return $changed;
     }
@@ -124,6 +158,7 @@ trait ManagesExpenseAggregate
         }
     }
 
+    /** @param array<string, mixed> $properties */
     private function audit(string $event, string $correlationId, User $actor, Tenant $tenant, Expense $expense, array $properties = []): void
     {
         app(AuditRecorder::class)->record($event, $correlationId, new AuditProperties($properties), $actor, (int) $tenant->getKey(), $expense);

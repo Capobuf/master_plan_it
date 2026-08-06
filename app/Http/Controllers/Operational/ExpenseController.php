@@ -15,12 +15,11 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
 
 final class ExpenseController extends Controller
 {
-    public function index(Request $request, ExpenseRegisterQuery $expenseRegister): Response
+    public function index(Request $request, ExpenseRegisterQuery $expenseRegister): View
     {
         $actor = $this->actor($request);
         $context = $this->tenantContext($request);
@@ -43,7 +42,7 @@ final class ExpenseController extends Controller
         );
         $totals = $expenseRegister->totals($actor, $context, $selectedYear);
 
-        return Inertia::render('Operational/Expenses/Index', [
+        return view('operational.expenses.index', [
             'expenses' => $this->paginatedExpenses($expenses, $context->currencyCode),
             'yearOptions' => array_map(static fn (array $year): array => [
                 'value' => $year['id'],
@@ -64,7 +63,7 @@ final class ExpenseController extends Controller
         Request $request,
         int $expense,
         ExpenseDetailQuery $expenseDetail,
-    ): Response {
+    ): View {
         try {
             $context = $this->tenantContext($request);
             $detail = $expenseDetail->find($this->actor($request), $context, $expense);
@@ -72,7 +71,7 @@ final class ExpenseController extends Controller
             abort(404);
         }
 
-        return Inertia::render('Operational/Expenses/Show', [
+        return view('operational.expenses.show', [
             'expense' => $this->currentExpenseProps(Expense::query()->where('tenant_id', $context->tenantId)->with(['planningYear','costCenter','contract','rows.vendor','rows.fundedPlafond'])->findOrFail($expense), $context->currencyCode),
             'abilities' => [
                 'update' => app(ExpensePolicy::class)->update($this->actor($request), Expense::query()->where('tenant_id', $context->tenantId)->findOrFail($expense))->allowed(),

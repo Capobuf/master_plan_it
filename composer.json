@@ -8,7 +8,6 @@
     "require": {
         "php": "^8.3",
         "ext-bcmath": "*",
-        "inertiajs/inertia-laravel": "3.3.1",
         "laravel/framework": "13.22.0",
         "laravel/tinker": "3.0.2",
         "openspout/openspout": "4.32.0",

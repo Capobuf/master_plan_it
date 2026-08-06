@@ -26,20 +26,19 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
 use LogicException;
 
 final class CostCenterController extends Controller
 {
     public function __construct(private readonly AuthorizeApplicationAbility $authorizeAbility) {}
 
-    public function index(Request $request, CostCenterTreeQuery $costCenterTree): Response
+    public function index(Request $request, CostCenterTreeQuery $costCenterTree): View
     {
         $actor = $this->actor($request);
         $context = $this->tenantContext($request);
 
-        return Inertia::render('Operational/CostCenters/Index', [
+        return view('operational.cost-centers.index', [
             'costCenters' => $costCenterTree->forTenant($actor, $context)
                 ->map(fn (CostCenter $costCenter): array => $this->treeProps($costCenter, 0))
                 ->all(),
@@ -47,12 +46,12 @@ final class CostCenterController extends Controller
         ]);
     }
 
-    public function create(Request $request, CostCenterSelectorQuery $selector): Response
+    public function create(Request $request, CostCenterSelectorQuery $selector): View
     {
         $actor = $this->actor($request);
         $context = $this->tenantContext($request);
 
-        return Inertia::render('Operational/CostCenters/Create', [
+        return view('operational.cost-centers.create', [
             'parents' => $this->parentOptions($selector->forNewSelection($actor, $context)),
             'abilities' => $this->abilities($request),
         ]);
@@ -83,12 +82,12 @@ final class CostCenterController extends Controller
         Request $request,
         int $costCenter,
         CostCenterSelectorQuery $selector,
-    ): Response {
+    ): View {
         $actor = $this->actor($request);
         $context = $this->tenantContext($request);
         $target = $this->costCenter($context, $costCenter);
 
-        return Inertia::render('Operational/CostCenters/Edit', [
+        return view('operational.cost-centers.edit', [
             'costCenter' => $this->costCenterProps($target),
             'parents' => $this->parentOptions($selector->forRecord($actor, $context, $costCenter)),
             'abilities' => $this->abilities($request),
@@ -165,13 +164,13 @@ final class CostCenterController extends Controller
         Request $request,
         int $costCenter,
         RevisionHistoryQuery $revisionHistory,
-    ): Response {
+    ): View {
         $actor = $this->actor($request);
         $context = $this->tenantContext($request);
         $target = $this->costCenter($context, $costCenter);
         app(CostCenterPolicy::class)->viewRevisions($actor, $target)->authorize();
 
-        return Inertia::render('Operational/CostCenters/History', [
+        return view('operational.cost-centers.history', [
             'costCenter' => $this->costCenterProps($target),
             'history' => $this->historyProps($context, $target, $revisionHistory),
             'canRestore' => app(CostCenterPolicy::class)->restoreRevision($actor, $target)->allowed(),

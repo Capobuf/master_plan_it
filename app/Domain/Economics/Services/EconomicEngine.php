@@ -14,7 +14,7 @@ final class EconomicEngine
     public function calculate(EconomicDataset $dataset): array
     {
         $basis = $dataset->scope->budgetBasis->value;
-        $amounts = array_fill_keys(['officialCurrentPosition','net','vat','gross','estimate','quote','actual','actualToConfirm','actualConfirmed','plafondAllocated','plafondConsumed','plafondResidual','plafondOverrun'], '0.00');
+        $amounts = array_fill_keys(['officialCurrentPosition','net','vat','gross','estimate','quote','actual','actualToConfirm','actualConfirmed','extra','plafondAllocated','plafondConsumed','plafondResidual','plafondOverrun'], '0.00');
         $monthly = []; for ($month = 1; $month <= 12; $month++) { $monthly[sprintf('%04d-%02d', $dataset->scope->yearLabel, $month)] = '0.00'; }
         $byType = ['estimate' => '0.00', 'quote' => '0.00', 'actual' => '0.00'];
         $byCostCenter = [];
@@ -30,6 +30,7 @@ final class EconomicEngine
             if ($line->fundedPlafondExpenseId === null) {$byCostCenter[$line->costCenterName] = bcadd($byCostCenter[$line->costCenterName] ?? '0.00', $official, 2);}
             if ($line->type === 'actual' && $line->confirmationState === 'to_confirm') { $amounts['actualToConfirm'] = bcadd($amounts['actualToConfirm'], $official, 2); }
             if ($line->type === 'actual' && $line->confirmationState === 'confirmed') { $amounts['actualConfirmed'] = bcadd($amounts['actualConfirmed'], $official, 2); }
+            if ($line->isExtra) { $amounts['extra'] = bcadd($amounts['extra'], $official, 2); }
             if ($line->expenseKind === 'plafond') { $amounts['plafondAllocated'] = bcadd($amounts['plafondAllocated'], $official, 2);$plafondGroups[$line->expenseId]??=['official'=>'0.00','net'=>'0.00','vat'=>'0.00','gross'=>'0.00'];$plafondGroups[$line->expenseId]['official']=bcadd($plafondGroups[$line->expenseId]['official'],$official,2);foreach(['net','vat','gross'] as $dimension){$plafondGroups[$line->expenseId][$dimension]=bcadd($plafondGroups[$line->expenseId][$dimension],$line->{$dimension},2);} }
             if ($line->fundedPlafondExpenseId !== null) { $amounts['plafondConsumed'] = bcadd($amounts['plafondConsumed'], $official, 2);$group=$line->fundedPlafondExpenseId;$consumedGroups[$group]??=['official'=>'0.00','net'=>'0.00','vat'=>'0.00','gross'=>'0.00'];$consumedGroups[$group]['official']=bcadd($consumedGroups[$group]['official'],$official,2);foreach(['net','vat','gross'] as $dimension){$consumedGroups[$group][$dimension]=bcadd($consumedGroups[$group][$dimension],$line->{$dimension},2);}$fundedLines[$group]=$line; }
             foreach ($line->fundedPlafondExpenseId === null ? $this->monthly($dataset, $line->spendDate, $line->periodStart, $line->periodEnd, $line->distribution, $official) : [] as $key => $value) {

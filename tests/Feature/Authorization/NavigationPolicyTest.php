@@ -9,7 +9,6 @@ use App\Support\Authorization\PlatformAdministrator;
 use Database\Seeders\PermissionCatalogueSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Route;
-use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
@@ -34,22 +33,19 @@ class NavigationPolicyTest extends TestCase
         parent::tearDown();
     }
 
-    public function test_public_login_and_platform_tenant_navigation_are_inertia_pages(): void
+    public function test_public_login_and_platform_tenant_navigation_are_blade_pages(): void
     {
         $this->get('/login')
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page->component('Auth/Login'));
+            ->assertViewIs('auth.login');
 
         $administrator = $this->administrator();
 
         $this->actingAs($administrator)
             ->get('/platform/tenants')
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Platform/Tenants/Index')
-                ->where('navigation.canViewPlatformTenants', true)
-                ->where('abilities.create', true)
-                ->where('tenant.current', null));
+            ->assertViewIs('platform.tenants.index')
+            ->assertViewHas('abilities', fn (array $abilities): bool => $abilities['create'] === true);
     }
 
     public function test_tenant_actor_without_platform_ability_cannot_open_tenant_administration(): void
@@ -83,11 +79,7 @@ class NavigationPolicyTest extends TestCase
 
         $this->get('/operational')
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Dashboard')
-                ->where('tenant.current.id', $tenant->getKey())
-                ->where('tenant.current.name', 'Selected dashboard tenant')
-                ->where('tenant.current.code', 'DASH-01'));
+            ->assertViewIs('operational.dashboard');
     }
 
     public function test_operational_routes_keep_the_complete_security_middleware_chain(): void

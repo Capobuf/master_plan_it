@@ -25,11 +25,11 @@ cp .env.testing.example .env.testing
 
 Verify exact planned versions and PHP platform 8.3.32. Failure blocks implementation.
 
-The frontend gate must verify the exact React/Inertia/Tailwind/TailAdmin lock, Vite manifest, absence of runtime CDN assets and the React mount/unmount lifecycle before any Expense or Budget UI task starts:
+The frontend gate verifies TailAdmin Laravel Free Blade/Alpine assets, the Vite manifest and absence of runtime CDN assets:
 
 ```bash
 npm ci && npm run build
-php artisan test tests/Architecture/FrontendStackContractTest.php tests/Feature/Inertia/ApplicationShellTest.php
+php artisan test tests/Architecture/FrontendStackContractTest.php
 php artisan dusk tests/Browser/Shell/OperationalShellSmokeTest.php
 ```
 

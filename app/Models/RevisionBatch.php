@@ -8,6 +8,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+/**
+ * @property int $id
+ * @property RevisionOperation $operation
+ * @property string|null $reason
+ * @property \Carbon\Carbon $occurred_at
+ */
 class RevisionBatch extends Model
 {
     /** @var list<string> */

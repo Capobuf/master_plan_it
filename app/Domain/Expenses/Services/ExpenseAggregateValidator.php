@@ -25,7 +25,7 @@ final class ExpenseAggregateValidator
      */
     public function validate(Tenant $tenant, SaveExpenseData $data, array $rows, ?Expense $currentExpense = null): array
     {
-        if ($data->projectId !== null || ($data->projectId !== null && $data->contractId !== null)) {
+        if ($data->projectId !== null) {
             $this->fail('project_id', 'Projects are not available in this workflow.');
         }
         if (trim($data->title) === '' || mb_strlen($data->title) > 255) {
@@ -39,8 +39,15 @@ final class ExpenseAggregateValidator
         if (! $year instanceof PlanningYear) {
             $this->fail('planning_year_id', 'The selected planning year is invalid.');
         }
-        if (! CostCenter::query()->where('tenant_id', $tenant->getKey())->whereKey($data->costCenterId)->exists()) {
+        if (! $this->isCurrentOrActive($year->active, $currentExpense?->planning_year_id, $data->planningYearId)) {
+            $this->fail('planning_year_id', 'The selected planning year is inactive.');
+        }
+        $costCenter = CostCenter::query()->where('tenant_id', $tenant->getKey())->whereKey($data->costCenterId)->first();
+        if (! $costCenter instanceof CostCenter) {
             $this->fail('cost_center_id', 'The selected cost center is invalid.');
+        }
+        if (! $this->isCurrentOrActive($costCenter->active, $currentExpense?->cost_center_id, $data->costCenterId)) {
+            $this->fail('cost_center_id', 'The selected cost center is inactive.');
         }
         if ($data->contractId !== null && ! \App\Models\Contract::query()->where('tenant_id', $tenant->getKey())->whereKey($data->contractId)->exists()) {
             $preservedGeneratedSource = $currentExpense?->exists === true
@@ -59,6 +66,7 @@ final class ExpenseAggregateValidator
 
         $normalized = [];
         $ids = [];
+        $positions = [];
         foreach ($rows as $index => $row) {
             if (! $row instanceof SaveExpenseRowData) {
                 $this->fail("rows.{$index}", 'The expense row is invalid.');
@@ -67,7 +75,11 @@ final class ExpenseAggregateValidator
                 $this->fail("rows.{$index}.id", 'The expense row is duplicated.');
             }
             $ids[$row->id ?? -($index + 1)] = true;
-            $normalized[] = $this->row($tenant, $year, $data->kind, $row, $index);
+            if (isset($positions[$row->position])) {
+                $this->fail("rows.{$index}.position", 'Each current expense row requires a unique position.');
+            }
+            $positions[$row->position] = true;
+            $normalized[] = $this->row($tenant, $year, $data->kind, $row, $index, $currentExpense);
         }
 
         return [
@@ -85,7 +97,7 @@ final class ExpenseAggregateValidator
     }
 
     /** @return array<string, mixed> */
-    private function row(Tenant $tenant, PlanningYear $year, ExpenseKind $kind, SaveExpenseRowData $row, int $index): array
+    private function row(Tenant $tenant, PlanningYear $year, ExpenseKind $kind, SaveExpenseRowData $row, int $index, ?Expense $currentExpense): array
     {
         $prefix = "rows.{$index}";
         if (trim($row->description) === '' || mb_strlen($row->description) > 255) {
@@ -97,8 +109,12 @@ final class ExpenseAggregateValidator
         if ($kind === ExpenseKind::Ordinary && $row->vendorId === null) {
             $this->fail("{$prefix}.vendor_id", 'Ordinary expense rows require a vendor.');
         }
-        if ($row->vendorId !== null && ! Vendor::query()->where('tenant_id', $tenant->getKey())->whereKey($row->vendorId)->exists()) {
+        $vendor = $row->vendorId === null ? null : Vendor::query()->where('tenant_id', $tenant->getKey())->whereKey($row->vendorId)->first();
+        if ($row->vendorId !== null && ! $vendor instanceof Vendor) {
             $this->fail("{$prefix}.vendor_id", 'The selected vendor is invalid.');
+        }
+        if ($vendor instanceof Vendor && ! $vendor->active && ! $this->isCurrentRowVendor($currentExpense, $row->id, $vendor->getKey())) {
+            $this->fail("{$prefix}.vendor_id", 'The selected vendor is inactive.');
         }
         if ($row->isExtra && $row->fundedPlafondExpenseId !== null) {
             $this->fail("{$prefix}.funded_plafond_expense_id", 'Extra and funded Plafond are mutually exclusive.');
@@ -196,6 +212,23 @@ final class ExpenseAggregateValidator
     private function nullableText(?string $value): ?string
     {
         return $value === null || trim($value) === '' ? null : trim($value);
+    }
+
+    private function isCurrentOrActive(bool $active, ?int $currentId, int $selectedId): bool
+    {
+        return $active || $currentId === $selectedId;
+    }
+
+    private function isCurrentRowVendor(?Expense $expense, ?int $rowId, int $vendorId): bool
+    {
+        if (! $expense instanceof Expense || $rowId === null) {
+            return false;
+        }
+
+        return $expense->rows()
+            ->whereKey($rowId)
+            ->where('vendor_id', $vendorId)
+            ->exists();
     }
 
     private function fail(string $field, string $message): never

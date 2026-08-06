@@ -1,0 +1,6 @@
+@extends('layouts.app')
+@section('content')
+<x-common.page-breadcrumb :pageTitle="'Storico · '.$costCenter['name']" />
+@if(session('success'))<div class="mb-6 rounded-lg border border-success-200 bg-success-50 px-4 py-3 text-sm text-success-700">{{ session('success') }}</div>@endif
+<div class="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[.03]"><ul class="divide-y divide-gray-100 dark:divide-gray-800">@forelse($history as $item)<li class="flex items-start justify-between gap-5 px-6 py-5"><div><h2 class="font-medium capitalize text-gray-800 dark:text-white">{{ $item['operation'] }}</h2><p class="mt-1 text-sm text-gray-500">{{ $item['actor'] ?: 'Sistema' }} · {{ $item['timestamp'] ?: '—' }}</p>@if($item['reason'])<p class="mt-2 text-sm text-gray-600 dark:text-gray-300">{{ $item['reason'] }}</p>@endif</div>@if($canRestore && $item['sourceRevisionId'])<form method="POST" action="{{ route('operational.cost-centers.history.restore',['costCenter'=>$costCenter['id'],'version'=>$item['sourceRevisionId']]) }}">@csrf<input name="lock_version" type="hidden" value="{{ $costCenter['lockVersion'] }}"><button class="text-sm font-medium text-brand-500">Ripristina</button></form>@endif</li>@empty<li class="px-6 py-10 text-center text-sm text-gray-500">Nessuna revisione disponibile.</li>@endforelse</ul></div>
+@endsection

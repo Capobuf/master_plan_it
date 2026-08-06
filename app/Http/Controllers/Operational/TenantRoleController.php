@@ -12,15 +12,14 @@ use App\Http\Middleware\AuthorizeApplicationAbility;
 use App\Support\Authorization\PermissionCatalogue;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
 use Spatie\Permission\Models\Role;
 
 final class TenantRoleController extends Controller
 {
     public function __construct(private readonly AuthorizeApplicationAbility $authorizeAbility) {}
 
-    public function index(Request $request): Response
+    public function index(Request $request): View
     {
         $roles = TenantOwnedRecordQuery::forTenant($this->tenantContext($request), Role::class)
             ->where('guard_name', 'web')
@@ -31,15 +30,15 @@ final class TenantRoleController extends Controller
             ->map(fn (Role $role): array => $this->roleProps($role))
             ->all();
 
-        return Inertia::render('Operational/Roles/Index', [
+        return view('operational.roles.index', [
             'roles' => $roles,
             'abilities' => $this->crudAbilities($request),
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request): View
     {
-        return Inertia::render('Operational/Roles/Create', [
+        return view('operational.roles.create', [
             'abilities' => $this->abilityOptions(),
             'crudAbilities' => $this->crudAbilities($request),
         ]);
@@ -62,12 +61,12 @@ final class TenantRoleController extends Controller
             ->with('success', 'Role created.');
     }
 
-    public function edit(Request $request, int $role): Response
+    public function edit(Request $request, int $role): View
     {
         $target = $this->role($this->tenantContext($request), $role);
         $target->load('permissions:id,name');
 
-        return Inertia::render('Operational/Roles/Edit', [
+        return view('operational.roles.edit', [
             'role' => $this->roleProps($target),
             'abilities' => $this->abilityOptions(),
             'crudAbilities' => $this->crudAbilities($request),

@@ -6,10 +6,10 @@ use App\Domain\Contracts\Actions\Concerns\ManagesContracts;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Contract;
+use App\Models\ContractTerm;
 use App\Models\User;
 use DomainException;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\ValidationException;
 
 final class DeleteContract
 {
@@ -21,11 +21,15 @@ final class DeleteContract
         DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $reason, $target, $tenant): void {
             $contract = Contract::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($target->getKey());
             if (! $contract instanceof Contract || $contract->lock_version !== $expectedLockVersion) { throw new DomainException('STALE_VERSION'); }
-            if ($tenant->deletion_reason_required && trim((string) $reason) === '') { throw ValidationException::withMessages(['deletion_reason' => 'A deletion reason is required.']); }
+            $reason = $this->deletionReason($tenant, $reason);
+            $deletedAt = now('UTC')->toImmutable();
             $changed = [$contract];
-            foreach ($contract->terms()->lockForUpdate()->get() as $term) { $changed[] = $term;$changed=[...$changed,...$this->terminalizeTerm($term, $actor, $reason)]; }
-            $contract->expenses()->with('rows')->get()->each(function ($expense): void { foreach ($expense->rows as $row) { if ($row->is_system_managed) { $row->fill(['is_system_managed' => false, 'manual_override_at' => now('UTC'), 'lock_version' => $row->lock_version + 1])->save(); } } });
-            $contract->fill(['active' => false, 'deleted_by_user_id' => $actor->getKey(), 'deleted_by_at' => now('UTC'), 'deletion_reason' => $reason, 'lock_version' => $contract->lock_version + 1])->save();
+            foreach (ContractTerm::query()->where('tenant_id', $tenant->getKey())->where('contract_id', $contract->getKey())->lockForUpdate()->get() as $term) {
+                $changed[] = $term;
+                $changed = [...$changed, ...$this->terminalizeTerm($contract, $term, $actor, $reason, $deletedAt, true)];
+            }
+            $changed = [...$changed, ...$this->terminalizeContractSources($contract, $reason, $deletedAt)];
+            $contract->fill(['active' => false, 'deleted_by_user_id' => $actor->getKey(), 'deleted_by_at' => $deletedAt, 'deletion_reason' => $reason, 'lock_version' => $contract->lock_version + 1])->save();
             $this->contractRevisions($actor, $context, RevisionOperation::Delete, $correlationId, $contract, $changed, $reason);
             $this->contractAudit('contract.deleted', $correlationId, $actor, $tenant, $contract);
             $contract->delete();

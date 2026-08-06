@@ -5,7 +5,6 @@ use App\Http\Middleware\AssignCorrelationId;
 use App\Http\Middleware\AuthorizeApplicationAbility;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\EnsureTenantIsActive;
-use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveTenantContext;
 use App\Http\Middleware\SetPermissionTeamContext;
 use App\Models\User;
@@ -37,7 +36,6 @@ return Application::configure(basePath: dirname(__DIR__))
         );
 
         $middleware->append(AssignCorrelationId::class);
-        $middleware->appendToGroup('web', HandleInertiaRequests::class);
         $middleware->alias([
             'active-user' => EnsureActiveUser::class,
             'application-ability' => AuthorizeApplicationAbility::class,

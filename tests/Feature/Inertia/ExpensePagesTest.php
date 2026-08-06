@@ -10,7 +10,6 @@ use App\Models\Tenant;
 use App\Models\User;
 use Database\Seeders\PermissionCatalogueSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -55,21 +54,19 @@ class ExpensePagesTest extends TestCase
         $this->actingAs($actor)
             ->get(route('operational.expenses.index', ['year' => $year->getKey()]))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Expenses/Index')
-                ->where('selectedYear', $year->getKey())
-                ->where('expenses.data.0.id', $expense->getKey())
-                ->where('expenses.data.0.title', 'Cloud services')
-                ->where('expenses.data.0.net', '125,00 €')
-                ->where('totals.gross', '152,50 €'));
+            ->assertViewIs('operational.expenses.index')
+            ->assertViewHas('selectedYear', $year->getKey())
+            ->assertViewHas('expenses', fn (array $expenses): bool => $expenses['data'][0]['id'] === $expense->getKey()
+                && $expenses['data'][0]['title'] === 'Cloud services'
+                && $expenses['data'][0]['net'] === '125,00 €')
+            ->assertViewHas('totals', fn (array $totals): bool => $totals['gross'] === '152,50 €');
 
         $this->get(route('operational.expenses.show', $expense))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Expenses/Show')
-                ->where('expense.id', $expense->getKey())
-                ->where('expense.rows.0.description', 'Managed database')
-                ->where('expense.gross', '152,50 €'));
+            ->assertViewIs('operational.expenses.show')
+            ->assertViewHas('expense', fn (array $shownExpense): bool => $shownExpense['id'] === $expense->getKey()
+                && $shownExpense['rows'][0]['description'] === 'Managed database'
+                && $shownExpense['gross'] === '152,50 €');
     }
 
     public function test_expense_routes_fail_closed_for_missing_permission_and_foreign_ids(): void

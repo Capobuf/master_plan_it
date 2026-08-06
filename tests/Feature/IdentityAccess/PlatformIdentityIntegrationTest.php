@@ -11,7 +11,6 @@ use Database\Seeders\PermissionCatalogueSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -54,48 +53,36 @@ class PlatformIdentityIntegrationTest extends TestCase
             ->withSession([EnterTenantContext::SESSION_KEY => $tenant->getKey()])
             ->get('/operational/users')
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Users/Index')
-                ->where('abilities.create', true)
-                ->where('abilities.resetPassword', true));
+            ->assertViewIs('operational.users.index')
+            ->assertViewHas('abilities', fn (array $abilities): bool => $abilities['create'] && $abilities['resetPassword']);
 
         $this->get('/operational/users/create')
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Users/Create')
-                ->has('roles', 1)
-                ->where('roles.0.value', $targetRole->getKey())
-                ->where('abilities.create', true)
-                ->where('abilities.update', true));
+            ->assertViewIs('operational.users.create')
+            ->assertViewHas('roles', fn (array $roles): bool => count($roles) === 1 && $roles[0]['value'] === $targetRole->getKey())
+            ->assertViewHas('abilities', fn (array $abilities): bool => $abilities['create'] && $abilities['update']);
 
         $this->get("/operational/users/{$targetUser->getKey()}/edit")
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Users/Edit')
-                ->where('user.id', $targetUser->getKey())
-                ->where('abilities.deactivate', true)
-                ->where('abilities.resetPassword', true));
+            ->assertViewIs('operational.users.edit')
+            ->assertViewHas('user', fn (array $user): bool => $user['id'] === $targetUser->getKey())
+            ->assertViewHas('abilities', fn (array $abilities): bool => $abilities['deactivate'] && $abilities['resetPassword']);
 
         $this->get('/operational/roles')
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Roles/Index')
-                ->where('abilities.create', true)
-                ->where('abilities.delete', true));
+            ->assertViewIs('operational.roles.index')
+            ->assertViewHas('abilities', fn (array $abilities): bool => $abilities['create'] && $abilities['delete']);
 
         $this->get('/operational/roles/create')
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Roles/Create')
-                ->where('crudAbilities.create', true)
-                ->where('crudAbilities.update', true));
+            ->assertViewIs('operational.roles.create')
+            ->assertViewHas('crudAbilities', fn (array $abilities): bool => $abilities['create'] && $abilities['update']);
 
         $this->get("/operational/roles/{$targetRole->getKey()}/edit")
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Roles/Edit')
-                ->where('role.id', $targetRole->getKey())
-                ->where('crudAbilities.delete', true));
+            ->assertViewIs('operational.roles.edit')
+            ->assertViewHas('role', fn (array $role): bool => $role['id'] === $targetRole->getKey())
+            ->assertViewHas('crudAbilities', fn (array $abilities): bool => $abilities['delete']);
 
         $tenantUser = User::factory()->create([
             'tenant_id' => $tenant->getKey(),

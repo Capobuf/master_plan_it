@@ -9,8 +9,6 @@ use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
 use Database\Seeders\PermissionCatalogueSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Illuminate\Support\Collection;
-use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class PlatformTenantPagesTest extends TestCase
@@ -35,24 +33,19 @@ class PlatformTenantPagesTest extends TestCase
         $this->actingAs($administrator)
             ->get(route('platform.tenants.index'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Platform/Tenants/Index')
-                ->where('tenants', fn (Collection $tenants): bool => $tenants->contains(
-                    fn (array $item): bool => $item['id'] === $tenant->getKey()
-                        && $item['name'] === 'Inertia tenant',
-                ))
-                ->where('abilities.create', true)
-                ->where('abilities.update', true)
-                ->where('abilities.deactivate', true)
-                ->where('abilities.reactivate', true)
-                ->where('abilities.enter', true));
+            ->assertViewIs('platform.tenants.index')
+            ->assertViewHas('tenants', fn (array $tenants): bool => collect($tenants)->contains(
+                fn (array $item): bool => $item['id'] === $tenant->getKey()
+                    && $item['name'] === 'Inertia tenant',
+            ))
+            ->assertViewHas('abilities', fn (array $abilities): bool => $abilities['create']
+                && $abilities['update'] && $abilities['deactivate'] && $abilities['reactivate'] && $abilities['enter']);
 
         $this->get(route('platform.tenants.edit', $tenant))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Platform/Tenants/Edit')
-                ->where('record.id', $tenant->getKey())
-                ->where('record.code', 'INERTIA-01'));
+            ->assertViewIs('platform.tenants.edit')
+            ->assertViewHas('record', fn (array $record): bool => $record['id'] === $tenant->getKey()
+                && $record['code'] === 'INERTIA-01');
     }
 
     public function test_create_and_enter_routes_delegate_to_tenant_actions(): void

@@ -14,19 +14,18 @@ use App\Http\Middleware\AuthorizeApplicationAbility;
 use App\Models\PlanningYear;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Inertia\Inertia;
-use Inertia\Response;
+use Illuminate\View\View;
 
 final class PlanningYearController extends Controller
 {
     public function __construct(private readonly AuthorizeApplicationAbility $authorizeAbility) {}
 
-    public function index(Request $request, PlanningYearListQuery $planningYears): Response
+    public function index(Request $request, PlanningYearListQuery $planningYears): View
     {
         $actor = $this->actor($request);
         $context = $this->tenantContext($request);
 
-        return Inertia::render('Operational/PlanningYears/Index', [
+        return view('operational.planning-years.index', [
             'planningYears' => $planningYears->forTenant($actor, $context)
                 ->get()
                 ->map(fn (PlanningYear $year): array => $this->planningYearProps($year))

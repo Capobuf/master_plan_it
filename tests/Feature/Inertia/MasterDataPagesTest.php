@@ -9,7 +9,6 @@ use App\Models\User;
 use App\Models\Vendor;
 use Database\Seeders\PermissionCatalogueSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
-use Inertia\Testing\AssertableInertia as Assert;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
@@ -65,27 +64,24 @@ class MasterDataPagesTest extends TestCase
         $this->actingAs($actor)
             ->get(route('operational.planning-years.index'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/PlanningYears/Index')
-                ->where('planningYears.0.id', $year->getKey())
-                ->where('planningYears.0.label', 2031)
-                ->where('abilities.create', true));
+            ->assertViewIs('operational.planning-years.index')
+            ->assertViewHas('planningYears', fn (array $years): bool => $years[0]['id'] === $year->getKey()
+                && $years[0]['label'] === 2031)
+            ->assertViewHas('abilities', fn (array $abilities): bool => $abilities['create']);
 
         $this->get(route('operational.cost-centers.index'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/CostCenters/Index')
-                ->where('costCenters.0.id', $costCenter->getKey())
-                ->where('costCenters.0.name', 'Operations')
-                ->where('abilities.viewRevisions', true));
+            ->assertViewIs('operational.cost-centers.index')
+            ->assertViewHas('costCenters', fn (array $costCenters): bool => $costCenters[0]['id'] === $costCenter->getKey()
+                && $costCenters[0]['name'] === 'Operations')
+            ->assertViewHas('abilities', fn (array $abilities): bool => $abilities['viewRevisions']);
 
         $this->get(route('operational.vendors.index'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Vendors/Index')
-                ->where('vendors.data.0.id', $vendor->getKey())
-                ->where('vendors.data.0.name', 'Acme')
-                ->where('abilities.update', true));
+            ->assertViewIs('operational.vendors.index')
+            ->assertViewHas('vendors', fn (array $vendors): bool => $vendors['data'][0]['id'] === $vendor->getKey()
+                && $vendors['data'][0]['name'] === 'Acme')
+            ->assertViewHas('abilities', fn (array $abilities): bool => $abilities['update']);
     }
 
     public function test_create_pages_offer_only_same_tenant_relationship_options(): void
@@ -101,17 +97,15 @@ class MasterDataPagesTest extends TestCase
         $this->actingAs($actor)
             ->get(route('operational.cost-centers.create'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/CostCenters/Create')
-                ->has('parents', 1)
-                ->where('parents.0.value', $parent->getKey())
-                ->where('parents.0.label', 'Allowed parent'));
+            ->assertViewIs('operational.cost-centers.create')
+            ->assertViewHas('parents', fn (array $parents): bool => count($parents) === 1
+                && $parents[0]['value'] === $parent->getKey()
+                && $parents[0]['label'] === 'Allowed parent');
 
         $this->get(route('operational.vendors.create'))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Vendors/Create')
-                ->where('abilities.create', true));
+            ->assertViewIs('operational.vendors.create')
+            ->assertViewHas('abilities', fn (array $abilities): bool => $abilities['create']);
     }
 
     public function test_planning_year_submit_routes_delegate_create_and_lifecycle_actions(): void
@@ -180,10 +174,9 @@ class MasterDataPagesTest extends TestCase
         $costCenter->refresh();
         $this->get(route('operational.cost-centers.history', $costCenter->getKey()))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/CostCenters/History')
-                ->where('costCenter.id', $costCenter->getKey())
-                ->has('history'));
+            ->assertViewIs('operational.cost-centers.history')
+            ->assertViewHas('costCenter', fn (array $shownCostCenter): bool => $shownCostCenter['id'] === $costCenter->getKey())
+            ->assertViewHas('history');
 
         $this->post(route('operational.cost-centers.deactivate', $costCenter->getKey()), [
             'lock_version' => $costCenter->lock_version,
@@ -241,10 +234,9 @@ class MasterDataPagesTest extends TestCase
         $vendor->refresh();
         $this->get(route('operational.vendors.history', $vendor->getKey()))
             ->assertOk()
-            ->assertInertia(fn (Assert $page): Assert => $page
-                ->component('Operational/Vendors/History')
-                ->where('vendor.id', $vendor->getKey())
-                ->has('history'));
+            ->assertViewIs('operational.vendors.history')
+            ->assertViewHas('vendor', fn (array $shownVendor): bool => $shownVendor['id'] === $vendor->getKey())
+            ->assertViewHas('history');
 
         $this->post(route('operational.vendors.deactivate', $vendor->getKey()), [
             'lock_version' => $vendor->lock_version,

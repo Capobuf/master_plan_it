@@ -10,14 +10,14 @@ Create the Laravel/Sail skeleton, non-destructive test/CI foundation, authentica
 
 ## TailAdmin UI standard
 
-All React/TailAdmin-owned UI in this feature follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search the official TailAdmin React catalogue/source first, choose the best native fit, delegate application adapters to native primitives, and record any unavoidable exception before implementation.
+All application UI follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): use the official TailAdmin Laravel Free Blade source and native Alpine behavior first, then bind server-owned data and actions without recreating visual primitives.
 
 ## Technical context
 
 | Item | Decision |
 |---|---|
 | Runtime | PHP 8.3.32; Laravel 13.22.0; Sail 1.64.0 |
-| UI | Inertia 3, React 19, Tailwind CSS 4 and native TailAdmin React components/methods for every application surface; Chart.js for server-fed charts. The only Blade file is the Inertia mount root. |
+| UI | Official TailAdmin Laravel Free Blade components, Tailwind CSS 4, native Alpine methods and ApexCharts for server-fed charts. No Inertia/React application surface. |
 | DB | MySQL 8.4.10; development/test separate logical DBs |
 | Auth/RBAC | Laravel auth; Spatie Permission 8.3.0 teams; Shield 4.3.1 |
 | Operations | sync queue; one scheduler cron; database notifications + optional sync mail |
@@ -80,9 +80,9 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
 - `admin:reset-password` interactive command;
 - notification check commands remain in owning features and are scheduled here.
 
-### React/Inertia/TailAdmin UI
+### TailAdmin Laravel Free UI
 
-- authentication page using the shared Inertia/React shell;
+- authentication page using the shared TailAdmin Blade shell;
 - platform settings page, Administrator-only;
 - user and tenant role management pages integrated with Feature 007;
 - tenant context indicator in navigation/breadcrumbs;
@@ -90,7 +90,7 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
 
 ### Operational UI boundary
 
-All authentication, administration and operational screens use the same Inertia/React layout and reuse the authenticated session, tenant context, Policies, middleware, Actions, Queries and DTOs. Inertia/React owns the client boundary, native TailAdmin owns visual primitives and documented theme/component methods, and Chart.js consumes server-calculated presentation payloads. No handwritten duplicate may replace a native TailAdmin fit; an absent fit requires the exception record defined in `docs/replatform/tailadmin-ui-standard.md`.
+All authentication, administration and operational screens use the same TailAdmin Laravel Blade layout and reuse the authenticated session, tenant context, Policies, middleware, Actions, Queries and DTOs. Blade owns server rendering, native TailAdmin Alpine methods own local interactions, and ApexCharts consumes server-calculated presentation payloads. No handwritten duplicate may replace a native TailAdmin Free fit.
 
 The shared modal contract is server-state aware: Escape closes ordinary modals and cancels an unsubmitted destructive confirmation; while a non-interruptible server request is active, close, Escape and duplicate actions are disabled. Closing restores focus to the opener, and validation failure focuses the first invalid field. The shared state contract requires perceivable loading with `aria-busy`, mathematically valid and guided empty states, non-disclosing denial, stale-conflict input preservation with explicit reload or re-execution, and safe unexpected-error presentation using `UNEXPECTED_ERROR` plus the request correlation ID when available. T001-028/T001-029 own the shared contract, T003-009/T003-012 and T005-006/T005-007 apply it, and T005-026 owns end-to-end runtime verification for the selected milestone.
 

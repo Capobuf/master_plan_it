@@ -1,9 +1,0 @@
-import { Head, router } from '@inertiajs/react';
-import { useState } from 'react';
-import AppLayout from '../../../layouts/AppLayout';
-import { ConfirmModal, EmptyState, PageHeader } from '../../../components/ui';
-
-export default function History({ vendor, history = [], canRestore }: any) {
-    const [revision, setRevision] = useState<number | null>(null);
-    return <AppLayout><Head title="Vendor history"/><PageHeader title={`History · ${vendor?.name ?? 'Vendor'}`} crumbs={[{ label: 'Vendors', href: '/operational/vendors' }, { label: 'History' }]}/>{history.length ? <div className="mp-card"><ul className="divide-y divide-slate-200">{history.map((item: any, index: number) => <li className="p-5" key={item.sourceRevisionId ?? index}><div className="flex justify-between gap-4"><div><p className="font-semibold text-slate-900">{item.operation}</p><p className="mt-1 text-sm text-slate-500">{item.actor ?? 'System'} · {item.timestamp ?? '—'}</p><p className="mt-1 text-xs text-slate-500">Source revision: {item.sourceRevisionId ?? '—'}</p>{item.reason && <p className="mt-2 text-sm text-slate-600">{item.reason}</p>}</div>{canRestore && item.sourceRevisionId && <button className="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-5 py-3.5 text-sm text-gray-700 shadow-theme-xs ring-1 ring-inset ring-gray-300 transition hover:bg-gray-50" onClick={() => setRevision(item.sourceRevisionId)}>Restore</button>}</div></li>)}</ul></div> : <EmptyState title="No revision history">No changes have been recorded for this vendor.</EmptyState>}<ConfirmModal open={revision !== null} title="Restore vendor revision" confirmLabel="Restore" onClose={() => setRevision(null)} onConfirm={() => revision && router.post(`/operational/vendors/${vendor.id}/history/${revision}/restore`, { lock_version: vendor.lockVersion }, { onSuccess: () => setRevision(null) })}>Restore this source revision for {vendor?.name}?</ConfirmModal></AppLayout>;
-}

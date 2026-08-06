@@ -2,6 +2,8 @@
 
 use App\Http\Controllers\Operational\CostCenterController;
 use App\Http\Controllers\Operational\DashboardController;
+use App\Http\Controllers\Operational\CurrentBudgetController;
+use App\Http\Controllers\Operational\EconomicReportController;
 use App\Http\Controllers\Operational\ExpenseController;
 use App\Http\Controllers\Operational\ExpenseWriteController;
 use App\Http\Controllers\Operational\ContractController;
@@ -23,6 +25,14 @@ Route::middleware([
     Route::get('/', DashboardController::class)
         ->middleware('application-ability:dashboard.view')
         ->name('index');
+
+    Route::get('/budget', CurrentBudgetController::class)
+        ->middleware('application-ability:budget.view')
+        ->name('budget.index');
+
+    Route::get('/reports', EconomicReportController::class)
+        ->middleware('application-ability:report.view')
+        ->name('reports.index');
 
     Route::prefix('/users')->name('users.')
         ->middleware('application-ability:platform.users.manage')
@@ -174,6 +184,6 @@ Route::middleware([
         Route::post('/{contract}/generate/{year}', [ContractController::class, 'generate'])->middleware('application-ability:contract.generate-occurrence')->whereNumber(['contract','year'])->name('generate');
         Route::post('/{contract}/occurrences/{sourceKey}/resume', [ContractController::class, 'resume'])->middleware('application-ability:contract.resume-generation')->whereNumber('contract')->name('occurrences.resume');
         Route::post('/{contract}/occurrences/{sourceKey}/resume-and-generate', [ContractController::class, 'resumeAndGenerate'])->middleware('application-ability:contract.resume-generation')->whereNumber('contract')->name('occurrences.resume-and-generate');
-        Route::delete('/{contract}/terms/{term}', [ContractController::class, 'destroyTerm'])->middleware('application-ability:contract.delete')->whereNumber(['contract','term'])->name('terms.destroy');
+        Route::delete('/{contract}/terms/{term}', [ContractController::class, 'destroyTerm'])->middleware('application-ability:contract.update')->whereNumber(['contract','term'])->name('terms.destroy');
     });
 });

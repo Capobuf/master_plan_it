@@ -9,5 +9,6 @@ final readonly class EconomicLine
         public ?string $confirmationState, public int $costCenterId, public string $costCenterName,
         public string $net, public string $vat, public string $gross, public ?int $fundedPlafondExpenseId,
         public ?string $spendDate, public ?string $periodStart, public ?string $periodEnd, public ?string $distribution,
+        public bool $isExtra = false,
     ) {}
 }
