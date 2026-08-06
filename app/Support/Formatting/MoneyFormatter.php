@@ -47,7 +47,7 @@ final class MoneyFormatter
         array_unshift($groups, $integer);
 
         $formattedAmount = ($isNegative ? '-' : '')
-            .implode("'", $groups)
+            .implode('', $groups)
             .','
             .$fraction;
 

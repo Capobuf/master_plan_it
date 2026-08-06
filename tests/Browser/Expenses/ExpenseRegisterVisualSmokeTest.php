@@ -59,13 +59,13 @@ class ExpenseRegisterVisualSmokeTest extends DuskTestCase
                     ->clickLink('Expenses')
                     ->waitForText('Expense register')
                     ->assertSee('Cloud platform services')
-                    ->assertSee("17'300,00 €")
+                    ->assertSee('17300,00 €')
                     ->assertScript('return document.documentElement.scrollWidth <= document.documentElement.clientWidth;', true)
                     ->screenshot('expense-register-desktop')
                     ->click('tbody tr')
                     ->waitForText('Managed database capacity')
                     ->assertSee('Northwind Operations')
-                    ->assertSee("21'106,00 €");
+                    ->assertSee('21106,00 €');
 
                 $browser->script('window.scrollTo(0, 0)');
 
