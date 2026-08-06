@@ -8,6 +8,9 @@ use App\Domain\Expenses\Queries\ExpenseDetailQuery;
 use App\Domain\Expenses\Queries\ExpenseRegisterQuery;
 use App\Http\Controllers\Controller;
 use App\Support\Formatting\MoneyFormatter;
+use App\Models\Expense;
+use App\Models\ExpenseRow;
+use App\Policies\ExpensePolicy;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
@@ -53,6 +56,7 @@ final class ExpenseController extends Controller
                 'vat' => MoneyFormatter::format($totals['vat'], $context->currencyCode),
                 'gross' => MoneyFormatter::format($totals['gross'], $context->currencyCode),
             ],
+            'abilities' => ['create' => app(ExpensePolicy::class)->create($actor)->allowed()],
         ]);
     }
 
@@ -69,7 +73,12 @@ final class ExpenseController extends Controller
         }
 
         return Inertia::render('Operational/Expenses/Show', [
-            'expense' => $this->expenseProps($detail, $context->currencyCode),
+            'expense' => $this->currentExpenseProps(Expense::query()->where('tenant_id', $context->tenantId)->with(['planningYear','costCenter','contract','rows.vendor','rows.fundedPlafond'])->findOrFail($expense), $context->currencyCode),
+            'abilities' => [
+                'update' => app(ExpensePolicy::class)->update($this->actor($request), Expense::query()->where('tenant_id', $context->tenantId)->findOrFail($expense))->allowed(),
+                'delete' => app(ExpensePolicy::class)->delete($this->actor($request), Expense::query()->where('tenant_id', $context->tenantId)->findOrFail($expense))->allowed(),
+                'confirmActual' => app(ExpensePolicy::class)->confirmActual($this->actor($request), Expense::query()->where('tenant_id', $context->tenantId)->findOrFail($expense))->allowed(),
+            ],
         ]);
     }
 
@@ -87,6 +96,9 @@ final class ExpenseController extends Controller
                 'costCenterName' => $expense->costCenterName,
                 'kind' => $expense->kind,
                 'title' => $expense->title,
+                'contractId' => $expense->contractId,
+                'contractTitle' => $expense->contractTitle,
+                'contractHref' => $expense->contractCurrent && $expense->contractId !== null ? route('operational.contracts.show', $expense->contractId) : null,
                 'rowCount' => $expense->rowCount,
                 'net' => MoneyFormatter::format($expense->netTotal, $currency),
                 'vat' => MoneyFormatter::format($expense->vatTotal, $currency),
@@ -133,5 +145,14 @@ final class ExpenseController extends Controller
             'vat' => MoneyFormatter::format($expense->vatTotal, $currency),
             'gross' => MoneyFormatter::format($expense->grossTotal, $currency),
         ];
+    }
+
+    /** @return array<string,mixed> */
+    private function currentExpenseProps(Expense $expense, string $currency): array
+    {
+        $sourceContract=$expense->contract_id===null?null:\App\Models\Contract::withTrashed()->where('tenant_id',$expense->tenant_id)->find($expense->contract_id);
+        $net='0.00';$vat='0.00';$gross='0.00';
+        $rows=$expense->rows->map(function(ExpenseRow $row)use($currency,&$net,&$vat,&$gross):array{$net=bcadd($net,(string)$row->net_amount,2);$vat=bcadd($vat,(string)$row->vat_amount,2);$gross=bcadd($gross,(string)$row->gross_amount,2);return ['id'=>(int)$row->id,'position'=>(int)$row->position,'vendorId'=>$row->vendor_id===null?null:(int)$row->vendor_id,'vendorName'=>$row->vendor?->name,'type'=>$row->type->value,'confirmationState'=>$row->confirmation_state?->value,'description'=>$row->description,'quantity'=>$row->quantity,'unitPrice'=>$row->unit_price,'enteredAmount'=>$row->entered_amount,'amountIncludesVat'=>(bool)$row->amount_includes_vat,'vatRate'=>$row->vat_rate,'isExtra'=>(bool)$row->is_extra,'fundedPlafondExpenseId'=>$row->funded_plafond_expense_id,'fundedPlafondTitle'=>$row->fundedPlafond?->title,'spendDate'=>$row->spend_date,'periodStart'=>$row->period_start,'periodEnd'=>$row->period_end,'distribution'=>$row->distribution?->value,'externalReference'=>$row->external_reference,'lockVersion'=>(int)$row->lock_version,'isSystemManaged'=>(bool)$row->is_system_managed,'sourceKey'=>$row->source_key,'contractTermId'=>$row->contract_term_id,'canConfirm'=>$row->confirmation_state?->value==='to_confirm','net'=>MoneyFormatter::format((string)$row->net_amount,$currency),'vat'=>MoneyFormatter::format((string)$row->vat_amount,$currency),'gross'=>MoneyFormatter::format((string)$row->gross_amount,$currency)];})->all();
+        return ['id'=>(int)$expense->id,'planningYearId'=>(int)$expense->planning_year_id,'planningYearLabel'=>$expense->planningYear->year_label,'costCenterId'=>(int)$expense->cost_center_id,'costCenterName'=>$expense->costCenter->name,'kind'=>$expense->kind->value,'title'=>$expense->title,'notes'=>$expense->notes,'contractId'=>$expense->contract_id,'contractTitle'=>$sourceContract?->title,'contractIsCurrent'=>$sourceContract!==null&&$sourceContract->deleted_at===null,'contractHref'=>$sourceContract!==null&&$sourceContract->deleted_at===null?route('operational.contracts.show',$sourceContract):null,'lockVersion'=>(int)$expense->lock_version,'rows'=>$rows,'net'=>MoneyFormatter::format($net,$currency),'vat'=>MoneyFormatter::format($vat,$currency),'gross'=>MoneyFormatter::format($gross,$currency)];
     }
 }

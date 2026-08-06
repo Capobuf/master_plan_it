@@ -25,11 +25,11 @@ cp .env.testing.example .env.testing
 
 Verify exact planned versions and PHP platform 8.3.32. Failure blocks implementation.
 
-The separate operational-frontend gate is T001-028/T001-029. It must verify the exact Preline/Tailwind lock, applicable Preline license, Vite manifest, absence of runtime CDN assets and the Livewire morph/navigation reinitialization contract before any Expense or Budget UI task starts:
+The frontend gate must verify the exact React/Inertia/Tailwind/TailAdmin lock, Vite manifest, absence of runtime CDN assets and the React mount/unmount lifecycle before any Expense or Budget UI task starts:
 
 ```bash
 npm ci && npm run build
-php artisan test tests/Architecture/FrontendStackContractTest.php tests/Livewire/Shell/OperationalShellTest.php
+php artisan test tests/Architecture/FrontendStackContractTest.php tests/Feature/Inertia/ApplicationShellTest.php
 php artisan dusk tests/Browser/Shell/OperationalShellSmokeTest.php
 ```
 

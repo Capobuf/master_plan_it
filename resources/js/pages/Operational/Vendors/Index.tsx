@@ -57,7 +57,7 @@ export default function Vendors({
                 action={
                     abilities.create && (
                         <Link
-                            className="mp-button mp-button-primary"
+                            className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-500 px-5 py-3.5 text-sm text-white shadow-theme-xs transition hover:bg-brand-600"
                             href="/operational/vendors/create"
                         >
                             Add vendor

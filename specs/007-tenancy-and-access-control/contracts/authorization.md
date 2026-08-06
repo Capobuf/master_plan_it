@@ -7,7 +7,7 @@ Authority: Constitution C-07/C-11; Feature 007; `docs/replatform/permission-cata
 
 ## Protected platform boundary
 
-Only protected global Administrator may manage tenants/users/roles, platform settings, global audit view, migration/import, installation backup/restore and global overview. These abilities are absent from tenant role catalogue and cannot be created/assigned through Shield RoleResource. The Administrator remains tenantless: reserved Spatie relationship team key `0` is an internal platform scope, never a Tenant, and its protected boundary restores the prior team after every check or assignment.
+Only protected global Administrator may manage tenants/users/roles, platform settings, global audit view, migration/import, installation backup/restore and global overview. These abilities are absent from tenant role catalogue and cannot be created or assigned through tenant role UI. The Administrator remains tenantless: reserved Spatie relationship team key `0` is an internal platform scope, never a Tenant, and its protected boundary restores the prior team after every check or assignment.
 
 Changing a selected tenant's attachment quota is a protected platform-setting operation. It requires global Administrator and `platform.settings.manage`; entering tenant context or holding a tenant role is insufficient.
 
@@ -18,7 +18,7 @@ Administrator does not receive a generic invariant-bypass `Gate::before`. Inside
 - tenant users derive exactly one tenant from User and cannot switch;
 - Administrator enters/leaves an explicit tenant context and retains identity;
 - missing/invalid/inactive/unauthorized context fails closed;
-- Spatie team ID is set before authorization and reset between requests/Livewire/console iterations/tests;
+- Spatie team ID is set before authorization and reset between requests/React/Inertia/console iterations/tests;
 - changing context unsets loaded `roles` and `permissions` relations and resets cache as required;
 - business Queries require a TenantContext and tenant predicate; permission team context alone is not data scoping.
 
@@ -47,7 +47,7 @@ Administrator sets/resets tenant-user passwords; authenticated user changes own 
 
 ## Policy implementation
 
-One Policy per resource maps methods to stable abilities and same-tenant/current-state checks. Non-CRUD Actions use explicit Gates matching catalogue names. Filament `can*` methods delegate to Policies/Gates.
+One Policy per resource maps methods to stable abilities and same-tenant/current-state checks. Non-CRUD Actions use explicit Gates matching catalogue names. React/TailAdmin pages delegate authorization to Policies/Gates.
 
 Global query pages and tenant pages are separate surfaces; no optional tenant filter turns a global page into an economic cross-tenant query.
 
@@ -62,7 +62,7 @@ For every ability family:
 5. protected ability cannot be assigned;
 6. permission cannot bypass invariant;
 7. role customization affects access without domain code;
-8. context/cache does not leak across requests/Livewire/commands/tests;
+8. context/cache does not leak across requests/React/Inertia/commands/tests;
 9. direct URL, relation, file, revision, report/export and scheduler paths covered.
 10. quota management is Administrator-only and isolated to the selected tenant;
 11. deletion-reason setting management requires global Administrator plus the exact protected ability and explicit target tenant, and never changes prior evidence.

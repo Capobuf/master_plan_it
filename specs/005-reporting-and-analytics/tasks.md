@@ -4,6 +4,8 @@ Status: `TASKS COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLE
 Input: Constitution 5.0.0; Feature 005 design/contracts; shared Money, Expense, project, tenant, permission and output contracts.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
+Branch UI directive: all application UI tasks in this file target Inertia/React/Tailwind with native TailAdmin components and methods. Legacy Filament, Livewire, Preline, Alpine and Blade feature-view paths are superseded; use React pages/components, `tests/Feature/Inertia` and focused browser tests instead. Keep only `resources/views/app.blade.php` as the Inertia mount root.
+
 Tests use exact decimal strings. Presentation code never calculates authoritative economics. `[FND]`, `[USn]` and `[VER]` classes are defined by the readiness registry. Feature 007 owns tenant report-branding settings and returns an immutable DTO; Feature 005 consumes that DTO only inside report/output content while the Master Plan IT application shell remains unchanged.
 
 Foundation-story ownership: T005-001–T005-005 benefit US-005-01.

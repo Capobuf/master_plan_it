@@ -31,6 +31,15 @@ use Overtrue\LaravelVersionable\VersionStrategy;
     'period_end',
     'distribution',
     'external_reference',
+    'confirmation_state',
+    'confirmed_by_user_id',
+    'confirmed_at',
+    'is_system_managed',
+    'manual_override_at',
+    'contract_term_id',
+    'contract_source_rule_key',
+    'contract_occurrence_date',
+    'source_key',
     'lock_version',
 ])]
 class ExpenseRow extends Model
@@ -59,6 +68,16 @@ class ExpenseRow extends Model
         'period_end',
         'distribution',
         'external_reference',
+        'confirmation_state',
+        'confirmed_by_user_id',
+        'confirmed_at',
+        'is_system_managed',
+        'manual_override_at',
+        'contract_term_id',
+        'contract_source_rule_key',
+        'contract_occurrence_date',
+        'source_key',
+        'lock_version',
     ];
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
@@ -76,6 +95,9 @@ class ExpenseRow extends Model
             'amount_includes_vat' => 'boolean',
             'is_extra' => 'boolean',
             'lock_version' => 'integer',
+            'confirmed_at' => 'datetime',
+            'manual_override_at' => 'datetime',
+            'contract_occurrence_date' => 'date',
         ];
     }
 
@@ -117,5 +139,10 @@ class ExpenseRow extends Model
     public function confirmedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'confirmed_by_user_id');
+    }
+
+    public function contractTerm(): BelongsTo
+    {
+        return $this->belongsTo(ContractTerm::class);
     }
 }

@@ -43,4 +43,4 @@ Read the local plan and data model. Implement exactly KPI placement, questions, 
 
 Tenant dashboard datasets contain exactly one tenant. The separate Administrator global overview contains only tenant state, role counts, last activity, entry action, operational alerts, renewals, and import/migration errors; it contains no combined economic values.
 
-The tenant current-Budget surface is an operational Livewire/Blade/Preline page in the shared T001-029 layout. It renders minimum filters, KPI, equivalent table, one useful Chart.js chart and loading/empty/error states from the same server dataset. Preline and Chart.js lifecycle after Livewire DOM changes follows INV-PLT-008; Alpine owns only local transient state and no browser code calculates economics.
+The tenant current-Budget surface is a React/TailAdmin page in the shared Inertia layout. It renders minimum filters, KPI, equivalent table, one useful Chart.js chart and loading/empty/error states from the same server dataset. React mount/unmount owns Chart.js lifecycle per INV-PLT-008, and no browser code calculates economics.

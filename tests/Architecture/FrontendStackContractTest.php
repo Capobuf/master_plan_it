@@ -51,4 +51,33 @@ class FrontendStackContractTest extends TestCase
         $this->assertStringContainsString('/platform/tenants', $layout);
         $this->assertStringContainsString('aria-label="Main navigation"', $layout);
     }
+
+    public function test_branch_has_no_legacy_application_frontend_stack(): void
+    {
+        $root = dirname(__DIR__, 2);
+        $composer = json_decode((string) file_get_contents($root.'/composer.json'), true, flags: JSON_THROW_ON_ERROR);
+        $package = json_decode((string) file_get_contents($root.'/package.json'), true, flags: JSON_THROW_ON_ERROR);
+        $dependencies = array_merge(
+            array_keys($composer['require'] ?? []),
+            array_keys($composer['require-dev'] ?? []),
+            array_keys($package['dependencies'] ?? []),
+            array_keys($package['devDependencies'] ?? []),
+        );
+
+        foreach ($dependencies as $dependency) {
+            $this->assertDoesNotMatchRegularExpression('/(?:preline|livewire|filament)/i', $dependency);
+        }
+
+        $viewFiles = [];
+        $iterator = new \RecursiveIteratorIterator(
+            new \RecursiveDirectoryIterator($root.'/resources/views', \FilesystemIterator::SKIP_DOTS),
+        );
+        foreach ($iterator as $file) {
+            if ($file->isFile()) {
+                $viewFiles[] = str_replace($root.'/', '', $file->getPathname());
+            }
+        }
+
+        $this->assertSame(['resources/views/app.blade.php'], $viewFiles);
+    }
 }

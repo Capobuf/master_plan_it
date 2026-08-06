@@ -44,7 +44,7 @@ Actual confirmation records status/actor/time and ends system-managed contract s
 
 ## Server authority
 
-Forms, models, SQL projections, Blade, Livewire, charts and exports cannot reimplement formulas. Expense Actions calculate persisted rows; `EconomicEngine` aggregates them.
+Forms, models, SQL projections, React components, charts and exports cannot reimplement formulas. Expense Actions calculate persisted rows; `EconomicEngine` aggregates them.
 
 ## Test contract
 

@@ -1,0 +1,22 @@
+<?php
+
+namespace App\Domain\Reporting\Queries;
+
+use App\Domain\Tenancy\Data\TenantContext;
+use Illuminate\Support\Facades\DB;
+
+final class TenantDashboardQuery
+{
+    /** @return array<string,list<array<string,mixed>>> */
+    public function presentation(TenantContext $context, int $planningYearId): array
+    {
+        $recent = DB::table('expenses')->where('tenant_id', $context->tenantId)->where('planning_year_id', $planningYearId)->whereNull('deleted_at')->orderByDesc('updated_at')->limit(8)->get(['id', 'title', 'updated_at'])->map(fn ($row) => ['id' => (int) $row->id, 'label' => (string) $row->title, 'href' => route('operational.expenses.show', $row->id), 'date' => (string) $row->updated_at])->all();
+        $generated = DB::table('expense_rows')->join('expenses', 'expenses.id', '=', 'expense_rows.expense_id')->where('expense_rows.tenant_id', $context->tenantId)->where('expenses.planning_year_id', $planningYearId)->whereNull('expense_rows.deleted_at')->whereNull('expenses.deleted_at')->whereNotNull('expense_rows.source_key')->where('expense_rows.confirmation_state', 'to_confirm')->orderBy('expense_rows.spend_date')->limit(8)->get(['expenses.id', 'expenses.title', 'expense_rows.spend_date'])->map(fn ($row) => ['id' => (int) $row->id, 'label' => (string) $row->title, 'href' => route('operational.expenses.show', $row->id), 'state' => 'To confirm', 'date' => (string) $row->spend_date])->all();
+        $active = DB::table('contracts')->where('tenant_id', $context->tenantId)->whereNull('deleted_at')->where('active', true)->orderBy('title')->limit(8)->get(['id', 'title'])->map(fn ($row) => ['id' => (int) $row->id, 'label' => (string) $row->title, 'href' => route('operational.contracts.show', $row->id), 'state' => 'Active'])->all();
+        $today=now($context->timezone)->toDateString();$limit=now($context->timezone)->addYear()->toDateString();
+        $renewals = DB::table('contracts')->where('tenant_id', $context->tenantId)->whereNull('deleted_at')->where('active', true)->whereBetween('renewal_date',[$today,$limit])->get(['id','title','renewal_date as event_date'])->map(fn($row)=>['id'=>(int)$row->id,'label'=>(string)$row->title,'href'=>route('operational.contracts.show',$row->id),'secondary'=>'Renewal','date'=>(string)$row->event_date]);
+        $ends=DB::table('contract_terms')->join('contracts',fn($join)=>$join->on('contracts.id','=','contract_terms.contract_id')->on('contracts.tenant_id','=','contract_terms.tenant_id'))->where('contract_terms.tenant_id',$context->tenantId)->whereNull('contract_terms.deleted_at')->whereNull('contracts.deleted_at')->where('contracts.active',true)->whereBetween('contract_terms.effective_end',[$today,$limit])->get(['contracts.id','contracts.title','contract_terms.effective_end as event_date'])->map(fn($row)=>['id'=>(int)$row->id,'label'=>(string)$row->title,'href'=>route('operational.contracts.show',$row->id),'secondary'=>'Contract end','date'=>(string)$row->event_date]);
+        $events=$renewals->concat($ends)->sortBy('date')->take(8)->values()->all();
+        return ['recentExpenses' => $recent, 'generatedExpensesToConfirm' => $generated, 'activeContracts' => $active, 'upcomingContractEvents' => $events];
+    }
+}

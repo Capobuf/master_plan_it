@@ -4,6 +4,8 @@ Status: `TASKS COMPLETE; ROLLING ANALYSIS ACTIVE; IMPLEMENTATION IN PROGRESS`
 Input: Constitution 5.0.0; Feature 002 design; shared tenancy, permission, revision and error contracts.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
+Branch UI directive: all application UI tasks in this file target Inertia/React/Tailwind with native TailAdmin components and methods. Legacy Filament, Livewire, Preline, Alpine and Blade feature-view paths are superseded; use React pages/components, `tests/Feature/Inertia` and focused browser tests instead. Keep only `resources/views/app.blade.php` as the Inertia mount root.
+
 Tests precede production code. Feature 002 owns shared operational revision batches because it is the earliest concrete consumer after platform/tenancy; Expense and later features reuse them. `[FND]`, `[USn]` and `[VER]` classes are defined by the readiness registry.
 
 Foundation-story ownership: T002-001–T002-003 provide common schema/authorization for US-002-01–US-002-03; T002-004–T002-006 and T002-017 provide revision infrastructure for US-002-02 and US-002-03 only.

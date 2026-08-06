@@ -23,6 +23,11 @@ export interface NavigationAbilities {
     canViewCostCenters: boolean;
     canViewVendors: boolean;
     canViewExpenses: boolean;
+    canViewContracts: boolean;
+    canCreateContracts: boolean;
+    canViewBudget: boolean;
+    canCreateExpenses: boolean;
+    canUpdateExpenses: boolean;
 }
 
 export interface SharedPageProps {
@@ -73,6 +78,7 @@ export interface PaginatedData<T> {
 
 export * from "./auth";
 export * from "./cost-centers";
+export * from "./contracts";
 export * from "./dashboard";
 export * from "./expenses";
 export * from "./planning-years";

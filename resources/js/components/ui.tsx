@@ -1,6 +1,15 @@
-import { Link, router, usePage } from "@inertiajs/react";
-import { type FormEvent, type ReactNode, useEffect, useState } from "react";
+import { router, usePage } from "@inertiajs/react";
+import { type FormEvent, type ReactNode } from "react";
 import type { BreadcrumbItem, PaginationLink, SharedPageProps } from "../types";
+import TailAdminAlert from "./tailadmin/Alert";
+import TailAdminBadge from "./tailadmin/Badge";
+import TailAdminButton from "./tailadmin/Button";
+import TailAdminInput from "./tailadmin/InputField";
+import TailAdminLabel from "./tailadmin/Label";
+import TailAdminModal from "./tailadmin/Modal";
+import TailAdminPageBreadcrumb from "./tailadmin/PageBreadcrumb";
+import TailAdminSelect from "./tailadmin/Select";
+import TailAdminTextArea from "./tailadmin/TextArea";
 
 export const cx = (...classes: Array<string | false | null | undefined>) =>
     classes.filter(Boolean).join(" ");
@@ -14,12 +23,17 @@ export function Button({
     variant?: "primary" | "secondary" | "danger";
 }) {
     return (
-        <button
-            className={cx("mp-button", `mp-button-${variant}`, className)}
+        <TailAdminButton
+            variant={variant === "primary" ? "primary" : "outline"}
+            className={cx(
+                variant === "danger" &&
+                    "!border-error-300 !bg-error-500 !text-white hover:!bg-error-600",
+                className,
+            )}
             {...props}
         >
             {children}
-        </button>
+        </TailAdminButton>
     );
 }
 export function TextInput({
@@ -33,19 +47,14 @@ export function TextInput({
 }) {
     return (
         <label className="block">
-            {label && <span className="mp-label">{label}</span>}
-            <input
-                className={cx(
-                    "mp-input",
-                    error &&
-                        "border-red-500 focus:border-red-500 focus:ring-red-500",
-                    className,
-                )}
+            {label && <TailAdminLabel>{label}</TailAdminLabel>}
+            <TailAdminInput
+                aria-invalid={error ? true : undefined}
+                error={Boolean(error)}
+                hint={error}
+                className={className}
                 {...props}
             />
-            {error && (
-                <span className="mt-1 block text-xs text-red-600">{error}</span>
-            )}
         </label>
     );
 }
@@ -61,19 +70,22 @@ export function SelectInput({
 }) {
     return (
         <label className="block">
-            {label && <span className="mp-label">{label}</span>}
-            <select className="mp-input" {...props}>
+            {label && <TailAdminLabel>{label}</TailAdminLabel>}
+            <TailAdminSelect
+                aria-invalid={error ? true : undefined}
+                error={Boolean(error)}
+                hint={error}
+                {...props}
+            >
                 {children}
-            </select>
-            {error && (
-                <span className="mt-1 block text-xs text-red-600">{error}</span>
-            )}
+            </TailAdminSelect>
         </label>
     );
 }
 export function Textarea({
     label,
     error,
+    className,
     ...props
 }: React.TextareaHTMLAttributes<HTMLTextAreaElement> & {
     label?: string;
@@ -81,11 +93,14 @@ export function Textarea({
 }) {
     return (
         <label className="block">
-            {label && <span className="mp-label">{label}</span>}
-            <textarea className="mp-input min-h-24" {...props} />
-            {error && (
-                <span className="mt-1 block text-xs text-red-600">{error}</span>
-            )}
+            {label && <TailAdminLabel>{label}</TailAdminLabel>}
+            <TailAdminTextArea
+                className={cx("min-h-24", className)}
+                error={Boolean(error)}
+                hint={error}
+                aria-invalid={error ? true : undefined}
+                {...props}
+            />
         </label>
     );
 }
@@ -96,22 +111,17 @@ export function Badge({
     children: ReactNode;
     tone?: "slate" | "green" | "red" | "amber" | "blue";
 }) {
-    const tones = {
-        slate: "bg-slate-100 text-slate-700",
-        green: "bg-emerald-50 text-emerald-700",
-        red: "bg-red-50 text-red-700",
-        amber: "bg-amber-50 text-amber-700",
-        blue: "bg-blue-50 text-blue-700",
-    };
+    const colors = {
+        slate: "light",
+        green: "success",
+        red: "error",
+        amber: "warning",
+        blue: "info",
+    } as const;
     return (
-        <span
-            className={cx(
-                "inline-flex rounded-full px-2.5 py-1 text-xs font-medium",
-                tones[tone],
-            )}
-        >
+        <TailAdminBadge color={colors[tone]} size="sm">
             {children}
-        </span>
+        </TailAdminBadge>
     );
 }
 export function PageHeader({
@@ -126,36 +136,14 @@ export function PageHeader({
     action?: ReactNode;
 }) {
     return (
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-            <div>
-                <nav
-                    aria-label="Breadcrumb"
-                    className="mb-2 flex gap-2 text-sm text-slate-500"
-                >
-                    {crumbs?.map((c, i) => (
-                        <span key={c.label} className="flex gap-2">
-                            {i > 0 && <span>/</span>}
-                            {c.href ? (
-                                <Link
-                                    href={c.href}
-                                    className="hover:text-brand-700"
-                                >
-                                    {c.label}
-                                </Link>
-                            ) : (
-                                c.label
-                            )}
-                        </span>
-                    ))}
-                </nav>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-                    {title}
-                </h1>
-                {description && (
-                    <p className="mt-1 text-sm text-slate-500">{description}</p>
-                )}
-            </div>
-            {action}
+        <div className="mb-6">
+            <TailAdminPageBreadcrumb title={title} crumbs={crumbs} />
+            {(description || action) && (
+                <div className="-mt-2 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                    {description ? <p className="text-theme-sm text-gray-500 dark:text-gray-400">{description}</p> : <span />}
+                    {action}
+                </div>
+            )}
         </div>
     );
 }
@@ -164,25 +152,10 @@ export function FlashMessages() {
     return (
         <>
             {flash.success && (
-                <div
-                    role="status"
-                    className="mb-5 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-800"
-                >
-                    {flash.success}
-                </div>
+                <div className="mb-5"><TailAdminAlert variant="success" title="Success" message={flash.success} /></div>
             )}
             {flash.error && (
-                <div
-                    role="alert"
-                    className="mb-5 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-800"
-                >
-                    {flash.error}
-                    {diagnostics.correlationId && (
-                        <span className="ml-1 text-xs">
-                            Reference: {diagnostics.correlationId}
-                        </span>
-                    )}
-                </div>
+                <div className="mb-5"><TailAdminAlert variant="error" title="Error" message={<>{flash.error}{diagnostics.correlationId && <span className="ml-1 text-xs">Reference: {diagnostics.correlationId}</span>}</>} /></div>
             )}
         </>
     );
@@ -219,12 +192,7 @@ export function ErrorState({
     message?: string;
 }) {
     return (
-        <div
-            role="alert"
-            className="rounded-xl border border-red-200 bg-red-50 p-5 text-sm text-red-800"
-        >
-            {message}
-        </div>
+        <TailAdminAlert variant="error" title="Unable to load data" message={message} />
     );
 }
 export function Pagination({ links }: { links?: PaginationLink[] }) {
@@ -266,33 +234,15 @@ export function ConfirmModal({
     onConfirm: () => void;
     busy?: boolean;
 }) {
-    useEffect(() => {
-        const close = (e: KeyboardEvent) => e.key === "Escape" && onClose();
-        if (open) window.addEventListener("keydown", close);
-        return () => window.removeEventListener("keydown", close);
-    }, [open, onClose]);
-    if (!open) return null;
     return (
-        <div
-            className="fixed inset-0 z-50 grid place-items-center p-4"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="modal-title"
-        >
-            <button
-                data-close-modal
-                aria-label="Close dialog"
-                onClick={onClose}
-                className="absolute inset-0 bg-slate-950/45"
-            />
-            <div className="relative w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <TailAdminModal isOpen={open} onClose={onClose} showCloseButton={false} className="max-w-md p-6">
                 <h2
                     id="modal-title"
-                    className="text-lg font-bold text-slate-900"
+                    className="text-lg font-bold text-gray-800 dark:text-white/90"
                 >
                     {title}
                 </h2>
-                <div className="mt-3 text-sm text-slate-600">{children}</div>
+                <div className="mt-3 text-sm text-gray-500 dark:text-gray-400">{children}</div>
                 <div className="mt-6 flex justify-end gap-3">
                     <Button variant="secondary" onClick={onClose}>
                         Cancel
@@ -305,8 +255,7 @@ export function ConfirmModal({
                         {confirmLabel}
                     </Button>
                 </div>
-            </div>
-        </div>
+        </TailAdminModal>
     );
 }
 export function SearchForm({

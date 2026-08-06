@@ -5,7 +5,11 @@ Dependencies: Feature 001 bootstrap; permission catalogue and shared security co
 
 ## Summary
 
-Implement single-database tenant ownership, explicit Administrator tenant context, protected platform role, tenant operational settings and configurable tenant roles through Spatie Permission teams and Filament Shield. Every route, query, Action, file, revision, output, command and scheduler path fails closed without valid tenant/ability. No tenancy package, subdomain, impersonation or multi-tenant membership.
+Implement single-database tenant ownership, explicit Administrator tenant context, protected platform role, tenant operational settings and configurable tenant roles through Spatie Permission teams. Every route, query, Action, file, revision, output, command and scheduler path fails closed without valid tenant/ability. No tenancy package, subdomain, impersonation or multi-tenant membership.
+
+## TailAdmin UI standard
+
+Any tenant-context, role or access surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
 
 ## Constitution check
 
@@ -106,7 +110,7 @@ No helper may call `Model::find($id)` for a tenant resource without tenant predi
 - tenant create/update/deactivate/reactivate/no delete;
 - Administrator enter/leave identity and audit;
 - tenant user fixed membership and inactive behavior;
-- team context request/Livewire/console reset and cache leakage;
+- team context request/React/Inertia/console reset and cache leakage;
 - permission catalogue/protected ability/role customization;
 - same-tenant allow, missing permission deny, other-tenant safe deny for every ability family;
 - direct URL, relation, revision, attachment, report/export, command and notification isolation;
@@ -125,7 +129,7 @@ Dusk covers visible context and RoleResource critical interaction only.
 3. TenantContext/middleware/scoped binding tests;
 4. permission catalogue/seed/protected role;
 5. tenant lifecycle/user/role Actions and Policies;
-6. Filament global resources/switch/context UI;
+6. React/TailAdmin global resources/switch/context UI;
 7. onboarding/global overview;
 8. operational tenant settings and permission boundaries;
 9. full cross-feature isolation test matrix.

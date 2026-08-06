@@ -7,6 +7,10 @@ Dependencies: Feature 001 platform; Feature 007 tenancy/RBAC; shared revision in
 
 Implement fixed-calendar planning years, cost centers and vendors as three small tenant-owned aggregates. Planning-year boundaries are derived and immutable; deactivation preserves historical readability and no planning-year revision UI exists. Vendors and cost centers use operational revisions and permit constrained deletion only when unreferenced. No generic master-data service or third-party tree package.
 
+## TailAdmin UI standard
+
+Any React/TailAdmin surface for this feature follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+
 ## Constitution check
 
 Passes C-01, C-04, amended C-05/C-12, C-07, C-10 and C-11. Planning years use the Constitution 5.0.0 fixed-calendar exception. Cross-tenant catalogues, observer side effects, role-name conditions and automatic historical reassignment are prohibited.
@@ -37,7 +41,7 @@ A generic `SaveMasterData` Action is prohibited because date overlap, tree and v
 
 ### Policies and UI
 
-One Policy and one Filament Resource per model. Because the accepted admin panel uses an explicit resource list rather than discovery, T002-009, T002-012 and T002-015 each register their newly delivered Resource exactly once in `AdminPanelProvider`; those three provider writes are serialized in that order and verified through the owning Resource test. Cost-center hierarchy uses native Filament/Livewire composition first. Revision pages use the shared revision contract.
+One Policy and one React/TailAdmin page flow per model. Cost-center hierarchy uses native TailAdmin composition first. Revision pages use the shared revision contract.
 
 ## Invariants
 
@@ -76,7 +80,7 @@ Dusk is not planned unless custom browser-only tree behavior remains after the n
 5. cost-center Actions/tests;
 6. application-owned revision restore integration, after the foundational Overtrue package integration and revision-batch boundary;
 7. queries/selectors;
-8. Filament Resources;
+8. React/TailAdmin pages;
 9. tenant/concurrency/lifecycle/restore verification.
 
 ## Post-design check

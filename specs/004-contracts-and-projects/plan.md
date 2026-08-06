@@ -7,6 +7,10 @@ Dependencies: Features 001–003 and 007; shared revision/audit infrastructure
 
 Implement projects as decision context and contracts as term-based generators of Actual rows. A generated occurrence has one immutable source key. Synchronization creates or updates only a system-managed Actual `ToConfirm`; manual modification, confirmation, or deletion of its source contract/term makes it user-authoritative. Project deletion is blocked by current linked Expenses. Project/contract/term deletion is irreversible in the application; contract/term deletion never cascades to Expenses and writes immutable deletion provenance while stopping future generation. Contracts/projects never contribute independent monetary totals.
 
+## TailAdmin UI standard
+
+Any React/TailAdmin project or contract surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+
 ## Constitution check
 
 Passes C-03, C-04, C-05, C-07, C-10, C-11, C-12 and C-13. Economic observers, duplicate source rows, silent overwrite, project/contract totals and hidden regeneration are prohibited.
@@ -36,7 +40,7 @@ Passes C-03, C-04, C-05, C-07, C-10, C-11, C-12 and C-13. Economic observers, du
 
 - `ProjectListQuery`, `ContractListQuery`, `ContractDetailQuery`, `ContractGenerationHistoryQuery`;
 - one Policy per resource plus explicit generation Gates;
-- operational Livewire Project/Contract list/editor/timeline/history components rendered by Blade/Preline in the shared tenant layout.
+- operational React Project/Contract list/editor/timeline/history components rendered in the shared TailAdmin tenant layout.
 
 No `ContractAnnualizer` service unless tests prove a reusable calculation independent from generation; term values use shared Money/VAT services.
 
@@ -115,7 +119,7 @@ Current project/contract/term saves create aggregate revision batches. Restore u
 - tenant/permission isolation;
 - notification thresholds/dedup/email failure.
 
-Dusk is limited to term editor and regeneration-choice/history controls when browser behavior cannot be proven with Livewire tests.
+Dusk/browser coverage is limited to term editor and regeneration-choice/history controls when behavior cannot be proven with focused React/Inertia tests.
 
 ## Sequence
 
@@ -127,7 +131,7 @@ Dusk is limited to term editor and regeneration-choice/history controls when bro
 6. project/contract/term deletion provenance and tenant reason-setting Actions/tests;
 7. generated-expense deletion/suppression/resume Actions;
 8. notifications;
-9. policies/queries/operational Livewire/Blade/Preline UI;
+9. policies/queries/React/TailAdmin UI;
 10. full accounting/tenant/browser verification.
 
 ## Post-design check

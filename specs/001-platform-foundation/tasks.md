@@ -4,9 +4,11 @@ Status: `IMPLEMENTATION IN PROGRESS`
 Input: Constitution 5.0.0; Feature 001 spec/plan; development/test, permission and task-readiness contracts.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
+Branch UI directive: all application UI tasks in this file target Inertia/React/Tailwind with native TailAdmin components and methods. Legacy references to Filament, Livewire, Preline, Alpine or Blade feature views are superseded; use React pages/components, `tests/Feature/Inertia` and focused browser tests instead. Keep only `resources/views/app.blade.php` as the Inertia mount root.
+
 Every task is test-first. `[FND]` identifies setup/shared infrastructure, `[USn]` maps to a Feature 001 user story, and `[VER]` creates no runtime behavior. Feature 007 owns Tenant, `TenantContext`, tenant lifecycle and tenant User/Role/Tenant resources. Feature 001 owns application bootstrap, authentication integration, password operations, platform settings/audit, the notification delivery primitive, final scheduler registration and release workflows.
 
-Supersession ledger (2026-08-05): completed T001-001, T001-002 and T001-011 remain accepted historical evidence for their original dependency/shell scope. Their clauses forbidding Preline or a second UI kit are superseded only for the ADR-035 tenant-facing operational stack. They did not install or verify Preline; T001-028/T001-029 own that new work. Checkboxes and prior validation evidence are unchanged.
+Supersession ledger (2026-08-06): completed tasks retain their historical checkbox/evidence status, but every frontend clause is interpreted under the branch UI directive above. The branch does not install or verify Preline, Livewire, Filament UI, Alpine or application Blade views. Any legacy T001-028/T001-029 wording about those technologies is superseded by the React/Inertia/Tailwind/TailAdmin implementation and validation already present in the branch.
 
 Foundation-story ownership: T001-001–T001-004 and T001-007 benefit US-001-01; T001-005 benefits US-001-06; T001-006 benefits US-001-03; T001-022–T001-023 benefit US-001-01.
 

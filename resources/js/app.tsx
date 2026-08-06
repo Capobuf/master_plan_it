@@ -2,6 +2,7 @@ import { createInertiaApp } from "@inertiajs/react";
 import type { ComponentType } from "react";
 import { createRoot } from "react-dom/client";
 import type { SharedPageProps } from "./types";
+import { ThemeProvider } from "./context/ThemeContext";
 
 const applicationName = import.meta.env.VITE_APP_NAME ?? "Master Plan IT";
 const pages = import.meta.glob<ComponentType<any>>("./pages/**/*.tsx", {
@@ -25,7 +26,11 @@ void createInertiaApp<SharedPageProps>({
             throw new Error("Inertia application root was not found.");
         }
 
-        createRoot(el).render(<App {...props} />);
+        createRoot(el).render(
+            <ThemeProvider>
+                <App {...props} />
+            </ThemeProvider>,
+        );
     },
     progress: {
         color: "#344054",

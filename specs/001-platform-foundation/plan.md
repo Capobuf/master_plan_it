@@ -8,12 +8,16 @@ Dependencies: Feature 007 plan for tenant/RBAC; `docs/replatform/replatform-plan
 
 Create the Laravel/Sail skeleton, non-destructive test/CI foundation, authentication, protected global Administrator, tenant-context shell, typed platform settings, audit pipeline, scheduler and release gates. This feature owns platform bootstrap and global operations; it does not own tenant business models, economic formulas or migration application.
 
+## TailAdmin UI standard
+
+All React/TailAdmin-owned UI in this feature follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search the official TailAdmin React catalogue/source first, choose the best native fit, delegate application adapters to native primitives, and record any unavoidable exception before implementation.
+
 ## Technical context
 
 | Item | Decision |
 |---|---|
 | Runtime | PHP 8.3.32; Laravel 13.22.0; Sail 1.64.0 |
-| UI | Administrative: Filament 5.7.3. Tenant-facing operational: Blade, Livewire 4.3.3, Alpine, Tailwind CSS 4, mandatory Preline UI; Chart.js for server-fed charts. T001-028/T001-029 own exact lock/build/browser verification. |
+| UI | Inertia 3, React 19, Tailwind CSS 4 and native TailAdmin React components/methods for every application surface; Chart.js for server-fed charts. The only Blade file is the Inertia mount root. |
 | DB | MySQL 8.4.10; development/test separate logical DBs |
 | Auth/RBAC | Laravel auth; Spatie Permission 8.3.0 teams; Shield 4.3.1 |
 | Operations | sync queue; one scheduler cron; database notifications + optional sync mail |
@@ -43,8 +47,7 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
 - `compose.yaml`: `laravel.test`, `mysql`, optional `selenium` profile;
 - `.env.example`, `.env.testing.example`, `phpunit.xml`;
 - `bootstrap/app.php`: middleware aliases/groups;
-- `config/permission.php`, `config/filament-shield.php`, `config/auth.php`, `config/queue.php`;
-- `app/Providers/Filament/AdminPanelProvider.php`;
+- `config/permission.php`, `config/auth.php`, `config/queue.php`;
 - `routes/console.php` scheduler definitions.
 
 ### Models/data
@@ -65,7 +68,7 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
   `app/Policies/PlatformSettingPolicy.php`, and protected platform Gate integration in
   `app/Providers/AuthServiceProvider.php` after the Feature 007 ownership concern exists.
 - `AssignCorrelationId` is global and establishes one validated lowercase UUID v4 in `X-Correlation-ID`, the request/scoped object, exception response and shared log context. Invalid inbound identifiers are replaced; exception hooks preserve the ID through reporting and terminal cleanup prevents leakage.
-- `AppServiceProvider` resolves `TenantContext` only from the value already validated into the request attribute by Feature 007; it never queries or falls back to session. `EnsureActiveUser` runs on every authenticated panel route. Tenant-bound resources then apply the shared Feature 007 context/team/active-tenant/presentation route stack, in that order before route substitution; global dashboard and tenant-administration routes remain usable by an Administrator without a selected tenant. The panel registers active-user and the tenant stack as Livewire-persistent middleware, so Livewire update requests replay only middleware that was present on the original matched route rather than widening tenant requirements to global routes.
+- `AppServiceProvider` resolves `TenantContext` only from the value already validated into the request attribute by Feature 007; it never queries or falls back to session. `EnsureActiveUser` runs on every authenticated Inertia route. Tenant-bound pages then apply the shared Feature 007 context/team/active-tenant/presentation route stack, in that order before route substitution; global dashboard and tenant-administration routes remain usable by an Administrator without a selected tenant.
 
 ### Actions/commands
 
@@ -77,17 +80,17 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
 - `admin:reset-password` interactive command;
 - notification check commands remain in owning features and are scheduled here.
 
-### Filament/UI
+### React/Inertia/TailAdmin UI
 
-- authentication page using Filament native auth;
-- `PlatformSettingResource` or one Settings Page, Administrator-only;
-- `UserResource` and tenant role management integration from Feature 007;
+- authentication page using the shared Inertia/React shell;
+- platform settings page, Administrator-only;
+- user and tenant role management pages integrated with Feature 007;
 - tenant context indicator in navigation/breadcrumbs;
 - global operational dashboard shell without economics.
 
 ### Operational UI boundary
 
-Filament remains authoritative for the accepted authentication and administrative surfaces above. Expense, Budget, reporting and later operational project/contract screens use the single operational Blade layout from T001-029 and reuse the same authenticated session, tenant context, Policies, middleware, Actions, Queries and DTOs. Livewire owns server state/validation/authorization/loading and Action invocation; Blade owns markup; Preline owns its documented visual components; Alpine owns only local transient state; Chart.js consumes server-calculated presentation payloads. Livewire DOM updates must explicitly reinitialize Preline and destroy/recreate JavaScript-owned resources without duplicating listeners or chart instances.
+All authentication, administration and operational screens use the same Inertia/React layout and reuse the authenticated session, tenant context, Policies, middleware, Actions, Queries and DTOs. Inertia/React owns the client boundary, native TailAdmin owns visual primitives and documented theme/component methods, and Chart.js consumes server-calculated presentation payloads. No handwritten duplicate may replace a native TailAdmin fit; an absent fit requires the exception record defined in `docs/replatform/tailadmin-ui-standard.md`.
 
 The shared modal contract is server-state aware: Escape closes ordinary modals and cancels an unsubmitted destructive confirmation; while a non-interruptible server request is active, close, Escape and duplicate actions are disabled. Closing restores focus to the opener, and validation failure focuses the first invalid field. The shared state contract requires perceivable loading with `aria-busy`, mathematically valid and guided empty states, non-disclosing denial, stale-conflict input preservation with explicit reload or re-execution, and safe unexpected-error presentation using `UNEXPECTED_ERROR` plus the request correlation ID when available. T001-028/T001-029 own the shared contract, T003-009/T003-012 and T005-006/T005-007 apply it, and T005-026 owns end-to-end runtime verification for the selected milestone.
 
@@ -121,7 +124,7 @@ Each command uses overlap prevention and explicit lock name. Tenant iteration is
 - audit minimization and prune boundary tests;
 - password no-log/no-export/session invalidation tests;
 - scheduler registration/deduplication tests;
-- Filament navigation and direct-route authorization;
+- React navigation and direct-route authorization;
 - release artifact manifest/content structural test.
 
 Dusk covers login/logout session scope, tenant context visibility, role UI critical path, reinforced generic retention confirmation, and the critical WCAG 2.2 AA/browser/viewport matrix. Component and browser tests prove keyboard reachability, visible focus, programmatic labels, contrast, identifiable errors and non-visual chart alternatives at 360, 768 and 1280 CSS pixels in the latest two stable Chrome, Edge and Firefox releases and current stable Safari.
@@ -134,7 +137,7 @@ Dusk covers login/logout session scope, tenant context visibility, role UI criti
 4. auth and active-user middleware;
 5. tenant context/RBAC integration with Feature 007;
 6. settings/password/audit Actions and policies;
-7. Filament shell/resources;
+7. React/Inertia/TailAdmin application shell and pages;
 8. scheduler/notifications plumbing;
 9. release workflow and hosting structural checks;
 10. full platform tests and quickstart.

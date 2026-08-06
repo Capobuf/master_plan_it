@@ -97,6 +97,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 'ACTIVE_DESCENDANT_EXISTS' => 'Deactivate active descendants before deactivating this cost center.',
                 'PLATFORM_ABILITY_PROTECTED' => 'Platform abilities cannot be assigned to tenant roles.',
                 'TENANT_RELATION_MISMATCH', 'REVISION_RESTORE_INVALID' => 'The requested change conflicts with the current tenant data.',
+                'CONTRACT_TERM_OVERLAP' => 'Contract terms cannot overlap.',
+                'DUPLICATE_SOURCE_KEY', 'GENERATION_SOURCE_DUPLICATE' => 'This contract occurrence has already been generated.',
+                'OCCURRENCE_SUPPRESSED', 'GENERATION_SUPPRESSED' => 'This contract occurrence is suppressed. Resume it before generating.',
+                'INVALID_GENERATION_YEAR', 'INVALID_OCCURRENCE', 'GENERATION_NOT_APPLICABLE' => 'No contract occurrence is applicable to the selected year.',
+                'OCCURRENCE_NOT_SUPPRESSED' => 'This contract occurrence is not suppressed.',
+                'TERMINAL_DELETION' => 'This contract or term was deleted and cannot generate new occurrences.',
+                'INVALID_MONEY' => 'One or more monetary values are invalid.',
+                'DATE_MODE_CONFLICT' => 'Use either one spend date or one complete allocation period.',
                 default => null,
             };
 

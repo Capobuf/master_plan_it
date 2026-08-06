@@ -4,6 +4,8 @@ Status: `TASKS COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLE
 Input: Constitution 5.0.0; Feature 004 spec/plan/research/data model; generation, Expense, revision, notification, tenant and permission contracts.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
+Branch UI directive: all application UI tasks in this file target Inertia/React/Tailwind with native TailAdmin components and methods. Legacy Filament, Livewire, Preline, Alpine and Blade feature-view paths are superseded; use React pages/components, `tests/Feature/Inertia` and focused browser tests instead. Keep only `resources/views/app.blade.php` as the Inertia mount root.
+
 Every task is test-first and reuses Feature 003 Money and Expense Actions. `[FND]`, `[USn]` and `[VER]` classes are defined by the readiness registry. Renewal notification behavior belongs to US-004-02 because it is part of the managed contract lifecycle; `[VER]` is reserved for the final evidence task.
 
 Foundation-story ownership: T004-001–T004-003 benefit US-004-01.

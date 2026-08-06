@@ -115,6 +115,16 @@ final class HandleInertiaRequests extends Middleware
                 && $this->authorizeAbility->allows($request, $actor, 'vendor.view'),
             'canViewExpenses' => $hasTenantContext
                 && $this->authorizeAbility->allows($request, $actor, 'expense.view'),
+            'canViewContracts' => $hasTenantContext
+                && $this->authorizeAbility->allows($request, $actor, 'contract.view'),
+            'canCreateContracts' => $hasTenantContext
+                && $this->authorizeAbility->allows($request, $actor, 'contract.create'),
+            'canViewBudget' => $hasTenantContext
+                && $this->authorizeAbility->allows($request, $actor, 'budget.view'),
+            'canCreateExpenses' => $hasTenantContext
+                && $this->authorizeAbility->allows($request, $actor, 'expense.create'),
+            'canUpdateExpenses' => $hasTenantContext
+                && $this->authorizeAbility->allows($request, $actor, 'expense.update'),
         ];
     }
 
@@ -141,6 +151,11 @@ final class HandleInertiaRequests extends Middleware
             'canViewCostCenters' => false,
             'canViewVendors' => false,
             'canViewExpenses' => false,
+            'canViewContracts' => false,
+            'canCreateContracts' => false,
+            'canViewBudget' => false,
+            'canCreateExpenses' => false,
+            'canUpdateExpenses' => false,
         ];
     }
 }

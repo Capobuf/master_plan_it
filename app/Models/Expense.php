@@ -35,6 +35,7 @@ class Expense extends Model
         'notes',
         'project_id',
         'contract_id',
+        'lock_version',
     ];
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
@@ -80,5 +81,10 @@ class Expense extends Model
     public function rows(): HasMany
     {
         return $this->hasMany(ExpenseRow::class);
+    }
+
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
     }
 }

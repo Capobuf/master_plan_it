@@ -7,6 +7,10 @@ Dependencies: Features 001–005 and 007
 
 Implement controlled CSV staging/import for one legacy site, tenant portability, whole-installation backup verification and immutable-artifact deployment. Every operation is Administrator-only, synchronous/bounded and diagnostic. This is not a generic ETL platform or selective tenant disaster recovery.
 
+## TailAdmin UI standard
+
+Any import, reconciliation or operations surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+
 ## Constitution check
 
 Passes C-01, C-04, C-06, C-07, C-09, C-10 and C-11. Silent merge, guessed tenant, direct legacy DB access, hidden retry, audit export and partial unreported success are prohibited.
@@ -34,7 +38,7 @@ Importers are small per dataset because dependencies and Actions differ. A gener
 
 ### UI
 
-Administrator Filament Pages for import runs/reconciliation/exclusions, tenant portability export, backup status. Restore is not a one-click web action; UI may display the verified operator procedure/status only.
+Administrator React/TailAdmin pages for import runs/reconciliation/exclusions, tenant portability export and backup status. Restore is not a one-click web action; UI may display the verified operator procedure/status only.
 
 ## Import package
 

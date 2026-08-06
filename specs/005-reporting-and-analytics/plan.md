@@ -5,7 +5,11 @@ Dependencies: Features 001, 003 and 007 for the manual-Expense current Budget; F
 
 ## Summary
 
-Implement one current rolling Budget dataset, tenant dashboard, report/drill-down, scenarios, immutable named BudgetVersion snapshots, comparisons, dedicated Blade print and CSV/OpenSpout XLSX output. Every current formula is owned by the shared Economics query/engine. No persisted current Budget total, server PDF package or presentation-layer recalculation.
+Implement one current rolling Budget dataset, tenant dashboard, report/drill-down, scenarios, immutable named BudgetVersion snapshots, comparisons, React print view and CSV/OpenSpout XLSX output. Every current formula is owned by the shared Economics query/engine. No persisted current Budget total, server PDF package or presentation-layer recalculation.
+
+## TailAdmin UI standard
+
+Any React/TailAdmin dashboard, Budget or report surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
 
 ## Constitution check
 
@@ -27,9 +31,9 @@ Shared Money/VAT/allocation services are reused, not copied.
 
 - `AnnualBudget` context model and migration;
 - `TenantDashboardQuery` composes one economic dataset plus non-economic alerts;
-- operational Livewire `CurrentBudgetPage` and `EconomicReportPage` rendered by Blade/Preline within the shared tenant layout;
+- operational React `CurrentBudgetPage` and `EconomicReportPage` rendered within the shared TailAdmin tenant layout;
 - `EconomicReportFilterData` and typed grouping/order enums;
-- Chart.js adapter that renders server-calculated number copies and destroys/recreates charts on Livewire lifecycle.
+- Chart.js adapter that renders server-calculated number copies and mounts/unmounts with the React component lifecycle.
 
 ### Scenarios
 
@@ -49,8 +53,8 @@ Shared Money/VAT/allocation services are reused, not copied.
 
 - `EconomicDatasetCsvExporter` using incremental writes to a request-scoped private temporary artifact;
 - `EconomicDatasetXlsxExporter` using OpenSpout 4.32 writer-only;
-- dedicated `resources/views/reports/economic-print.blade.php` and print CSS;
-- export/print controllers and operational Livewire interactions accepting the same typed dataset request.
+- dedicated React economic print page and print CSS;
+- export/print controllers and Inertia interactions accepting the same typed dataset request.
 
 No `ReportPdfRenderer` interface at launch because there is no implementation or server-PDF requirement.
 

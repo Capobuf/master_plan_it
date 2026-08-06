@@ -7,7 +7,7 @@ Dependencies: Feature 007 product contract
 
 ## Objective
 
-Authenticate local users, enforce active account and tenant context, expose a permission-aware Filament application shell, manage users/roles/passwords and global platform settings, run scheduled notifications and retention through one cron, and remain compatible with shared PHP hosting and precompiled assets.
+Authenticate local users, enforce active account and tenant context, expose a permission-aware React/Inertia application shell, manage users/roles/passwords and global platform settings, run scheduled notifications and retention through one cron, and remain compatible with shared PHP hosting and precompiled assets.
 
 ## Clarifications
 
@@ -120,7 +120,7 @@ Loading is perceivable and marked `aria-busy` without duplicate actions. Empty s
 | FR-001-019 | Tenant deactivation shall require reinforced confirmation. | AC-001-07 |
 | FR-001-020 | One installation-wide `audit_retention_months` platform setting shall accept integer values from 1 through 120, default to 24, and be writable only by Administrator. | AC-001-09 |
 | FR-001-021 | Audit retention shall use the current configured period at command execution; increasing the period shall not recreate removed events. | AC-001-06, AC-001-09 |
-| FR-001-022 | Authenticated tenant-facing operational screens shall share the existing session, tenant context and authorization while using the ADR-035 Blade/Livewire/Alpine/Tailwind/Preline stack; frontend dependencies are locked and built by Vite with no runtime CDN. | AC-001-02, AC-001-08 |
+| FR-001-022 | All authenticated application screens shall share the existing session, tenant context and authorization while using the React/Inertia/Tailwind/TailAdmin stack; frontend dependencies are locked and built by Vite with no runtime CDN, Preline, Livewire, Alpine or application Blade views. | AC-001-02, AC-001-08 |
 | FR-001-023 | Tenant-user administration shall be an Administrator operation. | AC-001-05, AC-001-10 |
 | FR-001-024 | Tenant-role administration shall be an Administrator operation. | AC-001-04, AC-001-10 |
 | FR-001-025 | Protected platform permissions shall not be assignable or editable through tenant-role administration. | AC-001-04, AC-001-10 |
@@ -155,7 +155,7 @@ Loading is perceivable and marked `aria-busy` without duplicate actions. Empty s
 | INV-PLT-005 | Tenant role management cannot grant protected platform or invariant-bypass abilities. | Authorization | TEST-001-005 |
 | INV-PLT-006 | Passwords and secrets never enter audit/revision/export/notification data. | DomainConflict | TEST-001-006 |
 | INV-PLT-007 | Only Administrator changes audit retention, and retention never removes current business or version data. | Authorization/DomainConflict | TEST-001-007 |
-| INV-PLT-008 | Livewire DOM changes reinitialize Preline idempotently; Alpine never duplicates server or Preline state; Chart.js instances are destroyed/recreated from server-calculated payloads and no browser layer calculates authoritative economics. | DomainConflict | TEST-001-009 |
+| INV-PLT-008 | React component mount/unmount owns UI lifecycle; no browser layer duplicates server state or calculates authoritative economics; Chart.js instances are destroyed/recreated from server-calculated payloads. | DomainConflict | TEST-001-009 |
 | INV-CTX-001 | Missing/unauthorized tenant context fails closed. | Authorization/NotFound-safe denial | TEST-001-008 |
 
 ## Out of scope

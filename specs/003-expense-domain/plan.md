@@ -7,6 +7,10 @@ Dependencies: Features 001, 002 and 007; shared revision infrastructure
 
 Implement decimal Money/VAT/allocation primitives and the Expense aggregate with independent Estimate, Quote and Actual rows. The current aggregate has one identity, operational snapshots, soft-delete infrastructure, Actual confirmation and no replacement-state graph. Private attachments may belong to the Expense or one row, use the approved 10 MiB/type allow-list, and are captured by complete per-revision manifests that reuse immutable payload versions for unchanged bytes under a configurable 2 GiB-per-tenant default quota. Confirmation stops contract synchronization but does not remove authorized version/update/delete operations.
 
+## TailAdmin UI standard
+
+Any React/TailAdmin Expense surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+
 ## Constitution check
 
 Passes C-02, C-03, C-04, C-05, C-07, C-10, C-11 and C-12. Attachment payloads live in dedicated private versioned storage; revision/audit metadata contains references and checksums only. Float arithmetic, economic observers, audit-as-source, immutable-Actual target and `Active/Replaced/Cancelled` current state are prohibited.
@@ -49,7 +53,7 @@ No `ReplaceExpenseRow` Action in the target model.
 - `ExpenseRegisterQuery` returns register DTOs and server totals;
 - `ExpenseDetailQuery` includes only current header and rows in the selected Slice 1; attachment and revision enrichment remains owned by their later tasks and is not queried or claimed early;
 - `ExpensePolicy`;
-- operational Livewire register/editor/history components rendered by Blade/Preline in the T001-029 layout; the shared navigation and home expose the Expense module only with `expense.view`, omit links to forbidden dashboard routes, and retain direct-route authorization; no Filament ownership for tenant-facing Expense screens.
+- operational React register/editor/history components rendered in the shared TailAdmin layout; the shared navigation and home expose the Expense module only with `expense.view`, omit links to forbidden dashboard routes, and retain direct-route authorization.
 
 ## Aggregate transaction
 
@@ -141,14 +145,14 @@ Dusk only for row-editor JS/focus/action menu and reinforced delete confirmation
 
 1. Money/VAT/allocation tests and value objects;
 2. migrations/models/factories, revision package smoke and Policies;
-3. Slice 1 current queries plus operational Livewire/Blade/Preline register;
+3. Slice 1 current queries plus React/TailAdmin register;
 4. Slice 1 manual create/update Actions and operational editor using planning year/vendor/cost center selectors;
 5. Slice 2 current Budget consumers from Feature 005, independently of Feature 004;
 6. Slice 3 cross-flow hardening;
 7. attachment schema/quota/integration, remaining delete/restore/history and Actual confirmation;
 8. Feature 004 generation integration, migration fixtures and full gates.
 
-The first manual Expense revision is data-only and does not wait for attachment storage. T003-024 later attaches complete immutable payload manifests to the existing Create/Update Actions before attachment-capable revisions are accepted. Operational screens use the ADR-035 stack; accepted Filament authentication and administrative surfaces remain unchanged.
+The first manual Expense revision is data-only and does not wait for attachment storage. T003-024 later attaches complete immutable payload manifests to the existing Create/Update Actions before attachment-capable revisions are accepted. Operational screens use the branch React/Inertia/Tailwind/TailAdmin stack.
 
 ## Post-design check
 

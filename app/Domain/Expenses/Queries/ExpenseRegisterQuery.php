@@ -41,6 +41,9 @@ final class ExpenseRegisterQuery
             costCenterName: (string) $row->cost_center_name,
             kind: (string) $row->kind,
             title: (string) $row->title,
+            contractId: $row->contract_id === null ? null : (int) $row->contract_id,
+            contractTitle: $row->contract_title === null ? null : (string) $row->contract_title,
+            contractCurrent: $row->contract_id !== null && $row->contract_deleted_at === null,
             rowCount: (int) $row->row_count,
             netTotal: $this->decimal($row->net_total),
             vatTotal: $this->decimal($row->vat_total),
@@ -108,6 +111,10 @@ final class ExpenseRegisterQuery
                     ->on('expense_rows.tenant_id', '=', 'expenses.tenant_id')
                     ->whereNull('expense_rows.deleted_at');
             })
+            ->leftJoin('contracts', function ($join): void {
+                $join->on('contracts.id', '=', 'expenses.contract_id')
+                    ->on('contracts.tenant_id', '=', 'expenses.tenant_id');
+            })
             ->where('expenses.tenant_id', $context->tenantId)
             ->whereNull('expenses.deleted_at')
             ->when($planningYearId !== null, fn ($query) => $query->where('expenses.planning_year_id', $planningYearId))
@@ -119,6 +126,9 @@ final class ExpenseRegisterQuery
                 'cost_centers.name',
                 'expenses.kind',
                 'expenses.title',
+                'expenses.contract_id',
+                'contracts.title',
+                'contracts.deleted_at',
             ])
             ->select([
                 'expenses.id',
@@ -128,6 +138,9 @@ final class ExpenseRegisterQuery
                 'cost_centers.name as cost_center_name',
                 'expenses.kind',
                 'expenses.title',
+                'expenses.contract_id',
+                'contracts.title as contract_title',
+                'contracts.deleted_at as contract_deleted_at',
             ])
             ->selectRaw('COUNT(expense_rows.id) AS row_count')
             ->selectRaw('COALESCE(SUM(expense_rows.net_amount), 0) AS net_total')
