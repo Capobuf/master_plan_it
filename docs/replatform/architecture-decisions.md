@@ -7,7 +7,7 @@
 | ADR-003 | `DECIMAL(19,6)` intermediate and 2-decimal business results | APPROVED | Deterministic money, VAT, allocation and comparison. |
 | ADR-004 | Money arithmetic via BCMath value objects | APPROVED | Avoids float drift without a money dependency. |
 | ADR-005 | Filament/Blade by default, Livewire selectively | AMENDED BY ADR-035 | Historical foundation choice retained for authentication, global administration, tenant/user/RBAC administration, technical settings and suitable simple CRUD; it no longer governs tenant-facing operational screens. |
-| ADR-006 | Chart.js only | APPROVED | One maintained chart integration and printable dataset reuse. |
+| ADR-006 | ApexCharts only | AMENDED BY ADR-035 | One maintained chart integration aligned with the TailAdmin Laravel distribution and printable dataset reuse. |
 | ADR-007 | No permanent worker; synchronous bounded commands | APPROVED | Shared-hosting constraint. |
 | ADR-008 | Contract sync updates only system-managed unconfirmed occurrences; source-key idempotent, suppression-aware and no-overwrite | AMENDED / APPROVED | Manual modification or confirmation makes the Actual user-authoritative without making it permanently immutable. |
 | ADR-009 | Migration through versioned UTF-8 CSV packages and staging | APPROVED | No direct Frappe database assumption; deterministic replay and reconciliation. |
@@ -16,7 +16,7 @@
 | ADR-012 | Administrator tenant context without impersonation | APPROVED | Preserves real actor identity and audit clarity. |
 | ADR-013 | Controlled one-site migration into one selected tenant | APPROVED | Matches verified migration scope. |
 | ADR-014 | Laravel Sail is the canonical development and agent-verification environment | APPROVED | Reproducible runtime, Composer, build tools, MySQL and optional Selenium without production services. |
-| ADR-015 | Runtime baseline is PHP 8.3.32, Laravel 13.22.0, Sail 1.64.0, Filament 5.7.3 and Livewire 4.3.3 | APPROVED — LOCK VERIFICATION REQUIRED | Current compatible versions at planning date; Composer platform PHP prevents dependency drift to a higher runtime. |
+| ADR-015 | Runtime baseline is PHP 8.3.32, Laravel 13.22.0 and Sail 1.64.0 | AMENDED BY ADR-035 — LOCK VERIFICATION REQUIRED | Composer platform PHP prevents dependency drift to a higher runtime; Filament and Livewire are not part of the application stack. |
 | ADR-016 | MySQL 8.4.10 LTS is the sole launch database profile | APPROVED | Lowest compatibility/test surface; no unneeded MySQL 9.x matrix before a real hosting requirement. |
 | ADR-017 | Tests use static, accounting and application layers with bounded browser coverage | APPROVED | Separates assurance responsibilities without multiplying infrastructure. |
 | ADR-018 | Automated tests never reset the persistent test database implicitly | APPROVED PROJECT-SPECIFIC DEVIATION | Uses explicit test DB, forward migrations, transactions and targeted cleanup instead of Laravel reset traits. |
@@ -36,7 +36,7 @@
 | ADR-032 | Backup archive target is `spatie/laravel-backup` 10.3.0, conditional on real PHP 8.3.32 Composer resolution | CONDITIONAL APPROVAL | Composer metadata and documentation disagree on PHP floor. Failure blocks Feature 006; no automatic downgrade/custom fallback. |
 | ADR-033 | CSV is authoritative; XLSX output uses OpenSpout 4.32.0 writer-only | APPROVED — LOCK VERIFICATION REQUIRED | OpenSpout 5 requires PHP 8.4; no XLSX import or ODS at launch. |
 | ADR-034 | Launch printing is dedicated Blade HTML; no server PDF renderer package | APPROVED REJECTION | Meets printable-output requirement without Chromium/Python/container/cloud dependency or second CSS engine. |
-| ADR-035 | Tenant-facing operational UI uses Blade + Livewire 4 + Alpine + Tailwind CSS 4 + mandatory Preline UI, with Chart.js for charts; Filament 5 remains bounded to the accepted administrative surfaces | APPROVED — FRONTEND LOCK/BUILD/BROWSER GATE REQUIRED | Preserves one Laravel authentication/session/tenant/authorization/domain stack while giving Expense, Budget, reporting and later operational project/contract screens a purpose-built server-rendered UI. Livewire owns server state and Actions, Blade markup, Preline visual behavior, Alpine only local transient state, and Chart.js only server-calculated presentation payloads. |
+| ADR-035 | Every application surface uses official TailAdmin Laravel Free Blade components + Tailwind CSS 4 + native Alpine methods, with ApexCharts for charts | APPROVED — FRONTEND LOCK/BUILD/BROWSER GATE REQUIRED | Preserves one Laravel authentication/session/tenant/authorization/domain and frontend stack. Controllers own request state and Actions, Blade renders markup, TailAdmin/Alpine owns documented visual behavior, and ApexCharts receives only server-calculated presentation payloads. Filament UI, Livewire, Preline and Inertia/React application views are excluded. |
 
 ## Executable dependency gate
 

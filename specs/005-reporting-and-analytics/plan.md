@@ -5,11 +5,11 @@ Dependencies: Features 001, 003 and 007 for the manual-Expense current Budget; F
 
 ## Summary
 
-Implement one current rolling Budget dataset, tenant dashboard, report/drill-down, scenarios, immutable named BudgetVersion snapshots, comparisons, React print view and CSV/OpenSpout XLSX output. Every current formula is owned by the shared Economics query/engine. No persisted current Budget total, server PDF package or presentation-layer recalculation.
+Implement one current rolling Budget dataset, tenant dashboard, report/drill-down, scenarios, immutable named BudgetVersion snapshots, comparisons, Blade print view and CSV/OpenSpout XLSX output. Every current formula is owned by the shared Economics query/engine. No persisted current Budget total, server PDF package or presentation-layer recalculation.
 
 ## TailAdmin UI standard
 
-Any React/TailAdmin dashboard, Budget or report surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+Any Blade/TailAdmin dashboard, Budget or report surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
 
 ## Constitution check
 
@@ -31,9 +31,9 @@ Shared Money/VAT/allocation services are reused, not copied.
 
 - `AnnualBudget` context model and migration;
 - `TenantDashboardQuery` composes one economic dataset plus non-economic alerts;
-- operational React `CurrentBudgetPage` and `EconomicReportPage` rendered within the shared TailAdmin tenant layout;
+- operational Blade current-Budget and economic-report pages rendered within the shared TailAdmin tenant layout;
 - `EconomicReportFilterData` and typed grouping/order enums;
-- Chart.js adapter that renders server-calculated number copies and mounts/unmounts with the React component lifecycle.
+- ApexCharts adapter that renders server-calculated number copies and owns explicit initialization/cleanup through the TailAdmin/Alpine lifecycle.
 
 ### Scenarios
 
@@ -53,8 +53,8 @@ Shared Money/VAT/allocation services are reused, not copied.
 
 - `EconomicDatasetCsvExporter` using incremental writes to a request-scoped private temporary artifact;
 - `EconomicDatasetXlsxExporter` using OpenSpout 4.32 writer-only;
-- dedicated React economic print page and print CSS;
-- export/print controllers and Inertia interactions accepting the same typed dataset request.
+- dedicated Blade economic print page and print CSS;
+- export/print controllers and ordinary Laravel requests accepting the same typed dataset request.
 
 No `ReportPdfRenderer` interface at launch because there is no implementation or server-PDF requirement.
 
@@ -156,7 +156,7 @@ Dusk covers chart lifecycle, explicit scope action, browser print smoke, keyboar
 ## Sequence
 
 1. Slice 2 pure economic DTO/engine tests over manual Expense inputs, then the current manual-Expense query and indexes;
-2. operational current Budget filters/KPI/table/Chart.js using exactly that dataset, without AnnualBudget/BudgetVersion or Feature 004 as prerequisites;
+2. operational current Budget filters/KPI/table/ApexCharts using exactly that dataset, without AnnualBudget/BudgetVersion or Feature 004 as prerequisites;
 3. Slice 3 parity/authorization/isolation/responsive/keyboard/focus/loading/error/browser and representative-performance hardening;
 4. Feature 004 project-stage query enrichment without creating a new monetary source;
 5. scenarios and BudgetVersion schema/Actions/checksum;

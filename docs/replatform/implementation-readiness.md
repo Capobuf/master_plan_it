@@ -2,11 +2,11 @@
 
 Status: `IMPLEMENTATION IN PROGRESS ON CONSTITUTION 5.0.0; LIVE TASK CHECKBOXES ARE AUTHORITATIVE`
 
-Constitution 5.0.0, Q-001–Q-041 and the approved frontend, attachment, operational-setting and terminal-deletion decisions are encoded across the integrated architecture and Feature 001–007 artifacts. `speckit-analyze-2026-08-04-constitution-5.0.0.md` is a historical snapshot. The current artifacts, task checkboxes and `.codex/orchestration-plan.md` are live evidence; this branch targets React/Inertia/Tailwind/TailAdmin and claims no Preline, Livewire or application-Blade implementation.
+Constitution 5.0.0, Q-001–Q-041 and the approved frontend, attachment, operational-setting and terminal-deletion decisions are encoded across the integrated architecture and Feature 001–007 artifacts. `speckit-analyze-2026-08-04-constitution-5.0.0.md` is a historical snapshot. The current artifacts, task checkboxes and `.codex/orchestration-plan.md` are live evidence; this branch targets the official TailAdmin Laravel Free Blade/Tailwind UI with native Alpine methods and ApexCharts, and contains no Preline, Livewire, Filament UI or Inertia/React application surface.
 
 | Feature | Planned and tasked scope | Status |
 |---|---|---|
-| 001 Platform foundation | runtime/Sail/test/CI, React/TailAdmin application shell, auth, settings/audit/notifications/release | IMPLEMENTATION IN PROGRESS |
+| 001 Platform foundation | runtime/Sail/test/CI, TailAdmin Laravel Blade application shell, auth, settings/audit/notifications/release | IMPLEMENTATION IN PROGRESS |
 | 002 Master data | shared revisions, years, vendors, cost centers, lifecycle and restore | IMPLEMENTATION IN PROGRESS |
 | 003 Expense domain | Money/VAT/allocation, manual register/create/edit first, then Actual confirmation/revisions/deletion/attachments | IMPLEMENTATION IN PROGRESS; SLICE 1 PLANNED |
 | 004 Contracts/projects | lifecycle, terms, source keys, controlled sync, suppression/resume and renewal notifications | POST-SLICE IMPLEMENTATION READY |
@@ -37,7 +37,7 @@ These structural claims were recalculated for the live 158-task graph by the ind
 
 1. `/speckit.implement` is active under the dependency-ordered orchestration plan.
 2. The independent documentation analysis gate for Slice 0–3 is PASS; implementation proceeds through dependency-ordered, separately reviewed vertical slices.
-3. The initial frontend lock/build exists. The React/Tailwind/TailAdmin source, TypeScript, Vite and browser gates must execute before each application UI slice.
+3. The initial frontend lock/build exists. The TailAdmin Laravel Blade/Tailwind/Alpine source, Vite and browser gates must execute before each application UI slice.
 4. A later normative documentation change invalidates this readiness result until re-analysis.
 
 ## Conditional package gate

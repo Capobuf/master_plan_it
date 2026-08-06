@@ -21,10 +21,10 @@ Le versioni sotto sono target esatti del piano. Il primo task di implementazione
 | MySQL | 8.4.10 | APPROVED | LTS corrente pubblicata 2026-06-16. Nessuna matrice 9.x al lancio: aggiungerla senza hosting/prodotto concreto aumenterebbe costi e superficie di test. |
 | Filament | 5.7.3 | APPROVED | Compatibile PHP ^8.2; componenti Filament bloccati alla stessa versione. |
 | Livewire | 4.3.3 | APPROVED | Compatibile Laravel 13; soddisfa il vincolo Filament ^4.1. |
-| Alpine.js | 3.15.12 bundled by locked Livewire 4.3.3 artifact | APPROVED BOUNDARY | Version string verified in the installed Livewire distribution; only local transient state, no second Alpine instance without a demonstrated gate and no duplication of Livewire/Preline state. |
+| Alpine.js | 3.14.9 | APPROVED BOUNDARY | Locked directly by the frontend package manifest; limited to TailAdmin's native interaction methods and local transient state. |
 | Tailwind CSS | 4.2.4 target T001-029; 4.1.17 corrente | APPROVED — LOCK GATE | CSS-first/Vite; l'upgrade resta non verificato finché T001-028/T001-029 non passano build e browser smoke. |
-| Preline UI | 4.2.0 | APPROVED MANDATORY — LOCK/LICENSE/LIFECYCLE GATE | Superfici operative tenant-facing; supporto dichiarato Tailwind 4.2.x, import locale Vite e reinit Livewire; licenza MIT + Preline UI Fair Use da registrare nel gate. |
-| Chart.js | 4.5.1 | APPROVED | Unica libreria chart applicativa, già bloccata dal lock corrente; nessuna importazione della dipendenza transitiva ApexCharts di Preline. |
+| TailAdmin Laravel Free | commit `13ce4efa25d0f5ba156697b4cb5f101fc8c232a9` | APPROVED MANDATORY — SOURCE/BUILD/BROWSER GATE | Componenti Blade, pattern Tailwind e metodi Alpine nativi copiati dalla distribuzione MIT ufficiale. |
+| ApexCharts | 5.3.5 | APPROVED | Unica libreria chart applicativa, bloccata direttamente dal lock corrente e alimentata solo da payload server-calcolati. |
 | RBAC | `spatie/laravel-permission` 8.3.0 | APPROVED | PHP ^8.3, Illuminate 12/13, MIT. Teams enabled prima delle migrations con `team_foreign_key = tenant_id`. |
 | Filament RBAC UI | `bezhansalleh/filament-shield` 4.3.1 | APPROVED | PHP 8.2/8.3, Filament 4/5, Illuminate 11/12/13 e Spatie Permission 6/7/8. Usa catalogue/policy generation, non decide invarianti. |
 | Model versions | `mansoor/filament-versionable` 5.1 + `overtrue/laravel-versionable` 6.0.0 | APPROVED WITH BOUNDARY | Compatibili Filament 5/Laravel 13/PHP 8.3, MIT. Strategia `SNAPSHOT`; la documentazione del plugin segnala bug reports per `DIFF`. Il restore UI del package non è autorità di dominio. |
@@ -189,15 +189,15 @@ Tabella `audit_events` con actor, tenant nullable, event type, subject, correlat
 - OpenSpout 5.x;
 - queue/Redis/WebSocket packages;
 - automatic backup restore packages;
-- UI kit ulteriori oltre lo stack approvato Filament (solo superfici amministrative) + Preline UI (superfici operative tenant-facing).
+- UI kit ulteriori oltre lo stack unico TailAdmin Laravel Free Blade/Tailwind/Alpine.
 
 ## Frontend operativo tenant-facing — decisione 2026-08-05
 
-La decisione precedente che escludeva Preline è superseded da ADR-035. Il target da verificare e bloccare nel frontend lock è `preline` 4.2.0 con Tailwind CSS e `@tailwindcss/vite` 4.2.4 e, per i form Preline effettivamente usati, `@tailwindcss/forms` 0.5.11. Le versioni correnti del repository restano Chart.js 4.5.1, Tailwind 4.1.17 e Vite 6.4.3 finché T001-028/T001-029 non eseguono il lock/build gate: questa remediation non dichiara ancora compatibilità installata.
+ADR-035 blocca lo stack unico TailAdmin Laravel Free Blade/Tailwind/Alpine. Il frontend lock contiene `alpinejs` 3.14.9, `apexcharts` 5.3.5, Tailwind CSS e `@tailwindcss/vite` 4.2.4 e `@tailwindcss/forms` 0.5.11. T001-028/T001-029 verificano source baseline, lock, build e browser behavior senza introdurre Preline, Livewire, Filament UI o Inertia/React.
 
-L'integrazione target è locale e compilata da Vite, mai CDN: CSS Tailwind CSS-first con i source Preline, import JavaScript di Preline, e reinizializzazione idempotente di `HSStaticMethods.autoInit()` dopo navigazioni e morph/update Livewire. Ogni componente con risorse proprie deve distruggerle prima della sostituzione DOM; Chart.js mantiene un solo adapter `chart.js/auto`, distrugge l'istanza precedente e riceve esclusivamente valori già calcolati dal server. Alpine gestisce solo stato locale/transitorio non posseduto da Livewire o Preline.
+L'integrazione target è locale e compilata da Vite, mai CDN: Tailwind CSS-first, import diretto di Alpine e ApexCharts e inizializzazione dei metodi nativi TailAdmin. Ogni componente con risorse proprie distrugge l'istanza prima della sostituzione DOM; ApexCharts riceve esclusivamente valori già calcolati dal server. Alpine gestisce solo stato locale/transitorio.
 
-Preline 4.2.0 dichiara supporto a Tailwind 4.2.x ed è mantenuto; il package usa licenza duale MIT + Preline UI Fair Use License. T001-028 deve rendere esplicita l'accettazione/licensing applicabile prima del lock. La dipendenza transitiva ApexCharts di Preline non autorizza una seconda libreria chart: non deve essere importata o usata, e Chart.js resta l'unico chart adapter applicativo.
+TailAdmin Laravel Free usa licenza MIT e la baseline sorgente è fissata nel relativo standard UI. ApexCharts è una dipendenza diretta e l'unico chart adapter applicativo; una seconda libreria chart non è autorizzata.
 
 ## Fonti primarie verificate
 
@@ -216,4 +216,4 @@ Preline 4.2.0 dichiara supporto a Tailwind 4.2.x ed è mantenuto; il package usa
 - Tailwind CSS Vite installation: `https://tailwindcss.com/docs/installation/using-vite`;
 - Livewire JavaScript lifecycle and morph hooks: `https://livewire.laravel.com/docs/javascript`;
 - Alpine lifecycle: `https://alpinejs.dev/globals/alpine-data`;
-- Chart.js integration: `https://www.chartjs.org/docs/latest/getting-started/integration.html`.
+- ApexCharts integration: `https://apexcharts.com/docs/installation/`.

@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Inertia;
+namespace Tests\Feature\Application;
 
 use App\Models\CostCenter;
 use App\Models\PlanningYear;
@@ -282,7 +282,7 @@ class MasterDataPagesTest extends TestCase
         $registrar->setPermissionsTeamId($tenant->getKey());
         $role = Role::query()->create([
             'tenant_id' => $tenant->getKey(),
-            'name' => 'Inertia master data '.str()->uuid(),
+            'name' => 'Application master data '.str()->uuid(),
             'guard_name' => 'web',
         ]);
         $role->syncPermissions($abilities);

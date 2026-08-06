@@ -68,7 +68,7 @@ Tenant table itself and tenant lifecycle are owned by Feature 007, but platform 
   `app/Policies/PlatformSettingPolicy.php`, and protected platform Gate integration in
   `app/Providers/AuthServiceProvider.php` after the Feature 007 ownership concern exists.
 - `AssignCorrelationId` is global and establishes one validated lowercase UUID v4 in `X-Correlation-ID`, the request/scoped object, exception response and shared log context. Invalid inbound identifiers are replaced; exception hooks preserve the ID through reporting and terminal cleanup prevents leakage.
-- `AppServiceProvider` resolves `TenantContext` only from the value already validated into the request attribute by Feature 007; it never queries or falls back to session. `EnsureActiveUser` runs on every authenticated Inertia route. Tenant-bound pages then apply the shared Feature 007 context/team/active-tenant/presentation route stack, in that order before route substitution; global dashboard and tenant-administration routes remain usable by an Administrator without a selected tenant.
+- `AppServiceProvider` resolves `TenantContext` only from the value already validated into the request attribute by Feature 007; it never queries or falls back to session. `EnsureActiveUser` runs on every authenticated application route. Tenant-bound pages then apply the shared Feature 007 context/team/active-tenant/presentation route stack, in that order before route substitution; global dashboard and tenant-administration routes remain usable by an Administrator without a selected tenant.
 
 ### Actions/commands
 
@@ -124,7 +124,7 @@ Each command uses overlap prevention and explicit lock name. Tenant iteration is
 - audit minimization and prune boundary tests;
 - password no-log/no-export/session invalidation tests;
 - scheduler registration/deduplication tests;
-- React navigation and direct-route authorization;
+- Blade navigation and direct-route authorization;
 - release artifact manifest/content structural test.
 
 Dusk covers login/logout session scope, tenant context visibility, role UI critical path, reinforced generic retention confirmation, and the critical WCAG 2.2 AA/browser/viewport matrix. Component and browser tests prove keyboard reachability, visible focus, programmatic labels, contrast, identifiable errors and non-visual chart alternatives at 360, 768 and 1280 CSS pixels in the latest two stable Chrome, Edge and Firefox releases and current stable Safari.
@@ -137,7 +137,7 @@ Dusk covers login/logout session scope, tenant context visibility, role UI criti
 4. auth and active-user middleware;
 5. tenant context/RBAC integration with Feature 007;
 6. settings/password/audit Actions and policies;
-7. React/Inertia/TailAdmin application shell and pages;
+7. Blade/TailAdmin application shell and pages;
 8. scheduler/notifications plumbing;
 9. release workflow and hosting structural checks;
 10. full platform tests and quickstart.

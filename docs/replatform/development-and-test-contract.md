@@ -115,14 +115,14 @@ Expected values come from an approved formula, invariant, `EQ-*` fixture or veri
 
 ### Layer 3 — Application
 
-Pest Feature and Inertia/React tests cover routes, middleware, policies, tenant context, configurable permissions, validation, Actions, reports, output scopes, files, operational revisions, audit settings/retention, commands, notifications and scheduler behavior.
+Pest Feature tests cover routes, Blade responses, middleware, policies, tenant context, configurable permissions, validation, Actions, reports, output scopes, files, operational revisions, audit settings/retention, commands, notifications and scheduler behavior.
 
 Dusk is limited to behavior that cannot be proven reliably below the browser layer:
 
 - JavaScript lifecycle;
 - focus and keyboard interaction;
 - responsive action menus;
-- essential React/Inertia interaction;
+- essential Alpine/TailAdmin interaction;
 - reinforced-confirmation UI;
 - print/download smoke.
 
@@ -155,7 +155,7 @@ Required Composer scripts are finalized by `/speckit.plan`, using these stable r
 - `test:browser`;
 - `verify`.
 
-`verify` runs all mandatory non-browser suites and includes browser tests when the task changes React, JavaScript or browser-owned behavior. CI keeps the relevant browser job as an independent required gate.
+`verify` runs all mandatory non-browser suites and includes browser tests when the task changes Blade interaction, JavaScript or browser-owned behavior. CI keeps the relevant browser job as an independent required gate.
 
 Initial wall-clock targets are measured after the first vertical slice and may be adjusted only with recorded evidence; they never justify removing required coverage.
 
@@ -184,7 +184,7 @@ The integrated plan and task package map at least:
 - test environment/database guard;
 - `tests/Architecture/DevelopmentContractTest.php`;
 - `tests/Accounting/Unit/**`, `tests/Accounting/Integration/**`, fixtures;
-- focused `tests/Feature/**`, `tests/Feature/Inertia/**`, `tests/Browser/**`;
+- focused `tests/Feature/**`, `tests/Feature/Application/**`, `tests/Browser/**`;
 - Composer quality scripts;
 - `.github/workflows/quality.yml` and release workflow;
 - `.github/CODEOWNERS`.
@@ -209,9 +209,9 @@ This is the single authoritative matrix for delegated work. `.codex/orchestratio
 |---|---|---|
 | GPT-5.6 Sol / high | coordination; Spec Kit plan/tasks/analyze; cross-artifact and architecture conflicts; tenancy, authorization, security, Money, economic invariants, revisioning, destructive operations, critical migration; final vertical-slice and economic-dataset-parity review | mechanical edits or repetitive markup |
 | GPT-5.6 Sol / medium | first visual reference screen, UX architecture, Budget visual review, complex frontend design judgment without critical invariants | ordinary implementation |
-| GPT-5.6 Terra / high | bounded domain Actions, persistence, migrations, economic queries, complex authorized React state, Feature/integration tests and non-mechanical local refactors | mechanical work |
-| GPT-5.6 Terra / medium | default implementation for React, Tailwind, Chart.js wiring, simple CRUD, responsive frontend and bounded bugs | critical Money/tenancy/security decisions |
-| GPT-5.6 Luna / medium or low | mechanical formatting, repetitive fixtures, UI copy, translation, file lists, simple scans and non-normative repetitive documentation | production domain PHP, authorization, tenancy, Money, migrations, complex React state, non-trivial application JavaScript or technical decisions |
+| GPT-5.6 Terra / high | bounded domain Actions, persistence, migrations, economic queries, complex authorized browser state, Feature/integration tests and non-mechanical local refactors | mechanical work |
+| GPT-5.6 Terra / medium | default implementation for Blade, Tailwind, Alpine/ApexCharts wiring, simple CRUD, responsive frontend and bounded bugs | critical Money/tenancy/security decisions |
+| GPT-5.6 Luna / medium or low | mechanical formatting, repetitive fixtures, UI copy, translation, file lists, simple scans and non-normative repetitive documentation | production domain PHP, authorization, tenancy, Money, migrations, complex browser state, non-trivial application JavaScript or technical decisions |
 
 `xhigh` and `max` are forbidden by default. They require a documented failed `high` attempt, evidence that reasoning rather than an incomplete contract caused the failure, coordinator rationale, and Product Owner approval when materially more costly. Reasoning is never raised automatically.
 
@@ -221,7 +221,7 @@ Spawn only for a bounded independent analysis, a separable write set, real paral
 
 Future implementation allows at most two concurrent writers with completely disjoint write sets and one additional read-only reviewer. Composer files, the frontend lock, providers, routes, shared middleware/fixtures, rollback map, permission catalogue, task registries and Spec Kit artifacts each have at most one writer at a time. The coordinator alone changes task checkboxes and normative registries after diff review and the exact registered validation.
 
-One independent review is the default. Sol high review is mandatory for Money, tenancy, authorization, security, destructive operations, revision restore, contract-generation idempotency and economic-dataset parity. Ordinary UI uses Terra medium implementation, coordinator review and focused React/browser tests. Sol medium visual review is reserved for the first reference screen, Budget, the operational global layout or material interaction-design problems. A second independent reviewer is allowed only after a material first-review finding and for a precise critical remediation.
+One independent review is the default. Sol high review is mandatory for Money, tenancy, authorization, security, destructive operations, revision restore, contract-generation idempotency and economic-dataset parity. Ordinary UI uses Terra medium implementation, coordinator review and focused Feature/browser tests. Sol medium visual review is reserved for the first reference screen, Budget, the operational global layout or material interaction-design problems. A second independent reviewer is allowed only after a material first-review finding and for a precise critical remediation.
 
 A task may pass through at most two implementation-review cycles. After two reopenings, stop, inspect and correct the requirement/plan/task source, run `/speckit.analyze`, and only then issue a new work package; never run a third implementation against the unchanged contract.
 

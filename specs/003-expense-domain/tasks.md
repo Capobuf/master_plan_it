@@ -4,7 +4,7 @@ Status: `TASKS COMPLETE; ROLLING ANALYSIS ACTIVE; IMPLEMENTATION IN PROGRESS`
 Input: Constitution 5.0.0; current Feature 003 design/contracts; tenant, permission, revision, attachment and error contracts.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
-Branch UI directive: all application UI tasks in this file target Inertia/React/Tailwind with native TailAdmin components and methods. Legacy Filament, Livewire, Preline, Alpine and Blade feature-view paths are superseded; use React pages/components, `tests/Feature/Inertia` and focused browser tests instead. Keep only `resources/views/app.blade.php` as the Inertia mount root.
+Branch UI directive: all application UI tasks in this file target official TailAdmin Laravel Free Blade components, Tailwind CSS and native Alpine methods. Legacy Filament, Livewire, Preline and Inertia/React feature-view paths are superseded; use Blade pages/components, `tests/Feature/Application` and focused browser tests instead.
 
 Every task is test-first. Monetary assertions compare normalized decimal strings exactly. Feature 002 owns shared revision persistence/orchestration. Feature 003 owns Money, the current Expense aggregate and the application-owned attachment foundation used by Expense.
 

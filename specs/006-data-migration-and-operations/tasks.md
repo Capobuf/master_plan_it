@@ -4,7 +4,7 @@ Status: `TASKS COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; NOT C
 Input: Constitution 5.0.0; Feature 006 spec/plan/research/data model/contracts; current domain Actions from Features 001–005/007.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
-Branch UI directive: all application UI tasks in this file target Inertia/React/Tailwind with native TailAdmin components and methods. Legacy Filament, Livewire, Preline, Alpine and Blade feature-view paths are superseded; use React pages/components, `tests/Feature/Inertia` and focused browser tests instead. Keep only `resources/views/app.blade.php` as the Inertia mount root.
+Branch UI directive: all application UI tasks in this file target official TailAdmin Laravel Free Blade components, Tailwind CSS and native Alpine methods. Legacy Filament, Livewire, Preline and Inertia/React feature-view paths are superseded; use Blade pages/components, `tests/Feature/Application` and focused browser tests instead.
 
 All import/apply/backup operations are Administrator-only, bounded and diagnostic. Tests precede implementation. `[FND]`, `[USn]` and `[VER]` classes are defined by the readiness registry. Deployment scripts/workflows are shared technical foundation; `[VER]` tasks create only evidence and documentation.
 

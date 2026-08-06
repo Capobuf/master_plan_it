@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Inertia;
+namespace Tests\Feature\Application;
 
 use App\Models\Tenant;
 use App\Models\User;

@@ -7,7 +7,7 @@ Product decisions: Q-001–Q-041, PD-REV-001, PD-BUD-001, PD-GEN-001, PD-SET-001
 
 ## 1. Obiettivo
 
-Implementare Master Plan IT come modular monolith Laravel 13, multi-tenant in un solo database, con un'unica interfaccia applicativa React/Inertia/Tailwind/TailAdmin:
+Implementare Master Plan IT come modular monolith Laravel 13, multi-tenant in un solo database, con un'unica interfaccia applicativa Laravel Blade/Tailwind/TailAdmin:
 
 - una sola sorgente economica corrente: Expense e righe correnti/non eliminate;
 - revision history operativa separata;
@@ -25,9 +25,9 @@ Implementare Master Plan IT come modular monolith Laravel 13, multi-tenant in un
 - Laravel 13.22.0;
 - Laravel Sail 1.64.0;
 - MySQL 8.4.10 LTS;
-- Inertia 3 + React 19 per il markup/stato operativo;
-- Tailwind CSS 4 + componenti e metodi TailAdmin React nativi obbligatori per tutte le superfici applicative, bloccati e compilati da Vite;
-- Chart.js 4.x bloccato dal lock frontend;
+- Blade per il markup server-rendered e controller Laravel per lo stato operativo;
+- Tailwind CSS 4 + componenti TailAdmin Laravel Free Blade e metodi Alpine nativi obbligatori per tutte le superfici applicative, bloccati e compilati da Vite;
+- Alpine.js 3.14.9 e ApexCharts 5.3.5 bloccati dal lock frontend;
 - Pest + Larastan/PHPStan + Pint + browser smoke test;
 - `spatie/laravel-permission` 8.3.0;
 - `overtrue/laravel-versionable` 6.0.0;
@@ -37,7 +37,7 @@ Implementare Master Plan IT come modular monolith Laravel 13, multi-tenant in un
 
 ## 2.1 Standard UI TailAdmin
 
-Tutte le superfici React/TailAdmin devono seguire [`tailadmin-ui-standard.md`](tailadmin-ui-standard.md). Prima di implementare una nuova interazione o superficie, il piano/task deve cercare il catalogo, la documentazione e il source template ufficiale TailAdmin, confrontare le varianti e scegliere il miglior fit nativo. Sono vietate duplicazioni manuali di primitivi TailAdmin e librerie UI parallele. Gli adapter applicativi possono occuparsi solo di dati dominio, Inertia, autorizzazione, stato server e orchestrazione, delegando la resa visuale a componenti TailAdmin nativi. Ogni eccezione deve essere registrata nel piano/task con alternative valutate, motivazione, ambito e condizione di revisione.
+Tutte le superfici Blade/TailAdmin devono seguire [`tailadmin-ui-standard.md`](tailadmin-ui-standard.md). Prima di implementare una nuova interazione o superficie, il piano/task deve cercare il catalogo, la documentazione e il source template ufficiale TailAdmin, confrontare le varianti e scegliere il miglior fit nativo. Sono vietate duplicazioni manuali di primitivi TailAdmin e librerie UI parallele. L'applicazione può occuparsi solo di dati dominio, richieste Laravel, autorizzazione, stato server e orchestrazione, delegando la resa visuale a componenti TailAdmin nativi. Ogni eccezione deve essere registrata nel piano/task con alternative valutate, motivazione, ambito e condizione di revisione.
 
 Le dipendenze sono installate e bloccate soltanto durante implementazione. `--ignore-platform-reqs`, floating tags e downgrade silenziosi sono vietati.
 
@@ -145,9 +145,9 @@ One use case, explicit typed input, policy/tenant/invariant checks, one document
 
 Reusable tenant-scoped read datasets. They never mutate and never bypass permission/scope. Reporting queries return DTOs, not Eloquent models as public contracts.
 
-### React / Inertia / TailAdmin
+### Blade / Alpine / TailAdmin
 
-Inertia e React possiedono il confine applicativo client, Tailwind la composizione dello stile e TailAdmin i primitivi e i metodi visuali nativi. Le pagine React invocano Actions/Queries tramite endpoint Inertia e ricevono DTO/payload calcolati dal server. Chart.js consuma esclusivamente payload di presentazione server-calcolati. Nessun componente possiede formule o orchestrazione di persistenza. La sola Blade ammessa è `resources/views/app.blade.php`, usata come mount root tecnico di Inertia.
+I controller Laravel possiedono il confine applicativo server, Blade rende il markup, Tailwind compone lo stile e TailAdmin fornisce i primitivi e i metodi Alpine nativi. Le pagine ricevono DTO e payload calcolati dal server; ApexCharts consuma esclusivamente payload di presentazione server-calcolati. Nessun componente possiede formule o orchestrazione di persistenza.
 
 ### Packages
 
@@ -243,7 +243,7 @@ Reference profile: 10,000 current expense rows per tenant/year.
 - accounting unit: Money/VAT/allocation/engine table cases;
 - accounting integration: MySQL current query, generation, revisions, BudgetVersion parity;
 - application: policies, Actions, tenant context, lifecycle, exports, commands;
-- browser: only React geometry/focus/reinforced confirmation/print smoke;
+- browser: only TailAdmin/Alpine geometry, focus, reinforced confirmation and print smoke;
 - persistent `master_plan_it_test`, no implicit reset traits;
 - each test owns identifiable data and transaction/targeted cleanup.
 
@@ -282,9 +282,9 @@ No direct production Frappe DB connection, placeholder data or silent row loss.
 |---|---|---|---|
 | P0 | scaffold/runtime/Sail/test/CI | none | dependency lock + static suite |
 | P1 | tenants/users/context/RBAC/settings/audit shell | P0 | cross-tenant and permission suite |
-| P2 / Slice 0 | React/TailAdmin UI foundation; years/vendors/cost centers and minimum shared revision prerequisites | P1 | TailAdmin source/build/theme checks, operational shell and browser smoke |
+| P2 / Slice 0 | Blade/TailAdmin UI foundation; years/vendors/cost centers and minimum shared revision prerequisites | P1 | TailAdmin source/build/theme checks, operational shell and browser smoke |
 | P3 / Slice 1 | Money + manual Expense register/create/edit and current Expense query | P2 | usable authorized tenant-facing Expense flow |
-| P4 / Slice 2 | minimum pure economic engine + current Budget filters/KPI/table/Chart.js | P3 | one-dataset parity and browser lifecycle |
+| P4 / Slice 2 | minimum pure economic engine + current Budget filters/KPI/table/ApexCharts | P3 | one-dataset parity and browser lifecycle |
 | P5 / Slice 3 | responsive/keyboard/focus/loading/error/direct-route/isolation/performance hardening; then attachments and remaining Expense lifecycle | P4 | vertical-slice checkpoint |
 | P6 | projects/contracts/terms/generation/notifications and post-Feature-004 project-stage query enrichment | P5 | generation matrix and no-new-economic-source parity |
 | P7 | scenarios/BudgetVersion/comparisons/print/CSV/XLSX | P4 plus exact feature prerequisites | immutability/output parity |
@@ -311,7 +311,7 @@ They block cutover and exact deployment/report parity, not the approved architec
 - persistent current Budget totals;
 - revision/audit tables queried as current;
 - generic repositories, CQRS, event sourcing, internal APIs;
-- Preline, Livewire, Alpine-driven UI, Blade application pages/layouts/views, Filament UI or any other parallel UI kit;
+- Preline, Livewire, Filament UI, Inertia, React or any other parallel UI stack;
 - server PDF dependency at launch;
 - XLSX import;
 - implicit database reset;

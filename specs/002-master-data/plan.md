@@ -9,7 +9,7 @@ Implement fixed-calendar planning years, cost centers and vendors as three small
 
 ## TailAdmin UI standard
 
-Any React/TailAdmin surface for this feature follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+Any Blade/TailAdmin surface for this feature follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
 
 ## Constitution check
 
@@ -41,7 +41,7 @@ A generic `SaveMasterData` Action is prohibited because date overlap, tree and v
 
 ### Policies and UI
 
-One Policy and one React/TailAdmin page flow per model. Cost-center hierarchy uses native TailAdmin composition first. Revision pages use the shared revision contract.
+One Policy and one Blade/TailAdmin page flow per model. Cost-center hierarchy uses native TailAdmin composition first. Revision pages use the shared revision contract.
 
 ## Invariants
 
@@ -80,7 +80,7 @@ Dusk is not planned unless custom browser-only tree behavior remains after the n
 5. cost-center Actions/tests;
 6. application-owned revision restore integration, after the foundational Overtrue package integration and revision-batch boundary;
 7. queries/selectors;
-8. React/TailAdmin pages;
+8. Blade/TailAdmin pages;
 9. tenant/concurrency/lifecycle/restore verification.
 
 ## Post-design check

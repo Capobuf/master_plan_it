@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Inertia;
+namespace Tests\Feature\Application;
 
 use App\Domain\Tenancy\Actions\EnterTenantContext;
 use App\Domain\Tenancy\Enums\TenantState;
@@ -26,8 +26,8 @@ class PlatformTenantPagesTest extends TestCase
     {
         $administrator = $this->administrator();
         $tenant = Tenant::factory()->create([
-            'name' => 'Inertia tenant',
-            'code' => 'INERTIA-01',
+            'name' => 'Application tenant',
+            'code' => 'APPLICATION-01',
         ]);
 
         $this->actingAs($administrator)
@@ -36,7 +36,7 @@ class PlatformTenantPagesTest extends TestCase
             ->assertViewIs('platform.tenants.index')
             ->assertViewHas('tenants', fn (array $tenants): bool => collect($tenants)->contains(
                 fn (array $item): bool => $item['id'] === $tenant->getKey()
-                    && $item['name'] === 'Inertia tenant',
+                    && $item['name'] === 'Application tenant',
             ))
             ->assertViewHas('abilities', fn (array $abilities): bool => $abilities['create']
                 && $abilities['update'] && $abilities['deactivate'] && $abilities['reactivate'] && $abilities['enter']);
@@ -45,7 +45,7 @@ class PlatformTenantPagesTest extends TestCase
             ->assertOk()
             ->assertViewIs('platform.tenants.edit')
             ->assertViewHas('record', fn (array $record): bool => $record['id'] === $tenant->getKey()
-                && $record['code'] === 'INERTIA-01');
+                && $record['code'] === 'APPLICATION-01');
     }
 
     public function test_create_and_enter_routes_delegate_to_tenant_actions(): void
@@ -53,15 +53,15 @@ class PlatformTenantPagesTest extends TestCase
         $administrator = $this->administrator();
 
         $response = $this->actingAs($administrator)->post(route('platform.tenants.store'), [
-            'name' => 'Created through Inertia',
-            'code' => 'INERTIA-NEW',
+            'name' => 'Created through application form',
+            'code' => 'APPLICATION-NEW',
             'currency_code' => 'EUR',
             'language_code' => 'it',
             'timezone' => 'Europe/Rome',
             'default_vat_rate' => '22.000000',
         ]);
 
-        $tenant = Tenant::query()->where('code', 'INERTIA-NEW')->firstOrFail();
+        $tenant = Tenant::query()->where('code', 'APPLICATION-NEW')->firstOrFail();
         $response->assertRedirect(route('platform.tenants.edit', $tenant));
 
         $this->post(route('platform.tenants.enter', $tenant))

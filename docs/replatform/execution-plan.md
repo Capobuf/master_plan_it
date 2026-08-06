@@ -33,7 +33,7 @@ Status: `DOCUMENTATION GATE PASSED ON CONSTITUTION 5.0.0 — IMPLEMENTATION IN P
 1. retain the accepted scaffold, tenant context, authentication, authorization, Money and master-data foundations;
 2. Slice 0 T001-028/T001-029 operational frontend contract, lock, lifecycle, layout and navigation bridge;
 3. Slice 1 T003-007–T003-012 manual Expense list/create/edit through current Queries and Actions;
-4. Slice 2 T005-001–T005-008 economic kernel/dataset and real current Budget KPI/table/Chart.js;
+4. Slice 2 T005-001–T005-008 economic kernel/dataset and real current Budget KPI/table/ApexCharts;
 5. Slice 3 T005-026 end-to-end authorization/isolation/parity/responsive/browser/performance hardening;
 6. attachments and remaining Expense lifecycle;
 7. Feature 004 projects/contracts/generated occurrences, then T005-027 project-stage dataset enrichment;

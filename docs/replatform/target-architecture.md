@@ -9,8 +9,8 @@ Authority: Constitution 5.0.0; `replatform-plan.md`; `technical-research.md`
 - Laravel 13.22.0;
 - Laravel Sail 1.64.0;
 - MySQL 8.4.10 LTS, InnoDB, utf8mb4, strict mode;
-- Filament 5.7.3 for accepted authentication and administration; Blade, Livewire 4.3.3, Alpine, Tailwind CSS 4 and mandatory Preline UI for tenant-facing operational screens, all through Vite;
-- Chart.js 4.x locked by frontend lock;
+- official TailAdmin Laravel Free Blade components for every application and administrative surface, with Tailwind CSS 4 and native Alpine methods through Vite;
+- Alpine.js 3.14.9 and ApexCharts 5.3.5 locked by the frontend lock;
 - sync queue and one scheduler cron;
 - no Redis, WebSockets, permanent worker, runtime Node or second application service.
 
@@ -50,7 +50,7 @@ Directories/classes are created only for concrete responsibility. No repository 
 - Actions own complex writes/transactions.
 - Queries own reusable tenant-scoped read DTOs.
 - Models own persistence/relations/casts without domain side effects.
-- Filament owns accepted administrative UI only. Operational Livewire authorizes, validates, loads data and invokes Actions; Blade renders markup; Preline owns documented visual behaviors; Alpine owns only local transient state; Chart.js renders server-calculated payloads. No presentation layer owns authoritative formulas.
+- Laravel controllers authorize, validate, load data and invoke Actions; Blade renders markup; TailAdmin/Alpine owns documented visual behaviors; ApexCharts renders server-calculated payloads. No presentation layer owns authoritative formulas and no second UI stack is permitted.
 - Packages provide infrastructure/UI only.
 
 ## Current/history/data-set separation

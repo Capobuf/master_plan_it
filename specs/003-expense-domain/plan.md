@@ -9,7 +9,7 @@ Implement decimal Money/VAT/allocation primitives and the Expense aggregate with
 
 ## TailAdmin UI standard
 
-Any React/TailAdmin Expense surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+Any Blade/TailAdmin Expense surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
 
 ## Constitution check
 
@@ -53,7 +53,7 @@ No `ReplaceExpenseRow` Action in the target model.
 - `ExpenseRegisterQuery` returns register DTOs and server totals;
 - `ExpenseDetailQuery` includes only current header and rows in the selected Slice 1; attachment and revision enrichment remains owned by their later tasks and is not queried or claimed early;
 - `ExpensePolicy`;
-- operational React register/editor/history components rendered in the shared TailAdmin layout; the shared navigation and home expose the Expense module only with `expense.view`, omit links to forbidden dashboard routes, and retain direct-route authorization.
+- operational Blade register/editor/history components rendered in the shared TailAdmin layout; the shared navigation and home expose the Expense module only with `expense.view`, omit links to forbidden dashboard routes, and retain direct-route authorization.
 
 ## Aggregate transaction
 
@@ -145,14 +145,14 @@ Dusk only for row-editor JS/focus/action menu and reinforced delete confirmation
 
 1. Money/VAT/allocation tests and value objects;
 2. migrations/models/factories, revision package smoke and Policies;
-3. Slice 1 current queries plus React/TailAdmin register;
+3. Slice 1 current queries plus Blade/TailAdmin register;
 4. Slice 1 manual create/update Actions and operational editor using planning year/vendor/cost center selectors;
 5. Slice 2 current Budget consumers from Feature 005, independently of Feature 004;
 6. Slice 3 cross-flow hardening;
 7. attachment schema/quota/integration, remaining delete/restore/history and Actual confirmation;
 8. Feature 004 generation integration, migration fixtures and full gates.
 
-The first manual Expense revision is data-only and does not wait for attachment storage. T003-024 later attaches complete immutable payload manifests to the existing Create/Update Actions before attachment-capable revisions are accepted. Operational screens use the branch React/Inertia/Tailwind/TailAdmin stack.
+The first manual Expense revision is data-only and does not wait for attachment storage. T003-024 later attaches complete immutable payload manifests to the existing Create/Update Actions before attachment-capable revisions are accepted. Operational screens use the branch Blade/Tailwind/TailAdmin/Alpine stack.
 
 ## Post-design check
 

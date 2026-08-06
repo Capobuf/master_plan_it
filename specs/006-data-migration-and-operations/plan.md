@@ -38,7 +38,7 @@ Importers are small per dataset because dependencies and Actions differ. A gener
 
 ### UI
 
-Administrator React/TailAdmin pages for import runs/reconciliation/exclusions, tenant portability export and backup status. Restore is not a one-click web action; UI may display the verified operator procedure/status only.
+Administrator Blade/TailAdmin pages for import runs/reconciliation/exclusions, tenant portability export and backup status. Restore is not a one-click web action; UI may display the verified operator procedure/status only.
 
 ## Import package
 

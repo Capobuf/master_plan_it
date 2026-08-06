@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\Inertia;
+namespace Tests\Feature\Application;
 
 use App\Models\CostCenter;
 use App\Models\Expense;
@@ -93,7 +93,7 @@ class ExpensePagesTest extends TestCase
         $registrar->setPermissionsTeamId($tenant->getKey());
         $role = Role::query()->create([
             'tenant_id' => $tenant->getKey(),
-            'name' => 'Inertia expenses '.str()->uuid(),
+            'name' => 'Application expenses '.str()->uuid(),
             'guard_name' => 'web',
         ]);
         $role->syncPermissions(['dashboard.view', 'expense.view']);

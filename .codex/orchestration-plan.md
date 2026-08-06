@@ -41,7 +41,7 @@ The focused dependency analysis for the selected milestone contains 59 tasks: 47
 | ExpenseRow | Persistence/model/factory/version snapshots complete; aggregate Action absent | None | Estimate/Quote/Actual rows with exact server totals | T003-010–012 |
 | Expense revision history | Snapshot capture infrastructure complete; selected-slice history Query/UI absent | None | Correct revisions on create/edit; compare/restore UI remains T003-015–016 outside this milestone | T003-011 |
 | Economic dataset | Not implemented | None | One authorized tenant/year dataset for KPI/table/chart | T005-001–004 |
-| Current Budget | Not implemented; no AnnualBudget/BudgetVersion prerequisite | None | Filters, KPI, table, Chart.js and valid empty state from one dataset | T005-006–008, T005-026 |
+| Current Budget | Not implemented; no AnnualBudget/BudgetVersion prerequisite | None | Filters, KPI, table, ApexCharts and valid empty state from one dataset | T005-006–008, T005-026 |
 
 ## Remaining task inventory
 

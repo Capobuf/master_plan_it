@@ -45,7 +45,7 @@ class PlatformIdentityIntegrationTest extends TestCase
         ]);
         $targetRole = Role::query()->create([
             'tenant_id' => $tenant->getKey(),
-            'name' => 'Inertia managed role',
+            'name' => 'Application managed role',
             'guard_name' => 'web',
         ]);
 

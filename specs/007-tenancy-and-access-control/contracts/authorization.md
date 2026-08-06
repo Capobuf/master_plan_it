@@ -18,7 +18,7 @@ Administrator does not receive a generic invariant-bypass `Gate::before`. Inside
 - tenant users derive exactly one tenant from User and cannot switch;
 - Administrator enters/leaves an explicit tenant context and retains identity;
 - missing/invalid/inactive/unauthorized context fails closed;
-- Spatie team ID is set before authorization and reset between requests/React/Inertia/console iterations/tests;
+- Spatie team ID is set before authorization and reset between requests, console iterations and tests;
 - changing context unsets loaded `roles` and `permissions` relations and resets cache as required;
 - business Queries require a TenantContext and tenant predicate; permission team context alone is not data scoping.
 
@@ -47,7 +47,7 @@ Administrator sets/resets tenant-user passwords; authenticated user changes own 
 
 ## Policy implementation
 
-One Policy per resource maps methods to stable abilities and same-tenant/current-state checks. Non-CRUD Actions use explicit Gates matching catalogue names. React/TailAdmin pages delegate authorization to Policies/Gates.
+One Policy per resource maps methods to stable abilities and same-tenant/current-state checks. Non-CRUD Actions use explicit Gates matching catalogue names. Blade/TailAdmin pages delegate authorization to Policies/Gates.
 
 Global query pages and tenant pages are separate surfaces; no optional tenant filter turns a global page into an economic cross-tenant query.
 
@@ -62,7 +62,7 @@ For every ability family:
 5. protected ability cannot be assigned;
 6. permission cannot bypass invariant;
 7. role customization affects access without domain code;
-8. context/cache does not leak across requests/React/Inertia/commands/tests;
+8. context/cache does not leak across requests, commands or tests;
 9. direct URL, relation, file, revision, report/export and scheduler paths covered.
 10. quota management is Administrator-only and isolated to the selected tenant;
 11. deletion-reason setting management requires global Administrator plus the exact protected ability and explicit target tenant, and never changes prior evidence.

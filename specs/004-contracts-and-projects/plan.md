@@ -9,7 +9,7 @@ Implement projects as decision context and contracts as term-based generators of
 
 ## TailAdmin UI standard
 
-Any React/TailAdmin project or contract surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+Any Blade/TailAdmin project or contract surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
 
 ## Constitution check
 
@@ -40,7 +40,7 @@ Passes C-03, C-04, C-05, C-07, C-10, C-11, C-12 and C-13. Economic observers, du
 
 - `ProjectListQuery`, `ContractListQuery`, `ContractDetailQuery`, `ContractGenerationHistoryQuery`;
 - one Policy per resource plus explicit generation Gates;
-- operational React Project/Contract list/editor/timeline/history components rendered in the shared TailAdmin tenant layout.
+- operational Blade Project/Contract list/editor/timeline/history components rendered in the shared TailAdmin tenant layout.
 
 No `ContractAnnualizer` service unless tests prove a reusable calculation independent from generation; term values use shared Money/VAT services.
 
@@ -119,7 +119,7 @@ Current project/contract/term saves create aggregate revision batches. Restore u
 - tenant/permission isolation;
 - notification thresholds/dedup/email failure.
 
-Dusk/browser coverage is limited to term editor and regeneration-choice/history controls when behavior cannot be proven with focused React/Inertia tests.
+Dusk/browser coverage is limited to term editor and regeneration-choice/history controls when behavior cannot be proven with focused Feature tests.
 
 ## Sequence
 
@@ -131,7 +131,7 @@ Dusk/browser coverage is limited to term editor and regeneration-choice/history 
 6. project/contract/term deletion provenance and tenant reason-setting Actions/tests;
 7. generated-expense deletion/suppression/resume Actions;
 8. notifications;
-9. policies/queries/React/TailAdmin UI;
+9. policies/queries/Blade/TailAdmin UI;
 10. full accounting/tenant/browser verification.
 
 ## Post-design check

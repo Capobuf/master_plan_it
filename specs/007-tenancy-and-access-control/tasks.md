@@ -4,7 +4,7 @@ Status: `TASKS COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION IN PROGRESS`
 Input: Constitution 5.0.0; current Feature 007 design; authorization, permission and error catalogues.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
-Branch UI directive: all application UI tasks in this file target Inertia/React/Tailwind with native TailAdmin components and methods. Legacy Filament, Livewire, Preline, Alpine and Blade feature-view paths are superseded; use React pages/components, `tests/Feature/Inertia` and focused browser tests instead. Keep only `resources/views/app.blade.php` as the Inertia mount root.
+Branch UI directive: all application UI tasks in this file target official TailAdmin Laravel Free Blade components, Tailwind CSS and native Alpine methods. Legacy Filament, Livewire, Preline and Inertia/React feature-view paths are superseded; use Blade pages/components, `tests/Feature/Application` and focused browser tests instead.
 
 Tests are written first. Feature 007 owns Tenant, `TenantContext`, tenant lifecycle, reusable tenant-ownership policy primitives, tenant user/role Actions, tenant indicator, tenant report-branding and operational settings, and User/Role/Tenant Resources. The complete cross-feature ability matrix is intentionally late and starts only after every exact owning implementation task named in T007-011 is complete.
 
