@@ -103,7 +103,10 @@ final class ApiAuthenticationHttpTest extends TestCase
         $this->actingAs($user, 'web');
 
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/logout')->assertNoContent();
-        $this->assertGuest();
+
+        $this->getJson('/api/v1/auth/me')
+            ->assertStatus(401)
+            ->assertJsonPath('error.code', 'AUTHENTICATION_REQUIRED');
     }
 
     public function test_authenticated_password_change_mutates_only_the_server_side_password(): void
@@ -125,13 +128,20 @@ final class ApiAuthenticationHttpTest extends TestCase
     {
         $this->get('/sanctum/csrf-cookie')->assertNoContent();
 
-        $response = $this->withHeaders([
-            'Origin' => 'http://localhost',
-            'Referer' => 'http://localhost/',
-        ])->postJson('/api/v1/auth/login', [
-            'email' => 'missing@example.test',
-            'password' => 'password',
-        ]);
+        $originalEnvironment = (string) app()->environment();
+
+        try {
+            app()->instance('env', 'local');
+            $response = $this->withHeaders([
+                'Origin' => 'http://localhost',
+                'Referer' => 'http://localhost/',
+            ])->postJson('/api/v1/auth/login', [
+                'email' => 'missing@example.test',
+                'password' => 'password',
+            ]);
+        } finally {
+            app()->instance('env', $originalEnvironment);
+        }
 
         $response->assertStatus(419)
             ->assertJsonPath('error.code', 'CSRF_TOKEN_MISMATCH')

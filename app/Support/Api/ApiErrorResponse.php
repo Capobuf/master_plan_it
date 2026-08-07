@@ -9,6 +9,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\AccessDeniedHttpException;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
@@ -77,6 +78,10 @@ final class ApiErrorResponse
 
         if ($exception instanceof DomainException) {
             return self::domain($exception->getMessage(), 409, 'DOMAIN_CONFLICT', 'The requested change conflicts with current data.');
+        }
+
+        if ($exception instanceof TokenMismatchException) {
+            return [419, 'CSRF_TOKEN_MISMATCH', 'The security token is invalid or expired.', []];
         }
 
         if ($exception instanceof HttpExceptionInterface) {
