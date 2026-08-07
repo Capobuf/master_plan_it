@@ -10,6 +10,7 @@ use App\Models\PlanningYear;
 use App\Models\Tenant;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
 
@@ -91,7 +92,14 @@ final class ReportingApiHttpTest extends TestCase
     {
         $tenant = Tenant::factory()->create();
         $user = $this->tenantUser($tenant);
-        $user->roles()->firstOrFail()->revokePermissionTo('dashboard.view');
+        $registrar = app(PermissionRegistrar::class);
+        $previousTeamId = $registrar->getPermissionsTeamId();
+        $registrar->setPermissionsTeamId($tenant->getKey());
+        try {
+            $user->roles()->firstOrFail()->revokePermissionTo('dashboard.view');
+        } finally {
+            $registrar->setPermissionsTeamId($previousTeamId);
+        }
         $this->actingAs($user, 'web');
 
         $this->getJson('/api/v1/dashboard')
