@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -25,12 +26,14 @@ final class ContractTermResource extends JsonResource
 
             return $value;
         };
+        $start = $read('effective_start');
+        $end = $read('effective_end');
 
         return [
             'id' => $read('id') === null ? null : (int) $read('id'),
             'local_key' => (string) $read('local_key'),
-            'effective_start' => $read('effective_start'),
-            'effective_end' => $read('effective_end'),
+            'effective_start' => $start instanceof CarbonInterface ? $start->toDateString() : $start,
+            'effective_end' => $end instanceof CarbonInterface ? $end->toDateString() : $end,
             'billing_cycle' => is_object($read('billing_cycle')) ? $read('billing_cycle')->value : (string) $read('billing_cycle'),
             'quantity' => $read('quantity') === null ? null : (string) $read('quantity'),
             'unit_price' => $read('unit_price') === null ? null : (string) $read('unit_price'),
