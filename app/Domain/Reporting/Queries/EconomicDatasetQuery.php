@@ -7,6 +7,7 @@ use App\Domain\Economics\Data\EconomicLine;
 use App\Domain\Economics\Data\EconomicScope;
 use App\Domain\Reporting\Data\EconomicReportFilterData;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Models\PlanningYear;
 use App\Models\User;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -17,11 +18,17 @@ final class EconomicDatasetQuery
 {
     public function execute(User $actor, TenantContext $context, int $planningYearId, ?EconomicReportFilterData $filters = null): EconomicDataset
     {
-        $persistedActor = User::query()->whereKey($actor->getRawOriginal($actor->getKeyName()))->where('is_active', true)->first();
+        $actorQuery = $actor->tenant_id === null
+            ? $actor->newQuery()
+            : TenantOwnedRecordQuery::forTenant($context, User::class);
+        $persistedActor = $actorQuery
+            ->whereKey($actor->getRawOriginal($actor->getKeyName()))
+            ->where('is_active', true)
+            ->first();
         if (! $persistedActor instanceof User || ($persistedActor->tenant_id !== null && (int) $persistedActor->tenant_id !== $context->tenantId)) {
             throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
         }
-        $year = PlanningYear::query()->where('tenant_id', $context->tenantId)->find($planningYearId);
+        $year = TenantOwnedRecordQuery::forTenant($context, PlanningYear::class)->find($planningYearId);
         if (! $year instanceof PlanningYear) {
             throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYearId]);
         }

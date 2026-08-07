@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Reporting\Queries\EconomicReportQuery;
+use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\ReportingLineResource;
 use App\Http\Resources\Api\V1\ReportingScopeResource;
@@ -18,7 +20,7 @@ final class EconomicReportController extends Controller
     {
         $context = $this->tenantContext($request);
         $planningYearId = $this->planningYearId($request);
-        $costCenterId = $this->costCenterId($request, $context->tenantId);
+        $costCenterId = $this->costCenterId($request, $context);
         $perPage = min(max($request->integer('per_page', 25), 1), 100);
         $result = $report->execute(
             $this->actor($request),
@@ -57,14 +59,14 @@ final class EconomicReportController extends Controller
         return (int) $value;
     }
 
-    private function costCenterId(Request $request, int $tenantId): ?int
+    private function costCenterId(Request $request, TenantContext $context): ?int
     {
         $value = $request->query('cost_center', $request->query('cost_center_id'));
 
         if ($value === null || $value === '') {
             return null;
         }
-        if (! is_numeric($value) || (int) $value < 1 || ! CostCenter::query()->where('tenant_id', $tenantId)->whereKey((int) $value)->exists()) {
+        if (! is_numeric($value) || (int) $value < 1 || ! TenantOwnedRecordQuery::forTenant($context, CostCenter::class)->whereKey((int) $value)->exists()) {
             abort(404);
         }
 

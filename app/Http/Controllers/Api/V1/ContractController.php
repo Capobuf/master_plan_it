@@ -21,13 +21,13 @@ use App\Domain\Contracts\Queries\ContractListQuery;
 use App\Domain\Expenses\Enums\ActualConfirmationState;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\AuthorizeApplicationAbility;
 use App\Http\Resources\Api\V1\ContractResource;
 use App\Http\Resources\Api\V1\ContractRevisionResource;
 use App\Http\Resources\Api\V1\GeneratedExpenseResource;
 use App\Models\Contract;
-use App\Models\ContractTerm;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\RevisionBatch;
@@ -165,7 +165,7 @@ final class ContractController extends Controller
         ]);
         $context = $this->tenantContext($request);
         $subject = $this->contract($context, $contract);
-        $target = ContractTerm::query()->where('tenant_id', $context->tenantId)->where('contract_id', $subject->getKey())->findOrFail($term);
+        $target = $subject->terms()->where('tenant_id', $context->tenantId)->findOrFail($term);
         $action->execute($this->actor($request), $context, $subject, $target, (int) $input['lock_version'], $input['deletion_reason'] ?? null, $this->correlationId($request));
 
         return response()->noContent();
@@ -180,7 +180,7 @@ final class ContractController extends Controller
             'allow_regeneration' => ['required', 'boolean'],
         ]);
         $context = $this->tenantContext($request);
-        $target = Expense::query()->where('tenant_id', $context->tenantId)->where('contract_id', $contract)->whereKey($expense)->firstOrFail();
+        $target = $this->contract($context, $contract)->expenses()->where('tenant_id', $context->tenantId)->whereKey($expense)->firstOrFail();
         $action->execute($this->actor($request), $context, $target, (int) $input['lock_version'], (bool) $input['allow_regeneration'], $this->correlationId($request));
 
         return response()->noContent();
@@ -192,7 +192,12 @@ final class ContractController extends Controller
         $context = $this->tenantContext($request);
         $subject = $this->contract($context, $contract);
         /** @var \Illuminate\Database\Eloquent\Collection<int, RevisionBatch> $batches */
-        $batches = RevisionBatch::query()->where('tenant_id', $context->tenantId)->where('root_subject_type', $subject->getMorphClass())->where('root_subject_id', $subject->getKey())->with('actor')->latest('occurred_at')->get();
+        $batches = TenantOwnedRecordQuery::forTenant($context, RevisionBatch::class)
+            ->where('root_subject_type', $subject->getMorphClass())
+            ->where('root_subject_id', $subject->getKey())
+            ->with('actor')
+            ->latest('occurred_at')
+            ->get();
         /** @var Collection<int, array<string, mixed>> $rows */
         $rows = $batches->map(static function (RevisionBatch $batch): array {
             $operation = $batch->getAttribute('operation');
@@ -303,7 +308,13 @@ final class ContractController extends Controller
         }
 
         /** @var \Illuminate\Database\Eloquent\Collection<int, RevisionBatch> $revisionBatches */
-        $revisionBatches = RevisionBatch::query()->where('tenant_id', $context->tenantId)->where('root_subject_type', $contract->getMorphClass())->where('root_subject_id', $contract->getKey())->with('actor')->latest('occurred_at')->limit(10)->get();
+        $revisionBatches = TenantOwnedRecordQuery::forTenant($context, RevisionBatch::class)
+            ->where('root_subject_type', $contract->getMorphClass())
+            ->where('root_subject_id', $contract->getKey())
+            ->with('actor')
+            ->latest('occurred_at')
+            ->limit(10)
+            ->get();
         /** @var list<array<string, mixed>> $revisions */
         $revisions = $revisionBatches->map(static function (RevisionBatch $batch): array {
             $operation = $batch->getAttribute('operation');
@@ -341,7 +352,7 @@ final class ContractController extends Controller
     private function contract(TenantContext $context, int $id): Contract
     {
         /** @var Contract $contract */
-        $contract = Contract::query()->where('tenant_id', $context->tenantId)->findOrFail($id);
+        $contract = TenantOwnedRecordQuery::findOrFail($context, Contract::class, $id);
 
         return $contract;
     }

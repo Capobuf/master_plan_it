@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Domain\Economics\Services\EconomicEngine;
 use App\Domain\Reporting\Queries\EconomicDatasetQuery;
 use App\Domain\Reporting\Queries\TenantDashboardQuery;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\ReportingDatasetResource;
 use App\Models\PlanningYear;
@@ -20,8 +21,7 @@ final class DashboardController extends Controller
         TenantDashboardQuery $dashboard,
     ): ReportingDatasetResource {
         $context = $this->tenantContext($request);
-        $years = PlanningYear::query()
-            ->where('tenant_id', $context->tenantId)
+        $years = TenantOwnedRecordQuery::forTenant($context, PlanningYear::class)
             ->orderBy('year_label')
             ->orderBy('id')
             ->get(['id', 'year_label', 'active']);
