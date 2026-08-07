@@ -36,6 +36,6 @@ final readonly class TenantContext
 
         $this->budgetBasis = $rawBudgetBasis instanceof BudgetBasis
             ? $rawBudgetBasis
-            : BudgetBasis::from((string) $rawBudgetBasis);
+            : BudgetBasis::tryFrom((string) $rawBudgetBasis) ?? BudgetBasis::Net;
     }
 }
