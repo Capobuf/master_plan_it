@@ -169,6 +169,15 @@ final class ExpenseController extends Controller
     /** @return array{SaveExpenseData, list<SaveExpenseRowData>, list<array{id: int, lock_version: int}>} */
     private function validatedData(Request $request, bool $updating): array
     {
+        $rawRows = $request->input('rows');
+        if (is_array($rawRows)) {
+            foreach ($rawRows as $index => $row) {
+                if (is_array($row)) {
+                    $this->rejectUnexpectedRowFields($row, (int) $index);
+                }
+            }
+        }
+
         $rules = [
             'planning_year_id' => ['required', 'integer', 'min:1'],
             'cost_center_id' => ['required', 'integer', 'min:1'],
