@@ -1,13 +1,14 @@
 # Piano integrato Laravel replatform
 
-Status: `CURRENT INTEGRATED DESIGN — /speckit.analyze PASSED; IMPLEMENTATION READY`
+Status: `CURRENT INTEGRATED DESIGN — API-ONLY AMENDMENT 6.0.0; IMPLEMENTATION IN PROGRESS`
 Historical authoring branch/base: `plan/replatform-3.0.1` / `72262851ba4cf459654ec1a2684fa870b91664e4`
-Constitution: 5.0.0
-Product decisions: Q-001–Q-041, PD-REV-001, PD-BUD-001, PD-GEN-001, PD-SET-001, PD-DEL-001
+Constitution: 6.0.0
+Product decisions: Q-001–Q-041, PD-API-001, PD-REV-001, PD-BUD-001, PD-GEN-001, PD-SET-001, PD-DEL-001
 
 ## 1. Obiettivo
 
-Implementare Master Plan IT come modular monolith Laravel 13, multi-tenant in un solo database, con un'unica interfaccia applicativa Laravel Blade/Tailwind/TailAdmin:
+Implementare Master Plan IT come modular monolith Laravel 13, multi-tenant in un solo database,
+con Laravel come backend API-only e una applicazione React/TypeScript separata:
 
 - una sola sorgente economica corrente: Expense e righe correnti/non eliminate;
 - revision history operativa separata;
@@ -17,7 +18,8 @@ Implementare Master Plan IT come modular monolith Laravel 13, multi-tenant in un
 - contratti idempotenti e controllabili;
 - output semantici identici;
 - migrazione e operations diagnosticabili;
-- runtime compatibile con hosting PHP/MySQL senza worker permanente.
+- runtime Laravel installabile senza Node/npm e raggiungibile privatamente dal proxy frontend;
+- due deployable services senza un secondo backend/business layer nel frontend.
 
 ## 2. Stack bloccato dal piano
 
@@ -25,21 +27,30 @@ Implementare Master Plan IT come modular monolith Laravel 13, multi-tenant in un
 - Laravel 13.22.0;
 - Laravel Sail 1.64.0;
 - MySQL 8.4.10 LTS;
-- Blade per il markup server-rendered e controller Laravel per lo stato operativo;
-- Tailwind CSS 4 + componenti TailAdmin Laravel Free Blade e metodi Alpine nativi obbligatori per tutte le superfici applicative, bloccati e compilati da Vite;
-- Alpine.js 3.14.9 e ApexCharts 5.3.5 bloccati dal lock frontend;
-- Pest + Larastan/PHPStan + Pint + browser smoke test;
+- API Resources/DTOs e controller API sotto `/api/v1`; Sanctum SPA session con
+  `statefulApi()` e `auth:sanctum`;
+- React/TypeScript + official TailAdmin React Free è un deployable separato; il browser usa solo
+  URL relativi `/api/v1/*` e `/sanctum/*` attraverso il reverse proxy;
+- Pest + Larastan/PHPStan + Pint + API contract tests;
 - `spatie/laravel-permission` 8.3.0;
 - `overtrue/laravel-versionable` 6.0.0;
 - `openspout/openspout` 4.32.0 writer-only;
 - `spatie/laravel-backup` 10.3.0 condizionato al gate Composer PHP 8.3.32;
 - nessun server PDF package.
 
-## 2.1 Standard UI TailAdmin
+## 2.1 API contract boundary
 
-Tutte le superfici Blade/TailAdmin devono seguire [`tailadmin-ui-standard.md`](tailadmin-ui-standard.md). Prima di implementare una nuova interazione o superficie, il piano/task deve cercare il catalogo, la documentazione e il source template ufficiale TailAdmin, confrontare le varianti e scegliere il miglior fit nativo. Sono vietate duplicazioni manuali di primitivi TailAdmin e librerie UI parallele. L'applicazione può occuparsi solo di dati dominio, richieste Laravel, autorizzazione, stato server e orchestrazione, delegando la resa visuale a componenti TailAdmin nativi. Ogni eccezione deve essere registrata nel piano/task con alternative valutate, motivazione, ambito e condizione di revisione.
+Ogni capability implementata deve avere un contratto operation-oriented: ability, Action/Query,
+endpoint `/api/v1`, metodo, request schema, resource/DTO, errori e tenant scope. JSON success usa
+`data` per una risorsa o collection/meta/links per paginazione; gli errori usano `error.code`,
+messaggio sicuro/localizzato, `fields` e `correlation_id`. Money usa decimal strings esatte,
+currency e Net/VAT/Gross separati. Non esistono generic CRUD, dump di modelli/colonne o endpoint
+placeholder. Il frontend usa `abilities` per navigazione ma Laravel ripete sempre authorization,
+ownership e invarianti server-side.
 
-Le dipendenze sono installate e bloccate soltanto durante implementazione. `--ignore-platform-reqs`, floating tags e downgrade silenziosi sono vietati.
+Il contratto di deployment configura `API_INTERNAL_ORIGIN=http://127.0.0.1:<port>` soltanto nel
+proxy/frontend runtime, mai nel JavaScript browser. Wildcard CORS, public developer API, OAuth,
+JWT, bearer token, refresh token e browser personal token sono vietati.
 
 ## 3. Constitution check
 
@@ -50,7 +61,7 @@ Le dipendenze sono installate e bloccate soltanto durante implementazione. `--ig
 | C-03 sole source | current non-deleted expense rows only | architecture/query tests |
 | C-04 explicit operations | named Actions own transactions | no economic observer/package callbacks |
 | C-05 current/revision/audit | one current record, snapshot versions outside current | deletion/restore/current exclusion tests |
-| C-06 shared hosting | monolith, sync queue, one cron, precompiled assets | hosting preflight |
+| C-06 API-only backend | Laravel API-only; React/TailAdmin separato; Sanctum; two deployables; private proxy/loopback | API contract, Sanctum/session, no-HTML-route and backend-without-Node gates |
 | C-07 configurable RBAC | Spatie teams + Shield; protected platform abilities | allow/deny/cross-tenant suite |
 | C-08 semantic dataset | EconomicDataset shared across presentation/output | parity tests |
 | C-09 migration | staging, identity map, quarantine, reconciliation | dry-run/idempotency tests |
@@ -145,9 +156,11 @@ One use case, explicit typed input, policy/tenant/invariant checks, one document
 
 Reusable tenant-scoped read datasets. They never mutate and never bypass permission/scope. Reporting queries return DTOs, not Eloquent models as public contracts.
 
-### Blade / Alpine / TailAdmin
+### API controllers and resources
 
-I controller Laravel possiedono il confine applicativo server, Blade rende il markup, Tailwind compone lo stile e TailAdmin fornisce i primitivi e i metodi Alpine nativi. Le pagine ricevono DTO e payload calcolati dal server; ApexCharts consuma esclusivamente payload di presentazione server-calcolati. Nessun componente possiede formule o orchestrazione di persistenza.
+I controller API autorizzano, validano, delegano ad Actions/Queries e trasformano con Resources o
+DTO. Il client React/TailAdmin rende dati già calcolati e non possiede formule, authorization,
+tenant scoping o orchestrazione di persistenza. Laravel non renderizza pagine applicative HTML.
 
 ### Packages
 
@@ -169,7 +182,7 @@ app/Domain/Economics/Services/EconomicEngine.php
 - Query: tenant/current/non-deleted I/O, projection, filters, detail/output scope.
 - Engine: one deterministic pass for components, project buckets, Plafond, Net/VAT/Gross.
 - DTOs: immutable contracts.
-- Consumers: tenant dashboard, Budget page, report, print/export, BudgetVersion capture.
+- Consumers: tenant dashboard dataset, current Budget, report/export resources, BudgetVersion capture.
 - Scenario/BudgetVersion: explicit alternative dataset adapters; no second current engine.
 
 Extraction from `EconomicEngine` is allowed only for independent invariants/reuse/dependency/change reason. Line count alone is not a criterion.
@@ -239,11 +252,11 @@ Reference profile: 10,000 current expense rows per tenant/year.
 
 ## 12. Testing design
 
-- static: composer validate, Pint, PHPStan/Larastan, architecture rules, frontend build;
+- static: composer validate, Pint, PHPStan/Larastan, architecture rules, API contract checks;
 - accounting unit: Money/VAT/allocation/engine table cases;
 - accounting integration: MySQL current query, generation, revisions, BudgetVersion parity;
 - application: policies, Actions, tenant context, lifecycle, exports, commands;
-- browser: only TailAdmin/Alpine geometry, focus, reinforced confirmation and print smoke;
+- client/browser verification is owned by the separate React session; Laravel gates remain API-only;
 - persistent `master_plan_it_test`, no implicit reset traits;
 - each test owns identifiable data and transaction/targeted cleanup.
 
@@ -268,7 +281,7 @@ No direct production Frappe DB connection, placeholder data or silent row loss.
 
 - Sail verification and GitHub Actions quality gates;
 - immutable ZIP from exact verified commit;
-- production dependencies and Vite assets prebuilt;
+- production Composer dependencies are installable and runnable without Node/npm;
 - host preflight for PHP/extensions/MySQL/document root/cron/storage/mysqldump;
 - installation backup Created then Verified by empty-environment restore rehearsal;
 - forward migrations;
@@ -282,10 +295,10 @@ No direct production Frappe DB connection, placeholder data or silent row loss.
 |---|---|---|---|
 | P0 | scaffold/runtime/Sail/test/CI | none | dependency lock + static suite |
 | P1 | tenants/users/context/RBAC/settings/audit shell | P0 | cross-tenant and permission suite |
-| P2 / Slice 0 | Blade/TailAdmin UI foundation; years/vendors/cost centers and minimum shared revision prerequisites | P1 | TailAdmin source/build/theme checks, operational shell and browser smoke |
-| P3 / Slice 1 | Money + manual Expense register/create/edit and current Expense query | P2 | usable authorized tenant-facing Expense flow |
-| P4 / Slice 2 | minimum pure economic engine + current Budget filters/KPI/table/ApexCharts | P3 | one-dataset parity and browser lifecycle |
-| P5 / Slice 3 | responsive/keyboard/focus/loading/error/direct-route/isolation/performance hardening; then attachments and remaining Expense lifecycle | P4 | vertical-slice checkpoint |
+| P2 / Slice 0 | API foundation: routes, Sanctum SPA session, auth/context/error/resource contracts and API capability inventory | P1 | API contract and session/CSRF gates |
+| P3 / Slice 1 | Money + manual Expense register/create/edit and current Expense query API | P2 | authorized API contract and tenant-isolation tests |
+| P4 / Slice 2 | economic engine + current Budget/dashboard/report API datasets | P3 | one-dataset parity and API schema gates |
+| P5 / Slice 3 | pagination/error/direct-route/isolation/performance hardening; then attachments and remaining lifecycle APIs | P4 | API coverage checkpoint before Laravel UI removal |
 | P6 | projects/contracts/terms/generation/notifications and post-Feature-004 project-stage query enrichment | P5 | generation matrix and no-new-economic-source parity |
 | P7 | scenarios/BudgetVersion/comparisons/print/CSV/XLSX | P4 plus exact feature prerequisites | immutability/output parity |
 | P8 | migration/tenant portability/backup/deployment | P1–P7 | dry-run/restore/deployment rehearsal |
@@ -311,7 +324,8 @@ They block cutover and exact deployment/report parity, not the approved architec
 - persistent current Budget totals;
 - revision/audit tables queried as current;
 - generic repositories, CQRS, event sourcing, internal APIs;
-- Preline, Livewire, Filament UI, Inertia, React or any other parallel UI stack;
+- Laravel Blade/TailAdmin, Tailwind, Alpine, ApexCharts, Vite or any Laravel frontend stack;
+- a second backend/business layer in React, generic model CRUD or public developer API;
 - server PDF dependency at launch;
 - XLSX import;
 - implicit database reset;

@@ -1,15 +1,22 @@
 # Implementation plan — Feature 006 Migration and operations
 
-Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; NOT CUTOVER READY; IMPLEMENTATION NOT STARTED`
+Status: `PLAN AMENDED FOR API-ONLY TARGET 2026-08-07; IMPLEMENTATION READY; NOT CUTOVER READY`
+Constitution: 6.0.0; ADR-036; PD-API-001
 Dependencies: Features 001–005 and 007
+
+**Amendment 6.0.0 supersession note (2026-08-07).** Any later Laravel operations UI subsection
+is deprecated and replaced by protected API operation/resource contracts above. Import,
+portability, backup and deployment ownership remains unchanged.
 
 ## Summary
 
 Implement controlled CSV staging/import for one legacy site, tenant portability, whole-installation backup verification and immutable-artifact deployment. Every operation is Administrator-only, synchronous/bounded and diagnostic. This is not a generic ETL platform or selective tenant disaster recovery.
 
-## TailAdmin UI standard
+## API contract boundary
 
-Any import, reconciliation or operations surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+Import, reconciliation, portability and operational status capabilities are protected API
+operations under `/api/v1`. No Laravel HTML operations page, public developer API or generic
+import endpoint is approved; API resources expose only authorized domain data and safe errors.
 
 ## Constitution check
 
@@ -36,9 +43,11 @@ Importers are small per dataset because dependencies and Actions differ. A gener
 - `mpit:backup`, `mpit:backup-verify`, `mpit:import-dry-run`, `mpit:import-apply` commands;
 - deployment remains CI/operator procedure plus structural contracts, not a web auto-updater.
 
-### UI
+### API resources
 
-Administrator Blade/TailAdmin pages for import runs/reconciliation/exclusions, tenant portability export and backup status. Restore is not a one-click web action; UI may display the verified operator procedure/status only.
+Administrator API resources for import runs/reconciliation/exclusions, tenant portability export
+and backup status. Restore is not a one-click browser action; the API exposes only the verified
+operator procedure/status contract.
 
 ## Import package
 

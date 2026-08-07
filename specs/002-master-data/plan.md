@@ -1,19 +1,26 @@
 # Implementation plan — Feature 002 Master data
 
-Status: `PLAN COMPLETE; ROLLING ANALYZE GATE ACTIVE; IMPLEMENTATION IN PROGRESS`
+Status: `PLAN AMENDED FOR API-ONLY TARGET 2026-08-07; ROLLING ANALYZE GATE ACTIVE`
+Constitution: 6.0.0; ADR-036; PD-API-001
 Dependencies: Feature 001 platform; Feature 007 tenancy/RBAC; shared revision infrastructure
+
+**Amendment 6.0.0 supersession note (2026-08-07).** Any later Blade/TailAdmin/UI subsection is
+deprecated and replaced by the API contract boundary above; domain Actions, Policies, Queries and
+tenant invariants remain normative.
 
 ## Summary
 
 Implement fixed-calendar planning years, cost centers and vendors as three small tenant-owned aggregates. Planning-year boundaries are derived and immutable; deactivation preserves historical readability and no planning-year revision UI exists. Vendors and cost centers use operational revisions and permit constrained deletion only when unreferenced. No generic master-data service or third-party tree package.
 
-## TailAdmin UI standard
+## API contract boundary
 
-Any Blade/TailAdmin surface for this feature follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+Planning-year, cost-center and vendor capabilities are exposed only through authorized
+operation-oriented `/api/v1` resources. React/TailAdmin is a separate presentation client; this
+feature does not create Laravel HTML pages or generic CRUD endpoints.
 
 ## Constitution check
 
-Passes C-01, C-04, amended C-05/C-12, C-07, C-10 and C-11. Planning years use the Constitution 5.0.0 fixed-calendar exception. Cross-tenant catalogues, observer side effects, role-name conditions and automatic historical reassignment are prohibited.
+Passes C-01, C-04, amended C-05/C-12, C-07, C-10 and C-11. Planning years use the Constitution 6.0.0 fixed-calendar exception. Cross-tenant catalogues, observer side effects, role-name conditions and automatic historical reassignment are prohibited.
 
 ## Files and responsibilities
 
@@ -39,9 +46,11 @@ A generic `SaveMasterData` Action is prohibited because date overlap, tree and v
 - `VendorListQuery`, which rejects an inactive tenant context;
 - active selectors that include an inactive current value only when editing an existing same-tenant historical reference; arbitrary inactive or foreign IDs never widen the selector.
 
-### Policies and UI
+### Policies and API resources
 
-One Policy and one Blade/TailAdmin page flow per model. Cost-center hierarchy uses native TailAdmin composition first. Revision pages use the shared revision contract.
+One Policy and one API Resource/DTO contract per model. Cost-center hierarchy and revision history
+remain operation-specific resources. Every query repeats active tenant context, ability and
+same-tenant ownership checks.
 
 ## Invariants
 

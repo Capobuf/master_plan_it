@@ -1,10 +1,10 @@
 # Tasks — Feature 005 Reporting, BudgetVersion and analytics
 
 Status: `TASKS COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
-Input: Constitution 5.0.0; Feature 005 design/contracts; shared Money, Expense, project, tenant, permission and output contracts.
+Input: Constitution 6.0.0 / ADR-036 / PD-API-001; Feature 005 design/contracts; shared Money, Expense, project, tenant, permission and API output contracts.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
-Branch UI directive: all application UI tasks in this file target official TailAdmin Laravel Free Blade components, Tailwind CSS and native Alpine methods. Legacy Filament, Livewire, Preline and Inertia/React feature-view paths are superseded; use Blade pages/components, `tests/Feature/Application` and focused browser tests instead.
+API-only directive: dashboard, Budget, report, scenario, version and export capabilities use authorized `/api/v1` dataset/resource contracts. React/TailAdmin renders but never recalculates; Laravel Blade, Tailwind, Alpine, Vite and HTML/browser routes are deprecated and must not be added.
 
 Tests use exact decimal strings. Presentation code never calculates authoritative economics. `[FND]`, `[USn]` and `[VER]` classes are defined by the readiness registry. Feature 007 owns tenant report-branding settings and returns an immutable DTO; Feature 005 consumes that DTO only inside report/output content while the Master Plan IT application shell remains unchanged.
 

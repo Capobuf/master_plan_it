@@ -1,15 +1,23 @@
 # Implementation plan — Feature 003 Expense domain
 
-Status: `PLAN COMPLETE; ROLLING ANALYZE GATE ACTIVE; IMPLEMENTATION IN PROGRESS`
+Status: `PLAN AMENDED FOR API-ONLY TARGET 2026-08-07; ROLLING ANALYZE GATE ACTIVE`
+Constitution: 6.0.0; ADR-036; PD-API-001
 Dependencies: Features 001, 002 and 007; shared revision infrastructure
+
+**Amendment 6.0.0 supersession note (2026-08-07).** Any later Laravel Blade/TailAdmin,
+Livewire/browser or presentation subsection is deprecated and replaced by the API contract
+boundary above. Keep Money, Actions, Queries, policies and tenant ownership; add no HTML route.
 
 ## Summary
 
 Implement decimal Money/VAT/allocation primitives and the Expense aggregate with independent Estimate, Quote and Actual rows. The current aggregate has one identity, operational snapshots, soft-delete infrastructure, Actual confirmation and no replacement-state graph. Private attachments may belong to the Expense or one row, use the approved 10 MiB/type allow-list, and are captured by complete per-revision manifests that reuse immutable payload versions for unchanged bytes under a configurable 2 GiB-per-tenant default quota. Confirmation stops contract synchronization but does not remove authorized version/update/delete operations.
 
-## TailAdmin UI standard
+## API contract boundary
 
-Any Blade/TailAdmin Expense surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+Expense registration, detail, current rows, confirmation, mutation, revision and attachment
+capabilities require explicit authorized `/api/v1` operation contracts. Money resources return
+exact decimal Net/VAT/Gross components and currency; the React client formats but never
+recalculates them. No Laravel HTML page is a deliverable.
 
 ## Constitution check
 
@@ -48,7 +56,7 @@ Passes C-02, C-03, C-04, C-05, C-07, C-10, C-11 and C-12. Attachment payloads li
 
 No `ReplaceExpenseRow` Action in the target model.
 
-### Queries/UI
+### Queries/API resources
 
 - `ExpenseRegisterQuery` returns register DTOs and server totals;
 - `ExpenseDetailQuery` includes only current header and rows in the selected Slice 1; attachment and revision enrichment remains owned by their later tasks and is not queried or claimed early;

@@ -1,15 +1,22 @@
 # Implementation plan — Feature 004 Contracts and projects
 
-Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
+Status: `PLAN AMENDED FOR API-ONLY TARGET 2026-08-07; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
+Constitution: 6.0.0; ADR-036; PD-API-001
 Dependencies: Features 001–003 and 007; shared revision/audit infrastructure
+
+**Amendment 6.0.0 supersession note (2026-08-07).** Any later Blade/TailAdmin/UI subsection is
+deprecated and replaced by the API contract boundary above. Contract/generation Actions, source
+identity, authorization and terminal-deletion invariants remain normative.
 
 ## Summary
 
 Implement projects as decision context and contracts as term-based generators of Actual rows. A generated occurrence has one immutable source key. Synchronization creates or updates only a system-managed Actual `ToConfirm`; manual modification, confirmation, or deletion of its source contract/term makes it user-authoritative. Project deletion is blocked by current linked Expenses. Project/contract/term deletion is irreversible in the application; contract/term deletion never cascades to Expenses and writes immutable deletion provenance while stopping future generation. Contracts/projects never contribute independent monetary totals.
 
-## TailAdmin UI standard
+## API contract boundary
 
-Any Blade/TailAdmin project or contract surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+Projects, contracts, terms and generation controls are exposed only through authorized
+operation-oriented `/api/v1` contracts. Generated-expense links, source keys and terminal
+deletion provenance are API resources; no generic CRUD or Laravel HTML surface is approved.
 
 ## Constitution check
 
@@ -36,11 +43,11 @@ Passes C-03, C-04, C-05, C-07, C-10, C-11, C-12 and C-13. Economic observers, du
 - `SuppressContractOccurrence`, `ResumeContractOccurrence`, `ResumeAndGenerateOccurrence`, `GenerateContractOccurrenceForYear`;
 - `ConfirmActual` remains Feature 003-owned.
 
-### Queries/UI
+### Queries/API resources
 
 - `ProjectListQuery`, `ContractListQuery`, `ContractDetailQuery`, `ContractGenerationHistoryQuery`;
 - one Policy per resource plus explicit generation Gates;
-- operational Blade Project/Contract list/editor/timeline/history components rendered in the shared TailAdmin tenant layout.
+- operation-specific Project/Contract list/detail/timeline/history API Resources/DTOs.
 
 No `ContractAnnualizer` service unless tests prove a reusable calculation independent from generation; term values use shared Money/VAT services.
 

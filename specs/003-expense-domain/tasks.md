@@ -1,10 +1,10 @@
 # Tasks — Feature 003 Expense domain
 
 Status: `TASKS COMPLETE; ROLLING ANALYSIS ACTIVE; IMPLEMENTATION IN PROGRESS`
-Input: Constitution 5.0.0; current Feature 003 design/contracts; tenant, permission, revision, attachment and error contracts.
+Input: Constitution 6.0.0 / ADR-036 / PD-API-001; current Feature 003 design/contracts; tenant, permission, revision, attachment and API error contracts.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
-Branch UI directive: all application UI tasks in this file target official TailAdmin Laravel Free Blade components, Tailwind CSS and native Alpine methods. Legacy Filament, Livewire, Preline and Inertia/React feature-view paths are superseded; use Blade pages/components, `tests/Feature/Application` and focused browser tests instead.
+API-only directive: Expense capabilities use authorized `/api/v1` operation contracts and exact decimal API resources. React/TailAdmin formats server values only; Laravel Blade, Tailwind, Alpine, Vite and HTML/browser routes are deprecated and must not be added.
 
 Every task is test-first. Monetary assertions compare normalized decimal strings exactly. Feature 002 owns shared revision persistence/orchestration. Feature 003 owns Money, the current Expense aggregate and the application-owned attachment foundation used by Expense.
 

@@ -1,15 +1,23 @@
 # Implementation plan — Feature 007 Tenancy and access control
 
-Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION IN PROGRESS`
+Status: `PLAN AMENDED FOR API-ONLY TARGET 2026-08-07; IMPLEMENTATION IN PROGRESS`
+Constitution: 6.0.0; ADR-036; PD-API-001
 Dependencies: Feature 001 bootstrap; permission catalogue and shared security contracts
+
+**Amendment 6.0.0 supersession note (2026-08-07).** Any later Blade/TailAdmin/resource UI
+subsection is deprecated and replaced by protected API operation/resource contracts above.
+Tenant context, role and authorization invariants remain normative.
 
 ## Summary
 
 Implement single-database tenant ownership, explicit Administrator tenant context, protected platform role, tenant operational settings and configurable tenant roles through Spatie Permission teams. Every route, query, Action, file, revision, output, command and scheduler path fails closed without valid tenant/ability. No tenancy package, subdomain, impersonation or multi-tenant membership.
 
-## TailAdmin UI standard
+## API contract boundary
 
-Any tenant-context, role or access surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+Tenant context, users, roles, abilities, branding and operational settings use protected
+operation-oriented `/api/v1` contracts. The separate React/TailAdmin client may use returned
+abilities for presentation/navigation only; Laravel repeats authorization, tenant ownership and
+invariants. No Laravel HTML surface is a deliverable.
 
 ## Constitution check
 

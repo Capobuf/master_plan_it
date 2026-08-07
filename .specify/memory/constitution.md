@@ -1,22 +1,68 @@
 <!--
 Sync Impact Report
-- Version change: 4.0.0 -> 5.0.0
-- Modified principles: C-05 — Current state, revisions, deletion, and audit;
-  C-09 — Migration is repeatable and reconcilable;
-  C-12 — Explicit versioning contracts;
-  C-13 — Contract generation remains controllable and idempotent
-- Added sections: Amendment 5.0.0
-- Removed sections: none
-- Follow-up: propagate terminal project/contract/contract-term identity rules through
-  Features 004/006, plans, tasks, contracts, tests, portability and cross-feature registries
+- Version change: 5.0.0 -> 6.0.0
+- Modified principles: C-04 — Explicit domain operations; C-06 — API-only Laravel
+  backend; C-08 — One semantic dataset per API contract; C-11 — Tenant isolation and
+  API context
+- Added sections: Amendment 6.0.0; API-only deployment and response-contract rules
+- Removed sections: the former shared-hosting-compatible monolith/frontend C-06 rule
+- Follow-up: propagate API contracts, Sanctum session authentication, capability
+  coverage, private loopback deployment and frontend removal through plans, tasks,
+  traceability and implementation gates; no runtime changes are authorized by this amendment
 - Deferred placeholders: none
 -->
 # Master Plan IT Replatform Constitution
 
-Version: 5.0.0
+Version: 6.0.0
 Ratified baseline: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`  
-Amended: 2026-08-04
-Scope: documentation-only design for the Laravel replatform.
+Amended: 2026-08-07
+Scope: authoritative governance for the Laravel API backend and separate React client.
+
+## Amendment 6.0.0
+
+**Rationale.** The Product Owner approved a complete separation of domain/backend and
+presentation. Laravel is now an API-only backend; the public React/TypeScript application uses
+official TailAdmin React Free and is deployed separately. This is a backward-incompatible
+replacement of the former Laravel Blade/TailAdmin frontend decision and therefore a major
+constitutional amendment.
+
+**Current.** Laravel and its Blade/TailAdmin frontend are co-located in one project. The former
+contract allowed Laravel-rendered application HTML, Tailwind, Alpine, ApexCharts, Vite and a
+single deployable service.
+
+**Target.** Laravel owns the database, authentication, Sanctum session, tenant context, RBAC,
+authorization, validation, business invariants, Actions, economic calculations, revisions,
+generation, persistence, audit, exports and file authorization. It exposes versioned first-party
+JSON APIs under `/api/v1` and the infrastructure-only `/sanctum/csrf-cookie` path. React and
+TypeScript with official TailAdmin React Free are a separate deployable service. The public
+frontend forwards relative browser requests through a same-origin proxy to Laravel at a private
+loopback/internal origin; Laravel is not a public developer API. The browser never connects
+directly to Laravel, accesses the database, or receives an internal origin. The frontend is a
+presentation/client layer and MUST NOT duplicate authorization or economic/business rules.
+
+Laravel uses Sanctum SPA session authentication with `statefulApi()` and `auth:sanctum`; bearer
+tokens, OAuth, JWT, refresh tokens and browser personal tokens are not part of this contract.
+Application capabilities require explicit operation-oriented API contracts, stable error codes,
+safe localized messages, correlation IDs, tenant scope and exact decimal money components. API
+responses MUST NOT expose passwords, secrets, tombstones, persistence-only metadata or generic
+model/column dumps. Old Blade/browser contracts are deprecated; no Laravel application HTML
+route may remain after API parity is proven.
+
+**Affected principles and artifacts.** C-04, C-06, C-08 and C-11 are amended. PD-UI-001 is
+superseded. Architecture ADRs, target architecture, integrated plan, Feature 001–007 API
+tasks/contracts, capability matrix, OpenAPI contract, test contracts and source traceability
+must be propagated before deleting the Laravel UI. No application capability may be removed
+until its implemented operation has an equivalent authorized API contract.
+
+**Compatibility and migration impact.** Existing Blade/view/browser contracts are deprecated and
+must not be treated as API authority. The migration is from one co-located Laravel deployable to
+two deployable services with a private frontend proxy. Laravel remains the only business layer;
+the React service adds presentation only. API versioning starts at `/api/v1`; `/api/v2` and version
+negotiation are forbidden. API coverage is classified as `IMPLEMENTED_API`, `INTERNAL_ONLY`,
+`FOUNDATION_ONLY` or `PLANNED`; unimplemented capabilities remain absent rather than receiving
+placeholder CRUD endpoints.
+
+**Approval owner.** Product Owner, approved on 2026-08-07.
 
 ## Amendment 5.0.0
 
@@ -109,9 +155,13 @@ deactivatable, reactivatable, historically readable, and permanently non-deletab
 
 ## C-04 — Explicit domain operations
 
-**Rule.** Complex writes use named Actions under `app/Domain/<Area>/Actions`. Economic side effects are prohibited in Eloquent observers, model boot hooks, accessors, Blade, Alpine, JavaScript, and package callbacks.
+**Rule.** Complex writes use named Actions under `app/Domain/<Area>/Actions`. Economic side effects
+are prohibited in Eloquent observers, model boot hooks, accessors, HTTP controllers, API
+resources, client JavaScript, and package callbacks.
 
-**Architecture consequence.** Controllers and Filament/Livewire components authorize and delegate. Each Action owns a documented transaction boundary. Plugins provide infrastructure or UI only; they do not own domain decisions.
+**Architecture consequence.** API controllers authorize and delegate; each Action owns a documented
+transaction boundary. API Resources/DTOs transform responses without domain decisions. Plugins
+provide infrastructure only; they do not own domain decisions.
 
 **Verification.** File-map review; tests invoke Actions directly; static review for observers or plugin hooks modifying economic state.
 
@@ -147,13 +197,26 @@ project/contract/term non-reactivation, linked-Expense survival/provenance, Actu
 correction/deletion, deleted-record exclusion, audit minimization/configuration/retention,
 authorization, and rollback tests.
 
-## C-06 — Shared-hosting-compatible monolith
+## C-06 — Laravel is an API-only backend with a separate presentation client
 
-**Rule.** Initial production is a single Laravel monolith with Filament, Blade, selective Livewire, MySQL, local/public filesystem, and one cron entry. No runtime requires Redis, WebSockets, Node.js, a permanent queue worker, or a second application service.
+**Rule.** Laravel MUST NOT render application UI. All application capabilities are exposed through
+operation-oriented JSON contracts under `/api/v1`; `/sanctum/csrf-cookie` is the only
+infrastructure exception. Laravel is the sole owner of authentication, session, tenant context,
+RBAC, authorization, validation, business invariants, Actions, economic calculations, revisions,
+generation, persistence, audit, exports and file authorization. The frontend is a separate
+React/TypeScript deployable using official TailAdmin React Free and is presentation/client code
+only; it MUST NOT access the database or implement a second backend/business layer.
 
-**Architecture consequence.** Vite assets are precompiled before release. Scheduled checks run synchronously in bounded commands. Queue driver defaults to `sync`; no notification implements `ShouldQueue` at launch.
+**Architecture consequence.** Production has two deployable services: a public frontend and a
+private Laravel API reachable by loopback/internal origin through the frontend reverse proxy. The
+browser uses same-origin relative `/api/v1/*` and `/sanctum/*` URLs only. Laravel uses Sanctum SPA
+session authentication (`statefulApi()` and `auth:sanctum`), not bearer tokens. Laravel contains
+no application Blade routes or frontend build/runtime dependency after API parity is proven. No
+wildcard CORS or public developer API is enabled.
 
-**Verification.** Shared-hosting checklist, scheduler smoke, and deployment smoke test.
+**Verification.** API route/resource contract tests, Sanctum CSRF/session tests, authorization and
+tenant-isolation tests, API error/pagination/schema tests, capability matrix and OpenAPI parity,
+no-HTML-route checks, frontend-proxy checks and a backend install without Node/npm.
 
 ## C-07 — Configurable tenant authorization with protected platform control
 
@@ -167,7 +230,12 @@ authorization, and rollback tests.
 
 ## C-08 — One semantic dataset per report
 
-**Rule.** Screen table, KPI cards, chart, print, CSV, and XLSX for the same selected report scope consume the same query/result contract and filters. An authorized output explicitly represents either the current filtered dataset or a complete selected report/year scope; it never silently changes scope and never combines tenants. Presentation layers cannot recompute totals. Named budget versions and scenarios use their own explicit immutable dataset contracts and are visibly distinguished from current official values.
+**Rule.** API resources, dashboard datasets, exports and future client views for the same selected
+report scope consume the same query/result contract and filters. An authorized output explicitly
+represents either the current filtered dataset or a complete selected report/year scope; it never
+silently changes scope and never combines tenants. Presentation clients cannot recompute totals.
+Named budget versions and scenarios use their own explicit immutable dataset contracts and are
+visibly distinguished from current official values.
 
 **Verification.** Dataset snapshot tests, filtered-versus-complete scope tests, current-versus-version isolation, and export-versus-screen equality tests.
 
@@ -183,7 +251,10 @@ authorization, and rollback tests.
 
 ## C-11 — Tenant isolation and visible context
 
-**Rule.** Every operational aggregate belongs to one tenant. Cross-tenant references and unscoped access are forbidden. The current tenant is visible in side navigation and page breadcrumbs. UI hiding never replaces server-side authorization. Administrator does not impersonate tenant users.
+**Rule.** Every operational aggregate belongs to one tenant. Cross-tenant references and unscoped
+access are forbidden. The selected tenant context is returned only through an authorized API
+context contract; a client may use abilities for presentation/navigation, but client hiding never
+replaces server-side authorization. Administrator does not impersonate tenant users.
 
 **Architecture consequence.** Tenant ownership is explicit in persistence and query contracts. Missing, inactive, invalid, or unauthorized tenant context fails closed and never falls back to unscoped data.
 

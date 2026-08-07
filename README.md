@@ -8,7 +8,7 @@ This repository branch contains the authoritative Spec Kit replatform contract a
 - legacy branch: `refactor/reports`;
 - verified legacy commit: `e1f6dd2f770dbbdd0b5739ac7da4a575ec142bb3`;
 - latest historical integrated analysis: `docs/replatform/speckit-analyze-2026-08-04-constitution-5.0.0.md`, PASS on its analyzed tree; the live 2026-08-05 frontend/vertical-slice remediation is governed by current artifacts and `.codex/orchestration-plan.md`, with its independent final analyze gate passed at 0 CRITICAL, 0 HIGH, 0 MEDIUM and 0 LOW findings;
-- Constitution: 5.0.0;
+- Constitution: 6.0.0 (Amendment 2026-08-07; PD-UI-001 superseded by PD-API-001);
 - product questions: Q-001–Q-041 closed; 0 open.
 
 ## Spec Kit state
@@ -28,7 +28,8 @@ This repository branch contains the authoritative Spec Kit replatform contract a
 - fourth 2026-08-04 analysis: recorded 0 CRITICAL, 1 HIGH and 0 MEDIUM findings;
 - invariant task/test ownership remediation: COMPLETE; integration state authoritative only in GitHub PR metadata; final analysis completed below;
 - integration state: authoritative only in GitHub PR metadata;
-- Constitution 5.0.0 product clarification and cross-artifact remediation: COMPLETE;
+- Constitution 5.0.0 product clarification and cross-artifact remediation: HISTORICAL;
+- Constitution 6.0.0 API-only amendment and governance propagation: COMPLETE; runtime migration pending;
 - historical integrated `/speckit.analyze`: PASS — 0 CRITICAL, 0 HIGH, 0 MEDIUM; superseded by rolling implementation-time analysis;
 - `/speckit.checklist`: 289/295 requirement-quality items currently passed;
 - `/speckit.implement`: active.
@@ -56,6 +57,11 @@ The historical analyzed graph contained 153 task IDs. Rolling analysis added T00
 
 ## Planned target
 
-Laravel 13 modular monolith on PHP 8.3/MySQL 8.4, Sail verification, official TailAdmin Laravel Free Blade components on Tailwind CSS 4 with native Alpine methods and ApexCharts, explicit one-database tenancy, configurable tenant RBAC, operational snapshot revisions, one current Expense source, one shared economic kernel, rolling Budget, later controlled contract generation/BudgetVersion/output, staged migration/portability, verified whole-installation backup and immutable release artifact. The first planned usable slice is manual Expense → current economic dataset → current Budget.
+Laravel 13 API-only modular monolith on PHP 8.3/MySQL 8.4 with explicit one-database tenancy,
+configurable tenant RBAC, Sanctum SPA session, versioned `/api/v1` operation contracts, operational
+snapshot revisions, one current Expense source, one shared economic kernel and rolling Budget. A
+separate React/TypeScript official TailAdmin React Free frontend is the second deployable; its
+proxy reaches Laravel privately over loopback. The first API slice is manual Expense → current
+economic dataset → current Budget.
 
 Spec Kit tooling was installed and updated as documented in `docs/replatform/spec-kit-installation-2026-08-04.md`. Laravel implementation started on 2026-08-04 with the verified T001-001 scaffold/dependency gate; migrations, frontend build, backup, restore, import, deployment and cutover evidence remain governed by their unchecked tasks.

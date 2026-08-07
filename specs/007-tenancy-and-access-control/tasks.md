@@ -1,10 +1,10 @@
 # Tasks — Feature 007 Tenancy and access control
 
 Status: `TASKS COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION IN PROGRESS`
-Input: Constitution 5.0.0; current Feature 007 design; authorization, permission and error catalogues.
+Input: Constitution 6.0.0 / ADR-036 / PD-API-001; current Feature 007 design; authorization, permission and API error catalogues.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
-Branch UI directive: all application UI tasks in this file target official TailAdmin Laravel Free Blade components, Tailwind CSS and native Alpine methods. Legacy Filament, Livewire, Preline and Inertia/React feature-view paths are superseded; use Blade pages/components, `tests/Feature/Application` and focused browser tests instead.
+API-only directive: tenancy, users, roles, abilities, branding and settings use protected `/api/v1` operation contracts and resources. React/TailAdmin is a separate presentation client; Laravel Blade, Tailwind, Alpine, Vite and HTML/browser routes are deprecated and must not be added.
 
 Tests are written first. Feature 007 owns Tenant, `TenantContext`, tenant lifecycle, reusable tenant-ownership policy primitives, tenant user/role Actions, tenant indicator, tenant report-branding and operational settings, and User/Role/Tenant Resources. The complete cross-feature ability matrix is intentionally late and starts only after every exact owning implementation task named in T007-011 is complete.
 

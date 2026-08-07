@@ -2,7 +2,7 @@
 
 Status: `APPROVED`  
 Scope: Laravel replatform product clarification  
-Decision dates: 2026-08-02 through 2026-08-03  
+Decision dates: 2026-08-02 through 2026-08-07
 Source: Product Owner answers recorded in `clarification-log.md`.
 
 | ID | Approved decision | Required propagation |
@@ -51,9 +51,34 @@ Source: Product Owner answers recorded in `clarification-log.md`.
 
 ## Additional approved product contracts
 
-### PD-UI-001 — Operational frontend and first usable slice
+### PD-UI-001 — Operational frontend and first usable slice — SUPERSEDED
 
-All application and administrative surfaces use Laravel 13, the official TailAdmin Laravel Free Blade components, Tailwind CSS 4, native Alpine methods and ApexCharts while reusing the same session, tenant context, authorization, Actions, Queries, DTOs and middleware. Filament UI, Livewire, Preline and Inertia/React application views are excluded so the product has one frontend stack. The first implementation milestone is an authorized manual Expense list/create/edit flow followed by the current Budget KPI/table/chart from the same economic dataset; Feature 004 generation, BudgetVersion, scenarios, outputs, migration and operations are later unless an exact technical dependency proves otherwise. ADR-035 owns the technical boundary and T001-028/T001-029 own the dependency/lifecycle gate.
+`SUPERSEDED BY PD-API-001`, approved on 2026-08-07. The former Laravel Blade/TailAdmin
+co-location decision is retained only as historical evidence and is not an implementation
+authority. Its browser/view contracts, ADR-035 UI boundary and T001-028/T001-029 frontend lock
+gate are deprecated by the API-only amendment.
+
+### PD-API-001 — API-only Laravel and separate React frontend
+
+The Product Owner approved Laravel as an API-only backend and a separate React/TypeScript
+frontend using official TailAdmin React Free. The system has two deployable services: a public
+frontend and a private Laravel API reached through a same-origin frontend reverse proxy at an
+internal loopback origin. The browser uses relative `/api/v1/*` and `/sanctum/*` paths only; the
+internal origin is never shipped to browser JavaScript. Laravel is the only owner of
+authentication, Sanctum SPA session, tenant context, RBAC, authorization, validation, business
+invariants, Actions, economic calculations, revisions, generation, persistence, audit, exports
+and file authorization. The React service is presentation/client code and MUST NOT access the
+database or implement a second backend/business layer.
+
+All implemented capabilities require operation-oriented API contracts. Protected routes use
+`auth:sanctum`; SPA initialization uses `/sanctum/csrf-cookie`; application APIs are versioned
+under `/api/v1` with no `/api/v2` or version negotiation. JSON responses use resource/collection
+envelopes, exact decimal money components and stable safe error codes with correlation IDs. No
+generic model/column exposure, public developer API, wildcard CORS or placeholder CRUD endpoint
+is approved. Laravel application HTML routes and the old Blade/browser contracts are deprecated
+and may be removed only after capability-matrix parity is demonstrated.
+
+**Approval owner:** Product Owner — approved 2026-08-07.
 
 ### Operational revision history
 

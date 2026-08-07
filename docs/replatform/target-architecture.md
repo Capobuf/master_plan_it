@@ -1,7 +1,7 @@
 # Target architecture
 
-Status: `PROPOSED TARGET — PLANNED; /speckit.analyze PASSED; IMPLEMENTATION READY`
-Authority: Constitution 5.0.0; `replatform-plan.md`; `technical-research.md`
+Status: `APPROVED TARGET — API-ONLY AMENDMENT 2026-08-07; IMPLEMENTATION IN PROGRESS`
+Authority: Constitution 6.0.0; ADR-036; `replatform-plan.md`; `technical-research.md`
 
 ## Runtime
 
@@ -9,16 +9,24 @@ Authority: Constitution 5.0.0; `replatform-plan.md`; `technical-research.md`
 - Laravel 13.22.0;
 - Laravel Sail 1.64.0;
 - MySQL 8.4.10 LTS, InnoDB, utf8mb4, strict mode;
-- official TailAdmin Laravel Free Blade components for every application and administrative surface, with Tailwind CSS 4 and native Alpine methods through Vite;
-- Alpine.js 3.14.9 and ApexCharts 5.3.5 locked by the frontend lock;
-- sync queue and one scheduler cron;
-- no Redis, WebSockets, permanent worker, runtime Node or second application service.
+- Laravel API-only runtime with JSON resources/DTOs under `/api/v1`;
+- Sanctum SPA session authentication, `statefulApi()` and `auth:sanctum`;
+- React/TypeScript with official TailAdmin React Free as a separate frontend deployable;
+- a public frontend reverse proxy forwards relative `/api/v1/*` and `/sanctum/*` requests to
+  Laravel on a private loopback/internal origin;
+- sync queue and one scheduler cron where required by backend operations;
+- no Laravel Blade application pages, Tailwind, Alpine, ApexCharts, Vite, npm frontend runtime,
+  wildcard CORS or public developer API.
 
 Exact dependency resolution is the first implementation gate; failure blocks and amends the plan, never silently falls back.
 
 ## Application boundary
 
-One Laravel modular monolith and one database. Tenants use explicit `tenant_id`; tenant users belong to one tenant. Administrator is protected global identity and enters explicit tenant context without impersonation.
+Laravel remains one modular monolith and one database, deployed separately from the frontend.
+Tenants use explicit `tenant_id`; tenant users belong to one tenant. Administrator is protected
+global identity and enters explicit tenant context without impersonation. The browser knows only
+relative same-origin paths; `API_INTERNAL_ORIGIN` is proxy configuration and is never sent to
+client JavaScript.
 
 RBAC: Spatie Permission 8.3.0 teams keyed by `tenant_id` plus Filament Shield 4.3.1. Team context supports permissions but does not replace business query scoping. Policies/Gates authorize; Actions enforce tenant and domain invariants.
 
@@ -50,7 +58,10 @@ Directories/classes are created only for concrete responsibility. No repository 
 - Actions own complex writes/transactions.
 - Queries own reusable tenant-scoped read DTOs.
 - Models own persistence/relations/casts without domain side effects.
-- Laravel controllers authorize, validate, load data and invoke Actions; Blade renders markup; TailAdmin/Alpine owns documented visual behaviors; ApexCharts renders server-calculated payloads. No presentation layer owns authoritative formulas and no second UI stack is permitted.
+- API controllers authorize, validate, load data and invoke Actions/Queries; API Resources/DTOs
+  transform operation-oriented responses. The React client renders only server-authoritative
+  data and uses `abilities` for presentation/navigation hints. No presentation layer owns
+  authoritative formulas and no second backend/business layer is permitted.
 - Packages provide infrastructure/UI only.
 
 ## Current/history/data-set separation
@@ -89,7 +100,8 @@ Published BudgetVersion is application-owned and never restored through model-ve
 - application audit table; no audit package/export at launch;
 - native database notifications + optional sync mail;
 - CSV authoritative import/export; OpenSpout 4.32 writer-only for XLSX;
-- dedicated Blade print; no server PDF package;
+- API output resources remain presentation-neutral; print/export presentation belongs to the
+  authorized client while Laravel owns export data and file authorization;
 - Spatie Backup 10.3 conditional on PHP 8.3 Composer resolution and host preflight.
 
 ## Testing/release

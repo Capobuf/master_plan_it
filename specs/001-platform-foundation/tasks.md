@@ -1,14 +1,14 @@
 # Tasks — Feature 001 Platform foundation
 
 Status: `IMPLEMENTATION IN PROGRESS`
-Input: Constitution 5.0.0; Feature 001 spec/plan; development/test, permission and task-readiness contracts.
+Input: Constitution 6.0.0 / ADR-036 / PD-API-001; Feature 001 spec/plan; development/test, permission and task-readiness contracts.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
-Branch UI directive (Product Owner amendment, 2026-08-06): all application UI tasks target the official TailAdmin Laravel Free Blade components, Tailwind CSS and TailAdmin's native Alpine methods. Legacy references to Filament, Livewire, Preline and Inertia/React feature views are superseded; use Blade pages/components, ordinary Laravel feature tests and focused browser tests instead. Domain Actions, Queries, Policies, authorization and tenant middleware remain unchanged.
+API-only directive (Product Owner amendment, 2026-08-07): Laravel tasks expose authorized operation-oriented JSON contracts under `/api/v1`; Sanctum SPA session uses `/sanctum/csrf-cookie`, `statefulApi()` and `auth:sanctum`. React/TypeScript + TailAdmin React Free is a separate presentation deployable. Legacy Blade/view/browser clauses, frontend lock/build tasks and HTML routes are deprecated; no Node/npm dependency is valid for the Laravel backend. Domain Actions, Queries, Policies, authorization and tenant middleware remain unchanged.
 
 Every task is test-first. `[FND]` identifies setup/shared infrastructure, `[USn]` maps to a Feature 001 user story, and `[VER]` creates no runtime behavior. Feature 007 owns Tenant, `TenantContext`, tenant lifecycle and tenant User/Role/Tenant resources. Feature 001 owns application bootstrap, authentication integration, password operations, platform settings/audit, the notification delivery primitive, final scheduler registration and release workflows.
 
-Supersession ledger (2026-08-06): completed tasks retain their historical checkbox/evidence status, but every frontend clause is interpreted under the branch UI directive above. The branch does not install or verify Preline, Livewire, Filament UI or Inertia/React application views. Any legacy T001-028/T001-029 wording about those technologies is superseded by the TailAdmin Laravel Free Blade/Alpine implementation and validation.
+Supersession ledger (2026-08-07): completed tasks retain historical checkbox/evidence status, but every frontend clause is superseded by the API-only directive above. T001-028/T001-029 and any Laravel UI lock/build/browser wording are deprecated. API parity, capability coverage, response/error schemas and backend-without-Node gates replace those clauses.
 
 Foundation-story ownership: T001-001–T001-004 and T001-007 benefit US-001-01; T001-005 benefits US-001-06; T001-006 benefits US-001-03; T001-022–T001-023 benefit US-001-01.
 

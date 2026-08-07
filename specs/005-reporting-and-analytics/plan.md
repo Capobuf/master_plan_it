@@ -1,15 +1,23 @@
 # Implementation plan — Feature 005 Reporting, BudgetVersion and analytics
 
-Status: `PLAN COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
+Status: `PLAN AMENDED FOR API-ONLY TARGET 2026-08-07; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
+Constitution: 6.0.0; ADR-036; PD-API-001
 Dependencies: Features 001, 003 and 007 for the manual-Expense current Budget; Feature 004 only for later project-stage enrichment; shared economic kernel
+
+**Amendment 6.0.0 supersession note (2026-08-07).** Any later Blade/Livewire/chart/print UI
+subsection is deprecated and replaced by the API contract boundary above. Keep the shared
+economic dataset and output authorization; the client owns presentation only.
 
 ## Summary
 
 Implement one current rolling Budget dataset, tenant dashboard, report/drill-down, scenarios, immutable named BudgetVersion snapshots, comparisons, Blade print view and CSV/OpenSpout XLSX output. Every current formula is owned by the shared Economics query/engine. No persisted current Budget total, server PDF package or presentation-layer recalculation.
 
-## TailAdmin UI standard
+## API contract boundary
 
-Any Blade/TailAdmin dashboard, Budget or report surface follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): search official TailAdmin first, choose the best native fit, and document exceptions before implementation.
+Dashboard, rolling Budget, economic report, filters and pagination are API dataset/resource
+contracts under `/api/v1`. Laravel returns authoritative exact values; the separate React client
+owns formatting and presentation without recalculation. Print/export authorization and dataset
+selection remain Laravel-owned operations.
 
 ## Constitution check
 
@@ -31,9 +39,9 @@ Shared Money/VAT/allocation services are reused, not copied.
 
 - `AnnualBudget` context model and migration;
 - `TenantDashboardQuery` composes one economic dataset plus non-economic alerts;
-- operational Blade current-Budget and economic-report pages rendered within the shared TailAdmin tenant layout;
+- current-Budget and economic-report API Resources/DTOs with explicit scope/filter contracts;
 - `EconomicReportFilterData` and typed grouping/order enums;
-- ApexCharts adapter that renders server-calculated number copies and owns explicit initialization/cleanup through the TailAdmin/Alpine lifecycle.
+- presentation-neutral dataset payloads; chart rendering belongs to the separate React client.
 
 ### Scenarios
 

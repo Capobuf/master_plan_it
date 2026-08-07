@@ -2,19 +2,26 @@
 
 Status: `AUTHORITATIVE PHASE INDEX`  
 Latest formal integrated-analysis snapshot: `speckit-analyze-2026-08-04-constitution-5.0.0.md`; historical PASS on its analyzed documentation tree. The current 2026-08-05 ADR-035/frontend/vertical-slice remediation and its analyze result are recorded in `.codex/orchestration-plan.md` and the amended authoritative artifacts.
-Constitution: 5.0.0
+Constitution: 6.0.0 (Amendment 2026-08-07)
 
 ## Artifact status
 
 | Artifact set | Authoritative status |
 |---|---|
-| Feature 001 `spec.md` / `plan.md` | ADR-035 UI FOUNDATION REMEDIATION PROPAGATED; implementation in progress; T001-028/T001-029 not started |
-| Feature 002 `spec.md` / `plan.md` | CURRENT ON CONSTITUTION 5.0.0; implementation in progress |
-| Feature 003 `spec.md` / `plan.md` | MANUAL EXPENSE SLICE BEFORE ATTACHMENT CAPABILITY; latest persistence/attachment/quota decisions retained; implementation in progress |
-| Feature 004 `spec.md` / `plan.md` | POST-VERTICAL-SLICE; operational UI boundary and terminal-deletion decisions propagated; implementation not started |
-| Feature 005 `spec.md` / `plan.md` | CURRENT MANUAL-EXPENSE BUDGET INDEPENDENT OF FEATURE 004; Slice 2/3 ready after prerequisites; implementation not started |
-| Feature 006 `spec.md` / `plan.md` | IMPLEMENTATION READY; NOT CUTOVER READY; implementation not started |
-| Feature 007 `spec.md` / `plan.md` | LATEST OPERATIONAL-SETTING DECISIONS PROPAGATED; implementation in progress |
+| Feature 001 `spec.md` / `plan.md` | API foundation (Sanctum/auth/context/error/resource contracts) propagated; implementation in progress |
+| Feature 002 `spec.md` / `plan.md` | API Resources/DTOs and tenant-scoped master-data operations; implementation in progress |
+| Feature 003 `spec.md` / `plan.md` | Expense/money/attachment APIs; exact decimal response contract; implementation in progress |
+| Feature 004 `spec.md` / `plan.md` | Project/contract/generation APIs; terminal-deletion contract propagated; implementation not started |
+| Feature 005 `spec.md` / `plan.md` | Dashboard/Budget/report/export APIs; implementation not started |
+| Feature 006 `spec.md` / `plan.md` | Protected migration/operations APIs; not cutover ready; implementation not started |
+| Feature 007 `spec.md` / `plan.md` | Tenant/context/users/roles/settings APIs; implementation in progress |
+
+## API-only current phase
+
+- Product Owner approval: PD-API-001, 2026-08-07;
+- old Laravel Blade/browser contracts: DEPRECATED;
+- API capability classes: `IMPLEMENTED_API`, `INTERNAL_ONLY`, `FOUNDATION_ONLY`, `PLANNED`;
+- API parity, OpenAPI and capability-matrix reconciliation are required before UI removal.
 
 ## Current Spec Kit phase
 

@@ -6,12 +6,12 @@
 | ADR-002 | Current non-deleted expense rows are the sole current economic source | APPROVED | Prevents double counting; revisions, audit, scenarios, deleted records, generation exceptions and budget snapshots are explicit separate datasets. |
 | ADR-003 | `DECIMAL(19,6)` intermediate and 2-decimal business results | APPROVED | Deterministic money, VAT, allocation and comparison. |
 | ADR-004 | Money arithmetic via BCMath value objects | APPROVED | Avoids float drift without a money dependency. |
-| ADR-005 | Filament/Blade by default, Livewire selectively | AMENDED BY ADR-035 | Historical foundation choice retained for authentication, global administration, tenant/user/RBAC administration, technical settings and suitable simple CRUD; it no longer governs tenant-facing operational screens. |
-| ADR-006 | ApexCharts only | AMENDED BY ADR-035 | One maintained chart integration aligned with the TailAdmin Laravel distribution and printable dataset reuse. |
+| ADR-005 | Filament/Blade by default, Livewire selectively | SUPERSEDED BY ADR-036 | Historical Laravel UI foundation; no application HTML surface remains authoritative after the API-only transition. |
+| ADR-006 | ApexCharts only | SUPERSEDED BY ADR-036 | Historical Laravel chart choice; chart presentation moves to the separate React client. |
 | ADR-007 | No permanent worker; synchronous bounded commands | APPROVED | Shared-hosting constraint. |
 | ADR-008 | Contract sync updates only system-managed unconfirmed occurrences; source-key idempotent, suppression-aware and no-overwrite | AMENDED / APPROVED | Manual modification or confirmation makes the Actual user-authoritative without making it permanently immutable. |
 | ADR-009 | Migration through versioned UTF-8 CSV packages and staging | APPROVED | No direct Frappe database assumption; deterministic replay and reconciliation. |
-| ADR-010 | Dusk only for browser-owned lifecycle, focus, responsive and print/download behavior | APPROVED | Avoids duplicating Feature tests in a slow suite. |
+| ADR-010 | Dusk only for browser-owned lifecycle, focus, responsive and print/download behavior | SUPERSEDED BY ADR-036 | Browser UI tests are deprecated with Laravel application HTML; API contract tests own backend behavior. |
 | ADR-011 | Explicit tenant ownership in one Laravel application and one database | APPROVED | Multi-tenancy with minimum operational complexity. |
 | ADR-012 | Administrator tenant context without impersonation | APPROVED | Preserves real actor identity and audit clarity. |
 | ADR-013 | Controlled one-site migration into one selected tenant | APPROVED | Matches verified migration scope. |
@@ -35,8 +35,9 @@
 | ADR-031 | Audit uses an application-owned append-only table and dynamic retention cutoff | APPROVED | Minimization, global configurable retention and no export are clearer without an audit package. |
 | ADR-032 | Backup archive target is `spatie/laravel-backup` 10.3.0, conditional on real PHP 8.3.32 Composer resolution | CONDITIONAL APPROVAL | Composer metadata and documentation disagree on PHP floor. Failure blocks Feature 006; no automatic downgrade/custom fallback. |
 | ADR-033 | CSV is authoritative; XLSX output uses OpenSpout 4.32.0 writer-only | APPROVED — LOCK VERIFICATION REQUIRED | OpenSpout 5 requires PHP 8.4; no XLSX import or ODS at launch. |
-| ADR-034 | Launch printing is dedicated Blade HTML; no server PDF renderer package | APPROVED REJECTION | Meets printable-output requirement without Chromium/Python/container/cloud dependency or second CSS engine. |
-| ADR-035 | Every application surface uses official TailAdmin Laravel Free Blade components + Tailwind CSS 4 + native Alpine methods, with ApexCharts for charts | APPROVED — FRONTEND LOCK/BUILD/BROWSER GATE REQUIRED | Preserves one Laravel authentication/session/tenant/authorization/domain and frontend stack. Controllers own request state and Actions, Blade renders markup, TailAdmin/Alpine owns documented visual behavior, and ApexCharts receives only server-calculated presentation payloads. Filament UI, Livewire, Preline and Inertia/React application views are excluded. |
+| ADR-034 | Launch printing is dedicated Blade HTML; no server PDF renderer package | SUPERSEDED BY ADR-036 | Output APIs return authorized datasets; the separate React client owns presentation/print behavior. |
+| ADR-035 | Every application surface uses official TailAdmin Laravel Free Blade components + Tailwind CSS 4 + native Alpine methods, with ApexCharts for charts | SUPERSEDED BY ADR-036 | Historical decision recorded for traceability only; it must not be cherry-picked or used as the current frontend authority. |
+| ADR-036 | Laravel API-only backend with separate React/TailAdmin frontend and private proxy | APPROVED — CONSTITUTION 6.0.0 | Product Owner approval on 2026-08-07. Two deployable services use a public React/TypeScript TailAdmin React Free frontend and private Laravel API. Browser requests stay same-origin and relative; the proxy forwards `/api/v1/*` and `/sanctum/*` to an internal loopback origin. Sanctum SPA session authentication, server-side authorization, tenant scope, domain Actions and exact API resources remain Laravel-owned. No public developer API, wildcard CORS, generic CRUD, frontend business layer or Laravel application HTML is permitted. |
 
 ## Executable dependency gate
 

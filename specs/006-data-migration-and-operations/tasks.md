@@ -1,10 +1,10 @@
 # Tasks — Feature 006 Migration and operations
 
 Status: `TASKS COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; NOT CUTOVER READY; IMPLEMENTATION NOT STARTED`
-Input: Constitution 5.0.0; Feature 006 spec/plan/research/data model/contracts; current domain Actions from Features 001–005/007.
+Input: Constitution 6.0.0 / ADR-036 / PD-API-001; Feature 006 spec/plan/research/data model/contracts; current domain Actions from Features 001–005/007.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
-Branch UI directive: all application UI tasks in this file target official TailAdmin Laravel Free Blade components, Tailwind CSS and native Alpine methods. Legacy Filament, Livewire, Preline and Inertia/React feature-view paths are superseded; use Blade pages/components, `tests/Feature/Application` and focused browser tests instead.
+API-only directive: migration, portability and operations use protected `/api/v1` operation contracts; no Laravel HTML operations page, generic importer or public developer API is approved. React/TailAdmin is a separate presentation client.
 
 All import/apply/backup operations are Administrator-only, bounded and diagnostic. Tests precede implementation. `[FND]`, `[USn]` and `[VER]` classes are defined by the readiness registry. Deployment scripts/workflows are shared technical foundation; `[VER]` tasks create only evidence and documentation.
 

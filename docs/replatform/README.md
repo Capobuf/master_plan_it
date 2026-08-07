@@ -4,7 +4,7 @@ This package is the authoritative contract for the in-progress Laravel replatfor
 
 ## Current phase
 
-- Constitution: 5.0.0.
+- Constitution: 6.0.0; PD-UI-001 superseded by approved PD-API-001 on 2026-08-07.
 - Product clarification: Q-001–Q-041 closed; 0 open.
 - `/speckit.plan`: complete and merged.
 - initial `/speckit.tasks`: complete and merged.
@@ -22,13 +22,16 @@ This package is the authoritative contract for the in-progress Laravel replatfor
 - invariant task/test ownership remediation: complete; integration state authoritative only in GitHub PR metadata; final analysis completed below.
 - integration state: authoritative only in GitHub PR metadata.
 - final Constitution 3.x analysis on `ba3744fbc7043f3f3b036416e6c082e4cb7c6831`: historical pass with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings.
-- Constitution 5.0.0 clarification/plan/task propagation: complete.
+- Constitution 5.0.0 clarification/plan/task propagation: historical.
+- Constitution 6.0.0 API-only amendment/plan/task propagation: complete; runtime/API implementation remains in progress.
 - historical integrated analysis snapshot: `speckit-analyze-2026-08-04-constitution-5.0.0.md`, PASS with 0 CRITICAL, 0 HIGH and 0 MEDIUM findings for the documentation tree it analyzed.
 - current requirement-quality checklists: 289/295 passed and 6 explicitly open.
 - `/speckit.implement`: active; verified completion is represented only by the current `tasks.md` checkboxes and `.codex/orchestration-plan.md` integration log.
-- 2026-08-05 ADR-035 frontend and Expense→Budget Slice 0–3 plan/task remediation: current; independent final analyze PASS with 0 CRITICAL, 0 HIGH, 0 MEDIUM and 0 LOW findings; T001-028 is the next unchecked entry task.
+- 2026-08-05 ADR-035 frontend and Expense→Budget Slice 0–3 plan/task remediation: historical and superseded by ADR-036/PD-API-001.
 
-The historical documentation-remediation cycle did not execute application work. Implementation, migrations and tests have since started and their live evidence is recorded in the orchestration plan and task checkboxes.
+The historical documentation-remediation cycle did not execute application work. The approved
+current target is Laravel API-only plus a separate React/TailAdmin deployable; implementation,
+migrations and tests remain governed by the current task checkboxes and orchestration plan.
 
 ## Reading order
 
@@ -71,7 +74,7 @@ The historical documentation-remediation cycle did not execute application work.
 
 ## Live task inventory
 
-- 158 current tasks across 35 user stories; the historical snapshot contained 153, rolling analysis added T002-017 and the current remediation added T001-028/T001-029/T005-026/T005-027;
+- 158 historical tasks across 35 user stories; the API-only amendment replaces Laravel frontend task gates with API contract/capability gates;
 - 43 `[P]` tasks after exact prerequisites;
 - 7 feature task files;
 - one source/invariant/error registry;
@@ -80,7 +83,18 @@ The historical documentation-remediation cycle did not execute application work.
 - one bidirectional source/requirement/task/test ledger;
 - implementation is active; task checkboxes and `.codex/orchestration-plan.md` are the live completion evidence.
 
-The Constitution 5.0.0 integrated analysis verified its 153-task snapshot. The independent 2026-08-05 documentation gate verified the live 158-task graph with 0 CRITICAL, 0 HIGH, 0 MEDIUM and 0 LOW findings; it does not claim unexecuted application/runtime/browser verification.
+The Constitution 5.0.0 integrated analysis and independent 2026-08-05 documentation gate are
+historical snapshots. They do not authorize the API-only runtime or claim application/runtime
+verification; a new analysis gate is required after API contract reconciliation.
+
+## API-only target boundary
+
+Laravel owns authentication/session, tenant context, RBAC, authorization, validation, domain
+Actions/invariants, economics, revisions, generation, persistence, audit, exports and file
+authorization. Application APIs are `/api/v1`; `/sanctum/csrf-cookie` is infrastructure-only.
+The browser uses relative same-origin paths through a frontend proxy to a private loopback Laravel
+origin. No Laravel application HTML route, public developer API or frontend business layer is
+authorized. Capability parity must be demonstrated before Laravel UI removal.
 
 ## Remaining evidence
 

@@ -1,10 +1,10 @@
 # Tasks — Feature 004 Contracts and projects
 
 Status: `TASKS COMPLETE; INTEGRATED ANALYSIS PASSED; IMPLEMENTATION READY; IMPLEMENTATION NOT STARTED`
-Input: Constitution 5.0.0; Feature 004 spec/plan/research/data model; generation, Expense, revision, notification, tenant and permission contracts.
+Input: Constitution 6.0.0 / ADR-036 / PD-API-001; Feature 004 spec/plan/research/data model; generation, Expense, revision, notification, tenant and API permission contracts.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
-Branch UI directive: all application UI tasks in this file target official TailAdmin Laravel Free Blade components, Tailwind CSS and native Alpine methods. Legacy Filament, Livewire, Preline and Inertia/React feature-view paths are superseded; use Blade pages/components, `tests/Feature/Application` and focused browser tests instead.
+API-only directive: project, contract and generation capabilities use authorized `/api/v1` operation contracts and resources. React/TailAdmin is presentation-only; Laravel Blade, Tailwind, Alpine, Vite and HTML/browser routes are deprecated and must not be added.
 
 Every task is test-first and reuses Feature 003 Money and Expense Actions. `[FND]`, `[USn]` and `[VER]` classes are defined by the readiness registry. Renewal notification behavior belongs to US-004-02 because it is part of the managed contract lifecycle; `[VER]` is reserved for the final evidence task.
 

@@ -1,12 +1,21 @@
 # Global execution sequence
 
-Status: `DOCUMENTATION GATE PASSED ON CONSTITUTION 5.0.0 — IMPLEMENTATION IN PROGRESS`
+Status: `API-ONLY GOVERNANCE GATE PASSED ON CONSTITUTION 6.0.0 — IMPLEMENTATION IN PROGRESS`
+
+## API-only amendment gate
+
+The 2026-08-07 Product Owner decision (`PD-API-001`) supersedes `PD-UI-001`. Laravel is the
+only backend/business owner and exposes `/api/v1` operation contracts plus `/sanctum/csrf-cookie`.
+React/TypeScript + official TailAdmin React Free is a separate deployable behind a same-origin
+proxy to a private Laravel loopback origin. Existing Blade/view/browser contracts and frontend
+lock/build tasks are deprecated. API parity, capability matrix and OpenAPI reconciliation precede
+removal of Laravel UI assets.
 
 ## Spec Kit sequence
 
 | Step | Status | Required result |
 |---|---|---|
-| S0 Product clarification/Constitution 5.0.0 | COMPLETE | legacy Q-001–Q-041 plus current seven-feature clarification decisions closed |
+| S0 Product clarification/Constitution 6.0.0 | COMPLETE | Q-001–Q-041 remain closed; PD-API-001 supersedes PD-UI-001 and API-only contracts are propagated |
 | S1 Reconcile prior PRs | COMPLETE | development/test and Budget/kernel inputs merged |
 | S2 `/speckit.plan` | COMPLETE AND MERGED | research, ADRs, plans, physical models, contracts and quickstarts |
 | S3 Initial `/speckit.tasks` | COMPLETE AND MERGED | seven feature task files |
@@ -24,14 +33,15 @@ Status: `DOCUMENTATION GATE PASSED ON CONSTITUTION 5.0.0 — IMPLEMENTATION IN P
 | S15 Historical Constitution 3.0.1 final `/speckit.analyze` | COMPLETE AND RECORDED; SUPERSEDED | CRITICAL 0, HIGH 0, MEDIUM 0 on `ba3744fbc7043f3f3b036416e6c082e4cb7c6831`; does not authorize later artifacts |
 | S16 Constitution 4.0.0/5.0.0 clarification and propagation | COMPLETE; CURRENT WORKTREE | fixed calendar years, attachment manifests/quota, operational settings, output/performance/accessibility and terminal source deletion propagated |
 | S17 Historical integrated `/speckit.analyze` | COMPLETE AND RECORDED; SUPERSEDED AS LIVE STATUS | 0 CRITICAL, 0 HIGH, 0 MEDIUM; 300/300 requirement coverage; 153/153 command/readiness coverage; 295/295 checklist items at that snapshot |
-| S18 2026-08-05 frontend/vertical-slice `/speckit.plan` + `/speckit.tasks` remediation | CURRENT; INDEPENDENT ANALYZE PASS | ADR-035, Slice 0–3, exact task/registry/command/path updates; 0 CRITICAL, 0 HIGH, 0 MEDIUM and 0 LOW findings; no application implementation |
-| S19 `/speckit.implement` | ACTIVE AFTER S18 ANALYZE PASS | bounded one-to-three-task work packages beginning with T001-028 |
+| S18 2026-08-05 frontend/vertical-slice `/speckit.plan` + `/speckit.tasks` remediation | HISTORICAL / SUPERSEDED | ADR-035 and Laravel frontend tasks are retained only as historical evidence |
+| S19 2026-08-07 API-only amendment propagation | CURRENT | Constitution 6.0.0, ADR-036, API foundation/feature plans/tasks and private-proxy contract; runtime implementation pending |
+| S19 `/speckit.implement` | ACTIVE AFTER API-ONLY ANALYZE GATE | bounded API work packages begin with Sanctum/auth/context foundation; old T001-028 UI gate is superseded |
 | S20 Cutover evidence | LATER | real export, host, report inventory, restore and deployment rehearsal |
 
 ## Proposed implementation critical path
 
 1. retain the accepted scaffold, tenant context, authentication, authorization, Money and master-data foundations;
-2. Slice 0 T001-028/T001-029 operational frontend contract, lock, lifecycle, layout and navigation bridge;
+2. API foundation: Sanctum session, auth/context, response/error resources and private proxy boundary;
 3. Slice 1 T003-007–T003-012 manual Expense list/create/edit through current Queries and Actions;
 4. Slice 2 T005-001–T005-008 economic kernel/dataset and real current Budget KPI/table/ApexCharts;
 5. Slice 3 T005-026 end-to-end authorization/isolation/parity/responsive/browser/performance hardening;
@@ -53,7 +63,12 @@ The exact task graph, task composition and shared ownership are in `tasks-summar
 
 ## Vertical-slice rule
 
-Every implementation slice includes schema/rollback constraints, owning Action/query, authorization and tenant isolation, revision/audit behavior where relevant, the ADR-035 UI appropriate to its administrative or operational boundary, focused tests, documentation and actual validation results. One invocation covers one visible result and one to three tightly coupled tasks with a bounded write set. Package-only, database-only and unrelated refactor PRs are prohibited unless the task explicitly owns a verified prerequisite gate.
+Every implementation slice includes schema/rollback constraints, owning Action/query, authorization
+and tenant isolation, revision/audit behavior where relevant, the ADR-036 API contract appropriate
+to its boundary, focused API tests, documentation and actual validation results. One invocation
+covers one visible result and one to three tightly coupled tasks with a bounded write set.
+Package-only, database-only and unrelated refactor PRs are prohibited unless the task explicitly
+owns a verified prerequisite gate.
 
 ## Rollback principles
 

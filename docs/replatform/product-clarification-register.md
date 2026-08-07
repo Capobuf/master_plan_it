@@ -62,3 +62,10 @@ This register tracks the product ambiguities discovered during Laravel replatfor
 | **Total** | **41** | **41** | **0** |
 
 No implementation agent may reopen or reinterpret these decisions implicitly. A change requires a new Product Owner decision and, where constitutional principles are affected, the amendment procedure.
+
+## 2026-08-07 product amendment
+
+`PD-API-001` supersedes `PD-UI-001`. The approved target is Laravel API-only with a separate
+React/TypeScript + official TailAdmin React Free frontend, two deployable services and a private
+loopback Laravel origin behind the frontend proxy. The amendment is recorded in the Constitution
+6.0.0 amendment, `approved-decisions.md` and `clarification-log.md`; it does not reopen Q-001–Q-041.

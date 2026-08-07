@@ -1,27 +1,36 @@
 # Implementation plan — Feature 001 Platform foundation
 
-Status: `PLAN COMPLETE; IMPLEMENTATION IN PROGRESS`
-Constitution: 5.0.0
+Status: `PLAN AMENDED FOR API-ONLY TARGET 2026-08-07; IMPLEMENTATION IN PROGRESS`
+Constitution: 6.0.0; ADR-036; PD-API-001
 Dependencies: Feature 007 plan for tenant/RBAC; `docs/replatform/replatform-plan.md`; `development-and-test-contract.md`
+
+**Amendment 6.0.0 supersession note (2026-08-07).** Any later Laravel Blade/TailAdmin,
+frontend lock/build, browser-shell or HTML-route subsection in this historical plan is
+deprecated and replaced by the API contract boundary above. Keep the underlying domain,
+authorization and validation ownership; implement no Laravel presentation surface.
 
 ## Summary
 
 Create the Laravel/Sail skeleton, non-destructive test/CI foundation, authentication, protected global Administrator, tenant-context shell, typed platform settings, audit pipeline, scheduler and release gates. This feature owns platform bootstrap and global operations; it does not own tenant business models, economic formulas or migration application.
 
-## TailAdmin UI standard
+## API contract boundary
 
-All application UI follows [`docs/replatform/tailadmin-ui-standard.md`](../../docs/replatform/tailadmin-ui-standard.md): use the official TailAdmin Laravel Free Blade source and native Alpine behavior first, then bind server-owned data and actions without recreating visual primitives.
+Feature 001 owns the API foundation: Sanctum SPA session authentication, `/api/v1/auth/*`,
+`/api/v1/context`, `/api/v1/tenants/{tenant}/enter`, `/api/v1/context/leave`, stable error
+responses, correlation IDs and API resources/DTOs. React/TailAdmin is a separate client and is
+not implemented in this Laravel feature. No application HTML route or frontend build is a valid
+Feature 001 deliverable.
 
 ## Technical context
 
 | Item | Decision |
 |---|---|
 | Runtime | PHP 8.3.32; Laravel 13.22.0; Sail 1.64.0 |
-| UI | Official TailAdmin Laravel Free Blade components, Tailwind CSS 4, native Alpine methods and ApexCharts for server-fed charts. No Inertia/React application surface. |
+| API | JSON resources/DTOs under `/api/v1`; Sanctum SPA session with `statefulApi()` and `auth:sanctum`; no bearer-token browser contract. |
 | DB | MySQL 8.4.10; development/test separate logical DBs |
 | Auth/RBAC | Laravel auth; Spatie Permission 8.3.0 teams; Shield 4.3.1 |
 | Operations | sync queue; one scheduler cron; database notifications + optional sync mail |
-| Tests | static/accounting/application; bounded Dusk; no implicit DB reset |
+| Tests | static/accounting/application plus focused API contract/session/schema tests; no implicit DB reset |
 | Release | immutable ZIP built by Actions from verified commit |
 
 ## Constitution check

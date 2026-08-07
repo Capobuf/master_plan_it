@@ -1,10 +1,10 @@
 # Tasks — Feature 002 Master data
 
 Status: `TASKS COMPLETE; ROLLING ANALYSIS ACTIVE; IMPLEMENTATION IN PROGRESS`
-Input: Constitution 5.0.0; Feature 002 design; shared tenancy, permission, revision and error contracts.
+Input: Constitution 6.0.0 / ADR-036 / PD-API-001; Feature 002 design; shared tenancy, permission, revision and API error contracts.
 Normative supplements: `../../docs/replatform/task-readiness-registry.md` and `../../docs/replatform/task-execution-registry.md`.
 
-Branch UI directive: all application UI tasks in this file target official TailAdmin Laravel Free Blade components, Tailwind CSS and native Alpine methods. Legacy Filament, Livewire, Preline and Inertia/React feature-view paths are superseded; use Blade pages/components, `tests/Feature/Application` and focused browser tests instead.
+API-only directive: all capability tasks in this file target authorized `/api/v1` operation contracts and API Resources/DTOs. React/TailAdmin is a separate client; Laravel Blade, Tailwind, Alpine, Vite and HTML/browser routes are deprecated and must not be added.
 
 Tests precede production code. Feature 002 owns shared operational revision batches because it is the earliest concrete consumer after platform/tenancy; Expense and later features reuse them. `[FND]`, `[USn]` and `[VER]` classes are defined by the readiness registry.
 
