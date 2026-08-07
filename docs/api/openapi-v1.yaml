@@ -7,8 +7,8 @@ info:
     same-origin paths through the public React proxy. Laravel is private behind
     that proxy; its internal origin is never sent to browser JavaScript. This
     is not a public developer API.
-x-error-contract:
-  every error response includes the stable error envelope and, when available,
+x-error-contract: >-
+  Every error response includes the stable error envelope and, when available,
   the same identifier in the X-Correlation-ID response header. Unexpected 500
   responses use the Unexpected response component below.
 servers:
@@ -31,6 +31,7 @@ paths:
       description: Infrastructure endpoint; call before login or a state-changing request when required.
       responses:
         '204': {description: CSRF cookie established}
+        default: {$ref: '#/components/responses/Unexpected'}
   /api/v1/auth/login:
     post:
       tags: [Authentication]
@@ -41,32 +42,33 @@ paths:
         '200': {$ref: '#/components/responses/User'}
         '422': {$ref: '#/components/responses/ValidationError'}
         '429': {$ref: '#/components/responses/RateLimitError'}
+        default: {$ref: '#/components/responses/Unexpected'}
   /api/v1/auth/logout:
     post:
       tags: [Authentication]
       operationId: logout
       security: [{sessionAuth: []}]
       requestBody: {$ref: '#/components/requestBodies/Empty'}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}}
   /api/v1/auth/me:
     get:
       tags: [Authentication]
       operationId: currentUser
       security: [{sessionAuth: []}]
-      responses: {'200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}}
   /api/v1/auth/password:
     put:
       tags: [Authentication]
       operationId: changeOwnPassword
       security: [{sessionAuth: []}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/PasswordChangeRequest'}}}}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/context:
     get:
       tags: [Context and tenants]
       operationId: currentContext
       security: [{sessionAuth: []}]
-      responses: {'200': {$ref: '#/components/responses/Context'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Context'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
   /api/v1/context/leave:
     post:
       tags: [Context and tenants]
@@ -74,7 +76,7 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: platform.tenants.view
       requestBody: {$ref: '#/components/requestBodies/Empty'}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
   /api/v1/tenants:
     get:
       tags: [Context and tenants]
@@ -82,14 +84,14 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: platform.tenants.view
       parameters: [{$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
-      responses: {'200': {$ref: '#/components/responses/Tenants'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Tenants'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
     post:
       tags: [Context and tenants]
       operationId: createTenant
       security: [{sessionAuth: []}]
       x-ability: platform.tenants.create
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TenantWrite'}}}}
-      responses: {'200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/tenants/{tenant}:
     parameters: [{$ref: '#/components/parameters/TenantId'}]
     get:
@@ -97,14 +99,14 @@ paths:
       operationId: showTenant
       security: [{sessionAuth: []}]
       x-ability: platform.tenants.view
-      responses: {'200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
     put:
       tags: [Context and tenants]
       operationId: updateTenant
       security: [{sessionAuth: []}]
       x-ability: platform.tenants.update
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/TenantUpdate'}}}}
-      responses: {'200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/tenants/{tenant}/enter:
     post:
       tags: [Context and tenants]
@@ -113,7 +115,7 @@ paths:
       x-ability: platform.tenants.view
       requestBody: {$ref: '#/components/requestBodies/Empty'}
       parameters: [{$ref: '#/components/parameters/TenantId'}]
-      responses: {'200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
   /api/v1/tenants/{tenant}/deactivate:
     post:
       tags: [Context and tenants]
@@ -122,7 +124,7 @@ paths:
       x-ability: platform.tenants.deactivate
       parameters: [{$ref: '#/components/parameters/TenantId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/DeactivateRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/tenants/{tenant}/reactivate:
     post:
       tags: [Context and tenants]
@@ -131,7 +133,7 @@ paths:
       x-ability: platform.tenants.reactivate
       parameters: [{$ref: '#/components/parameters/TenantId'}]
       requestBody: {$ref: '#/components/requestBodies/Empty'}
-      responses: {'200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Tenant'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/users:
     get:
       tags: [Identity and planning]
@@ -139,14 +141,14 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: platform.users.manage
       parameters: [{$ref: '#/components/parameters/Search'}, {$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
-      responses: {'200': {$ref: '#/components/responses/Users'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Users'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
     post:
       tags: [Identity and planning]
       operationId: createUser
       security: [{sessionAuth: []}]
       x-ability: platform.users.manage
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/UserCreate'}}}}
-      responses: {'200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/users/{user}:
     parameters: [{$ref: '#/components/parameters/UserId'}]
     get:
@@ -154,14 +156,14 @@ paths:
       operationId: showUser
       security: [{sessionAuth: []}]
       x-ability: platform.users.manage
-      responses: {'200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
     put:
       tags: [Identity and planning]
       operationId: updateUser
       security: [{sessionAuth: []}]
       x-ability: platform.users.manage
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/UserUpdate'}}}}
-      responses: {'200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/users/{user}/roles:
     put:
       tags: [Identity and planning]
@@ -170,7 +172,7 @@ paths:
       x-ability: platform.users.manage
       parameters: [{$ref: '#/components/parameters/UserId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RolesRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/users/{user}/deactivate:
     post:
       tags: [Identity and planning]
@@ -179,7 +181,7 @@ paths:
       x-ability: platform.users.manage
       parameters: [{$ref: '#/components/parameters/UserId'}]
       requestBody: {$ref: '#/components/requestBodies/Empty'}
-      responses: {'200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/User'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}}
   /api/v1/users/{user}/password:
     put:
       tags: [Identity and planning]
@@ -188,21 +190,21 @@ paths:
       x-ability: platform.users.manage
       parameters: [{$ref: '#/components/parameters/UserId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/NewPassword'}}}}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/roles:
     get:
       tags: [Identity and planning]
       operationId: listRoles
       security: [{sessionAuth: []}]
       x-ability: platform.roles.manage
-      responses: {'200': {$ref: '#/components/responses/Roles'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Roles'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
     post:
       tags: [Identity and planning]
       operationId: createRole
       security: [{sessionAuth: []}]
       x-ability: platform.roles.manage
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RoleWrite'}}}}
-      responses: {'200': {$ref: '#/components/responses/Role'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Role'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/roles/{role}:
     parameters: [{$ref: '#/components/parameters/RoleId'}]
     get:
@@ -210,42 +212,42 @@ paths:
       operationId: showRole
       security: [{sessionAuth: []}]
       x-ability: platform.roles.manage
-      responses: {'200': {$ref: '#/components/responses/Role'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Role'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
     put:
       tags: [Identity and planning]
       operationId: updateRole
       security: [{sessionAuth: []}]
       x-ability: platform.roles.manage
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/RoleWrite'}}}}
-      responses: {'200': {$ref: '#/components/responses/Role'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Role'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
     delete:
       tags: [Identity and planning]
       operationId: deleteRole
       security: [{sessionAuth: []}]
       x-ability: platform.roles.manage
       requestBody: {$ref: '#/components/requestBodies/Empty'}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/abilities:
     get:
       tags: [Identity and planning]
       operationId: listAbilities
       security: [{sessionAuth: []}]
       x-ability: platform.roles.manage
-      responses: {'200': {$ref: '#/components/responses/Abilities'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Abilities'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
   /api/v1/planning-years:
     get:
       tags: [Identity and planning]
       operationId: listPlanningYears
       security: [{sessionAuth: []}]
       x-ability: planning-year.view
-      responses: {'200': {$ref: '#/components/responses/PlanningYears'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/PlanningYears'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
     post:
       tags: [Identity and planning]
       operationId: createPlanningYear
       security: [{sessionAuth: []}]
       x-ability: planning-year.create
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/PlanningYearWrite'}}}}
-      responses: {'200': {$ref: '#/components/responses/PlanningYear'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/PlanningYear'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/planning-years/{planningYear}/deactivate:
     post:
       tags: [Identity and planning]
@@ -254,7 +256,7 @@ paths:
       x-ability: planning-year.deactivate
       parameters: [{$ref: '#/components/parameters/PlanningYearId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LockVersionRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/PlanningYear'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/PlanningYear'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/planning-years/{planningYear}/reactivate:
     post:
       tags: [Identity and planning]
@@ -263,7 +265,7 @@ paths:
       x-ability: planning-year.reactivate
       parameters: [{$ref: '#/components/parameters/PlanningYearId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LockVersionRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/PlanningYear'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/PlanningYear'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/vendors:
     get:
       tags: [Master data]
@@ -271,14 +273,14 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: vendor.view
       parameters: [{$ref: '#/components/parameters/Search'}, {$ref: '#/components/parameters/Active'}, {$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
-      responses: {'200': {$ref: '#/components/responses/Vendors'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Vendors'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
     post:
       tags: [Master data]
       operationId: createVendor
       security: [{sessionAuth: []}]
       x-ability: vendor.create
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/VendorWrite'}}}}
-      responses: {'200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/vendors/{vendor}:
     parameters: [{$ref: '#/components/parameters/VendorId'}]
     get:
@@ -286,21 +288,21 @@ paths:
       operationId: showVendor
       security: [{sessionAuth: []}]
       x-ability: vendor.view
-      responses: {'200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
     put:
       tags: [Master data]
       operationId: updateVendor
       security: [{sessionAuth: []}]
       x-ability: vendor.update
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/VendorUpdate'}}}}
-      responses: {'200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
     delete:
       tags: [Master data]
       operationId: deleteVendor
       security: [{sessionAuth: []}]
       x-ability: vendor.delete
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LockVersionRequest'}}}}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/vendors/{vendor}/deactivate:
     post:
       tags: [Master data]
@@ -309,7 +311,7 @@ paths:
       x-ability: vendor.deactivate
       parameters: [{$ref: '#/components/parameters/VendorId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LockVersionRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/vendors/{vendor}/reactivate:
     post:
       tags: [Master data]
@@ -318,7 +320,7 @@ paths:
       x-ability: vendor.reactivate
       parameters: [{$ref: '#/components/parameters/VendorId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LockVersionRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/vendors/{vendor}/history:
     get:
       tags: [Master data]
@@ -326,7 +328,7 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: vendor.view-revisions
       parameters: [{$ref: '#/components/parameters/VendorId'}, {$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
-      responses: {'200': {$ref: '#/components/responses/Revisions'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Revisions'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
   /api/v1/vendors/{vendor}/history/{version}/restore:
     post:
       tags: [Master data]
@@ -335,7 +337,7 @@ paths:
       x-ability: vendor.restore-revision
       parameters: [{$ref: '#/components/parameters/VendorId'}, {$ref: '#/components/parameters/VersionId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LockVersionRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Vendor'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/cost-centers:
     get:
       tags: [Master data]
@@ -343,14 +345,14 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: cost-center.view
       parameters: [{$ref: '#/components/parameters/Search'}, {$ref: '#/components/parameters/Active'}, {$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
-      responses: {'200': {$ref: '#/components/responses/CostCenters'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/CostCenters'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
     post:
       tags: [Master data]
       operationId: createCostCenter
       security: [{sessionAuth: []}]
       x-ability: cost-center.create
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CostCenterWrite'}}}}
-      responses: {'200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/cost-centers/tree:
     get:
       tags: [Master data]
@@ -358,7 +360,7 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: cost-center.view
       parameters: [{$ref: '#/components/parameters/Active'}]
-      responses: {'200': {$ref: '#/components/responses/CostCenters'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/CostCenters'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
   /api/v1/cost-centers/{costCenter}:
     parameters: [{$ref: '#/components/parameters/CostCenterId'}]
     get:
@@ -366,21 +368,21 @@ paths:
       operationId: showCostCenter
       security: [{sessionAuth: []}]
       x-ability: cost-center.view
-      responses: {'200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
     put:
       tags: [Master data]
       operationId: updateCostCenter
       security: [{sessionAuth: []}]
       x-ability: cost-center.update
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/CostCenterUpdate'}}}}
-      responses: {'200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
     delete:
       tags: [Master data]
       operationId: deleteCostCenter
       security: [{sessionAuth: []}]
       x-ability: cost-center.delete
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LockVersionRequest'}}}}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/cost-centers/{costCenter}/deactivate:
     post:
       tags: [Master data]
@@ -389,7 +391,7 @@ paths:
       x-ability: cost-center.deactivate
       parameters: [{$ref: '#/components/parameters/CostCenterId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LockVersionRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/cost-centers/{costCenter}/reactivate:
     post:
       tags: [Master data]
@@ -398,7 +400,7 @@ paths:
       x-ability: cost-center.reactivate
       parameters: [{$ref: '#/components/parameters/CostCenterId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LockVersionRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/cost-centers/{costCenter}/history:
     get:
       tags: [Master data]
@@ -406,7 +408,7 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: cost-center.view-revisions
       parameters: [{$ref: '#/components/parameters/CostCenterId'}, {$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
-      responses: {'200': {$ref: '#/components/responses/Revisions'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Revisions'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
   /api/v1/cost-centers/{costCenter}/history/{version}/restore:
     post:
       tags: [Master data]
@@ -415,7 +417,7 @@ paths:
       x-ability: cost-center.restore-revision
       parameters: [{$ref: '#/components/parameters/CostCenterId'}, {$ref: '#/components/parameters/VersionId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/LockVersionRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/CostCenter'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/expenses:
     get:
       tags: [Expenses]
@@ -423,14 +425,14 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: expense.view
       parameters: [{$ref: '#/components/parameters/PlanningYearQuery'}, {$ref: '#/components/parameters/CostCenterQuery'}, {$ref: '#/components/parameters/Search'}, {$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
-      responses: {'200': {$ref: '#/components/responses/Expenses'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Expenses'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '422': {$ref: '#/components/responses/ValidationError'}}
     post:
       tags: [Expenses]
       operationId: createExpense
       security: [{sessionAuth: []}]
       x-ability: expense.create
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ExpenseWrite'}}}}
-      responses: {'200': {$ref: '#/components/responses/Expense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Expense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/expenses/{expense}:
     parameters: [{$ref: '#/components/parameters/ExpenseId'}]
     get:
@@ -438,21 +440,21 @@ paths:
       operationId: showExpense
       security: [{sessionAuth: []}]
       x-ability: expense.view
-      responses: {'200': {$ref: '#/components/responses/Expense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Expense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
     put:
       tags: [Expenses]
       operationId: updateExpense
       security: [{sessionAuth: []}]
       x-ability: expense.update
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ExpenseUpdate'}}}}
-      responses: {'200': {$ref: '#/components/responses/Expense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Expense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
     delete:
       tags: [Expenses]
       operationId: deleteExpense
       security: [{sessionAuth: []}]
       x-ability: expense.delete
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/DeleteRequest'}}}}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/expenses/{expense}/rows/{row}/confirm:
     post:
       tags: [Expenses]
@@ -461,7 +463,7 @@ paths:
       x-ability: expense.confirm-actual
       parameters: [{$ref: '#/components/parameters/ExpenseId'}, {$ref: '#/components/parameters/RowId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ConfirmActualRequest'}}}}
-      responses: {'200': {$ref: '#/components/responses/Expense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Expense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/contracts:
     get:
       tags: [Contracts]
@@ -469,14 +471,14 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: contract.view
       parameters: [{$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}, {$ref: '#/components/parameters/Search'}]
-      responses: {'200': {$ref: '#/components/responses/Contracts'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Contracts'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
     post:
       tags: [Contracts]
       operationId: createContract
       security: [{sessionAuth: []}]
       x-ability: contract.create
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ContractWrite'}}}}
-      responses: {'200': {$ref: '#/components/responses/Contract'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Contract'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/contracts/{contract}:
     parameters: [{$ref: '#/components/parameters/ContractId'}]
     get:
@@ -484,21 +486,21 @@ paths:
       operationId: showContract
       security: [{sessionAuth: []}]
       x-ability: contract.view
-      responses: {'200': {$ref: '#/components/responses/Contract'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Contract'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
     put:
       tags: [Contracts]
       operationId: updateContract
       security: [{sessionAuth: []}]
       x-ability: contract.update
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/ContractUpdate'}}}}
-      responses: {'200': {$ref: '#/components/responses/Contract'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Contract'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
     delete:
       tags: [Contracts]
       operationId: deleteContract
       security: [{sessionAuth: []}]
       x-ability: contract.delete
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/DeleteRequest'}}}}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/contracts/{contract}/history:
     get:
       tags: [Contracts]
@@ -506,7 +508,7 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: contract.view-revisions
       parameters: [{$ref: '#/components/parameters/ContractId'}, {$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
-      responses: {'200': {$ref: '#/components/responses/ContractRevisions'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/ContractRevisions'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
   /api/v1/contracts/{contract}/synchronize:
     post:
       tags: [Contracts]
@@ -515,7 +517,7 @@ paths:
       x-ability: contract.generate-occurrence
       parameters: [{$ref: '#/components/parameters/ContractId'}]
       requestBody: {$ref: '#/components/requestBodies/Empty'}
-      responses: {'200': {$ref: '#/components/responses/MutationData'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/MutationData'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}}
   /api/v1/contracts/{contract}/generate/{year}:
     post:
       tags: [Contracts]
@@ -524,7 +526,7 @@ paths:
       x-ability: contract.generate-occurrence
       parameters: [{$ref: '#/components/parameters/ContractId'}, {$ref: '#/components/parameters/Year'}]
       requestBody: {$ref: '#/components/requestBodies/Empty'}
-      responses: {'200': {$ref: '#/components/responses/GeneratedExpense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/GeneratedExpense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/contracts/{contract}/occurrences/{sourceKey}/suppress:
     post:
       tags: [Contracts]
@@ -533,7 +535,7 @@ paths:
       x-ability: contract.suppress-generation
       parameters: [{$ref: '#/components/parameters/ContractId'}, {$ref: '#/components/parameters/SourceKey'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/SuppressRequest'}}}}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/contracts/{contract}/occurrences/{sourceKey}/resume:
     post:
       tags: [Contracts]
@@ -542,7 +544,7 @@ paths:
       x-ability: contract.resume-generation
       parameters: [{$ref: '#/components/parameters/ContractId'}, {$ref: '#/components/parameters/SourceKey'}]
       requestBody: {$ref: '#/components/requestBodies/Empty'}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}}
   /api/v1/contracts/{contract}/occurrences/{sourceKey}/resume-and-generate:
     post:
       tags: [Contracts]
@@ -551,7 +553,7 @@ paths:
       x-ability: contract.resume-generation
       parameters: [{$ref: '#/components/parameters/ContractId'}, {$ref: '#/components/parameters/SourceKey'}]
       requestBody: {$ref: '#/components/requestBodies/Empty'}
-      responses: {'200': {$ref: '#/components/responses/GeneratedExpense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/GeneratedExpense'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/contracts/{contract}/terms/{term}:
     delete:
       tags: [Contracts]
@@ -560,7 +562,7 @@ paths:
       x-ability: contract.update
       parameters: [{$ref: '#/components/parameters/ContractId'}, {$ref: '#/components/parameters/TermId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/DeleteRequest'}}}}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/contracts/{contract}/generated-expenses/{expense}:
     delete:
       tags: [Contracts]
@@ -569,7 +571,7 @@ paths:
       x-ability: expense.delete
       parameters: [{$ref: '#/components/parameters/ContractId'}, {$ref: '#/components/parameters/ExpenseId'}]
       requestBody: {required: true, content: {application/json: {schema: {$ref: '#/components/schemas/GeneratedExpenseDelete'}}}}
-      responses: {'204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '204': {$ref: '#/components/responses/NoContent'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '409': {$ref: '#/components/responses/Conflict'}, '422': {$ref: '#/components/responses/ValidationError'}}
   /api/v1/dashboard:
     get:
       tags: [Reporting]
@@ -577,7 +579,7 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: dashboard.view
       parameters: [{$ref: '#/components/parameters/PlanningYearQuery'}]
-      responses: {'200': {$ref: '#/components/responses/ReportingDataset'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/ReportingDataset'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
   /api/v1/budget:
     get:
       tags: [Reporting]
@@ -585,7 +587,7 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: budget.view
       parameters: [{$ref: '#/components/parameters/PlanningYearQuery'}, {$ref: '#/components/parameters/CostCenterQuery'}]
-      responses: {'200': {$ref: '#/components/responses/ReportingDataset'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/ReportingDataset'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
   /api/v1/reports:
     get:
       tags: [Reporting]
@@ -593,7 +595,7 @@ paths:
       security: [{sessionAuth: []}]
       x-ability: report.view
       parameters: [{$ref: '#/components/parameters/PlanningYearQuery'}, {$ref: '#/components/parameters/CostCenterQuery'}, {$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
-      responses: {'200': {$ref: '#/components/responses/ReportLines'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
+      responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/ReportLines'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}}
 components:
   securitySchemes:
     sessionAuth:
