@@ -2,12 +2,10 @@
 
 namespace Tests\Feature\Api\Users;
 
-use App\Domain\Tenancy\Actions\EnterTenantContext;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
-use Spatie\Permission\Models\Role;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
 
@@ -21,10 +19,9 @@ final class ApiUsersHttpTest extends TestCase
         $administrator = $this->administrator();
         $tenant = Tenant::factory()->create();
         $existing = $this->tenantUser($tenant);
-        $this->actingAs($administrator, 'web')->withSession([
-            EnterTenantContext::SESSION_KEY => $tenant->getKey(),
-        ]);
-        $role = $existing->roles()->firstOrFail();
+        $this->actingAs($administrator, 'web');
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants/'.$tenant->getKey().'/enter')->assertOk();
+        $role = \Spatie\Permission\Models\Role::query()->where('tenant_id', $tenant->getKey())->firstOrFail();
 
         $this->getJson('/api/v1/users?per_page=1')
             ->assertOk()
@@ -55,9 +52,8 @@ final class ApiUsersHttpTest extends TestCase
         $tenantA = Tenant::factory()->create();
         $tenantB = Tenant::factory()->create();
         $foreign = $this->tenantUser($tenantB);
-        $this->actingAs($administrator, 'web')->withSession([
-            EnterTenantContext::SESSION_KEY => $tenantA->getKey(),
-        ]);
+        $this->actingAs($administrator, 'web');
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants/'.$tenantA->getKey().'/enter')->assertOk();
 
         $this->getJson('/api/v1/users/'.$foreign->getKey())
             ->assertNotFound()
@@ -69,9 +65,8 @@ final class ApiUsersHttpTest extends TestCase
         $administrator = $this->administrator();
         $tenant = Tenant::factory()->create();
         $user = $this->tenantUser($tenant);
-        $this->actingAs($administrator, 'web')->withSession([
-            EnterTenantContext::SESSION_KEY => $tenant->getKey(),
-        ]);
+        $this->actingAs($administrator, 'web');
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants/'.$tenant->getKey().'/enter')->assertOk();
 
         $response = $this->getJson('/api/v1/users/'.$user->getKey());
 

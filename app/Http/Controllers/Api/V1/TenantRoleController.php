@@ -17,6 +17,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Response;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
+use DomainException;
 
 final class TenantRoleController extends Controller
 {
@@ -62,13 +63,18 @@ final class TenantRoleController extends Controller
     public function store(Request $request, CreateTenantRole $createTenantRole): TenantRoleResource
     {
         $validated = $this->validated($request);
-        $role = $createTenantRole->execute(
-            $this->actor($request),
-            $this->tenantContext($request),
-            (string) $validated['name'],
-            array_values($validated['abilities']),
-            $this->correlationId($request),
-        );
+        try {
+            $role = $createTenantRole->execute(
+                $this->actor($request),
+                $this->tenantContext($request),
+                (string) $validated['name'],
+                array_values($validated['abilities']),
+                $this->correlationId($request),
+            );
+        } catch (DomainException $exception) {
+            $this->rethrowSafeRoleInputError($exception);
+            throw $exception;
+        }
         $role->load('permissions:id,name');
 
         return TenantRoleResource::make($role);
@@ -77,14 +83,19 @@ final class TenantRoleController extends Controller
     public function update(Request $request, int $role, UpdateTenantRole $updateTenantRole): TenantRoleResource
     {
         $validated = $this->validated($request);
-        $updated = $updateTenantRole->execute(
-            $this->actor($request),
-            $this->tenantContext($request),
-            TenantOwnedRecordQuery::findOrFail($this->tenantContext($request), Role::class, $role),
-            (string) $validated['name'],
-            array_values($validated['abilities']),
-            $this->correlationId($request),
-        );
+        try {
+            $updated = $updateTenantRole->execute(
+                $this->actor($request),
+                $this->tenantContext($request),
+                TenantOwnedRecordQuery::findOrFail($this->tenantContext($request), Role::class, $role),
+                (string) $validated['name'],
+                array_values($validated['abilities']),
+                $this->correlationId($request),
+            );
+        } catch (DomainException $exception) {
+            $this->rethrowSafeRoleInputError($exception);
+            throw $exception;
+        }
         $updated->load('permissions:id,name');
 
         return TenantRoleResource::make($updated);
@@ -124,6 +135,15 @@ final class TenantRoleController extends Controller
         $unexpected = array_diff(array_keys($request->all()), $allowed);
         if ($unexpected !== []) {
             throw ValidationException::withMessages(array_fill_keys($unexpected, 'This field is not allowed for this operation.'));
+        }
+    }
+
+    private function rethrowSafeRoleInputError(DomainException $exception): void
+    {
+        if ($exception->getMessage() === 'PLATFORM_ABILITY_PROTECTED') {
+            throw ValidationException::withMessages([
+                'abilities' => 'Protected platform abilities cannot be assigned to tenant roles.',
+            ]);
         }
     }
 }

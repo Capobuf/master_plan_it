@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Api\Roles;
 
-use App\Domain\Tenancy\Actions\EnterTenantContext;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
@@ -17,14 +16,13 @@ final class ApiRolesHttpTest extends TestCase
     {
         $administrator = $this->administrator();
         $tenant = Tenant::factory()->create();
-        $this->actingAs($administrator, 'web')->withSession([
-            EnterTenantContext::SESSION_KEY => $tenant->getKey(),
-        ]);
+        $this->actingAs($administrator, 'web');
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants/'.$tenant->getKey().'/enter')->assertOk();
 
         $abilities = $this->getJson('/api/v1/abilities')
             ->assertOk()
             ->assertJsonStructure([
-                'data.0' => ['name', 'label'],
+                'data' => ['*' => ['name', 'label']],
                 'meta' => ['current_page', 'last_page', 'per_page', 'total'],
                 'links' => ['first', 'last', 'prev', 'next'],
             ]);
@@ -51,9 +49,8 @@ final class ApiRolesHttpTest extends TestCase
     {
         $administrator = $this->administrator();
         $tenant = Tenant::factory()->create();
-        $this->actingAs($administrator, 'web')->withSession([
-            EnterTenantContext::SESSION_KEY => $tenant->getKey(),
-        ]);
+        $this->actingAs($administrator, 'web');
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants/'.$tenant->getKey().'/enter')->assertOk();
 
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/roles', [
             'name' => 'Invalid role',

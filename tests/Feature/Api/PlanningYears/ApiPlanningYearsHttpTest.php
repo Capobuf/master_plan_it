@@ -2,7 +2,6 @@
 
 namespace Tests\Feature\Api\PlanningYears;
 
-use App\Domain\Tenancy\Actions\EnterTenantContext;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
@@ -17,9 +16,8 @@ final class ApiPlanningYearsHttpTest extends TestCase
     {
         $administrator = $this->administrator();
         $tenant = Tenant::factory()->create();
-        $this->actingAs($administrator, 'web')->withSession([
-            EnterTenantContext::SESSION_KEY => $tenant->getKey(),
-        ]);
+        $this->actingAs($administrator, 'web');
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants/'.$tenant->getKey().'/enter')->assertOk();
 
         $created = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/planning-years', [
             'year_label' => 2032,
