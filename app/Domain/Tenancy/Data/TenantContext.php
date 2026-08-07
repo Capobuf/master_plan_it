@@ -29,6 +29,13 @@ final readonly class TenantContext
         $this->timezone = (string) $tenant->timezone;
         $this->currencyCode = (string) $tenant->currency_code;
         $this->defaultVatRate = (string) $tenant->default_vat_rate;
-        $this->budgetBasis = BudgetBasis::from((string) $tenant->getRawOriginal('budget_basis'));
+        $rawBudgetBasis = $tenant->getRawOriginal('budget_basis');
+        if ($rawBudgetBasis === null) {
+            $rawBudgetBasis = $tenant->getAttribute('budget_basis');
+        }
+
+        $this->budgetBasis = $rawBudgetBasis instanceof BudgetBasis
+            ? $rawBudgetBasis
+            : BudgetBasis::from((string) $rawBudgetBasis);
     }
 }
