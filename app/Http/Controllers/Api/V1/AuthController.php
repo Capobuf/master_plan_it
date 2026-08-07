@@ -22,11 +22,13 @@ use Illuminate\Support\Str;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Validation\ValidationException;
 use LogicException;
+use Symfony\Component\HttpKernel\Exception\TooManyRequestsHttpException;
 
 final class AuthController extends Controller
 {
     public function login(Request $request): UserResource
     {
+        $this->rejectUnexpectedFields($request, ['email', 'password']);
         $credentials = $request->validate([
             'email' => ['required', 'string', 'email', 'max:255'],
             'password' => ['required', 'string'],
@@ -38,9 +40,10 @@ final class AuthController extends Controller
         if (RateLimiter::tooManyAttempts($throttleKey, 5)) {
             $seconds = RateLimiter::availableIn($throttleKey);
 
-            throw ValidationException::withMessages([
-                'email' => __('auth.throttle', ['seconds' => $seconds, 'minutes' => (int) ceil($seconds / 60)]),
-            ]);
+            throw new TooManyRequestsHttpException(
+                $seconds,
+                __('auth.throttle', ['seconds' => $seconds, 'minutes' => (int) ceil($seconds / 60)]),
+            );
         }
 
         $guard = Auth::guard('web');
@@ -77,6 +80,7 @@ final class AuthController extends Controller
 
     public function logout(Request $request): Response
     {
+        $this->rejectUnexpectedFields($request, []);
         $guard = Auth::guard('web');
 
         if (! $guard instanceof SessionGuard) {
@@ -97,6 +101,7 @@ final class AuthController extends Controller
 
     public function password(Request $request, ChangeOwnPassword $changeOwnPassword, ResolveTenantContext $resolver): Response
     {
+        $this->rejectUnexpectedFields($request, ['current_password', 'password', 'password_confirmation']);
         $validated = $request->validate([
             'current_password' => ['required', 'string'],
             'password' => ['required', 'string', 'confirmed', Password::defaults()],
@@ -131,5 +136,17 @@ final class AuthController extends Controller
         }
 
         return $actor->tenant()->where('state', TenantState::Active->value)->exists();
+    }
+
+    /** @param list<string> $allowed */
+    private function rejectUnexpectedFields(Request $request, array $allowed): void
+    {
+        $unexpected = array_diff(array_keys($request->all()), $allowed);
+
+        if ($unexpected !== []) {
+            throw ValidationException::withMessages(
+                array_fill_keys($unexpected, 'This field is not allowed for this operation.'),
+            );
+        }
     }
 }

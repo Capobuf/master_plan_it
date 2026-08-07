@@ -7,6 +7,8 @@ use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Str;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
 
@@ -51,6 +53,57 @@ final class ApiAuthenticationHttpTest extends TestCase
             ->assertJsonMissingPath('error.fields.password');
         $this->assertSame('6f2c58f1-37d3-4bb5-9e69-97b7b4b0b7f2', $response->headers->get('X-Correlation-ID'));
         $this->assertGuest();
+    }
+
+    public function test_login_rate_limit_returns_429_after_five_failed_attempts(): void
+    {
+        $user = $this->administrator('correct-password');
+        $key = Str::transliterate($user->email).'|'.$this->app['request']->ip();
+        RateLimiter::clear($key);
+
+        try {
+            for ($attempt = 1; $attempt <= 5; $attempt++) {
+                $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/login', [
+                    'email' => $user->email,
+                    'password' => 'wrong-password',
+                ])->assertStatus(422);
+            }
+
+            $response = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/login', [
+                'email' => $user->email,
+                'password' => 'wrong-password',
+            ]);
+            $response->assertStatus(429)
+                ->assertJsonPath('error.code', 'RATE_LIMITED')
+                ->assertJsonStructure(['error' => ['code', 'message', 'fields', 'correlation_id']]);
+        } finally {
+            RateLimiter::clear($key);
+        }
+    }
+
+    public function test_auth_mutations_reject_unexpected_request_fields(): void
+    {
+        $password = 'old-api-password';
+        $user = $this->administrator($password);
+
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => $password,
+            'unexpected' => 'reject-me',
+        ])->assertStatus(422)->assertJsonPath('error.code', 'VALIDATION_FAILED');
+
+        $this->actingAs($user, 'web');
+        $this->withHeaders($this->csrfHeaders())->putJson('/api/v1/auth/password', [
+            'current_password' => $password,
+            'password' => 'new-api-password',
+            'password_confirmation' => 'new-api-password',
+            'unexpected' => 'reject-me',
+        ])->assertStatus(422)->assertJsonPath('error.code', 'VALIDATION_FAILED');
+
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/logout', [
+            'unexpected' => 'reject-me',
+        ])->assertStatus(422)->assertJsonPath('error.code', 'VALIDATION_FAILED');
+        $this->assertAuthenticatedAs($user);
     }
 
     public function test_inactive_actor_and_inactive_tenant_are_denied_without_disclosure(): void
