@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Domain\Contracts\Enums\BillingCycle;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -15,8 +16,8 @@ use Overtrue\LaravelVersionable\VersionStrategy;
  * @property int $id
  * @property int $tenant_id
  * @property int $contract_id
- * @property \Carbon\Carbon $effective_start
- * @property \Carbon\Carbon $effective_end
+ * @property Carbon $effective_start
+ * @property Carbon $effective_end
  * @property BillingCycle $billing_cycle
  * @property string|null $quantity
  * @property string|null $unit_price
@@ -36,6 +37,7 @@ class ContractTerm extends Model
 
     /** @var list<string> */
     protected array $versionable = ['effective_start', 'effective_end', 'billing_cycle', 'quantity', 'unit_price', 'entered_amount', 'amount_includes_vat', 'vat_rate', 'net_amount', 'vat_amount', 'gross_amount', 'auto_renew', 'deleted_by_user_id', 'deleted_by_at', 'deletion_reason', 'lock_version'];
+
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
 
     protected function casts(): array
@@ -44,9 +46,20 @@ class ContractTerm extends Model
     }
 
     /** @return BelongsTo<Tenant, $this> */
-    public function tenant(): BelongsTo { return $this->belongsTo(Tenant::class); }
+    public function tenant(): BelongsTo
+    {
+        return $this->belongsTo(Tenant::class);
+    }
+
     /** @return BelongsTo<Contract, $this> */
-    public function contract(): BelongsTo { return $this->belongsTo(Contract::class); }
+    public function contract(): BelongsTo
+    {
+        return $this->belongsTo(Contract::class);
+    }
+
     /** @return HasMany<ExpenseRow, $this> */
-    public function expenseRows(): HasMany { return $this->hasMany(ExpenseRow::class); }
+    public function expenseRows(): HasMany
+    {
+        return $this->hasMany(ExpenseRow::class);
+    }
 }

@@ -4,8 +4,9 @@ namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Spatie\Permission\Models\Role;
 
-/** @property-read \Spatie\Permission\Models\Role $resource */
+/** @property-read Role $resource */
 final class TenantRoleResource extends JsonResource
 {
     /** @return array<string, mixed> */

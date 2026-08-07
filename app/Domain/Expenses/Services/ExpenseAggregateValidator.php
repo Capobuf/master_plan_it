@@ -9,6 +9,7 @@ use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Money\Money;
 use App\Domain\Money\Services\MoneyCalculator;
 use App\Domain\Money\Services\VatCalculator;
+use App\Models\Contract;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\PlanningYear;
@@ -20,7 +21,7 @@ use Illuminate\Validation\ValidationException;
 final class ExpenseAggregateValidator
 {
     /**
-     * @param list<SaveExpenseRowData> $rows
+     * @param  list<SaveExpenseRowData>  $rows
      * @return array{header: array<string, mixed>, rows: list<array<string, mixed>>}
      */
     public function validate(Tenant $tenant, SaveExpenseData $data, array $rows, ?Expense $currentExpense = null): array
@@ -49,11 +50,11 @@ final class ExpenseAggregateValidator
         if (! $this->isCurrentOrActive($costCenter->active, $currentExpense?->cost_center_id, $data->costCenterId)) {
             $this->fail('cost_center_id', 'The selected cost center is inactive.');
         }
-        if ($data->contractId !== null && ! \App\Models\Contract::query()->where('tenant_id', $tenant->getKey())->whereKey($data->contractId)->exists()) {
+        if ($data->contractId !== null && ! Contract::query()->where('tenant_id', $tenant->getKey())->whereKey($data->contractId)->exists()) {
             $preservedGeneratedSource = $currentExpense?->exists === true
                 && (int) $currentExpense->getRawOriginal('contract_id') === $data->contractId
                 && $currentExpense->rows()->whereNotNull('source_key')->exists()
-                && \App\Models\Contract::withTrashed()
+                && Contract::withTrashed()
                     ->where('tenant_id', $tenant->getKey())
                     ->whereKey($data->contractId)
                     ->whereNotNull('deleted_at')
@@ -200,8 +201,11 @@ final class ExpenseAggregateValidator
 
     private function decimal(string $value, string $field): string
     {
-        try { return Money::fromDecimal($value, 'EUR')->amount(); }
-        catch (\Throwable) { $this->fail($field, 'The amount must be a decimal with at most 6 places.'); }
+        try {
+            return Money::fromDecimal($value, 'EUR')->amount();
+        } catch (\Throwable) {
+            $this->fail($field, 'The amount must be a decimal with at most 6 places.');
+        }
     }
 
     private function nullableDecimal(?string $value, string $field): ?string

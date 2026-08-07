@@ -20,11 +20,13 @@ final class CreateExpense
     {
         $this->expensePolicy($context)->create($actor)->authorize();
         [$actor, $tenant] = $this->persistedContext($actor, $context);
+
         return DB::transaction(function () use ($actor, $context, $correlationId, $data, $rows, $tenant): Expense {
             $expense = new Expense;
             $changed = $this->saveAggregate($expense, $tenant, $data, $rows, $actor);
             $this->revisions($actor, $context, RevisionOperation::Create, $correlationId, $expense, $changed);
             $this->audit('expense.created', $correlationId, $actor, $tenant, $expense, ['rows' => count($rows)]);
+
             return $expense->fresh(['rows']);
         });
     }

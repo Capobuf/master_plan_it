@@ -14,13 +14,16 @@ use Illuminate\Support\Facades\DB;
 final class DeleteContract
 {
     use ManagesContracts;
+
     public function execute(User $actor, TenantContext $context, Contract $target, int $expectedLockVersion, ?string $reason, string $correlationId): void
     {
         $this->contractPolicy($context)->delete($actor, $target)->authorize();
         [$actor, $tenant] = $this->persistedContractContext($actor, $context);
         DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $reason, $target, $tenant): void {
             $contract = Contract::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($target->getKey());
-            if (! $contract instanceof Contract || $contract->lock_version !== $expectedLockVersion) { throw new DomainException('STALE_VERSION'); }
+            if (! $contract instanceof Contract || $contract->lock_version !== $expectedLockVersion) {
+                throw new DomainException('STALE_VERSION');
+            }
             $reason = $this->deletionReason($tenant, $reason);
             $deletedAt = now('UTC')->toImmutable();
             $changed = [$contract];

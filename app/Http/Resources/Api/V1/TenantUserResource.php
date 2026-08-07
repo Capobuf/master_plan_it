@@ -2,13 +2,14 @@
 
 namespace App\Http\Resources\Api\V1;
 
-use LogicException;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use LogicException;
 use Spatie\Permission\Models\Role;
 
-/** @property-read \App\Models\User $resource */
+/** @property-read User $resource */
 final class TenantUserResource extends JsonResource
 {
     /** @return array<string, mixed> */

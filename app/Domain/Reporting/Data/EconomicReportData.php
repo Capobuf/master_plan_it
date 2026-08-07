@@ -4,12 +4,13 @@ namespace App\Domain\Reporting\Data;
 
 use App\Domain\Economics\Data\EconomicDataset;
 use App\Domain\Economics\Data\EconomicLine;
+use App\Domain\Economics\Data\EconomicSummary;
 
 final readonly class EconomicReportData
 {
     /**
-     * @param array{summary: \App\Domain\Economics\Data\EconomicSummary, monthly: array<string, string>, byType: array<string, string>, byCostCenter: array<string, string>} $calculated
-     * @param list<EconomicLine> $lines
+     * @param  array{summary: EconomicSummary, monthly: array<string, string>, byType: array<string, string>, byCostCenter: array<string, string>}  $calculated
+     * @param  list<EconomicLine>  $lines
      */
     public function __construct(
         public EconomicDataset $dataset,

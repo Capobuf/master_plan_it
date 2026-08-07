@@ -7,7 +7,6 @@ use App\Domain\Contracts\Data\ExpectedContractOccurrence;
 use App\Domain\Contracts\Queries\ExpectedContractOccurrenceQuery;
 use App\Domain\Expenses\Actions\Concerns\ManagesExpenseAggregate;
 use App\Domain\Expenses\Enums\ActualConfirmationState;
-use App\Domain\Expenses\Enums\Distribution;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Revisions\Data\RevisionOperation;
@@ -29,28 +28,45 @@ final class GenerateContractOccurrenceForYear
     {
         $this->contractPolicy($context)->generateOccurrence($actor, $contract)->authorize();
         [$actor, $tenant] = $this->persistedContractContext($actor, $context);
+
         return DB::transaction(function () use ($actor, $context, $contract, $correlationId, $tenant, $year): Expense {
-            $contract=Contract::query()->where('tenant_id',$tenant->getKey())->lockForUpdate()->find($contract->getKey());if(!$contract instanceof Contract){throw new DomainException('GENERATION_NOT_APPLICABLE');}
+            $contract = Contract::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($contract->getKey());
+            if (! $contract instanceof Contract) {
+                throw new DomainException('GENERATION_NOT_APPLICABLE');
+            }
             $planningYear = PlanningYear::query()->where('tenant_id', $tenant->getKey())->where('year_label', $year)->first();
-            if (! $planningYear instanceof PlanningYear) { throw new DomainException('INVALID_GENERATION_YEAR'); }
+            if (! $planningYear instanceof PlanningYear) {
+                throw new DomainException('INVALID_GENERATION_YEAR');
+            }
             $expected = app(ExpectedContractOccurrenceQuery::class)->forContract($contract, $year);
-            if ($expected === []) { throw new DomainException('GENERATION_NOT_APPLICABLE'); }
+            if ($expected === []) {
+                throw new DomainException('GENERATION_NOT_APPLICABLE');
+            }
             $candidate = collect($expected)->first(fn (ExpectedContractOccurrence $item) => ! $item->suppressed && $item->expenseId === null);
             if (! $candidate instanceof ExpectedContractOccurrence) {
-                if (collect($expected)->contains(fn (ExpectedContractOccurrence $item) => $item->suppressed && $item->expenseId === null)) { throw new DomainException('GENERATION_SUPPRESSED'); }
+                if (collect($expected)->contains(fn (ExpectedContractOccurrence $item) => $item->suppressed && $item->expenseId === null)) {
+                    throw new DomainException('GENERATION_SUPPRESSED');
+                }
                 throw new DomainException('GENERATION_SOURCE_DUPLICATE');
             }
+
             return $this->generateExpected($actor, $context, $contract, $candidate, $correlationId);
         });
     }
 
     public function generateExpected(User $actor, TenantContext $context, Contract $contract, ExpectedContractOccurrence $expected, string $correlationId): Expense
     {
-        if ($expected->suppressed) { throw new DomainException('GENERATION_SUPPRESSED'); }
-        if (ExpenseRow::query()->where('tenant_id', $context->tenantId)->where('source_key', $expected->sourceKey)->exists()) { throw new DomainException('GENERATION_SOURCE_DUPLICATE'); }
+        if ($expected->suppressed) {
+            throw new DomainException('GENERATION_SUPPRESSED');
+        }
+        if (ExpenseRow::query()->where('tenant_id', $context->tenantId)->where('source_key', $expected->sourceKey)->exists()) {
+            throw new DomainException('GENERATION_SOURCE_DUPLICATE');
+        }
         $planningYear = PlanningYear::query()->where('tenant_id', $context->tenantId)->where('year_label', $expected->planningYear)->first();
         $term = ContractTerm::query()->where('tenant_id', $context->tenantId)->where('contract_id', $contract->getKey())->find($expected->termId);
-        if (! $planningYear instanceof PlanningYear || ! $term instanceof ContractTerm || $contract->deleted_at !== null || ! $contract->active) { throw new DomainException('TERMINAL_DELETION'); }
+        if (! $planningYear instanceof PlanningYear || ! $term instanceof ContractTerm || $contract->deleted_at !== null || ! $contract->active) {
+            throw new DomainException('TERMINAL_DELETION');
+        }
         $expense = new Expense;
         $expense->forceFill([
             'tenant_id' => $context->tenantId,
@@ -76,6 +92,7 @@ final class GenerateContractOccurrenceForYear
         $row->save();
         $this->revisions($actor, $context, RevisionOperation::Create, $correlationId, $expense, [$expense, $row]);
         $this->audit('contract.occurrence-generated', $correlationId, $actor, $context->tenant, $expense, ['contract_id' => $contract->getKey(), 'source_key' => $expected->sourceKey]);
+
         return $expense->fresh(['rows']);
     }
 }

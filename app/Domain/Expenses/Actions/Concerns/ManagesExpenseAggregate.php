@@ -36,8 +36,15 @@ trait ManagesExpenseAggregate
     /** @return array{User,Tenant} */
     private function persistedContext(User $actor, TenantContext $context): array
     {
-        $actorKey=$actor->getKey();$actorOriginal=$actor->getRawOriginal($actor->getKeyName());$contextActorKey=$context->actor->getKey();$contextActorOriginal=$context->actor->getRawOriginal($context->actor->getKeyName());$tenantKey=$context->tenant->getKey();$tenantOriginal=$context->tenant->getRawOriginal($context->tenant->getKeyName());
-        if(!$actor->exists||$actorKey===null||$actorKey!==$actorOriginal||!$context->actor->exists||$contextActorKey!==$contextActorOriginal||$contextActorKey!==$actorKey||!$context->tenant->exists||$tenantKey!==$tenantOriginal||(int)$tenantKey!==$context->tenantId){throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');}
+        $actorKey = $actor->getKey();
+        $actorOriginal = $actor->getRawOriginal($actor->getKeyName());
+        $contextActorKey = $context->actor->getKey();
+        $contextActorOriginal = $context->actor->getRawOriginal($context->actor->getKeyName());
+        $tenantKey = $context->tenant->getKey();
+        $tenantOriginal = $context->tenant->getRawOriginal($context->tenant->getKeyName());
+        if (! $actor->exists || $actorKey === null || $actorKey !== $actorOriginal || ! $context->actor->exists || $contextActorKey !== $contextActorOriginal || $contextActorKey !== $actorKey || ! $context->tenant->exists || $tenantKey !== $tenantOriginal || (int) $tenantKey !== $context->tenantId) {
+            throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
+        }
         $persistedActor = User::query()->whereKey($actor->getRawOriginal($actor->getKeyName()))->where('is_active', true)->first();
         $tenant = Tenant::query()->whereKey($context->tenantId)->first();
         if (! $persistedActor instanceof User || ! $tenant instanceof Tenant || (int) $context->tenant->getKey() !== $context->tenantId) {
@@ -49,12 +56,13 @@ trait ManagesExpenseAggregate
         if ($persistedActor->tenant_id !== null && (int) $persistedActor->tenant_id !== (int) $tenant->getKey()) {
             throw new AuthorizationException('PERMISSION_DENIED');
         }
+
         return [$persistedActor, $tenant];
     }
 
     /**
-     * @param list<SaveExpenseRowData> $rows
-     * @param list<array{id: int, lock_version: int}> $deletedRows
+     * @param  list<SaveExpenseRowData>  $rows
+     * @param  list<array{id: int, lock_version: int}>  $deletedRows
      * @return list<Expense|ExpenseRow>
      */
     private function saveAggregate(Expense $expense, Tenant $tenant, SaveExpenseData $data, array $rows, User $actor, array $deletedRows = []): array
@@ -107,13 +115,14 @@ trait ManagesExpenseAggregate
             if ($row->exists && (int) $row->lock_version !== (int) $expected) {
                 throw new DomainException('STALE_VERSION');
             }
-            $oldType=$row->exists?$row->type:null;$wasSystemManaged=$row->exists&&$row->type===ExpenseType::Actual&&$row->is_system_managed;
+            $oldType = $row->exists ? $row->type : null;
+            $wasSystemManaged = $row->exists && $row->type === ExpenseType::Actual && $row->is_system_managed;
             $row->fill($attributes);
             $row->forceFill($serverAttributes);
             if ($wasSystemManaged && $row->isDirty()) {
                 $serverAttributes['is_system_managed'] = false;
                 $serverAttributes['manual_override_at'] = CarbonImmutable::now('UTC');
-                $row->forceFill(['is_system_managed'=>false,'manual_override_at'=>$serverAttributes['manual_override_at']]);
+                $row->forceFill(['is_system_managed' => false, 'manual_override_at' => $serverAttributes['manual_override_at']]);
             }
             if (! $row->exists) {
                 $serverAttributes['confirmation_state'] = $attributes['type'] === ExpenseType::Actual
@@ -124,9 +133,20 @@ trait ManagesExpenseAggregate
                 $row->tenant_id = $tenant->getKey();
                 $row->expense_id = $expense->getKey();
             } else {
-                if($oldType!==$attributes['type']){
-                    if($attributes['type']===ExpenseType::Actual){$serverAttributes['confirmation_state']=ActualConfirmationState::ToConfirm;$serverAttributes['confirmed_by_user_id']=null;$serverAttributes['confirmed_at']=null;$serverAttributes['is_system_managed']=false;$serverAttributes['manual_override_at']=null;}
-                    else{$serverAttributes['confirmation_state']=null;$serverAttributes['confirmed_by_user_id']=null;$serverAttributes['confirmed_at']=null;$serverAttributes['is_system_managed']=false;$serverAttributes['manual_override_at']=null;}
+                if ($oldType !== $attributes['type']) {
+                    if ($attributes['type'] === ExpenseType::Actual) {
+                        $serverAttributes['confirmation_state'] = ActualConfirmationState::ToConfirm;
+                        $serverAttributes['confirmed_by_user_id'] = null;
+                        $serverAttributes['confirmed_at'] = null;
+                        $serverAttributes['is_system_managed'] = false;
+                        $serverAttributes['manual_override_at'] = null;
+                    } else {
+                        $serverAttributes['confirmation_state'] = null;
+                        $serverAttributes['confirmed_by_user_id'] = null;
+                        $serverAttributes['confirmed_at'] = null;
+                        $serverAttributes['is_system_managed'] = false;
+                        $serverAttributes['manual_override_at'] = null;
+                    }
                 }
                 $attributes['lock_version'] = (int) $row->lock_version + 1;
             }
@@ -157,6 +177,7 @@ trait ManagesExpenseAggregate
             $row->delete();
             $changed[] = $row;
         }
+
         return $changed;
     }
 

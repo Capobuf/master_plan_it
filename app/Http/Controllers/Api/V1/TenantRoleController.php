@@ -9,15 +9,14 @@ use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\AssignableAbilityResource;
 use App\Http\Resources\Api\V1\TenantRoleResource;
-use App\Models\User;
 use App\Support\Authorization\PermissionCatalogue;
+use DomainException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Http\Response;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\ValidationException;
 use Spatie\Permission\Models\Role;
-use DomainException;
 
 final class TenantRoleController extends Controller
 {
@@ -44,9 +43,9 @@ final class TenantRoleController extends Controller
     public function abilities(Request $request): AnonymousResourceCollection
     {
         $items = array_values(array_map(static fn (string $ability): array => [
-                'name' => $ability,
-                'label' => str($ability)->replace(['-', '.'], ' ')->title()->toString(),
-            ], PermissionCatalogue::tenantAbilities()));
+            'name' => $ability,
+            'label' => str($ability)->replace(['-', '.'], ' ')->title()->toString(),
+        ], PermissionCatalogue::tenantAbilities()));
         $perPage = min(max($request->integer('per_page', 100), 1), 100);
         $page = max($request->integer('page', 1), 1);
         $paginator = new LengthAwarePaginator(

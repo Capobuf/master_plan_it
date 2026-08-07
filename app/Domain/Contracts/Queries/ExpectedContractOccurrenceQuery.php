@@ -27,7 +27,9 @@ final class ExpectedContractOccurrenceQuery
         $result = [];
         foreach ($terms as $term) {
             foreach ($this->dates($term) as $date) {
-                if ($year !== null && $date->year !== $year) { continue; }
+                if ($year !== null && $date->year !== $year) {
+                    continue;
+                }
                 $key = ContractOccurrenceKey::make($contract, $term, $date->year, $date)->value;
                 $row = $rows->get($key);
                 $result[] = new ExpectedContractOccurrence(
@@ -41,6 +43,7 @@ final class ExpectedContractOccurrenceQuery
             }
         }
         usort($result, fn ($a, $b) => [$a->occurrenceDate, $a->termId] <=> [$b->occurrenceDate, $b->termId]);
+
         return $result;
     }
 
@@ -53,16 +56,22 @@ final class ExpectedContractOccurrenceQuery
         if ($term->billing_cycle === BillingCycle::Annual) {
             for ($year = $start->year; $year <= $end->year; $year++) {
                 $date = CarbonImmutable::create($year, $start->month, min($start->day, CarbonImmutable::create($year, $start->month)->daysInMonth));
-                if ($date->betweenIncluded($start, $end)) { $dates[] = $date; }
+                if ($date->betweenIncluded($start, $end)) {
+                    $dates[] = $date;
+                }
             }
+
             return $dates;
         }
         $month = $start->startOfMonth();
         while ($month->lessThanOrEqualTo($end->startOfMonth())) {
             $date = $month->day(min($start->day, $month->daysInMonth));
-            if ($date->betweenIncluded($start, $end)) { $dates[] = $date; }
+            if ($date->betweenIncluded($start, $end)) {
+                $dates[] = $date;
+            }
             $month = $month->addMonthNoOverflow()->startOfMonth();
         }
+
         return $dates;
     }
 }

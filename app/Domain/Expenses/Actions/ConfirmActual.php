@@ -22,6 +22,7 @@ final class ConfirmActual
     {
         $this->expensePolicy($context)->confirmActual($actor, $target)->authorize();
         [$actor, $tenant] = $this->persistedContext($actor, $context);
+
         return DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $target, $targetRow, $tenant): ExpenseRow {
             $expense = Expense::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($target->getKey());
             $row = ExpenseRow::query()->where('tenant_id', $tenant->getKey())->where('expense_id', $expense?->getKey())->lockForUpdate()->find($targetRow->getKey());
@@ -31,6 +32,7 @@ final class ConfirmActual
             $row->forceFill(['confirmation_state' => ActualConfirmationState::Confirmed, 'confirmed_by_user_id' => $actor->getKey(), 'confirmed_at' => CarbonImmutable::now('UTC'), 'is_system_managed' => false, 'lock_version' => $row->lock_version + 1])->save();
             $this->revisions($actor, $context, RevisionOperation::Update, $correlationId, $expense, [$row]);
             $this->audit('expense.actual-confirmed', $correlationId, $actor, $tenant, $expense, ['row_id' => $row->getKey()]);
+
             return $row->fresh();
         });
     }

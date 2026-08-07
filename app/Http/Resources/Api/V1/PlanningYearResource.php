@@ -3,10 +3,11 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Domain\MasterData\Data\CreatePlanningYearData;
+use App\Models\PlanningYear;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @property-read \App\Models\PlanningYear $resource */
+/** @property-read PlanningYear $resource */
 final class PlanningYearResource extends JsonResource
 {
     /** @return array<string, mixed> */

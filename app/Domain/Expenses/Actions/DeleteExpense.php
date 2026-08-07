@@ -30,10 +30,15 @@ final class DeleteExpense
                     app(SuppressContractOccurrence::class)->execute($actor, $context, (int) $expense->contract_id, (string) $sourceKey, null, $correlationId);
                 }
             }
-            $deletedRows=$expense->rows()->get();
-            foreach($deletedRows as $deletedRow){$deletedRow->lock_version++;$deletedRow->save();$deletedRow->delete();}
-            $expense->lock_version++;$expense->save();
-            $this->revisions($actor, $context, RevisionOperation::Delete, $correlationId, $expense, [$expense,...$deletedRows->all()]);
+            $deletedRows = $expense->rows()->get();
+            foreach ($deletedRows as $deletedRow) {
+                $deletedRow->lock_version++;
+                $deletedRow->save();
+                $deletedRow->delete();
+            }
+            $expense->lock_version++;
+            $expense->save();
+            $this->revisions($actor, $context, RevisionOperation::Delete, $correlationId, $expense, [$expense, ...$deletedRows->all()]);
             $this->audit('expense.deleted', $correlationId, $actor, $tenant, $expense, ['suppressed' => $suppressOccurrence]);
             $expense->delete();
         });

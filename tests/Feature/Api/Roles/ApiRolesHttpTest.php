@@ -25,7 +25,7 @@ final class ApiRolesHttpTest extends TestCase
                 'data' => ['*' => ['name', 'label']],
                 'meta' => ['current_page', 'last_page', 'per_page', 'total'],
                 'links' => ['first', 'last', 'prev', 'next'],
-        ]);
+            ]);
         foreach ($abilities->json('data') as $ability) {
             self::assertFalse(str_starts_with($ability['name'], 'platform.'));
         }

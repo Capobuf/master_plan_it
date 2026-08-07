@@ -65,7 +65,7 @@ final class VendorController extends Controller
     public function store(Request $request, CreateVendor $createVendor): VendorResource
     {
         $this->authorize($request, 'vendor.create');
-        $this->rejectUnexpected($request, [...array_keys($this->vendorRules()),]);
+        $this->rejectUnexpected($request, [...array_keys($this->vendorRules())]);
         $input = $request->validate($this->vendorRules());
         $vendor = $createVendor->execute(
             $this->actor($request),

@@ -41,23 +41,45 @@ trait ManagesContracts
     /** @return array{User,Tenant} */
     private function persistedContractContext(User $actor, TenantContext $context): array
     {
-        $actorKey=$actor->getKey();$actorOriginal=$actor->getRawOriginal($actor->getKeyName());$contextActorKey=$context->actor->getKey();$contextActorOriginal=$context->actor->getRawOriginal($context->actor->getKeyName());$tenantKey=$context->tenant->getKey();$tenantOriginal=$context->tenant->getRawOriginal($context->tenant->getKeyName());
-        if(!$actor->exists||$actorKey===null||$actorKey!==$actorOriginal||!$context->actor->exists||$contextActorKey!==$contextActorOriginal||$contextActorKey!==$actorKey||!$context->tenant->exists||$tenantKey!==$tenantOriginal||(int)$tenantKey!==$context->tenantId){throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');}
+        $actorKey = $actor->getKey();
+        $actorOriginal = $actor->getRawOriginal($actor->getKeyName());
+        $contextActorKey = $context->actor->getKey();
+        $contextActorOriginal = $context->actor->getRawOriginal($context->actor->getKeyName());
+        $tenantKey = $context->tenant->getKey();
+        $tenantOriginal = $context->tenant->getRawOriginal($context->tenant->getKeyName());
+        if (! $actor->exists || $actorKey === null || $actorKey !== $actorOriginal || ! $context->actor->exists || $contextActorKey !== $contextActorOriginal || $contextActorKey !== $actorKey || ! $context->tenant->exists || $tenantKey !== $tenantOriginal || (int) $tenantKey !== $context->tenantId) {
+            throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
+        }
         $user = User::query()->whereKey($actor->getRawOriginal($actor->getKeyName()))->where('is_active', true)->first();
         $tenant = Tenant::query()->whereKey($context->tenantId)->first();
-        if (! $user instanceof User || ! $tenant instanceof Tenant) { throw new AuthorizationException('TENANT_CONTEXT_REQUIRED'); }
-        if ($tenant->state !== TenantState::Active) { throw new AuthorizationException('TENANT_INACTIVE'); }
-        if ($user->tenant_id !== null && (int) $user->tenant_id !== (int) $tenant->getKey()) { throw new AuthorizationException('PERMISSION_DENIED'); }
+        if (! $user instanceof User || ! $tenant instanceof Tenant) {
+            throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
+        }
+        if ($tenant->state !== TenantState::Active) {
+            throw new AuthorizationException('TENANT_INACTIVE');
+        }
+        if ($user->tenant_id !== null && (int) $user->tenant_id !== (int) $tenant->getKey()) {
+            throw new AuthorizationException('PERMISSION_DENIED');
+        }
+
         return [$user, $tenant];
     }
 
     /** @return list<Contract|ContractTerm> */
     private function saveContract(Contract $contract, Tenant $tenant, SaveContractData $data): array
     {
-        if (trim($data->title) === '' || mb_strlen($data->title) > 255) { $this->contractFail('title', 'A contract title is required.'); }
-        if (! Vendor::query()->where('tenant_id', $tenant->getKey())->whereKey($data->vendorId)->exists()) { $this->contractFail('vendor_id', 'The vendor is invalid.'); }
-        if (! CostCenter::query()->where('tenant_id', $tenant->getKey())->whereKey($data->costCenterId)->exists()) { $this->contractFail('cost_center_id', 'The cost center is invalid.'); }
-        if ($data->terms === []) { $this->contractFail('terms', 'At least one term is required.'); }
+        if (trim($data->title) === '' || mb_strlen($data->title) > 255) {
+            $this->contractFail('title', 'A contract title is required.');
+        }
+        if (! Vendor::query()->where('tenant_id', $tenant->getKey())->whereKey($data->vendorId)->exists()) {
+            $this->contractFail('vendor_id', 'The vendor is invalid.');
+        }
+        if (! CostCenter::query()->where('tenant_id', $tenant->getKey())->whereKey($data->costCenterId)->exists()) {
+            $this->contractFail('cost_center_id', 'The cost center is invalid.');
+        }
+        if ($data->terms === []) {
+            $this->contractFail('terms', 'At least one term is required.');
+        }
 
         $contract->fill(['vendor_id' => $data->vendorId, 'cost_center_id' => $data->costCenterId, 'title' => trim($data->title), 'description' => $data->description, 'active' => $data->active, 'renewal_date' => $data->renewalDate, 'renewal_notice_days' => $data->renewalNoticeDays, 'renewal_notes' => $data->renewalNotes]);
         $contract->tenant_id = $tenant->getKey();
@@ -68,33 +90,58 @@ trait ManagesContracts
         $kept = [];
         $changed = [$contract];
         foreach ($data->terms as $index => $termData) {
-            if (! $termData instanceof SaveContractTermData) { $this->contractFail("terms.{$index}", 'The term is invalid.'); }
-            try {$start = CarbonImmutable::parse($termData->effectiveStart)->startOfDay();$end = CarbonImmutable::parse($termData->effectiveEnd)->startOfDay();}catch(\Throwable){$this->contractFail("terms.{$index}.effective_start",'The term dates are invalid.');}
-            if ($start->greaterThan($end)) { $this->contractFail("terms.{$index}.effective_end", 'The term end must not precede its start.'); }
+            if (! $termData instanceof SaveContractTermData) {
+                $this->contractFail("terms.{$index}", 'The term is invalid.');
+            }
+            try {
+                $start = CarbonImmutable::parse($termData->effectiveStart)->startOfDay();
+                $end = CarbonImmutable::parse($termData->effectiveEnd)->startOfDay();
+            } catch (\Throwable) {
+                $this->contractFail("terms.{$index}.effective_start", 'The term dates are invalid.');
+            }
+            if ($start->greaterThan($end)) {
+                $this->contractFail("terms.{$index}.effective_end", 'The term end must not precede its start.');
+            }
             foreach ($periods as [$otherStart, $otherEnd]) {
-                if ($start->lessThanOrEqualTo($otherEnd) && $end->greaterThanOrEqualTo($otherStart)) { throw new DomainException('CONTRACT_TERM_OVERLAP'); }
+                if ($start->lessThanOrEqualTo($otherEnd) && $end->greaterThanOrEqualTo($otherStart)) {
+                    throw new DomainException('CONTRACT_TERM_OVERLAP');
+                }
             }
             $periods[] = [$start, $end];
             $term = $termData->id === null ? new ContractTerm : $existing->get($termData->id);
-            if (! $term instanceof ContractTerm) { throw new DomainException('TENANT_RELATION_MISMATCH'); }
-            if ($term->exists && (int) $term->lock_version !== (int) $termData->expectedLockVersion) { throw new DomainException('STALE_VERSION'); }
+            if (! $term instanceof ContractTerm) {
+                throw new DomainException('TENANT_RELATION_MISMATCH');
+            }
+            if ($term->exists && (int) $term->lock_version !== (int) $termData->expectedLockVersion) {
+                throw new DomainException('STALE_VERSION');
+            }
             $entered = Money::fromDecimal($termData->enteredAmount, (string) $tenant->currency_code)->amount();
             if ($termData->unitPrice !== null && trim($termData->unitPrice) !== '' && bccomp($termData->unitPrice, '0', 6) !== 0) {
-                if ($termData->quantity === null) { $this->contractFail("terms.{$index}.quantity", 'Quantity is required with a unit price.'); }
+                if ($termData->quantity === null) {
+                    $this->contractFail("terms.{$index}.quantity", 'Quantity is required with a unit price.');
+                }
                 $entered = (new MoneyCalculator)->multiply(Money::fromDecimal($termData->unitPrice, (string) $tenant->currency_code), $termData->quantity)->amount();
             }
             $rate = trim($termData->vatRate) === '' ? (string) $tenant->default_vat_rate : $termData->vatRate;
             $breakdown = $termData->amountIncludesVat ? (new VatCalculator)->fromIncludedAmount(Money::fromDecimal($entered, (string) $tenant->currency_code), $rate) : (new VatCalculator)->fromExcludedAmount(Money::fromDecimal($entered, (string) $tenant->currency_code), $rate);
             $term->fill(['effective_start' => $start->toDateString(), 'effective_end' => $end->toDateString(), 'billing_cycle' => $termData->billingCycle, 'quantity' => $termData->quantity, 'unit_price' => $termData->unitPrice, 'entered_amount' => $entered, 'amount_includes_vat' => $termData->amountIncludesVat, 'vat_rate' => $rate, 'net_amount' => $breakdown->net()->amount(), 'vat_amount' => $breakdown->vat()->amount(), 'gross_amount' => $breakdown->gross()->amount(), 'auto_renew' => $termData->autoRenew]);
-            if (! $term->exists) { $term->tenant_id = $tenant->getKey(); $term->contract_id = $contract->getKey(); $term->source_rule_key = (string) Str::uuid(); }
-            else { $term->lock_version++; }
+            if (! $term->exists) {
+                $term->tenant_id = $tenant->getKey();
+                $term->contract_id = $contract->getKey();
+                $term->source_rule_key = (string) Str::uuid();
+            } else {
+                $term->lock_version++;
+            }
             $term->save();
             $kept[(int) $term->getKey()] = true;
             $changed[] = $term;
         }
         foreach ($existing as $term) {
-            if (! isset($kept[(int) $term->getKey()])) { throw new DomainException('STALE_VERSION'); }
+            if (! isset($kept[(int) $term->getKey()])) {
+                throw new DomainException('STALE_VERSION');
+            }
         }
+
         return $changed;
     }
 
@@ -146,6 +193,7 @@ trait ManagesContracts
             'lock_version' => $term->lock_version + 1,
         ])->save();
         $term->delete();
+
         return $rows->all();
     }
 
@@ -209,7 +257,9 @@ trait ManagesContracts
             }
             $seen[$identity] = true;
             $version = $model->latestVersions()->first();
-            if ($version instanceof Version) { app(LinkVersionToRevisionBatch::class)->execute($batch, $version, $sequence++); }
+            if ($version instanceof Version) {
+                app(LinkVersionToRevisionBatch::class)->execute($batch, $version, $sequence++);
+            }
         }
     }
 
@@ -219,5 +269,8 @@ trait ManagesContracts
         app(AuditRecorder::class)->record($event, $correlationId, new AuditProperties($properties), $actor, (int) $tenant->getKey(), $contract);
     }
 
-    private function contractFail(string $field, string $message): never { throw ValidationException::withMessages([$field => $message]); }
+    private function contractFail(string $field, string $message): never
+    {
+        throw ValidationException::withMessages([$field => $message]);
+    }
 }
