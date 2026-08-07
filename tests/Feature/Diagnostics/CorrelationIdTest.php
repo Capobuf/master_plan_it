@@ -128,17 +128,31 @@ class CorrelationIdTest extends TestCase
             throw new RuntimeException('unexpected-correlation-failure');
         });
 
-        $authorization = $this->getJson('/api/_contract/correlation/authorization')
+        $authorizationId = strtolower((string) Str::uuid());
+        $authorization = $this->withHeader(CorrelationId::HEADER, $authorizationId)
+            ->getJson('/api/_contract/correlation/authorization')
             ->assertForbidden()
-            ->assertJsonPath('message', 'PERMISSION_DENIED');
-        $authorizationId = (string) $authorization->headers->get(CorrelationId::HEADER);
+            ->assertJsonStructure(['error' => ['code', 'message', 'fields', 'correlation_id']])
+            ->assertJsonPath('error.code', 'PERMISSION_DENIED')
+            ->assertJsonPath('error.fields', [])
+            ->assertJsonPath('error.correlation_id', $authorizationId);
+
+        $this->assertSame($authorizationId, $authorization->headers->get(CorrelationId::HEADER));
 
         $this->assertTrue(Str::isUuid($authorizationId, 4));
         $this->assertLogHasCorrelation($events, 'authorization-observed', $authorizationId);
         $this->assertArrayNotHasKey(CorrelationId::LOG_CONTEXT_KEY, Log::sharedContext());
 
-        $unexpected = $this->getJson('/api/_contract/correlation/unexpected')->assertStatus(500);
-        $unexpectedId = (string) $unexpected->headers->get(CorrelationId::HEADER);
+        $unexpectedId = strtolower((string) Str::uuid());
+        $unexpected = $this->withHeader(CorrelationId::HEADER, $unexpectedId)
+            ->getJson('/api/_contract/correlation/unexpected')
+            ->assertStatus(500)
+            ->assertJsonStructure(['error' => ['code', 'message', 'fields', 'correlation_id']])
+            ->assertJsonPath('error.code', 'INTERNAL_ERROR')
+            ->assertJsonPath('error.fields', [])
+            ->assertJsonPath('error.correlation_id', $unexpectedId);
+
+        $this->assertSame($unexpectedId, $unexpected->headers->get(CorrelationId::HEADER));
 
         $this->assertTrue(Str::isUuid($unexpectedId, 4));
         $this->assertNotSame($authorizationId, $unexpectedId);
