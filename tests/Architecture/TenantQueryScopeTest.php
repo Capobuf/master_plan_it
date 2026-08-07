@@ -223,6 +223,7 @@ final class TenantQueryScopeTest extends TestCase
             'default_vat_rate' => '22.000000',
             'budget_basis' => 'net',
         ]);
+        $tenant->syncOriginal();
 
         $actor = new User;
         $actor->forceFill(['id' => 5, 'tenant_id' => $tenantId]);

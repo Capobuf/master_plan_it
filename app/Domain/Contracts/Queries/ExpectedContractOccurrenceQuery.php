@@ -7,7 +7,6 @@ use App\Domain\Contracts\Data\ExpectedContractOccurrence;
 use App\Domain\Contracts\Enums\BillingCycle;
 use App\Domain\Expenses\Enums\ActualConfirmationState;
 use App\Models\Contract;
-use App\Models\ContractGenerationException;
 use App\Models\ContractTerm;
 use App\Models\ExpenseRow;
 use Carbon\CarbonImmutable;
@@ -17,8 +16,13 @@ final class ExpectedContractOccurrenceQuery
     /** @return list<ExpectedContractOccurrence> */
     public function forContract(Contract $contract, ?int $year = null): array
     {
-        $terms = ContractTerm::query()->where('tenant_id', $contract->tenant_id)->where('contract_id', $contract->getKey())->orderBy('effective_start')->get();
-        $exceptions = ContractGenerationException::query()->where('tenant_id', $contract->tenant_id)->where('contract_id', $contract->getKey())->pluck('id', 'source_key');
+        $terms = $contract->terms()
+            ->where('tenant_id', $contract->tenant_id)
+            ->orderBy('effective_start')
+            ->get();
+        $exceptions = $contract->generationExceptions()
+            ->where('tenant_id', $contract->tenant_id)
+            ->pluck('id', 'source_key');
         $rows = ExpenseRow::query()->where('tenant_id', $contract->tenant_id)->whereNotNull('source_key')->get()->keyBy('source_key');
         $result = [];
         foreach ($terms as $term) {
