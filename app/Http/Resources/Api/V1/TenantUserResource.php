@@ -2,6 +2,8 @@
 
 namespace App\Http\Resources\Api\V1;
 
+use LogicException;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Spatie\Permission\Models\Role;
@@ -14,10 +16,16 @@ final class TenantUserResource extends JsonResource
     {
         $roles = $this->resource->relationLoaded('roles')
             ? $this->resource->roles
-                ->map(static fn (Role $role): array => [
-                    'id' => (int) $role->getKey(),
-                    'name' => (string) $role->name,
-                ])
+                ->map(static function (Model $role): array {
+                    if (! $role instanceof Role) {
+                        throw new LogicException('Unexpected role model in tenant user resource.');
+                    }
+
+                    return [
+                        'id' => (int) $role->getKey(),
+                        'name' => (string) $role->name,
+                    ];
+                })
                 ->values()
                 ->all()
             : [];
