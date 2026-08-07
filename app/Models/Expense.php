@@ -35,7 +35,6 @@ class Expense extends Model
         'notes',
         'project_id',
         'contract_id',
-        'lock_version',
     ];
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;

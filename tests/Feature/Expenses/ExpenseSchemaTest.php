@@ -8,10 +8,13 @@ use App\Domain\Expenses\Enums\ActualConfirmationState;
 use App\Domain\Expenses\Enums\Distribution;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Models\Contract;
+use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\Vendor;
 use Database\Factories\ExpenseFactory;
 use Database\Factories\ExpenseRowFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -64,6 +67,7 @@ class ExpenseSchemaTest extends TestCase
             'manual_override_at',
             'contract_term_id',
             'source_key',
+            'current_source_key',
             'description',
             'quantity',
             'unit_price',
@@ -246,7 +250,7 @@ class ExpenseSchemaTest extends TestCase
         $this->assertIndex('expense_rows', ['tenant_id', 'expense_id', 'deleted_at']);
         $this->assertIndex('expense_rows', ['tenant_id', 'vendor_id', 'deleted_at']);
         $this->assertIndex('expense_rows', ['tenant_id', 'funded_plafond_expense_id', 'deleted_at']);
-        $this->assertIndex('expense_rows', ['tenant_id', 'source_key'], unique: true);
+        $this->assertIndex('expense_rows', ['tenant_id', 'current_source_key'], unique: true);
 
         $this->assertRestrictiveForeignKey('expenses', ['tenant_id'], 'tenants', ['id']);
         $this->assertRestrictiveForeignKey('expenses', ['tenant_id', 'planning_year_id'], 'planning_years', ['tenant_id', 'id']);
@@ -461,6 +465,19 @@ class ExpenseSchemaTest extends TestCase
         $this->assertExpenseTablesExist();
 
         $tenant = Tenant::factory()->create();
+        if ($contractId !== null) {
+            $vendor = Vendor::factory()->for($tenant)->create();
+            $costCenter = CostCenter::factory()->for($tenant)->create();
+            $contractId = Contract::query()->create([
+                'tenant_id' => $tenant->getKey(),
+                'vendor_id' => $vendor->getKey(),
+                'cost_center_id' => $costCenter->getKey(),
+                'title' => 'Context matrix contract',
+                'active' => true,
+                'lock_version' => 1,
+            ])->getKey();
+        }
+
         $operation = fn () => $this->insertExpenseHeader($tenant->id, 'Context matrix', [
             'project_id' => $projectId,
             'contract_id' => $contractId,
