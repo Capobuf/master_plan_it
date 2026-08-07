@@ -41,6 +41,23 @@ final class ContractApiHttpTest extends TestCase
             ->assertJsonPath('data.terms.0.local_key', $contract->terms()->firstOrFail()->source_rule_key);
     }
 
+    public function test_contract_detail_is_tenant_scoped_for_same_and_foreign_records(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $owned = $this->contract($tenant);
+        $foreign = $this->contract(Tenant::factory()->create());
+        $this->actingAs($user, 'web');
+
+        $this->getJson('/api/v1/contracts/'.$owned->getKey())
+            ->assertOk()
+            ->assertJsonPath('data.id', $owned->getKey());
+
+        $this->getJson('/api/v1/contracts/'.$foreign->getKey())
+            ->assertNotFound()
+            ->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
+    }
+
     public function test_contract_create_requires_ability_and_csrf_session(): void
     {
         $tenant = Tenant::factory()->create();
