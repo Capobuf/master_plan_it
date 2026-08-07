@@ -99,8 +99,15 @@ final class ApiAuthenticationHttpTest extends TestCase
 
     public function test_logout_invalidates_the_current_session_and_returns_no_content(): void
     {
-        $user = $this->administrator();
-        $this->actingAs($user, 'web');
+        $password = 'logout-browser-password';
+        $user = $this->administrator($password);
+
+        $loginResponse = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/login', [
+            'email' => $user->email,
+            'password' => $password,
+        ]);
+        $loginResponse->assertOk();
+        $this->persistSessionCookie($loginResponse);
 
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/logout')->assertNoContent();
 

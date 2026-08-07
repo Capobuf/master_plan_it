@@ -7,8 +7,10 @@ use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
 use Database\Seeders\PermissionCatalogueSeeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Testing\TestResponse;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
+use Symfony\Component\HttpFoundation\Response;
 
 trait InteractsWithApiFoundation
 {
@@ -93,5 +95,14 @@ trait InteractsWithApiFoundation
             'Referer' => 'http://localhost/',
             'X-XSRF-TOKEN' => $token,
         ];
+    }
+
+    /** @param TestResponse<Response> $response */
+    protected function persistSessionCookie(TestResponse $response): void
+    {
+        $cookie = $response->getCookie((string) config('session.cookie'));
+
+        self::assertNotNull($cookie);
+        $this->withUnencryptedCookie((string) config('session.cookie'), $cookie->getValue());
     }
 }
