@@ -51,8 +51,19 @@ final class GenerateContractOccurrenceForYear
         $planningYear = PlanningYear::query()->where('tenant_id', $context->tenantId)->where('year_label', $expected->planningYear)->first();
         $term = ContractTerm::query()->where('tenant_id', $context->tenantId)->where('contract_id', $contract->getKey())->find($expected->termId);
         if (! $planningYear instanceof PlanningYear || ! $term instanceof ContractTerm || $contract->deleted_at !== null || ! $contract->active) { throw new DomainException('TERMINAL_DELETION'); }
-        $expense = Expense::query()->create(['tenant_id' => $context->tenantId, 'planning_year_id' => $planningYear->getKey(), 'cost_center_id' => $contract->cost_center_id, 'kind' => ExpenseKind::Ordinary, 'title' => $contract->title.' — '.$expected->occurrenceDate, 'notes' => 'Generated from contract.', 'project_id' => null, 'contract_id' => $contract->getKey()]);
-        $row = ExpenseRow::query()->create([
+        $expense = new Expense;
+        $expense->forceFill([
+            'tenant_id' => $context->tenantId,
+            'planning_year_id' => $planningYear->getKey(),
+            'cost_center_id' => $contract->cost_center_id,
+            'kind' => ExpenseKind::Ordinary,
+            'title' => $contract->title.' — '.$expected->occurrenceDate,
+            'notes' => 'Generated from contract.',
+            'project_id' => null,
+            'contract_id' => $contract->getKey(),
+        ])->save();
+        $row = new ExpenseRow;
+        $row->forceFill([
             'tenant_id' => $context->tenantId, 'expense_id' => $expense->getKey(), 'position' => 1, 'vendor_id' => $contract->vendor_id,
             'type' => ExpenseType::Actual, 'confirmation_state' => ActualConfirmationState::ToConfirm, 'confirmed_by_user_id' => null, 'confirmed_at' => null,
             'is_system_managed' => true, 'manual_override_at' => null, 'contract_term_id' => $term->getKey(), 'contract_source_rule_key' => $term->source_rule_key,
@@ -62,6 +73,7 @@ final class GenerateContractOccurrenceForYear
             'is_extra' => false, 'funded_plafond_expense_id' => null, 'spend_date' => $expected->occurrenceDate, 'period_start' => null, 'period_end' => null,
             'distribution' => null, 'external_reference' => null,
         ]);
+        $row->save();
         $this->revisions($actor, $context, RevisionOperation::Create, $correlationId, $expense, [$expense, $row]);
         $this->audit('contract.occurrence-generated', $correlationId, $actor, $context->tenant, $expense, ['contract_id' => $contract->getKey(), 'source_key' => $expected->sourceKey]);
         return $expense->fresh(['rows']);

@@ -87,6 +87,12 @@ trait ManagesExpenseAggregate
             unset($attributes['id']);
             $expected = $attributes['expected_lock_version'];
             unset($attributes['expected_lock_version']);
+            $authoritativeAmounts = [
+                'net_amount' => $attributes['net_amount'],
+                'vat_amount' => $attributes['vat_amount'],
+                'gross_amount' => $attributes['gross_amount'],
+            ];
+            unset($attributes['net_amount'], $attributes['vat_amount'], $attributes['gross_amount']);
             $row = $id === null ? new ExpenseRow : $existing->get((int) $id);
             if (! $row instanceof ExpenseRow) {
                 throw new DomainException('TENANT_RELATION_MISMATCH');
@@ -96,6 +102,7 @@ trait ManagesExpenseAggregate
             }
             $oldType=$row->exists?$row->type:null;$wasSystemManaged=$row->exists&&$row->type===ExpenseType::Actual&&$row->is_system_managed;
             $row->fill($attributes);
+            $row->forceFill($authoritativeAmounts);
             if ($wasSystemManaged && $row->isDirty()) {
                 $attributes['is_system_managed'] = false;
                 $attributes['manual_override_at'] = CarbonImmutable::now('UTC');
@@ -117,6 +124,7 @@ trait ManagesExpenseAggregate
                 $attributes['lock_version'] = (int) $row->lock_version + 1;
             }
             $row->fill($attributes);
+            $row->forceFill($authoritativeAmounts);
             $row->save();
             $submitted[(int) $row->getKey()] = true;
             $changed[] = $row;

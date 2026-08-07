@@ -44,7 +44,8 @@ final class SynchronizeContractOccurrences
                 $term = ContractTerm::query()->where('tenant_id', $context->tenantId)->find($expected->termId);
                 $expense = Expense::query()->where('tenant_id', $context->tenantId)->lockForUpdate()->find($row->expense_id);
                 if (! $term instanceof ContractTerm || ! $expense instanceof Expense) { $counts['skipped']++; continue; }
-                $row->fill(['vendor_id' => $contract->vendor_id, 'description' => $contract->title, 'quantity' => $term->quantity, 'unit_price' => $term->unit_price, 'entered_amount' => $term->entered_amount, 'amount_includes_vat' => $term->amount_includes_vat, 'vat_rate' => $term->vat_rate, 'net_amount' => $term->net_amount, 'vat_amount' => $term->vat_amount, 'gross_amount' => $term->gross_amount, 'lock_version' => $row->lock_version + 1])->save();
+                $row->fill(['vendor_id' => $contract->vendor_id, 'description' => $contract->title, 'quantity' => $term->quantity, 'unit_price' => $term->unit_price, 'entered_amount' => $term->entered_amount, 'amount_includes_vat' => $term->amount_includes_vat, 'vat_rate' => $term->vat_rate, 'lock_version' => $row->lock_version + 1]);
+                $row->forceFill(['net_amount' => $term->net_amount, 'vat_amount' => $term->vat_amount, 'gross_amount' => $term->gross_amount])->save();
                 $expense->fill(['cost_center_id' => $contract->cost_center_id, 'title' => $contract->title.' — '.$expected->occurrenceDate, 'lock_version' => $expense->lock_version + 1])->save();
                 $this->revisions($actor, $context, RevisionOperation::Update, $occurrenceCorrelationId, $expense, [$expense, $row]);
                 $counts['updated']++;
