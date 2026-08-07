@@ -71,9 +71,8 @@ class TenantContextTest extends TestCase
     public function test_persisted_tenant_with_invalid_budget_basis_fails_explicitly(): void
     {
         $tenant = new Tenant;
-        $tenant->forceFill(['id' => 999999, 'budget_basis' => 'invalid']);
+        $tenant->setRawAttributes(['id' => 999999, 'budget_basis' => 'invalid'], true);
         $tenant->exists = true;
-        $tenant->syncOriginal();
 
         $this->expectException(\ValueError::class);
 
