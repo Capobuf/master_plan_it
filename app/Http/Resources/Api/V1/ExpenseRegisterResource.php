@@ -16,6 +16,7 @@ final class ExpenseRegisterResource extends JsonResource
         $row = $this->resource;
         $context = $request->attributes->get(TenantContext::class);
         $currency = $context instanceof TenantContext ? $context->currencyCode : 'EUR';
+        $officialBasis = $context instanceof TenantContext ? $context->budgetBasis->value : 'net';
 
         return [
             'id' => $row->id,
@@ -34,6 +35,7 @@ final class ExpenseRegisterResource extends JsonResource
                 'vat' => $row->vatTotal,
                 'gross' => $row->grossTotal,
                 'currency' => $currency,
+                'official_basis' => $officialBasis,
             ])->resolve($request),
         ];
     }

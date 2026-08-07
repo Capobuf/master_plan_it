@@ -36,14 +36,15 @@ final class ExpenseApiHttpTest extends TestCase
         $this->getJson('/api/v1/expenses?year='.$year->getKey().'&per_page=1')
             ->assertOk()
             ->assertJsonStructure([
-                'data' => [['id', 'planning_year_id', 'totals' => ['net', 'vat', 'gross', 'currency']]],
+                'data' => [['id', 'planning_year_id', 'totals' => ['net', 'vat', 'gross', 'currency', 'official_basis']]],
                 'meta' => ['current_page', 'last_page', 'per_page', 'total'],
                 'links' => ['first', 'last', 'prev', 'next'],
-                'totals' => ['net', 'vat', 'gross', 'currency'],
+                'totals' => ['net', 'vat', 'gross', 'currency', 'official_basis'],
                 'year_options',
             ])
             ->assertJsonPath('data.0.totals.net', '120228.00')
             ->assertJsonPath('data.0.totals.currency', 'EUR')
+            ->assertJsonPath('data.0.totals.official_basis', 'net')
             ->assertJsonPath('totals.gross', '146678.16');
     }
 
@@ -78,6 +79,12 @@ final class ExpenseApiHttpTest extends TestCase
             ->assertJsonPath('data.rows.0.totals.net', '100.00');
         $expenseId = (int) $created->json('data.id');
         $rowId = (int) $created->json('data.rows.0.id');
+        $this->assertDatabaseHas('expense_rows', [
+            'id' => $rowId,
+            'net_amount' => '100.00',
+            'vat_amount' => '22.00',
+            'gross_amount' => '122.00',
+        ]);
 
         $this->withHeaders($this->csrfHeaders())->postJson("/api/v1/expenses/{$expenseId}/rows/{$rowId}/confirm", [
             'lock_version' => 1,
@@ -94,6 +101,23 @@ final class ExpenseApiHttpTest extends TestCase
             'lock_version' => 2,
         ])->assertNoContent();
         $this->assertSoftDeleted('expenses', ['id' => $expenseId]);
+    }
+
+    public function test_client_cannot_supply_calculated_money_fields(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $center = CostCenter::factory()->for($tenant)->create();
+        $vendor = Vendor::factory()->for($tenant)->create();
+        $payload = $this->payload($year->getKey(), $center->getKey(), $vendor->getKey());
+        $payload['rows'][0]['net_amount'] = '999999.99';
+        $this->actingAs($user, 'web');
+
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $payload)
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'VALIDATION_FAILED');
+        $this->assertDatabaseMissing('expenses', ['title' => 'API expense']);
     }
 
     /** @return array<string, mixed> */

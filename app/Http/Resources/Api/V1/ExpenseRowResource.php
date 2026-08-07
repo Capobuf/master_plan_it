@@ -19,6 +19,7 @@ final class ExpenseRowResource extends JsonResource
         $row = $this->resource;
         $context = $request->attributes->get(TenantContext::class);
         $currency = $context instanceof TenantContext ? $context->currencyCode : 'EUR';
+        $officialBasis = $context instanceof TenantContext ? $context->budgetBasis->value : 'net';
 
         if (is_array($row)) {
             return [
@@ -49,6 +50,7 @@ final class ExpenseRowResource extends JsonResource
                     'vat' => (string) $row['vat_amount'],
                     'gross' => (string) $row['gross_amount'],
                     'currency' => $currency,
+                    'official_basis' => $officialBasis,
                 ])->resolve($request),
             ];
         }
@@ -82,6 +84,7 @@ final class ExpenseRowResource extends JsonResource
                 'vat' => self::decimal((string) $row->vat_amount, 2),
                 'gross' => self::decimal((string) $row->gross_amount, 2),
                 'currency' => $currency,
+                'official_basis' => $officialBasis,
             ])->resolve($request),
         ];
     }

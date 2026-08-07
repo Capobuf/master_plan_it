@@ -56,6 +56,7 @@ final class ExpenseController extends Controller
             'totals' => ExpenseMoneyResource::make([
                 ...$totals,
                 'currency' => $context->currencyCode,
+                'official_basis' => $context->budgetBasis->value,
             ])->resolve($request),
             'year_options' => $yearOptions,
         ]);
