@@ -276,7 +276,7 @@ class TenantContextTest extends TestCase
         foreach (['TENANT_CONTEXT_REQUIRED', 'TENANT_INACTIVE', 'PERMISSION_DENIED'] as $code) {
             $this->getJson('/api/_contract/tenant-authorization/'.$code)
                 ->assertForbidden()
-                ->assertJsonPath('message', $code);
+                ->assertJsonPath('error.code', $code);
         }
     }
 

@@ -108,6 +108,11 @@ class TenantContextMiddlewareTest extends TestCase
         $binderCalled = false;
 
         Route::bind('tenant_probe', function (string $value) use ($actor, $tenant, $registrar, &$binderCalled): string {
+            $route = request()->route();
+            if (! $route instanceof \Illuminate\Routing\Route || ! str_contains($route->uri(), 'context-order/')) {
+                return $value;
+            }
+
             $binderCalled = true;
             $context = request()->attributes->get(TenantContext::class);
 
@@ -121,7 +126,7 @@ class TenantContextMiddlewareTest extends TestCase
             return $value;
         });
 
-        $this->registerContextRoute('/api/_contract/context-order/{tenant_probe}');
+        $this->registerContextRoute('/api/_contract/context-order/{tenant_probe}', true);
 
         $this->actingAs($actor)
             ->getJson('/api/_contract/context-order/observed')
@@ -177,7 +182,7 @@ class TenantContextMiddlewareTest extends TestCase
         $this->actingAs($inactive)
             ->getJson('/api/_contract/context-denial/inactive')
             ->assertForbidden()
-            ->assertJsonPath('message', 'ACCOUNT_INACTIVE');
+            ->assertJsonPath('error.code', 'ACCOUNT_INACTIVE');
 
         $administrator = $this->administrator();
 
@@ -185,7 +190,7 @@ class TenantContextMiddlewareTest extends TestCase
             ->withSession([EnterTenantContext::SESSION_KEY => 'invalid'])
             ->getJson('/api/_contract/context-denial/invalid-session')
             ->assertForbidden()
-            ->assertJsonPath('message', 'TENANT_CONTEXT_REQUIRED');
+            ->assertJsonPath('error.code', 'TENANT_CONTEXT_REQUIRED');
     }
 
     public function test_consecutive_http_requests_do_not_leak_tenant_team_locale_timezone_or_scoped_context(): void
@@ -233,8 +238,20 @@ class TenantContextMiddlewareTest extends TestCase
         }
     }
 
-    private function registerContextRoute(string $uri): void
+    private function registerContextRoute(string $uri, bool $withBindings = false): void
     {
+        $middleware = [
+            'active-tenant',
+            'permission-team-context',
+            'tenant-context',
+            'active-user',
+            'auth',
+        ];
+
+        if ($withBindings) {
+            $middleware[] = SubstituteBindings::class;
+        }
+
         Route::get($uri, function (string $tenant_probe) {
             $context = app(TenantContext::class);
 
@@ -245,13 +262,7 @@ class TenantContextMiddlewareTest extends TestCase
                 'timezone' => date_default_timezone_get(),
                 'team_id' => app(PermissionRegistrar::class)->getPermissionsTeamId(),
             ]);
-        })->middleware([
-            'active-tenant',
-            'permission-team-context',
-            'tenant-context',
-            'active-user',
-            'auth',
-        ]);
+        })->middleware($middleware);
     }
 
     private function administrator(): User
