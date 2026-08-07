@@ -7,10 +7,12 @@ use App\Domain\IdentityAccess\Actions\CreateTenantUser;
 use App\Domain\IdentityAccess\Actions\DeactivateTenantUser;
 use App\Domain\IdentityAccess\Actions\ResetTenantUserPassword;
 use App\Domain\IdentityAccess\Actions\UpdateTenantUser;
+use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\TenantUserResource;
 use App\Models\User;
+use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -134,6 +136,7 @@ final class TenantUserController extends Controller
     {
         $validated = $this->validated($request, [
             'password' => ['required', 'string', Password::defaults(), 'confirmed'],
+            'password_confirmation' => ['required', 'string'],
         ]);
         $resetTenantUserPassword->execute(
             $this->actor($request),
@@ -157,12 +160,12 @@ final class TenantUserController extends Controller
     /** @param list<int> $ids
      * @return list<Role>
      */
-    private function roles(\App\Domain\Tenancy\Data\TenantContext $context, array $ids): array
+    private function roles(TenantContext $context, array $ids): array
     {
         return array_map(static fn (int $id): Role => TenantOwnedRecordQuery::findOrFail($context, Role::class, $id), $ids);
     }
 
-    /** @param array<string, array<int, string|\Illuminate\Contracts\Validation\ValidationRule>> $rules
+    /** @param array<string, array<int, string|ValidationRule>> $rules
      * @return array<string, mixed>
      */
     private function validated(Request $request, array $rules): array

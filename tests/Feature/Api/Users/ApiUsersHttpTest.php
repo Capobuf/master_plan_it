@@ -3,9 +3,9 @@
 namespace Tests\Feature\Api\Users;
 
 use App\Models\Tenant;
-use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
+use Spatie\Permission\Models\Role;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
 
@@ -21,7 +21,7 @@ final class ApiUsersHttpTest extends TestCase
         $existing = $this->tenantUser($tenant);
         $this->actingAs($administrator, 'web');
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants/'.$tenant->getKey().'/enter')->assertOk();
-        $role = \Spatie\Permission\Models\Role::query()->where('tenant_id', $tenant->getKey())->firstOrFail();
+        $role = Role::query()->where('tenant_id', $tenant->getKey())->firstOrFail();
 
         $this->getJson('/api/v1/users?per_page=1')
             ->assertOk()
@@ -72,5 +72,47 @@ final class ApiUsersHttpTest extends TestCase
 
         $response->assertOk()->assertJsonMissingPath('data.password')->assertJsonMissingPath('data.password_hash');
         $this->assertTrue(Hash::check('password', (string) $user->refresh()->password));
+    }
+
+    public function test_administrator_can_reset_tenant_user_password_and_invalidate_target_identity(): void
+    {
+        $administrator = $this->administrator();
+        $tenant = Tenant::factory()->create();
+        $target = $this->tenantUser($tenant, 'old-reset-password');
+        $rememberToken = (string) $target->remember_token;
+        $this->actingAs($administrator, 'web');
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants/'.$tenant->getKey().'/enter')->assertOk();
+
+        $this->withHeaders($this->csrfHeaders())->putJson('/api/v1/users/'.$target->getKey().'/password', [
+            'password' => 'new-reset-password',
+            'password_confirmation' => 'new-reset-password',
+        ])->assertNoContent();
+
+        $target->refresh();
+        $this->assertTrue(Hash::check('new-reset-password', (string) $target->password));
+        $this->assertNotSame($rememberToken, (string) $target->remember_token);
+    }
+
+    public function test_tenant_user_password_reset_rejects_mismatched_confirmation_and_unknown_fields(): void
+    {
+        $administrator = $this->administrator();
+        $tenant = Tenant::factory()->create();
+        $target = $this->tenantUser($tenant, 'old-reset-password');
+        $previousHash = (string) $target->password;
+        $this->actingAs($administrator, 'web');
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants/'.$tenant->getKey().'/enter')->assertOk();
+
+        $this->withHeaders($this->csrfHeaders())->putJson('/api/v1/users/'.$target->getKey().'/password', [
+            'password' => 'new-reset-password',
+            'password_confirmation' => 'does-not-match',
+        ])->assertStatus(422)->assertJsonPath('error.code', 'VALIDATION_FAILED');
+        $this->assertSame($previousHash, (string) $target->refresh()->password);
+
+        $this->withHeaders($this->csrfHeaders())->putJson('/api/v1/users/'.$target->getKey().'/password', [
+            'password' => 'new-reset-password',
+            'password_confirmation' => 'new-reset-password',
+            'unexpected' => 'reject-me',
+        ])->assertStatus(422)->assertJsonPath('error.code', 'VALIDATION_FAILED');
+        $this->assertSame($previousHash, (string) $target->refresh()->password);
     }
 }
