@@ -2,6 +2,17 @@
 
 Status: `NORMATIVE TASK SUPPLEMENT — EXACT COMMANDS AND PATH EXPANSIONS`
 
+## API-only package execution order
+
+The new API package overlay is executed in strict order: A2 → A3 → A4 → A5 → A6 → A7 → A8 →
+A9. A8 cannot start until A2–A7 have reconciled implemented capabilities. A9-API-002 cannot
+remove Laravel UI assets or Composer/frontend dependencies until A9-API-001 records parity.
+
+Package command ownership is explicit: A2–A7 use the focused API contract commands registered in
+their feature command files; A8 owns static capability/OpenAPI reconciliation; A9 owns route,
+resource, package scans and the final backend command list. Historical browser/UI commands do not
+prove any API package complete.
+
 ## Contract composition
 
 A Ready task is the non-overlapping combination of:

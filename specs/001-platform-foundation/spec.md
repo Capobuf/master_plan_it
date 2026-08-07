@@ -1,175 +1,181 @@
-# Feature 001 — Platform foundation
+# Feature 001 — API platform foundation
 
-Status: `CLARIFIED AND APPROVED; IMPLEMENTATION IN PROGRESS`
-Logical owner: Product Owner with domain approval  
-Actors: Administrator and tenant users  
-Dependencies: Feature 007 product contract
+Status: `AMENDED AND APPROVED FOR API-ONLY TARGET 2026-08-07; IMPLEMENTATION IN PROGRESS`
+Logical owner: Product Owner with domain approval
+Authority: Constitution 6.0.0; PD-API-001; ADR-036
+Actors: Administrator and tenant users
+Dependencies: Feature 007 tenant/RBAC domain contracts; Feature 001 owns shared API foundation
 
 ## Objective
 
-Authenticate local users, enforce active account and tenant context, expose a permission-aware Blade/TailAdmin application shell, manage users/roles/passwords and global platform settings, run scheduled notifications and retention through one cron, and remain compatible with shared PHP hosting and precompiled assets.
+Authenticate first-party browser clients with Laravel Sanctum SPA sessions, enforce active actor
+and tenant context, and expose the platform foundation as operation-oriented JSON APIs. Laravel
+owns authentication, session, context, RBAC, authorization, validation, audit, notifications and
+platform settings. A separate React/TypeScript application using official TailAdmin React Free is
+the presentation client; it is a separate deployable and contains no business/backend layer.
 
-## Clarifications
+Laravel APIs are private behind the frontend reverse proxy. The browser uses only relative,
+same-origin `/api/v1/*` and `/sanctum/*` paths. The internal Laravel origin is proxy configuration
+and is never sent to browser JavaScript. Laravel does not render application HTML and this feature
+does not create Blade pages, frontend assets, Vite configuration or browser UI gates.
 
-### Session 2026-08-04
+## Approved API boundary
 
-- Q: Quale intervallo deve accettare l'impostazione globale di conservazione degli eventi di audit? → A: Da 1 a 120 mesi, con valore predefinito 24 mesi.
-- Q: Quale standard di accessibilità deve costituire il criterio verificabile per l'interfaccia applicativa e i report? → A: WCAG 2.2 livello AA.
-- Q: Quale matrice minima di browser e dimensioni dello schermo deve essere supportata e verificata? → A: Ultime 2 versioni stabili di Chrome, Edge e Firefox; Safari corrente; viewport 360, 768 e 1280 px.
-- Q: Quando un utente esegue il logout ordinario, quali sessioni devono essere invalidate? → A: Solo la sessione corrente; cambio e reset password invalidano le sessioni secondo i rispettivi requisiti.
-- Q: Prima di confermare una riduzione della conservazione audit, quali conseguenze deve mostrare l'interfaccia? → A: Solo un avviso generico di possibile eliminazione.
+- application APIs are versioned under `/api/v1`; `/sanctum/csrf-cookie` is the infrastructure
+  exception; `/api/v2` and version negotiation are forbidden;
+- Sanctum SPA authentication uses `statefulApi()` and `auth:sanctum`; bearer tokens, OAuth, JWT,
+  refresh tokens and browser personal tokens are not first-party frontend contracts;
+- every capability has an explicit ability, Action/Query, endpoint, method, request schema,
+  response Resource/DTO, stable errors and tenant scope; generic model/column CRUD is forbidden;
+- success responses use `{ "data": resource }` or collection `data` plus `meta` and `links`;
+- errors use `{ "error": { "code", "message", "fields", "correlation_id" } }`, preserve the
+  correlation ID header/payload when available, and map 401/403/404/409/422/429/500 safely;
+- authoritative money uses exact decimal strings, currency and separate Net/VAT/Gross components;
+  clients may format values but never recalculate them;
+- password, secrets, sessions, tombstones, persistence-only metadata and generic database fields
+  are never exposed;
+- API authorization repeats authentication, active actor, selected context, ability, ownership,
+  tenant scope and domain invariants server-side.
 
 ## User stories
 
-### US-001-01 — Authenticate
+### US-001-01 — Authenticate through Sanctum SPA session
 
-A local active user signs in with email/password and is routed to the correct global or tenant context.
+An active first-party browser client obtains the CSRF cookie, signs in with email/password,
+retrieves the current user and logs out. Ordinary logout invalidates only the current session.
 
-### US-001-02 — Application shell
+### US-001-02 — Read and mutate authorized context
 
-An authenticated actor sees navigation permitted by server-side abilities and always sees current tenant context on tenant pages.
+An authenticated actor reads the authorized context and abilities. Administrator enters/leaves an
+explicit tenant context without impersonation; a tenant user resolves only its assigned tenant.
 
-### US-001-03 — Administrator manages tenant identities and roles
+### US-001-03 — Platform foundation for identity and roles
 
-Administrator creates/deactivates users, sets/resets tenant-user passwords, manages tenant role templates/permissions, and cannot expose protected platform/invariant-bypass abilities.
+Administrator-only user, role and platform-setting operations reuse Laravel Actions, policies and
+validation and are exposed as protected API operations. Protected platform abilities cannot be
+assigned through tenant role management.
 
-### US-001-04 — User changes own password
+### US-001-04 — Change own password
 
-An authenticated active user changes their own password. No tenant-user self-service forgotten-password flow is exposed.
+An authenticated active user changes its own password. No self-service password recovery endpoint
+is exposed.
 
-### US-001-05 — Scheduler and notifications
+### US-001-05 — Bounded notifications and retention
 
-One cron invokes Laravel scheduler for renewals, expirations, audit retention, backup checks, and other approved bounded commands without a permanent worker.
+Approved synchronous scheduler operations persist safe notifications and apply the current global
+audit-retention setting without a permanent worker.
 
-### US-001-06 — Administrator manages platform settings
+## API acceptance scenarios
 
-Administrator changes protected installation-wide settings, including audit retention, through validated and audited operations.
+### AC-001-01 — CSRF, login, current user and logout
 
-## Acceptance scenarios
+`GET /sanctum/csrf-cookie` establishes the SPA CSRF path. Valid active credentials succeed at
+`POST /api/v1/auth/login`; invalid credentials, inactive users and inactive-tenant access deny
+without disclosure. `GET /api/v1/auth/me` returns only authorized user data. `POST
+/api/v1/auth/logout` invalidates the current session and returns 204 when no resource is needed.
 
-### AC-001-01 — Authentication
+### AC-001-02 — Password change
 
-Valid active user credentials authenticate. Invalid credentials, deactivated user, and tenant user in an Inactive tenant are denied. Authentication alone grants no business ability. Ordinary logout invalidates only the current session and rotates the request's session state; it does not terminate the user's other active sessions.
+`PUT /api/v1/auth/password` validates the authenticated user's current/new password, never logs
+secrets, invalidates the required sessions and returns the stable validation/error contract.
 
-### AC-001-02 — Tenant context
+### AC-001-03 — Context
 
-Administrator selects tenant explicitly and retains identity. Tenant user resolves exactly their tenant. Missing, invalid, inactive, and unauthorized context fails closed. Tenant name appears in navigation and breadcrumbs.
+`GET /api/v1/context` returns only `{ user, platformAdministrator, tenant, abilities }` allowed
+for the actor. `POST /api/v1/tenants/{tenant}/enter` and `POST /api/v1/context/leave` are
+Administrator-only context operations. Missing, invalid, inactive or unauthorized context fails
+closed with safe 403/404 semantics; Administrator identity is retained and no impersonation occurs.
 
-### AC-001-03 — Permission-aware shell
+### AC-001-04 — Authorization and tenant isolation
 
-Navigation reflects explicit policy/Gate abilities, but direct URL/identifier requests are independently authorized server-side.
+Every protected API repeats authentication, active actor, context, ability and same-tenant
+ownership checks. A changed identifier, client tenant ID, client ability or client role cannot
+grant access. Cross-tenant and protected-resource existence are not disclosed.
 
-### AC-001-04 — Role administration
+### AC-001-05 — Stable responses and diagnostics
 
-Administrator creates tenant roles and assigns stable permission-catalogue abilities. Seeded Editor/Viewer templates exist. Protected Administrator/platform/invariant-bypass abilities cannot be edited or assigned through tenant role management.
+Successful single resources, collections/pagination, 204 mutations, exact decimal money and the
+uniform error envelope conform to the API contract. Correlation IDs remain consistent between
+response header and error payload when available.
 
-### AC-001-05 — Password administration
+### AC-001-06 — Platform settings and bounded scheduler
 
-Administrator sets/resets tenant-user passwords without logging or exporting them. Authenticated users may change their own. Forgotten-password email routes are absent. An interactive Artisan command resets global Administrator credentials with hidden input and session invalidation.
+Administrator-only platform-setting and retention operations validate input, are audited without
+secrets, use the current configured retention period, and execute synchronously with bounded
+failure behavior. Browser clients do not receive a scheduler or internal-origin contract.
 
-### AC-001-06 — Scheduler
+### AC-001-07 — Presentation ownership
 
-One cron executes scheduler with overlap prevention. Commands are bounded, synchronous, explicit on failure, and create approved database notifications/optional email without queue workers. The audit-retention command reads the current global retention setting when it runs.
-
-### AC-001-07 — Destructive confirmation
-
-Tenant deactivation, lowering audit retention, and comparable protected destructive operations require reinforced confirmation; ordinary saves and low-risk actions use proportional confirmation. For audit-retention reduction, the interface shows a generic warning that older events may be removed by the next run; no cutoff-date or eligible-count preview is required.
-
-### AC-001-08 — Shared-hosting release
-
-Production uses compiled Vite assets and requires no Node runtime, Redis, WebSockets, or permanent worker.
-
-### AC-001-09 — Audit-retention setting
-
-The platform initializes audit retention to 24 months and accepts only integer values from 1 through 120 months. Only Administrator can change it. Lowering the value shows a generic warning that the next retention run may remove older events, without a cutoff-date or eligible-count preview. Increasing it affects future retention but does not recreate events already removed.
-
-### AC-001-10 — Atomic Administrator operations
-
-Tenant lifecycle, tenant-user administration, tenant-role administration, protected-permission control, platform-setting administration, migration application, and installation backup/restore are independently authorized Administrator operations. Each operation has a focused allow/deny task and test; none implies impersonation, tenant fallback, or invariant bypass.
-
-### AC-001-11 — Shared modal behavior
-
-Escape closes an ordinary modal and cancels an unsubmitted destructive confirmation. While a non-interruptible server request is in flight, close, Escape, and duplicate actions are disabled. Closing restores focus to the opener; validation failure focuses the first invalid field.
-
-### AC-001-12 — Shared presentation states
-
-Loading is perceivable and marked `aria-busy` without duplicate actions. Empty states preserve mathematically valid values, explain the absence, and offer a pertinent next action. Denial does not reveal cross-tenant existence. A stale conflict never overwrites silently, preserves input, and offers explicit reload or re-execution. Unexpected errors show a safe stable code and correlation ID when available.
+WCAG, responsive behavior, keyboard/focus, loading/empty states and browser compatibility are
+owned by the future React/TailAdmin frontend session. Laravel API tests verify semantic response,
+authorization and error behavior only; no Laravel browser/UI gate is required.
 
 ## Functional requirements
 
 | ID | Requirement | Acceptance |
 |---|---|---|
-| FR-001-001 | Application shall authenticate local users with email and password and shall provide ordinary logout that invalidates only the current session. | AC-001-01 |
-| FR-001-002 | Every protected route shall require authentication, active user, and valid scope. | AC-001-01, AC-001-02 |
-| FR-001-003 | `Administrator` shall be protected global role; tenant roles/permissions shall be configurable; Editor/Viewer shall be seeded templates. | AC-001-04 |
-| FR-001-004 | Shell shall expose navigation according to explicit abilities while every route/Action remains server-authorized. | AC-001-03 |
-| FR-001-005 | Assets shall be precompiled; production shall not require Node runtime. | AC-001-08 |
-| FR-001-006 | Scheduler shall be invoked by one cron entry with overlap prevention and bounded synchronous commands. | AC-001-06 |
-| FR-001-007 | Platform shall store timestamps in UTC and apply tenant language, timezone, currency, and default VAT to tenant-facing output. | AC-001-02 |
-| FR-001-008 | Tenant lifecycle operations shall be Administrator operations. | AC-001-10 |
-| FR-001-009 | Tenant-bound routes shall require explicit valid tenant context visible in side navigation and breadcrumbs. | AC-001-02 |
-| FR-001-010 | Tenant user shall belong to exactly one tenant and may receive one or more tenant-scoped roles. | AC-001-04 |
-| FR-001-011 | Tenant creation shall require Q-012 fields; optional onboarding shall reuse standard Actions/validation. | AC-001-07 |
-| FR-001-012 | Inactive tenant shall deny tenant-user access while Administrator retains otherwise authorized access and reactivation. | AC-001-01, AC-001-02 |
-| FR-001-013 | Deactivated-user authorship/audit shall be preserved and open assignments flagged for manual reassignment. | AC-001-01 |
-| FR-001-014 | No tenant-user self-service forgotten-password flow shall be exposed. | AC-001-05 |
-| FR-001-015 | Administrator shall set/reset tenant-user passwords; authenticated user may change own password. | AC-001-05 |
-| FR-001-016 | Global Administrator emergency reset shall use interactive Artisan command with hidden input and session invalidation. | AC-001-05 |
-| FR-001-017 | Passwords/hashes/tokens/sessions shall be excluded from audit, revisions, notifications, and tenant export. | AC-001-05 |
-| FR-001-018 | Approved database notifications and optional synchronous email shall operate without permanent queue worker. | AC-001-06 |
-| FR-001-019 | Tenant deactivation shall require reinforced confirmation. | AC-001-07 |
-| FR-001-020 | One installation-wide `audit_retention_months` platform setting shall accept integer values from 1 through 120, default to 24, and be writable only by Administrator. | AC-001-09 |
-| FR-001-021 | Audit retention shall use the current configured period at command execution; increasing the period shall not recreate removed events. | AC-001-06, AC-001-09 |
-| FR-001-022 | All authenticated application screens shall share the existing session, tenant context and authorization while using official TailAdmin Laravel Free Blade components, Tailwind CSS and native Alpine methods; frontend dependencies are locked and built by Vite with no runtime CDN, Preline, Livewire, Filament UI or Inertia/React application views. | AC-001-02, AC-001-08 |
-| FR-001-023 | Tenant-user administration shall be an Administrator operation. | AC-001-05, AC-001-10 |
-| FR-001-024 | Tenant-role administration shall be an Administrator operation. | AC-001-04, AC-001-10 |
-| FR-001-025 | Protected platform permissions shall not be assignable or editable through tenant-role administration. | AC-001-04, AC-001-10 |
-| FR-001-026 | Installation-wide platform-setting administration shall be an Administrator operation. | AC-001-09, AC-001-10 |
-| FR-001-027 | Migration application shall be an Administrator operation. | AC-001-10 |
-| FR-001-028 | Installation backup and restore shall be Administrator operations. Their cadence, monitoring threshold and final command names are deferred post-milestone to T001-025 and T006-012–T006-013 and are not prerequisites of the manual Expense-to-current-Budget slice. | AC-001-10 |
-| FR-001-029 | Migration application shall require reinforced confirmation before submission. | AC-001-07 |
-| FR-001-030 | Installation restore shall require reinforced confirmation before submission. | AC-001-07 |
-| FR-001-031 | Lowering audit retention shall require reinforced confirmation with a generic possible-deletion warning and no cutoff-date or eligible-count preview. | AC-001-07, AC-001-09 |
+| FR-001-001 | Laravel shall authenticate local users through Sanctum SPA session authentication and expose `POST /api/v1/auth/login`. | AC-001-01 |
+| FR-001-002 | Protected APIs shall require authentication, active actor and valid context where the operation is tenant-scoped. | AC-001-01, AC-001-04 |
+| FR-001-003 | Laravel shall expose `POST /api/v1/auth/logout`, `GET /api/v1/auth/me` and `PUT /api/v1/auth/password` with session semantics and no bearer-token browser contract. | AC-001-01, AC-001-02 |
+| FR-001-004 | Laravel shall expose `GET /api/v1/context`, Administrator enter/leave operations and only authorized `user`, `platformAdministrator`, `tenant` and `abilities` fields. | AC-001-03 |
+| FR-001-005 | The backend shall be installable and runnable with Composer/PHP/Artisan without Node/npm and shall render no application HTML routes. | AC-001-07 |
+| FR-001-006 | The frontend shall be a separate React/TypeScript TailAdmin React Free deployable; Laravel shall contain no second presentation/business layer. | AC-001-07 |
+| FR-001-007 | The browser shall use relative same-origin `/api/v1/*` and `/sanctum/*` paths through a frontend proxy; `API_INTERNAL_ORIGIN` shall remain proxy-only. | AC-001-03, AC-001-07 |
+| FR-001-008 | Complex API writes shall delegate to named Actions and policies; controllers/resources shall not contain domain or economic logic. | AC-001-04 |
+| FR-001-009 | Every implemented capability shall register an operation-oriented API contract with ability, Action/Query, method, request, resource, errors and tenant scope. | AC-001-05 |
+| FR-001-010 | JSON success shall use the `data` resource envelope and collection pagination shall include `meta` and `links`. | AC-001-05 |
+| FR-001-011 | API errors shall use stable codes, safe localized messages, field details and correlation IDs for 401/403/404/409/422/429/500 mappings. | AC-001-05 |
+| FR-001-012 | Authoritative money responses shall use exact decimal strings, currency code and separate Net/VAT/Gross values. | AC-001-05 |
+| FR-001-013 | API responses shall exclude passwords, secrets, sessions, tombstones, persistence-only metadata and generic model/column dumps. | AC-001-05 |
+| FR-001-014 | Tenant user shall belong to exactly one tenant and receive one or more tenant-scoped roles; Administrator remains protected global identity. | AC-001-04 |
+| FR-001-015 | Tenant context shall fail closed for missing, invalid, inactive or unauthorized state and shall never trust client tenant/role/ability input. | AC-001-03, AC-001-04 |
+| FR-001-016 | No tenant-user self-service password-recovery endpoint shall be exposed; Administrator reset and authenticated self-change remain distinct operations. | AC-001-02 |
+| FR-001-017 | Passwords, hashes, tokens and sessions shall be excluded from audit, revisions, notifications and tenant portability data. | AC-001-02, AC-001-06 |
+| FR-001-018 | Approved database notifications and optional synchronous email shall operate without Redis, WebSockets or a permanent queue worker. | AC-001-06 |
+| FR-001-019 | Tenant lifecycle, identity, role, platform-setting, migration and installation operations shall remain Administrator-authorized operations. | AC-001-04, AC-001-06 |
+| FR-001-020 | Installation-wide `audit_retention_months` shall default to 24, accept integers 1–120 and use the current value when retention runs. | AC-001-06 |
+| FR-001-021 | Lowering audit retention shall require reinforced confirmation at the owning API operation; removed events are not recreated by a later increase. | AC-001-06 |
+| FR-001-022 | API contract tests shall cover auth, CSRF/session path, context, authorization, tenant isolation, response/error schemas, pagination and no-HTML application routes. | AC-001-01 through AC-001-07 |
+| FR-001-023 | The separate React client may use `abilities` for navigation/presentation only; Laravel repeats all authorization and invariants. | AC-001-03, AC-001-04 |
 
 ## Non-functional requirements
 
 | ID | Measure | Threshold and verification |
 |---|---|---|
-| NFR-001-SEC-01 | Authorization | every registered ability has same-tenant allow, missing-permission deny, other-tenant deny, inactive/deactivated deny tests |
-| NFR-001-INT-01 | Integrity | every documented write is transactional and rollback-tested |
-| NFR-001-LOG-01 | Diagnostics | unexpected failures have correlation ID and no sensitive payload; no silent retries/fallbacks |
-| NFR-001-A11Y-01 | Accessibility | shared application and report flows shall satisfy WCAG 2.2 level AA acceptance checks, including keyboard reachability, visible focus, programmatic labels, contrast, error identification and non-visual alternatives for charts |
-| NFR-001-COMPAT-01 | Browser and responsive compatibility | verify the latest two stable Chrome, Edge and Firefox versions, the current Safari version, and responsive behavior at 360, 768 and 1280 CSS pixels |
-| NFR-001-MAINT-01 | Complexity | use maintained packages/native framework only after compatibility spike; no custom generic ACL/auth/notification/settings framework |
-| NFR-001-UX-01 | Shared modal interaction | Escape closes ordinary modals and cancels destructive confirmation before submission; a non-interruptible server request disables close, Escape and duplicate actions; close restores focus to the opener; validation focuses the first invalid field |
-| NFR-001-STATE-01 | Shared presentation states | loading is perceivable with `aria-busy` and no duplicate action; empty preserves valid mathematical values with explanation and pertinent next action; denied uses stable non-disclosing authorization/not-found behavior; stale conflict preserves input and requires explicit reload or re-execution; unexpected error shows safe `UNEXPECTED_ERROR` plus correlation ID when available |
+| NFR-001-SEC-01 | Authorization | Every protected endpoint has same-tenant allow, missing-permission, inactive-context and other-tenant safe-deny tests. |
+| NFR-001-INT-01 | Integrity | Every documented write delegates to a transaction-bounded Action and has rollback evidence. |
+| NFR-001-LOG-01 | Diagnostics | Unexpected API failures have correlation ID and no sensitive payload; no silent retries/fallbacks. |
+| NFR-001-API-01 | Contract | Every implemented capability is represented in the capability matrix and static OpenAPI contract; no placeholder CRUD. |
+| NFR-001-API-02 | Deployment | Laravel runs with no Node/npm installation and is reachable only through configured private proxy/loopback origin. |
+| NFR-001-CLIENT-01 | Presentation handoff | React/TailAdmin owns WCAG 2.2 AA, responsive, keyboard/focus, loading/empty states and browser matrix in its own session. |
 
 ## Business invariants
 
 | ID | Rule | Error | Test |
 |---|---|---|---|
-| INV-PLT-001 | Unauthenticated/deactivated users cannot access business routes. | Authorization | TEST-001-001 |
-| INV-PLT-002 | Hidden navigation never replaces server-side authorization. | Authorization | TEST-001-002 |
-| INV-PLT-003 | Production release contains compiled asset manifest. | DomainConflict | TEST-001-003 |
-| INV-PLT-004 | Initial runtime requires no permanent worker. | DomainConflict | TEST-001-004 |
-| INV-PLT-005 | Tenant role management cannot grant protected platform or invariant-bypass abilities. | Authorization | TEST-001-005 |
-| INV-PLT-006 | Passwords and secrets never enter audit/revision/export/notification data. | DomainConflict | TEST-001-006 |
-| INV-PLT-007 | Only Administrator changes audit retention, and retention never removes current business or version data. | Authorization/DomainConflict | TEST-001-007 |
-| INV-PLT-008 | TailAdmin/Alpine owns local UI lifecycle; no browser layer duplicates server state or calculates authoritative economics; ApexCharts instances are initialized and destroyed from server-calculated payloads. | DomainConflict | TEST-001-009 |
-| INV-CTX-001 | Missing/unauthorized tenant context fails closed. | Authorization/NotFound-safe denial | TEST-001-008 |
+| INV-PLT-001 | Unauthenticated, inactive or unauthorized actors cannot access protected API operations. | AUTHENTICATION_REQUIRED / PERMISSION_DENIED | TEST-001-001 |
+| INV-PLT-002 | Client navigation/abilities never replace server-side API authorization. | PERMISSION_DENIED | TEST-001-002 |
+| INV-PLT-003 | Backend release and static API contract contain no Node/npm frontend dependency or Laravel application HTML route. | DEPENDENCY_LOCK_FAILED / ROUTE_CONTRACT_INVALID | TEST-001-003 |
+| INV-PLT-004 | Approved scheduler/notifications remain bounded and do not require a permanent worker. | NOTIFICATION_DELIVERY_FAILED | TEST-001-004 |
+| INV-PLT-005 | Tenant role management cannot grant protected platform or invariant-bypass abilities. | PLATFORM_ABILITY_PROTECTED | TEST-001-005 |
+| INV-PLT-006 | Passwords and secrets never enter API responses, audit, revisions, exports or notifications. | SENSITIVE_DATA_REJECTED | TEST-001-006 |
+| INV-PLT-007 | Only Administrator changes audit retention and retention never removes current business or version data. | PERMISSION_DENIED / AUDIT_RETENTION_INVALID | TEST-001-007 |
+| INV-PLT-008 | API resources expose server-calculated authoritative values; clients never recalculate economics or bypass context/authorization. | DOMAIN_CONFLICT | TEST-001-009 |
+| INV-CTX-001 | Missing, invalid, inactive or unauthorized tenant context fails closed and does not disclose protected existence. | TENANT_CONTEXT_REQUIRED / RESOURCE_NOT_FOUND | TEST-001-008 |
 
 ## Out of scope
 
-- public registration;
-- social login;
-- tenant-user forgotten-password email flow;
-- impersonation;
-- multi-tenant user membership;
-- tenant self-service user/role administration;
-- per-tenant audit-retention configuration;
-- WebSockets, Redis, permanent worker, real-time notification requirement;
-- role-name business logic beyond protected Administrator.
+- Laravel application HTML, Blade/TailAdmin Laravel, Tailwind, Alpine, ApexCharts, Vite and
+  frontend assets;
+- public developer API, OAuth, JWT, bearer tokens, refresh tokens and browser personal tokens;
+- public registration, social login and tenant-user forgotten-password email flow;
+- impersonation, multi-tenant user membership and tenant self-service administration;
+- frontend database access, duplicated backend/business rules or client-side economic calculation;
+- React accessibility/browser implementation (owned by the future frontend session).
 
 ## Clarification result
 
-Q-001 through Q-005, Q-012 through Q-017, Q-020, Q-023 through Q-026, and Q-033 are closed. Their approved outcomes are propagated through the current Feature 001 plan, tasks, contracts, and cross-feature registries. Implementation began with the verified T001-001 dependency/scaffold gate; remaining work and open requirement-quality items are tracked in `tasks.md`, the checklists and `.codex/orchestration-plan.md`.
+Q-001 through Q-005, Q-012 through Q-017, Q-020, Q-023 through Q-026 and Q-033 remain closed.
+PD-API-001 supersedes PD-UI-001 on 2026-08-07. The API-only target and this Feature 001 contract
+are authoritative; old Laravel UI clauses are historical/deprecated and do not authorize runtime
+work.

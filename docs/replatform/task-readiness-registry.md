@@ -4,6 +4,18 @@ Status: `NORMATIVE TASK SUPPLEMENT — SOURCES, INVARIANTS AND ERRORS ONLY`
 Applies to: Feature 001–007 task IDs on Constitution 6.0.0 / ADR-036 / PD-API-001
 Latest analysis baseline: historical 2026-08-05 live-graph rerun; API-only propagation requires a new analysis gate
 
+## API-only package readiness overlay A2–A9
+
+The package order is dependency-locked: A2 foundation/auth/context/tenant APIs → A3 users/roles/
+planning-year APIs → A4 vendor/cost-center APIs → A5 Expense APIs → A6 contract/generation APIs →
+A7 dashboard/Budget/report APIs → A8 capability matrix/OpenAPI reconciliation → A9 demonstrated
+API parity, then Laravel UI removal, Composer/test cleanup and final backend gates. Deprecated
+Laravel UI/browser/frontend task IDs remain historical evidence only and cannot satisfy A2–A9.
+
+Authoritative package task block: `specs/001-platform-foundation/tasks.md`, section
+`API-only implementation package overlay A2–A9`. Feature task files retain domain task ownership;
+their API package references resolve to that block, which is the single cross-feature task artifact.
+
 ## Non-overlapping task contract
 
 A task is Ready only when all four records agree:
@@ -36,6 +48,14 @@ No record may override a field owned by another record. In particular, this regi
 | T001-022–T001-023 | FND | Feature 001 deployment/quality plan; development/test contract §§5–8 | INV-PLT-003 | DEPENDENCY_LOCK_FAILED |
 | T001-024 | VER | Feature 001 verification contract | all Feature 001 invariants | no new runtime behavior |
 | T001-028–T001-029 | DEPRECATED / REPLACED | ADR-035 and former Laravel frontend clauses; retained only as historical evidence | no current API invariant | no current runtime gate; API foundation/capability tasks replace this range |
+| A2-API-001–A2-API-004 | FND/US1 | Constitution 6.0.0; PD-API-001; ADR-036; Feature 001 API contract | INV-PLT-001–INV-PLT-008; INV-CTX-001 | AUTHENTICATION_REQUIRED, TENANT_CONTEXT_REQUIRED, PERMISSION_DENIED, RESOURCE_NOT_FOUND, UNEXPECTED_ERROR |
+| A3-API-001–A3-API-003 | US2 | Features 007/002 API contracts; A2 | tenant ownership, RBAC and planning-year invariants | PERMISSION_DENIED, TENANT_INACTIVE, RESOURCE_NOT_FOUND, STALE_VERSION |
+| A4-API-001–A4-API-002 | US3 | Feature 002 API contracts; A3 | master-data hierarchy/lifecycle/revision invariants | COST_CENTER_CYCLE, COST_CENTER_DEPTH_EXCEEDED, REFERENCED_RECORD_DELETE_DENIED, REVISION_RESTORE_INVALID |
+| A5-API-001–A5-API-002 | US4 | Feature 003 API contracts; A4 | expense, Money, attachment and tenant invariants | INVALID_MONEY, VAT_REQUIRED, PERMISSION_DENIED, RESOURCE_NOT_FOUND, STALE_VERSION |
+| A6-API-001–A6-API-002 | US5 | Feature 004 API contracts; A5 | contract/generation/source-deletion invariants | GENERATION_SOURCE_DUPLICATE, GENERATION_SUPPRESSED, REVISION_RESTORE_INVALID, PERMISSION_DENIED |
+| A7-API-001–A7-API-002 | US6 | Feature 005 API contracts; A5; shared economic kernel | economic/report/output invariants | OUTPUT_SCOPE_INVALID, PERMISSION_DENIED, RESOURCE_NOT_FOUND, STALE_VERSION |
+| A8-API-001–A8-API-002 | VER | capability matrix/OpenAPI contract; A2–A7 | complete implemented-capability coverage | API_CONTRACT_INCOMPLETE, OPENAPI_ROUTE_MISMATCH |
+| A9-API-001–A9-API-003 | VER/FND | A8; Constitution 6.0.0 removal gate | no-HTML/no-frontend/backend-install/final-gate invariants | ROUTE_CONTRACT_INVALID, DEPENDENCY_LOCK_FAILED, UNEXPECTED_ERROR |
 | T002-001–T002-002 | FND | Feature 002 spec/plan | INV-MD-TEN-001 | TENANT_RELATION_MISMATCH |
 | T002-003 | FND | Feature 002 authorization rules; authorization contract; R-TEN-003 | INV-MD-TEN-001, INV-TEN-001, INV-TEN-004 | PERMISSION_DENIED, TENANT_CONTEXT_REQUIRED, RESOURCE_NOT_FOUND |
 | T002-004–T002-006 | FND | Feature 002 spec/plan; PD-REV-001; RES-002-011; R-MD-REV-001 approved-root/persisted-identity/restore-source/delete-snapshot contract | INV-MD-REV-001, INV-MD-TEN-001, NFR-001-INT-01 | STALE_VERSION, TENANT_RELATION_MISMATCH, REVISION_BATCH_INCOMPLETE |
