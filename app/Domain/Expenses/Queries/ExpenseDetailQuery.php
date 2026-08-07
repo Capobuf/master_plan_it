@@ -51,6 +51,8 @@ final class ExpenseDetailQuery
                 'expenses.kind',
                 'expenses.title',
                 'expenses.notes',
+                'expenses.contract_id',
+                'expenses.lock_version',
             ]);
 
         if ($header === null) {
@@ -70,6 +72,22 @@ final class ExpenseDetailQuery
                 'type',
                 'confirmation_state',
                 'description',
+                'quantity',
+                'unit_price',
+                'entered_amount',
+                'amount_includes_vat',
+                'vat_rate',
+                'is_extra',
+                'funded_plafond_expense_id',
+                'spend_date',
+                'period_start',
+                'period_end',
+                'distribution',
+                'external_reference',
+                'lock_version',
+                'is_system_managed',
+                'source_key',
+                'contract_term_id',
                 'net_amount',
                 'vat_amount',
                 'gross_amount',
@@ -81,6 +99,22 @@ final class ExpenseDetailQuery
                 'type' => (string) $row->type,
                 'confirmation_state' => $row->confirmation_state === null ? null : (string) $row->confirmation_state,
                 'description' => (string) $row->description,
+                'quantity' => $row->quantity === null ? null : $this->decimal($row->quantity, 6),
+                'unit_price' => $row->unit_price === null ? null : $this->decimal($row->unit_price, 6),
+                'entered_amount' => $this->decimal($row->entered_amount, 6),
+                'amount_includes_vat' => (bool) $row->amount_includes_vat,
+                'vat_rate' => $this->decimal($row->vat_rate, 6),
+                'is_extra' => (bool) $row->is_extra,
+                'funded_plafond_expense_id' => $row->funded_plafond_expense_id === null ? null : (int) $row->funded_plafond_expense_id,
+                'spend_date' => $row->spend_date === null ? null : (string) $row->spend_date,
+                'period_start' => $row->period_start === null ? null : (string) $row->period_start,
+                'period_end' => $row->period_end === null ? null : (string) $row->period_end,
+                'distribution' => $row->distribution === null ? null : (string) $row->distribution,
+                'external_reference' => $row->external_reference === null ? null : (string) $row->external_reference,
+                'lock_version' => (int) $row->lock_version,
+                'is_system_managed' => (bool) $row->is_system_managed,
+                'generated' => $row->source_key !== null,
+                'contract_term_id' => $row->contract_term_id === null ? null : (int) $row->contract_term_id,
                 'net_amount' => $this->decimal($row->net_amount),
                 'vat_amount' => $this->decimal($row->vat_amount),
                 'gross_amount' => $this->decimal($row->gross_amount),
@@ -105,6 +139,8 @@ final class ExpenseDetailQuery
             kind: (string) $header->kind,
             title: (string) $header->title,
             notes: $header->notes === null ? null : (string) $header->notes,
+            contractId: $header->contract_id === null ? null : (int) $header->contract_id,
+            lockVersion: (int) $header->lock_version,
             rows: $rows,
             netTotal: $this->decimal($totals?->net_total),
             vatTotal: $this->decimal($totals?->vat_total),
@@ -121,11 +157,11 @@ final class ExpenseDetailQuery
         );
     }
 
-    private function decimal(mixed $value): string
+    private function decimal(mixed $value, int $scale = 2): string
     {
         $normalized = (string) ($value ?? '0');
         [$integer, $fraction] = array_pad(explode('.', $normalized, 2), 2, '');
-        $fraction = substr(str_pad($fraction, 2, '0'), 0, 2);
+        $fraction = substr(str_pad($fraction, $scale, '0'), 0, $scale);
 
         return ($integer === '-0' ? '0' : $integer).'.'.$fraction;
     }
