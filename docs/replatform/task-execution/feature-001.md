@@ -65,8 +65,9 @@ paths through the frontend proxy; Laravel remains private behind loopback.
 - Root `package.json`, `package-lock.json` and `vite.config.*`: absent;
   Laravel Dusk: absent.
 
-The Pest result-cache permission warning observed when the vendor directory is
-mounted read-only in a temporary Sail verification container is harmless and
-does not change test results. React rendering, browser accessibility and
+The non-fatal Pest result-cache permission warning about writing
+`vendor/pestphp/pest/.temp/test-results` in the temporary Sail verification
+container is harmless (exit 0; tests pass) and does not change test results.
+React rendering, browser accessibility and
 frontend proxy verification are intentionally deferred to the next separate
 frontend integration session.
