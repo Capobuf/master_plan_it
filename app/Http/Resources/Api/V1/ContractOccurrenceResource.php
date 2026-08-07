@@ -16,6 +16,10 @@ final class ContractOccurrenceResource extends JsonResource
                 return $row[$key] ?? null;
             }
 
+            if (in_array($key, ['currency', 'official_basis'], true)) {
+                return null;
+            }
+
             $property = [
                 'term_id' => 'termId',
                 'planning_year' => 'planningYear',
