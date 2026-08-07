@@ -110,8 +110,12 @@ final class ApiAuthenticationHttpTest extends TestCase
         $this->persistSessionCookie($loginResponse);
 
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/logout')->assertNoContent();
+        app('auth')->forgetGuards();
 
-        $this->getJson('/api/v1/auth/me')
+        $this->withHeaders([
+            'Origin' => 'http://localhost',
+            'Referer' => 'http://localhost/',
+        ])->getJson('/api/v1/auth/me')
             ->assertStatus(401)
             ->assertJsonPath('error.code', 'AUTHENTICATION_REQUIRED');
     }
