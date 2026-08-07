@@ -21,7 +21,7 @@ complete until its focused tests and exact registered command pass.
 - [X] `A2-API-001` [FND] Implement `bootstrap/app.php`, `routes/api.php`, Sanctum `statefulApi()`, `/sanctum/csrf-cookie`, correlation/error handling, API Resources/DTO conventions and `/api/v1` grouping; depends: baseline; tests: API route/CSRF/error/schema; validate: `php artisan route:list --path=api && php artisan test tests/Feature/Api/Contracts`; forbidden: Blade/web application routes, bearer tokens, generic CRUD or a second context implementation.
 - [X] `A2-API-002` [US1] Implement `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`, `PUT /api/v1/auth/password` through named Actions, `auth:sanctum`, active-actor checks and stable errors; depends: A2-API-001; tests: auth/session/password contracts; validate: `php artisan test tests/Feature/Api/Auth`; forbidden: recovery, OAuth, JWT, refresh/personal browser tokens.
 - [X] `A2-API-003` [US1] Implement `GET /api/v1/context`, `POST /api/v1/tenants/{tenant}/enter`, `POST /api/v1/context/leave` using TenantContext/Policies with no client-controlled tenant/ability; depends: A2-API-001 and Feature 007 context foundation; tests: context/tenant-isolation/Administrator identity; validate: `php artisan test tests/Feature/Api/Context tests/Feature/Api/TenantIsolationTest.php`.
-- [ ] `A2-API-004` [FND] Reconcile `app/Http/Controllers/Api/V1/`, `app/Http/Resources/Api/V1/`, stable error/correlation payload and no-HTML/backend-without-Node architecture tests; depends: A2-API-001; validate: `composer test:static && php artisan route:list`.
+- [X] `A2-API-004` [FND] Reconcile `app/Http/Controllers/Api/V1/`, `app/Http/Resources/Api/V1/`, stable error/correlation payload and no-HTML/backend-without-Node architecture tests; depends: A2-API-001; validate: `composer test:static && php artisan route:list`.
 
 ### A3 — Users, roles and planning years
 
@@ -58,9 +58,9 @@ complete until its focused tests and exact registered command pass.
 
 ### A9 — Parity, removal and final backend gates
 
-- [ ] `A9-API-001` [VER] Demonstrate API parity against the capability matrix and mark Laravel UI removal ready only then; run auth, authorization, tenant isolation, error/schema/pagination/CSRF/no-HTML tests; depends: A8-API-002; forbidden: deleting an uncovered capability.
-- [ ] `A9-API-002` [FND] After parity, remove deprecated Laravel Blade/TailAdmin/Tailwind/Alpine/ApexCharts/Vite/npm assets, HTML-only controllers/routes and obsolete browser tests; clean Composer scripts/dependencies so static tests do not invoke npm; depends: A9-API-001.
-- [ ] `A9-API-003` [VER] Record exact final backend gates: `composer validate --strict --no-check-all`, `composer install`, `php artisan route:list`, `php artisan test`, `composer test:static`, `composer test:accounting`, `composer test:application`, `composer audit --locked --no-interaction`, resource/package scans; depends: A9-API-002; no claim without output.
+- [X] `A9-API-001` [VER] Demonstrate API parity against the capability matrix and mark Laravel UI removal ready only then; run auth, authorization, tenant isolation, error/schema/pagination/CSRF/no-HTML tests; depends: A8-API-002; forbidden: deleting an uncovered capability.
+- [X] `A9-API-002` [FND] After parity, remove deprecated Laravel Blade/TailAdmin/Tailwind/Alpine/ApexCharts/Vite/npm assets, HTML-only controllers/routes and obsolete browser tests; clean Composer scripts/dependencies so static tests do not invoke npm; depends: A9-API-001.
+- [X] `A9-API-003` [VER] Record exact final backend gates: `composer validate --strict --no-check-all`, `composer install`, `php artisan route:list`, `php artisan test`, `composer test:static`, `composer test:accounting`, `composer test:application`, `composer audit --locked --no-interaction`, resource/package scans; depends: A9-API-002; no claim without output.
 
 Historical/deprecated Laravel UI task IDs: `T001-002`, `T001-004`, `T001-009`, `T001-010`,
 `T001-011`, `T001-016`, `T001-019`, `T001-021`, `T001-024`, `T001-026`, `T001-027`,

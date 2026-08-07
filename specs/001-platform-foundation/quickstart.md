@@ -1,41 +1,51 @@
 # Verification quickstart — Feature 001 Platform foundation
 
-Future commands; none were executed during planning.
+Laravel is the private API backend. The React/TypeScript + TailAdmin React
+frontend is a separate deployable and is verified in the next frontend session.
+The browser uses relative `/api/v1/*` and `/sanctum/*` paths; Laravel is not an
+application HTML host and the backend has no Node/npm build requirement.
 
 ## Bootstrap
 
 ```bash
 cp .env.example .env
 cp .env.testing.example .env.testing
-./vendor/bin/sail up -d
-./vendor/bin/sail composer validate --strict --no-check-all
-./vendor/bin/sail artisan migrate
-./vendor/bin/sail artisan migrate --env=testing
+composer install
+php artisan migrate
+php artisan migrate --env=testing
 ```
 
-`test:prepare` must fail unless environment is `testing` and database is exactly `master_plan_it_test`. Do not use `migrate:fresh`, `db:wipe`, RefreshDatabase or truncation traits.
+`test:prepare` must fail unless the environment is `testing` and the database
+is exactly `master_plan_it_test`. Do not use `migrate:fresh`, `db:wipe`,
+`RefreshDatabase` or truncation traits.
 
-## Dependency gate
+The private deployment path is frontend proxy → Laravel loopback. Configure
+the proxy's internal origin (never browser JavaScript) as
+`API_INTERNAL_ORIGIN=http://127.0.0.1:<port>`.
+
+## Dependency and API gates
 
 ```bash
-./vendor/bin/sail composer update --with-all-dependencies
-./vendor/bin/sail composer audit
-./vendor/bin/sail composer show --locked
+composer validate --strict --no-check-all
+composer audit --locked --no-interaction
+php artisan route:list
+php artisan test
+composer test:static
+composer test:accounting
+composer test:application
 ```
 
-Verify exact planned versions and PHP platform 8.3.32. Failure blocks implementation.
-
-The frontend gate verifies TailAdmin Laravel Free Blade/Alpine assets, the Vite manifest and absence of runtime CDN assets:
-
-```bash
-npm ci && npm run build
-php artisan test tests/Architecture/FrontendStackContractTest.php
-php artisan dusk tests/Browser/Shell/OperationalShellSmokeTest.php
-```
+Confirm that application routes are JSON contracts under `/api/v1`; the only
+infrastructure exception is `/sanctum/csrf-cookie` (and the health endpoint).
+Sanctum SPA authentication requires the CSRF-cookie request before login or
+mutations when required. Do not add bearer tokens, OAuth, JWT, refresh tokens,
+or a public developer API.
 
 ## Seed minimum platform
 
-Set non-empty, installation-specific values in `.env`; no demo/Administrator account or credential is seeded by default, and the Administrator seeder fails closed when any value is absent:
+Set non-empty, installation-specific values in `.env`; no demo/Administrator
+account or credential is seeded by default, and the Administrator seeder fails
+closed when any value is absent:
 
 ```dotenv
 PLATFORM_ADMIN_NAME=
@@ -44,49 +54,69 @@ PLATFORM_ADMIN_PASSWORD=
 ```
 
 ```bash
-./vendor/bin/sail artisan db:seed --class=PermissionCatalogueSeeder
-./vendor/bin/sail artisan db:seed --class=PlatformSettingSeeder
-./vendor/bin/sail artisan db:seed --class=PlatformAdministratorSeeder
+php artisan db:seed --class=PermissionCatalogueSeeder
+php artisan db:seed --class=PlatformSettingSeeder
+php artisan db:seed --class=PlatformAdministratorSeeder
 ```
 
-The Administrator remains tenantless. The implementation uses Spatie team key `0` only as an internal platform-role assignment scope; do not create a Tenant with that ID.
-The configured email must be absent on first provisioning. Later runs are idempotent only for that already protected Administrator; any other existing-user collision fails closed.
+The Administrator remains tenantless. The implementation uses Spatie team key
+`0` only as an internal platform-role assignment scope; do not create a Tenant
+with that ID. The configured email must be absent on first provisioning.
+Later runs are idempotent only for that already protected Administrator; any
+other existing-user collision fails closed.
 
-Create two tenants through Feature 007 fixture, one tenant role/user for each and one inactive tenant/user.
+Create two tenants through the Feature 007 fixture, one tenant role/user for
+each and one inactive tenant/user.
 
-## Focused verification
+## Focused API verification
 
 ```bash
-./vendor/bin/sail composer test:static
-./vendor/bin/sail artisan test --testsuite=Feature --filter=Platform
-./vendor/bin/sail artisan test --testsuite=Feature --filter=TenantContext
-./vendor/bin/sail artisan test --testsuite=Feature --filter=Permission
-./vendor/bin/sail artisan test --testsuite=Feature --filter=AuditRetention
+php artisan test tests/Feature/Api/Auth tests/Feature/Api/Context
+php artisan test tests/Feature/Api/Tenancy tests/Feature/Api/Users
+php artisan test tests/Feature/Api/Roles tests/Feature/Api/PlanningYears
+php artisan test tests/Feature/Api/Vendors tests/Feature/Api/CostCenters
+php artisan test tests/Feature/Api/Expenses tests/Feature/Api/Contracts
+php artisan test tests/Feature/Api/Reporting
 ```
 
-Browser only when shell/role/settings UI is implemented:
-
-```bash
-./vendor/bin/sail composer test:browser-matrix -- --filter=AccessibilityCompatibilityTest
-```
+Verify authorization, active actor and tenant isolation on every request;
+stable `error.code`/`error.message`/`correlation_id` responses; pagination
+metadata and links; CSRF/session authentication; exact decimal money values;
+and safe 404 behavior for protected foreign records.
 
 ## Manual acceptance
 
-1. Login as Administrator.
-2. Enter tenant A and verify tenant label/breadcrumb.
-3. Directly request tenant B object and receive safe denial.
-4. Assign/remove a tenant permission and verify behavior changes without code change.
-5. Verify audit retention accepts only integers 1–120, defaults to 24, and lowering shows a generic reinforced warning without cutoff/count preview; do not run prune against shared data.
-6. Log out one session and verify another session remains active; then verify password change/reset invalidates all target sessions.
-7. Exercise keyboard/focus/error/chart-alternative behavior at 360, 768 and 1280 CSS pixels across the approved browser matrix.
-8. Deactivate a user/tenant and verify login/access rules.
-9. Build production assets and inspect Vite manifest.
+1. Obtain `/sanctum/csrf-cookie`, log in through `/api/v1/auth/login`, and
+   verify `/api/v1/auth/me` and `/api/v1/context`.
+2. Enter tenant A as Administrator, verify abilities, and request a tenant B
+   object; receive a safe denial without existence disclosure.
+3. Verify role/ability presentation data cannot grant authorization and that
+   Laravel repeats every authorization decision server-side.
+4. Verify money responses contain exact decimal Net/VAT/Gross values and a
+   currency code; the client must not recalculate authoritative amounts.
+5. Deactivate a user/tenant and verify login/access rules; verify logout and
+   password-change session behavior.
+6. Confirm the frontend proxy can reach Laravel only through its private
+   loopback origin; no public API hostname or wildcard CORS is required.
 
-## Full gate
+React/TailAdmin rendering, browser accessibility, frontend navigation and
+frontend proxy verification belong exclusively to the next separate frontend
+integration session.
+
+## Full backend gate
 
 ```bash
-./vendor/bin/sail composer verify
-./vendor/bin/sail composer test:browser-matrix
+composer validate --strict --no-check-all
+composer install
+php artisan route:list
+php artisan test
+composer test:static
+composer test:accounting
+composer test:application
+composer audit --locked --no-interaction
 ```
 
-Success requires no destructive DB command, no unexpected log, no sensitive audit payload, no cross-request permission-team leakage and a valid release artifact structural test.
+Success requires no Node/npm installation, no Laravel application HTML route,
+no frontend assets in the backend root, no cross-request permission-team
+leakage, no sensitive API payload, and a valid OpenAPI/capability-matrix
+contract for every implemented capability.
