@@ -12,7 +12,6 @@ services:
       - 'host.docker.internal:host-gateway'
     ports:
       - '8080:80'
-      - '5174:5173'
     environment:
       WWWUSER: '${WWWUSER:-1000}'
       LARAVEL_SAIL: 1
@@ -47,15 +46,6 @@ services:
       test: ['CMD', 'mysqladmin', 'ping', '-p${DB_PASSWORD:-password}']
       retries: 12
       timeout: 5s
-
-  selenium:
-    image: selenium/standalone-chromium:4.27.0
-    profiles: [dusk]
-    extra_hosts:
-      - 'host.docker.internal:host-gateway'
-    shm_size: 2gb
-    networks:
-      - sail
 
 networks:
   sail:

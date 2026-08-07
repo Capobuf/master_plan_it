@@ -20,8 +20,8 @@ class DevelopmentEnvironmentTest extends TestCase
         $this->assertStringContainsString('laravel.test:', $compose);
         $this->assertStringContainsString('context: ./docker/8.3', $compose);
         $this->assertStringContainsString('image: mysql:8.4.10', $compose);
-        $this->assertStringContainsString('image: selenium/standalone-chromium:4.27.0', $compose);
-        $this->assertStringContainsString('profiles: [dusk]', $compose);
+        $this->assertStringNotContainsString('selenium', $compose);
+        $this->assertStringNotContainsString('dusk', $compose);
         $this->assertStringContainsString('sail-mysql:/var/lib/mysql', $compose);
         $this->assertStringNotContainsString('redis:', $compose);
         $this->assertStringNotContainsString('queue:work', $compose);

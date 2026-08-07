@@ -20,6 +20,7 @@ class DependencyContractTest extends TestCase
             'php' => '^8.3',
             'ext-bcmath' => '*',
             'laravel/framework' => '13.22.0',
+            'laravel/sanctum' => '4.3.3',
             'laravel/tinker' => '3.0.2',
             'openspout/openspout' => '4.32.0',
             'overtrue/laravel-versionable' => '6.0.0',
@@ -29,7 +30,6 @@ class DependencyContractTest extends TestCase
         $expectedDev = [
             'fakerphp/faker' => '1.24.1',
             'larastan/larastan' => '3.10.0',
-            'laravel/dusk' => '8.6.0',
             'laravel/pail' => '1.2.7',
             'laravel/pao' => '1.1.3',
             'laravel/pint' => '1.30.3',
@@ -77,54 +77,6 @@ class DependencyContractTest extends TestCase
                 $lockedNames,
             )),
             'Forbidden worker, Redis, or server-side PDF dependency is locked.',
-        );
-    }
-
-    public function test_frontend_build_dependencies_are_exactly_constrained(): void
-    {
-        $root = dirname(__DIR__, 2);
-        $package = json_decode(
-            file_get_contents($root.'/package.json'),
-            true,
-            flags: JSON_THROW_ON_ERROR,
-        );
-
-        $this->assertSame('module', $package['type'] ?? null);
-        $this->assertSame('vite', $package['scripts']['dev'] ?? null);
-        $this->assertSame('vite build', $package['scripts']['build'] ?? null);
-        $this->assertSame([
-            'alpinejs' => '3.14.9',
-            'apexcharts' => '5.3.5',
-        ], $package['dependencies'] ?? null);
-        $this->assertSame(
-            [
-                '@tailwindcss/forms' => '0.5.11',
-                '@tailwindcss/vite' => '4.2.4',
-                'laravel-vite-plugin' => '1.3.0',
-                'tailwindcss' => '4.2.4',
-                'vite' => '6.4.3',
-            ],
-            $package['devDependencies'] ?? null,
-        );
-
-        $this->assertFileExists($root.'/package-lock.json');
-        $this->assertFileExists($root.'/vite.config.js');
-
-        $viteConfig = file_get_contents($root.'/vite.config.js');
-        $this->assertStringContainsString("'resources/css/app.css'", $viteConfig);
-        $this->assertStringContainsString("'resources/js/app.js'", $viteConfig);
-        $this->assertStringNotContainsString("@vitejs/plugin-react", $viteConfig);
-        $this->assertStringContainsString("from 'laravel-vite-plugin'", $viteConfig);
-        $this->assertStringContainsString("from '@tailwindcss/vite'", $viteConfig);
-
-        $this->assertFileExists($root.'/resources/js/app.js');
-        $this->assertStringNotContainsString(
-            'http://',
-            file_get_contents($root.'/resources/js/app.js'),
-        );
-        $this->assertStringNotContainsString(
-            'https://',
-            file_get_contents($root.'/resources/js/app.js'),
         );
     }
 }

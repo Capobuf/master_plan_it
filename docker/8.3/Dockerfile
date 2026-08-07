@@ -30,8 +30,6 @@ RUN apt-get update \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=composer:2.7.1 /usr/bin/composer /usr/local/bin/composer
-COPY --from=node:22.14.0-bookworm-slim /usr/local /usr/local
-
 COPY start-container /usr/local/bin/start-container
 COPY supervisord.conf /etc/supervisor/conf.d/supervisord.conf
 COPY php.ini /usr/local/etc/php/conf.d/99-sail.ini

@@ -4,78 +4,64 @@ namespace Tests\Architecture;
 
 use PHPUnit\Framework\TestCase;
 
-class FrontendStackContractTest extends TestCase
+final class FrontendStackContractTest extends TestCase
 {
-    public function test_tailadmin_laravel_frontend_is_locally_built_from_the_blade_entrypoint(): void
+    public function test_laravel_backend_contains_no_application_frontend_assets_or_root_node_manifests(): void
     {
         $root = dirname(__DIR__, 2);
-        $package = json_decode((string) file_get_contents($root.'/package.json'), true, flags: JSON_THROW_ON_ERROR);
-        $lock = json_decode((string) file_get_contents($root.'/package-lock.json'), true, flags: JSON_THROW_ON_ERROR);
 
-        $this->assertSame('3.14.9', $package['dependencies']['alpinejs'] ?? null);
-        $this->assertSame('5.3.5', $package['dependencies']['apexcharts'] ?? null);
-        $this->assertArrayNotHasKey('@inertiajs/react', $package['dependencies'] ?? []);
-        $this->assertArrayNotHasKey('react', $package['dependencies'] ?? []);
-        $this->assertSame('4.2.4', $lock['packages']['node_modules/tailwindcss']['version'] ?? null);
+        foreach (['package.json', 'package-lock.json', 'vite.config.js'] as $manifest) {
+            $this->assertFileDoesNotExist($root.'/'.$manifest);
+        }
 
-        $entrypoint = (string) file_get_contents($root.'/resources/js/app.js');
-        $rootView = (string) file_get_contents($root.'/resources/views/layouts/app.blade.php');
-        $viteConfig = (string) file_get_contents($root.'/vite.config.js');
-        $assets = $entrypoint."\n".$rootView."\n".$viteConfig;
+        foreach (['resources/views', 'resources/css', 'resources/js'] as $directory) {
+            $this->assertDirectoryDoesNotExist($root.'/'.$directory);
+        }
 
-        $this->assertStringContainsString("from 'alpinejs'", $entrypoint);
-        $this->assertStringContainsString("from 'apexcharts'", $entrypoint);
-        $this->assertStringContainsString('@vite', $rootView);
-        $this->assertStringContainsString("'resources/js/app.js'", $viteConfig);
-        $this->assertStringNotContainsString('react()', $viteConfig);
-        $this->assertDoesNotMatchRegularExpression('#https?://#', $assets);
+        $this->assertFileDoesNotExist($root.'/routes/operational.php');
+        $this->assertFileDoesNotExist($root.'/routes/web.php');
     }
 
-    public function test_operational_routes_keep_the_tenant_security_chain_and_tailadmin_shell(): void
+    public function test_bootstrap_registers_only_api_and_console_application_routing(): void
     {
         $root = dirname(__DIR__, 2);
         $bootstrap = (string) file_get_contents($root.'/bootstrap/app.php');
-        $routes = (string) file_get_contents($root.'/routes/operational.php');
-        $layout = (string) file_get_contents($root.'/resources/views/layouts/sidebar.blade.php');
 
-        $this->assertStringContainsString("require __DIR__.'/../routes/operational.php';", $bootstrap);
-        foreach (['auth', 'active-user', 'tenant-context', 'permission-team-context', 'active-tenant', 'tenant-presentation'] as $middleware) {
-            $this->assertStringContainsString("'{$middleware}'", $routes);
-        }
-
-        $this->assertStringContainsString('application-ability:dashboard.view', $routes);
-        $this->assertStringContainsString('MenuHelper::groups()', $layout);
-        $this->assertStringContainsString('$store.sidebar', $layout);
-        $this->assertStringContainsString('<nav', $layout);
+        $this->assertStringContainsString("api: __DIR__.'/../routes/api.php'", $bootstrap);
+        $this->assertStringContainsString("commands: __DIR__.'/../routes/console.php'", $bootstrap);
+        $this->assertStringContainsString("health: '/up'", $bootstrap);
+        $this->assertStringNotContainsString("web: __DIR__.'/../routes/web.php'", $bootstrap);
+        $this->assertStringNotContainsString('routes/operational.php', $bootstrap);
+        $this->assertStringNotContainsString('tenant-presentation', $bootstrap);
+        $this->assertStringContainsString('statefulApi()', $bootstrap);
+        $this->assertStringContainsString('ApiErrorResponse::from', $bootstrap);
     }
 
-    public function test_branch_has_no_legacy_application_frontend_stack(): void
+    public function test_backend_has_no_presentation_only_symbols(): void
     {
         $root = dirname(__DIR__, 2);
-        $composer = json_decode((string) file_get_contents($root.'/composer.json'), true, flags: JSON_THROW_ON_ERROR);
-        $package = json_decode((string) file_get_contents($root.'/package.json'), true, flags: JSON_THROW_ON_ERROR);
-        $dependencies = array_merge(
-            array_keys($composer['require'] ?? []),
-            array_keys($composer['require-dev'] ?? []),
-            array_keys($package['dependencies'] ?? []),
-            array_keys($package['devDependencies'] ?? []),
-        );
 
-        foreach ($dependencies as $dependency) {
-            $this->assertDoesNotMatchRegularExpression('/(?:preline|livewire|filament)/i', $dependency);
+        foreach ([
+            'app/Helpers/MenuHelper.php',
+            'app/Support/Formatting/MoneyFormatter.php',
+            'app/Http/Middleware/ApplyTenantPresentationContext.php',
+            'app/Http/Middleware/ResolveOptionalTenantContext.php',
+        ] as $path) {
+            $this->assertFileDoesNotExist($root.'/'.$path);
         }
 
-        $viewFiles = [];
-        $iterator = new \RecursiveIteratorIterator(
-            new \RecursiveDirectoryIterator($root.'/resources/views', \FilesystemIterator::SKIP_DOTS),
-        );
-        foreach ($iterator as $file) {
-            if ($file->isFile()) {
-                $viewFiles[] = str_replace($root.'/', '', $file->getPathname());
+        foreach (['MenuHelper', 'MoneyFormatter', 'ApplyTenantPresentationContext', 'ResolveOptionalTenantContext'] as $symbol) {
+            foreach (['app', 'bootstrap', 'routes'] as $directory) {
+                $iterator = new \RecursiveIteratorIterator(
+                    new \RecursiveDirectoryIterator($root.'/'.$directory, \FilesystemIterator::SKIP_DOTS),
+                );
+
+                foreach ($iterator as $file) {
+                    if ($file->isFile() && str_ends_with($file->getFilename(), '.php')) {
+                        $this->assertStringNotContainsString($symbol, (string) file_get_contents($file->getPathname()));
+                    }
+                }
             }
         }
-
-        $this->assertContains('resources/views/layouts/app.blade.php', $viewFiles);
-        $this->assertContains('resources/views/layouts/sidebar.blade.php', $viewFiles);
     }
 }

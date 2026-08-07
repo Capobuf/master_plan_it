@@ -1,1 +1,0 @@
-@include('operational.vendors.form')

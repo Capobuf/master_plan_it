@@ -94,33 +94,4 @@ final class TenantDashboardQuery
             'upcomingContractEvents' => $renewals->concat($ends)->sortBy('date')->take(8)->values()->all(),
         ];
     }
-
-    /** @return array<string,list<array<string,mixed>>> */
-    public function presentation(TenantContext $context, int $planningYearId): array
-    {
-        $dataset = $this->apiDataset($context, $planningYearId);
-
-        return [
-            'recentExpenses' => array_map(fn (array $item): array => [
-                ...$item,
-                'href' => route('operational.expenses.show', $item['id']),
-            ], $dataset['recentExpenses']),
-            'generatedExpensesToConfirm' => array_map(fn (array $item): array => [
-                ...$item,
-                'href' => route('operational.expenses.show', $item['id']),
-                'state' => 'To confirm',
-            ], $dataset['generatedExpensesToConfirm']),
-            'activeContracts' => array_map(fn (array $item): array => [
-                ...$item,
-                'href' => route('operational.contracts.show', $item['id']),
-                'state' => 'Active',
-            ], $dataset['activeContracts']),
-            'upcomingContractEvents' => array_map(fn (array $item): array => [
-                ...$item,
-                'href' => route('operational.contracts.show', $item['id']),
-                'secondary' => $item['event_type'] === 'renewal' ? 'Renewal' : 'Contract end',
-                'event_type' => null,
-            ], $dataset['upcomingContractEvents']),
-        ];
-    }
 }

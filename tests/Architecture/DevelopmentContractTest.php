@@ -2,12 +2,9 @@
 
 namespace Tests\Architecture;
 
-use Facebook\WebDriver\Remote\DesiredCapabilities;
 use PHPUnit\Framework\AssertionFailedError;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
-use Tests\Browser\Support\BrowserMatrix;
-use Tests\DuskTestCase;
 
 class DevelopmentContractTest extends TestCase
 {
@@ -47,7 +44,6 @@ class DevelopmentContractTest extends TestCase
         $this->assertSame(
             [
                 'larastan/larastan' => '3.10.0',
-                'laravel/dusk' => '8.6.0',
                 'pestphp/pest' => '4.7.8',
                 'pestphp/pest-plugin-laravel' => '4.1.0',
                 'phpstan/phpstan' => '2.2.7',
@@ -56,7 +52,6 @@ class DevelopmentContractTest extends TestCase
                 $composer['require-dev'],
                 array_flip([
                     'larastan/larastan',
-                    'laravel/dusk',
                     'pestphp/pest',
                     'pestphp/pest-plugin-laravel',
                     'phpstan/phpstan',
@@ -69,8 +64,6 @@ class DevelopmentContractTest extends TestCase
             'test:static',
             'test:accounting',
             'test:application',
-            'test:browser',
-            'test:browser-matrix',
             'verify',
         ];
 
@@ -78,8 +71,6 @@ class DevelopmentContractTest extends TestCase
             $this->assertArrayHasKey($script, $composer['scripts']);
             $this->assertNotSame([], (array) $composer['scripts'][$script]);
         }
-        $this->assertStringEndsWith("' --", $composer['scripts']['test:browser-matrix']);
-
         $scripts = json_encode($composer['scripts'], JSON_THROW_ON_ERROR);
         $this->assertSame([], $this->matchingPatterns($scripts, self::FORBIDDEN_DATABASE_PATTERNS));
 
@@ -155,70 +146,6 @@ class DevelopmentContractTest extends TestCase
         $codeowners = file_get_contents($root.'/.github/CODEOWNERS');
         $this->assertStringContainsString('/tests/Accounting/', $codeowners);
         $this->assertStringContainsString('/.github/workflows/', $codeowners);
-    }
-
-    public function test_approved_browser_matrix_is_complete_and_explicit(): void
-    {
-        $this->assertSame(
-            [
-                'chrome-current',
-                'chrome-previous',
-                'edge-current',
-                'edge-previous',
-                'firefox-current',
-                'firefox-previous',
-                'safari-current',
-            ],
-            array_keys(BrowserMatrix::profiles()),
-        );
-        $this->assertSame([360, 768, 1280], BrowserMatrix::viewports());
-
-        foreach (BrowserMatrix::profiles() as $profile) {
-            $this->assertNotSame('', $profile['browser']);
-            $this->assertMatchesRegularExpression('/^MPIT_[A-Z_]+_VERSION$/', $profile['versionEnvironment']);
-            $this->assertMatchesRegularExpression('/^MPIT_[A-Z_]+_DRIVER_URL$/', $profile['driverUrlEnvironment']);
-        }
-
-        $dusk = file_get_contents(dirname(__DIR__).'/DuskTestCase.php');
-        $this->assertStringContainsString('getCapabilities()', $dusk);
-        $this->assertStringContainsString('getBrowserName()', $dusk);
-        $this->assertStringContainsString('getVersion()', $dusk);
-    }
-
-    public function test_browser_matrix_rejects_equal_current_and_previous_versions(): void
-    {
-        $original = [];
-
-        try {
-            foreach (BrowserMatrix::profiles() as $name => $profile) {
-                foreach ([$profile['versionEnvironment'], $profile['driverUrlEnvironment']] as $variable) {
-                    $original[$variable] = getenv($variable);
-                }
-
-                $version = str_ends_with($name, '-previous') ? '99.0' : '100.0';
-                putenv($profile['versionEnvironment'].'='.$version);
-                putenv($profile['driverUrlEnvironment'].'=http://webdriver.invalid/wd/hub');
-            }
-
-            putenv('MPIT_CHROME_PREVIOUS_VERSION=100.0');
-
-            $failure = null;
-            try {
-                BrowserMatrix::validateResolvedMatrix();
-            } catch (\RuntimeException $exception) {
-                $failure = $exception;
-            }
-
-            $this->assertInstanceOf(\RuntimeException::class, $failure);
-            $this->assertStringContainsString('distinct versions', $failure->getMessage());
-
-            putenv('MPIT_CHROME_PREVIOUS_VERSION=99.0');
-            $this->assertCount(7, BrowserMatrix::validateResolvedMatrix());
-        } finally {
-            foreach ($original as $variable => $value) {
-                putenv($value === false ? $variable : $variable.'='.$value);
-            }
-        }
     }
 
     #[DataProvider('mandatorySourceFiles')]
@@ -381,59 +308,6 @@ PHP;
             $rejected = true;
         }
         $this->assertTrue($rejected, 'An empty #[Test] method unexpectedly passed.');
-    }
-
-    public function test_dusk_capability_validation_rejects_missing_or_mismatched_values(): void
-    {
-        $profile = ['browser' => 'MicrosoftEdge', 'version' => '100.0', 'driverUrl' => 'http://webdriver.invalid'];
-
-        $invalid = [
-            null,
-            new DesiredCapabilities([]),
-            DesiredCapabilities::createFromW3cCapabilities(['browserName' => '', 'browserVersion' => '100.0']),
-            DesiredCapabilities::createFromW3cCapabilities(['browserName' => 'MicrosoftEdge', 'browserVersion' => '']),
-            DesiredCapabilities::createFromW3cCapabilities(['browserName' => 'firefox', 'browserVersion' => '100.0']),
-            DesiredCapabilities::createFromW3cCapabilities(['browserName' => 'MicrosoftEdge', 'browserVersion' => '99.0']),
-        ];
-
-        foreach ($invalid as $capabilities) {
-            $rejected = false;
-            try {
-                DuskTestCase::assertResolvedCapabilities($profile, $capabilities);
-            } catch (\RuntimeException) {
-                $rejected = true;
-            }
-            $this->assertTrue($rejected, 'Invalid WebDriver capabilities unexpectedly passed.');
-        }
-
-        DuskTestCase::assertResolvedCapabilities(
-            $profile,
-            DesiredCapabilities::createFromW3cCapabilities(['browserName' => 'msedge', 'browserVersion' => '100.0']),
-        );
-        $this->addToAssertionCount(1);
-    }
-
-    public function test_dusk_capability_validation_accepts_a_delimited_browser_series_only(): void
-    {
-        $profile = ['browser' => 'chrome', 'version' => '131.0', 'driverUrl' => 'http://webdriver.invalid'];
-
-        DuskTestCase::assertResolvedCapabilities(
-            $profile,
-            DesiredCapabilities::createFromW3cCapabilities([
-                'browserName' => 'chrome',
-                'browserVersion' => '131.0.6778.204',
-            ]),
-        );
-        $this->addToAssertionCount(1);
-
-        $this->expectException(\RuntimeException::class);
-        DuskTestCase::assertResolvedCapabilities(
-            $profile,
-            DesiredCapabilities::createFromW3cCapabilities([
-                'browserName' => 'chrome',
-                'browserVersion' => '131.01.6778.204',
-            ]),
-        );
     }
 
     public function test_authoritative_domain_code_contains_no_float_arithmetic(): void

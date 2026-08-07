@@ -18,7 +18,6 @@
     "require-dev": {
         "fakerphp/faker": "1.24.1",
         "larastan/larastan": "3.10.0",
-        "laravel/dusk": "8.6.0",
         "laravel/sail": "1.64.0",
         "laravel/pail": "1.2.7",
         "laravel/pao": "1.1.3",
@@ -56,13 +55,10 @@
             "@php vendor/bin/pest tests/Architecture",
             "@php vendor/bin/pint --test",
             "@php vendor/bin/phpstan analyse --no-progress",
-            "npm run build",
             "@composer audit --locked --no-interaction"
         ],
         "test:accounting": "@php artisan test --testsuite=Accounting",
         "test:application": "@php artisan test --testsuite=Application",
-        "test:browser": "@php artisan dusk",
-        "test:browser-matrix": "@php -r 'require \"vendor/autoload.php\"; exit(Tests\\Browser\\Support\\BrowserMatrix::run(array_slice($argv, 1)));' --",
         "verify": [
             "@test:static",
             "@test:prepare",

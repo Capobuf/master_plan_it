@@ -4,7 +4,6 @@ namespace Tests\Feature\Tenancy;
 
 use App\Domain\Tenancy\Actions\EnterTenantContext;
 use App\Domain\Tenancy\Data\TenantContext;
-use App\Http\Middleware\ApplyTenantPresentationContext;
 use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\EnsureTenantIsActive;
 use App\Http\Middleware\ResolveTenantContext;
@@ -97,10 +96,8 @@ class TenantContextMiddlewareTest extends TestCase
         }
     }
 
-    public function test_route_binding_observes_active_actor_tenant_team_and_presentation_context_in_exact_order(): void
+    public function test_route_binding_observes_active_actor_tenant_and_team_context_in_exact_order(): void
     {
-        $originalLocale = App::currentLocale();
-        $originalTimezone = date_default_timezone_get();
         $tenant = Tenant::factory()->create([
             'language_code' => 'it',
             'timezone' => 'Europe/Rome',
@@ -120,8 +117,6 @@ class TenantContextMiddlewareTest extends TestCase
             $this->assertTrue($context->actor->is_active);
             $this->assertSame($tenant->getKey(), $context->tenantId);
             $this->assertSame($tenant->getKey(), $registrar->getPermissionsTeamId());
-            $this->assertSame('it', App::currentLocale());
-            $this->assertSame('Europe/Rome', date_default_timezone_get());
 
             return $value;
         });
@@ -136,8 +131,6 @@ class TenantContextMiddlewareTest extends TestCase
 
         $this->assertTrue($binderCalled);
         $this->assertNull($registrar->getPermissionsTeamId());
-        $this->assertSame($originalLocale, App::currentLocale());
-        $this->assertSame($originalTimezone, date_default_timezone_get());
     }
 
     public function test_aliases_and_priority_place_the_context_chain_between_authentication_and_route_binding(): void
@@ -149,7 +142,6 @@ class TenantContextMiddlewareTest extends TestCase
         $this->assertSame(ResolveTenantContext::class, $aliases['tenant-context'] ?? null);
         $this->assertSame(SetPermissionTeamContext::class, $aliases['permission-team-context'] ?? null);
         $this->assertSame(EnsureTenantIsActive::class, $aliases['active-tenant'] ?? null);
-        $this->assertSame(ApplyTenantPresentationContext::class, $aliases['tenant-presentation'] ?? null);
 
         $priority = app(Kernel::class)->getMiddlewarePriority();
         $ordered = [
@@ -157,7 +149,6 @@ class TenantContextMiddlewareTest extends TestCase
             ResolveTenantContext::class,
             SetPermissionTeamContext::class,
             EnsureTenantIsActive::class,
-            ApplyTenantPresentationContext::class,
             SubstituteBindings::class,
             Authorize::class,
         ];
@@ -224,8 +215,8 @@ class TenantContextMiddlewareTest extends TestCase
                 ->assertOk()
                 ->assertJson([
                     'tenant_id' => $tenant->getKey(),
-                    'locale' => $tenant->language_code,
-                    'timezone' => $tenant->timezone,
+                    'locale' => $originalLocale,
+                    'timezone' => $originalTimezone,
                     'team_id' => $tenant->getKey(),
                 ]);
 
@@ -255,8 +246,6 @@ class TenantContextMiddlewareTest extends TestCase
                 'team_id' => app(PermissionRegistrar::class)->getPermissionsTeamId(),
             ]);
         })->middleware([
-            'web',
-            'tenant-presentation',
             'active-tenant',
             'permission-team-context',
             'tenant-context',
