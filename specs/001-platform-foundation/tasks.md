@@ -18,41 +18,41 @@ complete until its focused tests and exact registered command pass.
 
 ### A2 — Foundation, authentication, context and tenants
 
-- [ ] `A2-API-001` [FND] Implement `bootstrap/app.php`, `routes/api.php`, Sanctum `statefulApi()`, `/sanctum/csrf-cookie`, correlation/error handling, API Resources/DTO conventions and `/api/v1` grouping; depends: baseline; tests: API route/CSRF/error/schema; validate: `php artisan route:list --path=api && php artisan test tests/Feature/Api/Contracts`; forbidden: Blade/web application routes, bearer tokens, generic CRUD or a second context implementation.
-- [ ] `A2-API-002` [US1] Implement `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`, `PUT /api/v1/auth/password` through named Actions, `auth:sanctum`, active-actor checks and stable errors; depends: A2-API-001; tests: auth/session/password contracts; validate: `php artisan test tests/Feature/Api/Auth`; forbidden: recovery, OAuth, JWT, refresh/personal browser tokens.
-- [ ] `A2-API-003` [US1] Implement `GET /api/v1/context`, `POST /api/v1/tenants/{tenant}/enter`, `POST /api/v1/context/leave` using TenantContext/Policies with no client-controlled tenant/ability; depends: A2-API-001 and Feature 007 context foundation; tests: context/tenant-isolation/Administrator identity; validate: `php artisan test tests/Feature/Api/Context tests/Feature/Api/TenantIsolationTest.php`.
+- [X] `A2-API-001` [FND] Implement `bootstrap/app.php`, `routes/api.php`, Sanctum `statefulApi()`, `/sanctum/csrf-cookie`, correlation/error handling, API Resources/DTO conventions and `/api/v1` grouping; depends: baseline; tests: API route/CSRF/error/schema; validate: `php artisan route:list --path=api && php artisan test tests/Feature/Api/Contracts`; forbidden: Blade/web application routes, bearer tokens, generic CRUD or a second context implementation.
+- [X] `A2-API-002` [US1] Implement `POST /api/v1/auth/login`, `POST /api/v1/auth/logout`, `GET /api/v1/auth/me`, `PUT /api/v1/auth/password` through named Actions, `auth:sanctum`, active-actor checks and stable errors; depends: A2-API-001; tests: auth/session/password contracts; validate: `php artisan test tests/Feature/Api/Auth`; forbidden: recovery, OAuth, JWT, refresh/personal browser tokens.
+- [X] `A2-API-003` [US1] Implement `GET /api/v1/context`, `POST /api/v1/tenants/{tenant}/enter`, `POST /api/v1/context/leave` using TenantContext/Policies with no client-controlled tenant/ability; depends: A2-API-001 and Feature 007 context foundation; tests: context/tenant-isolation/Administrator identity; validate: `php artisan test tests/Feature/Api/Context tests/Feature/Api/TenantIsolationTest.php`.
 - [ ] `A2-API-004` [FND] Reconcile `app/Http/Controllers/Api/V1/`, `app/Http/Resources/Api/V1/`, stable error/correlation payload and no-HTML/backend-without-Node architecture tests; depends: A2-API-001; validate: `composer test:static && php artisan route:list`.
 
 ### A3 — Users, roles and planning years
 
-- [ ] `A3-API-001` [US2] Add protected tenant list/detail/create/update/deactivate/reactivate, users list/detail/create/update/deactivate and role-assignment API contracts using Feature 007 Actions/Policies; depends: A2-API-003; tests: same-tenant authorization, safe 404/403, pagination and mutations; validate: `php artisan test tests/Feature/Api/Tenancy tests/Feature/Api/Users`.
-- [ ] `A3-API-002` [US2] Add role list/detail/create/update/lifecycle and ability resources, preserving protected Administrator/platform abilities; depends: A3-API-001; tests: role/ability authorization and no-secrets schemas; validate: `php artisan test tests/Feature/Api/Roles tests/Feature/Api/Abilities`.
-- [ ] `A3-API-003` [US2] Add planning-year list/create/deactivate/reactivate contracts using Feature 002 Actions/Queries and calendar-year invariants; depends: A2-API-003; tests: tenant scope, lifecycle, pagination and inactive-context; validate: `php artisan test tests/Feature/Api/PlanningYears`.
+- [X] `A3-API-001` [US2] Add protected tenant list/detail/create/update/deactivate/reactivate, users list/detail/create/update/deactivate and role-assignment API contracts using Feature 007 Actions/Policies; depends: A2-API-003; tests: same-tenant authorization, safe 404/403, pagination and mutations; validate: `php artisan test tests/Feature/Api/Tenancy tests/Feature/Api/Users`.
+- [X] `A3-API-002` [US2] Add role list/detail/create/update/lifecycle and ability resources, preserving protected Administrator/platform abilities; depends: A3-API-001; tests: role/ability authorization and no-secrets schemas; validate: `php artisan test tests/Feature/Api/Roles tests/Feature/Api/Abilities`.
+- [X] `A3-API-003` [US2] Add planning-year list/create/deactivate/reactivate contracts using Feature 002 Actions/Queries and calendar-year invariants; depends: A2-API-003; tests: tenant scope, lifecycle, pagination and inactive-context; validate: `php artisan test tests/Feature/Api/PlanningYears`.
 
 ### A4 — Vendors and cost centers
 
-- [ ] `A4-API-001` [US3] Add vendor list/detail/create/update/deactivate/reactivate and implemented history/restore resources using Feature 002 operations; depends: A3-API-003; tests: ownership, lifecycle, history/restore and schemas; validate: `php artisan test tests/Feature/Api/Vendors`.
-- [ ] `A4-API-002` [US3] Add cost-center list/detail/create/update/hierarchy/deactivate/reactivate and implemented history/restore resources; depends: A3-API-003; tests: hierarchy, cycle/depth, scope and pagination; validate: `php artisan test tests/Feature/Api/CostCenters`.
+- [X] `A4-API-001` [US3] Add vendor list/detail/create/update/deactivate/reactivate and implemented history/restore resources using Feature 002 operations; depends: A3-API-003; tests: ownership, lifecycle, history/restore and schemas; validate: `php artisan test tests/Feature/Api/Vendors`.
+- [X] `A4-API-002` [US3] Add cost-center list/detail/create/update/hierarchy/deactivate/reactivate and implemented history/restore resources; depends: A3-API-003; tests: hierarchy, cycle/depth, scope and pagination; validate: `php artisan test tests/Feature/Api/CostCenters`.
 
 ### A5 — Expenses
 
-- [ ] `A5-API-001` [US4] Add expense register/detail/create/update/delete/current-row and Actual-confirmation contracts using Feature 003 Actions/Queries/Policies; depends: A4-API-001/A4-API-002; tests: isolation, authorization, validation, stale/domain conflicts and pagination; validate: `php artisan test tests/Feature/Api/Expenses`.
+- [X] `A5-API-001` [US4] Add expense register/detail/create/update/delete/current-row and Actual-confirmation contracts using Feature 003 Actions/Queries/Policies; depends: A4-API-001/A4-API-002; tests: isolation, authorization, validation, stale/domain conflicts and pagination; validate: `php artisan test tests/Feature/Api/Expenses`.
 - [ ] `A5-API-002` [US4] Add exact decimal Net/VAT/Gross/currency resources, implemented attachment/history operations and generated-expense deletion decision contract; depends: A5-API-001; tests: money/schema/no-recalculation; validate: `composer test:accounting && php artisan test tests/Feature/Api/ExpenseContracts`.
 
 ### A6 — Contracts and generation
 
 - [ ] `A6-API-001` [US5] Add project/contract/term register/detail/create/update/delete and terms resources using Feature 004 operations; depends: A5-API-001; tests: scope, terminal deletion, safe existence and pagination; validate: `php artisan test tests/Feature/Api/Projects tests/Feature/Api/Contracts`.
-- [ ] `A6-API-002` [US5] Add synchronize, generated-expense history, generate occurrence, resume, resume-and-generate, suppression and term-deletion contracts only for implemented controls; depends: A6-API-001; tests: source-key idempotency, no-overwrite, authorization and domain conflicts; validate: `php artisan test tests/Feature/Api/ContractGeneration`.
+- [X] `A6-API-002` [US5] Add synchronize, generated-expense history, generate occurrence, resume, resume-and-generate, suppression and term-deletion contracts only for implemented controls; depends: A6-API-001; tests: source-key idempotency, no-overwrite, authorization and domain conflicts; validate: `php artisan test tests/Feature/Api/ContractGeneration`.
 
 ### A7 — Dashboard, Budget and reporting
 
-- [ ] `A7-API-001` [US6] Add tenant dashboard dataset, current rolling Budget and economic report/filter/pagination resources using the shared EconomicDataset; depends: A5-API-001 and Feature 005 kernel; tests: exact Net/VAT/Gross parity, scope and no-cross-tenant economics; validate: `composer test:accounting && php artisan test tests/Feature/Api/Reporting`.
+- [X] `A7-API-001` [US6] Add tenant dashboard dataset, current rolling Budget and economic report/filter/pagination resources using the shared EconomicDataset; depends: A5-API-001 and Feature 005 kernel; tests: exact Net/VAT/Gross parity, scope and no-cross-tenant economics; validate: `composer test:accounting && php artisan test tests/Feature/Api/Reporting`.
 - [ ] `A7-API-002` [US6] Add implemented export/Scenario/BudgetVersion resources and operations without persistence-only fields or client recalculation; depends: A7-API-001; tests: output authorization, immutability, pagination/schema; validate: `php artisan test tests/Feature/Api/Outputs tests/Feature/Api/BudgetVersions`.
 
 ### A8 — Capability matrix and OpenAPI
 
-- [ ] `A8-API-001` [VER] Inventory every current capability and classify `IMPLEMENTED_API`, `INTERNAL_ONLY`, `FOUNDATION_ONLY` or `PLANNED` in `docs/api/v1-capability-matrix.md`; map ability, Action/Query, endpoint/method, request, response, errors and tenant scope; depends: A2–A7; forbidden: placeholders/generic model exposure.
-- [ ] `A8-API-002` [VER] Create `docs/api/openapi-v1.yaml` (OpenAPI 3.1) covering every `IMPLEMENTED_API` endpoint and reconcile routes/resources/matrix; depends: A8-API-001; forbidden: Swagger runtime package or `/api/v2`.
+- [X] `A8-API-001` [VER] Inventory every current capability and classify `IMPLEMENTED_API`, `INTERNAL_ONLY`, `FOUNDATION_ONLY` or `PLANNED` in `docs/api/v1-capability-matrix.md`; map ability, Action/Query, endpoint/method, request, response, errors and tenant scope; depends: A2–A7; forbidden: placeholders/generic model exposure.
+- [X] `A8-API-002` [VER] Create `docs/api/openapi-v1.yaml` (OpenAPI 3.1) covering every `IMPLEMENTED_API` endpoint and reconcile routes/resources/matrix; depends: A8-API-001; forbidden: Swagger runtime package or `/api/v2`.
 
 ### A9 — Parity, removal and final backend gates
 

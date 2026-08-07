@@ -112,6 +112,22 @@ Legacy sources establish verified behavior or migration evidence. Product decisi
 | 007 | FR-007-021 | T007-001, T007-002, T007-019, T007-020, T005-021–T005-023 | T007-018 |
 | 007 | FR-007-024–026 | T007-001, T007-002, T007-005, T007-011, T007-021, T007-022 | T007-018 |
 
+## API-only reconciliation evidence
+
+The implemented A2–A8 API slice is reconciled against the current route and
+resource inventory. Pending overlay items remain explicitly unchecked and are
+classified as absent or planned in the matrix. The authoritative contract artifacts are:
+
+| Evidence | Covers | Boundary |
+|---|---|---|
+| `docs/api/v1-capability-matrix.md` | A8-API-001; every current capability classified with ability, Action/Query, request, resource, errors and tenant scope | Does not invent endpoints for persistence-only or planned features |
+| `docs/api/openapi-v1.yaml` | A8-API-002; every `IMPLEMENTED_API` `/api/v1` operation plus `/sanctum/csrf-cookie` | Static OpenAPI 3.1 only; no Swagger runtime; A9 parity/removal/final gates remain pending |
+
+The matrix and OpenAPI are reconciled to the route fragments under
+`routes/api/v1/`; the browser contract uses Sanctum session/CSRF and relative
+same-origin paths, while Laravel remains the sole authorization and economic
+owner.
+
 ## Coverage gate
 
 No row permits implementation of unstated behavior. A task is executable only when its owning task entry, readiness row, exact command and any required path expansion agree. The historical Constitution 5.0.0 integrated analysis does not authorize the API-only runtime. A later normative change requires another analysis before implementation continues from the changed contract.
