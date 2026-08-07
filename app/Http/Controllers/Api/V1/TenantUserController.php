@@ -12,6 +12,7 @@ use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\TenantUserResource;
 use App\Models\User;
+use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Contracts\Validation\ValidationRule;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -165,7 +166,7 @@ final class TenantUserController extends Controller
         return array_map(static fn (int $id): Role => TenantOwnedRecordQuery::findOrFail($context, Role::class, $id), $ids);
     }
 
-    /** @param array<string, array<int, string|ValidationRule>> $rules
+    /** @param array<string, array<int, string|Rule|ValidationRule|\Closure>> $rules
      * @return array<string, mixed>
      */
     private function validated(Request $request, array $rules): array

@@ -4,6 +4,7 @@ namespace App\Http\Resources\Api\V1;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
+use Spatie\Permission\Models\Role;
 
 /** @property-read \App\Models\User $resource */
 final class TenantUserResource extends JsonResource
@@ -13,7 +14,7 @@ final class TenantUserResource extends JsonResource
     {
         $roles = $this->resource->relationLoaded('roles')
             ? $this->resource->roles
-                ->map(static fn (mixed $role): array => [
+                ->map(static fn (Role $role): array => [
                     'id' => (int) $role->getKey(),
                     'name' => (string) $role->name,
                 ])

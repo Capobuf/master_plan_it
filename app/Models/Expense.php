@@ -83,6 +83,9 @@ class Expense extends Model
         return $this->hasMany(ExpenseRow::class);
     }
 
+    /**
+     * @return BelongsTo<Contract, $this>
+     */
     public function contract(): BelongsTo
     {
         return $this->belongsTo(Contract::class);

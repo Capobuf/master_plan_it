@@ -10,6 +10,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 
 final class ContractListQuery
 {
+    /** @return LengthAwarePaginator<int, Contract> */
     public function paginate(User $actor, TenantContext $context, int $page = 1, int $perPage = 15): LengthAwarePaginator
     {
         app(ContractPolicy::class)->viewAny($actor)->authorize();
