@@ -34,8 +34,14 @@ final readonly class TenantContext
             $rawBudgetBasis = $tenant->getAttribute('budget_basis');
         }
 
-        $this->budgetBasis = $rawBudgetBasis instanceof BudgetBasis
+        $parsedBudgetBasis = $rawBudgetBasis instanceof BudgetBasis
             ? $rawBudgetBasis
-            : BudgetBasis::tryFrom((string) $rawBudgetBasis) ?? BudgetBasis::Net;
+            : BudgetBasis::tryFrom((string) $rawBudgetBasis);
+
+        if ($parsedBudgetBasis === null && $tenant->exists) {
+            throw new \ValueError('Persisted tenant has an invalid budget basis.');
+        }
+
+        $this->budgetBasis = $parsedBudgetBasis ?? BudgetBasis::Net;
     }
 }

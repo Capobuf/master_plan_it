@@ -5,6 +5,7 @@ namespace Tests\Feature\Tenancy;
 use App\Domain\Tenancy\Actions\EnterTenantContext;
 use App\Domain\Tenancy\Actions\LeaveTenantContext;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Enums\BudgetBasis;
 use App\Domain\Tenancy\Enums\TenantState;
 use App\Http\Middleware\EnsureTenantIsActive;
 use App\Http\Middleware\ResolveTenantContext;
@@ -48,6 +49,35 @@ class TenantContextTest extends TestCase
         $this->assertSame('Europe/Rome', $context->timezone);
         $this->assertSame('EUR', $context->currencyCode);
         $this->assertSame('22.125000', $context->defaultVatRate);
+    }
+
+    public function test_synthetic_tenant_without_budget_basis_gets_a_non_authoritative_fallback(): void
+    {
+        $tenant = new Tenant;
+        $tenant->forceFill([
+            'id' => 999999,
+            'language_code' => 'it',
+            'timezone' => 'Europe/Rome',
+            'currency_code' => 'EUR',
+            'default_vat_rate' => '22.000000',
+        ]);
+        $actor = new User;
+
+        $context = new TenantContext($tenant, $actor);
+
+        $this->assertSame(BudgetBasis::Net, $context->budgetBasis);
+    }
+
+    public function test_persisted_tenant_with_invalid_budget_basis_fails_explicitly(): void
+    {
+        $tenant = new Tenant;
+        $tenant->forceFill(['id' => 999999, 'budget_basis' => 'invalid']);
+        $tenant->exists = true;
+        $tenant->syncOriginal();
+
+        $this->expectException(\ValueError::class);
+
+        new TenantContext($tenant, new User);
     }
 
     public function test_tenant_user_resolves_only_their_fixed_membership_and_ignores_session_selection(): void
