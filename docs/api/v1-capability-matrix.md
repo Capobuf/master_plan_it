@@ -87,11 +87,11 @@ safe error envelope; when available `correlation_id` is repeated in the
 
 | Capability | Status | Reason / boundary |
 |---|---|---|
-| Laravel Blade/TailAdmin pages, HTML operational routes | `INTERNAL_ONLY` (deprecated) | Superseded by the API-only decision; no HTML application route is a supported contract. |
 | Sanctum CSRF cookie | `FOUNDATION_ONLY` | Infrastructure path `/sanctum/csrf-cookie`; not an application capability. |
 | Session middleware, active-user, tenant-context, permission-team-context, active-tenant, correlation ID | `FOUNDATION_ONLY` | Laravel security/runtime foundation reused by every protected API. |
 | Domain Actions, Policies, revision batches, economic kernel and persistence tables | `INTERNAL_ONLY` | Server-owned implementation; never exposed as generic model/CRUD endpoints. |
-| Expense revision history/restore | `INTERNAL_ONLY` | Persistence/query/action foundation exists, but no current API route is implemented. |
+| PlatformSetting and audit-retention schema/recorder | `FOUNDATION_ONLY` | Persistence and audit foundation exists; no PlatformSetting or audit-retention operation API is implemented. |
+| Expense revision history/restore | `FOUNDATION_ONLY` | Persistence/query/action foundation exists, but no current API route is implemented. |
 | Projects | `FOUNDATION_ONLY` | No implemented project application capability in the current backend. |
 | Attachments/file downloads | `FOUNDATION_ONLY` | Storage/authorization boundary is not an implemented API capability. |
 | BudgetVersion snapshots | `FOUNDATION_ONLY` | Persistence/domain foundation exists; no snapshot API route. |

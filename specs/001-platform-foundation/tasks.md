@@ -37,11 +37,13 @@ complete until its focused tests and exact registered command pass.
 ### A5 — Expenses
 
 - [X] `A5-API-001` [US4] Add expense register/detail/create/update/delete/current-row and Actual-confirmation contracts using Feature 003 Actions/Queries/Policies; depends: A4-API-001/A4-API-002; tests: isolation, authorization, validation, stale/domain conflicts and pagination; validate: `php artisan test tests/Feature/Api/Expenses`.
-- [ ] `A5-API-002` [US4] Add exact decimal Net/VAT/Gross/currency resources, implemented attachment/history operations and generated-expense deletion decision contract; depends: A5-API-001; tests: money/schema/no-recalculation; validate: `composer test:accounting && php artisan test tests/Feature/Api/ExpenseContracts`.
+- [X] `A5-API-002` [US4] Add exact decimal Net/VAT/Gross/currency resources and the implemented generated-expense deletion decision contract; depends: A5-API-001; tests: money/schema/no-recalculation and generated deletion; validate: focused Expense API contract tests.
+- [ ] `A5-API-002-PENDING` [US4] Keep Attachments and Expense revision-history/restore classified `FOUNDATION_ONLY` until their backend capability is implemented; no placeholder endpoint; depends: A5-API-001; validate: capability-matrix reconciliation.
 
 ### A6 — Contracts and generation
 
-- [ ] `A6-API-001` [US5] Add project/contract/term register/detail/create/update/delete and terms resources using Feature 004 operations; depends: A5-API-001; tests: scope, terminal deletion, safe existence and pagination; validate: `php artisan test tests/Feature/Api/Projects tests/Feature/Api/Contracts`.
+- [X] `A6-API-001` [US5] Add contract/term register/detail/create/update/delete and terms resources for the implemented Feature 004 operations; depends: A5-API-001; tests: contract scope, terminal deletion, safe existence and pagination; validate: focused Contract API tests.
+- [ ] `A6-API-001-PENDING` [US5] Keep Projects classified `FOUNDATION_ONLY` until its backend capability is implemented; do not add project placeholder routes; depends: A5-API-001; validate: capability-matrix reconciliation.
 - [X] `A6-API-002` [US5] Add synchronize, generated-expense history, generate occurrence, resume, resume-and-generate, suppression and term-deletion contracts only for implemented controls; depends: A6-API-001; tests: source-key idempotency, no-overwrite, authorization and domain conflicts; validate: `php artisan test tests/Feature/Api/ContractGeneration`.
 
 ### A7 — Dashboard, Budget and reporting
@@ -122,7 +124,7 @@ Foundation-story ownership: T001-001–T001-004 and T001-007 benefit US-001-01; 
 
 ## Phase 9 — Shared quality and release infrastructure
 
-- [ ] T001-022 [P] [FND] Create `.github/workflows/quality.yml`; symbols: static/accounting/application, latest-two Chrome/Edge/Firefox plus current-Safari browser matrix, MySQL 8.4 jobs, explicit supported runner/profile and lock-keyed caches; depends: T001-004; requirements: FR-001-005, NFR-001-COMPAT-01, INV-PLT-003; tests first: `tests/Architecture/WorkflowContractTest.php`; validate: workflow contract test; expected: mandatory gates on PR/protected branch and recorded resolved browser versions; forbidden: optional mandatory jobs, unpinned actions, destructive DB reset or unexecuted Safari claim.
+- [ ] T001-022 [HISTORICAL-DEPRECATED] [P] [FND] Create `.github/workflows/quality.yml`; symbols: static/accounting/application, latest-two Chrome/Edge/Firefox plus current-Safari browser matrix, MySQL 8.4 jobs, explicit supported runner/profile and lock-keyed caches; depends: T001-004; requirements: FR-001-005, NFR-001-COMPAT-01, INV-PLT-003; tests first: `tests/Architecture/WorkflowContractTest.php`; validate: workflow contract test; expected: mandatory gates on PR/protected branch and recorded resolved browser versions; forbidden: optional mandatory jobs, unpinned actions, destructive DB reset or unexecuted Safari claim.
 - [ ] T001-023 [FND] Create `.github/workflows/release.yml`, `scripts/build-release.sh`, `tests/Feature/Deployment/ReleaseArtifactContractTest.php`; symbols: verified commit, production dependencies/assets, ZIP/checksum/provenance; depends: T001-002, T001-022; requirements: FR-001-005, INV-PLT-003; tests first: release contract test; validate: release contract plus `bash scripts/build-release.sh --verify-only`; expected: immutable host-ready ZIP; forbidden: production rebuild, `.env`, test data, `node_modules` or mutable latest artifact.
 
 ## Phase 9A — Slice 0 operational UI foundation
