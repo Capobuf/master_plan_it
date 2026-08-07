@@ -221,6 +221,7 @@ final class TenantQueryScopeTest extends TestCase
             'timezone' => 'Europe/Rome',
             'currency_code' => 'EUR',
             'default_vat_rate' => '22.000000',
+            'budget_basis' => 'net',
         ]);
 
         $actor = new User;
