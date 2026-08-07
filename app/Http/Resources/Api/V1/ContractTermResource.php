@@ -12,6 +12,7 @@ final class ContractTermResource extends JsonResource
     {
         $term = $this->resource;
         $currency = is_array($term) ? ($term['currency'] ?? null) : ($request->attributes->get('currency_code') ?? null);
+        $basis = is_array($term) ? ($term['official_basis'] ?? null) : ($request->attributes->get('official_basis') ?? null);
         $read = static function (string $key) use ($term): mixed {
             if (is_array($term)) {
                 return $term[$key] ?? null;
@@ -40,6 +41,7 @@ final class ContractTermResource extends JsonResource
             'vat' => (string) $read('vat_amount'),
             'gross' => (string) $read('gross_amount'),
             'currency' => $currency,
+            'official_basis' => $basis,
             'auto_renew' => (bool) $read('auto_renew'),
             'lock_version' => (int) $read('lock_version'),
         ];

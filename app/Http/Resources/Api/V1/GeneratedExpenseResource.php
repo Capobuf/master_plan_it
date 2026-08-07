@@ -25,6 +25,7 @@ final class GeneratedExpenseResource extends JsonResource
             'vat' => (string) $get('vat_amount'),
             'gross' => (string) $get('gross_amount'),
             'currency' => $get('currency') ?? $request->attributes->get('currency_code'),
+            'official_basis' => $get('official_basis') ?? $request->attributes->get('official_basis'),
             'lock_version' => (int) $get('lock_version'),
         ];
     }

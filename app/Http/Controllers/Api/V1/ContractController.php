@@ -12,19 +12,20 @@ use App\Domain\Contracts\Actions\ResumeContractOccurrence;
 use App\Domain\Contracts\Actions\SuppressContractOccurrence;
 use App\Domain\Contracts\Actions\SynchronizeContractOccurrences;
 use App\Domain\Contracts\Actions\UpdateContract;
+use App\Domain\Contracts\Data\ExpectedContractOccurrence;
 use App\Domain\Contracts\Data\SaveContractData;
 use App\Domain\Contracts\Data\SaveContractTermData;
 use App\Domain\Contracts\Enums\BillingCycle;
-use App\Domain\Expenses\Enums\ActualConfirmationState;
-use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Contracts\Queries\ContractDetailQuery;
 use App\Domain\Contracts\Queries\ContractListQuery;
+use App\Domain\Expenses\Enums\ActualConfirmationState;
+use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\AuthorizeApplicationAbility;
 use App\Http\Resources\Api\V1\ContractResource;
-use App\Http\Resources\Api\V1\GeneratedExpenseResource;
 use App\Http\Resources\Api\V1\ContractRevisionResource;
+use App\Http\Resources\Api\V1\GeneratedExpenseResource;
 use App\Models\Contract;
 use App\Models\ContractTerm;
 use App\Models\Expense;
@@ -32,11 +33,12 @@ use App\Models\ExpenseRow;
 use App\Models\RevisionBatch;
 use Carbon\CarbonInterface;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -106,6 +108,7 @@ final class ContractController extends Controller
     public function synchronize(Request $request, int $contract, SynchronizeContractOccurrences $action): JsonResponse
     {
         $this->authorize($request, 'contract.generate-occurrence');
+        $this->rejectEmptyBody($request);
         $result = $action->execute($this->actor($request), $this->tenantContext($request), $this->contractFromRequest($request, $contract), $this->correlationId($request));
 
         return response()->json(['data' => $result]);
@@ -114,6 +117,7 @@ final class ContractController extends Controller
     public function generate(Request $request, int $contract, int $year, GenerateContractOccurrenceForYear $action): GeneratedExpenseResource
     {
         $this->authorize($request, 'contract.generate-occurrence');
+        $this->rejectEmptyBody($request);
         $context = $this->tenantContext($request);
         $expense = $action->execute($this->actor($request), $context, $this->contract($context, $contract), $year, $this->correlationId($request));
         $this->setCurrency($request, $context);
@@ -124,6 +128,7 @@ final class ContractController extends Controller
     public function resume(Request $request, int $contract, string $sourceKey, ResumeContractOccurrence $action): Response
     {
         $this->authorize($request, 'contract.resume-generation');
+        $this->rejectEmptyBody($request);
         $action->execute($this->actor($request), $this->tenantContext($request), $this->contractFromRequest($request, $contract), $sourceKey, $this->correlationId($request));
 
         return response()->noContent();
@@ -132,6 +137,7 @@ final class ContractController extends Controller
     public function resumeAndGenerate(Request $request, int $contract, string $sourceKey, ResumeAndGenerateOccurrence $action): GeneratedExpenseResource
     {
         $this->authorize($request, 'contract.resume-generation');
+        $this->rejectEmptyBody($request);
         $context = $this->tenantContext($request);
         $expense = $action->execute($this->actor($request), $context, $this->contract($context, $contract), $sourceKey, $this->correlationId($request));
         $this->setCurrency($request, $context);
@@ -187,7 +193,7 @@ final class ContractController extends Controller
         $subject = $this->contract($context, $contract);
         /** @var \Illuminate\Database\Eloquent\Collection<int, RevisionBatch> $batches */
         $batches = RevisionBatch::query()->where('tenant_id', $context->tenantId)->where('root_subject_type', $subject->getMorphClass())->where('root_subject_id', $subject->getKey())->with('actor')->latest('occurred_at')->get();
-        /** @var \Illuminate\Support\Collection<int, array<string, mixed>> $rows */
+        /** @var Collection<int, array<string, mixed>> $rows */
         $rows = $batches->map(static function (RevisionBatch $batch): array {
             $operation = $batch->getAttribute('operation');
 
@@ -207,7 +213,6 @@ final class ContractController extends Controller
         return ContractRevisionResource::collection($paginator);
     }
 
-    /** @return SaveContractData */
     private function contractData(Request $request, bool $update): SaveContractData
     {
         $allowed = ['vendor_id', 'cost_center_id', 'title', 'description', 'active', 'renewal_date', 'renewal_notice_days', 'renewal_notes', 'terms'];
@@ -242,6 +247,19 @@ final class ContractController extends Controller
         if ($update) {
             $rules['lock_version'] = ['required', 'integer', 'min:1'];
         }
+        $rawTerms = $request->input('terms');
+        if (is_array($rawTerms)) {
+            $termAllowed = ['id', 'local_key', 'effective_start', 'effective_end', 'billing_cycle', 'quantity', 'unit_price', 'entered_amount', 'amount_includes_vat', 'vat_rate', 'auto_renew', 'lock_version'];
+            foreach ($rawTerms as $index => $term) {
+                if (! is_array($term)) {
+                    continue;
+                }
+                $unexpected = array_diff(array_keys($term), $termAllowed);
+                if ($unexpected !== []) {
+                    throw ValidationException::withMessages(["terms.{$index}" => 'The term contains unsupported fields.']);
+                }
+            }
+        }
         $input = $request->validate($rules);
         $terms = [];
         $termAllowed = ['id', 'local_key', 'effective_start', 'effective_end', 'billing_cycle', 'quantity', 'unit_price', 'entered_amount', 'amount_includes_vat', 'vat_rate', 'auto_renew', 'lock_version'];
@@ -270,8 +288,8 @@ final class ContractController extends Controller
     }
 
     /**
-     * @param  list<\App\Domain\Contracts\Data\ExpectedContractOccurrence>  $occurrences
-     * @return array{contract: Contract, occurrences: list<\App\Domain\Contracts\Data\ExpectedContractOccurrence>, generated_expenses: list<array<string, mixed>>, revision_activity: list<array<string, mixed>>, currency: string}
+     * @param  list<ExpectedContractOccurrence>  $occurrences
+     * @return array{contract: Contract, occurrences: list<ExpectedContractOccurrence>, generated_expenses: list<array<string, mixed>>, revision_activity: list<array<string, mixed>>, currency: string, official_basis: string}
      */
     private function payload(Request $request, TenantContext $context, Contract $contract, array $occurrences): array
     {
@@ -293,7 +311,7 @@ final class ContractController extends Controller
             return ['id' => (int) $batch->getKey(), 'operation' => $operation instanceof RevisionOperation ? $operation->value : (string) $batch->getRawOriginal('operation'), 'actor' => $batch->actor?->name, 'timestamp' => $batch->occurred_at instanceof CarbonInterface ? $batch->occurred_at->toIso8601String() : null, 'summary' => $batch->reason];
         })->all();
 
-        return ['contract' => $contract, 'occurrences' => $occurrences, 'generated_expenses' => $expenses, 'revision_activity' => $revisions, 'currency' => $context->currencyCode];
+        return ['contract' => $contract, 'occurrences' => $occurrences, 'generated_expenses' => $expenses, 'revision_activity' => $revisions, 'currency' => $context->currencyCode, 'official_basis' => $context->budgetBasis->value];
     }
 
     /** @return array<string, mixed> */
@@ -315,6 +333,7 @@ final class ContractController extends Controller
             'vat_amount' => $row === null ? '0.00' : (string) $row->vat_amount,
             'gross_amount' => $row === null ? '0.00' : (string) $row->gross_amount,
             'currency' => $context->currencyCode,
+            'official_basis' => $context->budgetBasis->value,
             'lock_version' => (int) $expense->lock_version,
         ];
     }
@@ -335,6 +354,14 @@ final class ContractController extends Controller
     private function setCurrency(Request $request, TenantContext $context): void
     {
         $request->attributes->set('currency_code', $context->currencyCode);
+        $request->attributes->set('official_basis', $context->budgetBasis->value);
+    }
+
+    private function rejectEmptyBody(Request $request): void
+    {
+        if ($request->all() !== []) {
+            throw ValidationException::withMessages(['body' => 'This operation does not accept a request body.']);
+        }
     }
 
     /** @param list<string> $allowed */

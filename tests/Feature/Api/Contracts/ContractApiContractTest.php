@@ -20,14 +20,17 @@ final class ContractApiContractTest extends TestCase
             "Route::delete('/{contract}', [ContractController::class, 'destroy'])",
             "Route::post('/{contract}/synchronize'",
             "Route::post('/{contract}/generate/{year}'",
+            "Route::post('/{contract}/occurrences/{sourceKey}/suppress'",
             "Route::post('/{contract}/occurrences/{sourceKey}/resume'",
             "Route::post('/{contract}/occurrences/{sourceKey}/resume-and-generate'",
             "Route::delete('/{contract}/terms/{term}'",
+            "Route::delete('/{contract}/generated-expenses/{expense}'",
+            "Route::get('/{contract}/history'",
         ] as $contract) {
             self::assertStringContainsString($contract, $routes);
         }
 
-        foreach (['vendor_id', 'cost_center_id', 'terms', 'occurrences', 'generated_expenses', 'lock_version'] as $field) {
+        foreach (['vendor_id', 'cost_center_id', 'terms', 'occurrences', 'generated_expenses', 'currency', 'official_basis', 'lock_version'] as $field) {
             self::assertStringContainsString("'{$field}'", $resource);
         }
 

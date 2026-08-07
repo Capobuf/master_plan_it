@@ -13,6 +13,7 @@ final class ContractResource extends JsonResource
         $payload = is_array($this->resource) ? $this->resource : ['contract' => $this->resource];
         $contract = $payload['contract'];
         $currency = $payload['currency'] ?? $request->attributes->get('currency_code');
+        $basis = $payload['official_basis'] ?? $request->attributes->get('official_basis');
         $terms = $payload['terms'] ?? ($contract->relationLoaded('terms') ? $contract->terms : []);
         $occurrences = $payload['occurrences'] ?? [];
         $expenses = $payload['generated_expenses'] ?? [];
@@ -36,6 +37,7 @@ final class ContractResource extends JsonResource
             'renewal_notice_days' => $contract->renewal_notice_days === null ? null : (int) $contract->renewal_notice_days,
             'renewal_notes' => $contract->renewal_notes,
             'currency' => $currency,
+            'official_basis' => $basis,
             'term_count' => count($terms),
             'generated_expense_count' => count($expenses) > 0
                 ? count($expenses)

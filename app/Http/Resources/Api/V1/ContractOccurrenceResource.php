@@ -40,6 +40,7 @@ final class ContractOccurrenceResource extends JsonResource
             'vat' => (string) $get('vat_amount'),
             'gross' => (string) $get('gross_amount'),
             'currency' => $get('currency') ?? $request->attributes->get('currency_code'),
+            'official_basis' => $get('official_basis') ?? $request->attributes->get('official_basis'),
             'suppressed' => (bool) $get('suppressed'),
             'expense_id' => $get('expense_id') === null ? null : (int) $get('expense_id'),
             'generation_state' => $get('generation_state'),
