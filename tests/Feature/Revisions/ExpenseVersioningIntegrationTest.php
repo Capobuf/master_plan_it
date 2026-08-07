@@ -2,7 +2,10 @@
 
 namespace Tests\Feature\Revisions;
 
+use App\Domain\Expenses\Actions\ConfirmActual;
 use App\Domain\Expenses\Data\ExpenseRevisionSnapshot;
+use App\Domain\Expenses\Enums\ActualConfirmationState;
+use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Revisions\Actions\BeginRevisionBatch;
 use App\Domain\Revisions\Actions\LinkVersionToRevisionBatch;
 use App\Domain\Revisions\Data\RevisionOperation;
@@ -14,16 +17,26 @@ use App\Models\RevisionBatchItem;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Version as ApplicationVersion;
+use App\Support\Authorization\PlatformAdministrator;
+use Database\Seeders\PermissionCatalogueSeeder;
 use DomainException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Str;
 use Overtrue\LaravelVersionable\Versionable;
 use Overtrue\LaravelVersionable\VersionStrategy;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class ExpenseVersioningIntegrationTest extends TestCase
 {
     use DatabaseTransactions;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        app(PermissionCatalogueSeeder::class)->run();
+        app(PermissionRegistrar::class)->setPermissionsTeamId(null);
+    }
 
     public function test_expense_and_row_use_snapshot_versioning_with_exact_business_field_allowlists(): void
     {
@@ -62,6 +75,25 @@ class ExpenseVersioningIntegrationTest extends TestCase
             'period_end',
             'distribution',
             'external_reference',
+            'confirmation_state',
+            'confirmed_by_user_id',
+            'confirmed_at',
+            'is_system_managed',
+            'manual_override_at',
+            'contract_term_id',
+            'contract_source_rule_key',
+            'contract_occurrence_date',
+            'source_key',
+            'source_deleted_contract_id',
+            'source_deleted_contract_title',
+            'source_contract_deleted_at',
+            'source_contract_deletion_reason',
+            'source_deleted_term_id',
+            'source_deleted_term_rule_key',
+            'source_deleted_term_start',
+            'source_deleted_term_end',
+            'source_term_deleted_at',
+            'source_term_deletion_reason',
         ], $row->getVersionable());
 
         foreach ([$expense, $row] as $model) {
@@ -110,6 +142,33 @@ class ExpenseVersioningIntegrationTest extends TestCase
             'version_id' => $rowVersion->getKey(),
             'sequence' => 2,
         ]);
+    }
+
+    public function test_confirm_actual_snapshots_the_confirmation_state_change(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $actor = User::factory()->create(['tenant_id' => null, 'is_active' => true]);
+        app(PlatformAdministrator::class)->assign($actor);
+        $expense = Expense::factory()->for($tenant)->create();
+        $row = ExpenseRow::factory()->for($expense)->create();
+        $row->forceFill([
+            'type' => ExpenseType::Actual,
+            'confirmation_state' => ActualConfirmationState::ToConfirm,
+            'confirmed_by_user_id' => null,
+            'confirmed_at' => null,
+        ])->save();
+
+        app(ConfirmActual::class)->execute(
+            $actor,
+            new TenantContext($tenant, $actor),
+            $expense,
+            $row->fresh(),
+            $row->lock_version,
+            (string) Str::uuid(),
+        );
+
+        $version = $row->fresh()->latestVersion()->firstOrFail();
+        $this->assertSame(ActualConfirmationState::Confirmed->value, $version->contents['confirmation_state']);
     }
 
     public function test_revision_snapshot_is_a_readonly_typed_dto_excluding_technical_flags(): void
