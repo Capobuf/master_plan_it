@@ -92,6 +92,13 @@ trait ManagesExpenseAggregate
                 'vat_amount' => $attributes['vat_amount'],
                 'gross_amount' => $attributes['gross_amount'],
             ];
+            $serverAttributes = $authoritativeAmounts;
+            foreach (['confirmation_state', 'confirmed_by_user_id', 'confirmed_at', 'is_system_managed', 'manual_override_at', 'contract_term_id', 'source_key'] as $serverAttribute) {
+                if (array_key_exists($serverAttribute, $attributes)) {
+                    $serverAttributes[$serverAttribute] = $attributes[$serverAttribute];
+                    unset($attributes[$serverAttribute]);
+                }
+            }
             unset($attributes['net_amount'], $attributes['vat_amount'], $attributes['gross_amount']);
             $row = $id === null ? new ExpenseRow : $existing->get((int) $id);
             if (! $row instanceof ExpenseRow) {
@@ -102,29 +109,29 @@ trait ManagesExpenseAggregate
             }
             $oldType=$row->exists?$row->type:null;$wasSystemManaged=$row->exists&&$row->type===ExpenseType::Actual&&$row->is_system_managed;
             $row->fill($attributes);
-            $row->forceFill($authoritativeAmounts);
+            $row->forceFill($serverAttributes);
             if ($wasSystemManaged && $row->isDirty()) {
-                $attributes['is_system_managed'] = false;
-                $attributes['manual_override_at'] = CarbonImmutable::now('UTC');
-                $row->fill(['is_system_managed'=>false,'manual_override_at'=>$attributes['manual_override_at']]);
+                $serverAttributes['is_system_managed'] = false;
+                $serverAttributes['manual_override_at'] = CarbonImmutable::now('UTC');
+                $row->forceFill(['is_system_managed'=>false,'manual_override_at'=>$serverAttributes['manual_override_at']]);
             }
             if (! $row->exists) {
-                $attributes['confirmation_state'] = $attributes['type'] === ExpenseType::Actual
+                $serverAttributes['confirmation_state'] = $attributes['type'] === ExpenseType::Actual
                     ? ActualConfirmationState::ToConfirm : null;
-                $attributes['confirmed_by_user_id'] = null;
-                $attributes['confirmed_at'] = null;
-                $attributes['is_system_managed'] = false;
+                $serverAttributes['confirmed_by_user_id'] = null;
+                $serverAttributes['confirmed_at'] = null;
+                $serverAttributes['is_system_managed'] = false;
                 $row->tenant_id = $tenant->getKey();
                 $row->expense_id = $expense->getKey();
             } else {
                 if($oldType!==$attributes['type']){
-                    if($attributes['type']===ExpenseType::Actual){$attributes['confirmation_state']=ActualConfirmationState::ToConfirm;$attributes['confirmed_by_user_id']=null;$attributes['confirmed_at']=null;$attributes['is_system_managed']=false;$attributes['manual_override_at']=null;}
-                    else{$attributes['confirmation_state']=null;$attributes['confirmed_by_user_id']=null;$attributes['confirmed_at']=null;$attributes['is_system_managed']=false;$attributes['manual_override_at']=null;}
+                    if($attributes['type']===ExpenseType::Actual){$serverAttributes['confirmation_state']=ActualConfirmationState::ToConfirm;$serverAttributes['confirmed_by_user_id']=null;$serverAttributes['confirmed_at']=null;$serverAttributes['is_system_managed']=false;$serverAttributes['manual_override_at']=null;}
+                    else{$serverAttributes['confirmation_state']=null;$serverAttributes['confirmed_by_user_id']=null;$serverAttributes['confirmed_at']=null;$serverAttributes['is_system_managed']=false;$serverAttributes['manual_override_at']=null;}
                 }
                 $attributes['lock_version'] = (int) $row->lock_version + 1;
             }
             $row->fill($attributes);
-            $row->forceFill($authoritativeAmounts);
+            $row->forceFill($serverAttributes);
             $row->save();
             $submitted[(int) $row->getKey()] = true;
             $changed[] = $row;

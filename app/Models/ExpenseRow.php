@@ -31,15 +31,6 @@ use Overtrue\LaravelVersionable\VersionStrategy;
     'period_end',
     'distribution',
     'external_reference',
-    'confirmation_state',
-    'confirmed_by_user_id',
-    'confirmed_at',
-    'is_system_managed',
-    'manual_override_at',
-    'contract_term_id',
-    'contract_source_rule_key',
-    'contract_occurrence_date',
-    'source_key',
     'lock_version',
 ])]
 class ExpenseRow extends Model
