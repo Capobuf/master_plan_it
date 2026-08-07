@@ -8,6 +8,7 @@ use App\Http\Middleware\EnsureTenantIsActive;
 use App\Http\Middleware\ResolveTenantContext;
 use App\Http\Middleware\SetPermissionTeamContext;
 use App\Models\User;
+use App\Support\Api\ApiErrorResponse;
 use App\Support\Authorization\PlatformAdministrator;
 use App\Support\Diagnostics\CorrelationId;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -21,6 +22,7 @@ use Symfony\Component\HttpFoundation\Response;
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
         web: __DIR__.'/../routes/web.php',
+        api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
         then: function (): void {
@@ -28,6 +30,8 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->statefulApi();
+
         $middleware->redirectGuestsTo(
             fn (Request $request): string => route('login'),
         );
@@ -72,6 +76,10 @@ return Application::configure(basePath: dirname(__DIR__))
         });
 
         $exceptions->render(function (DomainException $exception, Request $request) {
+            if ($request->is('api/*')) {
+                return ApiErrorResponse::from($exception, $request);
+            }
+
             $code = $exception->getMessage();
 
             if ($code === 'CURRENT_PASSWORD_INVALID') {
@@ -107,6 +115,14 @@ return Application::configure(basePath: dirname(__DIR__))
             };
 
             return $message === null ? null : back()->with('error', $message);
+        });
+
+        $exceptions->render(function (Throwable $exception, Request $request) {
+            if (! $request->is('api/*')) {
+                return null;
+            }
+
+            return ApiErrorResponse::from($exception, $request);
         });
 
         $exceptions->context(function (): array {
