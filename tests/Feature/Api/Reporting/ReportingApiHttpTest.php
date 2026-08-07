@@ -2,11 +2,13 @@
 
 namespace Tests\Feature\Api\Reporting;
 
+use App\Models\Contract;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Tenant;
+use App\Models\Vendor;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
@@ -31,6 +33,8 @@ final class ReportingApiHttpTest extends TestCase
                     'scope' => ['planning_year_id', 'year', 'currency', 'official_basis'],
                     'summary' => ['official_basis', 'currency', 'amounts'],
                     'monthly', 'by_type', 'by_cost_center', 'has_economic_data',
+                    'year_options', 'selected_year_id',
+                    'ancillary' => ['recentExpenses', 'generatedExpensesToConfirm', 'activeContracts', 'upcomingContractEvents'],
                 ],
             ])
             ->assertJsonPath('data.summary.amounts.net', '100.00')
@@ -39,6 +43,60 @@ final class ReportingApiHttpTest extends TestCase
             ->assertJsonPath('data.summary.currency', 'EUR')
             ->assertJsonMissingPath('data.charts')
             ->assertJsonMissingPath('data.summary.netFormatted');
+    }
+
+    public function test_dashboard_defaults_year_and_returns_safe_ancillary_domain_data(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => (int) now()->year, 'active' => true]);
+        $expense = $this->expenseWithRow($tenant, $year, '100.00', '22.00', '122.00');
+        $vendor = Vendor::factory()->for($tenant)->create();
+        $center = CostCenter::factory()->for($tenant)->create();
+        Contract::query()->create([
+            'tenant_id' => $tenant->getKey(),
+            'vendor_id' => $vendor->getKey(),
+            'cost_center_id' => $center->getKey(),
+            'title' => 'Active contract',
+            'active' => true,
+            'renewal_date' => now()->addMonth()->toDateString(),
+            'lock_version' => 1,
+        ]);
+        $this->actingAs($user, 'web');
+
+        $response = $this->getJson('/api/v1/dashboard')->assertOk();
+        $response->assertJsonPath('data.selected_year_id', $year->getKey())
+            ->assertJsonPath('data.ancillary.recentExpenses.0.id', $expense->getKey())
+            ->assertJsonMissingPath('data.ancillary.recentExpenses.0.href')
+            ->assertJsonPath('data.ancillary.activeContracts.0.label', 'Active contract')
+            ->assertJsonMissingPath('data.ancillary.activeContracts.0.href')
+            ->assertJsonPath('data.ancillary.upcomingContractEvents.0.event_type', 'renewal');
+    }
+
+    public function test_dashboard_without_planning_years_returns_empty_dataset(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $this->actingAs($user, 'web');
+
+        $this->getJson('/api/v1/dashboard')
+            ->assertOk()
+            ->assertJsonPath('data.scope', null)
+            ->assertJsonPath('data.selected_year_id', null)
+            ->assertJsonPath('data.has_economic_data', false)
+            ->assertJsonCount(0, 'data.year_options');
+    }
+
+    public function test_dashboard_ability_denial_is_uniform(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $user->roles()->firstOrFail()->revokePermissionTo('dashboard.view');
+        $this->actingAs($user, 'web');
+
+        $this->getJson('/api/v1/dashboard')
+            ->assertForbidden()
+            ->assertJsonPath('error.code', 'PERMISSION_DENIED');
     }
 
     public function test_budget_applies_same_tenant_cost_center_filter(): void

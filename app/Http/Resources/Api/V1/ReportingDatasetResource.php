@@ -17,7 +17,22 @@ final class ReportingDatasetResource extends JsonResource
         $dataset = $payload['dataset'];
         $calculated = $payload['calculated'];
 
-        return [
+        if ($dataset === null || $calculated === null) {
+            return [
+                'scope' => null,
+                'summary' => null,
+                'monthly' => [],
+                'by_type' => [],
+                'by_cost_center' => [],
+                'cost_center_id' => null,
+                'has_economic_data' => false,
+                'year_options' => $payload['year_options'] ?? [],
+                'selected_year_id' => null,
+                'ancillary' => $payload['ancillary'] ?? [],
+            ];
+        }
+
+        $result = [
             'scope' => ReportingScopeResource::make($dataset->scope)->resolve($request),
             'summary' => ReportingSummaryResource::make($calculated['summary'])->resolve($request),
             'monthly' => $calculated['monthly'],
@@ -26,5 +41,13 @@ final class ReportingDatasetResource extends JsonResource
             'cost_center_id' => $payload['cost_center_id'] ?? null,
             'has_economic_data' => $dataset->lines !== [],
         ];
+
+        if (($payload['dashboard'] ?? false) === true) {
+            $result['year_options'] = $payload['year_options'] ?? [];
+            $result['selected_year_id'] = $payload['selected_year_id'] ?? null;
+            $result['ancillary'] = $payload['ancillary'] ?? [];
+        }
+
+        return $result;
     }
 }
