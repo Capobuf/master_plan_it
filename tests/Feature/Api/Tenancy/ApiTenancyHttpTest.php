@@ -36,7 +36,7 @@ final class ApiTenancyHttpTest extends TestCase
         $user = $this->tenantUser($tenant);
         $this->actingAs($user, 'web');
 
-        $response = $this->postJson('/api/v1/tenants', [
+        $response = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants', [
             'name' => 'Forbidden tenant',
             'code' => 'forbidden-tenant',
             'currency_code' => 'EUR',
@@ -62,18 +62,18 @@ final class ApiTenancyHttpTest extends TestCase
             'default_vat_rate' => '22.000000',
         ];
 
-        $created = $this->postJson('/api/v1/tenants', $payload)
-            ->assertOk()
+        $created = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants', $payload)
+            ->assertCreated()
             ->assertJsonPath('data.code', 'api-tenant')
             ->assertJsonPath('data.state', 'active');
         $tenantId = $created->json('data.id');
 
-        $this->putJson('/api/v1/tenants/'.$tenantId, [
+        $this->withHeaders($this->csrfHeaders())->putJson('/api/v1/tenants/'.$tenantId, [
             'name' => 'API Tenant Updated',
             'lock_version' => 1,
         ])->assertOk()->assertJsonPath('data.name', 'API Tenant Updated');
 
-        $this->postJson('/api/v1/tenants/'.$tenantId.'/deactivate', [
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants/'.$tenantId.'/deactivate', [
             'confirmation_code' => 'api-tenant',
             'lock_version' => 2,
         ])->assertOk()->assertJsonPath('data.state', 'inactive');

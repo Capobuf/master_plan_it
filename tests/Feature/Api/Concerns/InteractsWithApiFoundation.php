@@ -72,11 +72,21 @@ trait InteractsWithApiFoundation
     protected function csrfHeaders(): array
     {
         $response = $this->get('/sanctum/csrf-cookie');
-        $cookie = $response->getCookie('XSRF-TOKEN');
+        $csrfCookie = $response->getCookie('XSRF-TOKEN');
 
-        self::assertNotNull($cookie);
+        self::assertNotNull($csrfCookie);
 
-        $token = urldecode($cookie->getValue());
+        foreach ([config('session.cookie'), 'XSRF-TOKEN'] as $cookieName) {
+            $cookie = $response->getCookie((string) $cookieName);
+
+            if ($cookie !== null) {
+                $this->withUnencryptedCookie((string) $cookieName, $cookie->getValue());
+            }
+        }
+
+        $this->withCredentials();
+
+        $token = urldecode($csrfCookie->getValue());
 
         return [
             'Origin' => 'http://localhost',

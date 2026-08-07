@@ -21,7 +21,7 @@ final class ApiAuthenticationHttpTest extends TestCase
         $user = $this->administrator($password);
         $sessionId = session()->getId();
 
-        $response = $this->postJson('/api/v1/auth/login', [
+        $response = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/login', [
             'email' => $user->email,
             'password' => $password,
         ]);
@@ -39,7 +39,7 @@ final class ApiAuthenticationHttpTest extends TestCase
     {
         $user = $this->administrator('correct-password');
 
-        $response = $this->postJson('/api/v1/auth/login', [
+        $response = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/login', [
             'email' => $user->email,
             'password' => 'wrong-password',
         ], ['X-Correlation-ID' => '6f2c58f1-37d3-4bb5-9e69-97b7b4b0b7f2']);
@@ -58,7 +58,7 @@ final class ApiAuthenticationHttpTest extends TestCase
         $inactiveActor = User::factory()->inactive()->create(['password' => Hash::make('inactive-password')]);
         $this->seedApiPermissions();
 
-        $inactiveActorResponse = $this->postJson('/api/v1/auth/login', [
+        $inactiveActorResponse = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/login', [
             'email' => $inactiveActor->email,
             'password' => 'inactive-password',
         ]);
@@ -71,7 +71,7 @@ final class ApiAuthenticationHttpTest extends TestCase
             'password' => Hash::make('inactive-tenant-password'),
         ]);
 
-        $inactiveTenantResponse = $this->postJson('/api/v1/auth/login', [
+        $inactiveTenantResponse = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/login', [
             'email' => $tenantUser->email,
             'password' => 'inactive-tenant-password',
         ]);
@@ -102,7 +102,7 @@ final class ApiAuthenticationHttpTest extends TestCase
         $user = $this->administrator();
         $this->actingAs($user, 'web');
 
-        $this->postJson('/api/v1/auth/logout')->assertNoContent();
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/auth/logout')->assertNoContent();
         $this->assertGuest();
     }
 
@@ -111,7 +111,7 @@ final class ApiAuthenticationHttpTest extends TestCase
         $user = $this->administrator('old-password');
         $this->actingAs($user, 'web');
 
-        $response = $this->putJson('/api/v1/auth/password', [
+        $response = $this->withHeaders($this->csrfHeaders())->putJson('/api/v1/auth/password', [
             'current_password' => 'old-password',
             'password' => 'new-api-password',
             'password_confirmation' => 'new-api-password',

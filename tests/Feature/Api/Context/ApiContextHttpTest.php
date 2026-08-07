@@ -20,7 +20,7 @@ final class ApiContextHttpTest extends TestCase
         $user = $this->tenantUser($ownTenant);
         $this->actingAs($user, 'web');
 
-        $response = $this->withSession([
+        $response = $this->withHeaders($this->csrfHeaders())->withSession([
             EnterTenantContext::SESSION_KEY => $otherTenant->getKey(),
         ])->getJson('/api/v1/context');
 
@@ -46,17 +46,17 @@ final class ApiContextHttpTest extends TestCase
             ->assertJsonPath('data.tenant', null)
             ->assertJsonPath('data.user.id', $administrator->getKey());
 
-        $this->postJson('/api/v1/tenants/'.$tenant->getKey().'/enter')
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants/'.$tenant->getKey().'/enter')
             ->assertOk()
             ->assertJsonPath('data.id', $tenant->getKey());
 
-        $this->getJson('/api/v1/context')
+        $this->withHeaders($this->csrfHeaders())->getJson('/api/v1/context')
             ->assertOk()
             ->assertJsonPath('data.tenant.id', $tenant->getKey())
             ->assertJsonPath('data.user.id', $administrator->getKey());
 
-        $this->postJson('/api/v1/context/leave')->assertNoContent();
-        $this->getJson('/api/v1/context')->assertJsonPath('data.tenant', null);
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/context/leave')->assertNoContent();
+        $this->withHeaders($this->csrfHeaders())->getJson('/api/v1/context')->assertJsonPath('data.tenant', null);
     }
 
     public function test_leave_without_context_fails_closed_with_uniform_error(): void
@@ -64,7 +64,7 @@ final class ApiContextHttpTest extends TestCase
         $administrator = $this->administrator();
         $this->actingAs($administrator, 'web');
 
-        $response = $this->postJson('/api/v1/context/leave');
+        $response = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/context/leave');
 
         $response->assertStatus(403)
             ->assertJsonPath('error.code', 'TENANT_CONTEXT_REQUIRED')
