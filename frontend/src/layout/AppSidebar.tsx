@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
 
 import { useApplicationContext } from "../context/ApplicationContext";
@@ -48,21 +48,25 @@ const AppSidebar: React.FC = () => {
   const previousPathname = useRef<string | null>(null);
   const expanded = isExpanded || isHovered || isMobileOpen;
 
-  const visibleNavigation = applicationNavigation.reduce<
-    Array<ApplicationNavigationItem | ApplicationNavigationGroup>
-  >((entries, entry) => {
-    if (isNavigationGroup(entry)) {
-      const items = visibleItems(entry, hasAbility);
+  const visibleNavigation = useMemo(
+    () =>
+      applicationNavigation.reduce<
+        Array<ApplicationNavigationItem | ApplicationNavigationGroup>
+      >((entries, entry) => {
+        if (isNavigationGroup(entry)) {
+          const items = visibleItems(entry, hasAbility);
 
-      if (items.length > 0) {
-        entries.push({ ...entry, items });
-      }
-    } else if (hasAbility(entry.requiredAbility)) {
-      entries.push(entry);
-    }
+          if (items.length > 0) {
+            entries.push({ ...entry, items });
+          }
+        } else if (hasAbility(entry.requiredAbility)) {
+          entries.push(entry);
+        }
 
-    return entries;
-  }, []);
+        return entries;
+      }, []),
+    [hasAbility],
+  );
 
   const isGroupActive = useCallback(
     (group: ApplicationNavigationGroup) =>
@@ -103,10 +107,12 @@ const AppSidebar: React.FC = () => {
 
     const submenu = subMenuRefs.current[openSubmenu];
     if (submenu) {
-      setSubMenuHeights((heights) => ({
-        ...heights,
-        [openSubmenu]: submenu.scrollHeight,
-      }));
+      const nextHeight = submenu.scrollHeight;
+      setSubMenuHeights((heights) =>
+        heights[openSubmenu] === nextHeight
+          ? heights
+          : { ...heights, [openSubmenu]: nextHeight },
+      );
     }
   }, [expanded, openSubmenu, visibleNavigation]);
 
