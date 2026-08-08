@@ -1,0 +1,172 @@
+import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router";
+import {
+  ApiError,
+  type PaginationMeta,
+} from "../../api/client";
+import {
+  listExpenses,
+  type ExpenseListParams,
+  type ExpenseRegisterResponse,
+} from "../../api/expenses";
+import ComponentCard from "../../components/common/ComponentCard";
+import PageBreadcrumb from "../../components/common/PageBreadCrumb";
+import PageMeta from "../../components/common/PageMeta";
+import ExpenseFilters from "../../components/expenses/ExpenseFilters";
+import ExpensePagination from "../../components/expenses/ExpensePagination";
+import ExpenseRegisterTable from "../../components/expenses/ExpenseRegisterTable";
+import ExpenseTotals from "../../components/expenses/ExpenseTotals";
+import Alert from "../../components/ui/alert/Alert";
+import Button from "../../components/ui/button/Button";
+import { useApplicationContext } from "../../context/ApplicationContext";
+
+const defaultPerPage = 15;
+
+function readParams(searchParams: URLSearchParams): ExpenseListParams {
+  const numberParam = (name: string): number | undefined => {
+    const raw = searchParams.get(name);
+    if (!raw || !/^\d+$/.test(raw)) {
+      return undefined;
+    }
+    const value = Number(raw);
+    return value > 0 ? value : undefined;
+  };
+
+  const q = searchParams.get("q")?.trim() || undefined;
+  const kind = searchParams.get("kind") || undefined;
+
+  return {
+    planning_year_id: numberParam("planning_year_id"),
+    cost_center_id: numberParam("cost_center_id"),
+    q,
+    kind,
+    page: numberParam("page") ?? 1,
+    per_page: numberParam("per_page") ?? defaultPerPage,
+  };
+}
+
+function writeParams(
+  params: ExpenseListParams,
+  setSearchParams: (next: URLSearchParams) => void,
+) {
+  const next = new URLSearchParams();
+  if (params.planning_year_id) next.set("planning_year_id", String(params.planning_year_id));
+  if (params.cost_center_id) next.set("cost_center_id", String(params.cost_center_id));
+  if (params.q) next.set("q", params.q);
+  if (params.kind) next.set("kind", params.kind);
+  if (params.page && params.page > 1) next.set("page", String(params.page));
+  if (params.per_page && params.per_page !== defaultPerPage) next.set("per_page", String(params.per_page));
+  setSearchParams(next);
+}
+
+interface RegisterState {
+  tenantId: number;
+  response: ExpenseRegisterResponse | null;
+  error: ApiError | null;
+}
+
+export default function ExpenseRegister() {
+  const { data: applicationContext, loading: contextLoading, hasAbility } =
+    useApplicationContext();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [registerState, setRegisterState] = useState<RegisterState | null>(null);
+  const [loading, setLoading] = useState(false);
+
+  const tenantId = applicationContext?.tenant?.id ?? null;
+  const canView = hasAbility("expense.view");
+  const params = useMemo(() => readParams(searchParams), [searchParams]);
+  const requestKey = searchParams.toString();
+
+  useEffect(() => {
+    if (contextLoading || tenantId === null || !canView) {
+      return;
+    }
+
+    let active = true;
+    setLoading(true);
+    void listExpenses(params)
+      .then((response) => {
+        if (active) {
+          setRegisterState({ tenantId, response, error: null });
+        }
+      })
+      .catch((error: unknown) => {
+        if (active) {
+          setRegisterState({ tenantId, response: null, error: ApiError.from(error) });
+        }
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [canView, contextLoading, params, requestKey, tenantId]);
+
+  const currentState = registerState?.tenantId === tenantId ? registerState : null;
+  const response = currentState?.response;
+  const updateParams = (next: ExpenseListParams) => writeParams(next, setSearchParams);
+
+  let content;
+  if (contextLoading) {
+    content = <Alert variant="info" title="Caricamento contesto" message="Verifica del tenant e dell'abilitazione expense.view." />;
+  } else if (tenantId === null) {
+    content = <Alert variant="warning" title="Tenant richiesto" message="Seleziona un tenant dal menu dell'intestazione prima di aprire le spese." />;
+  } else if (!canView) {
+    content = <Alert variant="warning" title="Registro non disponibile" message="Il contesto corrente non concede l'abilitazione expense.view." />;
+  } else if (currentState?.error) {
+    content = (
+      <div className="space-y-3">
+        <Alert
+          variant="error"
+          title="Richiesta registro non riuscita"
+          message={`${currentState.error.message}${currentState.error.correlationId ? ` Correlation ID: ${currentState.error.correlationId}` : ""}`}
+        />
+        <Button variant="outline" onClick={() => updateParams(params)} disabled={loading}>
+          Riprova
+        </Button>
+      </div>
+    );
+  } else if (!response) {
+    content = <Alert variant="info" title="Caricamento registro" message="Richiesta delle spese correnti del tenant." />;
+  } else if (response.data.length === 0) {
+    content = <Alert variant="info" title="Nessuna spesa" message="Non ci sono spese correnti per i filtri selezionati." />;
+  } else {
+    content = (
+      <div className="overflow-hidden rounded-xl border border-gray-200 dark:border-white/[0.05]">
+        <ExpenseRegisterTable
+          expenses={response.data}
+          canEdit={hasAbility("expense.update")}
+          canDelete={hasAbility("expense.delete")}
+          disabled={loading}
+          onDeleted={() => updateParams(params)}
+        />
+        <ExpensePagination
+          meta={response.meta as PaginationMeta}
+          onPageChange={(page) => updateParams({ ...params, page })}
+          disabled={loading}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <>
+      <PageMeta title="Spese | Master Plan IT" description="Registro delle spese correnti del tenant" />
+      <PageBreadcrumb pageTitle="Spese" />
+      <div className="space-y-6">
+        <ComponentCard title="Registro spese" desc="Valori correnti restituiti dal servizio expense con filtri e paginazione server-side.">
+          <ExpenseFilters
+            value={params}
+            yearOptions={response?.year_options ?? []}
+            onChange={updateParams}
+            disabled={loading || contextLoading || tenantId === null || !canView}
+          />
+          {content}
+        </ComponentCard>
+        {response?.totals && <ExpenseTotals totals={response.totals} title="Totali del registro" />}
+      </div>
+    </>
+  );
+}
