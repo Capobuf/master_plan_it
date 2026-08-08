@@ -7,6 +7,7 @@ import Alert from "../../components/ui/alert/Alert";
 import DashboardView from "../../components/dashboard/DashboardView";
 import { useApplicationContext } from "../../context/ApplicationContext";
 import { usePlanningYear } from "../../context/PlanningYearContext";
+import PlanningYearSelector from "../../components/dashboard/PlanningYearSelector";
 
 interface DashboardState {
   tenantId: number;
@@ -116,6 +117,7 @@ export default function Home() {
         description="Decision dashboard for the selected planning year"
       />
       <PageBreadcrumb pageTitle="Dashboard" />
+      <PlanningYearSelector />
       {content}
     </>
   );

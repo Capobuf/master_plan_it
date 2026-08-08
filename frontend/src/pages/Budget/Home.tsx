@@ -8,6 +8,7 @@ import Alert from "../../components/ui/alert/Alert";
 import BudgetView from "../../components/budget/BudgetView";
 import { useApplicationContext } from "../../context/ApplicationContext";
 import { usePlanningYear } from "../../context/PlanningYearContext";
+import PlanningYearSelector from "../../components/dashboard/PlanningYearSelector";
 
 export default function BudgetHome() {
   const { data: applicationContext, loading: contextLoading, hasAbility } = useApplicationContext();
@@ -39,6 +40,7 @@ export default function BudgetHome() {
     <>
       <PageMeta title="Budget | Master Plan IT" description="Current rolling budget" />
       <PageBreadcrumb pageTitle="Budget" />
+      <PlanningYearSelector />
       {content}
     </>
   );

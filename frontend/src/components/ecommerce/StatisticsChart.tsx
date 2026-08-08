@@ -5,6 +5,8 @@ import flatpickr from "flatpickr";
 import ChartTab from "../common/ChartTab";
 import { CalenderIcon } from "../../icons";
 
+const defaultCategories = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
 interface StatisticsChartProps {
   title?: string;
   categories?: string[];
@@ -14,14 +16,15 @@ interface StatisticsChartProps {
 
 export default function StatisticsChart({
   title = "Statistics",
-  categories = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  categories = defaultCategories,
   values,
   currency = "EUR",
 }: StatisticsChartProps) {
+  const customData = values !== undefined || categories !== defaultCategories;
   const datePickerRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    if (!datePickerRef.current) return;
+    if (customData || !datePickerRef.current) return;
 
     const today = new Date();
     const sevenDaysAgo = new Date();
@@ -45,7 +48,7 @@ export default function StatisticsChart({
         fp.destroy();
       }
     };
-  }, []);
+  }, [customData]);
 
   const options: ApexOptions = {
     legend: {
@@ -155,10 +158,10 @@ export default function StatisticsChart({
             {title}
           </h3>
           <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
-            Target you've set for each month
+            {customData ? "Authoritative monthly position from the dashboard API." : "Target you've set for each month"}
           </p>
         </div>
-        <div className="flex items-center gap-3 sm:justify-end">
+        {!customData && <div className="flex items-center gap-3 sm:justify-end">
           <ChartTab />
           <div className="relative inline-flex items-center">
             <CalenderIcon className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 lg:left-3 lg:top-1/2 lg:translate-x-0 lg:-translate-y-1/2 size-5 text-gray-500 dark:text-gray-400 pointer-events-none z-10" />
@@ -168,7 +171,7 @@ export default function StatisticsChart({
               placeholder="Select date range"
             />
           </div>
-        </div>
+        </div>}
       </div>
 
       <div className="max-w-full overflow-x-auto custom-scrollbar">
