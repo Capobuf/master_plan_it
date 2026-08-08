@@ -6,6 +6,7 @@ import PageMeta from "../../components/common/PageMeta";
 import Alert from "../../components/ui/alert/Alert";
 import DashboardView from "../../components/dashboard/DashboardView";
 import { useApplicationContext } from "../../context/ApplicationContext";
+import { usePlanningYear } from "../../context/PlanningYearContext";
 
 interface DashboardState {
   tenantId: number;
@@ -16,6 +17,7 @@ interface DashboardState {
 export default function Home() {
   const { data: applicationContext, loading: contextLoading, hasAbility } =
     useApplicationContext();
+  const { selectedPlanningYearId, loading: planningYearLoading } = usePlanningYear();
   const [dashboardState, setDashboardState] = useState<DashboardState | null>(
     null,
   );
@@ -24,13 +26,13 @@ export default function Home() {
   const canViewDashboard = hasAbility("dashboard.view");
 
   useEffect(() => {
-    if (contextLoading || tenantId === null || !canViewDashboard) {
+    if (contextLoading || planningYearLoading || tenantId === null || selectedPlanningYearId === null || !canViewDashboard) {
       return;
     }
 
     let active = true;
 
-    void getDashboard()
+    void getDashboard({ planning_year_id: selectedPlanningYearId })
       .then((dashboard) => {
         if (active) {
           setDashboardState({ tenantId, data: dashboard, error: null });
@@ -49,14 +51,14 @@ export default function Home() {
     return () => {
       active = false;
     };
-  }, [canViewDashboard, contextLoading, tenantId]);
+  }, [canViewDashboard, contextLoading, planningYearLoading, selectedPlanningYearId, tenantId]);
 
   const currentDashboardState =
     dashboardState?.tenantId === tenantId ? dashboardState : null;
 
   let content;
 
-  if (contextLoading) {
+  if (contextLoading || planningYearLoading) {
     content = (
       <Alert
         variant="info"

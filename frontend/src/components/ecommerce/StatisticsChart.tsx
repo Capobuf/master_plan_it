@@ -5,7 +5,19 @@ import flatpickr from "flatpickr";
 import ChartTab from "../common/ChartTab";
 import { CalenderIcon } from "../../icons";
 
-export default function StatisticsChart() {
+interface StatisticsChartProps {
+  title?: string;
+  categories?: string[];
+  values?: number[];
+  currency?: string;
+}
+
+export default function StatisticsChart({
+  title = "Statistics",
+  categories = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+  values,
+  currency = "EUR",
+}: StatisticsChartProps) {
   const datePickerRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -90,23 +102,18 @@ export default function StatisticsChart() {
       x: {
         format: "dd MMM yyyy", // Format for x-axis tooltip
       },
+      y: {
+        formatter: (value: number) => new Intl.NumberFormat(undefined, {
+          style: "currency",
+          currency,
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        }).format(value),
+      },
     },
     xaxis: {
       type: "category", // Category-based x-axis
-      categories: [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-      ],
+      categories,
       axisBorder: {
         show: false, // Hide x-axis border
       },
@@ -117,7 +124,7 @@ export default function StatisticsChart() {
         enabled: false, // Disable tooltip for x-axis points
       },
     },
-    yaxis: {
+      yaxis: {
       labels: {
         style: {
           fontSize: "12px", // Adjust font size for y-axis labels
@@ -133,22 +140,19 @@ export default function StatisticsChart() {
     },
   };
 
-  const series = [
-    {
-      name: "Sales",
-      data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235],
-    },
-    {
-      name: "Revenue",
-      data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140],
-    },
-  ];
+  const series = values
+    ? [{ name: title, data: values }]
+    : [
+        { name: "Sales", data: [180, 190, 170, 160, 175, 165, 170, 205, 230, 210, 240, 235] },
+        { name: "Revenue", data: [40, 30, 50, 40, 55, 40, 70, 100, 110, 120, 150, 140] },
+      ];
+
   return (
     <div className="rounded-2xl border border-gray-200 bg-white px-5 pb-5 pt-5 dark:border-gray-800 dark:bg-white/[0.03] sm:px-6 sm:pt-6">
       <div className="flex flex-col gap-5 mb-6 sm:flex-row sm:justify-between">
-        <div className="w-full">
+      <div className="w-full">
           <h3 className="text-lg font-semibold text-gray-800 dark:text-white/90">
-            Statistics
+            {title}
           </h3>
           <p className="mt-1 text-gray-500 text-theme-sm dark:text-gray-400">
             Target you've set for each month

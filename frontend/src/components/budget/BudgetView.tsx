@@ -1,5 +1,7 @@
 import type { ReportingDataset } from "../../api/dashboard";
 import Badge from "../ui/badge/Badge";
+import ComponentCard from "../common/ComponentCard";
+import EcommerceMetrics from "../ecommerce/EcommerceMetrics";
 import {
   Table,
   TableBody,
@@ -15,28 +17,8 @@ const money = (value: string, currency: string): string => {
     : value;
 };
 
-function Panel({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-      <h3 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">{title}</h3>
-      {children}
-    </section>
-  );
-}
-
 function EmptyState() {
   return <p className="py-5 text-sm text-gray-500 dark:text-gray-400">No data for this planning year.</p>;
-}
-
-function ValueCard({ label, value, currency, warning = false }: { label: string; value: string; currency: string; warning?: boolean }) {
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-      <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
-      <p className={`mt-2 text-title-sm font-bold ${warning ? "text-warning-600 dark:text-warning-500" : "text-gray-800 dark:text-white/90"}`}>
-        {money(value, currency)}
-      </p>
-    </div>
-  );
 }
 
 export default function BudgetView({ dataset }: { dataset: ReportingDataset }) {
@@ -52,14 +34,14 @@ export default function BudgetView({ dataset }: { dataset: ReportingDataset }) {
           No economic data is available for the selected planning year yet.
         </div>
       )}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <ValueCard label="Current budget" value={amounts.official_current_position ?? "0.00"} currency={currency} />
-        <ValueCard label="Confirmed actual" value={amounts.actual_confirmed ?? "0.00"} currency={currency} />
-        <ValueCard label="Net" value={amounts.net ?? "0.00"} currency={currency} />
-        <ValueCard label="Gross" value={amounts.gross ?? "0.00"} currency={currency} />
-      </div>
+      <EcommerceMetrics metrics={[
+        { label: "Current budget", value: money(amounts.official_current_position ?? "0.00", currency) },
+        { label: "Confirmed actual", value: money(amounts.actual_confirmed ?? "0.00", currency) },
+        { label: "Net", value: money(amounts.net ?? "0.00", currency) },
+        { label: "Gross", value: money(amounts.gross ?? "0.00", currency) },
+      ]} />
       <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-        <Panel title="Estimate / Quote / Actual composition">
+        <ComponentCard title="Estimate / Quote / Actual composition">
           {composition.length === 0 ? <EmptyState /> : (
             <div className="space-y-3">
               {composition.map(([type, value]) => (
@@ -70,8 +52,8 @@ export default function BudgetView({ dataset }: { dataset: ReportingDataset }) {
               ))}
             </div>
           )}
-        </Panel>
-        <Panel title="Breakdown">
+        </ComponentCard>
+        <ComponentCard title="Breakdown">
           <div className="max-w-full overflow-x-auto">
             <Table>
               <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
@@ -84,9 +66,9 @@ export default function BudgetView({ dataset }: { dataset: ReportingDataset }) {
               </TableBody>
             </Table>
           </div>
-        </Panel>
+        </ComponentCard>
       </div>
-      <Panel title="Top cost centers">
+      <ComponentCard title="Top cost centers">
         {costCenters.length === 0 ? <EmptyState /> : (
           <div className="max-w-full overflow-x-auto">
             <Table>
@@ -107,7 +89,7 @@ export default function BudgetView({ dataset }: { dataset: ReportingDataset }) {
             </Table>
           </div>
         )}
-      </Panel>
+      </ComponentCard>
       <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 dark:border-gray-800 dark:bg-gray-800/50">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>

@@ -9,6 +9,10 @@ import {
   TableRow,
 } from "../ui/table";
 import Badge from "../ui/badge/Badge";
+import InputField from "../form/input/InputField";
+import Label from "../form/Label";
+import Select from "../form/Select";
+import Button from "../ui/button/Button";
 
 const money = (value: string, currency: string): string => {
   const numeric = Number(value);
@@ -46,37 +50,34 @@ function ReportsPagination({ meta, onPage }: { meta: ReportsResponse["meta"]; on
     <nav className="flex flex-wrap items-center justify-between gap-3 border-t border-gray-100 pt-4 dark:border-gray-800" aria-label="Reports pagination">
       <p className="text-sm text-gray-500 dark:text-gray-400">Page {meta.current_page} of {meta.last_page} · {meta.total} lines</p>
       <div className="flex items-center gap-1">
-        <button type="button" onClick={() => onPage(meta.current_page - 1)} disabled={meta.current_page <= 1} className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-300">Previous</button>
+        <Button onClick={() => onPage(meta.current_page - 1)} disabled={meta.current_page <= 1} size="sm" variant="outline">Previous</Button>
         {pages.map((page) => (
-          <button key={page} type="button" onClick={() => onPage(page)} aria-current={page === meta.current_page ? "page" : undefined} className={`rounded-lg px-3 py-2 text-sm ${page === meta.current_page ? "bg-brand-500 text-white" : "border border-gray-200 text-gray-600 dark:border-gray-700 dark:text-gray-300"}`}>{page}</button>
+          <Button key={page} onClick={() => onPage(page)} disabled={page === meta.current_page} size="sm" variant={page === meta.current_page ? "primary" : "outline"}>{page}</Button>
         ))}
-        <button type="button" onClick={() => onPage(meta.current_page + 1)} disabled={meta.current_page >= meta.last_page} className="rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-600 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:text-gray-300">Next</button>
+        <Button onClick={() => onPage(meta.current_page + 1)} disabled={meta.current_page >= meta.last_page} size="sm" variant="outline">Next</Button>
       </div>
     </nav>
   );
 }
 
-export default function ReportsView({ tenantId, canView }: { tenantId: number | null; canView: boolean }) {
-  const [year, setYear] = useState(String(new Date().getFullYear()));
+export default function ReportsView({ tenantId, planningYearId, canView }: { tenantId: number | null; planningYearId: number | null; canView: boolean }) {
   const [costCenter, setCostCenter] = useState("");
-  const [query, setQuery] = useState<ReportsQuery>({ year: new Date().getFullYear(), page: 1, per_page: 15 });
+  const [query, setQuery] = useState<ReportsQuery>({ page: 1, per_page: 15 });
   const [state, setState] = useState<{ tenantId: number; response: ReportsResponse | null; error: ApiError | null } | null>(null);
 
   useEffect(() => {
-    if (tenantId === null || !canView || query.year === undefined) return;
+    if (tenantId === null || planningYearId === null || !canView) return;
     let active = true;
-    void getReports(query)
+    void getReports({ ...query, planning_year_id: planningYearId })
       .then((response) => active && setState({ tenantId, response, error: null }))
       .catch((error: unknown) => active && setState({ tenantId, response: null, error: ApiError.from(error) }));
     return () => { active = false; };
-  }, [canView, query, tenantId]);
+  }, [canView, planningYearId, query, tenantId]);
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const next: ReportsQuery = { page: 1, per_page: query.per_page };
-    const numericYear = Number(year);
     const numericCostCenter = Number(costCenter);
-    if (Number.isInteger(numericYear) && numericYear > 0) next.year = numericYear;
     if (costCenter !== "" && Number.isInteger(numericCostCenter) && numericCostCenter > 0) next.cost_center_id = numericCostCenter;
     setQuery(next);
   };
@@ -88,18 +89,9 @@ export default function ReportsView({ tenantId, canView }: { tenantId: number | 
     <div className="space-y-6">
       <form onSubmit={submit} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
         <div className="flex flex-col gap-4 md:flex-row md:items-end">
-          <label className="flex-1 text-sm text-gray-600 dark:text-gray-300">Planning year
-            <input type="number" min="1" value={year} onChange={(event) => setYear(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" />
-          </label>
-          <label className="flex-1 text-sm text-gray-600 dark:text-gray-300">Cost center ID (optional)
-            <input type="number" min="1" value={costCenter} onChange={(event) => setCostCenter(event.target.value)} className="mt-2 h-11 w-full rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" />
-          </label>
-          <label className="text-sm text-gray-600 dark:text-gray-300">Rows
-            <select value={query.per_page ?? 15} onChange={(event) => setQuery((current) => ({ ...current, page: 1, per_page: Number(event.target.value) }))} className="mt-2 h-11 rounded-lg border border-gray-300 bg-white px-3 text-sm text-gray-800 outline-none focus:border-brand-500 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90">
-              {[15, 25, 50, 100].map((size) => <option key={size} value={size}>{size}</option>)}
-            </select>
-          </label>
-          <button type="submit" className="h-11 rounded-lg bg-brand-500 px-5 text-sm font-medium text-white hover:bg-brand-600">Apply filters</button>
+          <div className="flex-1"><Label htmlFor="report-cost-center">Cost center ID (optional)</Label><InputField id="report-cost-center" type="number" min="1" value={costCenter} onChange={(event) => setCostCenter(event.target.value)} /></div>
+          <div className="w-full md:w-28"><Label htmlFor="report-page-size">Rows</Label><Select options={[15, 25, 50, 100].map((size) => ({ value: String(size), label: String(size) }))} defaultValue={String(query.per_page ?? 15)} onChange={(value) => setQuery((current) => ({ ...current, page: 1, per_page: Number(value) }))} /></div>
+          <Button>Apply filters</Button>
         </div>
         <p className="mt-3 text-xs text-gray-500 dark:text-gray-400">Filters use the documented year, cost_center_id, page, and per_page parameters.</p>
       </form>

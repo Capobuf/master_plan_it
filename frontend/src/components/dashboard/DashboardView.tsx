@@ -1,14 +1,9 @@
-import Chart from "react-apexcharts";
-import type { ApexOptions } from "apexcharts";
 import type { DashboardListItem, ReportingDataset } from "../../api/dashboard";
 import Badge from "../ui/badge/Badge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "../ui/table";
+import ComponentCard from "../common/ComponentCard";
+import EcommerceMetrics from "../ecommerce/EcommerceMetrics";
+import StatisticsChart from "../ecommerce/StatisticsChart";
+import RecentOrders, { type RecentOrderItem } from "../ecommerce/RecentOrders";
 
 const amount = (dataset: ReportingDataset, key: string): string =>
   dataset.summary?.amounts?.[key] ?? "0.00";
@@ -28,84 +23,23 @@ function EmptyState({ message = "No data for this view." }: { message?: string }
   return <p className="py-6 text-sm text-gray-500 dark:text-gray-400">{message}</p>;
 }
 
-function Panel({
-  title,
-  children,
-  className = "",
-}: {
-  title: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <section
-      className={`rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03] ${className}`}
-    >
-      <h3 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">
-        {title}
-      </h3>
-      {children}
-    </section>
-  );
-}
-
-function SummaryCard({
-  label,
-  value,
-  currency,
-  tone = "default",
-}: {
-  label: string;
-  value: string;
-  currency: string;
-  tone?: "default" | "warning";
-}) {
-  return (
-    <div className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-      <p className="text-sm text-gray-500 dark:text-gray-400">{label}</p>
-      <p
-        className={`mt-2 text-title-sm font-bold ${tone === "warning" ? "text-warning-600 dark:text-warning-500" : "text-gray-800 dark:text-white/90"}`}
-      >
-        {money(value, currency)}
-      </p>
-    </div>
-  );
-}
-
 function MonthlyTrend({ dataset }: { dataset: ReportingDataset }) {
   const months = Object.entries(dataset.monthly ?? {});
-  if (months.length === 0) return <Panel title="Monthly trend"><EmptyState /></Panel>;
-
-  const options: ApexOptions = {
-    chart: { toolbar: { show: false }, fontFamily: "Outfit, sans-serif" },
-    colors: ["#465FFF"],
-    dataLabels: { enabled: false },
-    stroke: { curve: "smooth", width: 2 },
-    xaxis: { categories: months.map(([key]) => key.slice(5)) },
-    yaxis: { labels: { formatter: (value) => money(String(value), dataset.summary?.currency ?? "EUR") } },
-    tooltip: { y: { formatter: (value) => money(String(value), dataset.summary?.currency ?? "EUR") } },
-    grid: { yaxis: { lines: { show: true } } },
-  };
+  if (months.length === 0) return <ComponentCard title="Monthly trend"><EmptyState /></ComponentCard>;
 
   return (
-    <Panel title="Monthly trend">
-      <div className="max-w-full overflow-x-auto">
-        <div className="min-w-[650px]">
-          <Chart
-            options={options}
-            series={[{ name: "Official position", data: months.map(([, value]) => Number(value)) }]}
-            type="area"
-            height={280}
-          />
-        </div>
-      </div>
-    </Panel>
+    <StatisticsChart
+      title="Monthly trend"
+      categories={months.map(([key]) => key.slice(5))}
+      values={months.map(([, value]) => Number(value))}
+      currency={dataset.summary?.currency ?? "EUR"}
+    />
   );
 }
 
 function ListPanel({ title, items, emptyMessage }: { title: string; items: DashboardListItem[]; emptyMessage: string }) {
   return (
-    <Panel title={title}>
+    <ComponentCard title={title}>
       {items.length === 0 ? (
         <EmptyState message={emptyMessage} />
       ) : (
@@ -122,7 +56,7 @@ function ListPanel({ title, items, emptyMessage }: { title: string; items: Dashb
           ))}
         </ul>
       )}
-    </Panel>
+    </ComponentCard>
   );
 }
 
@@ -132,7 +66,7 @@ function CostCenters({ dataset }: { dataset: ReportingDataset }) {
     .sort(([, left], [, right]) => Number(right) - Number(left))
     .slice(0, 8);
   return (
-    <Panel title="Top cost centers">
+    <ComponentCard title="Top cost centers">
       {rows.length === 0 ? <EmptyState /> : (
         <ul className="space-y-3">
           {rows.map(([name, value]) => (
@@ -143,35 +77,15 @@ function CostCenters({ dataset }: { dataset: ReportingDataset }) {
           ))}
         </ul>
       )}
-    </Panel>
+    </ComponentCard>
   );
 }
 
 function RecentExpenses({ items }: { items: DashboardListItem[] }) {
-  return (
-    <Panel title="Recent expenses">
-      {items.length === 0 ? <EmptyState message="No recent expenses." /> : (
-        <div className="max-w-full overflow-x-auto">
-          <Table>
-            <TableHeader className="border-y border-gray-100 dark:border-gray-800">
-              <TableRow>
-                <TableCell isHeader className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">Expense</TableCell>
-                <TableCell isHeader className="py-3 text-end text-theme-xs font-medium text-gray-500 dark:text-gray-400">Updated</TableCell>
-              </TableRow>
-            </TableHeader>
-            <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">
-              {items.map((item) => (
-                <TableRow key={`${item.id}-${item.date}`}>
-                  <TableCell className="py-3 text-sm text-gray-800 dark:text-white/90">{item.label}</TableCell>
-                  <TableCell className="py-3 text-end text-sm text-gray-500 dark:text-gray-400">{item.date ?? "—"}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      )}
-    </Panel>
-  );
+  const recentItems: RecentOrderItem[] = items.map((item) => ({ id: item.id, label: item.label, date: item.date }));
+  return items.length === 0
+    ? <ComponentCard title="Recent expenses"><EmptyState message="No recent expenses." /></ComponentCard>
+    : <RecentOrders title="Recent expenses" items={recentItems} />;
 }
 
 export default function DashboardView({ dataset }: { dataset: ReportingDataset }) {
@@ -186,12 +100,11 @@ export default function DashboardView({ dataset }: { dataset: ReportingDataset }
           No economic data is available for the selected planning year yet.
         </div>
       )}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <SummaryCard label="Current budget" value={amount(dataset, "official_current_position")} currency={currency} />
-        <SummaryCard label="Confirmed actual" value={amount(dataset, "actual_confirmed")} currency={currency} />
-        <SummaryCard label="Actuals to confirm" value={amount(dataset, "actual_to_confirm")} currency={currency} tone="warning" />
-        <SummaryCard label="Plafond residual" value={amount(dataset, "plafond_residual")} currency={currency} />
-      </div>
+      <EcommerceMetrics metrics={[
+        { label: "Current budget", value: money(amount(dataset, "official_current_position"), currency) },
+        { label: "Confirmed actual", value: money(amount(dataset, "actual_confirmed"), currency) },
+        { label: "Actuals to confirm", value: money(amount(dataset, "actual_to_confirm"), currency), tone: "warning", badge: "Review" },
+      ]} />
       {Number(overrun) > 0 && (
         <div className="rounded-xl border border-warning-200 bg-warning-50 px-4 py-3 text-sm text-warning-700 dark:border-warning-500/30 dark:bg-warning-500/10 dark:text-warning-400">
           The API reports a Plafond overrun of {money(overrun, currency)}. Review the source expenses.
