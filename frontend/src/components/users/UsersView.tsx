@@ -54,7 +54,7 @@ export default function UsersView({ canManage }: { canManage: boolean }) {
         <div><Label htmlFor="user-name">Name</Label><InputField id="user-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
         <div><Label htmlFor="user-email">Email</Label><InputField id="user-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
         {!selected && <div><Label htmlFor="user-password">Password</Label><InputField id="user-password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>}
-        <div><Label>Role {selected ? "(optional reassignment)" : ""}</Label><Select key={`user-role-${selected?.id ?? "new"}`} options={[...(selected ? [{ value: "", label: "Keep current assignment" }] : []), ...roles.map((role) => ({ value: String(role.id), label: role.name }))]} defaultValue={form.role} onChange={(value) => setForm({ ...form, role: value })} /></div>
+        <div><Label>Role {selected ? "(optional reassignment)" : ""}</Label><Select key={`user-role-${selected?.id ?? "new"}`} options={roles.map((role) => ({ value: String(role.id), label: role.name }))} placeholder={selected ? "Keep current role assignment" : "Select a role"} defaultValue={form.role} onChange={(value) => setForm({ ...form, role: value })} /></div>
         <div className="flex gap-2 md:col-span-4"><Button type="submit" disabled={!selected && !form.role}>{selected ? "Save user" : "Create user"}</Button>{selected && <Button type="button" variant="outline" onClick={() => begin(null)}>Cancel</Button>}</div>
       </form>
     </ComponentCard>}
