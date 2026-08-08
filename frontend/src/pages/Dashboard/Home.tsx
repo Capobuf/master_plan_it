@@ -1,10 +1,10 @@
 import { useEffect, useState } from "react";
 import { getDashboard, type ReportingDataset } from "../../api/dashboard";
 import { ApiError } from "../../api/client";
-import ComponentCard from "../../components/common/ComponentCard";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import Alert from "../../components/ui/alert/Alert";
+import DashboardView from "../../components/dashboard/DashboardView";
 import { useApplicationContext } from "../../context/ApplicationContext";
 
 interface DashboardState {
@@ -104,36 +104,17 @@ export default function Home() {
     );
   } else {
     const dashboard = currentDashboardState.data;
-    const year = dashboard?.scope?.year ?? "not provided";
-    const currency = dashboard?.scope?.currency ?? "not provided";
-    const selectedYearId = dashboard?.selected_year_id ?? "not provided";
-    const hasEconomicData =
-      dashboard?.has_economic_data === undefined
-        ? "not provided"
-        : String(dashboard.has_economic_data);
-
-    content = (
-      <Alert
-        variant="success"
-        title="Dashboard API connected"
-        message={`Year: ${year}. Currency: ${currency}. Selected year ID: ${selectedYearId}. Economic data present: ${hasEconomicData}.`}
-      />
-    );
+    content = dashboard ? <DashboardView dataset={dashboard} /> : null;
   }
 
   return (
     <>
       <PageMeta
         title="Dashboard | Master Plan IT"
-        description="Protected Master Plan IT dashboard API connectivity surface"
+        description="Decision dashboard for the selected planning year"
       />
       <PageBreadcrumb pageTitle="Dashboard" />
-      <ComponentCard
-        title="Dashboard connectivity"
-        desc="Live data from the protected dashboard API for the current tenant."
-      >
-        {content}
-      </ComponentCard>
+      {content}
     </>
   );
 }

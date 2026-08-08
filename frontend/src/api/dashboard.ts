@@ -24,7 +24,22 @@ export interface ReportingDataset {
   has_economic_data?: boolean;
   year_options?: Record<string, unknown>[];
   selected_year_id?: number | null;
-  ancillary?: Record<string, Record<string, unknown>[]>;
+  ancillary?: DashboardAncillary;
+}
+
+export interface DashboardListItem {
+  id: number;
+  label: string;
+  date?: string;
+  state?: string;
+  event_type?: string;
+}
+
+export interface DashboardAncillary {
+  recentExpenses?: DashboardListItem[];
+  generatedExpensesToConfirm?: DashboardListItem[];
+  activeContracts?: DashboardListItem[];
+  upcomingContractEvents?: DashboardListItem[];
 }
 
 export interface DashboardQuery {
