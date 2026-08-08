@@ -89,6 +89,54 @@ export interface ExpenseDetail {
   totals: ExpenseMoney;
 }
 
+export interface ExpenseRowInput {
+  id?: number;
+  position: number;
+  vendor_id?: number;
+  type: string;
+  description: string;
+  quantity?: string;
+  unit_price?: string;
+  entered_amount: string;
+  amount_includes_vat: boolean;
+  vat_rate?: string;
+  is_extra: boolean;
+  funded_plafond_expense_id?: number;
+  spend_date?: string;
+  period_start?: string;
+  period_end?: string;
+  distribution?: string;
+  external_reference?: string;
+  lock_version?: number;
+}
+
+export interface ExpenseWrite {
+  planning_year_id: number;
+  cost_center_id: number;
+  kind: string;
+  title: string;
+  notes?: string;
+  contract_id?: number;
+  rows: ExpenseRowInput[];
+}
+
+export interface ExpenseUpdate extends ExpenseWrite {
+  lock_version: number;
+  deleted_rows?: Array<{ id: number; lock_version: number }>;
+}
+
+export interface ExpenseLookupOption {
+  id: number;
+  name: string;
+  active?: boolean;
+}
+
+export interface ExpenseContractOption {
+  id: number;
+  title: string;
+  active?: boolean;
+}
+
 export interface DeleteExpenseRequest {
   lock_version: number;
   deletion_reason?: string;
@@ -118,6 +166,81 @@ export async function listExpenses(
 export async function getExpense(expenseId: number): Promise<ExpenseDetail> {
   const response = await apiClient.get<DataEnvelope<ExpenseDetail>>(
     `/api/v1/expenses/${expenseId}`,
+  );
+
+  return response.data.data;
+}
+
+export async function listExpenseVendors(): Promise<ExpenseLookupOption[]> {
+  const response = await apiClient.get<PaginatedData<ExpenseLookupOption>>(
+    "/api/v1/vendors",
+    { params: { status: "active", page: 1, per_page: 100 } },
+  );
+
+  return response.data.data;
+}
+
+interface ExpenseCostCenterOption extends ExpenseLookupOption {
+  children?: ExpenseCostCenterOption[];
+}
+
+function flattenCostCenters(
+  options: ExpenseCostCenterOption[],
+): ExpenseLookupOption[] {
+  return options.flatMap((option) => [
+    { id: option.id, name: option.name, active: option.active },
+    ...flattenCostCenters(option.children ?? []),
+  ]);
+}
+
+export async function listExpenseCostCenters(): Promise<ExpenseLookupOption[]> {
+  const response = await apiClient.get<PaginatedData<ExpenseCostCenterOption>>(
+    "/api/v1/cost-centers/tree",
+    { params: { active: "1" } },
+  );
+
+  return flattenCostCenters(response.data.data);
+}
+
+export async function listExpensePlanningYears(): Promise<ExpenseYearOption[]> {
+  const response = await apiClient.get<PaginatedData<{
+    id: number;
+    year_label: number;
+    active: boolean;
+  }>>("/api/v1/planning-years", { params: { page: 1, per_page: 100 } });
+
+  return response.data.data.map((year) => ({
+    id: year.id,
+    label: year.year_label,
+    active: year.active,
+  }));
+}
+
+export async function listExpenseContracts(): Promise<ExpenseContractOption[]> {
+  const response = await apiClient.get<PaginatedData<ExpenseContractOption>>(
+    "/api/v1/contracts",
+    { params: { page: 1, per_page: 100 } },
+  );
+
+  return response.data.data;
+}
+
+export async function createExpense(input: ExpenseWrite): Promise<ExpenseDetail> {
+  const response = await apiClient.post<DataEnvelope<ExpenseDetail>>(
+    "/api/v1/expenses",
+    input,
+  );
+
+  return response.data.data;
+}
+
+export async function updateExpense(
+  expenseId: number,
+  input: ExpenseUpdate,
+): Promise<ExpenseDetail> {
+  const response = await apiClient.put<DataEnvelope<ExpenseDetail>>(
+    `/api/v1/expenses/${expenseId}`,
+    input,
   );
 
   return response.data.data;
