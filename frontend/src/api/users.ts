@@ -1,5 +1,5 @@
 import { apiClient, type DataEnvelope, type PaginatedData, type PaginationParams } from "./client";
-export interface TenantUser { id: number; name: string; email: string; active: boolean; lock_version: number; roles: { id: number; name: string }[]; role_ids: number[]; }
+export interface TenantUser { id: number; name: string; email: string; active: boolean; tenant_id?: number | null; }
 export interface UserInput { name: string; email: string; }
 export interface UserCreate extends UserInput { password: string; roles: number[]; }
 export interface UserListParams extends PaginationParams { q?: string; }

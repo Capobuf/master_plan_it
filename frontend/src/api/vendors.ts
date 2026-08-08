@@ -9,5 +9,6 @@ export async function createVendor(input: VendorInput): Promise<Vendor> { return
 export async function updateVendor(id: number, input: VendorInput & { lock_version: number }): Promise<Vendor> { return (await apiClient.put<DataEnvelope<Vendor>>(`/api/v1/vendors/${id}`, input)).data.data; }
 export async function deactivateVendor(id: number, lock_version: number): Promise<Vendor> { return (await apiClient.post<DataEnvelope<Vendor>>(`/api/v1/vendors/${id}/deactivate`, { lock_version })).data.data; }
 export async function reactivateVendor(id: number, lock_version: number): Promise<Vendor> { return (await apiClient.post<DataEnvelope<Vendor>>(`/api/v1/vendors/${id}/reactivate`, { lock_version })).data.data; }
+export async function deleteVendor(id: number, lock_version: number): Promise<void> { await apiClient.delete(`/api/v1/vendors/${id}`, { data: { lock_version } }); }
 export async function listVendorHistory(id: number, params: PaginationParams = {}): Promise<PaginatedData<Revision>> { return (await apiClient.get<PaginatedData<Revision>>(`/api/v1/vendors/${id}/history`, { params })).data; }
 export async function restoreVendor(id: number, version: number, lock_version: number): Promise<Vendor> { return (await apiClient.post<DataEnvelope<Vendor>>(`/api/v1/vendors/${id}/history/${version}/restore`, { lock_version })).data.data; }
