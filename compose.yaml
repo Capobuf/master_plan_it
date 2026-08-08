@@ -31,7 +31,7 @@ services:
     working_dir: /var/www/html/frontend
     command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
     ports:
-      - '127.0.0.1:${FRONTEND_PORT:-5173}:5173'
+      - '0.0.0.0:${FRONTEND_PORT:-5173}:5173'
     environment:
       VITE_INTERNAL_API_PROXY_TARGET: '${VITE_INTERNAL_API_PROXY_TARGET:-http://laravel.test}'
     volumes:
