@@ -174,7 +174,7 @@ export async function getExpense(expenseId: number): Promise<ExpenseDetail> {
 export async function listExpenseVendors(): Promise<ExpenseLookupOption[]> {
   const response = await apiClient.get<PaginatedData<ExpenseLookupOption>>(
     "/api/v1/vendors",
-    { params: { status: "active", page: 1, per_page: 100 } },
+    { params: { active: true, page: 1, per_page: 100 } },
   );
 
   return response.data.data;
@@ -196,7 +196,7 @@ function flattenCostCenters(
 export async function listExpenseCostCenters(): Promise<ExpenseLookupOption[]> {
   const response = await apiClient.get<PaginatedData<ExpenseCostCenterOption>>(
     "/api/v1/cost-centers/tree",
-    { params: { active: "1" } },
+    { params: { active: true } },
   );
 
   return flattenCostCenters(response.data.data);
