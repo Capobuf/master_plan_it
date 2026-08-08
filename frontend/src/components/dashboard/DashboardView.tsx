@@ -44,8 +44,8 @@ function ListPanel({ title, items, emptyMessage }: { title: string; items: Dashb
         <EmptyState message={emptyMessage} />
       ) : (
         <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-          {items.map((item) => (
-            <li key={`${item.id}-${item.date ?? item.state ?? "item"}`} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+          {items.map((item, index) => (
+            <li key={`${item.id}-${item.label}-${item.date ?? item.state ?? "item"}-${index}`} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
               <div className="min-w-0">
                 <p className="truncate text-sm font-medium text-gray-800 dark:text-white/90">{item.label}</p>
                 {item.date && <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{item.date}</p>}
