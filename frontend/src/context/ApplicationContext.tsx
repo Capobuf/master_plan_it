@@ -12,6 +12,7 @@ import {
   type ApplicationContextData,
 } from "../api/context";
 import { useAuth } from "./AuthContext";
+import { PlanningYearProvider } from "./PlanningYearContext";
 
 interface ApplicationContextValue {
   data: ApplicationContextData | null;
@@ -94,7 +95,12 @@ export function ApplicationProvider({ children }: { children: ReactNode }) {
 
   return (
     <ApplicationContext.Provider value={value}>
-      {children}
+      <PlanningYearProvider
+        tenantId={data?.tenant?.id ?? null}
+        canRead={hasAbility("planning-year.view")}
+      >
+        {children}
+      </PlanningYearProvider>
     </ApplicationContext.Provider>
   );
 }

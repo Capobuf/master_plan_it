@@ -54,7 +54,13 @@ export default function TenantDropdown() {
     return (
       <div className="flex h-11 items-center gap-2 rounded-lg border border-gray-200 px-3 text-sm font-medium text-gray-700 dark:border-gray-800 dark:text-gray-400">
         <CheckCircleIcon className="h-5 w-5 fill-gray-500 dark:fill-gray-400" />
-        <span>{contextLoading ? "Loading tenant..." : currentTenant?.name ?? "No tenant"}</span>
+        <span>
+          {contextLoading
+            ? "Loading tenant..."
+            : currentTenant
+              ? `${currentTenant.name} (${currentTenant.state})`
+              : "No tenant"}
+        </span>
       </div>
     );
   }
@@ -136,6 +142,11 @@ export default function TenantDropdown() {
       >
         <CheckCircleIcon className="h-5 w-5 fill-gray-500 dark:fill-gray-400" />
         <span>{currentTenant?.name ?? "Platform administration"}</span>
+        {currentTenant ? (
+          <span className="text-theme-xs text-gray-500 dark:text-gray-400">
+            {currentTenant.state}
+          </span>
+        ) : null}
         <ChevronDownIcon
           className={`stroke-gray-500 transition-transform duration-200 dark:stroke-gray-400 ${
             isOpen ? "rotate-180" : ""
