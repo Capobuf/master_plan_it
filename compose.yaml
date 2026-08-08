@@ -26,6 +26,22 @@ services:
       mysql:
         condition: service_healthy
 
+  frontend:
+    image: node:22-alpine
+    working_dir: /var/www/html/frontend
+    command: sh -c "npm ci && npm run dev -- --host 0.0.0.0"
+    ports:
+      - '127.0.0.1:${FRONTEND_PORT:-5173}:5173'
+    environment:
+      VITE_INTERNAL_API_PROXY_TARGET: '${VITE_INTERNAL_API_PROXY_TARGET:-http://laravel.test}'
+    volumes:
+      - '.:/var/www/html'
+      - 'frontend-node-modules:/var/www/html/frontend/node_modules'
+    networks:
+      - sail
+    depends_on:
+      - laravel.test
+
   mysql:
     image: mysql:8.4.10
     environment:
@@ -53,4 +69,6 @@ networks:
 
 volumes:
   sail-mysql:
+    driver: local
+  frontend-node-modules:
     driver: local
