@@ -1,6 +1,12 @@
 import { useState } from "react";
 import { ApiError } from "../../api/client";
-import { deleteExpense } from "../../api/expenses";
+import {
+  deleteExpense,
+  deleteGeneratedExpense,
+} from "../../api/expenses";
+import Checkbox from "../form/input/Checkbox";
+import InputField from "../form/input/InputField";
+import Label from "../form/Label";
 import Button from "../ui/button/Button";
 import { Modal } from "../ui/modal";
 
@@ -8,6 +14,7 @@ interface ExpenseActionModalProps {
   expenseId: number;
   lockVersion: number;
   generated: boolean;
+  contractId: number | null;
   isOpen: boolean;
   onClose: () => void;
   onDeleted: () => void;
@@ -17,11 +24,13 @@ export default function ExpenseActionModal({
   expenseId,
   lockVersion,
   generated,
+  contractId,
   isOpen,
   onClose,
   onDeleted,
 }: ExpenseActionModalProps) {
   const [allowRegeneration, setAllowRegeneration] = useState(false);
+  const [deletionReason, setDeletionReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
 
@@ -30,10 +39,19 @@ export default function ExpenseActionModal({
     setError(null);
 
     try {
-      await deleteExpense(expenseId, {
-        lock_version: lockVersion,
-        ...(generated ? { allow_regeneration: allowRegeneration } : {}),
-      });
+      if (generated && contractId !== null) {
+        await deleteGeneratedExpense(contractId, expenseId, {
+          lock_version: lockVersion,
+          allow_regeneration: allowRegeneration,
+        });
+      } else {
+        await deleteExpense(expenseId, {
+          lock_version: lockVersion,
+          ...(deletionReason.trim()
+            ? { deletion_reason: deletionReason.trim() }
+            : {}),
+        });
+      }
       onDeleted();
     } catch (requestError: unknown) {
       setError(ApiError.from(requestError));
@@ -51,20 +69,26 @@ export default function ExpenseActionModal({
         La spesa verrà rimossa dalla vista corrente. Questa operazione richiede
         una nuova revisione e non può essere annullata da questa pagina.
       </p>
-      {generated && (
-        <label className="mt-5 flex items-start gap-3 text-sm text-gray-700 dark:text-gray-300">
-          <input
-            type="checkbox"
+      {generated && contractId !== null && (
+        <div className="mt-5">
+          <Checkbox
             checked={allowRegeneration}
-            onChange={(event) => setAllowRegeneration(event.target.checked)}
+            onChange={setAllowRegeneration}
             disabled={busy}
-            className="mt-0.5 h-4 w-4 rounded border-gray-300 text-brand-500 focus:ring-brand-500"
+            label="Consenti la rigenerazione dell'occorrenza generata dal contratto"
           />
-          <span>
-            Consenti la rigenerazione dell&apos;occorrenza generata dal contratto.
-          </span>
-        </label>
+        </div>
       )}
+      <div className="mt-5">
+        <Label htmlFor="expense-deletion-reason">Motivo (opzionale)</Label>
+        <InputField
+          id="expense-deletion-reason"
+          value={deletionReason}
+          onChange={(event) => setDeletionReason(event.target.value)}
+          disabled={busy}
+          placeholder="Inserisci un motivo"
+        />
+      </div>
       {error && (
         <p className="mt-4 rounded-lg bg-error-50 p-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-400">
           {error.message}

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router";
 import {
   ApiError,
@@ -19,6 +19,7 @@ import ExpenseTotals from "../../components/expenses/ExpenseTotals";
 import Alert from "../../components/ui/alert/Alert";
 import Button from "../../components/ui/button/Button";
 import { useApplicationContext } from "../../context/ApplicationContext";
+import { usePlanningYear } from "../../context/PlanningYearContext";
 
 const defaultPerPage = 15;
 
@@ -68,6 +69,13 @@ interface RegisterState {
 export default function ExpenseRegister() {
   const { data: applicationContext, loading: contextLoading, hasAbility } =
     useApplicationContext();
+  const {
+    planningYears,
+    activePlanningYears,
+    selectedPlanningYearId,
+    loading: planningYearLoading,
+    selectPlanningYear,
+  } = usePlanningYear();
   const [searchParams, setSearchParams] = useSearchParams();
   const [registerState, setRegisterState] = useState<RegisterState | null>(null);
   const [loading, setLoading] = useState(false);
@@ -76,9 +84,61 @@ export default function ExpenseRegister() {
   const canView = hasAbility("expense.view");
   const params = useMemo(() => readParams(searchParams), [searchParams]);
   const requestKey = searchParams.toString();
+  const updateParams = useCallback(
+    (next: ExpenseListParams) => writeParams(next, setSearchParams),
+    [setSearchParams],
+  );
 
   useEffect(() => {
-    if (contextLoading || tenantId === null || !canView) {
+    if (
+      contextLoading ||
+      planningYearLoading ||
+      tenantId === null ||
+      !canView
+    ) {
+      return;
+    }
+
+    const requestedYear = params.planning_year_id;
+    const requestedYearIsActive = activePlanningYears.some(
+      (planningYear) => planningYear.id === requestedYear,
+    );
+
+    if (requestedYearIsActive) {
+      if (selectedPlanningYearId !== requestedYear) {
+        selectPlanningYear(requestedYear as number);
+      }
+      return;
+    }
+
+    if (selectedPlanningYearId !== null && requestedYear !== selectedPlanningYearId) {
+      updateParams({ ...params, planning_year_id: selectedPlanningYearId, page: 1 });
+    }
+  }, [
+    activePlanningYears,
+    canView,
+    contextLoading,
+    params,
+    planningYearLoading,
+    selectPlanningYear,
+    selectedPlanningYearId,
+    tenantId,
+    updateParams,
+  ]);
+
+  useEffect(() => {
+    const waitingForYearSync =
+      !planningYearLoading &&
+      activePlanningYears.length > 0 &&
+      params.planning_year_id === undefined;
+
+    if (
+      contextLoading ||
+      planningYearLoading ||
+      waitingForYearSync ||
+      tenantId === null ||
+      !canView
+    ) {
       return;
     }
 
@@ -102,11 +162,26 @@ export default function ExpenseRegister() {
     return () => {
       active = false;
     };
-  }, [canView, contextLoading, params, requestKey, tenantId]);
+  }, [
+    activePlanningYears.length,
+    canView,
+    contextLoading,
+    params,
+    planningYearLoading,
+    requestKey,
+    tenantId,
+  ]);
 
   const currentState = registerState?.tenantId === tenantId ? registerState : null;
   const response = currentState?.response;
-  const updateParams = (next: ExpenseListParams) => writeParams(next, setSearchParams);
+  const yearOptions =
+    planningYears.length > 0
+      ? planningYears.map((planningYear) => ({
+          id: planningYear.id,
+          label: planningYear.year_label,
+          active: planningYear.active,
+        }))
+      : response?.year_options ?? [];
 
   let content;
   if (contextLoading) {
@@ -159,7 +234,7 @@ export default function ExpenseRegister() {
         <ComponentCard title="Registro spese" desc="Valori correnti restituiti dal servizio expense con filtri e paginazione server-side.">
           <ExpenseFilters
             value={params}
-            yearOptions={response?.year_options ?? []}
+            yearOptions={yearOptions}
             onChange={updateParams}
             disabled={loading || contextLoading || tenantId === null || !canView}
           />

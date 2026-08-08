@@ -28,6 +28,7 @@ export default function ExpenseRegisterTable({
     id: number;
     lockVersion: number;
     generated: boolean;
+    contractId: number | null;
   } | null>(null);
   const [loadingDeleteId, setLoadingDeleteId] = useState<number | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
@@ -41,6 +42,7 @@ export default function ExpenseRegisterTable({
         id: detail.id,
         lockVersion: detail.lock_version,
         generated: detail.rows.some((row) => row.generated),
+        contractId: detail.contract_id,
       });
     } catch (requestError: unknown) {
       setError(ApiError.from(requestError));
@@ -98,7 +100,7 @@ export default function ExpenseRegisterTable({
                   <ExpenseKindBadge kind={expense.kind} />
                 </TableCell>
                 <TableCell className="px-5 py-4 text-start text-sm text-gray-600 dark:text-gray-300">
-                  {expense.vendor_name ?? expense.contract_title ?? "—"}
+                  <span className="text-gray-500 dark:text-gray-400">Non disponibile</span>
                 </TableCell>
                 <TableCell className="px-5 py-4 text-start text-sm text-gray-600 dark:text-gray-300">
                   {expense.cost_center_name ?? `#${expense.cost_center_id}`}
@@ -154,6 +156,7 @@ export default function ExpenseRegisterTable({
           expenseId={deleteTarget.id}
           lockVersion={deleteTarget.lockVersion}
           generated={deleteTarget.generated}
+          contractId={deleteTarget.contractId}
           isOpen
           onClose={() => setDeleteTarget(null)}
           onDeleted={() => {

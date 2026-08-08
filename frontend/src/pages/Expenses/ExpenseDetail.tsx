@@ -173,6 +173,7 @@ export default function ExpenseDetail() {
             expenseId={detail.id}
             lockVersion={detail.lock_version}
             generated={hasGeneratedRows}
+            contractId={detail.contract_id}
             isOpen={deleteOpen}
             onClose={() => setDeleteOpen(false)}
             onDeleted={() => navigate("/expenses")}

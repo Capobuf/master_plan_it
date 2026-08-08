@@ -36,21 +36,15 @@ export default function ExpensePagination({
         {Array.from({ length: pageEnd - pageStart + 1 }, (_, index) => {
           const page = pageStart + index;
           return (
-            <button
+            <Button
               key={page}
-              type="button"
-              aria-current={page === meta.current_page ? "page" : undefined}
-              aria-label={`Pagina ${page}`}
               disabled={disabled}
               onClick={() => onPageChange(page)}
-              className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
-                page === meta.current_page
-                  ? "bg-brand-500 text-white"
-                  : "text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-white/[0.05]"
-              } disabled:cursor-not-allowed disabled:opacity-50`}
+              variant={page === meta.current_page ? "primary" : "outline"}
+              className="min-w-10 px-3"
             >
               {page}
-            </button>
+            </Button>
           );
         })}
         <Button

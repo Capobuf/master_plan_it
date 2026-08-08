@@ -20,7 +20,6 @@ export interface ExpenseRegisterItem {
   cost_center_name: string | null;
   kind: string;
   title: string;
-  vendor_name?: string | null;
   contract_id: number | null;
   contract_title: string | null;
   contract_current: boolean;
@@ -92,7 +91,12 @@ export interface ExpenseDetail {
 
 export interface DeleteExpenseRequest {
   lock_version: number;
-  allow_regeneration?: boolean;
+  deletion_reason?: string;
+}
+
+export interface DeleteGeneratedExpenseRequest {
+  lock_version: number;
+  allow_regeneration: boolean;
 }
 
 export interface ConfirmActualRequest {
@@ -102,9 +106,10 @@ export interface ConfirmActualRequest {
 export async function listExpenses(
   params: ExpenseListParams = {},
 ): Promise<ExpenseRegisterResponse> {
+  const { planning_year_id, ...rest } = params;
   const response = await apiClient.get<ExpenseRegisterResponse>(
     "/api/v1/expenses",
-    { params },
+    { params: { ...rest, ...(planning_year_id ? { year: planning_year_id } : {}) } },
   );
 
   return response.data;
@@ -125,15 +130,24 @@ export async function deleteExpense(
   await apiClient.delete(`/api/v1/expenses/${expenseId}`, { data: request });
 }
 
+export async function deleteGeneratedExpense(
+  contractId: number,
+  expenseId: number,
+  request: DeleteGeneratedExpenseRequest,
+): Promise<void> {
+  await apiClient.delete(
+    `/api/v1/contracts/${contractId}/generated-expenses/${expenseId}`,
+    { data: request },
+  );
+}
+
 export async function confirmActual(
   expenseId: number,
   rowId: number,
   request: ConfirmActualRequest,
-): Promise<ExpenseRow> {
-  const response = await apiClient.post<DataEnvelope<ExpenseRow>>(
+): Promise<void> {
+  await apiClient.post(
     `/api/v1/expenses/${expenseId}/rows/${rowId}/confirm`,
     request,
   );
-
-  return response.data.data;
 }
