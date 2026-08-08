@@ -412,13 +412,13 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
           <ExpenseEditorRows rows={rows} vendors={vendors} onChange={updateRow} onMove={moveRow} onRemove={removeRow} disabled={disabled} />
         </DndProvider>
         <div className="flex justify-end">
-          <Button size="sm" variant="outline" onClick={() => setRows((current) => [...current, newExpenseEditorRow(current.length + 1)])} disabled={disabled}>
+          <Button type="button" size="sm" variant="outline" onClick={() => setRows((current) => [...current, newExpenseEditorRow(current.length + 1)])} disabled={disabled}>
             Aggiungi riga
           </Button>
         </div>
       </ComponentCard>
       <div className="flex flex-wrap justify-end gap-3">
-        <Button variant="outline" onClick={() => navigate(editing ? `/expenses/${expenseId}` : "/expenses")} disabled={submitting}>
+        <Button type="button" variant="outline" onClick={() => navigate(editing ? `/expenses/${expenseId}` : "/expenses")} disabled={submitting}>
           Annulla
         </Button>
         <Button disabled={disabled}>{submitting ? "Salvataggio…" : editing ? "Salva modifiche" : "Crea spesa"}</Button>

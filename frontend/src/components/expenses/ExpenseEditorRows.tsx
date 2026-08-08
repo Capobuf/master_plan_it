@@ -200,27 +200,33 @@ function DraggableExpenseRow({
         </div>
       </TableCell>
       <TableCell className="min-w-40 px-3 py-4 align-top">
-        <DatePicker
-          id={`${row.editorKey}-spend-date`}
-          label="Data spesa"
-          defaultDate={row.spend_date || undefined}
-          onChange={(_, dateString) => onChange({ spend_date: dateString || undefined })}
-        />
+        <div className={disabled ? "pointer-events-none opacity-60" : ""}>
+          <DatePicker
+            id={`${row.editorKey}-spend-date`}
+            label="Data spesa"
+            defaultDate={row.spend_date || undefined}
+            onChange={(_, dateString) => onChange({ spend_date: dateString || undefined })}
+          />
+        </div>
       </TableCell>
       <TableCell className="min-w-40 px-3 py-4 align-top">
-        <DatePicker
-          id={`${row.editorKey}-period-start`}
-          label="Periodo da"
-          defaultDate={row.period_start || undefined}
-          onChange={(_, dateString) => onChange({ period_start: dateString || undefined })}
-        />
-        <div className="mt-3">
+        <div className={disabled ? "pointer-events-none opacity-60" : ""}>
           <DatePicker
-            id={`${row.editorKey}-period-end`}
-            label="Periodo a"
-            defaultDate={row.period_end || undefined}
-            onChange={(_, dateString) => onChange({ period_end: dateString || undefined })}
+            id={`${row.editorKey}-period-start`}
+            label="Periodo da"
+            defaultDate={row.period_start || undefined}
+            onChange={(_, dateString) => onChange({ period_start: dateString || undefined })}
           />
+        </div>
+        <div className="mt-3">
+          <div className={disabled ? "pointer-events-none opacity-60" : ""}>
+            <DatePicker
+              id={`${row.editorKey}-period-end`}
+              label="Periodo a"
+              defaultDate={row.period_end || undefined}
+              onChange={(_, dateString) => onChange({ period_end: dateString || undefined })}
+            />
+          </div>
         </div>
       </TableCell>
       <TableCell className="min-w-36 px-3 py-4 align-top">
@@ -256,7 +262,7 @@ function DraggableExpenseRow({
         />
       </TableCell>
       <TableCell className="px-3 py-4 align-top">
-        <Button size="sm" variant="outline" onClick={onRemove} disabled={disabled}>
+        <Button type="button" size="sm" variant="outline" onClick={onRemove} disabled={disabled}>
           Rimuovi
         </Button>
       </TableCell>
