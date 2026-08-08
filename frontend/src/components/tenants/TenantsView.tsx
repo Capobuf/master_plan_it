@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiError, type Tenant } from "../../api/client";
 import { createTenant, deactivateTenant, listTenants, reactivateTenant, updateTenant, type TenantInput } from "../../api/tenants";
 import ComponentCard from "../common/ComponentCard";
@@ -16,11 +16,11 @@ export default function TenantsView({ canView, canCreate, canUpdate, canDeactiva
   const [form, setForm] = useState<TenantInput>(empty);
   const [error, setError] = useState<string | null>(null);
 
-  const load = async () => {
+  const load = useCallback(async () => {
     if (!canView) return;
     try { setTenants((await listTenants({ per_page: 100 })).data); } catch (e) { setError(ApiError.from(e).message); }
-  };
-  useEffect(() => { void load(); }, [canView]);
+  }, [canView]);
+  useEffect(() => { void load(); }, [load]);
   const begin = (tenant: Tenant | null) => {
     setSelected(tenant);
     setForm(tenant ? { name: tenant.name, code: tenant.code, currency_code: tenant.currency_code, language_code: tenant.language_code, timezone: tenant.timezone, default_vat_rate: tenant.default_vat_rate } : empty);

@@ -1,10 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "../../api/client";
 import { createRole, deleteRole, listAbilities, listRoles, updateRole, type Ability, type Role } from "../../api/roles";
 import ComponentCard from "../common/ComponentCard"; import Checkbox from "../form/input/Checkbox"; import InputField from "../form/input/InputField"; import Label from "../form/Label"; import Button from "../ui/button/Button"; import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
+
 export default function RolesView({ canManage }: { canManage: boolean }) {
   const [roles, setRoles] = useState<Role[]>([]); const [abilities, setAbilities] = useState<Ability[]>([]); const [selected, setSelected] = useState<Role | null>(null); const [name, setName] = useState(""); const [selectedAbilities, setSelectedAbilities] = useState<string[]>([]); const [error, setError] = useState<string | null>(null);
-  const load = async () => { if (!canManage) return; try { const [roleResult, abilityResult] = await Promise.all([listRoles(), listAbilities()]); setRoles(roleResult.data); setAbilities(abilityResult.data); } catch (e) { setError(ApiError.from(e).message); } }; useEffect(() => { void load(); }, [canManage]);
+  const load = useCallback(async () => { if (!canManage) return; try { const [roleResult, abilityResult] = await Promise.all([listRoles(), listAbilities()]); setRoles(roleResult.data); setAbilities(abilityResult.data); } catch (e) { setError(ApiError.from(e).message); } }, [canManage]);
+  useEffect(() => { void load(); }, [load]);
   const begin = (role: Role | null) => { setSelected(role); setName(role?.name ?? ""); setSelectedAbilities(role?.abilities ?? []); };
   const submit = async (event: React.FormEvent) => { event.preventDefault(); try { const result = selected ? await updateRole(selected.id, name, selectedAbilities) : await createRole(name, selectedAbilities); setRoles((items) => selected ? items.map((item) => item.id === result.id ? result : item) : [...items, result]); begin(null); } catch (e) { setError(ApiError.from(e).message); } };
   const remove = async (role: Role) => { if (!window.confirm(`Delete role ${role.name}?`)) return; try { await deleteRole(role.id); setRoles((items) => items.filter((item) => item.id !== role.id)); } catch (e) { setError(ApiError.from(e).message); } };

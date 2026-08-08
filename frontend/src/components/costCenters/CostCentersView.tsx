@@ -1,12 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "../../api/client";
 import { createCostCenter, deactivateCostCenter, deleteCostCenter, listCostCenterHistory, listCostCenters, reactivateCostCenter, restoreCostCenter, updateCostCenter, type CostCenter, type Revision } from "../../api/costCenters";
 import ComponentCard from "../common/ComponentCard"; import InputField from "../form/input/InputField"; import Label from "../form/Label"; import Select from "../form/Select"; import Badge from "../ui/badge/Badge"; import Button from "../ui/button/Button"; import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 function flatten(items: CostCenter[], depth = 0): CostCenter[] { return items.flatMap((item) => [{ ...item, depth }, ...flatten(item.children ?? [], depth + 1)]); }
 export default function CostCentersView({ canView, canCreate, canUpdate, canDeactivate, canReactivate, canDelete, canHistory, canRestore }: { canView: boolean; canCreate: boolean; canUpdate: boolean; canDeactivate: boolean; canReactivate: boolean; canDelete: boolean; canHistory: boolean; canRestore: boolean }) {
   const [tree, setTree] = useState<CostCenter[]>([]); const [selected, setSelected] = useState<CostCenter | null>(null); const [history, setHistory] = useState<{ id: number; rows: Revision[] } | null>(null); const [form, setForm] = useState({ name: "", parent_id: "" }); const [error, setError] = useState<string | null>(null); const rows = flatten(tree);
-  const load = async () => { if (!canView) return; try { setTree((await listCostCenters({ per_page: 100 })).data); } catch (e) { setError(ApiError.from(e).message); } };
-  useEffect(() => { void load(); }, [canView]);
+  const load = useCallback(async () => { if (!canView) return; try { setTree((await listCostCenters({ per_page: 100 })).data); } catch (e) { setError(ApiError.from(e).message); } }, [canView]);
+  useEffect(() => { void load(); }, [load]);
   const begin = (item: CostCenter | null) => { setSelected(item); setForm({ name: item?.name ?? "", parent_id: item?.parent_id ? String(item.parent_id) : "" }); };
   const save = async (event: React.FormEvent) => { event.preventDefault(); try { const input = { name: form.name, parent_id: form.parent_id ? Number(form.parent_id) : null }; if (selected) await updateCostCenter(selected.id, { ...input, lock_version: selected.lock_version }); else await createCostCenter(input); await load(); begin(null); } catch (e) { setError(ApiError.from(e).message); } };
   const changeState = async (item: CostCenter, active: boolean) => { try { if (active) await reactivateCostCenter(item.id, item.lock_version); else await deactivateCostCenter(item.id, item.lock_version); await load(); } catch (e) { setError(ApiError.from(e).message); } };
