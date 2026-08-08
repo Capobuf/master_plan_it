@@ -142,6 +142,28 @@ export interface SuppressRequest {
   reason?: string;
 }
 
+export interface ContractLookupOption {
+  id: number;
+  name: string;
+  active?: boolean;
+}
+
+export async function listContractVendors(): Promise<PaginatedData<ContractLookupOption>> {
+  const response = await apiClient.get<PaginatedData<ContractLookupOption>>(
+    "/api/v1/vendors",
+    { params: { per_page: 100 } },
+  );
+  return response.data;
+}
+
+export async function listContractCostCenters(): Promise<PaginatedData<ContractLookupOption>> {
+  const response = await apiClient.get<PaginatedData<ContractLookupOption>>(
+    "/api/v1/cost-centers",
+    { params: { per_page: 100 } },
+  );
+  return response.data;
+}
+
 export async function listContracts(
   params: ContractListParams = {},
 ): Promise<PaginatedData<Contract>> {

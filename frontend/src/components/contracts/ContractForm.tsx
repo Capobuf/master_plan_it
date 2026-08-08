@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import type {
   Contract,
@@ -6,10 +6,17 @@ import type {
   ContractUpdate,
   ContractWrite,
 } from "../../api/contracts";
+import {
+  listContractCostCenters,
+  listContractVendors,
+  type ContractLookupOption,
+} from "../../api/contracts";
 import Checkbox from "../form/input/Checkbox";
 import DatePicker from "../form/date-picker";
 import InputField from "../form/input/InputField";
+import TextArea from "../form/input/TextArea";
 import Label from "../form/Label";
+import Select from "../form/Select";
 import Button from "../ui/button/Button";
 import Alert from "../ui/alert/Alert";
 import ContractTermsEditor from "./ContractTermsEditor";
@@ -56,13 +63,31 @@ export default function ContractForm({
   const [renewalNotes, setRenewalNotes] = useState(contract?.renewal_notes ?? "");
   const [terms, setTerms] = useState<ContractTermInput[]>(contract?.terms.map(toTermInput) ?? []);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
+  const [vendors, setVendors] = useState<ContractLookupOption[]>([]);
+  const [costCenters, setCostCenters] = useState<ContractLookupOption[]>([]);
+  const [lookupError, setLookupError] = useState<string | null>(null);
 
   const handleRenewalDate = useCallback((_: unknown, dateString: string) => {
     setRenewalDate(dateString);
   }, []);
 
-  const submit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  useEffect(() => {
+    if (!canSubmit) return;
+    let active = true;
+    void Promise.all([listContractVendors(), listContractCostCenters()])
+      .then(([vendorResponse, costCenterResponse]) => {
+        if (active) {
+          setVendors(vendorResponse.data);
+          setCostCenters(costCenterResponse.data);
+        }
+      })
+      .catch((requestError: unknown) => {
+        if (active) setLookupError(requestError instanceof Error ? requestError.message : "Unable to load contract lookups.");
+      });
+    return () => { active = false; };
+  }, [canSubmit]);
+
+  const submit = async () => {
     setValidationMessage(null);
     const numericVendorId = Number(vendorId);
     const numericCostCenterId = Number(costCenterId);
@@ -93,21 +118,24 @@ export default function ContractForm({
   const disabled = !canSubmit || submitting;
 
   return (
-    <form className="space-y-6" onSubmit={(event) => void submit(event)}>
+    <>
+      <form className="space-y-6" onSubmit={(event) => { event.preventDefault(); void submit(); }}>
       {error ? <Alert variant="error" title="Contract request failed" message={error} /> : null}
+      {lookupError ? <Alert variant="warning" title="Lookup request failed" message={`${lookupError} Vendor and cost-center lists are required for selection.`} /> : null}
       {validationMessage ? <Alert variant="warning" title="Check the contract fields" message={validationMessage} /> : null}
       <div className="grid gap-4 md:grid-cols-2">
-        <div><Label htmlFor="contract-vendor">Vendor ID</Label><InputField id="contract-vendor" type="number" min="1" value={vendorId} onChange={(event) => setVendorId(event.target.value)} disabled={disabled} /></div>
-        <div><Label htmlFor="contract-cost-center">Cost center ID</Label><InputField id="contract-cost-center" type="number" min="1" value={costCenterId} onChange={(event) => setCostCenterId(event.target.value)} disabled={disabled} /></div>
+        <div><Label>Vendor</Label><Select options={vendors.map((vendor) => ({ value: String(vendor.id), label: `${vendor.name}${vendor.active === false ? " (inactive)" : ""}` }))} placeholder={vendors.length === 0 ? "Loading vendors…" : "Select a vendor"} defaultValue={vendorId} onChange={setVendorId} /></div>
+        <div><Label>Cost center</Label><Select options={costCenters.map((costCenter) => ({ value: String(costCenter.id), label: `${costCenter.name}${costCenter.active === false ? " (inactive)" : ""}` }))} placeholder={costCenters.length === 0 ? "Loading cost centers…" : "Select a cost center"} defaultValue={costCenterId} onChange={setCostCenterId} /></div>
         <div className="md:col-span-2"><Label htmlFor="contract-title">Title</Label><InputField id="contract-title" value={title} onChange={(event) => setTitle(event.target.value)} disabled={disabled} /></div>
-        <div className="md:col-span-2"><Label htmlFor="contract-description">Description</Label><textarea id="contract-description" value={description} onChange={(event) => setDescription(event.target.value)} disabled={disabled} className="min-h-24 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 outline-none focus:border-brand-300 focus:ring-3 focus:ring-brand-500/20 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90" /></div>
+        <div className="md:col-span-2"><Label>Description</Label><TextArea value={description} onChange={setDescription} disabled={disabled} /></div>
         <div><DatePicker id="contract-renewal-date" label="Renewal date" placeholder="Select a renewal date" defaultDate={renewalDate || undefined} onChange={handleRenewalDate} /></div>
         <div><Label htmlFor="contract-renewal-notice">Renewal notice days</Label><InputField id="contract-renewal-notice" type="number" min="0" value={renewalNoticeDays} onChange={(event) => setRenewalNoticeDays(event.target.value)} disabled={disabled} /></div>
         <div className="md:col-span-2"><Label htmlFor="contract-renewal-notes">Renewal notes</Label><InputField id="contract-renewal-notes" value={renewalNotes} onChange={(event) => setRenewalNotes(event.target.value)} disabled={disabled} /></div>
       </div>
       <Checkbox label="Contract is active" checked={active} onChange={setActive} disabled={disabled} />
+      </form>
       <ContractTermsEditor terms={terms} onChange={setTerms} disabled={disabled} existingTerms={contract?.terms} />
-      <div className="flex justify-end"><Button disabled={disabled}>{submitting ? "Saving…" : contract ? "Save contract" : "Create contract"}</Button></div>
-    </form>
+      <div className="flex justify-end"><Button onClick={() => void submit()} disabled={disabled}>{submitting ? "Saving…" : contract ? "Save contract" : "Create contract"}</Button></div>
+    </>
   );
 }
