@@ -1,27 +1,29 @@
 # Artifact status register
 
 Status: `AUTHORITATIVE PHASE INDEX`  
-Latest formal integrated-analysis snapshot: `speckit-analyze-2026-08-04-constitution-5.0.0.md`; historical PASS on its analyzed documentation tree. The current 2026-08-05 ADR-035/frontend/vertical-slice remediation and its analyze result are recorded in `.codex/orchestration-plan.md` and the amended authoritative artifacts.
+Latest formal integrated-analysis snapshot: `speckit-analyze-2026-08-04-constitution-5.0.0.md`; historical PASS on its analyzed documentation tree. Runtime current state is governed by Constitution 6.0.0, PD-API-001, `docs/api/v1-capability-matrix.md`, `docs/api/openapi-v1.yaml` and the 2026-08-08 section of `.codex/orchestration-plan.md`.
 Constitution: 6.0.0 (Amendment 2026-08-07)
 
 ## Artifact status
 
 | Artifact set | Authoritative status |
 |---|---|
-| Feature 001 `spec.md` / `plan.md` | API foundation (Sanctum/auth/context/error/resource contracts) propagated; implementation in progress |
-| Feature 002 `spec.md` / `plan.md` | API Resources/DTOs and tenant-scoped master-data operations; implementation in progress |
-| Feature 003 `spec.md` / `plan.md` | Expense/money/attachment APIs; exact decimal response contract; implementation in progress |
-| Feature 004 `spec.md` / `plan.md` | Project/contract/generation APIs; terminal-deletion contract propagated; implementation not started |
-| Feature 005 `spec.md` / `plan.md` | Dashboard/Budget/report/export APIs; implementation not started |
+| Feature 001 `spec.md` / `plan.md` | API foundation implemented: Sanctum session auth, context, error/resource and pagination contracts; React foundation present |
+| Feature 002 `spec.md` / `plan.md` | Planning-year, Vendor and Cost Center API operations implemented, including documented lifecycle and revision operations |
+| Feature 003 `spec.md` / `plan.md` | Expense register/detail/create/update/delete/Actual-confirm APIs and exact-money kernel implemented; attachments and Expense revision API remain foundation-only |
+| Feature 004 `spec.md` / `plan.md` | Contract CRUD, terms, history, synchronization and generation-control APIs implemented; Projects remain foundation-only |
+| Feature 005 `spec.md` / `plan.md` | Dashboard, current Budget and paginated economic Report APIs implemented; exports, BudgetVersion and Scenarios are not implemented APIs |
 | Feature 006 `spec.md` / `plan.md` | Protected migration/operations APIs; not cutover ready; implementation not started |
-| Feature 007 `spec.md` / `plan.md` | Tenant/context/users/roles/settings APIs; implementation in progress |
+| Feature 007 `spec.md` / `plan.md` | Tenant/context/users/roles/abilities APIs implemented; PlatformSetting and audit-retention operation APIs remain unavailable |
 
 ## API-only current phase
 
 - Product Owner approval: PD-API-001, 2026-08-07;
 - old Laravel Blade/browser contracts: DEPRECATED;
 - API capability classes: `IMPLEMENTED_API`, `INTERNAL_ONLY`, `FOUNDATION_ONLY`, `PLANNED`;
-- API parity, OpenAPI and capability-matrix reconciliation are required before UI removal.
+- current inventory: 71 application operations classified `IMPLEMENTED_API`, plus the infrastructure-only `/sanctum/csrf-cookie` path;
+- React/TypeScript TailAdmin foundation exists in `frontend/`; current implementation work delivers ability-gated vertical UI only for those implemented operations;
+- Laravel remains API-only and does not host the React UI.
 
 ## Current Spec Kit phase
 

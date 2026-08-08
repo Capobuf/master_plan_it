@@ -1,9 +1,21 @@
 # Implementation orchestration plan
 
-Status: ACTIVE — 2026-08-05 vertical-slice remediation recorded; coordinator-owned; no commits, pushes, branches or PRs authorized.
-Baseline date: 2026-08-05 (Europe/Rome).
+Status: ACTIVE — 2026-08-08 React capability delivery; coordinator-owned; work remains on `laravel-replatform`; no new branch or PR is authorized.
+Baseline date: 2026-08-08 (Europe/Rome).
 
-## Verified baseline
+## 2026-08-08 authoritative current state
+
+- Constitution 6.0.0 and PD-API-001 are current. The former Blade/Filament/TailAdmin-Laravel presentation architecture is historical and MUST NOT be used as implementation authority.
+- Laravel is an implemented API-only backend under `/api/v1`, using Sanctum SPA sessions. It owns tenant context, RBAC/authorization, validation, persistence, domain operations and authoritative economic calculation.
+- `docs/api/v1-capability-matrix.md` records 71 `IMPLEMENTED_API` operations. Projects, attachments/downloads, BudgetVersion snapshots, scenarios, audit UI/export, exports and print remain non-implemented and receive no React placeholder surface.
+- `frontend/` is the separate React/TypeScript TailAdmin React Free 2.3.0 client, pinned to upstream commit `21dc917cb6cb22b5f1d12e5af57359a849d19aa8`. Browser traffic is same-origin and relative under `/api/v1/*` and `/sanctum/*`; Laravel does not serve React.
+- The imported frontend foundation already provides Sign In, protected routing, shell, tenant context/switching and an API-connected verification dashboard. The active delivery replaces that verification surface with ability-gated vertical capability pages for Dashboard, Expenses, Budget, Reports, Contracts and implemented administration/master data.
+- Local developer topology is React/Vite at `http://localhost:5173` and private Laravel development origin at `http://127.0.0.1:8080`, connected through the Vite proxy. The frontend is presentation-only and never sends `tenant_id` or recalculates authoritative money.
+- Implementation packages use disjoint frontend write sets. `frontend/src/App.tsx` and dependency manifests are coordinator-owned integration files. Generic TailAdmin primitives remain upstream-identical unless a demonstrated blocker requires a separately reviewed exception.
+
+Everything below this point is retained as historical implementation evidence. References to Constitution 5.0.0, Filament, Blade, Laravel-rendered TailAdmin, the 2026-08-05 slice graph or incomplete API runtime describe earlier phases and do not override the current state above, Constitution 6.0.0, PD-API-001, the capability matrix or OpenAPI.
+
+## Historical verified baseline (2026-08-05)
 
 - Repository: `/root/masterplan/master_plan_it`; branch `laravel-replatform`; upstream `origin/laravel-replatform`; default remote branch `origin/main`.
 - Initial HEAD: `d6e4eff5e9ad9ad2b0128fac66e5e5034ed0d293`; initial worktree clean with no untracked files.
