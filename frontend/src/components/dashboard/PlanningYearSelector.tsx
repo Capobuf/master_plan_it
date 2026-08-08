@@ -11,6 +11,7 @@ export default function PlanningYearSelector() {
     <div className="mb-6 max-w-xs">
       <Label htmlFor="selected-planning-year">Planning year</Label>
       <Select
+        key={selectedPlanningYearId ?? "none"}
         options={activePlanningYears.map((planningYear) => ({
           value: String(planningYear.id),
           label: String(planningYear.year_label),
