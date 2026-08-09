@@ -25,17 +25,17 @@ REQUIRED_DOCTYPES = [
 REQUIRED_ROLES = ["vCIO Manager", "Client Editor", "Client Viewer"]
 WORKSPACE_NAME = "Master Plan IT"
 REQUIRED_REPORTS = [
-    "MPIT Overview",
-    "MPIT Monthly Plan",
+    "MPIT Economic Position",
+    "MPIT Year End Forecast",
     "MPIT Expenses",
     "MPIT Project Forecast vs Actual",
-    "MPIT Renewals Window",
+    "MPIT Renewals And Commitments",
 ]
 REQUIRED_DASHBOARD_CHARTS = [
     "MPIT Forecast vs Actual by Cost Center",
     "MPIT Monthly Forecast vs Actual",
     "MPIT Plafond Usage by Cost Center",
-    "MPIT Renewals Window (by Month)",
+    "MPIT Renewals And Commitments (by Month)",
 ]
 REQUIRED_NUMBER_CARDS = [
     "MPIT Forecast Total",

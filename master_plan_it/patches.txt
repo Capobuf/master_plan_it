@@ -6,3 +6,4 @@ master_plan_it.patches.v1_2.remove_expense_parent_state_and_vendor
 
 [post_model_sync]
 master_plan_it.patches.v1_2.drop_removed_expense_parent_columns
+master_plan_it.patches.v1_3.cleanup_legacy_report_assets

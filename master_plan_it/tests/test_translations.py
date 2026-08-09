@@ -123,10 +123,10 @@ def test_workspace_translation_targets_present():
         "New Plafond": "Nuovo plafond",
         "New Contract": "Nuovo contratto",
         "New Project": "Nuovo progetto",
-        "Forecast Total": "Budget previsto",
         "Actual Total": "Spesa effettiva",
-        "Plafonds": "Plafond",
-        "Remaining Plafond": "Plafond residuo",
+        "Forecast Remaining": "Forecast residuo",
+        "Year-end Forecast": "Forecast fine anno",
+        "Extra Budget": "Extra budget",
     }
 
     translations = _load_po_translations(_it_po_path())
@@ -192,7 +192,7 @@ def test_overview_and_contract_actualization_translation_targets_present():
     assert not mismatched, f"Mismatched translations in it.po: {mismatched}"
 
 
-def test_mpit_overview_pdf_business_translation_targets_present():
+def test_mpit_economic_position_pdf_business_translation_targets_present():
     expected = {
         "IT Economic Overview": "Panoramica economica IT",
         "Budget, actual spend, forecasts and plafond": "Budget, consuntivo, previsioni e plafond",
@@ -310,7 +310,7 @@ def test_mpit_overview_pdf_business_translation_targets_present():
 
     fuzzy = _load_po_fuzzy_msgids(_it_po_path())
     fuzzy_expected = sorted(msgid for msgid in expected if msgid in fuzzy)
-    assert not fuzzy_expected, f"Fuzzy MPIT Overview PDF translations in it.po: {fuzzy_expected}"
+    assert not fuzzy_expected, f"Fuzzy MPIT Economic Position PDF translations in it.po: {fuzzy_expected}"
 
 
 def test_contract_fallback_translation_targets_absent():
@@ -360,6 +360,45 @@ def test_plafond_cross_cost_center_translation_targets_present():
         key: (translations[key], value)
         for key, value in expected.items()
         if translations.get(key) != value
+    }
+    assert not mismatched, f"Mismatched translations in it.po: {mismatched}"
+
+
+def test_economic_position_usage_and_filter_translation_targets_present():
+    expected = {
+        "Group": "Raggruppamento",
+        "Confirmed Usage %": "Utilizzo confermato %",
+        "Plafond Over": "Sforamento plafond",
+        "Group By": "Raggruppa per",
+        "Include Children": "Includi sottocentri",
+        "Forecast Scope": "Ambito forecast",
+        "Funding Scope": "Ambito finanziamento",
+        "Actual + Approved Projects": "Effettivo + progetti approvati",
+        "Actual + Proposed": "Effettivo + proposte",
+        "Full Planning": "Pianificazione completa",
+        "Hide Zero Rows": "Nascondi righe a zero",
+        "Plafond availability is shown only when grouping by Cost Center or Funding.": (
+            "La disponibilità del plafond è mostrata solo raggruppando per centro di costo o finanziamento."
+        ),
+        "Choose which active estimates and quotes are included in the remaining forecast.": (
+            "Scegli quali stime e preventivi attivi includere nel forecast residuo."
+        ),
+        "Limit the report to standard, plafond-funded, or extra expenses.": (
+            "Limita il report alle spese ordinarie, finanziate da plafond o extra."
+        ),
+    }
+
+    pot_sources = _load_po_translations(_main_pot_path())
+    translations = _load_po_translations(_it_po_path())
+
+    pot_missing = sorted(msgid for msgid in expected if msgid not in pot_sources)
+    assert not pot_missing, f"Missing msgid entries in main.pot: {pot_missing}"
+    missing = sorted(msgid for msgid in expected if msgid not in translations)
+    assert not missing, f"Missing msgid entries in it.po: {missing}"
+    mismatched = {
+        msgid: (translations.get(msgid), msgstr)
+        for msgid, msgstr in expected.items()
+        if translations.get(msgid) != msgstr
     }
     assert not mismatched, f"Mismatched translations in it.po: {mismatched}"
 

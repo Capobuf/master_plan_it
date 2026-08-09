@@ -27,7 +27,7 @@ describe("v16 — Workspace Smoke", () => {
       "New Contract",
       "New Project",
       "Panoramica Economica",
-      "Monthly Plan",
+      "Year End Forecast",
     ];
 
     shortcuts.forEach((label) => {
@@ -50,7 +50,7 @@ describe("v16 — Workspace Smoke", () => {
     cy.get(".dashboard-widget-box", { timeout: 20000 }).its("length").should("be.gte", 3);
   });
 
-  it("'Monthly Plan' shortcut navigates to MPIT Monthly Plan report", () => {
+  it("'Year End Forecast' shortcut navigates to MPIT Year End Forecast report", () => {
     cy.visit("/app/master-plan-it");
 
     cy.on("uncaught:exception", (err) => {
@@ -58,8 +58,8 @@ describe("v16 — Workspace Smoke", () => {
       return false;
     });
 
-    cy.contains("Monthly Plan", { timeout: 10000 }).click();
-    cy.url({ timeout: 15000 }).should("include", "Monthly%20Plan");
+    cy.contains("Year End Forecast", { timeout: 10000 }).click();
+    cy.url({ timeout: 15000 }).should("include", "Year%20End%20Forecast");
     cy.get('[data-fieldname="year"] input', { timeout: 15000 }).should("be.visible");
   });
 });

@@ -8,8 +8,8 @@ _YEAR_FILTER_CHARTS = [
     "MPIT Forecast vs Actual by Cost Center",
     "MPIT Monthly Forecast vs Actual",
     "MPIT Plafond Usage by Cost Center",
-    "MPIT Renewals Window (by Month)",
-    "MPIT Monthly Plan",
+    "MPIT Renewals And Commitments (by Month)",
+    "MPIT Year End Forecast",
 ]
 
 

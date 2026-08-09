@@ -480,7 +480,7 @@ def get_overview_buildup_dataset(
     show_zero_rows: bool = False,
 ) -> dict:
     """
-    Returns hierarchical (build-up) rows for the MPIT Overview report.
+    Returns hierarchical (build-up) rows for the MPIT Economic Position report.
 
     Each cost center produces a header row (indent=0) followed by block rows
     (indent=1) that explain which components compose the total.
@@ -636,7 +636,7 @@ def get_overview_lines_dataset(
     show_zero_rows: bool = False,
 ) -> dict:
     """
-    Returns individual contribution lines for the MPIT Overview Lines mode.
+    Returns individual contribution lines for the MPIT Economic Position Lines mode.
 
     Line types:
     - Expense Row    : one row per active MPIT Expense Row (Estimate/Quote/Actual)
@@ -894,7 +894,12 @@ def _resolve_cost_centers_for_year(year_int: int, cost_center: str | None) -> li
     return sorted({row.cost_center for row in from_expenses if row.cost_center})
 
 
-def _get_cost_center_scope(cost_center: str) -> list[str]:
+def _get_cost_center_scope(cost_center: str | None, include_children: bool = True) -> list[str] | None:
+    if not cost_center:
+        return None
+    if not include_children:
+        return [cost_center]
+
     cost_center_doc = frappe.db.get_value(
         "MPIT Cost Center",
         cost_center,
@@ -1092,6 +1097,919 @@ def get_monthly_forecast_vs_actual(
             "delta_total": flt(forecast_total - actual_total, 2),
         },
     }
+
+
+REPORT_BASIS_VALUES = {
+    "Actual only",
+    "Forecast only",
+    "Actual + Forecast",
+    "Actual + Approved Projects",
+    "Actual + Proposed",
+    "Full Planning",
+    "Year-end Forecast",
+    "Committed",
+}
+
+
+def _normalize_report_filters(filters: dict | None) -> frappe._dict:
+    out = frappe._dict(filters or {})
+    out.year = str(out.get("year") or datetime.date.today().year)
+    out.include_children = int(out.get("include_children", 1) or 0)
+    out.print_profile = out.get("print_profile") or "Standard"
+    out.print_orientation = out.get("print_orientation") or "Auto"
+    out.print_density = out.get("print_density") or "Normal"
+    return out
+
+
+def _classify_funding(expense: dict) -> str:
+    if expense.get("expense_kind") == "Plafond":
+        return "Plafond"
+    if expense.get("uses_plafond"):
+        return "Plafond"
+    if expense.get("is_extra"):
+        return "Extra"
+    return "Standard"
+
+
+def _classify_project_stage(project_state: str | None) -> str:
+    state = (project_state or "").strip()
+    if state in {
+        PROJECT_STATE_IDEA,
+        PROJECT_STATE_PROPOSED,
+        PROJECT_STATE_APPROVED,
+        PROJECT_STATE_DEFERRED,
+        PROJECT_STATE_REJECTED,
+    }:
+        return state
+    return "No Project"
+
+
+def _status_from_amounts(
+    available_budget: float,
+    year_end_forecast: float,
+    warning_threshold: float,
+) -> str:
+    available_budget = flt(available_budget, 2)
+    year_end_forecast = flt(year_end_forecast, 2)
+    threshold = flt(warning_threshold or 85)
+
+    if available_budget <= 0 and year_end_forecast > 0:
+        return "Critical"
+    if available_budget <= 0:
+        return "OK"
+    if year_end_forecast > available_budget:
+        return "Critical"
+    if (year_end_forecast / available_budget) * 100 >= threshold:
+        return "Warning"
+    return "OK"
+
+
+def get_economic_position_dataset(filters: dict) -> dict:
+    """Return grouped economic position rows, summary values, optional chart, and metadata."""
+    filters = _normalize_report_filters(filters)
+    rows = _query_report_economic_rows(filters)
+    group_by = filters.get("group_by") or "Cost Center"
+    scope = filters.get("scope") or "All"
+    basis = filters.get("basis") or "Actual + Proposed"
+
+    grouped: dict[str, dict] = {}
+    for row in rows:
+        funding = _classify_funding(row)
+        if scope == "Expenses" and row.get("expense_kind") != "Ordinary":
+            continue
+        if scope == "Standard" and funding != "Standard":
+            continue
+        if scope == "Plafond" and funding != "Plafond":
+            continue
+        if scope == "Extra" and funding != "Extra":
+            continue
+
+        key, label = _get_report_group(row, group_by)
+        target = grouped.setdefault(key, _empty_position_row(label))
+        amount = flt(row.get("amount_net"), 2)
+
+        if row.get("expense_kind") == "Plafond":
+            # Cost-center plafond values are merged below from their funding
+            # source so cross-cost-center consumption remains attributed to
+            # the owner of the selected plafond.
+            if group_by != "Cost Center":
+                target["plafond_total"] = flt(target["plafond_total"] + amount, 2)
+            continue
+
+        if row.get("row_phase") == "Actual":
+            if basis == "Forecast only":
+                continue
+            target["actual_total"] = flt(target["actual_total"] + amount, 2)
+            if funding == "Plafond":
+                target["actual_on_plafond"] = flt(target["actual_on_plafond"] + amount, 2)
+                if group_by == "Funding":
+                    target["plafond_consumed"] = flt(target["plafond_consumed"] + amount, 2)
+            elif funding == "Extra":
+                target["actual_extra"] = flt(target["actual_extra"] + amount, 2)
+            else:
+                target["actual_standard"] = flt(target["actual_standard"] + amount, 2)
+            continue
+
+        if row.get("row_phase") in {"Estimate", "Quote"}:
+            stage = _classify_project_stage(row.get("effective_project_state"))
+            if funding == "Standard" and stage in {"No Project", PROJECT_STATE_APPROVED}:
+                target["operating_budget"] = flt(target["operating_budget"] + amount, 2)
+            # Approved projects are a planning bucket, not the official approved budget limit.
+            if stage == PROJECT_STATE_APPROVED:
+                target["approved_projects_forecast"] = flt(target["approved_projects_forecast"] + amount, 2)
+            if _is_forecast_included_for_basis(stage, basis):
+                target["forecast_remaining"] = flt(target["forecast_remaining"] + amount, 2)
+
+    if group_by == "Cost Center" and scope in {"All", "Plafond"}:
+        for cost_center, plafond in _get_plafond_position_by_cost_center(filters).items():
+            target = grouped.setdefault(cost_center, _empty_position_row(cost_center))
+            target["plafond_total"] = plafond["plafond_total"]
+            target["plafond_consumed"] = plafond["plafond_consumed"]
+
+    out_rows = []
+    for row in grouped.values():
+        _finalize_position_row(row)
+        if filters.get("hide_zero_rows", 1) and not _position_row_has_amounts(row):
+            continue
+        out_rows.append(row)
+
+    out_rows.sort(key=lambda item: item.get("group_label") or "")
+    summary = _summarize_position_rows(out_rows)
+    chart = _build_position_chart(out_rows) if len(out_rows) <= 12 else None
+    return {
+        "rows": out_rows,
+        "summary": summary,
+        "chart": chart,
+        "meta": {"year": filters.year, "group_by": group_by, "basis": basis},
+    }
+
+
+def get_period_forecast_dataset(filters: dict) -> dict:
+    """Return monthly, quarterly, half-year, or annual actual and forecast rows."""
+    filters = _normalize_report_filters(filters)
+    year_int = _resolve_year_int(filters.year)
+    year_start, year_end = annualization.get_year_bounds(year_int)
+    rows = _query_report_economic_rows(filters, expense_kind="Ordinary", phases=("Actual", "Estimate", "Quote"))
+    actual_by_month: dict[datetime.date, float] = defaultdict(float)
+    forecast_by_month: dict[datetime.date, float] = defaultdict(float)
+    basis = filters.get("basis") or "Actual + Forecast"
+
+    for row in rows:
+        stage = _classify_project_stage(row.get("effective_project_state"))
+        if row.get("row_phase") == "Actual" and basis == "Forecast only":
+            continue
+        if row.get("row_phase") in {"Estimate", "Quote"} and basis == "Actual only":
+            continue
+        if row.get("row_phase") in {"Estimate", "Quote"} and not _is_forecast_included_for_basis(stage, basis):
+            continue
+        allocation = allocate_expense_row_to_months(row, year_start, year_end)
+        for month_start, amount in allocation.items():
+            if row.get("row_phase") == "Actual":
+                actual_by_month[month_start] += flt(amount, 6)
+            elif row.get("row_phase") in {"Estimate", "Quote"}:
+                forecast_by_month[month_start] += flt(amount, 6)
+
+    periods = _build_periods(year_start, year_end, filters.get("period") or "Monthly")
+    data = []
+    actual_cumulative = 0.0
+    forecast_cumulative = 0.0
+    previous_period_total = None
+    for label, month_starts in periods:
+        actual_amount = flt(sum(actual_by_month.get(month, 0) for month in month_starts), 2)
+        forecast_amount = flt(sum(forecast_by_month.get(month, 0) for month in month_starts), 2)
+        period_total = flt(actual_amount + forecast_amount, 2)
+        if filters.get("cumulative", 1):
+            actual_cumulative = flt(actual_cumulative + actual_amount, 2)
+            forecast_cumulative = flt(forecast_cumulative + forecast_amount, 2)
+        else:
+            actual_cumulative = actual_amount
+            forecast_cumulative = forecast_amount
+        period_delta = flt(period_total - previous_period_total, 2) if previous_period_total is not None else 0.0
+        previous_period_total = period_total
+        data.append(
+            {
+                "period_label": label,
+                "actual_amount": actual_amount,
+                "forecast_amount": forecast_amount,
+                "period_total": period_total,
+                "actual_cumulative": actual_cumulative,
+                "forecast_cumulative": forecast_cumulative,
+                "period_delta": period_delta,
+                "cumulative_delta": flt(forecast_cumulative - actual_cumulative, 2),
+            }
+        )
+
+    summary = {
+        "actual_total": flt(sum(row["actual_amount"] for row in data), 2),
+        "forecast_total": flt(sum(row["forecast_amount"] for row in data), 2),
+        "year_end_forecast": flt(sum(row["period_total"] for row in data), 2),
+    }
+    chart = {
+        "data": {
+            "labels": [row["period_label"] for row in data],
+            "datasets": [
+                {"name": _("Actual Cumulative"), "values": [row["actual_cumulative"] for row in data]},
+                {"name": _("Forecast Cumulative"), "values": [row["forecast_cumulative"] for row in data]},
+            ],
+        },
+        "type": "line",
+    }
+    return {"rows": data, "summary": summary, "chart": chart, "meta": {"year": str(year_int)}}
+
+
+def get_budget_variance_dataset(filters: dict) -> dict:
+    """Return budget, actual, forecast, and variance rows."""
+    filters = _normalize_report_filters(filters)
+    position = get_economic_position_dataset(
+        {
+            **filters,
+            "basis": _variance_basis_to_report_basis(filters.get("variance_basis")),
+            "hide_zero_rows": 0,
+            "show_only_exceptions": 0,
+        }
+    )
+    min_amount = flt(filters.get("min_variance_amount") or 0)
+    min_percent = flt(filters.get("min_variance_percent") or 0)
+    rows = []
+    for item in position["rows"]:
+        budget_amount = flt(item.get("available_budget"), 2)
+        forecast_amount = flt(item.get("year_end_forecast"), 2)
+        variance_amount = flt(forecast_amount - budget_amount, 2)
+        variance_percent = flt((variance_amount / budget_amount) * 100, 2) if budget_amount else (100.0 if variance_amount else 0.0)
+        if filters.get("only_variances", 1):
+            if abs(variance_amount) < min_amount and abs(variance_percent) < min_percent:
+                continue
+            if variance_amount > 0 and not filters.get("show_positive_variance", 1):
+                continue
+            if variance_amount < 0 and not filters.get("show_negative_variance", 1):
+                continue
+        rows.append(
+            {
+                "group_label": item.get("group_label"),
+                "budget_amount": budget_amount,
+                "actual_amount": flt(item.get("actual_total"), 2),
+                "forecast_amount": forecast_amount,
+                "variance_amount": variance_amount,
+                "variance_percent": variance_percent,
+                "main_driver": _variance_driver(item),
+                "status": _status_from_amounts(budget_amount, forecast_amount, flt(filters.get("warning_threshold_percent") or 85)),
+            }
+        )
+
+    summary = {
+        "budget_amount": flt(sum(row["budget_amount"] for row in rows), 2),
+        "actual_amount": flt(sum(row["actual_amount"] for row in rows), 2),
+        "forecast_amount": flt(sum(row["forecast_amount"] for row in rows), 2),
+        "variance_amount": flt(sum(row["variance_amount"] for row in rows), 2),
+        "variance_rows": len(rows),
+    }
+    chart = _build_variance_chart(rows) if len(rows) <= 12 else None
+    return {"rows": rows, "summary": summary, "chart": chart, "meta": {"year": filters.year}}
+
+
+def get_what_if_dataset(filters: dict) -> dict:
+    """Return read-only scenario calculations without writing to the database."""
+    filters = _normalize_report_filters(filters)
+    scenario = filters.get("scenario") or "Base"
+    _apply_scenario_defaults(filters, scenario)
+    rows = _query_report_economic_rows(filters, phases=("Actual", "Estimate", "Quote"))
+    components = []
+    actual_total = 0.0
+    base_forecast = 0.0
+    scenario_additions = 0.0
+
+    for row in rows:
+        amount = flt(row.get("amount_net"), 2)
+        funding = _classify_funding(row)
+        stage = _classify_project_stage(row.get("effective_project_state"))
+        if row.get("row_phase") == "Actual":
+            actual_total = flt(actual_total + amount, 2)
+            included = True
+            reason = "Actual"
+        else:
+            included, reason = _what_if_inclusion(filters, funding, stage)
+            if stage in {"No Project", PROJECT_STATE_APPROVED}:
+                base_forecast = flt(base_forecast + amount, 2)
+            if included:
+                scenario_additions = flt(scenario_additions + amount, 2)
+
+        components.append(
+            {
+                "included": 1 if included else 0,
+                "component_type": row.get("row_phase") or row.get("expense_kind"),
+                "source_document": row.get("expense"),
+                "source_row": row.get("row_name"),
+                "cost_center": row.get("cost_center"),
+                "project": row.get("effective_project"),
+                "project_stage": stage,
+                "vendor": row.get("vendor"),
+                "amount_net": amount,
+                "inclusion_reason": reason,
+            }
+        )
+
+    contingency_amount = flt(scenario_additions * flt(filters.get("contingency_percent") or 0) / 100, 2)
+    scenario_total = flt(actual_total + scenario_additions + contingency_amount, 2)
+    position = get_economic_position_dataset({**filters, "hide_zero_rows": 0})
+    available_budget = flt(position.get("summary", {}).get("available_budget"), 2)
+    summary_row = {
+        "scenario_label": scenario,
+        "actual_total": actual_total,
+        "base_forecast": base_forecast,
+        "scenario_additions": scenario_additions,
+        "contingency_amount": contingency_amount,
+        "scenario_total": scenario_total,
+        "remaining_or_over": flt(available_budget - scenario_total, 2),
+        "status": _status_from_amounts(available_budget, scenario_total, flt(filters.get("warning_threshold_percent") or 85)),
+    }
+    return {
+        "rows": components if filters.get("show_detail") else [summary_row],
+        "summary": summary_row,
+        "chart": None,
+        "meta": {"year": filters.year, "show_detail": int(filters.get("show_detail") or 0)},
+    }
+
+
+def get_economic_detail_dataset(filters: dict) -> dict:
+    """Return source economic rows for audit and drill-down."""
+    filters = _normalize_report_filters(filters)
+    active_only = not bool(filters.get("show_replaced_cancelled"))
+    phases = None if (filters.get("row_phase") in (None, "", "All")) else (filters.get("row_phase"),)
+    expense_kind = None if (filters.get("expense_kind") in (None, "", "All")) else filters.get("expense_kind")
+    rows = _query_report_economic_rows(filters, expense_kind=expense_kind, phases=phases, active_only=active_only)
+    funding_filter = filters.get("funding") or "All"
+    project_stage_filter = filters.get("project_stage") or "All"
+    data = []
+    for row in rows:
+        funding = _classify_funding(row)
+        stage = _classify_project_stage(row.get("effective_project_state"))
+        if funding_filter != "All" and funding_filter != funding:
+            continue
+        if project_stage_filter != "All" and project_stage_filter != stage:
+            continue
+        effective_date = _get_effective_row_date(row, filters.get("date_basis") or "Spend Date")
+        if filters.get("from_date") and effective_date and getdate(effective_date) < getdate(filters.get("from_date")):
+            continue
+        if filters.get("to_date") and effective_date and getdate(effective_date) > getdate(filters.get("to_date")):
+            continue
+        data.append(
+            {
+                "effective_date": effective_date,
+                "cost_center": row.get("cost_center"),
+                "source_type": row.get("expense_kind"),
+                "source_document": row.get("expense"),
+                "source_row": row.get("row_name"),
+                "description": row.get("row_description"),
+                "vendor": row.get("vendor"),
+                "project": row.get("effective_project"),
+                "project_stage": stage,
+                "contract": row.get("contract"),
+                "row_phase": row.get("row_phase"),
+                "funding": funding,
+                "amount_net": flt(row.get("amount_net"), 2),
+                "amount_vat": flt(row.get("amount_vat"), 2),
+                "amount_gross": flt(row.get("amount_gross"), 2),
+                "row_state": row.get("row_state"),
+            }
+        )
+    data.sort(key=lambda item: (item.get("cost_center") or "", item.get("effective_date") or "", item.get("source_document") or ""))
+    summary = {
+        "total_rows": len(data),
+        "amount_net": flt(sum(row["amount_net"] for row in data), 2),
+        "amount_vat": flt(sum(row["amount_vat"] for row in data), 2),
+        "amount_gross": flt(sum(row["amount_gross"] for row in data), 2),
+    }
+    return {"rows": data, "summary": summary, "chart": None, "meta": {"year": filters.year}}
+
+
+def get_year_comparison_dataset(filters: dict) -> dict:
+    """Return year A vs year B comparison rows."""
+    filters = frappe._dict(filters or {})
+    year_a = str(filters.get("year_a") or datetime.date.today().year - 1)
+    year_b = str(filters.get("year_b") or datetime.date.today().year)
+    group_by = filters.get("group_by") or "Cost Center"
+    basis = filters.get("basis") or "Year-end Forecast"
+    dataset_a = get_economic_position_dataset({"year": year_a, "group_by": group_by, "basis": _variance_basis_to_report_basis(basis), "hide_zero_rows": 0})
+    dataset_b = get_economic_position_dataset({"year": year_b, "group_by": group_by, "basis": _variance_basis_to_report_basis(basis), "hide_zero_rows": 0})
+    by_label_a = {row["group_label"]: row for row in dataset_a["rows"]}
+    by_label_b = {row["group_label"]: row for row in dataset_b["rows"]}
+    min_amount = flt(filters.get("min_delta_amount") or 0)
+    min_percent = flt(filters.get("min_delta_percent") or 0)
+    rows = []
+    for label in sorted(set(by_label_a) | set(by_label_b)):
+        amount_a = flt(by_label_a.get(label, {}).get("year_end_forecast"), 2)
+        amount_b = flt(by_label_b.get(label, {}).get("year_end_forecast"), 2)
+        delta_amount = flt(amount_b - amount_a, 2)
+        delta_percent = flt((delta_amount / amount_a) * 100, 2) if amount_a else (100.0 if amount_b else 0.0)
+        change_type = _change_type(amount_a, amount_b, delta_amount, min_amount, min_percent, delta_percent)
+        if filters.get("only_changed", 1) and change_type == "Unchanged":
+            continue
+        if change_type == "New" and not filters.get("show_new_items", 1):
+            continue
+        if change_type == "Removed" and not filters.get("show_removed_items", 1):
+            continue
+        rows.append(
+            {
+                "group_label": label,
+                "amount_a": amount_a,
+                "amount_b": amount_b,
+                "delta_amount": delta_amount,
+                "delta_percent": delta_percent,
+                "change_type": change_type,
+                "main_driver": change_type,
+            }
+        )
+    summary = {
+        "amount_a": flt(sum(row["amount_a"] for row in rows), 2),
+        "amount_b": flt(sum(row["amount_b"] for row in rows), 2),
+        "delta_amount": flt(sum(row["delta_amount"] for row in rows), 2),
+        "changed_rows": len(rows),
+    }
+    chart = _build_comparison_chart(rows) if len(rows) <= 12 else None
+    return {"rows": rows, "summary": summary, "chart": chart, "meta": {"year_a": year_a, "year_b": year_b}}
+
+
+def get_renewals_commitments_dataset(filters: dict) -> dict:
+    """Return renewal rows enriched with economic impact and recommended action."""
+    filters = _normalize_report_filters(filters)
+    from_date = getdate(filters.get("from_date") or datetime.date.today())
+    days = int(filters.get("days") or 90)
+    to_date = from_date + datetime.timedelta(days=days)
+    cost_centers = _get_cost_center_scope(filters.get("cost_center"), bool(filters.get("include_children", 1)))
+    contract_filters: dict = {}
+    if cost_centers:
+        contract_filters["cost_center"] = ["in", cost_centers]
+    if filters.get("auto_renew_only"):
+        contract_filters["auto_renew"] = 1
+
+    contracts = frappe.get_all(
+        "MPIT Contract",
+        filters=contract_filters,
+        fields=[
+            "name",
+            "description",
+            "vendor",
+            "cost_center",
+            "next_renewal_date",
+            "annual_amount_current_year",
+            "annual_amount_next_year",
+            "auto_renew",
+            "status",
+        ],
+        order_by="next_renewal_date asc, name asc",
+        limit=None,
+    )
+    rows = []
+    for contract in contracts:
+        renewal_date = contract.get("next_renewal_date")
+        if not renewal_date:
+            include = True
+        else:
+            renewal_date = getdate(renewal_date)
+            include = renewal_date <= to_date and (filters.get("include_past") or renewal_date >= from_date)
+        if not include:
+            continue
+        current_amount = flt(contract.get("annual_amount_current_year"), 2)
+        next_amount = flt(contract.get("annual_amount_next_year"), 2)
+        if current_amount < flt(filters.get("min_annual_amount") or 0) and next_amount < flt(filters.get("min_annual_amount") or 0):
+            continue
+        action = _recommended_renewal_action(contract, from_date)
+        if filters.get("action_status") not in (None, "", "All", action):
+            continue
+        days_to_renewal = (getdate(contract.get("next_renewal_date")) - from_date).days if contract.get("next_renewal_date") else None
+        rows.append(
+            {
+                "count": 1,
+                "contract": contract.name,
+                "title": contract.get("description"),
+                "vendor": contract.get("vendor"),
+                "cost_center": contract.get("cost_center"),
+                "next_renewal_date": contract.get("next_renewal_date"),
+                "days_to_renewal": days_to_renewal,
+                "annual_amount_current_year": current_amount,
+                "annual_amount_next_year": next_amount,
+                "auto_renew": int(contract.get("auto_renew") or 0),
+                "recommended_action": action,
+                "expired_count": 1 if action == "Expired" else 0,
+                "status": contract.get("status"),
+            }
+        )
+
+    summary = {
+        "renewal_count": len(rows),
+        "current_annual_amount": flt(sum(row["annual_amount_current_year"] for row in rows), 2),
+        "next_annual_amount": flt(sum(row["annual_amount_next_year"] for row in rows), 2),
+        "expired_count": len([row for row in rows if row["recommended_action"] == "Expired"]),
+    }
+    chart = None
+    return {"rows": rows, "summary": summary, "chart": chart, "meta": {"from_date": from_date, "to_date": to_date}}
+
+
+def _query_report_economic_rows(
+    filters: frappe._dict,
+    expense_kind: str | None = None,
+    phases: tuple[str, ...] | None = None,
+    active_only: bool = True,
+) -> list[dict]:
+    year_int = _resolve_year_int(filters.get("year"))
+    cost_centers = _get_cost_center_scope(filters.get("cost_center"), bool(filters.get("include_children", 1)))
+
+    # Query Builder cannot express the COALESCE project joins as readably here; this is a read-only aggregate source query.
+    sql = [
+        """
+        SELECT
+            e.name AS expense,
+            e.expense_kind,
+            e.expense_title,
+            e.year,
+            e.cost_center,
+            e.project,
+            e.contract,
+            e.uses_plafond,
+            e.plafond_expense,
+            e.is_extra,
+            COALESCE(e.project, contract_doc.project) AS effective_project,
+            COALESCE(project_direct.workflow_state, project_from_contract.workflow_state) AS effective_project_state,
+            r.name AS row_name,
+            r.idx AS row_idx,
+            r.row_state,
+            r.row_phase,
+            r.vendor,
+            r.row_description,
+            r.amount_net,
+            r.amount_vat,
+            r.amount_gross,
+            r.spend_date,
+            r.start_date,
+            r.end_date,
+            r.distribution
+        FROM `tabMPIT Expense Row` r
+        INNER JOIN `tabMPIT Expense` e ON e.name = r.parent
+        LEFT JOIN `tabMPIT Contract` contract_doc ON contract_doc.name = e.contract
+        LEFT JOIN `tabMPIT Project` project_direct ON project_direct.name = e.project
+        LEFT JOIN `tabMPIT Project` project_from_contract ON project_from_contract.name = contract_doc.project
+        WHERE e.year = %(year)s
+          AND r.parenttype = 'MPIT Expense'
+          AND r.parentfield = 'rows'
+        """
+    ]
+    params: dict = {"year": str(year_int)}
+    if active_only:
+        sql.append("AND r.row_state = 'Active'")
+    if expense_kind:
+        sql.append("AND e.expense_kind = %(expense_kind)s")
+        params["expense_kind"] = expense_kind
+    if phases:
+        sql.append("AND r.row_phase IN %(phases)s")
+        params["phases"] = phases
+    if cost_centers:
+        sql.append("AND e.cost_center IN %(cost_centers)s")
+        params["cost_centers"] = tuple(cost_centers)
+    if filters.get("project"):
+        sql.append("AND COALESCE(e.project, contract_doc.project) = %(project)s")
+        params["project"] = filters.get("project")
+    if filters.get("contract"):
+        sql.append("AND e.contract = %(contract)s")
+        params["contract"] = filters.get("contract")
+    if filters.get("vendor"):
+        sql.append("AND r.vendor = %(vendor)s")
+        params["vendor"] = filters.get("vendor")
+    sql.append("ORDER BY e.cost_center asc, e.name asc, r.idx asc")
+    return frappe.db.sql("\n".join(sql), params, as_dict=True)
+
+
+def _get_plafond_position_by_cost_center(filters: frappe._dict) -> dict[str, dict]:
+    """Aggregate allocation and consumption on the plafond owner's cost center."""
+    year_int = _resolve_year_int(filters.get("year"))
+    cost_centers = _get_cost_center_scope(
+        filters.get("cost_center"),
+        bool(filters.get("include_children", 1)),
+    )
+    params: dict = {"year": str(year_int)}
+    cost_center_clause = ""
+    if cost_centers:
+        cost_center_clause = "AND p.cost_center IN %(cost_centers)s"
+        params["cost_centers"] = tuple(cost_centers)
+
+    allocations = frappe.db.sql(
+        f"""
+        SELECT
+            p.cost_center,
+            COALESCE(SUM(r.amount_net), 0) AS plafond_total
+        FROM `tabMPIT Expense` p
+        INNER JOIN `tabMPIT Expense Row` r ON r.parent = p.name
+        WHERE p.year = %(year)s
+          AND p.expense_kind = 'Plafond'
+          AND r.parenttype = 'MPIT Expense'
+          AND r.parentfield = 'rows'
+          AND r.row_state = 'Active'
+          {cost_center_clause}
+        GROUP BY p.cost_center
+        """,
+        params,
+        as_dict=True,
+    )
+    consumptions = frappe.db.sql(
+        f"""
+        SELECT
+            p.cost_center,
+            COALESCE(SUM(r.amount_net), 0) AS plafond_consumed
+        FROM `tabMPIT Expense` p
+        INNER JOIN `tabMPIT Expense` e ON e.plafond_expense = p.name
+        INNER JOIN `tabMPIT Expense Row` r ON r.parent = e.name
+        WHERE p.year = %(year)s
+          AND p.expense_kind = 'Plafond'
+          AND e.year = %(year)s
+          AND e.expense_kind = 'Ordinary'
+          AND e.uses_plafond = 1
+          AND r.parenttype = 'MPIT Expense'
+          AND r.parentfield = 'rows'
+          AND r.row_state = 'Active'
+          AND r.row_phase = 'Actual'
+          {cost_center_clause}
+        GROUP BY p.cost_center
+        """,
+        params,
+        as_dict=True,
+    )
+
+    out: dict[str, dict] = {}
+    for row in allocations:
+        out[row.cost_center] = {
+            "plafond_total": flt(row.plafond_total, 2),
+            "plafond_consumed": 0.0,
+        }
+    for row in consumptions:
+        target = out.setdefault(
+            row.cost_center,
+            {"plafond_total": 0.0, "plafond_consumed": 0.0},
+        )
+        target["plafond_consumed"] = flt(row.plafond_consumed, 2)
+    return out
+
+
+def _get_report_group(row: dict, group_by: str) -> tuple[str, str]:
+    if group_by == "Vendor":
+        value = row.get("vendor") or "No Vendor"
+    elif group_by == "Project":
+        value = row.get("effective_project") or "No Project"
+    elif group_by == "Project Stage":
+        value = _classify_project_stage(row.get("effective_project_state"))
+    elif group_by == "Funding":
+        value = _classify_funding(row)
+    elif group_by == "Contract":
+        value = row.get("contract") or "No Contract"
+    else:
+        value = row.get("cost_center") or "No Cost Center"
+    return value, value
+
+
+def _empty_position_row(label: str) -> dict:
+    return {
+        "group_label": label,
+        "operating_budget": 0.0,
+        "plafond_total": 0.0,
+        "plafond_consumed": 0.0,
+        "actual_standard": 0.0,
+        "actual_on_plafond": 0.0,
+        "actual_extra": 0.0,
+        "actual_total": 0.0,
+        "forecast_remaining": 0.0,
+        "approved_projects_forecast": 0.0,
+        "year_end_forecast": 0.0,
+        "plafond_remaining": 0.0,
+        "plafond_over": 0.0,
+        "remaining_or_over": 0.0,
+        "usage_percent": 0.0,
+        "available_budget": 0.0,
+    }
+
+
+def _finalize_position_row(row: dict) -> None:
+    row["available_budget"] = flt(row.get("operating_budget", 0) + row.get("plafond_total", 0), 2)
+    row["year_end_forecast"] = flt(row.get("actual_total", 0) + row.get("forecast_remaining", 0), 2)
+    row["plafond_remaining"] = flt(row.get("plafond_total", 0) - row.get("plafond_consumed", 0), 2)
+    row["plafond_over"] = flt(max(row.get("plafond_consumed", 0) - row.get("plafond_total", 0), 0), 2)
+    row["remaining_or_over"] = flt(row.get("available_budget", 0) - row.get("year_end_forecast", 0), 2)
+    row["usage_percent"] = (
+        flt((row["actual_total"] / row["year_end_forecast"]) * 100, 2)
+        if row["year_end_forecast"]
+        else 0.0
+    )
+
+
+def _position_row_has_amounts(row: dict) -> bool:
+    fields = ("available_budget", "actual_total", "forecast_remaining", "plafond_total", "year_end_forecast")
+    return any(flt(row.get(field), 2) for field in fields)
+
+
+def _summarize_position_rows(rows: list[dict]) -> dict:
+    fields = [
+        "operating_budget",
+        "plafond_total",
+        "plafond_consumed",
+        "actual_standard",
+        "actual_on_plafond",
+        "actual_extra",
+        "actual_total",
+        "forecast_remaining",
+        "approved_projects_forecast",
+        "year_end_forecast",
+        "plafond_remaining",
+        "plafond_over",
+        "remaining_or_over",
+        "available_budget",
+    ]
+    summary = {field: flt(sum(row.get(field, 0) for row in rows), 2) for field in fields}
+    summary["usage_percent"] = (
+        flt((summary["actual_total"] / summary["year_end_forecast"]) * 100, 2)
+        if summary["year_end_forecast"]
+        else 0.0
+    )
+    return summary
+
+
+def _build_position_chart(rows: list[dict]) -> dict:
+    return {
+        "data": {
+            "labels": [row["group_label"] for row in rows],
+            "datasets": [
+                {"name": _("Actual Total"), "values": [row["actual_total"] for row in rows]},
+                {"name": _("Year-end Forecast"), "values": [row["year_end_forecast"] for row in rows]},
+            ],
+        },
+        "type": "bar",
+        "colors": ["#2563EB", "#F59E0B"],
+        "fieldtype": "Currency",
+    }
+
+
+def _build_variance_chart(rows: list[dict]) -> dict:
+    return {
+        "data": {
+            "labels": [row["group_label"] for row in rows],
+            "datasets": [{"name": _("Variance Amount"), "values": [row["variance_amount"] for row in rows]}],
+        },
+        "type": "bar",
+    }
+
+
+def _build_comparison_chart(rows: list[dict]) -> dict:
+    return {
+        "data": {
+            "labels": [row["group_label"] for row in rows],
+            "datasets": [
+                {"name": _("Year A"), "values": [row["amount_a"] for row in rows]},
+                {"name": _("Year B"), "values": [row["amount_b"] for row in rows]},
+            ],
+        },
+        "type": "bar",
+    }
+
+
+def _is_forecast_included_for_basis(stage: str, basis: str) -> bool:
+    if basis == "Forecast only":
+        return stage in {"No Project", PROJECT_STATE_APPROVED, PROJECT_STATE_PROPOSED}
+    if basis in {"Actual + Forecast", "Year-end Forecast", "Committed"}:
+        return stage in {"No Project", PROJECT_STATE_APPROVED, PROJECT_STATE_PROPOSED}
+    if basis == "Actual + Approved Projects":
+        return stage in {"No Project", PROJECT_STATE_APPROVED}
+    if basis == "Actual + Proposed":
+        return stage in {"No Project", PROJECT_STATE_APPROVED, PROJECT_STATE_PROPOSED}
+    if basis == "Full Planning":
+        return stage not in {PROJECT_STATE_REJECTED, PROJECT_STATE_DEFERRED}
+    if basis == "Actual only":
+        return False
+    return stage in {"No Project", PROJECT_STATE_APPROVED, PROJECT_STATE_PROPOSED}
+
+
+def _build_periods(
+    year_start: datetime.date,
+    year_end: datetime.date,
+    period: str,
+) -> list[tuple[str, list[datetime.date]]]:
+    month_starts = _month_periods_touched(year_start, year_end)
+    if period == "Annual":
+        return [(str(year_start.year), month_starts)]
+    if period == "Half-year":
+        return [
+            ("H1", [month for month in month_starts if month.month <= 6]),
+            ("H2", [month for month in month_starts if month.month >= 7]),
+        ]
+    if period == "Quarterly":
+        return [
+            (f"Q{quarter}", [month for month in month_starts if ((month.month - 1) // 3) + 1 == quarter])
+            for quarter in range(1, 5)
+        ]
+    return [(_format_month_label(month, year_start, year_end), [month]) for month in month_starts]
+
+
+def _variance_basis_to_report_basis(value: str | None) -> str:
+    if value == "Actual":
+        return "Actual only"
+    if value == "Full Planning":
+        return "Full Planning"
+    return "Actual + Forecast"
+
+
+def _variance_driver(row: dict) -> str:
+    candidates = [
+        ("Actual", abs(flt(row.get("actual_total"), 2))),
+        ("Forecast", abs(flt(row.get("forecast_remaining"), 2))),
+        ("Plafond", abs(flt(row.get("actual_on_plafond"), 2))),
+        ("Extra", abs(flt(row.get("actual_extra"), 2))),
+    ]
+    return max(candidates, key=lambda item: item[1])[0]
+
+
+def _apply_scenario_defaults(filters: frappe._dict, scenario: str) -> None:
+    if scenario == "Actual Only":
+        filters.include_approved_projects = 0
+        filters.include_proposed_projects = 0
+        filters.include_ideas = 0
+        filters.include_extra = 0
+        filters.include_plafond = 0
+    elif scenario == "Approved Only":
+        filters.include_approved_projects = 1
+        filters.include_proposed_projects = 0
+        filters.include_ideas = 0
+    elif scenario == "Proposals":
+        filters.include_approved_projects = 1
+        filters.include_proposed_projects = 1
+        filters.include_ideas = 0
+    elif scenario == "Maximum":
+        filters.include_approved_projects = 1
+        filters.include_proposed_projects = 1
+        filters.include_ideas = 1
+        filters.include_extra = 1
+        filters.include_plafond = 1
+    elif scenario == "Conservative":
+        filters.include_approved_projects = 1
+        filters.include_proposed_projects = 0
+        filters.include_ideas = 0
+        filters.contingency_percent = filters.get("contingency_percent") or 10
+
+
+def _what_if_inclusion(filters: frappe._dict, funding: str, stage: str) -> tuple[bool, str]:
+    if funding == "Extra" and not filters.get("include_extra", 1):
+        return False, "Extra excluded"
+    if funding == "Plafond" and not filters.get("include_plafond", 1):
+        return False, "Plafond excluded"
+    if stage == PROJECT_STATE_APPROVED:
+        return bool(filters.get("include_approved_projects", 1)), "Approved project"
+    if stage == PROJECT_STATE_PROPOSED:
+        return bool(filters.get("include_proposed_projects")), "Proposed project"
+    if stage == PROJECT_STATE_IDEA:
+        return bool(filters.get("include_ideas")), "Idea project"
+    if stage in {PROJECT_STATE_DEFERRED, PROJECT_STATE_REJECTED}:
+        return False, stage
+    return True, "Base"
+
+
+def _get_effective_row_date(row: dict, date_basis: str):
+    if date_basis == "Start Date":
+        return row.get("start_date") or row.get("spend_date")
+    if date_basis == "End Date":
+        return row.get("end_date") or row.get("spend_date")
+    if date_basis == "Effective Period":
+        return row.get("spend_date") or row.get("start_date") or row.get("end_date")
+    return row.get("spend_date") or row.get("start_date") or row.get("end_date")
+
+
+def _change_type(
+    amount_a: float,
+    amount_b: float,
+    delta_amount: float,
+    min_amount: float,
+    min_percent: float,
+    delta_percent: float,
+) -> str:
+    if amount_a == 0 and amount_b > 0:
+        return "New"
+    if amount_a > 0 and amount_b == 0:
+        return "Removed"
+    if abs(delta_amount) < min_amount and abs(delta_percent) < min_percent:
+        return "Unchanged"
+    if delta_amount > 0:
+        return "Increased"
+    if delta_amount < 0:
+        return "Reduced"
+    return "Unchanged"
+
+
+def _recommended_renewal_action(contract: dict, today: datetime.date) -> str:
+    renewal_date = contract.get("next_renewal_date")
+    current_amount = flt(contract.get("annual_amount_current_year"), 2)
+    next_amount = flt(contract.get("annual_amount_next_year"), 2)
+    if renewal_date and getdate(renewal_date) < today:
+        return "Expired"
+    if not renewal_date or not current_amount or not next_amount:
+        return "Review"
+    if next_amount > current_amount * 1.1:
+        return "Renegotiate"
+    if contract.get("auto_renew"):
+        return "Renew"
+    return "Review"
 
 
 def _resolve_year_int(year: str | int | None) -> int:

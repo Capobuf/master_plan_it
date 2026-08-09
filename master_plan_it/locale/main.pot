@@ -35,10 +35,10 @@ msgstr ""
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:425
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:449
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:50
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:29
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:38
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:47
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:252
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.py:29
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.py:38
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.py:47
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:252
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:33
 msgid "Actual"
 msgstr ""
@@ -57,7 +57,7 @@ msgstr ""
 
 #. Label of the actual_extra (Currency) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:394
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:394
 msgid "Actual Extra"
 msgstr ""
 
@@ -70,7 +70,7 @@ msgstr ""
 #. Label of the actual_on_plafond (Currency) field in DocType 'MPIT Cost
 #. Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:388
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:388
 msgid "Actual On Plafond"
 msgstr ""
 
@@ -86,7 +86,7 @@ msgstr ""
 
 #. Label of the actual_standard (Currency) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:382
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:382
 msgid "Actual Standard"
 msgstr ""
 
@@ -98,9 +98,9 @@ msgstr ""
 #. Label of a number card in the Master Plan IT Workspace
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:396
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:356
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:209
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:400
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:356
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:209
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:400
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:361
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 msgid "Actual Total"
@@ -179,12 +179,12 @@ msgstr ""
 
 #. Label of the amount_net (Currency) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:682
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:209
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:682
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:209
 msgid "Amount Net"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:205
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:205
 msgid "Amount Net Total"
 msgstr ""
 
@@ -229,8 +229,8 @@ msgstr ""
 msgid "Annual Amount (Next Year)"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:666
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:215
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:666
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:215
 msgid "Annual Contribution"
 msgstr ""
 
@@ -240,18 +240,18 @@ msgstr ""
 msgid "Annual Summary"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:204
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:648
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:694
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:230
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:204
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:648
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:694
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:230
 msgid "Annual Total"
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:372
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:340
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:567
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:340
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:567
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:341
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:399
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:399
 msgid "Applied Filters"
 msgstr ""
 
@@ -262,8 +262,8 @@ msgid "Approved"
 msgstr ""
 
 #: master_plan_it/master_plan_it/financial_engine.py:573
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:258
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:364
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:258
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:364
 msgid "Approved Budget"
 msgstr ""
 
@@ -288,13 +288,13 @@ msgstr ""
 msgid "Attachments"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:466
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:26
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:466
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:26
 msgid "Auto Renew"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:159
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:35
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:159
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.js:35
 msgid "Auto Renew Only"
 msgstr ""
 
@@ -360,7 +360,7 @@ msgstr ""
 msgid "Change Year"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:50
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:50
 msgid "Choose whether the report shows actual budget, forecast, or actual values enriched with estimates and quotes."
 msgstr ""
 
@@ -421,13 +421,13 @@ msgstr ""
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:435
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:29
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:47
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:138
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:23
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:573
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:672
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:100
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:152
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:20
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:138
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.js:23
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:573
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:672
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:100
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:152
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:20
 msgid "Contract"
 msgstr ""
 
@@ -473,8 +473,8 @@ msgstr ""
 #. Label of a Workspace Sidebar Item
 #: master_plan_it/master_plan_it/dashboard_chart_source/mpit_contracts_by_status/mpit_contracts_by_status.py:51
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project_dashboard.py:13
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:414
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:439
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:414
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:439
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 #: master_plan_it/workspace_sidebar/master_plan_it.json
 msgid "Contracts"
@@ -485,7 +485,7 @@ msgstr ""
 msgid "Optional contract related to this expense. The expense keeps its own cost center; the contract is a logical reference."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:388
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:388
 msgid "Contracts grouped by renewal urgency"
 msgstr ""
 
@@ -507,23 +507,23 @@ msgstr ""
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:438
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:11
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:45
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:136
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:11
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:570
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:70
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:60
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:126
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:136
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.js:11
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:570
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:70
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:60
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:126
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:139
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:11
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:31
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:154
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:450
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:5
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:23
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:154
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:450
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.js:5
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:23
 msgid "Cost Center"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:94
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:94
 msgid "Cost Center / Item"
 msgstr ""
 
@@ -548,14 +548,14 @@ msgstr ""
 msgid "Cost Center {0} does not exist."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:126
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:126
 msgid "Cost Center {0} is missing tree bounds (lft/rgt)."
 msgstr ""
 
 #. Label of a Link in the Master Plan IT Workspace
 #. Label of a Workspace Sidebar Item
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:388
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:203
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:203
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 #: master_plan_it/workspace_sidebar/master_plan_it.json
 msgid "Cost Centers"
@@ -589,11 +589,11 @@ msgstr ""
 msgid "Current Term Monthly Net"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:460
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:460
 msgid "Days"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:25
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:25
 msgid "Days To Renewal"
 msgstr ""
 
@@ -631,20 +631,20 @@ msgstr ""
 msgid "Deferred"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:30
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:48
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.py:30
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.py:48
 msgid "Delta"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:360
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:360
 msgid "Delta Total"
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:367
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:335
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:562
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:335
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:562
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:336
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:394
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:394
 msgid "Density"
 msgstr ""
 
@@ -777,8 +777,8 @@ msgstr ""
 msgid "Expense Kind must be Ordinary or Plafond."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:572
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:89
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:572
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:89
 msgid "Expense Phase"
 msgstr ""
 
@@ -827,9 +827,9 @@ msgstr ""
 msgid "Expenses Report"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:80
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:418
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:92
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:80
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:418
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:92
 msgid "Expired"
 msgstr ""
 
@@ -847,7 +847,7 @@ msgstr ""
 #. Label of the is_extra (Check) field in DocType 'MPIT Expense'
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:60
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:300
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:300
 msgid "Extra"
 msgstr ""
 
@@ -855,7 +855,7 @@ msgstr ""
 msgid "Extra: {0}"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:111
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:111
 msgid "Filters by effective project context for expense rows, including contract-linked rows."
 msgstr ""
 
@@ -887,15 +887,15 @@ msgstr ""
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:424
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:448
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:49
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:28
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:37
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:46
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:246
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.py:28
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.py:37
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.py:46
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:246
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:32
 msgid "Forecast"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:346
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:346
 msgid "Forecast Estimate"
 msgstr ""
 
@@ -907,7 +907,7 @@ msgstr ""
 msgid "Forecast Net"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:352
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:352
 msgid "Forecast Quote"
 msgstr ""
 
@@ -915,10 +915,10 @@ msgstr ""
 #. Label of a number card in the Master Plan IT Workspace
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:392
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:352
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:208
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:696
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:358
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:352
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:208
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:696
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:358
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:357
 #: master_plan_it/master_plan_it/workspace/master_plan_it/master_plan_it.json
 msgid "Forecast Total"
@@ -935,8 +935,8 @@ msgstr ""
 
 #. Label of the from_date (Date) field in DocType 'MPIT Contract Term'
 #: master_plan_it/master_plan_it/doctype/mpit_contract_term/mpit_contract_term.json
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:157
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:24
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:157
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.js:24
 msgid "From Date"
 msgstr ""
 
@@ -944,8 +944,8 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:432
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:48
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:676
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:185
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:676
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:185
 msgid "Funding"
 msgstr ""
 
@@ -956,10 +956,10 @@ msgid "General Defaults"
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:364
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:332
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:559
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:332
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:559
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:333
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:391
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:391
 msgid "Generated"
 msgstr ""
 
@@ -989,8 +989,8 @@ msgid "Idea"
 msgstr ""
 
 #: master_plan_it/master_plan_it/financial_engine.py:577
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:270
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:376
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:270
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:376
 msgid "Ideas"
 msgstr ""
 
@@ -1009,13 +1009,13 @@ msgstr ""
 msgid "If set, Amount is calculated as Qty × Unit Price."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:155
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:11
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:155
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.js:11
 msgid "Include Child Cost Centers"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:158
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:29
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:158
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.js:29
 msgid "Include Past"
 msgstr ""
 
@@ -1045,7 +1045,7 @@ msgstr ""
 msgid "Kind"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:57
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:57
 msgid "Layout"
 msgstr ""
 
@@ -1054,11 +1054,11 @@ msgstr ""
 msgid "Left"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:82
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:82
 msgid "Limits the report to a specific economic area without changing the underlying budget rules."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:202
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:202
 msgid "Lines"
 msgstr ""
 
@@ -1101,15 +1101,15 @@ msgid "MPIT Expenses"
 msgstr ""
 
 #. Name of a report
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:328
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.json
-msgid "MPIT Monthly Plan"
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:328
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.json
+msgid "MPIT Year End Forecast"
 msgstr ""
 
 #. Name of a report
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:555
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.json
-msgid "MPIT Overview"
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:555
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.json
+msgid "MPIT Economic Position"
 msgstr ""
 
 #. Name of a DocType
@@ -1124,9 +1124,9 @@ msgid "MPIT Project Forecast vs Actual"
 msgstr ""
 
 #. Name of a report
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:387
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.json
-msgid "MPIT Renewals Window"
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:387
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.json
+msgid "MPIT Renewals And Commitments"
 msgstr ""
 
 #. Name of a DocType
@@ -1183,11 +1183,11 @@ msgstr ""
 msgid "Master Plan IT"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:556
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:556
 msgid "Mode"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.py:27
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.py:27
 msgid "Month"
 msgstr ""
 
@@ -1222,11 +1222,11 @@ msgstr ""
 msgid "Monthly amounts are recurring monthly values; Annual amounts are divided by 12 for monthly equivalents."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:329
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:329
 msgid "Monthly financial sheet: forecast vs actual"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:364
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:364
 msgid "Months"
 msgstr ""
 
@@ -1269,26 +1269,26 @@ msgstr ""
 msgid "New Project"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:156
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:18
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:156
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.js:18
 msgid "Next N Days"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:459
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:459
 msgid "Next Renewal"
 msgstr ""
 
 #. Label of the next_renewal_date (Date) field in DocType 'MPIT Contract'
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:24
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:24
 msgid "Next Renewal Date"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:88
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:125
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:88
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:125
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:88
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:405
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:466
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:405
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:466
 msgid "No"
 msgstr ""
 
@@ -1302,19 +1302,19 @@ msgid "No active MPIT Year covers today ({0})."
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:402
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:397
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:618
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:640
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:397
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:618
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:640
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:398
 msgid "No data available"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:432
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:432
 msgid "No renewals in this window"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:83
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:426
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:83
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:426
 msgid "Normal"
 msgstr ""
 
@@ -1408,20 +1408,20 @@ msgid "Ordinary rows require a valid phase: Estimate, Quote, or Actual."
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:366
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:334
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:561
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:334
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:561
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:335
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:393
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:393
 msgid "Orientation"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:424
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:424
 msgid "Over"
 msgstr ""
 
 #. Label of the plafond_over (Currency) field in DocType 'MPIT Cost Center'
 #: master_plan_it/master_plan_it/doctype/mpit_cost_center/mpit_cost_center.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:294
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:294
 msgid "Over Plafond"
 msgstr ""
 
@@ -1455,22 +1455,22 @@ msgstr ""
 msgid "Parent cost center in the native Frappe tree. Group summaries include descendant cost centers."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:678
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:678
 msgid "Period"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:197
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:197
 msgid "Period End"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:191
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:191
 msgid "Period Start"
 msgstr ""
 
 #. Label of the row_phase (Select) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:675
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:179
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:675
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:179
 msgid "Phase"
 msgstr ""
 
@@ -1479,12 +1479,12 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 #: master_plan_it/master_plan_it/financial_engine.py:591
 #: master_plan_it/master_plan_it/financial_engine.py:742
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:282
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:406
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:282
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:406
 msgid "Plafond"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:412
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:412
 msgid "Plafond Consumed"
 msgstr ""
 
@@ -1573,26 +1573,26 @@ msgid "Prefix for Project document naming series."
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:49
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:43
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:145
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.js:43
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:145
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:31
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:55
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.js:55
 msgid "Print Density"
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:42
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:36
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:138
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.js:36
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:138
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:24
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:48
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.js:48
 msgid "Print Orientation"
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:35
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:29
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:131
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.js:29
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:131
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:17
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:41
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.js:41
 msgid "Print Profile"
 msgstr ""
 
@@ -1606,10 +1606,10 @@ msgid "Printed on"
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:365
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:333
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:560
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:333
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:560
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:334
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:392
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:392
 msgid "Profile"
 msgstr ""
 
@@ -1622,17 +1622,17 @@ msgstr ""
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:434
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:23
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:46
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:137
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:17
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:574
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:673
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:107
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:159
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:137
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.js:17
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:574
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:673
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:107
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:159
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:29
 msgid "Project"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:166
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:166
 msgid "Project Bucket"
 msgstr ""
 
@@ -1681,8 +1681,8 @@ msgid "Projects are decision contexts; they do not create independent budget tot
 msgstr ""
 
 #: master_plan_it/master_plan_it/financial_engine.py:575
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:264
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:370
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:264
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:370
 msgid "Proposals"
 msgstr ""
 
@@ -1761,9 +1761,9 @@ msgid "Rejected"
 msgstr ""
 
 #: master_plan_it/master_plan_it/dashboard_chart_source/mpit_plafond_usage_by_cost_center/mpit_plafond_usage_by_cost_center.py:30
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:210
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:288
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:418
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:210
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:288
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:418
 msgid "Remaining"
 msgstr ""
 
@@ -1787,7 +1787,7 @@ msgstr ""
 msgid "Renewal Window Days"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:111
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:111
 msgid "Renewals"
 msgstr ""
 
@@ -1854,12 +1854,12 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_expense/mpit_expense.json
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:410
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:447
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:423
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:207
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:647
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:692
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:423
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:207
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:647
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:692
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:424
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:476
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:476
 msgid "Rows"
 msgstr ""
 
@@ -1867,8 +1867,8 @@ msgstr ""
 msgid "Rows without Spend Date require Start Date, End Date, and Distribution."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:571
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:78
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:571
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:78
 msgid "Section Scope"
 msgstr ""
 
@@ -1877,7 +1877,7 @@ msgstr ""
 msgid "Select Year"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:61
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:61
 msgid "Select how the report is displayed: summary, build-up, or detailed lines."
 msgstr ""
 
@@ -1910,28 +1910,28 @@ msgstr ""
 msgid "Show Attachments in Print"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:576
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:122
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:576
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:122
 msgid "Show Zero Rows"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:125
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:125
 msgid "Show rows with zero value for audit and troubleshooting. Disable for normal reading."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:82
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:82
 msgid "Soon"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:139
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:139
 msgid "Source Document"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:145
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:145
 msgid "Source Row"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:133
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:133
 msgid "Source Type"
 msgstr ""
 
@@ -1943,13 +1943,13 @@ msgstr ""
 
 #. Label of the spend_date (Date) field in DocType 'MPIT Expense Row'
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:679
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:203
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:679
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:203
 msgid "Spend Date"
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:62
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:276
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:276
 msgid "Standard"
 msgstr ""
 
@@ -1984,8 +1984,8 @@ msgid "Start date of this contract economic period."
 msgstr ""
 
 #: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:53
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:454
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:27
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:454
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:27
 msgid "Status"
 msgstr ""
 
@@ -1996,7 +1996,7 @@ msgstr ""
 msgid "Summary"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:59
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:59
 msgid "Build-up"
 msgstr ""
 
@@ -2060,7 +2060,7 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_project/mpit_project.json
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:42
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.py:30
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:21
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:21
 msgid "Title"
 msgstr ""
 
@@ -2093,7 +2093,7 @@ msgstr ""
 msgid "Total Gross"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:224
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:224
 msgid "Total Lines"
 msgstr ""
 
@@ -2110,14 +2110,14 @@ msgstr ""
 msgid "Total VAT"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:407
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:628
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:407
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:628
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:408
 msgid "Totals"
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:93
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:232
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:232
 msgid "Unassigned Cost Center"
 msgstr ""
 
@@ -2131,7 +2131,7 @@ msgstr ""
 msgid "Unknown"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:91
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:91
 msgid "Upcoming (<= {0} days)"
 msgstr ""
 
@@ -2141,11 +2141,11 @@ msgstr ""
 msgid "Upload supporting documents for this variation (optional)."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:81
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:81
 msgid "Urgent"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:422
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:422
 msgid "Urgent + Soon"
 msgstr ""
 
@@ -2203,12 +2203,12 @@ msgstr ""
 #: master_plan_it/master_plan_it/doctype/mpit_contract/mpit_contract.json
 #: master_plan_it/master_plan_it/doctype/mpit_expense_row/mpit_expense_row.json
 #: master_plan_it/master_plan_it/print_format/mpit_project_professional/mpit_project_professional.html:129
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:575
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:662
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:115
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py:172
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:449
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.py:22
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:575
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:662
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:115
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py:172
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:449
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.py:22
 msgid "Vendor"
 msgstr ""
 
@@ -2236,15 +2236,15 @@ msgstr ""
 msgid "Vendors"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:46
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:46
 msgid "Visualization"
 msgstr ""
 
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:37
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:31
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:80
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.js:31
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:80
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:19
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.js:43
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.js:43
 msgid "All"
 msgstr ""
 
@@ -2274,10 +2274,10 @@ msgstr ""
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.html:426
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.js:5
 #: master_plan_it/master_plan_it/report/mpit_expenses/mpit_expenses.py:44
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:135
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.js:5
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:569
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js:38
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:135
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.js:5
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:569
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js:38
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:138
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.js:5
 msgid "Year"
@@ -2294,12 +2294,12 @@ msgstr ""
 msgid "Years"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_monthly_plan/mpit_monthly_plan.html:88
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:125
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html:576
+#: master_plan_it/master_plan_it/report/mpit_year_end_forecast/mpit_year_end_forecast.html:88
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:125
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html:576
 #: master_plan_it/master_plan_it/report/mpit_project_forecast_vs_actual/mpit_project_forecast_vs_actual.html:88
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:405
-#: master_plan_it/master_plan_it/report/mpit_renewals_window/mpit_renewals_window.html:466
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:405
+#: master_plan_it/master_plan_it/report/mpit_renewals_and_commitments/mpit_renewals_and_commitments.html:466
 msgid "Yes"
 msgstr ""
 
@@ -2345,293 +2345,355 @@ msgstr ""
 msgid "{0} must be inside the selected year."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "IT Economic Overview"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Budget, actual spend, forecasts and plafond"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Financial View"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Report View"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Executive Summary"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Budget Build-up"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Detailed Lines"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Auto"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Portrait"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Landscape"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Compact"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Ultra"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Actual Spend"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Forecast Budget"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Actual Spend with Estimates and Quotes"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
 msgid "Estimates"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
 msgid "Quotes"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Approved Projects"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Proposed Projects"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Ideas Outside Budget"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
 msgid "Ordinary Actual Spend"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
 msgid "Actual Spend On Plafond"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
 msgid "Extra Budget"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.py
+msgid "Forecast Remaining"
+msgstr ""
+
+msgid "Year-end Forecast"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
 msgid "Consumed Plafond"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Budget approval note"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "This document summarizes the IT economic position using data recorded in Master Plan IT. The approved budget is the printed PDF version shared and approved during the meeting."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Financial Legend"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Actual rows already consumed in the selected year, including contract-generated expenses."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Estimates and quotes included by the selected financial view."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Forecast values linked to approved projects; this is not the official approved PDF budget."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Forecast values linked to proposed projects and useful for meeting discussion."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Tracked ideas that remain outside the main budget totals."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Available plafond after consumed plafond."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Amount exceeding available plafond."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Meeting approval"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Meeting notes"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Approved by"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Approval date"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Signature"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Generated by"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
 msgid "Choose whether to show actual spend, forecast values, or actual spend enriched with estimates and quotes."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
 msgid "Select the executive summary, budget build-up, or detailed source lines."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
 msgid "Controls how many columns are printed in the PDF."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
 msgid "Controls the PDF page orientation. Auto selects the safer orientation for the selected profile."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.js
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
 msgid "Controls PDF table spacing without changing report values."
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Centro di costo"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Effettivo"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Previsto"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Approvati"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Proposte"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Idee"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Consumato"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Residuo"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Sforamento"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Spesa/Riga"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Fornitore"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Contratto"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Progetto"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Fase"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Copertura"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Periodo/Data"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Contributo annuo"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Importo netto"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Righe"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Centri di costo"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Budget previsto"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Spesa effettiva"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Plafond residuo"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Sforamento plafond"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Totale annuale"
 msgstr ""
 
-#: master_plan_it/master_plan_it/report/mpit_overview/mpit_overview.html
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.html
 msgid "Totale importo netto"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
+msgid "Group"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
+msgid "Confirmed Usage %"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.py
+msgid "Plafond Over"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Group By"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Include Children"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Forecast Scope"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Funding Scope"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Actual + Approved Projects"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Actual + Proposed"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Full Planning"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Hide Zero Rows"
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Plafond availability is shown only when grouping by Cost Center or Funding."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Choose which active estimates and quotes are included in the remaining forecast."
+msgstr ""
+
+#: master_plan_it/master_plan_it/report/mpit_economic_position/mpit_economic_position.js
+msgid "Limit the report to standard, plafond-funded, or extra expenses."
 msgstr ""

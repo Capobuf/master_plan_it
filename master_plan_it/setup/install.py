@@ -69,6 +69,7 @@ def _reload_standard_assets() -> None:
 	frappe.reload_doc("master_plan_it", "workspace", "master_plan_it", force=1)
 	_reload_doc_folder("dashboard_chart_source")
 	_reload_doc_folder("dashboard_chart")
+	_reload_doc_folder("number_card")
 
 
 def _reload_doc_folder(folder: str) -> None:

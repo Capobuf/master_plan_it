@@ -284,36 +284,36 @@ describe("MPIT economic correctness", () => {
                   })
                 );
 
-                cy.runReport("MPIT Overview", {
+                cy.runReport("MPIT Economic Position", {
                   year,
                   cost_center: costCenter,
-                  financial_view: "Actual with Estimates and Quotes",
-                  view_mode: "Summary",
-                  show_zero_rows: 1,
+                  group_by: "Cost Center",
+                  basis: "Actual + Proposed",
+                  hide_zero_rows: 0,
                 }).then((payload) => {
                   const rows = reportRows(payload);
                   expect(rows, "overview rows").to.have.length(1);
                   const row = rows[0];
 
-                  expect(money(row.forecast_estimate)).to.eq(300);
-                  expect(money(row.forecast_quote)).to.eq(50);
-                  expect(money(row.forecast_total)).to.eq(350);
-                  expect(money(row.approved_budget)).to.eq(150);
-                  expect(money(row.proposals)).to.eq(200);
-                  expect(money(row.ideas)).to.eq(300);
-                  expect(money(row.actual_standard)).to.eq(30);
+                  expect(money(row.operating_budget)).to.eq(150);
+                  expect(money(row.approved_projects_forecast)).to.eq(150);
+                  expect(money(row.forecast_remaining)).to.eq(350);
+                  expect(money(row.actual_standard)).to.eq(70);
                   expect(money(row.actual_on_plafond)).to.eq(600);
                   expect(money(row.actual_extra)).to.eq(70);
-                  expect(money(row.actual_total)).to.eq(700);
-                  expect(money(row.plafond)).to.eq(1000);
+                  expect(money(row.actual_total)).to.eq(740);
+                  expect(money(row.plafond_total)).to.eq(1000);
                   expect(money(row.plafond_consumed)).to.eq(600);
-                  expect(money(row.remaining)).to.eq(400);
-                  expect(money(row.over)).to.eq(0);
+                  expect(money(row.plafond_remaining)).to.eq(400);
+                  expect(money(row.plafond_over)).to.eq(0);
+                  expect(money(row.year_end_forecast)).to.eq(1090);
+                  expect(money(row.usage_percent)).to.eq(67.89);
 
                   const summary = reportSummaryMap(payload);
-                  expect(summary["Forecast Budget"]).to.eq(350);
-                  expect(summary["Actual Spend"]).to.eq(700);
-                  expect(summary.Plafond).to.eq(1000);
+                  expect(summary["Year-end Forecast"]).to.eq(1090);
+                  expect(summary["Actual Total"]).to.eq(740);
+                  expect(summary["Forecast Remaining"]).to.eq(350);
+                  expect(summary["Confirmed Usage %"]).to.eq(67.89);
                 });
               });
             });
@@ -323,7 +323,7 @@ describe("MPIT economic correctness", () => {
     });
   });
 
-  it("splits VAT, unit-price rows, and monthly distributions into the Monthly Plan", () => {
+  it("splits VAT, unit-price rows, and monthly distributions into the Year End Forecast", () => {
     const suffix = runId();
     const year = yearName();
 
@@ -348,22 +348,22 @@ describe("MPIT economic correctness", () => {
           })
         );
 
-        cy.runReport("MPIT Monthly Plan", { year, cost_center: costCenter }).then((payload) => {
+        cy.runReport("MPIT Year End Forecast", { year, cost_center: costCenter }).then((payload) => {
           const byMonth = {};
           reportRows(payload).forEach((row) => {
-            byMonth[row.month] = row;
+            byMonth[row.period_label] = row;
           });
 
-          expect(money(byMonth.Jan.forecast)).to.eq(100);
-          expect(money(byMonth.Feb.forecast)).to.eq(200);
-          expect(money(byMonth.Mar.actual)).to.eq(150);
-          expect(money(byMonth.Apr.actual)).to.eq(150);
-          expect(money(byMonth.Jun.actual)).to.eq(80);
+          expect(money(byMonth.Jan.forecast_amount)).to.eq(100);
+          expect(money(byMonth.Feb.forecast_amount)).to.eq(200);
+          expect(money(byMonth.Mar.actual_amount)).to.eq(150);
+          expect(money(byMonth.Apr.actual_amount)).to.eq(150);
+          expect(money(byMonth.Jun.actual_amount)).to.eq(80);
 
           const summary = reportSummaryMap(payload);
-          expect(summary.Forecast).to.eq(300);
-          expect(summary.Actual).to.eq(380);
-          expect(summary.Delta).to.eq(-80);
+          expect(summary["Forecast Total"]).to.eq(300);
+          expect(summary["Actual Total"]).to.eq(380);
+          expect(summary["Year-end Forecast"]).to.eq(680);
         });
       });
     });
@@ -400,27 +400,26 @@ describe("MPIT economic correctness", () => {
               expect(created.expenses, "generated contract expense").to.have.length.gte(1);
             });
 
-            cy.runReport("MPIT Overview", {
+            cy.runReport("MPIT Economic Position", {
               year,
               cost_center: costCenter,
-              financial_view: "Actual with Estimates and Quotes",
-              view_mode: "Summary",
-              show_zero_rows: 1,
+              group_by: "Cost Center",
+              basis: "Actual + Proposed",
+              hide_zero_rows: 0,
             }).then((payload) => {
               const rows = reportRows(payload);
               expect(rows).to.have.length(1);
-              expect(money(rows[0].forecast_contracts)).to.eq(0);
-              expect(money(rows[0].forecast_total)).to.eq(0);
+              expect(money(rows[0].forecast_remaining)).to.eq(0);
               expect(money(rows[0].actual_standard)).to.eq(1200);
               expect(money(rows[0].actual_total)).to.eq(1200);
             });
 
-            cy.runReport("MPIT Monthly Plan", { year, cost_center: costCenter, contract: contractName }).then((payload) => {
+            cy.runReport("MPIT Year End Forecast", { year, cost_center: costCenter, contract: contractName }).then((payload) => {
               const rows = reportRows(payload);
               rows.forEach((row) => {
-                expect(money(row.actual), `${row.month} actual`).to.eq(100);
+                expect(money(row.actual_amount), `${row.period_label} actual`).to.eq(100);
               });
-              expect(reportSummaryMap(payload).Actual).to.eq(1200);
+              expect(reportSummaryMap(payload)["Actual Total"]).to.eq(1200);
             });
 
             cy.runReport("MPIT Project Forecast vs Actual", { year, cost_center: costCenter }).then((payload) => {
