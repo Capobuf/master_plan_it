@@ -26,6 +26,14 @@ const domainLabels = {
   contract_end: "Scadenza contratto",
   net: "Netto",
   gross: "Lordo",
+  idea: "Idea",
+  proposed: "Proposto",
+  approved: "Approvato",
+  deferred: "Rinviato",
+  rejected: "Respinto",
+  primary: "Primary",
+  excluded: "Escluso",
+  potential: "Potential",
 } as const;
 
 export type DomainLabelKey = keyof typeof domainLabels;

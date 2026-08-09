@@ -1,0 +1,17 @@
+.git/
+.github/
+.idea/
+.vscode/
+node_modules/
+frontend/node_modules/
+frontend/dist/
+public/build/
+storage/logs/
+tests/Browser/screenshots/
+tests/Browser/console/
+vendor/
+*.log*
+.env*
+!.env.example
+!.env.testing.example
+coverage/

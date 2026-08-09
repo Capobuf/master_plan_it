@@ -27,6 +27,7 @@ final class ApiErrorResponse
     private const DOMAIN_ERRORS = [
         'STALE_VERSION' => [409, 'The resource changed. Refresh and try again.'],
         'REFERENCED_RECORD_DELETE_DENIED' => [409, 'The resource cannot be deleted while referenced.'],
+        'PROJECT_HAS_LINKED_EXPENSES' => [409, 'The project cannot be deleted while current expenses are linked.'],
         'TENANT_ROLE_IN_USE' => [409, 'The role cannot be changed while it is assigned.'],
         'TENANT_RELATION_MISMATCH' => [409, 'The requested change conflicts with tenant data.'],
         'CURRENT_PASSWORD_INVALID' => [422, 'The current password is incorrect.'],

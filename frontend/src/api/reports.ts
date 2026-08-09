@@ -21,6 +21,9 @@ export interface ReportingLine {
   expense_kind: string;
   type: string;
   confirmation_state: string | null;
+  project_id: number | null;
+  project_stage: string | null;
+  bucket: string;
   net: string;
   vat: string;
   gross: string;

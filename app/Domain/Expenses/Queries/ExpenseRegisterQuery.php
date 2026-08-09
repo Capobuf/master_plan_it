@@ -43,6 +43,9 @@ final class ExpenseRegisterQuery
             costCenterName: (string) $row->cost_center_name,
             kind: (string) $row->kind,
             title: (string) $row->title,
+            projectId: $row->project_id === null ? null : (int) $row->project_id,
+            projectTitle: $row->project_title === null ? null : (string) $row->project_title,
+            projectCurrent: $row->project_id !== null && $row->project_deleted_at === null,
             contractId: $row->contract_id === null ? null : (int) $row->contract_id,
             contractTitle: $row->contract_title === null ? null : (string) $row->contract_title,
             contractCurrent: $row->contract_id !== null && $row->contract_deleted_at === null,
@@ -118,6 +121,10 @@ final class ExpenseRegisterQuery
                 $join->on('contracts.id', '=', 'expenses.contract_id')
                     ->on('contracts.tenant_id', '=', 'expenses.tenant_id');
             })
+            ->leftJoin('projects', function ($join): void {
+                $join->on('projects.id', '=', 'expenses.project_id')
+                    ->on('projects.tenant_id', '=', 'expenses.tenant_id');
+            })
             ->where('expenses.tenant_id', $context->tenantId)
             ->whereNull('expenses.deleted_at')
             ->when($planningYearId !== null, fn ($query) => $query->where('expenses.planning_year_id', $planningYearId))
@@ -130,6 +137,9 @@ final class ExpenseRegisterQuery
                 'cost_centers.name',
                 'expenses.kind',
                 'expenses.title',
+                'expenses.project_id',
+                'projects.title',
+                'projects.deleted_at',
                 'expenses.contract_id',
                 'contracts.title',
                 'contracts.deleted_at',
@@ -142,6 +152,9 @@ final class ExpenseRegisterQuery
                 'cost_centers.name as cost_center_name',
                 'expenses.kind',
                 'expenses.title',
+                'expenses.project_id',
+                'projects.title as project_title',
+                'projects.deleted_at as project_deleted_at',
                 'expenses.contract_id',
                 'contracts.title as contract_title',
                 'contracts.deleted_at as contract_deleted_at',

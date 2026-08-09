@@ -1,7 +1,7 @@
 # Regole di dominio implementate
 
-Stato: `VERIFIED CURRENT` / decisioni permanenti già implementate alla baseline
-`8f0f5660b409b562d354589d9e00012f31df8ef2`.
+Stato: `VERIFIED CURRENT` sulla slice Feature 010 derivata da
+`7132a39271b31479b9ad477b0ed212bbfc6359a9`.
 
 Questo documento descrive soltanto regole che devono restare dopo la rimozione degli Spec Kit
 storici. Le funzionalità non implementate sono descritte esclusivamente negli Spec Kit attivi.
@@ -62,6 +62,20 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 - Solo Expense row correnti e non eliminate entrano nei totali correnti.
 - I valori economici autorevoli sono calcolati dal backend e mantengono Net, VAT e Gross.
 - Gli update concorrenti usano optimistic locking.
+- Una Expense può riferirsi al massimo a uno tra Project e Contract; entrambi i riferimenti sono
+  tenant-scoped e non richiedono lo stesso centro di costo della Expense.
+
+## Progetti
+
+- I Project sono tenant-owned e classificano le Expense senza introdurre importi, budget o totali
+  persistiti propri.
+- Gli stage ammessi sono `Idea`, `Proposed`, `Approved`, `Deferred` e `Rejected`.
+- `Deferred` richiede un Planning Year attivo dello stesso Tenant; al raggiungimento dell'anno nel
+  timezone Tenant la promozione a `Proposed` è idempotente, versionata e auditata.
+- Create, update, delete e restore revision usano optimistic locking.
+- History, compare e restore sono disponibili soltanto sul record corrente e secondo ability.
+- La cancellazione è terminale, richiede assenza di Expense correnti collegate, non effettua detach
+  o cascade e non può essere annullata da revision restore.
 
 ## Contratti e generazione
 
@@ -96,6 +110,11 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
   default approvato.
 - Il Plafond non deve produrre doppio conteggio della parte già coperta dall'allocazione.
 - Dashboard, Budget e Report usano lo stesso economic kernel/server dataset.
+- Estimate e Quote senza Project o con Project `Approved` entrano in `primary`; `Proposed` entra in
+  `proposed`, `Idea` in `idea`, mentre `Deferred` e `Rejected` entrano in `excluded`.
+- Actual entra sempre in `primary`, indipendentemente dallo stage Project.
+- `potential = primary + proposed + idea` è calcolato dal server e non è un valore ufficiale;
+  `excluded` resta visibile ma non vi contribuisce.
 - Un output economico non può combinare più Tenant.
 
 ## Lingua dell'interfaccia

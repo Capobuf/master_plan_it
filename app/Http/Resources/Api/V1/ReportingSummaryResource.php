@@ -17,6 +17,11 @@ final class ReportingSummaryResource extends JsonResource
         $context = $request->attributes->get(TenantContext::class);
         $amounts = [
             'official_current_position' => $summary->amounts['officialCurrentPosition'],
+            'primary' => $summary->amounts['primary'],
+            'proposed' => $summary->amounts['proposed'],
+            'idea' => $summary->amounts['idea'],
+            'excluded' => $summary->amounts['excluded'],
+            'potential' => $summary->amounts['potential'],
             'net' => $summary->amounts['net'],
             'vat' => $summary->amounts['vat'],
             'gross' => $summary->amounts['gross'],

@@ -14,6 +14,10 @@ import Contracts from "./pages/Contracts/Contracts";
 import ContractDetail from "./pages/Contracts/ContractDetail";
 import NewContract from "./pages/Contracts/NewContract";
 import EditContract from "./pages/Contracts/EditContract";
+import Projects from "./pages/Projects/Projects";
+import ProjectDetail from "./pages/Projects/ProjectDetail";
+import NewProject from "./pages/Projects/NewProject";
+import EditProject from "./pages/Projects/EditProject";
 import Vendors from "./pages/Vendors/Home";
 import CostCenters from "./pages/CostCenters/Home";
 import PlanningYears from "./pages/PlanningYears/Home";
@@ -48,6 +52,10 @@ export default function App() {
                 <Route path={routes.nuovoContratto} element={<NewContract />} />
                 <Route path={routePatterns.contratto} element={<ContractDetail />} />
                 <Route path={routePatterns.modificaContratto} element={<EditContract />} />
+                <Route path={routes.progetti} element={<Projects />} />
+                <Route path={routes.nuovoProgetto} element={<NewProject />} />
+                <Route path={routePatterns.progetto} element={<ProjectDetail />} />
+                <Route path={routePatterns.modificaProgetto} element={<EditProject />} />
                 <Route path={routes.fornitori} element={<Vendors />} />
                 <Route path={routes.centriDiCosto} element={<CostCenters />} />
                 <Route path={routes.anniDiPianificazione} element={<PlanningYears />} />

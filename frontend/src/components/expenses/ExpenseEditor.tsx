@@ -37,6 +37,7 @@ import {
 } from "./expenseEditorTypes";
 import { formatEditableDecimal } from "../../presentation/formatters";
 import { routes } from "../../navigation/routes";
+import { listProjectOptions, type ProjectLookupOption } from "../../api/projects";
 
 const NONE = "__none__";
 
@@ -50,6 +51,7 @@ interface EditorHeader {
   kind: string;
   title: string;
   notes: string;
+  project_id: number | null;
   contract_id: number | null;
 }
 
@@ -60,6 +62,7 @@ function initialHeader(selectedPlanningYearId: number | null): EditorHeader {
     kind: "ordinary",
     title: "",
     notes: "",
+    project_id: null,
     contract_id: null,
   };
 }
@@ -136,6 +139,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
   const canUseLookups = ["cost-center.view", "planning-year.view"].every(hasAbility);
   const canViewVendors = hasAbility("vendor.view");
   const canViewContracts = hasAbility("contract.view");
+  const canViewProjects = hasAbility("project.view");
   const [header, setHeader] = useState<EditorHeader>(() => initialHeader(selectedPlanningYearId));
   const [rows, setRows] = useState<ExpenseEditorRow[]>(() => [newExpenseEditorRow(1)]);
   const [deletedRows, setDeletedRows] = useState<Array<{ id: number; lock_version: number }>>([]);
@@ -143,6 +147,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
   const [costCenters, setCostCenters] = useState<ExpenseLookupOption[]>([]);
   const [planningYears, setPlanningYears] = useState<ExpenseLookupOption[]>([]);
   const [contracts, setContracts] = useState<ExpenseContractOption[]>([]);
+  const [projects, setProjects] = useState<ProjectLookupOption[]>([]);
   const [plafonds, setPlafonds] = useState<PlafondExpenseOption[]>([]);
   const [plafondsLoading, setPlafondsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -178,14 +183,16 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
       listExpenseCostCenters(),
       listExpensePlanningYears(),
       canViewContracts ? listExpenseContracts() : Promise.resolve([]),
+      canViewProjects ? listProjectOptions() : Promise.resolve([]),
       detailRequest,
     ])
-      .then(([vendorOptions, costCenterOptions, yearOptions, contractOptions, detail]) => {
+      .then(([vendorOptions, costCenterOptions, yearOptions, contractOptions, projectOptions, detail]) => {
         if (!active) return;
         setVendors(vendorOptions);
         setCostCenters(costCenterOptions);
         setPlanningYears(yearOptions.map((year) => ({ id: year.id, name: String(year.label), active: year.active })));
         setContracts(contractOptions);
+        setProjects(projectOptions);
         if (detail) {
           setHeader({
             planning_year_id: detail.planning_year_id,
@@ -193,6 +200,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
             kind: detail.kind,
             title: detail.title,
             notes: detail.notes ?? "",
+            project_id: detail.project_id,
             contract_id: detail.contract_id,
           });
           setRows(toEditorRows(detail));
@@ -214,7 +222,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
     return () => {
       active = false;
     };
-  }, [canSubmit, canUseLookups, canView, canViewContracts, canViewVendors, contextLoading, editing, expenseId, selectedPlanningYearId, tenantId]);
+  }, [canSubmit, canUseLookups, canView, canViewContracts, canViewProjects, canViewVendors, contextLoading, editing, expenseId, selectedPlanningYearId, tenantId]);
 
   useEffect(() => {
     if (tenantId === null || header.planning_year_id === null || !canView) {
@@ -225,7 +233,12 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
     setPlafondsLoading(true);
     void listEligiblePlafondExpenses(header.planning_year_id)
       .then((items) => { if (active) setPlafonds(items.filter((item) => item.id !== expenseId)); })
-      .catch(() => { if (active) setPlafonds([]); })
+      .catch((requestError: unknown) => {
+        if (active) {
+          setPlafonds([]);
+          setError(ApiError.from(requestError));
+        }
+      })
       .finally(() => { if (active) setPlafondsLoading(false); });
     return () => { active = false; };
   }, [canView, expenseId, header.planning_year_id, tenantId]);
@@ -250,6 +263,16 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
         .map((contract) => ({ value: String(contract.id), label: contract.title })),
     ],
     [contracts, header.contract_id],
+  );
+  const projectOptions = useMemo(
+    () => [
+      { value: NONE, label: "Nessun progetto" },
+      ...(header.project_id !== null && !projects.some((project) => project.id === header.project_id)
+        ? [{ value: String(header.project_id), label: "Progetto corrente" }]
+        : []),
+      ...projects.map((project) => ({ value: String(project.id), label: project.title })),
+    ],
+    [header.project_id, projects],
   );
 
   function updateRow(index: number, patch: Partial<ExpenseEditorRow>) {
@@ -319,6 +342,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
       kind: header.kind,
       title: header.title.trim(),
       ...(header.notes.trim() ? { notes: header.notes.trim() } : {}),
+      ...(header.project_id !== null ? { project_id: header.project_id } : {}),
       ...(header.contract_id !== null ? { contract_id: header.contract_id } : {}),
       rows: preparedRows.map(({ row, position, entered, quantity, unitPrice, vatRate }) => ({
         ...(row.id !== undefined ? { id: row.id } : {}),
@@ -372,8 +396,8 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
       {validationMessage && <Alert variant="warning" title="Controlla i campi" message={validationMessage} />}
       <ComponentCard title="Dati della Spesa">
         <div className="grid gap-4 md:grid-cols-2">
-          {canViewContracts ? <div>
-            <Label>Anno di pianificazione</Label>
+          <div>
+            <Label htmlFor="expense-editor-year">Anno di pianificazione</Label>
             <EditorSelect
               id="expense-editor-year"
               value={header.planning_year_id === null ? NONE : String(header.planning_year_id)}
@@ -381,9 +405,9 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
               onChange={(value) => setHeader((current) => ({ ...current, planning_year_id: value === NONE ? null : Number(value) }))}
               disabled={disabled}
             />
-          </div> : null}
+          </div>
           <div>
-            <Label>Centro di costo</Label>
+            <Label htmlFor="expense-editor-cost-center">Centro di costo</Label>
             <EditorSelect
               id="expense-editor-cost-center"
               value={header.cost_center_id === null ? NONE : String(header.cost_center_id)}
@@ -393,7 +417,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
             />
           </div>
           <div>
-            <Label>Tipo spesa</Label>
+            <Label htmlFor="expense-editor-kind">Tipo spesa</Label>
             <EditorSelect
               id="expense-editor-kind"
               value={header.kind}
@@ -403,22 +427,32 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
             />
           </div>
           <div>
-            <Label>Contratto (opzionale)</Label>
+            <Label htmlFor="expense-editor-contract">Contratto (opzionale)</Label>
             <EditorSelect
               id="expense-editor-contract"
               value={header.contract_id === null ? NONE : String(header.contract_id)}
               options={contractOptions}
-              onChange={(value) => setHeader((current) => ({ ...current, contract_id: value === NONE ? null : Number(value) }))}
+              onChange={(value) => setHeader((current) => ({ ...current, contract_id: value === NONE ? null : Number(value), project_id: value === NONE ? current.project_id : null }))}
               disabled={disabled}
             />
           </div>
+          {canViewProjects ? <div>
+            <Label htmlFor="expense-editor-project">Progetto (opzionale)</Label>
+            <EditorSelect
+              id="expense-editor-project"
+              value={header.project_id === null ? NONE : String(header.project_id)}
+              options={projectOptions}
+              onChange={(value) => setHeader((current) => ({ ...current, project_id: value === NONE ? null : Number(value), contract_id: value === NONE ? current.contract_id : null }))}
+              disabled={disabled}
+            />
+          </div> : null}
           <div className="md:col-span-2">
             <Label htmlFor="expense-editor-title">Titolo</Label>
             <InputField id="expense-editor-title" value={header.title} onChange={(event) => setHeader((current) => ({ ...current, title: event.target.value }))} disabled={disabled} />
           </div>
           <div className="md:col-span-2">
-            <Label>Note</Label>
-            <TextArea value={header.notes} onChange={(notes) => setHeader((current) => ({ ...current, notes }))} disabled={disabled} placeholder="Note opzionali" />
+            <Label htmlFor="expense-editor-notes">Note</Label>
+            <TextArea id="expense-editor-notes" value={header.notes} onChange={(notes) => setHeader((current) => ({ ...current, notes }))} disabled={disabled} placeholder="Note opzionali" />
           </div>
         </div>
       </ComponentCard>

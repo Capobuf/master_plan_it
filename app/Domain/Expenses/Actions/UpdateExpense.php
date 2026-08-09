@@ -33,7 +33,10 @@ final class UpdateExpense
             $sourceRowIds = $expense->rows()->whereNotNull('source_key')->pluck('id')->map(fn ($id) => (int) $id)->all();
             if ($sourceRowIds !== []) {
                 $submittedIds = array_values(array_filter(array_map(fn ($row) => $row->id, $rows), fn ($id) => $id !== null));
-                if ((int) $expense->planning_year_id !== $data->planningYearId || (int) $expense->contract_id !== (int) $data->contractId || array_diff($sourceRowIds, $submittedIds) !== []) {
+                if ((int) $expense->planning_year_id !== $data->planningYearId
+                    || (int) $expense->contract_id !== (int) $data->contractId
+                    || $data->projectId !== null
+                    || array_diff($sourceRowIds, $submittedIds) !== []) {
                     throw new DomainException('TENANT_RELATION_MISMATCH');
                 }
             }

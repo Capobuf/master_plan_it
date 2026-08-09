@@ -22,8 +22,10 @@ class DevelopmentEnvironmentTest extends TestCase
         $this->assertStringContainsString('image: mysql:8.4.10', $compose);
         $this->assertStringContainsString("'127.0.0.1:\${APP_PORT:-8080}:80'", $compose);
         $this->assertStringNotContainsString("'8080:80'", $compose);
-        $this->assertStringNotContainsString('5173', $compose);
-        $this->assertStringNotContainsString('node:', $compose);
+        $this->assertStringContainsString('frontend:', $compose);
+        $this->assertStringContainsString('image: node:22-alpine', $compose);
+        $this->assertStringContainsString("'0.0.0.0:\${FRONTEND_PORT:-5173}:5173'", $compose);
+        $this->assertStringContainsString("VITE_INTERNAL_API_PROXY_TARGET: '\${VITE_INTERNAL_API_PROXY_TARGET:-http://laravel.test}'", $compose);
         $this->assertStringNotContainsString('selenium', $compose);
         $this->assertStringNotContainsString('dusk', $compose);
         $this->assertStringContainsString('sail-mysql:/var/lib/mysql', $compose);

@@ -99,8 +99,10 @@ Non aggiungere `-v` all'arresto ordinario: rimuoverebbe i volumi persistenti.
 Dopo una modifica API:
 
 1. aggiornare route/controller/resource e test;
-2. aggiornare `docs/api/openapi-v1.yaml`;
-3. verificare route e OpenAPI nello stesso lavoro.
+2. aggiornare il contract feature-local in `specs/<feature>/contracts/`;
+3. verificare route, Resource e test HTTP nello stesso lavoro;
+4. aggiornare anche `docs/api/openapi-v1.yaml` soltanto quando quel contratto globale esiste ed è
+   completo nel repository.
 
 ## Operazioni non ancora disponibili
 

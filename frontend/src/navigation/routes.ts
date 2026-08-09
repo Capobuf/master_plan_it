@@ -11,6 +11,10 @@ export const routes = {
   nuovoContratto: "/contratti/nuovo",
   contratto: (contractId: number | string) => `/contratti/${contractId}`,
   modificaContratto: (contractId: number | string) => `/contratti/${contractId}/modifica`,
+  progetti: "/progetti",
+  nuovoProgetto: "/progetti/nuovo",
+  progetto: (projectId: number | string) => `/progetti/${projectId}`,
+  modificaProgetto: (projectId: number | string) => `/progetti/${projectId}/modifica`,
   fornitori: "/fornitori",
   centriDiCosto: "/centri-di-costo",
   anniDiPianificazione: "/anni-di-pianificazione",
@@ -24,6 +28,8 @@ export const routePatterns = {
   modificaSpesa: "/spese/:expenseId/modifica",
   contratto: "/contratti/:contractId",
   modificaContratto: "/contratti/:contractId/modifica",
+  progetto: "/progetti/:projectId",
+  modificaProgetto: "/progetti/:projectId/modifica",
 } as const;
 
 export const legacyRoutes = {

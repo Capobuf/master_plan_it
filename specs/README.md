@@ -22,7 +22,7 @@ Questa directory contiene soltanto funzionalità non ancora completate alla base
 Una directory resta qui solo finché rappresenta lavoro ancora aperto. A feature completata:
 
 - il codice e i test diventano autorità;
-- OpenAPI viene aggiornato;
+- il contract API feature-local viene aggiornato e, quando presente, anche l'OpenAPI globale;
 - eventuali regole durevoli entrano nei documenti minimi;
 - `docs/STATUS.md` viene aggiornato;
 - gli artefatti della feature vengono rimossi.

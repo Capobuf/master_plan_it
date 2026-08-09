@@ -2,8 +2,8 @@
 
 namespace Tests\Feature\Api\Expenses;
 
-use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Expenses\Enums\ExpenseKind;
+use App\Domain\Expenses\Enums\ExpenseType;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;

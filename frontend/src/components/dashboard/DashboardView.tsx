@@ -44,7 +44,7 @@ export default function DashboardView({ dataset }: { dataset: ReportingDataset }
   const composition = Object.entries(dataset.by_type ?? {});
   const costCenters = Object.entries(dataset.by_cost_center ?? {}).sort(([, left], [, right]) => compareDecimalStrings(right, left)).slice(0, 8);
   const metrics: EcommerceMetric[] = [
-    { label: "Budget Corrente", value: formatMoney(amount(dataset, "official_current_position"), currency), icon: DollarLineIcon },
+    { label: "Budget Corrente", value: formatMoney(amount(dataset, "primary"), currency), icon: DollarLineIcon },
     { label: "Consuntivi Confermati", value: formatMoney(amount(dataset, "actual_confirmed"), currency), icon: CheckCircleIcon },
     { label: "Consuntivi da Confermare", value: formatMoney(amount(dataset, "actual_to_confirm"), currency), icon: TimeIcon, tone: "warning" },
   ];

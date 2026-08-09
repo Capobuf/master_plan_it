@@ -54,7 +54,7 @@
             "@composer validate --strict --no-check-all",
             "@php vendor/bin/pest tests/Architecture",
             "@php vendor/bin/pint --test",
-            "@php vendor/bin/phpstan analyse --no-progress",
+            "@php -d memory_limit=-1 vendor/bin/phpstan analyse --no-progress",
             "@composer audit --locked --no-interaction"
         ],
         "test:accounting": "@php artisan test --testsuite=Accounting",

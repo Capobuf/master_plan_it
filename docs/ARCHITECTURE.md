@@ -109,5 +109,8 @@ Non unificare in un generico sistema di "storia":
 
 ## Contratto API
 
-`docs/api/openapi-v1.yaml` è il contratto versionato delle API implementate. Quando una nuova
-feature aggiunge o modifica un'operazione API, aggiornare OpenAPI nello stesso lavoro.
+Il repository corrente non contiene `docs/api/openapi-v1.yaml`, nonostante riferimenti storici lo
+indicassero come contratto globale. Finché non viene introdotto un documento globale completo, le
+API implementate sono governate dai contract feature-local in `specs/*/contracts/`, dalle route,
+dai Resource e dai test HTTP. Una feature non deve creare un OpenAPI globale parziale per colmare
+questo gap documentale.

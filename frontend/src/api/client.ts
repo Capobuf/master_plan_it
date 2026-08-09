@@ -84,6 +84,16 @@ function localizedErrorMessage(status: number | null, serverMessage: string | nu
   return serverMessage ?? "Il servizio applicativo non è raggiungibile.";
 }
 
+function localizedCodeMessage(code: string | null): string | null {
+  if (code === "PROJECT_HAS_LINKED_EXPENSES") {
+    return "Elimina prima le spese correnti collegate usando il normale flusso delle Spese.";
+  }
+  if (code === "STALE_VERSION") {
+    return "I dati sono stati modificati da un'altra sessione. Ricarica la pagina e riprova.";
+  }
+  return null;
+}
+
 export class ApiError extends Error {
   readonly cause: unknown;
   readonly status: number | null;
@@ -127,17 +137,18 @@ export class ApiError extends Error {
 
     const axiosError: AxiosError<ErrorPayload> = error;
     const payload = axiosError.response?.data?.error;
+    const payloadCode = stringValue(payload?.code);
     const headerCorrelationId = stringValue(
       axiosError.response?.headers["x-correlation-id"],
     );
 
     return new ApiError({
-      message: localizedErrorMessage(
+      message: localizedCodeMessage(payloadCode) ?? localizedErrorMessage(
         axiosError.response?.status ?? null,
         stringValue(payload?.message),
       ),
       status: axiosError.response?.status ?? null,
-      code: stringValue(payload?.code) ?? axiosError.code ?? "REQUEST_FAILED",
+      code: payloadCode ?? axiosError.code ?? "REQUEST_FAILED",
       fields: isRecord(payload?.fields) ? payload.fields : {},
       correlationId: stringValue(payload?.correlation_id) ?? headerCorrelationId,
       cause: error,

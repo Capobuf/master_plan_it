@@ -10,5 +10,7 @@ final readonly class EconomicLine
         public string $net, public string $vat, public string $gross, public ?int $fundedPlafondExpenseId,
         public ?string $spendDate, public ?string $periodStart, public ?string $periodEnd, public ?string $distribution,
         public bool $isExtra = false,
+        public ?int $projectId = null,
+        public ?string $projectStage = null,
     ) {}
 }

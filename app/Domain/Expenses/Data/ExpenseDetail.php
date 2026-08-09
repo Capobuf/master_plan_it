@@ -42,6 +42,8 @@ final readonly class ExpenseDetail
         public string $kind,
         public string $title,
         public ?string $notes,
+        public ?int $projectId,
+        public ?string $projectTitle,
         public ?int $contractId,
         public int $lockVersion,
         public array $rows,

@@ -20,6 +20,9 @@ export interface ExpenseRegisterItem {
   cost_center_name: string | null;
   kind: string;
   title: string;
+  project_id: number | null;
+  project_title: string | null;
+  project_current: boolean;
   contract_id: number | null;
   contract_title: string | null;
   contract_current: boolean;
@@ -81,6 +84,8 @@ export interface ExpenseDetail {
   kind: string;
   title: string;
   notes: string | null;
+  project_id: number | null;
+  project_title: string | null;
   contract_id: number | null;
   lock_version: number;
   rows: ExpenseRow[];
@@ -114,6 +119,7 @@ export interface ExpenseWrite {
   kind: string;
   title: string;
   notes?: string;
+  project_id?: number;
   contract_id?: number;
   rows: ExpenseRowInput[];
 }
@@ -143,7 +149,6 @@ export interface PlafondExpenseOption {
 
 export interface DeleteExpenseRequest {
   lock_version: number;
-  deletion_reason?: string;
 }
 
 export interface DeleteGeneratedExpenseRequest {

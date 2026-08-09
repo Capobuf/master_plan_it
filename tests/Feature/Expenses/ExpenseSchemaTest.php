@@ -12,6 +12,7 @@ use App\Models\Contract;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
+use App\Models\Project;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
@@ -465,6 +466,9 @@ class ExpenseSchemaTest extends TestCase
         $this->assertExpenseTablesExist();
 
         $tenant = Tenant::factory()->create();
+        if ($projectId !== null) {
+            $projectId = Project::factory()->for($tenant)->create()->getKey();
+        }
         if ($contractId !== null) {
             $vendor = Vendor::factory()->for($tenant)->create();
             $costCenter = CostCenter::factory()->for($tenant)->create();

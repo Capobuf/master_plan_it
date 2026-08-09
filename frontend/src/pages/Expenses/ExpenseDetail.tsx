@@ -150,6 +150,10 @@ export default function ExpenseDetail() {
               <dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.contract_id ? "Contratto associato" : "Nessun contratto"}</dd>
             </div>
             <div>
+              <dt className="text-sm text-gray-500 dark:text-gray-400">Progetto</dt>
+              <dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.project_id && hasAbility("project.view") ? <button type="button" className="text-brand-500 hover:text-brand-600" onClick={() => navigate(routes.progetto(detail.project_id as number))}>{detail.project_title ?? "Progetto associato"}</button> : detail.project_title ?? "Nessun progetto"}</dd>
+            </div>
+            <div>
               <dt className="text-sm text-gray-500 dark:text-gray-400">Righe correnti</dt>
               <dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.rows.length}</dd>
             </div>

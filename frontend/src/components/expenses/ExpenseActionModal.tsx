@@ -5,8 +5,6 @@ import {
   deleteGeneratedExpense,
 } from "../../api/expenses";
 import Checkbox from "../form/input/Checkbox";
-import InputField from "../form/input/InputField";
-import Label from "../form/Label";
 import Button from "../ui/button/Button";
 import { Modal } from "../ui/modal";
 
@@ -30,7 +28,6 @@ export default function ExpenseActionModal({
   onDeleted,
 }: ExpenseActionModalProps) {
   const [allowRegeneration, setAllowRegeneration] = useState(false);
-  const [deletionReason, setDeletionReason] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
 
@@ -47,9 +44,6 @@ export default function ExpenseActionModal({
       } else {
         await deleteExpense(expenseId, {
           lock_version: lockVersion,
-          ...(deletionReason.trim()
-            ? { deletion_reason: deletionReason.trim() }
-            : {}),
         });
       }
       onDeleted();
@@ -79,16 +73,6 @@ export default function ExpenseActionModal({
           />
         </div>
       )}
-      <div className="mt-5">
-        <Label htmlFor="expense-deletion-reason">Motivo (opzionale)</Label>
-        <InputField
-          id="expense-deletion-reason"
-          value={deletionReason}
-          onChange={(event) => setDeletionReason(event.target.value)}
-          disabled={busy}
-          placeholder="Inserisci un motivo"
-        />
-      </div>
       {error && (
         <p className="mt-4 rounded-lg bg-error-50 p-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-400">
           {error.message}

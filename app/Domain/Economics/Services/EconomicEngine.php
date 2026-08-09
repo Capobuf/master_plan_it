@@ -3,6 +3,7 @@
 namespace App\Domain\Economics\Services;
 
 use App\Domain\Economics\Data\EconomicDataset;
+use App\Domain\Economics\Data\EconomicLine;
 use App\Domain\Economics\Data\EconomicSummary;
 use App\Domain\Money\Money;
 use App\Domain\Money\Services\MonthlyAllocator;
@@ -14,7 +15,7 @@ final class EconomicEngine
     public function calculate(EconomicDataset $dataset): array
     {
         $basis = $dataset->scope->budgetBasis->value;
-        $amounts = array_fill_keys(['officialCurrentPosition', 'net', 'vat', 'gross', 'estimate', 'quote', 'actual', 'actualToConfirm', 'actualConfirmed', 'extra', 'plafondAllocated', 'plafondConsumed', 'plafondResidual', 'plafondOverrun'], '0.00');
+        $amounts = array_fill_keys(['officialCurrentPosition', 'primary', 'proposed', 'idea', 'excluded', 'potential', 'net', 'vat', 'gross', 'estimate', 'quote', 'actual', 'actualToConfirm', 'actualConfirmed', 'extra', 'plafondAllocated', 'plafondConsumed', 'plafondResidual', 'plafondOverrun'], '0.00');
         $monthly = [];
         for ($month = 1; $month <= 12; $month++) {
             $monthly[sprintf('%04d-%02d', $dataset->scope->yearLabel, $month)] = '0.00';
@@ -26,15 +27,19 @@ final class EconomicEngine
         $fundedLines = [];
         foreach ($dataset->lines as $line) {
             $official = $basis === 'gross' ? $line->gross : $line->net;
+            $bucket = $this->classify($line);
             $amounts['net'] = bcadd($amounts['net'], $line->net, 2);
             $amounts['vat'] = bcadd($amounts['vat'], $line->vat, 2);
             $amounts['gross'] = bcadd($amounts['gross'], $line->gross, 2);
             if ($line->fundedPlafondExpenseId === null) {
-                $amounts['officialCurrentPosition'] = bcadd($amounts['officialCurrentPosition'], $official, 2);
+                $amounts[$bucket] = bcadd($amounts[$bucket], $official, 2);
+                if ($bucket === 'primary') {
+                    $amounts['officialCurrentPosition'] = bcadd($amounts['officialCurrentPosition'], $official, 2);
+                }
             }
             $amounts[$line->type] = bcadd($amounts[$line->type], $official, 2);
             $byType[$line->type] = bcadd($byType[$line->type], $official, 2);
-            if ($line->fundedPlafondExpenseId === null) {
+            if ($line->fundedPlafondExpenseId === null && $bucket === 'primary') {
                 $byCostCenter[$line->costCenterName] = bcadd($byCostCenter[$line->costCenterName] ?? '0.00', $official, 2);
             }
             if ($line->type === 'actual' && $line->confirmationState === 'to_confirm') {
@@ -61,9 +66,10 @@ final class EconomicEngine
                 $consumedGroups[$group]['official'] = bcadd($consumedGroups[$group]['official'], $official, 2);
                 foreach (['net', 'vat', 'gross'] as $dimension) {
                     $consumedGroups[$group][$dimension] = bcadd($consumedGroups[$group][$dimension], $line->{$dimension}, 2);
-                }$fundedLines[$group] = $line;
+                }
+                $fundedLines[$group] = $line;
             }
-            foreach ($line->fundedPlafondExpenseId === null ? $this->monthly($dataset, $line->spendDate, $line->periodStart, $line->periodEnd, $line->distribution, $official) : [] as $key => $value) {
+            foreach ($line->fundedPlafondExpenseId === null && $bucket === 'primary' ? $this->monthly($dataset, $line->spendDate, $line->periodStart, $line->periodEnd, $line->distribution, $official) : [] as $key => $value) {
                 if (isset($monthly[$key])) {
                     $monthly[$key] = bcadd($monthly[$key], $value, 2);
                 }
@@ -81,6 +87,7 @@ final class EconomicEngine
                 $overrun = ltrim($difference, '-');
                 $amounts['plafondOverrun'] = bcadd($amounts['plafondOverrun'], $overrun, 2);
                 $amounts['officialCurrentPosition'] = bcadd($amounts['officialCurrentPosition'], $overrun, 2);
+                $amounts['primary'] = bcadd($amounts['primary'], $overrun, 2);
                 $line = $fundedLines[$group] ?? null;
                 if ($line !== null) {
                     $byCostCenter[$line->costCenterName] = bcadd($byCostCenter[$line->costCenterName] ?? '0.00', $overrun, 2);
@@ -90,13 +97,30 @@ final class EconomicEngine
                         }
                     }
                 }
-            }foreach (['net', 'vat', 'gross'] as $dimension) {
+            }
+            foreach (['net', 'vat', 'gross'] as $dimension) {
                 $covered = bccomp($allocation[$dimension], $consumption[$dimension], 2) <= 0 ? $allocation[$dimension] : $consumption[$dimension];
                 $amounts[$dimension] = bcsub($amounts[$dimension], $covered, 2);
             }
         }
 
+        $amounts['potential'] = bcadd(bcadd($amounts['primary'], $amounts['proposed'], 2), $amounts['idea'], 2);
+
         return ['summary' => new EconomicSummary($basis, $amounts), 'monthly' => $monthly, 'byType' => $byType, 'byCostCenter' => $byCostCenter];
+    }
+
+    public function classify(EconomicLine $line): string
+    {
+        if ($line->type === 'actual' || $line->expenseKind === 'plafond' || $line->projectId === null || $line->projectStage === 'approved') {
+            return 'primary';
+        }
+
+        return match ($line->projectStage) {
+            'proposed' => 'proposed',
+            'idea' => 'idea',
+            'deferred', 'rejected' => 'excluded',
+            default => 'primary',
+        };
     }
 
     /** @return array<string,string> */

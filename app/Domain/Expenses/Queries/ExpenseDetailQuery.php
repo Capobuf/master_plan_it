@@ -39,6 +39,10 @@ final class ExpenseDetailQuery
                 $join->on('cost_centers.id', '=', 'expenses.cost_center_id')
                     ->on('cost_centers.tenant_id', '=', 'expenses.tenant_id');
             })
+            ->leftJoin('projects', function ($join): void {
+                $join->on('projects.id', '=', 'expenses.project_id')
+                    ->on('projects.tenant_id', '=', 'expenses.tenant_id');
+            })
             ->where('expenses.tenant_id', $context->tenantId)
             ->where('expenses.id', $expenseId)
             ->whereNull('expenses.deleted_at')
@@ -51,6 +55,8 @@ final class ExpenseDetailQuery
                 'expenses.kind',
                 'expenses.title',
                 'expenses.notes',
+                'expenses.project_id',
+                'projects.title as project_title',
                 'expenses.contract_id',
                 'expenses.lock_version',
             ]);
@@ -139,6 +145,8 @@ final class ExpenseDetailQuery
             kind: (string) $header->kind,
             title: (string) $header->title,
             notes: $header->notes === null ? null : (string) $header->notes,
+            projectId: $header->project_id === null ? null : (int) $header->project_id,
+            projectTitle: $header->project_title === null ? null : (string) $header->project_title,
             contractId: $header->contract_id === null ? null : (int) $header->contract_id,
             lockVersion: (int) $header->lock_version,
             rows: $rows,

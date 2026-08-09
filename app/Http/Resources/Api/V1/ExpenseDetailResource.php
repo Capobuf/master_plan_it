@@ -27,6 +27,8 @@ final class ExpenseDetailResource extends JsonResource
             'kind' => $expense->kind,
             'title' => $expense->title,
             'notes' => $expense->notes,
+            'project_id' => $expense->projectId,
+            'project_title' => $expense->projectTitle,
             'contract_id' => $expense->contractId,
             'lock_version' => $expense->lockVersion,
             'rows' => ExpenseRowResource::collection(collect($expense->rows))->resolve($request),

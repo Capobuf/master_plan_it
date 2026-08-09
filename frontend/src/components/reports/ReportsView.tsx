@@ -14,8 +14,8 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table"
 function Summary({ response }: { response: ReportsResponse }) {
   const currency = response.summary?.currency ?? response.scope?.currency ?? "EUR";
   const amounts = response.summary?.amounts ?? {};
-  return <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-    {([['Budget Corrente', 'official_current_position'], ['Consuntivi Confermati', 'actual_confirmed'], ['Lordo', 'gross']] as const).map(([label, key]) => <article key={key} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"><p className="text-sm text-gray-500 dark:text-gray-400">{label}</p><p className="mt-2 text-2xl font-bold text-gray-800 dark:text-white/90">{formatMoney(amounts[key] ?? "0.00", currency)}</p></article>)}
+  return <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
+    {([['Primary (ufficiale)', 'primary'], ['Proposed', 'proposed'], ['Idea', 'idea'], ['Excluded', 'excluded'], ['Potential (non ufficiale)', 'potential']] as const).map(([label, key]) => <article key={key} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"><p className="text-sm text-gray-500 dark:text-gray-400">{label}</p><p className="mt-2 text-2xl font-bold text-gray-800 dark:text-white/90">{formatMoney(amounts[key] ?? "0.00", currency)}</p></article>)}
   </div>;
 }
 
@@ -73,11 +73,13 @@ export default function ReportsView({ tenantId, planningYearId, canView, canLoad
     {response && response.data.length > 0 ? <section className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
       <h2 className="mb-4 text-lg font-semibold text-gray-800 dark:text-white/90">Dettaglio Economico</h2>
       <div className="max-w-full overflow-x-auto"><Table>
-        <TableHeader className="border-y border-gray-100 dark:border-gray-800"><TableRow>{['Data', 'Centro di costo', 'Natura e tipo', 'Conferma', 'Netto', 'IVA', 'Lordo'].map((header) => <TableCell key={header} isHeader className={`whitespace-nowrap py-3 text-theme-xs font-medium text-gray-500 dark:text-gray-400 ${['Netto','IVA','Lordo'].includes(header) ? 'text-end' : 'text-start'}`}>{header}</TableCell>)}</TableRow></TableHeader>
+        <TableHeader className="border-y border-gray-100 dark:border-gray-800"><TableRow>{['Data', 'Centro di costo', 'Natura e tipo', 'Progetto', 'Bucket', 'Conferma', 'Netto', 'IVA', 'Lordo'].map((header) => <TableCell key={header} isHeader className={`whitespace-nowrap py-3 text-theme-xs font-medium text-gray-500 dark:text-gray-400 ${['Netto','IVA','Lordo'].includes(header) ? 'text-end' : 'text-start'}`}>{header}</TableCell>)}</TableRow></TableHeader>
         <TableBody className="divide-y divide-gray-100 dark:divide-gray-800">{response.data.map((line) => <TableRow key={line.id}>
           <TableCell className="whitespace-nowrap py-3 text-sm text-gray-600 dark:text-gray-300">{formatDate(line.spend_date ?? line.period_start)}</TableCell>
           <TableCell className="py-3 text-sm font-medium text-gray-800 dark:text-white/90">{line.cost_center_name ?? "—"}</TableCell>
           <TableCell className="py-3 text-sm text-gray-600 dark:text-gray-300">{domainLabel(line.expense_kind)} · {domainLabel(line.type)}{line.is_extra ? " · Extra" : ""}</TableCell>
+          <TableCell className="py-3 text-sm text-gray-600 dark:text-gray-300">{line.project_id ? `#${line.project_id} · ${domainLabel(line.project_stage)}` : "—"}</TableCell>
+          <TableCell className="py-3"><Badge color={line.bucket === 'primary' ? 'success' : line.bucket === 'excluded' ? 'light' : 'info'} size="sm">{domainLabel(line.bucket)}</Badge></TableCell>
           <TableCell className="py-3">{line.confirmation_state ? <Badge color={line.confirmation_state === 'confirmed' ? 'success' : 'warning'} size="sm">{domainLabel(line.confirmation_state)}</Badge> : <span className="text-sm text-gray-500 dark:text-gray-400">—</span>}</TableCell>
           <TableCell className="whitespace-nowrap py-3 text-end text-sm text-gray-600 dark:text-gray-300">{formatMoney(line.net, line.currency)}</TableCell><TableCell className="whitespace-nowrap py-3 text-end text-sm text-gray-600 dark:text-gray-300">{formatMoney(line.vat, line.currency)}</TableCell><TableCell className="whitespace-nowrap py-3 text-end text-sm font-medium text-gray-800 dark:text-white/90">{formatMoney(line.gross, line.currency)}</TableCell>
         </TableRow>)}</TableBody>

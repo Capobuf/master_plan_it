@@ -24,10 +24,11 @@ export default function BudgetView({ dataset }: { dataset: ReportingDataset }) {
     {!dataset.has_economic_data ? <Alert variant="info" title="Nessun dato economico" message="Non sono ancora disponibili dati per l'anno di pianificazione selezionato." /> : null}
     {officialBasis ? <div className="flex justify-end"><Badge color="info" size="sm">Base Ufficiale: {domainLabel(officialBasis)}</Badge></div> : null}
     <EcommerceMetrics metrics={[
-      { label: "Budget Corrente", value: formatMoney(amounts.official_current_position ?? "0.00", currency), icon: DollarLineIcon },
-      { label: "Consuntivi Confermati", value: formatMoney(amounts.actual_confirmed ?? "0.00", currency), icon: CheckCircleIcon },
-      { label: "Consuntivi da Confermare", value: formatMoney(amounts.actual_to_confirm ?? "0.00", currency), icon: TimeIcon },
-      { label: "Lordo", value: formatMoney(amounts.gross ?? "0.00", currency), icon: AlertHexaIcon },
+      { label: "Primary (ufficiale)", value: formatMoney(amounts.primary ?? "0.00", currency), icon: DollarLineIcon },
+      { label: "Proposed", value: formatMoney(amounts.proposed ?? "0.00", currency), icon: CheckCircleIcon },
+      { label: "Idea", value: formatMoney(amounts.idea ?? "0.00", currency), icon: TimeIcon },
+      { label: "Excluded", value: formatMoney(amounts.excluded ?? "0.00", currency), icon: AlertHexaIcon },
+      { label: "Potential (non ufficiale)", value: formatMoney(amounts.potential ?? "0.00", currency), icon: DollarLineIcon },
     ]} />
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
       <div className="lg:col-span-7">

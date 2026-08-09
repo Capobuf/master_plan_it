@@ -13,6 +13,7 @@ use App\Models\Contract;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\PlanningYear;
+use App\Models\Project;
 use App\Models\Tenant;
 use App\Models\Vendor;
 use DateTimeImmutable;
@@ -26,8 +27,8 @@ final class ExpenseAggregateValidator
      */
     public function validate(Tenant $tenant, SaveExpenseData $data, array $rows, ?Expense $currentExpense = null): array
     {
-        if ($data->projectId !== null) {
-            $this->fail('project_id', 'Projects are not available in this workflow.');
+        if ($data->projectId !== null && $data->contractId !== null) {
+            $this->fail('project_id', 'Project and contract are mutually exclusive.');
         }
         if (trim($data->title) === '' || mb_strlen($data->title) > 255) {
             $this->fail('title', 'The title must be between 1 and 255 characters.');
@@ -64,6 +65,12 @@ final class ExpenseAggregateValidator
                 $this->fail('contract_id', 'The selected contract is invalid.');
             }
         }
+        if ($data->projectId !== null && ! Project::query()
+            ->where('tenant_id', $tenant->getKey())
+            ->whereKey($data->projectId)
+            ->exists()) {
+            $this->fail('project_id', 'The selected project is invalid.');
+        }
 
         $normalized = [];
         $ids = [];
@@ -90,7 +97,7 @@ final class ExpenseAggregateValidator
                 'kind' => $data->kind,
                 'title' => trim($data->title),
                 'notes' => $this->nullableText($data->notes),
-                'project_id' => null,
+                'project_id' => $data->projectId,
                 'contract_id' => $data->contractId,
             ],
             'rows' => $normalized,

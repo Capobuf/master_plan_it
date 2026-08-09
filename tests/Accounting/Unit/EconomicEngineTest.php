@@ -68,6 +68,41 @@ class EconomicEngineTest extends TestCase
         $this->assertSame('200.00', $summary->amounts['plafondOverrun']);
         $this->assertSame('1700.00', $summary->amounts['officialCurrentPosition']);
         $this->assertSame('1700.00', $summary->amounts['net']);
+        $this->assertSame('1700.00', $summary->amounts['primary']);
+        $this->assertSame('1700.00', $summary->amounts['potential']);
+    }
+
+    public function test_project_bucket_matrix_and_potential_are_calculated_once_with_exact_decimals(): void
+    {
+        $lines = [];
+        $rowId = 1;
+        foreach (['estimate', 'quote'] as $type) {
+            $lines[] = $this->line($rowId, $rowId++, $type, null, '10.00', '2.20', '12.20');
+            foreach ([
+                'approved' => 'primary', 'proposed' => 'proposed', 'idea' => 'idea',
+                'deferred' => 'excluded', 'rejected' => 'excluded',
+            ] as $stage => $bucket) {
+                $line = $this->line($rowId, $rowId++, $type, null, '10.00', '2.20', '12.20', projectStage: $stage);
+                $this->assertSame($bucket, app(EconomicEngine::class)->classify($line));
+                $lines[] = $line;
+            }
+        }
+        foreach ([null, 'approved', 'proposed', 'idea', 'deferred', 'rejected'] as $stage) {
+            $line = $this->line($rowId, $rowId++, 'actual', 'to_confirm', '10.00', '2.20', '12.20', projectStage: $stage);
+            $this->assertSame('primary', app(EconomicEngine::class)->classify($line));
+            $lines[] = $line;
+        }
+
+        $amounts = app(EconomicEngine::class)->calculate(new EconomicDataset(
+            new EconomicScope(1, 1, 2026, 'EUR', BudgetBasis::Net), $lines,
+        ))['summary']->amounts;
+
+        $this->assertSame('100.00', $amounts['primary']);
+        $this->assertSame('20.00', $amounts['proposed']);
+        $this->assertSame('20.00', $amounts['idea']);
+        $this->assertSame('40.00', $amounts['excluded']);
+        $this->assertSame('140.00', $amounts['potential']);
+        $this->assertSame($amounts['primary'], $amounts['officialCurrentPosition']);
     }
 
     private function line(
@@ -80,6 +115,7 @@ class EconomicEngineTest extends TestCase
         string $gross,
         string $expenseKind = 'ordinary',
         ?int $fundedPlafondExpenseId = null,
+        ?string $projectStage = null,
     ): EconomicLine {
         return new EconomicLine(
             $expenseId,
@@ -97,6 +133,9 @@ class EconomicEngineTest extends TestCase
             null,
             null,
             null,
+            false,
+            $projectStage === null ? null : 99,
+            $projectStage,
         );
     }
 }

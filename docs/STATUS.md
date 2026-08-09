@@ -1,6 +1,7 @@
 # Stato funzionale
 
-Baseline verificata: `laravel-replatform@8f0f5660b409b562d354589d9e00012f31df8ef2`.
+Stato verificato sulla Feature 010 derivata da
+`laravel-replatform@7132a39271b31479b9ad477b0ed212bbfc6359a9`.
 
 Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cronologia.
 
@@ -17,11 +18,15 @@ Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cro
 | Spese | Register/detail/create/update/delete/confirm Actual | Implementato |
 | Contratti | CRUD/term/history | Implementato |
 | Generazione contratti | Sync/generate/suppress/resume/delete generated Expense | Implementato |
+| Progetti | CRUD/Deferred/history/compare/restore/delete terminale | Implementato |
+| Collegamento Spesa-Progetto | Tenant-safe, esclusivo rispetto al Contract | Implementato |
 | Dashboard | Dataset tenant | Implementato |
-| Budget corrente | Dataset rolling | Implementato |
-| Report economico | Dataset paginato | Implementato |
+| Budget corrente | Dataset rolling con bucket Project server-side | Implementato |
+| Report economico | Dataset paginato con bucket Project server-side | Implementato |
 
-Il contratto esatto delle operazioni implementate resta `docs/api/openapi-v1.yaml`.
+Il file globale `docs/api/openapi-v1.yaml` non è presente nel repository corrente. Fino alla sua
+introduzione completa, i contratti verificabili sono i contract feature-local in `specs/*/contracts/`,
+le route e i Resource testati. Non va dichiarato aggiornato un OpenAPI globale inesistente.
 
 ## Da implementare
 
@@ -29,13 +34,12 @@ Il contratto esatto delle operazioni implementate resta `docs/api/openapi-v1.yam
 |---:|---|---|
 | 1 | Operazioni piattaforma, impostazioni, audit e notifiche | `specs/008-platform-operations` |
 | 2 | Revision history/compare/restore operativo dove ancora mancante | `specs/009-operational-revisions` |
-| 3 | Progetti end-to-end e impatto sul Budget | `specs/010-projects` |
-| 4 | Allegati delle spese con revisioni e quota | `specs/011-expense-attachments` |
-| 5 | BudgetVersion, riferimento e confronto | `specs/012-budget-versions` |
-| 6 | Scenari what-if | `specs/013-scenarios` |
-| 7 | Export CSV/XLSX e stampa | `specs/014-exports-and-print` |
-| 8 | Migrazione legacy e portabilità Tenant | `specs/015-migration-and-portability` |
-| 9 | Backup/restore, scheduler, release e deployment | `specs/016-backup-and-operations` |
+| 3 | Allegati delle spese con revisioni e quota | `specs/011-expense-attachments` |
+| 4 | BudgetVersion, riferimento e confronto | `specs/012-budget-versions` |
+| 5 | Scenari what-if | `specs/013-scenarios` |
+| 6 | Export CSV/XLSX e stampa | `specs/014-exports-and-print` |
+| 7 | Migrazione legacy e portabilità Tenant | `specs/015-migration-and-portability` |
+| 8 | Backup/restore, scheduler, release e deployment | `specs/016-backup-and-operations` |
 
 L'ordine è una dipendenza tecnica iniziale, non una promessa di priorità prodotto. Il Product Owner
 può cambiare l'ordine purché le dipendenze della slice scelta siano soddisfatte.

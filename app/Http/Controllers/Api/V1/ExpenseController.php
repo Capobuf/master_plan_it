@@ -191,6 +191,7 @@ final class ExpenseController extends Controller
             'title' => ['required', 'string', 'max:255'],
             'notes' => ['nullable', 'string'],
             'contract_id' => ['nullable', 'integer', 'min:1'],
+            'project_id' => ['nullable', 'integer', 'min:1'],
             'rows' => ['required', 'array', 'min:1'],
             'rows.*.id' => ['nullable', 'integer', 'min:1'],
             'rows.*.position' => ['required', 'integer', 'min:1'],
@@ -234,7 +235,7 @@ final class ExpenseController extends Controller
             ExpenseKind::from($validated['kind']),
             (string) $validated['title'],
             $validated['notes'] ?? null,
-            null,
+            isset($validated['project_id']) ? (int) $validated['project_id'] : null,
             isset($validated['contract_id']) ? (int) $validated['contract_id'] : null,
             isset($validated['lock_version']) ? (int) $validated['lock_version'] : null,
         );
@@ -269,7 +270,7 @@ final class ExpenseController extends Controller
     /** @return list<string> */
     private function expenseFields(): array
     {
-        return ['planning_year_id', 'cost_center_id', 'kind', 'title', 'notes', 'contract_id', 'rows'];
+        return ['planning_year_id', 'cost_center_id', 'kind', 'title', 'notes', 'project_id', 'contract_id', 'rows'];
     }
 
     /** @param list<string> $allowed */

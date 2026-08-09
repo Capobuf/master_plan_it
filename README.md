@@ -19,7 +19,8 @@ Master Plan IT è composto da:
 Usare questo ordine:
 
 1. codice, migration e test correnti per il comportamento già implementato;
-2. `docs/api/openapi-v1.yaml` per il contratto API implementato;
+2. `specs/<feature>/contracts/` per il contratto API implementato finché il documento globale
+   `docs/api/openapi-v1.yaml` non è presente;
 3. `docs/ARCHITECTURE.md` per i vincoli tecnici permanenti;
 4. `docs/DOMAIN.md` per le regole di prodotto già implementate e ancora rilevanti;
 5. `docs/STATUS.md` per distinguere implementato, parziale e non implementato;
@@ -28,7 +29,7 @@ Usare questo ordine:
 
 Uno Spec Kit non è documentazione storica. Dopo l'implementazione accettata di una feature:
 
-1. aggiornare codice, test e OpenAPI;
+1. aggiornare codice, test e contract API feature-local (e OpenAPI globale quando presente);
 2. trasferire in `docs/DOMAIN.md` o `docs/ARCHITECTURE.md` solo le nuove regole permanenti;
 3. aggiornare `docs/STATUS.md`;
 4. eliminare la directory della feature completata.

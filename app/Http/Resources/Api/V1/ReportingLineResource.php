@@ -3,6 +3,7 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Domain\Economics\Data\EconomicLine;
+use App\Domain\Economics\Services\EconomicEngine;
 use App\Domain\Tenancy\Data\TenantContext;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -24,6 +25,9 @@ final class ReportingLineResource extends JsonResource
             'expense_kind' => $line->expenseKind,
             'type' => $line->type,
             'confirmation_state' => $line->confirmationState,
+            'project_id' => $line->projectId,
+            'project_stage' => $line->projectStage,
+            'bucket' => app(EconomicEngine::class)->classify($line),
             'net' => $line->net,
             'vat' => $line->vat,
             'gross' => $line->gross,

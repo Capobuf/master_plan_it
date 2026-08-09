@@ -89,4 +89,10 @@ class Expense extends Model
     {
         return $this->belongsTo(Contract::class);
     }
+
+    /** @return BelongsTo<Project, $this> */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
+    }
 }

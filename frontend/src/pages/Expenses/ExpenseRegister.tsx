@@ -212,6 +212,7 @@ export default function ExpenseRegister() {
           expenses={response.data}
           canEdit={hasAbility("expense.update")}
           canDelete={hasAbility("expense.delete")}
+          canViewProjects={hasAbility("project.view")}
           disabled={loading}
           onDeleted={() => updateParams(params)}
         />

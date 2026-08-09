@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\PromoteDeferredProjectsCommand;
 use App\Http\Middleware\AssignCorrelationId;
 use App\Http\Middleware\AuthorizeApplicationAbility;
 use App\Http\Middleware\EnsureActiveUser;
@@ -8,6 +9,7 @@ use App\Http\Middleware\ResolveTenantContext;
 use App\Http\Middleware\SetPermissionTeamContext;
 use App\Support\Api\ApiErrorResponse;
 use App\Support\Diagnostics\CorrelationId;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -16,6 +18,9 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
+    ->withCommands([
+        PromoteDeferredProjectsCommand::class,
+    ])
     ->withRouting(
         api: __DIR__.'/../routes/api.php',
         commands: __DIR__.'/../routes/console.php',
@@ -37,6 +42,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->prependToPriorityList(SubstituteBindings::class, ResolveTenantContext::class);
         $middleware->prependToPriorityList(SubstituteBindings::class, SetPermissionTeamContext::class);
         $middleware->prependToPriorityList(SubstituteBindings::class, EnsureTenantIsActive::class);
+    })
+    ->withSchedule(function (Schedule $schedule): void {
+        $schedule->command('projects:promote-deferred')->dailyAt('00:15')->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

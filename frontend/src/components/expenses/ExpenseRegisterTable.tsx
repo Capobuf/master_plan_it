@@ -14,6 +14,7 @@ interface ExpenseRegisterTableProps {
   expenses: ExpenseRegisterItem[];
   canEdit: boolean;
   canDelete: boolean;
+  canViewProjects: boolean;
   onDeleted: () => void;
   disabled?: boolean;
 }
@@ -22,6 +23,7 @@ export default function ExpenseRegisterTable({
   expenses,
   canEdit,
   canDelete,
+  canViewProjects,
   onDeleted,
   disabled = false,
 }: ExpenseRegisterTableProps) {
@@ -68,6 +70,7 @@ export default function ExpenseRegisterTable({
                 "Spesa",
                 "Tipo",
                 "Contratto",
+                "Progetto",
                 "Centro di costo",
                 "Netto",
                 "IVA",
@@ -103,6 +106,9 @@ export default function ExpenseRegisterTable({
                 </TableCell>
                 <TableCell className="px-4 py-3 text-start text-sm text-gray-600 dark:text-gray-300">
                   {expense.contract_id && expense.contract_title ? <Link to={routes.contratto(expense.contract_id)} className="font-medium text-gray-700 hover:text-brand-500 dark:text-gray-300 dark:hover:text-brand-400">{expense.contract_title}</Link> : "—"}
+                </TableCell>
+                <TableCell className="px-4 py-3 text-start text-sm text-gray-600 dark:text-gray-300">
+                  {expense.project_id && expense.project_title ? canViewProjects ? <Link to={routes.progetto(expense.project_id)} className="font-medium text-gray-700 hover:text-brand-500 dark:text-gray-300 dark:hover:text-brand-400">{expense.project_title}</Link> : expense.project_title : "—"}
                 </TableCell>
                 <TableCell className="px-4 py-3 text-start text-sm text-gray-600 dark:text-gray-300">
                   {expense.cost_center_name ?? "—"}

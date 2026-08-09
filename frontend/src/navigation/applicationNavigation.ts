@@ -82,6 +82,12 @@ export const applicationNavigation = [
         requiredAbility: "contract.view",
       },
       {
+        route: routes.progetti,
+        label: "Progetti",
+        icon: PieChartIcon,
+        requiredAbility: "project.view",
+      },
+      {
         route: routes.fornitori,
         label: "Fornitori",
         icon: GroupIcon,
