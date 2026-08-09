@@ -38,6 +38,11 @@ final class PlanningYearPolicy
         return $this->authorizeCollection($user, 'planning-year.create');
     }
 
+    public function update(User $user, PlanningYear $planningYear): Response
+    {
+        return $this->authorizeRecord($user, 'planning-year.update', $planningYear);
+    }
+
     public function deactivate(User $user, PlanningYear $planningYear): Response
     {
         return $this->authorizeRecord($user, 'planning-year.deactivate', $planningYear);

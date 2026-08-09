@@ -54,7 +54,7 @@ export interface ExpenseRow {
   vendor_id: number | null;
   vendor_name?: string | null;
   type: string;
-  confirmation_state: string | null;
+  is_current_planning: boolean;
   description: string;
   quantity: string | null;
   unit_price: string | null;
@@ -64,9 +64,6 @@ export interface ExpenseRow {
   is_extra: boolean;
   funded_plafond_expense_id: number | null;
   spend_date: string | null;
-  period_start: string | null;
-  period_end: string | null;
-  distribution: string | null;
   external_reference: string | null;
   lock_version: number;
   is_system_managed: boolean;
@@ -87,9 +84,32 @@ export interface ExpenseDetail {
   project_id: number | null;
   project_title: string | null;
   contract_id: number | null;
+  budget_state: "preparation" | "approved" | "closed";
+  state: "open" | "closed";
+  closure_outcome: "not_incurred" | "cancelled" | "moved" | null;
+  approved_amount: string | null;
+  approved_basis: "net" | "gross" | null;
+  current_planning_row_id: number | null;
+  moved_from_expense_id: number | null;
+  credit_for_expense_id: number | null;
+  planned: string | null;
+  actual: string;
+  residual: string | null;
+  variance: string | null;
+  variance_final: boolean;
+  warnings: string[];
   lock_version: number;
   rows: ExpenseRow[];
+  revision_activity: ExpenseRevision[];
   totals: ExpenseMoney;
+}
+
+export interface ExpenseRevision {
+  id: number;
+  operation: string;
+  actor: string | null;
+  timestamp: string | null;
+  summary: string | null;
 }
 
 export interface ExpenseRowInput {
@@ -97,6 +117,7 @@ export interface ExpenseRowInput {
   position: number;
   vendor_id?: number;
   type: string;
+  is_current_planning?: boolean;
   description: string;
   quantity?: string;
   unit_price?: string;
@@ -106,9 +127,6 @@ export interface ExpenseRowInput {
   is_extra: boolean;
   funded_plafond_expense_id?: number;
   spend_date?: string;
-  period_start?: string;
-  period_end?: string;
-  distribution?: string;
   external_reference?: string;
   lock_version?: number;
 }
@@ -121,6 +139,7 @@ export interface ExpenseWrite {
   notes?: string;
   project_id?: number;
   contract_id?: number;
+  credit_for_expense_id?: number;
   rows: ExpenseRowInput[];
 }
 
@@ -156,8 +175,19 @@ export interface DeleteGeneratedExpenseRequest {
   allow_regeneration: boolean;
 }
 
-export interface ConfirmActualRequest {
+export interface CloseExpenseRequest {
   lock_version: number;
+  outcome?: "not_incurred" | "cancelled" | "moved";
+}
+
+export interface MoveExpenseRequest {
+  lock_version: number;
+  target_planning_year_id: number;
+}
+
+export interface MoveExpenseResponse {
+  origin: ExpenseDetail;
+  destination: ExpenseDetail;
 }
 
 export async function listExpenses(
@@ -288,13 +318,12 @@ export async function deleteGeneratedExpense(
   );
 }
 
-export async function confirmActual(
-  expenseId: number,
-  rowId: number,
-  request: ConfirmActualRequest,
-): Promise<void> {
-  await apiClient.post(
-    `/api/v1/expenses/${expenseId}/rows/${rowId}/confirm`,
-    request,
-  );
+export async function closeExpense(expenseId: number, request: CloseExpenseRequest): Promise<ExpenseDetail> {
+  const response = await apiClient.post<DataEnvelope<ExpenseDetail>>(`/api/v1/expenses/${expenseId}/close`, request);
+  return response.data.data;
+}
+
+export async function moveExpense(expenseId: number, request: MoveExpenseRequest): Promise<MoveExpenseResponse> {
+  const response = await apiClient.post<DataEnvelope<MoveExpenseResponse>>(`/api/v1/expenses/${expenseId}/move`, request);
+  return response.data.data;
 }

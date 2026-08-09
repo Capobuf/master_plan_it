@@ -5,7 +5,6 @@ namespace App\Domain\Contracts\Queries;
 use App\Domain\Contracts\Data\ContractOccurrenceKey;
 use App\Domain\Contracts\Data\ExpectedContractOccurrence;
 use App\Domain\Contracts\Enums\BillingCycle;
-use App\Domain\Expenses\Enums\ActualConfirmationState;
 use App\Models\Contract;
 use App\Models\ContractTerm;
 use App\Models\ExpenseRow;
@@ -23,26 +22,61 @@ final class ExpectedContractOccurrenceQuery
         $exceptions = $contract->generationExceptions()
             ->where('tenant_id', $contract->tenant_id)
             ->pluck('id', 'source_key');
-        $rows = ExpenseRow::query()->where('tenant_id', $contract->tenant_id)->whereNotNull('source_key')->get()->keyBy('source_key');
-        $result = [];
+        $rows = $contract->expenses()
+            ->where('tenant_id', $contract->tenant_id)
+            ->with(['rows' => fn ($query) => $query->whereNotNull('source_key')])
+            ->get()
+            ->flatMap(fn ($expense) => $expense->rows)
+            ->keyBy('source_key');
+        /** @var array<int, array{term_id:int, date:CarbonImmutable, net:string, vat:string, gross:string}> $annual */
+        $annual = [];
         foreach ($terms as $term) {
             foreach ($this->dates($term) as $date) {
                 if ($year !== null && $date->year !== $year) {
                     continue;
                 }
-                $key = ContractOccurrenceKey::make($contract, $term, $date->year, $date)->value;
-                $row = $rows->get($key);
-                $result[] = new ExpectedContractOccurrence(
-                    (int) $contract->getKey(), (int) $term->getKey(), $date->year, $date->toDateString(), $key,
-                    (string) $term->net_amount, (string) $term->vat_amount, (string) $term->gross_amount,
-                    $exceptions->has($key), $row instanceof ExpenseRow ? (int) $row->expense_id : null,
-                    $row instanceof ExpenseRow && $row->confirmation_state instanceof ActualConfirmationState
-                        ? $row->confirmation_state->value
-                        : null,
-                );
+                $bucket = $annual[$date->year] ?? [
+                    'term_id' => (int) $term->getKey(),
+                    'date' => $date,
+                    'net' => '0.000000',
+                    'vat' => '0.000000',
+                    'gross' => '0.000000',
+                ];
+                $bucket['net'] = bcadd($bucket['net'], (string) $term->net_amount, 6);
+                $bucket['vat'] = bcadd($bucket['vat'], (string) $term->vat_amount, 6);
+                $bucket['gross'] = bcadd($bucket['gross'], (string) $term->gross_amount, 6);
+                $annual[$date->year] = $bucket;
             }
         }
-        usort($result, fn ($a, $b) => [$a->occurrenceDate, $a->termId] <=> [$b->occurrenceDate, $b->termId]);
+
+        $result = [];
+        ksort($annual);
+        foreach ($annual as $planningYear => $bucket) {
+            $key = ContractOccurrenceKey::annual($contract, $planningYear)->value;
+            $row = $rows->get($key);
+            $result[] = new ExpectedContractOccurrence(
+                (int) $contract->getKey(),
+                $bucket['term_id'],
+                $planningYear,
+                sprintf('%04d-01-01', $planningYear),
+                $key,
+                $bucket['net'],
+                $bucket['vat'],
+                $bucket['gross'],
+                $exceptions->has($key),
+                $row instanceof ExpenseRow ? (int) $row->expense_id : null,
+                $row instanceof ExpenseRow ? ($row->manual_override_at === null ? 'managed' : 'manual') : null,
+                $row instanceof ExpenseRow && (
+                    bccomp($bucket['net'], (string) $row->net_amount, 6) !== 0
+                    || bccomp($bucket['vat'], (string) $row->vat_amount, 6) !== 0
+                    || bccomp($bucket['gross'], (string) $row->gross_amount, 6) !== 0
+                ) ? [
+                    'net' => bcsub($bucket['net'], (string) $row->net_amount, 6),
+                    'vat' => bcsub($bucket['vat'], (string) $row->vat_amount, 6),
+                    'gross' => bcsub($bucket['gross'], (string) $row->gross_amount, 6),
+                ] : null,
+            );
+        }
 
         return $result;
     }

@@ -2,8 +2,8 @@
 
 Gli Spec Kit storici del replatform `001`–`007` sono ritirati.
 
-Questa directory contiene soltanto funzionalità non ancora completate alla baseline
-`8f0f5660b409b562d354589d9e00012f31df8ef2`.
+Questa directory contiene gli Spec Kit attivi e la Feature 017 completata in attesa di archiviazione
+coordinata con il repository.
 
 | ID | Feature | Stato iniziale |
 |---|---|---|
@@ -16,6 +16,7 @@ Questa directory contiene soltanto funzionalità non ancora completate alla base
 | 014 | Exports and print | Specificata, da pianificare |
 | 015 | Migration and portability | Specificata, da pianificare |
 | 016 | Backup and operations | Specificata; dipende da evidenze hosting |
+| 017 | Budget annuale, approvazioni e ciclo Spese | Implementata e verificata |
 
 ## Regola
 

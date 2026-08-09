@@ -204,7 +204,7 @@ final class VendorController extends Controller
 
     private function version(TenantContext $context, Vendor $vendor, int $versionId): Version
     {
-        $item = RevisionBatchItem::query()
+        $item = TenantOwnedRecordQuery::forTenant($context, RevisionBatchItem::class)
             ->where('version_id', $versionId)
             ->where('versionable_type', $vendor->getMorphClass())
             ->where('versionable_id', $vendor->getKey())

@@ -2,6 +2,10 @@
 
 Status: `PROPOSED TARGET — backend capability not exposed at baseline`
 
+Nota dipendenza Feature 017: le revisioni annuali e la proiezione a cutoff sono implementate senza
+payload allegati inline. Questo scope resta aperto per metadata, manifest, payload privati, quota e
+restore attachment-aware; non deve retroattivamente inventare allegati nella storia 017.
+
 ## Problema
 
 Le Expense non dispongono ancora di una capability completa di upload/download/delete con

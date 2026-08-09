@@ -2,6 +2,10 @@
 
 Status: `PROPOSED TARGET — not implemented; /speckit.clarify required before plan`
 
+Nota dipendenza Feature 017: il dataset annuale ufficiale e le sue cinque dimensioni di reporting
+sono implementati e costituiscono la base di confronto. Lo Scenario resta non ufficiale e non può
+scrivere approvazioni, Expense o revisioni annuali.
+
 ## Problema
 
 Gli scenari what-if devono consentire simulazioni condivise senza modificare Expense o valori

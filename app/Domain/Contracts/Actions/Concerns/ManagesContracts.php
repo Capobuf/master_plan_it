@@ -18,6 +18,7 @@ use App\Models\Contract;
 use App\Models\ContractTerm;
 use App\Models\CostCenter;
 use App\Models\ExpenseRow;
+use App\Models\Project;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
@@ -77,11 +78,14 @@ trait ManagesContracts
         if (! CostCenter::query()->where('tenant_id', $tenant->getKey())->whereKey($data->costCenterId)->exists()) {
             $this->contractFail('cost_center_id', 'The cost center is invalid.');
         }
+        if ($data->projectId !== null && ! Project::query()->where('tenant_id', $tenant->getKey())->whereKey($data->projectId)->exists()) {
+            $this->contractFail('project_id', 'The project is invalid.');
+        }
         if ($data->terms === []) {
             $this->contractFail('terms', 'At least one term is required.');
         }
 
-        $contract->fill(['vendor_id' => $data->vendorId, 'cost_center_id' => $data->costCenterId, 'title' => trim($data->title), 'description' => $data->description, 'active' => $data->active, 'renewal_date' => $data->renewalDate, 'renewal_notice_days' => $data->renewalNoticeDays, 'renewal_notes' => $data->renewalNotes]);
+        $contract->fill(['vendor_id' => $data->vendorId, 'cost_center_id' => $data->costCenterId, 'project_id' => $data->projectId, 'title' => trim($data->title), 'description' => $data->description, 'active' => $data->active, 'renewal_date' => $data->renewalDate, 'renewal_notice_days' => $data->renewalNoticeDays, 'renewal_notes' => $data->renewalNotes]);
         $contract->tenant_id = $tenant->getKey();
         $contract->save();
         $existing = $contract->terms()->lockForUpdate()->get();
@@ -256,7 +260,7 @@ trait ManagesContracts
                 continue;
             }
             $seen[$identity] = true;
-            $version = $model->latestVersions()->first();
+            $version = $model->versions()->orderByDesc('id')->first();
             if ($version instanceof Version) {
                 app(LinkVersionToRevisionBatch::class)->execute($batch, $version, $sequence++);
             }

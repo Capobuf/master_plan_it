@@ -320,7 +320,7 @@ class PlanningYearTest extends TestCase
         }
     }
 
-    public function test_planning_year_has_no_update_delete_or_revision_domain_surface(): void
+    public function test_planning_year_has_no_generic_update_action_delete_or_revision_domain_surface(): void
     {
         foreach ([
             'App\\Domain\\MasterData\\Actions\\UpdatePlanningYear',

@@ -49,7 +49,7 @@ final class RevisionHistoryQuery
     {
         $persistedBatch = $this->persistedSameTenantBatch($batch, $context);
 
-        return RevisionBatchItem::query()
+        return TenantOwnedRecordQuery::forTenant($context, RevisionBatchItem::class)
             ->where('revision_batch_id', $persistedBatch->getKey())
             ->with(['version'])
             ->orderBy('sequence')

@@ -90,7 +90,7 @@ final class ExpenseApiHttpTest extends TestCase
             ->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
     }
 
-    public function test_create_update_confirm_and_delete_use_api_contract(): void
+    public function test_create_close_descriptive_update_and_delete_use_api_contract(): void
     {
         $tenant = Tenant::factory()->create();
         $user = $this->tenantUser($tenant);
@@ -106,7 +106,9 @@ final class ExpenseApiHttpTest extends TestCase
             ->assertJsonPath('data.lock_version', 1)
             ->assertJsonPath('data.rows.0.lock_version', 1)
             ->assertJsonPath('data.rows.0.entered_amount', '100.000000')
-            ->assertJsonPath('data.rows.0.totals.net', '100.00');
+            ->assertJsonPath('data.rows.0.totals.net', '100.00')
+            ->assertJsonCount(1, 'data.revision_activity')
+            ->assertJsonPath('data.revision_activity.0.operation', 'create');
         $expenseId = (int) $created->json('data.id');
         $rowId = (int) $created->json('data.rows.0.id');
         $this->assertDatabaseHas('expense_rows', [
@@ -116,19 +118,22 @@ final class ExpenseApiHttpTest extends TestCase
             'gross_amount' => '122.00',
         ]);
 
-        $this->withHeaders($this->csrfHeaders())->postJson("/api/v1/expenses/{$expenseId}/rows/{$rowId}/confirm", [
+        $this->withHeaders($this->csrfHeaders())->postJson("/api/v1/expenses/{$expenseId}/close", [
             'lock_version' => 1,
-        ])->assertOk()->assertJsonPath('data.confirmation_state', 'confirmed');
+            'outcome' => null,
+        ])->assertOk()->assertJsonPath('data.state', 'closed');
 
         $this->withHeaders($this->csrfHeaders())->putJson('/api/v1/expenses/'.$expenseId, [
             ...$payload,
             'title' => 'Updated expense',
-            'lock_version' => 1,
-            'rows' => [[...$payload['rows'][0], 'id' => $rowId, 'lock_version' => 2]],
-        ])->assertOk()->assertJsonPath('data.title', 'Updated expense');
+            'lock_version' => 2,
+            'rows' => [[...$payload['rows'][0], 'id' => $rowId, 'lock_version' => 1]],
+        ])->assertOk()
+            ->assertJsonPath('data.title', 'Updated expense')
+            ->assertJsonPath('data.state', 'closed');
 
         $this->withHeaders($this->csrfHeaders())->deleteJson('/api/v1/expenses/'.$expenseId, [
-            'lock_version' => 2,
+            'lock_version' => 3,
         ])->assertNoContent();
         $this->assertSoftDeleted('expenses', ['id' => $expenseId]);
     }
@@ -173,10 +178,8 @@ final class ExpenseApiHttpTest extends TestCase
                 'is_extra' => false,
                 'funded_plafond_expense_id' => null,
                 'spend_date' => '2026-01-15',
-                'period_start' => null,
-                'period_end' => null,
-                'distribution' => null,
                 'external_reference' => null,
+                'is_current_planning' => $type !== 'actual',
             ]],
         ];
     }

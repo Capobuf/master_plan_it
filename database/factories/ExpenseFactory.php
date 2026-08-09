@@ -3,6 +3,7 @@
 namespace Database\Factories;
 
 use App\Domain\Expenses\Enums\ExpenseKind;
+use App\Domain\Expenses\Enums\ExpenseState;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\PlanningYear;
@@ -43,6 +44,15 @@ class ExpenseFactory extends Factory
             'notes' => null,
             'project_id' => null,
             'contract_id' => null,
+            'approved_amount' => null,
+            'approved_basis' => null,
+            'state' => ExpenseState::Open,
+            'closure_outcome' => null,
+            'closed_at' => null,
+            'closed_by_user_id' => null,
+            'current_planning_row_id' => null,
+            'moved_from_expense_id' => null,
+            'credit_for_expense_id' => null,
             'lock_version' => 1,
         ];
     }

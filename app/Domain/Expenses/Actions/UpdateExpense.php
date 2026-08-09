@@ -30,6 +30,15 @@ final class UpdateExpense
             if (! $expense instanceof Expense || $data->expectedLockVersion === null || $expense->lock_version !== $data->expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');
             }
+            if ($expense->approved_amount !== null && (
+                (int) $expense->planning_year_id !== $data->planningYearId
+                || (int) $expense->cost_center_id !== $data->costCenterId
+                || (string) $expense->getRawOriginal('kind') !== $data->kind->value
+                || $this->nullableId($expense->project_id) !== $data->projectId
+                || $this->nullableId($expense->contract_id) !== $data->contractId
+            )) {
+                throw new DomainException('APPROVED_DIMENSION_REALLOCATION_REQUIRED');
+            }
             $sourceRowIds = $expense->rows()->whereNotNull('source_key')->pluck('id')->map(fn ($id) => (int) $id)->all();
             if ($sourceRowIds !== []) {
                 $submittedIds = array_values(array_filter(array_map(fn ($row) => $row->id, $rows), fn ($id) => $id !== null));
@@ -47,5 +56,10 @@ final class UpdateExpense
 
             return $expense->fresh(['rows']);
         });
+    }
+
+    private function nullableId(mixed $value): ?int
+    {
+        return $value === null ? null : (int) $value;
     }
 }

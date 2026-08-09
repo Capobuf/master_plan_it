@@ -10,7 +10,7 @@ final readonly class ExpenseDetail
      *     position: int,
      *     vendor_id: ?int,
      *     type: string,
-     *     confirmation_state: ?string,
+     *     is_current_planning: bool,
      *     description: string,
      *     quantity: ?string,
      *     unit_price: ?string,
@@ -20,9 +20,6 @@ final readonly class ExpenseDetail
      *     is_extra: bool,
      *     funded_plafond_expense_id: ?int,
      *     spend_date: ?string,
-     *     period_start: ?string,
-     *     period_end: ?string,
-     *     distribution: ?string,
      *     external_reference: ?string,
      *     lock_version: int,
      *     is_system_managed: bool,
@@ -32,6 +29,7 @@ final readonly class ExpenseDetail
      *     vat_amount: string,
      *     gross_amount: string
      * }> $rows
+     * @param  list<array{id:int,operation:string,actor:?string,timestamp:?string,summary:?string}>  $revisionActivity
      */
     public function __construct(
         public int $id,
@@ -45,10 +43,23 @@ final readonly class ExpenseDetail
         public ?int $projectId,
         public ?string $projectTitle,
         public ?int $contractId,
+        public string $budgetState,
+        public string $state,
+        public ?string $closureOutcome,
+        public ?string $approvedAmount,
+        public ?string $approvedBasis,
+        public ?int $currentPlanningRowId,
+        public ?int $movedFromExpenseId,
+        public ?int $creditForExpenseId,
+        public ?string $plannedAmount,
+        public string $actualAmount,
+        public ?string $residualAmount,
+        public ?string $varianceAmount,
         public int $lockVersion,
         public array $rows,
         public string $netTotal,
         public string $vatTotal,
         public string $grossTotal,
+        public array $revisionActivity,
     ) {}
 }

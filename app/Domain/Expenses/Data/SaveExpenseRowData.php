@@ -26,5 +26,6 @@ final readonly class SaveExpenseRowData
         public ?Distribution $distribution,
         public ?string $externalReference,
         public ?int $expectedLockVersion,
+        public bool $isCurrentPlanning = false,
     ) {}
 }

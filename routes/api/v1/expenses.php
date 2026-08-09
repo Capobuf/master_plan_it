@@ -27,9 +27,12 @@ Route::middleware(RejectBearerTokens::class)
             ->whereNumber('expense')
             ->middleware('application-ability:expense.delete')
             ->name('destroy');
-        Route::post('/{expense}/rows/{row}/confirm', [ExpenseController::class, 'confirm'])
+        Route::post('/{expense}/close', [ExpenseController::class, 'close'])
             ->whereNumber('expense')
-            ->whereNumber('row')
-            ->middleware('application-ability:expense.confirm-actual')
-            ->name('confirm');
+            ->middleware('application-ability:expense.update')
+            ->name('close');
+        Route::post('/{expense}/move', [ExpenseController::class, 'move'])
+            ->whereNumber('expense')
+            ->middleware(['application-ability:expense.update', 'application-ability:expense.create'])
+            ->name('move');
     });

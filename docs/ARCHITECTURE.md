@@ -3,7 +3,7 @@
 Stato: `VERIFIED CURRENT` per il runtime implementato; i vincoli di progetto elencati derivano
 dalle decisioni approvate e dal codice corrente.
 
-Baseline: `laravel-replatform@8f0f5660b409b562d354589d9e00012f31df8ef2`.
+Baseline funzionale: Feature 017 verificata nel worktree corrente.
 
 ## Runtime
 
@@ -70,8 +70,22 @@ Gli errori devono essere osservabili e diagnosticabili.
 - Project e Contract sono contesto o generatori, non sorgenti monetarie aggiuntive.
 - Revisioni, audit, tombstone, generation exception, Scenario e BudgetVersion non entrano
   implicitamente nei totali correnti.
-- Dashboard, Budget corrente e Report devono consumare lo stesso economic dataset/kernel
-  server-side per lo stesso scope.
+- Dashboard considera una sola pianificazione selezionata per Spesa e tutti gli Actual correnti.
+- Budget e Report annuali condividono `AnnualBudgetQuery`; il Report raggruppa le stesse linee e
+  riconcilia il Plafond prima dell'aggregazione.
+- Le somme usano soltanto stringhe decimali e BCMath; il frontend non ricalcola denaro autorevole.
+
+## Approvazioni e storia annuale
+
+- Approvazione, variazione, spostamento e chiusura sono Actions transazionali con lock ottimistico,
+  audit e un unico revision batch per mutazione logica.
+- `revision_batch_items` denormalizza Tenant, Planning Year e mutation (`upsert`/`delete`).
+- L'attivazione storica crea il baseline annuale; la proiezione seleziona l'ultimo item completo per
+  soggetto ordinando per timestamp batch, ID batch e sequence.
+- La risposta storica include le righe Expense ricostruite e il contesto annuale collegato di
+  approvazioni, Cost Center, Project, Contract, Contract term e Vendor.
+- Le letture storiche non iterano `versionAt()`, non usano audit come snapshot e non espongono
+  restore.
 
 ## Tenancy e autorizzazione
 

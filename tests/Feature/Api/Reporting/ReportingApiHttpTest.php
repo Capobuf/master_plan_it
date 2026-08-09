@@ -35,7 +35,7 @@ final class ReportingApiHttpTest extends TestCase
                     'summary' => ['official_basis', 'currency', 'amounts'],
                     'monthly', 'by_type', 'by_cost_center', 'has_economic_data',
                     'year_options', 'selected_year_id',
-                    'ancillary' => ['recentExpenses', 'generatedExpensesToConfirm', 'activeContracts', 'upcomingContractEvents'],
+                    'ancillary' => ['recentExpenses', 'generatedContractPlanning', 'activeContracts', 'upcomingContractEvents'],
                 ],
             ])
             ->assertJsonPath('data.summary.amounts.net', '100.00')
@@ -120,8 +120,9 @@ final class ReportingApiHttpTest extends TestCase
 
         $this->getJson('/api/v1/budget?planning_year_id='.$year->getKey().'&cost_center='.$center->getKey())
             ->assertOk()
-            ->assertJsonPath('data.cost_center_id', $center->getKey())
-            ->assertJsonPath('data.summary.amounts.official_current_position', '100.00');
+            ->assertJsonPath('data.budget.planning_year_id', $year->getKey())
+            ->assertJsonPath('data.expenses.0.cost_center_id', $center->getKey())
+            ->assertJsonPath('data.summary.proposed', '100.00');
 
         $this->getJson('/api/v1/budget?planning_year_id='.$year->getKey().'&cost_center='.$foreignCenter->getKey())
             ->assertNotFound()
@@ -140,16 +141,21 @@ final class ReportingApiHttpTest extends TestCase
         $this->getJson('/api/v1/reports?year='.$year->getKey().'&page=2&per_page=1')
             ->assertOk()
             ->assertJsonStructure([
-                'data' => [['id', 'expense_id', 'net', 'vat', 'gross', 'currency', 'official_basis']],
+                'data' => [[
+                    'key', 'label', 'group_by', 'proposed', 'approved', 'actual',
+                    'residual', 'variance', 'utilization_percentage', 'open_expenses',
+                    'closed_expenses', 'unapproved_actual_expenses', 'plafond_expenses',
+                ]],
                 'meta' => ['current_page', 'last_page', 'per_page', 'total'],
-                'links' => ['first', 'last', 'prev', 'next'],
-                'scope' => ['planning_year_id', 'official_basis'],
-                'summary' => ['amounts', 'currency'],
-                'filters' => ['planning_year_id', 'cost_center_id'],
+                'mode', 'requested_as_of', 'cutoff_utc', 'read_only',
+                'budget' => ['planning_year_id', 'year', 'state', 'lock_version'],
+                'summary' => ['proposed', 'approved_current', 'actual', 'residual', 'variance'],
+                'filters' => ['planning_year_id', 'cost_center_id', 'group_by'],
             ])
             ->assertJsonPath('meta.current_page', 2)
             ->assertJsonPath('meta.per_page', 1)
-            ->assertJsonPath('meta.total', 2);
+            ->assertJsonPath('meta.total', 2)
+            ->assertJsonPath('filters.group_by', 'cost_center');
     }
 
     public function test_reporting_requires_authentication_and_tenant_year_scope(): void
@@ -182,13 +188,14 @@ final class ReportingApiHttpTest extends TestCase
             'planning_year_id' => $year->getKey(),
             'cost_center_id' => ($costCenter ?? CostCenter::factory()->for($tenant)->create())->getKey(),
         ]);
-        ExpenseRow::factory()->for($expense)->create([
+        $row = ExpenseRow::factory()->for($expense)->create([
             'tenant_id' => $tenant->getKey(),
             'net_amount' => $net,
             'vat_amount' => $vat,
             'gross_amount' => $gross,
             'spend_date' => '2026-01-15',
         ]);
+        $expense->forceFill(['current_planning_row_id' => $row->getKey()])->save();
 
         return $expense;
     }

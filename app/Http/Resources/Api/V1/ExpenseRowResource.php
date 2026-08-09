@@ -2,8 +2,6 @@
 
 namespace App\Http\Resources\Api\V1;
 
-use App\Domain\Expenses\Enums\ActualConfirmationState;
-use App\Domain\Expenses\Enums\Distribution;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\ExpenseRow;
@@ -27,7 +25,7 @@ final class ExpenseRowResource extends JsonResource
                 'position' => (int) $row['position'],
                 'vendor_id' => $row['vendor_id'] === null ? null : (int) $row['vendor_id'],
                 'type' => (string) $row['type'],
-                'confirmation_state' => $row['confirmation_state'],
+                'is_current_planning' => (bool) ($row['is_current_planning'] ?? false),
                 'description' => (string) $row['description'],
                 'quantity' => $row['quantity'],
                 'unit_price' => $row['unit_price'],
@@ -37,9 +35,6 @@ final class ExpenseRowResource extends JsonResource
                 'is_extra' => (bool) $row['is_extra'],
                 'funded_plafond_expense_id' => $row['funded_plafond_expense_id'],
                 'spend_date' => $row['spend_date'],
-                'period_start' => $row['period_start'],
-                'period_end' => $row['period_end'],
-                'distribution' => $row['distribution'],
                 'external_reference' => $row['external_reference'],
                 'lock_version' => (int) $row['lock_version'],
                 'is_system_managed' => (bool) $row['is_system_managed'],
@@ -61,7 +56,7 @@ final class ExpenseRowResource extends JsonResource
             'vendor_id' => $row->vendor_id === null ? null : (int) $row->vendor_id,
             'vendor_name' => $row->relationLoaded('vendor') ? $row->vendor?->name : null,
             'type' => $row->type instanceof ExpenseType ? $row->type->value : (string) $row->getRawOriginal('type'),
-            'confirmation_state' => $row->confirmation_state instanceof ActualConfirmationState ? $row->confirmation_state->value : ($row->getRawOriginal('confirmation_state') ?: null),
+            'is_current_planning' => (bool) ($row->getAttribute('is_current_planning') ?? false),
             'description' => (string) $row->description,
             'quantity' => $row->quantity === null ? null : self::decimal((string) $row->quantity, 6),
             'unit_price' => $row->unit_price === null ? null : self::decimal((string) $row->unit_price, 6),
@@ -71,9 +66,6 @@ final class ExpenseRowResource extends JsonResource
             'is_extra' => (bool) $row->is_extra,
             'funded_plafond_expense_id' => $row->funded_plafond_expense_id === null ? null : (int) $row->funded_plafond_expense_id,
             'spend_date' => $row->getRawOriginal('spend_date'),
-            'period_start' => $row->getRawOriginal('period_start'),
-            'period_end' => $row->getRawOriginal('period_end'),
-            'distribution' => $row->distribution instanceof Distribution ? $row->distribution->value : ($row->getRawOriginal('distribution') ?: null),
             'external_reference' => $row->external_reference,
             'lock_version' => (int) $row->lock_version,
             'is_system_managed' => (bool) $row->is_system_managed,

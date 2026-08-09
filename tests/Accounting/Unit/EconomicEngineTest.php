@@ -25,7 +25,7 @@ class EconomicEngineTest extends TestCase
         $this->assertSame('100.00', $summary->amounts['officialCurrentPosition']);
     }
 
-    public function test_components_and_actual_confirmation_states_remain_independent_on_gross_basis(): void
+    public function test_planning_and_actual_are_immediately_effective_on_gross_basis_without_confirmation_buckets(): void
     {
         $dataset = new EconomicDataset(
             new EconomicScope(1, 1, 2026, 'EUR', BudgetBasis::Gross),
@@ -43,8 +43,9 @@ class EconomicEngineTest extends TestCase
         $this->assertSame('122.00', $summary->amounts['estimate']);
         $this->assertSame('244.00', $summary->amounts['quote']);
         $this->assertSame('97.60', $summary->amounts['actual']);
-        $this->assertSame('61.00', $summary->amounts['actualToConfirm']);
-        $this->assertSame('36.60', $summary->amounts['actualConfirmed']);
+        $this->assertSame('366.00', $summary->amounts['planned']);
+        $this->assertSame('0.00', $summary->amounts['actualToConfirm']);
+        $this->assertSame('0.00', $summary->amounts['actualConfirmed']);
         $this->assertSame('463.60', $summary->amounts['officialCurrentPosition']);
     }
 
@@ -72,15 +73,15 @@ class EconomicEngineTest extends TestCase
         $this->assertSame('1700.00', $summary->amounts['potential']);
     }
 
-    public function test_project_bucket_matrix_and_potential_are_calculated_once_with_exact_decimals(): void
+    public function test_project_stage_never_reclassifies_current_economic_lines(): void
     {
         $lines = [];
         $rowId = 1;
         foreach (['estimate', 'quote'] as $type) {
             $lines[] = $this->line($rowId, $rowId++, $type, null, '10.00', '2.20', '12.20');
             foreach ([
-                'approved' => 'primary', 'proposed' => 'proposed', 'idea' => 'idea',
-                'deferred' => 'excluded', 'rejected' => 'excluded',
+                'approved' => 'primary', 'proposed' => 'primary', 'idea' => 'primary',
+                'deferred' => 'primary', 'rejected' => 'primary',
             ] as $stage => $bucket) {
                 $line = $this->line($rowId, $rowId++, $type, null, '10.00', '2.20', '12.20', projectStage: $stage);
                 $this->assertSame($bucket, app(EconomicEngine::class)->classify($line));
@@ -97,11 +98,11 @@ class EconomicEngineTest extends TestCase
             new EconomicScope(1, 1, 2026, 'EUR', BudgetBasis::Net), $lines,
         ))['summary']->amounts;
 
-        $this->assertSame('100.00', $amounts['primary']);
-        $this->assertSame('20.00', $amounts['proposed']);
-        $this->assertSame('20.00', $amounts['idea']);
-        $this->assertSame('40.00', $amounts['excluded']);
-        $this->assertSame('140.00', $amounts['potential']);
+        $this->assertSame('180.00', $amounts['primary']);
+        $this->assertSame('0.00', $amounts['proposed']);
+        $this->assertSame('0.00', $amounts['idea']);
+        $this->assertSame('0.00', $amounts['excluded']);
+        $this->assertSame('180.00', $amounts['potential']);
         $this->assertSame($amounts['primary'], $amounts['officialCurrentPosition']);
     }
 

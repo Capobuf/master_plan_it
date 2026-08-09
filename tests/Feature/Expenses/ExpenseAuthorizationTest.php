@@ -50,7 +50,6 @@ class ExpenseAuthorizationTest extends TestCase
             ['create', ['expense.create'], null],
             ['update', ['expense.update'], $expense],
             ['delete', ['expense.delete'], $expense],
-            ['confirmActual', ['expense.confirm-actual'], $expense],
             ['restoreRevision', ['expense.restore-revision'], $expense],
             ['viewRevisions', ['expense.view-revisions'], $expense],
             ['viewAttachment', ['expense.view', 'attachment.view'], $expense],

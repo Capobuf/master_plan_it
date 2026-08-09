@@ -1,6 +1,6 @@
 import { Link } from "react-router";
 import type { DashboardListItem, ReportingDataset } from "../../api/dashboard";
-import { AlertHexaIcon, CheckCircleIcon, DollarLineIcon, TimeIcon } from "../../icons";
+import { AlertHexaIcon, CheckCircleIcon, DollarLineIcon } from "../../icons";
 import { routes } from "../../navigation/routes";
 import { compareDecimalStrings, formatDate, formatMoney, isPositiveDecimal, toChartNumber } from "../../presentation/formatters";
 import { domainLabel } from "../../presentation/labels";
@@ -44,9 +44,8 @@ export default function DashboardView({ dataset }: { dataset: ReportingDataset }
   const composition = Object.entries(dataset.by_type ?? {});
   const costCenters = Object.entries(dataset.by_cost_center ?? {}).sort(([, left], [, right]) => compareDecimalStrings(right, left)).slice(0, 8);
   const metrics: EcommerceMetric[] = [
-    { label: "Budget Corrente", value: formatMoney(amount(dataset, "primary"), currency), icon: DollarLineIcon },
-    { label: "Consuntivi Confermati", value: formatMoney(amount(dataset, "actual_confirmed"), currency), icon: CheckCircleIcon },
-    { label: "Consuntivi da Confermare", value: formatMoney(amount(dataset, "actual_to_confirm"), currency), icon: TimeIcon, tone: "warning" },
+    { label: "Pianificato selezionato", value: formatMoney(amount(dataset, "planned"), currency), icon: DollarLineIcon },
+    { label: "Actual", value: formatMoney(amount(dataset, "actual"), currency), icon: CheckCircleIcon },
   ];
   if (amounts.extra !== undefined) metrics.push({ label: "Spese Extra", value: formatMoney(amounts.extra, currency), icon: AlertHexaIcon });
 
@@ -59,7 +58,7 @@ export default function DashboardView({ dataset }: { dataset: ReportingDataset }
         {monthly.length ? <StatisticsChart title="Andamento Mensile" description="Posizione economica mensile dell'anno selezionato." categories={monthly.map(([key]) => monthLabels[key.slice(-2)] ?? key)} values={monthly.map(([, value]) => toChartNumber(value))} currency={currency} seriesName="Posizione mensile" /> : <ComponentCard title="Andamento Mensile"><EmptyState message="Nessun andamento mensile disponibile." /></ComponentCard>}
       </div>
       <div className="lg:col-span-4">
-        {composition.length ? <StatisticsChart title="Composizione per Stime, Preventivi e Consuntivi" categories={composition.map(([type]) => domainLabel(type))} values={composition.map(([, value]) => toChartNumber(value))} currency={currency} type="bar" seriesName="Composizione" /> : <ComponentCard title="Composizione per Stime, Preventivi e Consuntivi"><EmptyState message="Nessuna composizione disponibile." /></ComponentCard>}
+        {composition.length ? <StatisticsChart title="Composizione tra pianificazione selezionata e Actual" categories={composition.map(([type]) => domainLabel(type))} values={composition.map(([, value]) => toChartNumber(value))} currency={currency} type="bar" seriesName="Composizione" /> : <ComponentCard title="Composizione tra pianificazione selezionata e Actual"><EmptyState message="Nessuna composizione disponibile." /></ComponentCard>}
       </div>
     </div>
     <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -68,7 +67,7 @@ export default function DashboardView({ dataset }: { dataset: ReportingDataset }
       <ComponentCard title="Centri di Costo Principali" className="h-full">
         {costCenters.length === 0 ? <EmptyState message="Nessun centro di costo valorizzato." /> : <ul className="space-y-1">{costCenters.map(([name, value]) => <li key={name} className="flex items-center justify-between gap-4 rounded-lg px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-white/[0.03]"><span className="truncate text-sm text-gray-600 dark:text-gray-300">{name}</span><span className="whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white/90">{formatMoney(value, currency)}</span></li>)}</ul>}
       </ComponentCard>
-      {(ancillary.generatedExpensesToConfirm ?? []).length > 0 ? <ListPanel title="Consuntivi da Confermare" items={ancillary.generatedExpensesToConfirm ?? []} emptyMessage="" href={routes.spesa} /> : <ListPanel title="Consuntivi da Confermare" items={[]} emptyMessage="Nessun consuntivo richiede conferma." />}
+      <ListPanel title="Pianificazioni da Contratto" items={ancillary.generatedContractPlanning ?? []} emptyMessage="Nessuna pianificazione generata da Contratto." href={routes.spesa} />
     </div>
     {(ancillary.recentExpenses ?? []).length ? <RecentOrders items={(ancillary.recentExpenses ?? []).map((item) => ({ id: item.id, label: item.label, date: item.date, href: routes.spesa(item.id) }))} /> : <ComponentCard title="Spese Recenti"><EmptyState message="Nessuna spesa recente." /></ComponentCard>}
   </div>;

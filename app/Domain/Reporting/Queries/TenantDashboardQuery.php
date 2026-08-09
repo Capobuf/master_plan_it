@@ -34,15 +34,14 @@ final class TenantDashboardQuery
             ->whereNull('expense_rows.deleted_at')
             ->whereNull('expenses.deleted_at')
             ->whereNotNull('expense_rows.source_key')
-            ->where('expense_rows.confirmation_state', 'to_confirm')
-            ->orderBy('expense_rows.spend_date')
+            ->orderByDesc('expense_rows.updated_at')
             ->limit(8)
-            ->get(['expenses.id', 'expenses.title', 'expense_rows.spend_date'])
+            ->get(['expenses.id', 'expenses.title', 'expense_rows.updated_at', 'expense_rows.manual_override_at'])
             ->map(fn ($row): array => [
                 'id' => (int) $row->id,
                 'label' => (string) $row->title,
-                'state' => 'to_confirm',
-                'date' => (string) $row->spend_date,
+                'state' => $row->manual_override_at === null ? 'managed' : 'manual',
+                'date' => (string) $row->updated_at,
             ])->all();
         $active = DB::table('contracts')
             ->where('tenant_id', $context->tenantId)
@@ -89,7 +88,7 @@ final class TenantDashboardQuery
 
         return [
             'recentExpenses' => $recent,
-            'generatedExpensesToConfirm' => $generated,
+            'generatedContractPlanning' => $generated,
             'activeContracts' => $active,
             'upcomingContractEvents' => $renewals->concat($ends)->sortBy('date')->take(8)->values()->all(),
         ];

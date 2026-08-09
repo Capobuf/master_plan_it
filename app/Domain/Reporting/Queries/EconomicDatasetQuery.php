@@ -41,6 +41,10 @@ final class EconomicDatasetQuery
             ->where('expenses.planning_year_id', $planningYearId)
             ->whereNull('expenses.deleted_at')
             ->whereNull('expense_rows.deleted_at')
+            ->where(function ($query): void {
+                $query->where('expense_rows.type', 'actual')
+                    ->orWhereColumn('expense_rows.id', 'expenses.current_planning_row_id');
+            })
             ->when($costCenterId !== null, fn ($query) => $query->where('expenses.cost_center_id', $costCenterId))
             ->orderBy('expense_rows.id')
             ->get([

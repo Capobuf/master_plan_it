@@ -43,14 +43,14 @@ final class ExpensePolicy
         return $this->authorizeRecord($user, 'expense.update', $expense);
     }
 
+    public function manageBudget(User $user): Response
+    {
+        return $this->authorizeCollection($user, 'expense.update');
+    }
+
     public function delete(User $user, Expense $expense): Response
     {
         return $this->authorizeRecord($user, 'expense.delete', $expense);
-    }
-
-    public function confirmActual(User $user, Expense $expense): Response
-    {
-        return $this->authorizeRecord($user, 'expense.confirm-actual', $expense);
     }
 
     public function restoreRevision(User $user, Expense $expense): Response

@@ -37,7 +37,7 @@ export interface DashboardListItem {
 
 export interface DashboardAncillary {
   recentExpenses?: DashboardListItem[];
-  generatedExpensesToConfirm?: DashboardListItem[];
+  generatedContractPlanning?: DashboardListItem[];
   activeContracts?: DashboardListItem[];
   upcomingContractEvents?: DashboardListItem[];
 }

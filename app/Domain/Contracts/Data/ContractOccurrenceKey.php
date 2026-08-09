@@ -20,4 +20,14 @@ final readonly class ContractOccurrenceKey
             $date->format('Y-m-d'),
         ])));
     }
+
+    public static function annual(Contract $contract, int $planningYear): self
+    {
+        return new self(hash('sha256', implode(':', [
+            (int) $contract->tenant_id,
+            (int) $contract->getKey(),
+            'annual-planning',
+            $planningYear,
+        ])));
+    }
 }

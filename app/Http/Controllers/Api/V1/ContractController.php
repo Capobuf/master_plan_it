@@ -18,7 +18,6 @@ use App\Domain\Contracts\Data\SaveContractTermData;
 use App\Domain\Contracts\Enums\BillingCycle;
 use App\Domain\Contracts\Queries\ContractDetailQuery;
 use App\Domain\Contracts\Queries\ContractListQuery;
-use App\Domain\Expenses\Enums\ActualConfirmationState;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
@@ -220,7 +219,7 @@ final class ContractController extends Controller
 
     private function contractData(Request $request, bool $update): SaveContractData
     {
-        $allowed = ['vendor_id', 'cost_center_id', 'title', 'description', 'active', 'renewal_date', 'renewal_notice_days', 'renewal_notes', 'terms'];
+        $allowed = ['vendor_id', 'cost_center_id', 'project_id', 'title', 'description', 'active', 'renewal_date', 'renewal_notice_days', 'renewal_notes', 'terms'];
         if ($update) {
             $allowed[] = 'lock_version';
         }
@@ -228,6 +227,7 @@ final class ContractController extends Controller
         $rules = [
             'vendor_id' => ['required', 'integer', 'min:1'],
             'cost_center_id' => ['required', 'integer', 'min:1'],
+            'project_id' => ['nullable', 'integer', 'min:1'],
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
             'active' => ['required', 'boolean'],
@@ -289,7 +289,7 @@ final class ContractController extends Controller
             );
         }
 
-        return new SaveContractData((int) $input['vendor_id'], (int) $input['cost_center_id'], (string) $input['title'], $input['description'] ?? null, (bool) $input['active'], $input['renewal_date'] ?? null, isset($input['renewal_notice_days']) ? (int) $input['renewal_notice_days'] : null, $input['renewal_notes'] ?? null, isset($input['lock_version']) ? (int) $input['lock_version'] : null, $terms);
+        return new SaveContractData((int) $input['vendor_id'], (int) $input['cost_center_id'], (string) $input['title'], $input['description'] ?? null, (bool) $input['active'], $input['renewal_date'] ?? null, isset($input['renewal_notice_days']) ? (int) $input['renewal_notice_days'] : null, $input['renewal_notes'] ?? null, isset($input['lock_version']) ? (int) $input['lock_version'] : null, $terms, isset($input['project_id']) ? (int) $input['project_id'] : null);
     }
 
     /**
@@ -329,13 +329,12 @@ final class ContractController extends Controller
     private function generatedExpenseData(Expense $expense, TenantContext $context, ?ExpenseRow $row = null): array
     {
         $row ??= $expense->rows->first(fn (ExpenseRow $candidate): bool => $candidate->source_key !== null);
-        $state = $row?->confirmation_state;
         $occurrenceDate = $row?->contract_occurrence_date;
 
         return [
             'id' => (int) $expense->getKey(),
             'title' => (string) $expense->title,
-            'confirmation_state' => $state instanceof ActualConfirmationState ? $state->value : ($state === null ? null : (string) $state),
+            'planning_state' => $row?->manual_override_at === null ? 'managed' : 'manual',
             'is_system_managed' => $row === null ? false : (bool) $row->is_system_managed,
             'source_key' => $row === null ? '' : (string) $row->source_key,
             'contract_term_id' => $row?->contract_term_id,

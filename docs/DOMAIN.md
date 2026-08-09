@@ -1,7 +1,6 @@
 # Regole di dominio implementate
 
-Stato: `VERIFIED CURRENT` sulla slice Feature 010 derivata da
-`7132a39271b31479b9ad477b0ed212bbfc6359a9`.
+Stato: `VERIFIED CURRENT` dopo l'implementazione della Feature 017.
 
 Questo documento descrive soltanto regole che devono restare dopo la rimozione degli Spec Kit
 storici. Le funzionalità non implementate sono descritte esclusivamente negli Spec Kit attivi.
@@ -24,6 +23,8 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 - Inizio e fine sono derivati: 1 gennaio e 31 dicembre.
 - Le date non sono modificabili.
 - Sono ammessi create, deactivate e reactivate secondo permission.
+- Lo stesso record è il Budget annuale e attraversa `preparation`, `approved` e `closed`.
+- La chiusura richiede `planning-year.update`; non esiste riapertura formale implicita.
 - Un anno disattivato resta leggibile nello storico ed è escluso dalle nuove selezioni.
 - Non è prevista cancellazione permanente.
 - Non è prevista revision restore per gli anni di pianificazione.
@@ -51,19 +52,28 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 
 - Expense kind: `Ordinary` o `Plafond`.
 - Estimate, Quote e Actual sono tipi indipendenti: non esiste progressione obbligatoria.
-- Possono coesistere più row quando rappresentano costi distinti.
-- Actual può essere `ToConfirm` oppure `Confirmed`.
-- La conferma non rende l'Actual immutabile: le normali correzioni autorizzate restano possibili.
+- Una sola Estimate o Quote può essere selezionata come pianificazione corrente; le alternative
+  restano visibili ma non contribuiscono al Budget proposto.
+- Actual è effettivo immediatamente, richiede una data nello stesso anno della Spesa e può essere
+  positivo o negativo. Non esiste un passaggio di conferma.
 - Estimate e Quote non possono avere importo netto negativo; Actual può essere negativo.
-- Una row usa una singola data di spesa oppure un periodo completo con distribuzione, mai entrambi.
-- Le distribuzioni supportate sono `all`, `start`, `end`.
+- La pianificazione può omettere la data. Le nuove scritture non supportano periodi o distribuzioni.
 - Extra e finanziamento tramite Plafond sono mutuamente esclusivi.
 - Un Plafond referenziato deve appartenere allo stesso Tenant e anno; il cost center può differire.
 - Solo Expense row correnti e non eliminate entrano nei totali correnti.
 - I valori economici autorevoli sono calcolati dal backend e mantengono Net, VAT e Gross.
 - Gli update concorrenti usano optimistic locking.
-- Una Expense può riferirsi al massimo a uno tra Project e Contract; entrambi i riferimenti sono
-  tenant-scoped e non richiedono lo stesso centro di costo della Expense.
+- Una Expense può riferirsi a Project, Contract o entrambi; quando coesistono il Project deve
+  coincidere con quello del Contract.
+- L'Importo approvato è nullable: `null` significa non approvato, `0.00` approvato a zero. Solo
+  l'Action di approvazione può modificarlo.
+- Una Spesa può essere aperta o chiusa con esito opzionale `not_incurred`, `cancelled` o `moved`.
+  Una modifica economica riapre automaticamente una Spesa chiusa; titolo, note, fornitore e
+  riferimenti testuali non la riaprono.
+- Lo spostamento tra anni chiude l'origine come `moved`, crea una destinazione collegata e copia
+  solo la pianificazione, mai Actual o approvato.
+- Una nota di credito in un anno successivo è una nuova Spesa collegata all'origine e contiene
+  soltanto Actual negativi.
 
 ## Progetti
 
@@ -82,11 +92,13 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 - I Contract sono tenant-owned e non costituiscono una sorgente economica aggiuntiva.
 - I Contract term non possono sovrapporsi.
 - I cicli supportati sono Monthly e Annual.
-- Ogni occurrence generata ha una source key stabile, tenant-scoped e unica.
-- Una nuova occurrence valida genera un Actual `ToConfirm` inizialmente system-managed.
-- La sincronizzazione può modificare solo una occurrence ancora system-managed.
-- Modifica manuale o conferma rende l'Actual user-authoritative e impedisce successivi overwrite
-  automatici.
+- Un Contract può appartenere a un Project dello stesso Tenant.
+- Per ogni anno interessato, i term mensili o annuali sono aggregati in una sola Spesa annuale con
+  Quote inizialmente non selezionata e source key stabile; la generazione non crea Actual.
+- La sincronizzazione può modificare solo una Quote ancora system-managed e mai selezionata o
+  modificata manualmente. In caso contrario conserva il valore corrente ed espone la differenza
+  attesa.
+- Un cambio Project del Contract influenza soltanto le future Spese generate.
 - La cancellazione di una Expense generata richiede una scelta esplicita:
   consentire la futura rigenerazione oppure sopprimere quella occurrence.
 - Una suppression è stato di controllo non economico e non entra nei totali.
@@ -109,13 +121,27 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 - Net, VAT e Gross restano esatti; il Tenant può usare Net o Gross come base ufficiale, con Net come
   default approvato.
 - Il Plafond non deve produrre doppio conteggio della parte già coperta dall'allocazione.
-- Dashboard, Budget e Report usano lo stesso economic kernel/server dataset.
-- Estimate e Quote senza Project o con Project `Approved` entrano in `primary`; `Proposed` entra in
-  `proposed`, `Idea` in `idea`, mentre `Deferred` e `Rejected` entrano in `excluded`.
-- Actual entra sempre in `primary`, indipendentemente dallo stage Project.
-- `potential = primary + proposed + idea` è calcolato dal server e non è un valore ufficiale;
-  `excluded` resta visibile ma non vi contribuisce.
+- Budget e Report condividono lo stesso dataset annuale: proposto, approvazione iniziale,
+  variazioni, approvato corrente, Actual, residuo, scostamento, utilizzo e conteggi lifecycle.
+- Stati e chiusure di Project o Contract non riclassificano automaticamente pianificazione,
+  approvato o Actual.
+- Le approvazioni sono batch atomici multi-Spesa con data effettiva e timestamp di registrazione;
+  conservano delta e snapshot delle dimensioni. La base ufficiale Tenant non cambia dopo la prima
+  approvazione.
+- Il Report raggruppa per Centro di costo, Project, Contract, Fornitore o Spesa e i totali restano
+  identici al centesimo al riepilogo, inclusa la riconciliazione Plafond.
 - Un output economico non può combinare più Tenant.
+
+## Proiezione storica annuale
+
+- La storia annuale viene attivata con un baseline esplicito e un cutoff precedente restituisce
+  `HISTORY_BEFORE_ACTIVATION`.
+- Il cutoff è interpretato nel timezone Tenant; una data senza ora usa la fine della giornata
+  locale e viene normalizzata in UTC.
+- Le mutazioni multi-record sono lette tramite revision batch completi; i delete sono tombstone.
+- Budget e Report storici sono tenant/year-scoped, read-only, preservano label e relazioni al
+  cutoff e non costituiscono restore implicito.
+- La proiezione usa un numero costante di query rispetto al numero di Spese nel benchmark.
 
 ## Lingua dell'interfaccia
 

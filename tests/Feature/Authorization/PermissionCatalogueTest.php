@@ -553,10 +553,10 @@ class PermissionCatalogueTest extends TestCase
         return self::sorted([
             ...self::protectedPlatformAbilities(),
             'dashboard.view', 'audit.view', 'notification.view',
-            'planning-year.view', 'planning-year.create', 'planning-year.deactivate', 'planning-year.reactivate',
+            'planning-year.view', 'planning-year.create', 'planning-year.update', 'planning-year.deactivate', 'planning-year.reactivate',
             'cost-center.view', 'cost-center.create', 'cost-center.update', 'cost-center.delete', 'cost-center.deactivate', 'cost-center.reactivate', 'cost-center.view-revisions', 'cost-center.restore-revision',
             'vendor.view', 'vendor.create', 'vendor.update', 'vendor.delete', 'vendor.deactivate', 'vendor.reactivate', 'vendor.view-revisions', 'vendor.restore-revision',
-            'expense.view', 'expense.create', 'expense.update', 'expense.delete', 'expense.view-revisions', 'expense.restore-revision', 'expense.confirm-actual', 'expense.print', 'expense.export',
+            'expense.view', 'expense.create', 'expense.update', 'expense.delete', 'expense.view-revisions', 'expense.restore-revision', 'expense.print', 'expense.export',
             'attachment.view', 'attachment.upload', 'attachment.delete',
             'project.view', 'project.create', 'project.update', 'project.delete', 'project.view-revisions', 'project.restore-revision',
             'contract.view', 'contract.create', 'contract.update', 'contract.delete', 'contract.view-revisions', 'contract.restore-revision', 'contract.generate-occurrence', 'contract.suppress-generation', 'contract.resume-generation', 'contract.view-generation-history',
@@ -581,10 +581,10 @@ class PermissionCatalogueTest extends TestCase
     private static function editorAbilities(): array
     {
         return self::sorted([
-            'dashboard.view', 'audit.view', 'notification.view', 'planning-year.view',
+            'dashboard.view', 'audit.view', 'notification.view', 'planning-year.view', 'planning-year.update',
             'cost-center.view', 'cost-center.create', 'cost-center.update', 'cost-center.delete', 'cost-center.deactivate', 'cost-center.reactivate', 'cost-center.view-revisions', 'cost-center.restore-revision',
             'vendor.view', 'vendor.create', 'vendor.update', 'vendor.delete', 'vendor.deactivate', 'vendor.reactivate', 'vendor.view-revisions', 'vendor.restore-revision',
-            'expense.view', 'expense.create', 'expense.update', 'expense.delete', 'expense.view-revisions', 'expense.restore-revision', 'expense.confirm-actual', 'expense.print', 'expense.export',
+            'expense.view', 'expense.create', 'expense.update', 'expense.delete', 'expense.view-revisions', 'expense.restore-revision', 'expense.print', 'expense.export',
             'attachment.view', 'attachment.upload', 'attachment.delete',
             'project.view', 'project.create', 'project.update', 'project.delete', 'project.view-revisions', 'project.restore-revision',
             'contract.view', 'contract.create', 'contract.update', 'contract.delete', 'contract.view-revisions', 'contract.restore-revision', 'contract.generate-occurrence', 'contract.suppress-generation', 'contract.resume-generation', 'contract.view-generation-history',

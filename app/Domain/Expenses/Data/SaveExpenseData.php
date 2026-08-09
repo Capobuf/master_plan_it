@@ -15,5 +15,6 @@ final readonly class SaveExpenseData
         public ?int $projectId,
         public ?int $contractId,
         public ?int $expectedLockVersion,
+        public ?int $creditForExpenseId = null,
     ) {}
 }

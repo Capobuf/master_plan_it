@@ -2,50 +2,44 @@
 
 namespace App\Http\Controllers\Api\V1;
 
-use App\Domain\Reporting\Queries\EconomicReportQuery;
+use App\Domain\Reporting\Queries\AnnualEconomicReportQuery;
+use App\Domain\Revisions\Actions\ActivateAnnualHistory;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
-use App\Http\Resources\Api\V1\ReportingLineResource;
-use App\Http\Resources\Api\V1\ReportingScopeResource;
-use App\Http\Resources\Api\V1\ReportingSummaryResource;
 use App\Models\CostCenter;
+use App\Models\PlanningYear;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
-use Illuminate\Pagination\LengthAwarePaginator;
 
 final class EconomicReportController extends Controller
 {
-    public function __invoke(Request $request, EconomicReportQuery $report): AnonymousResourceCollection
+    public function __invoke(Request $request, AnnualEconomicReportQuery $report, ActivateAnnualHistory $activate): JsonResponse
     {
         $context = $this->tenantContext($request);
         $planningYearId = $this->planningYearId($request);
         $costCenterId = $this->costCenterId($request, $context);
         $perPage = min(max($request->integer('per_page', 25), 1), 100);
+        $groupBy = (string) $request->query('group_by', 'cost_center');
+        /** @var PlanningYear $year */
+        $year = TenantOwnedRecordQuery::findOrFail($context, PlanningYear::class, $planningYearId);
+        $activate->execute($this->actor($request), $context, $year, $this->correlationId($request));
+        $asOf = $request->query('as_of');
+        if ($asOf !== null && (! is_string($asOf) || trim($asOf) === '' || mb_strlen($asOf) > 40)) {
+            abort(422);
+        }
         $result = $report->execute(
             $this->actor($request),
             $context,
             $planningYearId,
             $costCenterId,
+            $groupBy,
             max(1, $request->integer('page', 1)),
             $perPage,
-        );
-        $paginator = new LengthAwarePaginator(
-            $result->lines,
-            $result->total,
-            $result->perPage,
-            $result->page,
-            ['path' => $request->url(), 'query' => $request->query()],
+            $asOf,
         );
 
-        return ReportingLineResource::collection($paginator)->additional([
-            'scope' => ReportingScopeResource::make($result->dataset->scope)->resolve($request),
-            'summary' => ReportingSummaryResource::make($result->calculated['summary'])->resolve($request),
-            'filters' => [
-                'planning_year_id' => $planningYearId,
-                'cost_center_id' => $costCenterId,
-            ],
-        ]);
+        return response()->json($result);
     }
 
     private function planningYearId(Request $request): int

@@ -179,7 +179,7 @@ trait ManagesVendorMutation
             $vendor,
             $restoredFromVersionId,
         );
-        $version = $vendor->latestVersions()->firstOrFail();
+        $version = $vendor->versions()->orderByDesc('id')->firstOrFail();
 
         if (! $version instanceof Version) {
             throw new DomainException('REVISION_RESTORE_INVALID');

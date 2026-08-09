@@ -52,6 +52,7 @@ class MasterDataAuthorizationTest extends TestCase
             [PlanningYearPolicy::class, 'viewAny', 'planning-year.view', null],
             [PlanningYearPolicy::class, 'view', 'planning-year.view', $planningYear],
             [PlanningYearPolicy::class, 'create', 'planning-year.create', null],
+            [PlanningYearPolicy::class, 'update', 'planning-year.update', $planningYear],
             [PlanningYearPolicy::class, 'deactivate', 'planning-year.deactivate', $planningYear],
             [PlanningYearPolicy::class, 'reactivate', 'planning-year.reactivate', $planningYear],
             [CostCenterPolicy::class, 'viewAny', 'cost-center.view', null],
@@ -127,13 +128,14 @@ class MasterDataAuthorizationTest extends TestCase
         $this->assertDenied($response, 'PERMISSION_DENIED');
     }
 
-    public function test_seeded_editor_is_view_only_for_planning_years_and_custom_roles_can_receive_lifecycle_abilities(): void
+    public function test_seeded_editor_can_close_budgets_but_cannot_manage_planning_year_lifecycle(): void
     {
         $tenant = Tenant::factory()->create();
         $editor = Role::query()->where('name', 'Editor')->whereNull('tenant_id')->firstOrFail();
         $editorAbilities = $editor->permissions()->pluck('name')->all();
 
         $this->assertContains('planning-year.view', $editorAbilities);
+        $this->assertContains('planning-year.update', $editorAbilities);
         $this->assertSame([], array_values(array_intersect([
             'planning-year.create',
             'planning-year.deactivate',
@@ -143,20 +145,22 @@ class MasterDataAuthorizationTest extends TestCase
         $actor = User::factory()->create(['tenant_id' => $tenant->getKey()]);
         $planningYear = PlanningYear::factory()->for($tenant)->create();
         $this->grant($actor, $tenant, 'planning-year.create', 'Calendar Lifecycle');
+        $this->grant($actor, $tenant, 'planning-year.update', 'Calendar Lifecycle');
         $this->grant($actor, $tenant, 'planning-year.deactivate', 'Calendar Lifecycle');
         $this->grant($actor, $tenant, 'planning-year.reactivate', 'Calendar Lifecycle');
         $policy = $this->policy(PlanningYearPolicy::class, new TenantContext($tenant, $actor));
 
         $this->assertTrue($policy->create($actor)->allowed());
+        $this->assertTrue($policy->update($actor, $planningYear)->allowed());
         $this->assertTrue($policy->deactivate($actor, $planningYear)->allowed());
         $this->assertTrue($policy->reactivate($actor, $planningYear)->allowed());
     }
 
-    public function test_planning_year_has_no_update_delete_or_revision_policy_surface(): void
+    public function test_planning_year_has_no_delete_or_revision_policy_surface(): void
     {
         $reflection = new \ReflectionClass(PlanningYearPolicy::class);
 
-        foreach (['update', 'delete', 'viewRevisions', 'restoreRevision'] as $method) {
+        foreach (['delete', 'viewRevisions', 'restoreRevision'] as $method) {
             $this->assertFalse($reflection->hasMethod($method), "Planning-year policy must not expose [{$method}].");
         }
     }

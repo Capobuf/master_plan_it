@@ -27,9 +27,6 @@ final class ExpenseAggregateValidator
      */
     public function validate(Tenant $tenant, SaveExpenseData $data, array $rows, ?Expense $currentExpense = null): array
     {
-        if ($data->projectId !== null && $data->contractId !== null) {
-            $this->fail('project_id', 'Project and contract are mutually exclusive.');
-        }
         if (trim($data->title) === '' || mb_strlen($data->title) > 255) {
             $this->fail('title', 'The title must be between 1 and 255 characters.');
         }
@@ -51,7 +48,8 @@ final class ExpenseAggregateValidator
         if (! $this->isCurrentOrActive($costCenter->active, $currentExpense?->cost_center_id, $data->costCenterId)) {
             $this->fail('cost_center_id', 'The selected cost center is inactive.');
         }
-        if ($data->contractId !== null && ! Contract::query()->where('tenant_id', $tenant->getKey())->whereKey($data->contractId)->exists()) {
+        $contract = $data->contractId === null ? null : Contract::query()->where('tenant_id', $tenant->getKey())->whereKey($data->contractId)->first();
+        if ($data->contractId !== null && ! $contract instanceof Contract) {
             $preservedGeneratedSource = $currentExpense?->exists === true
                 && (int) $currentExpense->getRawOriginal('contract_id') === $data->contractId
                 && $currentExpense->rows()->whereNotNull('source_key')->exists()
@@ -71,10 +69,31 @@ final class ExpenseAggregateValidator
             ->exists()) {
             $this->fail('project_id', 'The selected project is invalid.');
         }
+        if ($contract instanceof Contract && $contract->project_id !== null && (int) $contract->project_id !== $data->projectId) {
+            $this->fail('project_id', 'The expense project must match the contract project.');
+        }
+        if ($currentExpense instanceof Expense
+            && $this->nullableId($currentExpense->credit_for_expense_id) !== $data->creditForExpenseId) {
+            $this->fail('credit_for_expense_id', 'The credit origin cannot be changed after creation.');
+        }
+        $creditFor = $data->creditForExpenseId === null ? null : Expense::query()
+            ->where('tenant_id', $tenant->getKey())
+            ->whereKey($data->creditForExpenseId)
+            ->with('planningYear')
+            ->first();
+        if ($data->creditForExpenseId !== null && ! $creditFor instanceof Expense) {
+            $this->fail('credit_for_expense_id', 'The selected credit origin is invalid.');
+        }
+        if ($creditFor instanceof Expense
+            && (! $creditFor->planningYear instanceof PlanningYear
+                || (int) $year->year_label <= (int) $creditFor->planningYear->year_label)) {
+            $this->fail('credit_for_expense_id', 'A credit must belong to a year after its origin expense.');
+        }
 
         $normalized = [];
         $ids = [];
         $positions = [];
+        $selectedPlanningCount = 0;
         foreach ($rows as $index => $row) {
             if (! $row instanceof SaveExpenseRowData) {
                 $this->fail("rows.{$index}", 'The expense row is invalid.');
@@ -87,7 +106,23 @@ final class ExpenseAggregateValidator
                 $this->fail("rows.{$index}.position", 'Each current expense row requires a unique position.');
             }
             $positions[$row->position] = true;
+            if ($row->isCurrentPlanning) {
+                $selectedPlanningCount++;
+                if (! in_array($row->type, [ExpenseType::Estimate, ExpenseType::Quote], true)) {
+                    $this->fail("rows.{$index}.is_current_planning", 'Only an Estimate or Quote may be the current planning row.');
+                }
+            }
             $normalized[] = $this->row($tenant, $year, $data->kind, $row, $index, $currentExpense);
+        }
+        if ($creditFor instanceof Expense) {
+            foreach ($rows as $index => $row) {
+                if ($row->type !== ExpenseType::Actual || bccomp(Money::fromDecimal($row->enteredAmount, 'EUR')->amount(), '0', 6) >= 0) {
+                    $this->fail("rows.{$index}.entered_amount", 'A linked next-year credit accepts only negative Actual rows.');
+                }
+            }
+        }
+        if ($selectedPlanningCount > 1) {
+            $this->fail('rows', 'Only one current planning row may be selected.');
         }
 
         return [
@@ -99,6 +134,7 @@ final class ExpenseAggregateValidator
                 'notes' => $this->nullableText($data->notes),
                 'project_id' => $data->projectId,
                 'contract_id' => $data->contractId,
+                'credit_for_expense_id' => $data->creditForExpenseId,
             ],
             'rows' => $normalized,
         ];
@@ -136,7 +172,7 @@ final class ExpenseAggregateValidator
             $this->fail("{$prefix}.funded_plafond_expense_id", 'The funded Plafond is invalid.');
         }
 
-        $this->dateShape($row, $prefix);
+        $this->dateShape($row, $prefix, $year);
         $quantity = $this->nullableDecimal($row->quantity, "{$prefix}.quantity");
         $unitPrice = $this->nullableDecimal($row->unitPrice, "{$prefix}.unit_price");
         $entered = $this->decimal($row->enteredAmount, "{$prefix}.entered_amount");
@@ -180,25 +216,25 @@ final class ExpenseAggregateValidator
             'distribution' => $row->distribution,
             'external_reference' => $this->nullableText($row->externalReference),
             'expected_lock_version' => $row->expectedLockVersion,
+            'is_current_planning' => $row->isCurrentPlanning,
         ];
     }
 
-    private function dateShape(SaveExpenseRowData $row, string $prefix): void
+    private function dateShape(SaveExpenseRowData $row, string $prefix, PlanningYear $year): void
     {
         $spend = $row->spendDate !== null;
         $periodAny = $row->periodStart !== null || $row->periodEnd !== null || $row->distribution !== null;
-        $periodComplete = $row->periodStart !== null && $row->periodEnd !== null && $row->distribution !== null;
-        if (($spend && $periodAny) || (! $spend && ! $periodComplete)) {
-            $this->fail("{$prefix}.spend_date", 'Use either a spend date or a complete period.');
+        if ($periodAny) {
+            $this->fail("{$prefix}.period_start", 'Automatic period distribution is not supported.');
+        }
+        if ($row->type === ExpenseType::Actual && ! $spend) {
+            $this->fail("{$prefix}.spend_date", 'An Actual row requires its economic date.');
         }
         try {
             if ($spend) {
-                new DateTimeImmutable((string) $row->spendDate);
-            } else {
-                $start = new DateTimeImmutable((string) $row->periodStart);
-                $end = new DateTimeImmutable((string) $row->periodEnd);
-                if ($start > $end) {
-                    $this->fail("{$prefix}.period_end", 'The period end must not precede its start.');
+                $date = new DateTimeImmutable((string) $row->spendDate);
+                if ((int) $date->format('Y') !== (int) $year->year_label) {
+                    $this->fail("{$prefix}.spend_date", 'The row date must belong to the expense planning year.');
                 }
             }
         } catch (\Throwable) {
@@ -240,6 +276,11 @@ final class ExpenseAggregateValidator
             ->whereKey($rowId)
             ->where('vendor_id', $vendorId)
             ->exists();
+    }
+
+    private function nullableId(mixed $value): ?int
+    {
+        return $value === null ? null : (int) $value;
     }
 
     private function fail(string $field, string $message): never

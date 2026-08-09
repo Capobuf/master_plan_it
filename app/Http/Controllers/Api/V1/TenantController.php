@@ -16,6 +16,7 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 final class TenantController extends Controller
@@ -128,7 +129,7 @@ final class TenantController extends Controller
     {
         $presence = $partial ? 'sometimes' : 'required';
 
-        return [
+        $rules = [
             'name' => [$presence, 'string', 'max:255'],
             'code' => [$presence, 'string', 'max:255'],
             'currency_code' => [$presence, 'string', 'regex:/^[A-Za-z]{3}$/D'],
@@ -136,6 +137,12 @@ final class TenantController extends Controller
             'timezone' => [$presence, 'string', 'timezone'],
             'default_vat_rate' => [$presence, 'string', 'regex:/^[0-9]{1,6}(?:\.[0-9]{1,6})?$/D'],
         ];
+
+        if ($partial) {
+            $rules['budget_basis'] = ['sometimes', Rule::in(['net', 'gross'])];
+        }
+
+        return $rules;
     }
 
     private function authorizeAbility(Request $request, string $ability): void

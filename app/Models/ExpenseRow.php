@@ -40,6 +40,8 @@ class ExpenseRow extends Model
 
     /** @var list<string> */
     protected array $versionable = [
+        'tenant_id',
+        'expense_id',
         'position',
         'vendor_id',
         'type',
@@ -78,6 +80,7 @@ class ExpenseRow extends Model
         'source_deleted_term_end',
         'source_term_deleted_at',
         'source_term_deletion_reason',
+        'lock_version',
     ];
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;

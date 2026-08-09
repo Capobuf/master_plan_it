@@ -2,10 +2,9 @@
 
 namespace Tests\Feature\Revisions;
 
-use App\Domain\Expenses\Actions\ConfirmActual;
+use App\Domain\Expenses\Actions\CloseExpense;
 use App\Domain\Expenses\Data\ExpenseRevisionSnapshot;
-use App\Domain\Expenses\Enums\ActualConfirmationState;
-use App\Domain\Expenses\Enums\ExpenseType;
+use App\Domain\Expenses\Enums\ExpenseState;
 use App\Domain\Revisions\Actions\BeginRevisionBatch;
 use App\Domain\Revisions\Actions\LinkVersionToRevisionBatch;
 use App\Domain\Revisions\Data\RevisionOperation;
@@ -49,13 +48,28 @@ class ExpenseVersioningIntegrationTest extends TestCase
         $this->assertSame(VersionStrategy::SNAPSHOT, $row->getVersionStrategy());
 
         $this->assertSame([
+            'tenant_id',
             'kind',
+            'planning_year_id',
+            'cost_center_id',
             'title',
             'notes',
             'project_id',
             'contract_id',
+            'approved_amount',
+            'approved_basis',
+            'state',
+            'closure_outcome',
+            'closed_at',
+            'closed_by_user_id',
+            'current_planning_row_id',
+            'moved_from_expense_id',
+            'credit_for_expense_id',
+            'lock_version',
         ], $expense->getVersionable());
         $this->assertSame([
+            'tenant_id',
+            'expense_id',
             'position',
             'vendor_id',
             'type',
@@ -94,11 +108,12 @@ class ExpenseVersioningIntegrationTest extends TestCase
             'source_deleted_term_end',
             'source_term_deleted_at',
             'source_term_deletion_reason',
+            'lock_version',
         ], $row->getVersionable());
 
         foreach ([$expense, $row] as $model) {
             $this->assertSame([], array_intersect(
-                ['tenant_id', 'lock_version', 'created_at', 'updated_at', 'deleted_at'],
+                ['created_at', 'updated_at', 'deleted_at'],
                 $model->getVersionable(),
             ));
         }
@@ -144,31 +159,23 @@ class ExpenseVersioningIntegrationTest extends TestCase
         ]);
     }
 
-    public function test_confirm_actual_snapshots_the_confirmation_state_change(): void
+    public function test_close_expense_snapshots_the_lifecycle_state_change(): void
     {
         $tenant = Tenant::factory()->create();
         $actor = User::factory()->create(['tenant_id' => null, 'is_active' => true]);
         app(PlatformAdministrator::class)->assign($actor);
         $expense = Expense::factory()->for($tenant)->create();
-        $row = ExpenseRow::factory()->for($expense)->create();
-        $row->forceFill([
-            'type' => ExpenseType::Actual,
-            'confirmation_state' => ActualConfirmationState::ToConfirm,
-            'confirmed_by_user_id' => null,
-            'confirmed_at' => null,
-        ])->save();
-
-        app(ConfirmActual::class)->execute(
+        app(CloseExpense::class)->execute(
             $actor,
             new TenantContext($tenant, $actor),
             $expense,
-            $row->fresh(),
-            $row->lock_version,
+            $expense->lock_version,
+            null,
             (string) Str::uuid(),
         );
 
-        $version = $row->fresh()->latestVersion()->firstOrFail();
-        $this->assertSame(ActualConfirmationState::Confirmed->value, $version->contents['confirmation_state']);
+        $version = $expense->fresh()->latestVersion()->firstOrFail();
+        $this->assertSame(ExpenseState::Closed->value, $version->contents['state']);
     }
 
     public function test_revision_snapshot_is_a_readonly_typed_dto_excluding_technical_flags(): void

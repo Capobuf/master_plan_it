@@ -6,7 +6,7 @@ use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
-use App\Domain\Expenses\Enums\ActualConfirmationState;
+use App\Domain\Expenses\Enums\ExpenseState;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Expenses\Services\ExpenseAggregateValidator;
 use App\Domain\Revisions\Actions\BeginRevisionBatch;
@@ -68,6 +68,8 @@ trait ManagesExpenseAggregate
     private function saveAggregate(Expense $expense, Tenant $tenant, SaveExpenseData $data, array $rows, User $actor, array $deletedRows = []): array
     {
         $validated = app(ExpenseAggregateValidator::class)->validate($tenant, $data, $rows, $expense->exists ? $expense : null);
+        $wasClosed = $expense->exists && $expense->state === ExpenseState::Closed;
+        $originalEconomic = $expense->exists ? $expense->only(['planning_year_id', 'cost_center_id', 'kind', 'project_id', 'contract_id']) : [];
         $expense->fill($validated['header']);
         $expense->tenant_id = $tenant->getKey();
         $expense->save();
@@ -90,11 +92,15 @@ trait ManagesExpenseAggregate
         }
         $submitted = [];
         $changed = [$expense];
+        $selectedPlanningRowId = null;
+        $rowEconomicChanged = false;
         foreach ($validated['rows'] as $attributes) {
             $id = $attributes['id'];
             unset($attributes['id']);
             $expected = $attributes['expected_lock_version'];
             unset($attributes['expected_lock_version']);
+            $isCurrentPlanning = (bool) $attributes['is_current_planning'];
+            unset($attributes['is_current_planning']);
             $authoritativeAmounts = [
                 'net_amount' => $attributes['net_amount'],
                 'vat_amount' => $attributes['vat_amount'],
@@ -116,7 +122,8 @@ trait ManagesExpenseAggregate
                 throw new DomainException('STALE_VERSION');
             }
             $oldType = $row->exists ? $row->type : null;
-            $wasSystemManaged = $row->exists && $row->type === ExpenseType::Actual && $row->is_system_managed;
+            $wasSystemManaged = $row->exists && $row->is_system_managed;
+            $beforeEconomic = $row->exists ? $row->only(['type', 'quantity', 'unit_price', 'entered_amount', 'amount_includes_vat', 'vat_rate', 'net_amount', 'vat_amount', 'gross_amount', 'is_extra', 'funded_plafond_expense_id', 'spend_date']) : [];
             $row->fill($attributes);
             $row->forceFill($serverAttributes);
             if ($wasSystemManaged && $row->isDirty()) {
@@ -125,8 +132,7 @@ trait ManagesExpenseAggregate
                 $row->forceFill(['is_system_managed' => false, 'manual_override_at' => $serverAttributes['manual_override_at']]);
             }
             if (! $row->exists) {
-                $serverAttributes['confirmation_state'] = $attributes['type'] === ExpenseType::Actual
-                    ? ActualConfirmationState::ToConfirm : null;
+                $serverAttributes['confirmation_state'] = null;
                 $serverAttributes['confirmed_by_user_id'] = null;
                 $serverAttributes['confirmed_at'] = null;
                 $serverAttributes['is_system_managed'] = false;
@@ -134,25 +140,31 @@ trait ManagesExpenseAggregate
                 $row->expense_id = $expense->getKey();
             } else {
                 if ($oldType !== $attributes['type']) {
-                    if ($attributes['type'] === ExpenseType::Actual) {
-                        $serverAttributes['confirmation_state'] = ActualConfirmationState::ToConfirm;
-                        $serverAttributes['confirmed_by_user_id'] = null;
-                        $serverAttributes['confirmed_at'] = null;
-                        $serverAttributes['is_system_managed'] = false;
-                        $serverAttributes['manual_override_at'] = null;
-                    } else {
-                        $serverAttributes['confirmation_state'] = null;
-                        $serverAttributes['confirmed_by_user_id'] = null;
-                        $serverAttributes['confirmed_at'] = null;
-                        $serverAttributes['is_system_managed'] = false;
-                        $serverAttributes['manual_override_at'] = null;
-                    }
+                    $serverAttributes['confirmation_state'] = null;
+                    $serverAttributes['confirmed_by_user_id'] = null;
+                    $serverAttributes['confirmed_at'] = null;
+                    $serverAttributes['is_system_managed'] = false;
+                    $serverAttributes['manual_override_at'] = null;
                 }
                 $attributes['lock_version'] = (int) $row->lock_version + 1;
             }
             $row->fill($attributes);
             $row->forceFill($serverAttributes);
             $row->save();
+            if (! $row->wasRecentlyCreated && $beforeEconomic !== $row->only(array_keys($beforeEconomic))) {
+                $rowEconomicChanged = true;
+            }
+            if ($row->wasRecentlyCreated) {
+                $rowEconomicChanged = true;
+            }
+            if ($isCurrentPlanning) {
+                $selectedPlanningRowId = (int) $row->getKey();
+            }
+            if ((int) $expense->current_planning_row_id === (int) $row->getKey()
+                && ! in_array($row->type, [ExpenseType::Estimate, ExpenseType::Quote], true)) {
+                $expense->current_planning_row_id = null;
+                $rowEconomicChanged = true;
+            }
             $submitted[(int) $row->getKey()] = true;
             $changed[] = $row;
         }
@@ -174,8 +186,29 @@ trait ManagesExpenseAggregate
         }
 
         foreach ($deleted as $row) {
+            if ((int) $expense->current_planning_row_id === (int) $row->getKey()) {
+                $expense->current_planning_row_id = null;
+            }
             $row->delete();
             $changed[] = $row;
+            $rowEconomicChanged = true;
+        }
+
+        if ($selectedPlanningRowId !== null && (int) $expense->current_planning_row_id !== $selectedPlanningRowId) {
+            $expense->current_planning_row_id = $selectedPlanningRowId;
+            $rowEconomicChanged = true;
+        }
+        $headerEconomicChanged = $expense->only(array_keys($originalEconomic)) !== $originalEconomic;
+        if ($wasClosed && ($headerEconomicChanged || $rowEconomicChanged)) {
+            $expense->forceFill([
+                'state' => ExpenseState::Open,
+                'closure_outcome' => null,
+                'closed_at' => null,
+                'closed_by_user_id' => null,
+            ]);
+        }
+        if ($expense->isDirty()) {
+            $expense->save();
         }
 
         return $changed;
@@ -187,7 +220,7 @@ trait ManagesExpenseAggregate
         $batch = app(BeginRevisionBatch::class)->execute($actor, $context, $operation, null, $correlationId, $root, null);
         $sequence = 1;
         foreach ($models as $model) {
-            $version = $model->latestVersions()->first();
+            $version = $model->versions()->orderByDesc('id')->first();
             if ($version instanceof Version) {
                 app(LinkVersionToRevisionBatch::class)->execute($batch, $version, $sequence++);
             }

@@ -25,6 +25,7 @@ final class ReportingSummaryResource extends JsonResource
             'net' => $summary->amounts['net'],
             'vat' => $summary->amounts['vat'],
             'gross' => $summary->amounts['gross'],
+            'planned' => $summary->amounts['planned'],
             'estimate' => $summary->amounts['estimate'],
             'quote' => $summary->amounts['quote'],
             'actual' => $summary->amounts['actual'],

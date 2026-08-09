@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Contract, ContractTermInput, ContractUpdate, ContractWrite } from "../../api/contracts";
 import { listContractCostCenters, listContractVendors, type ContractLookupOption } from "../../api/contracts";
+import { listProjectOptions, type ProjectLookupOption } from "../../api/projects";
 import { formatEditableDecimal, normalizeDecimalInput } from "../../presentation/formatters";
 import ComponentCard from "../common/ComponentCard";
 import DatePicker from "../form/date-picker";
@@ -21,6 +22,7 @@ function toTermInput(term: Contract["terms"][number]): ContractTermInput {
 export default function ContractForm({ contract = null, canSubmit, submitting = false, error = null, onSubmit }: { contract?: Contract | null; canSubmit: boolean; submitting?: boolean; error?: string | null; onSubmit: (input: ContractWrite | ContractUpdate) => Promise<void> }) {
   const [vendorId, setVendorId] = useState(String(contract?.vendor_id ?? ""));
   const [costCenterId, setCostCenterId] = useState(String(contract?.cost_center_id ?? ""));
+  const [projectId, setProjectId] = useState(String(contract?.project_id ?? ""));
   const [title, setTitle] = useState(contract?.title ?? "");
   const [description, setDescription] = useState(contract?.description ?? "");
   const [active, setActive] = useState(contract?.active ?? true);
@@ -31,13 +33,14 @@ export default function ContractForm({ contract = null, canSubmit, submitting = 
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [vendors, setVendors] = useState<ContractLookupOption[]>([]);
   const [costCenters, setCostCenters] = useState<ContractLookupOption[]>([]);
+  const [projects, setProjects] = useState<ProjectLookupOption[]>([]);
   const [lookupError, setLookupError] = useState<string | null>(null);
   const handleRenewalDate = useCallback((_: unknown, value: string) => setRenewalDate(value), []);
 
   useEffect(() => {
     if (!canSubmit) return;
     let mounted = true;
-    void Promise.all([listContractVendors(), listContractCostCenters()]).then(([vendorResponse, costCenterResponse]) => { if (mounted) { setVendors(vendorResponse.data); setCostCenters(costCenterResponse.data); } }).catch((requestError: unknown) => { if (mounted) setLookupError(requestError instanceof Error ? requestError.message : "Impossibile caricare fornitori e centri di costo."); });
+    void Promise.all([listContractVendors(), listContractCostCenters(), listProjectOptions()]).then(([vendorResponse, costCenterResponse, projectResponse]) => { if (mounted) { setVendors(vendorResponse.data); setCostCenters(costCenterResponse.data); setProjects(projectResponse); } }).catch((requestError: unknown) => { if (mounted) setLookupError(requestError instanceof Error ? requestError.message : "Impossibile caricare i dati di supporto."); });
     return () => { mounted = false; };
   }, [canSubmit]);
 
@@ -50,7 +53,7 @@ export default function ContractForm({ contract = null, canSubmit, submitting = 
     try {
       const preparedTerms = terms.map((term) => ({ ...term, entered_amount: normalizeDecimalInput(term.entered_amount, 6), vat_rate: term.vat_rate ? normalizeDecimalInput(term.vat_rate, 6) : null, quantity: term.quantity ? normalizeDecimalInput(term.quantity, 6) : null, unit_price: term.unit_price ? normalizeDecimalInput(term.unit_price, 6) : null }));
       if (preparedTerms.some((term) => !term.effective_start || !term.effective_end)) { setValidationMessage("Indica la data iniziale e finale di ogni termine."); return; }
-      const input: ContractWrite = { vendor_id: parsedVendorId, cost_center_id: parsedCostCenterId, title: title.trim(), description: description.trim() || undefined, active, renewal_date: renewalDate || null, renewal_notice_days: renewalNoticeDays === "" ? null : Number.parseInt(renewalNoticeDays, 10), renewal_notes: renewalNotes.trim() || undefined, terms: preparedTerms };
+      const input: ContractWrite = { vendor_id: parsedVendorId, cost_center_id: parsedCostCenterId, ...(projectId ? { project_id: Number.parseInt(projectId, 10) } : {}), title: title.trim(), description: description.trim() || undefined, active, renewal_date: renewalDate || null, renewal_notice_days: renewalNoticeDays === "" ? null : Number.parseInt(renewalNoticeDays, 10), renewal_notes: renewalNotes.trim() || undefined, terms: preparedTerms };
       await onSubmit(contract ? { ...input, lock_version: contract.lock_version } : input);
     } catch (validationError) { setValidationMessage(validationError instanceof Error ? validationError.message : "Controlla gli importi inseriti."); }
   };
@@ -63,6 +66,7 @@ export default function ContractForm({ contract = null, canSubmit, submitting = 
     <ComponentCard title="Dati del Contratto"><div className="grid grid-cols-1 gap-4 md:grid-cols-2">
       <div><Label htmlFor="contract-vendor">Fornitore</Label><Select id="contract-vendor" options={vendors.map((vendor) => ({ value: String(vendor.id), label: `${vendor.name}${vendor.active === false ? " (inattivo)" : ""}` }))} placeholder={vendors.length === 0 ? "Caricamento fornitori…" : "Seleziona un fornitore"} value={vendorId} onChange={setVendorId} disabled={disabled} /></div>
       <div><Label htmlFor="contract-cost-center">Centro di costo</Label><Select id="contract-cost-center" options={costCenters.map((item) => ({ value: String(item.id), label: `${item.name}${item.active === false ? " (inattivo)" : ""}` }))} placeholder={costCenters.length === 0 ? "Caricamento centri di costo…" : "Seleziona un centro di costo"} value={costCenterId} onChange={setCostCenterId} disabled={disabled} /></div>
+      <div><Label htmlFor="contract-project">Progetto (opzionale)</Label><Select id="contract-project" options={projects.map((item) => ({ value: String(item.id), label: item.title }))} placeholder="Nessun progetto" allowEmpty value={projectId} onChange={setProjectId} disabled={disabled} /></div>
       <div className="md:col-span-2"><Label htmlFor="contract-title">Titolo</Label><InputField id="contract-title" value={title} onChange={(event) => setTitle(event.target.value)} disabled={disabled} /></div>
       <div className="md:col-span-2"><Label>Descrizione</Label><TextArea value={description} onChange={setDescription} disabled={disabled} placeholder="Descrizione opzionale" /></div>
     </div></ComponentCard>

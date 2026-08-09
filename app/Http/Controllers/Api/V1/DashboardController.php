@@ -87,7 +87,7 @@ final class DashboardController extends Controller
     {
         return [
             'recentExpenses' => [],
-            'generatedExpensesToConfirm' => [],
+            'generatedContractPlanning' => [],
             'activeContracts' => [],
             'upcomingContractEvents' => [],
         ];

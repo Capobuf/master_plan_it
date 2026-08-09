@@ -6,7 +6,6 @@ use App\Domain\Contracts\Actions\Concerns\ManagesContracts;
 use App\Domain\Contracts\Data\ExpectedContractOccurrence;
 use App\Domain\Contracts\Queries\ExpectedContractOccurrenceQuery;
 use App\Domain\Expenses\Actions\Concerns\ManagesExpenseAggregate;
-use App\Domain\Expenses\Enums\ActualConfirmationState;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Revisions\Data\RevisionOperation;
@@ -75,18 +74,18 @@ final class GenerateContractOccurrenceForYear
             'kind' => ExpenseKind::Ordinary,
             'title' => $contract->title.' — '.$expected->occurrenceDate,
             'notes' => 'Generated from contract.',
-            'project_id' => null,
+            'project_id' => $contract->project_id,
             'contract_id' => $contract->getKey(),
         ])->save();
         $row = new ExpenseRow;
         $row->forceFill([
             'tenant_id' => $context->tenantId, 'expense_id' => $expense->getKey(), 'position' => 1, 'vendor_id' => $contract->vendor_id,
-            'type' => ExpenseType::Actual, 'confirmation_state' => ActualConfirmationState::ToConfirm, 'confirmed_by_user_id' => null, 'confirmed_at' => null,
+            'type' => ExpenseType::Quote, 'confirmation_state' => null, 'confirmed_by_user_id' => null, 'confirmed_at' => null,
             'is_system_managed' => true, 'manual_override_at' => null, 'contract_term_id' => $term->getKey(), 'contract_source_rule_key' => $term->source_rule_key,
             'contract_occurrence_date' => $expected->occurrenceDate, 'source_key' => $expected->sourceKey, 'description' => $contract->title,
-            'quantity' => $term->quantity, 'unit_price' => $term->unit_price, 'entered_amount' => $term->entered_amount, 'amount_includes_vat' => $term->amount_includes_vat,
-            'vat_rate' => $term->vat_rate, 'net_amount' => $term->net_amount, 'vat_amount' => $term->vat_amount, 'gross_amount' => $term->gross_amount,
-            'is_extra' => false, 'funded_plafond_expense_id' => null, 'spend_date' => $expected->occurrenceDate, 'period_start' => null, 'period_end' => null,
+            'quantity' => null, 'unit_price' => null, 'entered_amount' => $expected->netAmount, 'amount_includes_vat' => false,
+            'vat_rate' => bccomp($expected->netAmount, '0', 6) === 0 ? '0.0000' : bcmul(bcdiv($expected->vatAmount, $expected->netAmount, 8), '100', 4), 'net_amount' => $expected->netAmount, 'vat_amount' => $expected->vatAmount, 'gross_amount' => $expected->grossAmount,
+            'is_extra' => false, 'funded_plafond_expense_id' => null, 'spend_date' => null, 'period_start' => null, 'period_end' => null,
             'distribution' => null, 'external_reference' => null,
         ]);
         $row->save();

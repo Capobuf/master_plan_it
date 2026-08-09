@@ -2,13 +2,14 @@
 
 namespace Tests\Feature\Expenses;
 
-use App\Domain\Expenses\Actions\ConfirmActual;
+use App\Domain\Expenses\Actions\CloseExpense;
 use App\Domain\Expenses\Actions\CreateExpense;
 use App\Domain\Expenses\Actions\DeleteExpense;
 use App\Domain\Expenses\Actions\UpdateExpense;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Enums\ExpenseKind;
+use App\Domain\Expenses\Enums\ExpenseState;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\AuditEvent;
@@ -101,23 +102,22 @@ final class ExpenseActionRollbackTest extends TestCase
         }
     }
 
-    public function test_confirm_actual_audit_failure_rolls_back_row_and_audit(): void
+    public function test_close_expense_audit_failure_rolls_back_lifecycle_and_audit(): void
     {
         [$actor, $context, $year, $center, $vendor] = $this->administratorContext();
         $expense = $this->existingExpense($actor, $context, $year, $center, $vendor, ExpenseType::Actual);
-        $row = $expense->rows()->firstOrFail();
         $correlationId = (string) str()->uuid();
         $auditCount = AuditEvent::query()->count();
         [$dispatcher, $eventName, $listeners] = $this->auditCreatingListeners($correlationId, static fn (): never => throw new RuntimeException('forced audit failure'));
 
         try {
             $this->expectException(RuntimeException::class);
-            self::assertTrue(class_exists(ConfirmActual::class));
-            $action = app(ConfirmActual::class);
-            $action->execute($actor, $context, $expense, $row, $row->lock_version, $correlationId);
+            self::assertTrue(class_exists(CloseExpense::class));
+            $action = app(CloseExpense::class);
+            $action->execute($actor, $context, $expense, $expense->lock_version, null, $correlationId);
         } finally {
             $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
-            $this->assertDatabaseHas('expense_rows', ['id' => $row->getKey(), 'confirmation_state' => 'to_confirm', 'lock_version' => 1]);
+            $this->assertDatabaseHas('expenses', ['id' => $expense->getKey(), 'state' => ExpenseState::Open->value, 'lock_version' => 1]);
             $this->assertDatabaseCount('audit_events', $auditCount);
         }
     }

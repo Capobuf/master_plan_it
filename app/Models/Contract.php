@@ -24,13 +24,13 @@ use Overtrue\LaravelVersionable\VersionStrategy;
  * @property string|null $renewal_notes
  * @property int $lock_version
  */
-#[Fillable(['tenant_id', 'vendor_id', 'cost_center_id', 'title', 'description', 'active', 'renewal_date', 'renewal_notice_days', 'renewal_notes', 'lock_version', 'deleted_by_user_id', 'deleted_by_at', 'deletion_reason'])]
+#[Fillable(['tenant_id', 'vendor_id', 'cost_center_id', 'project_id', 'title', 'description', 'active', 'renewal_date', 'renewal_notice_days', 'renewal_notes', 'lock_version', 'deleted_by_user_id', 'deleted_by_at', 'deletion_reason'])]
 class Contract extends Model
 {
     use SoftDeletes, Versionable;
 
     /** @var list<string> */
-    protected array $versionable = ['vendor_id', 'cost_center_id', 'title', 'description', 'active', 'renewal_date', 'renewal_notice_days', 'renewal_notes', 'deleted_by_user_id', 'deleted_by_at', 'deletion_reason', 'lock_version'];
+    protected array $versionable = ['vendor_id', 'cost_center_id', 'project_id', 'title', 'description', 'active', 'renewal_date', 'renewal_notice_days', 'renewal_notes', 'deleted_by_user_id', 'deleted_by_at', 'deletion_reason', 'lock_version'];
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
 
@@ -55,6 +55,12 @@ class Contract extends Model
     public function costCenter(): BelongsTo
     {
         return $this->belongsTo(CostCenter::class);
+    }
+
+    /** @return BelongsTo<Project, $this> */
+    public function project(): BelongsTo
+    {
+        return $this->belongsTo(Project::class);
     }
 
     /** @return HasMany<ContractTerm, $this> */

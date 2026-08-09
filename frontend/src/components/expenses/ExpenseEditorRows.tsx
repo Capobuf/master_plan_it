@@ -12,7 +12,6 @@ import InputField from "../form/input/InputField";
 import type { ExpenseEditorRow } from "./expenseEditorTypes";
 
 const rowTypeOptions = [{ value: "estimate", label: "Stima" }, { value: "quote", label: "Preventivo" }, { value: "actual", label: "Consuntivo" }];
-const distributionOptions = [{ value: "all", label: "Tutto il periodo" }, { value: "start", label: "Mese iniziale" }, { value: "end", label: "Mese finale" }];
 
 interface ExpenseEditorRowsProps {
   rows: ExpenseEditorRow[];
@@ -49,6 +48,8 @@ function DraggableExpenseRow({ row, index, count, vendors, plafonds, plafondsLoa
         <div className="md:col-span-2 xl:col-span-5"><Label htmlFor={`${row.editorKey}-description`}>Descrizione</Label><InputField id={`${row.editorKey}-description`} value={row.description} onChange={(event) => onChange({ description: event.target.value })} disabled={disabled} /></div>
       </div></section>
 
+      {row.type !== "actual" ? <section><Checkbox label="Pianificazione corrente" checked={row.is_current_planning ?? false} onChange={(is_current_planning) => onChange({ is_current_planning })} disabled={disabled} /></section> : null}
+
       <section><h4 className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">Quantità e Importi</h4><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-12">
         <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-quantity`}>Quantità</Label><DecimalInput id={`${row.editorKey}-quantity`} value={row.quantity ?? ""} onChange={(quantity) => onChange({ quantity })} trimTrailingZeros disabled={disabled} /></div>
         <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-unit-price`}>Prezzo unitario</Label><DecimalInput id={`${row.editorKey}-unit-price`} value={row.unit_price ?? ""} onChange={(unit_price) => onChange({ unit_price })} trimTrailingZeros disabled={disabled} /></div>
@@ -59,10 +60,7 @@ function DraggableExpenseRow({ row, index, count, vendors, plafonds, plafondsLoa
       </div></section>
 
       <section><h4 className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">Competenza</h4><div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
-        <div className="xl:col-span-3"><DatePicker id={`${row.editorKey}-spend-date`} label="Data spesa" placeholder="Seleziona la data" defaultDate={row.spend_date || undefined} onChange={(_, value) => onChange({ spend_date: value || undefined })} disabled={disabled} /></div>
-        <div className="xl:col-span-3"><DatePicker id={`${row.editorKey}-period-start`} label="Periodo da" placeholder="Data iniziale" defaultDate={row.period_start || undefined} onChange={(_, value) => onChange({ period_start: value || undefined })} disabled={disabled} /></div>
-        <div className="xl:col-span-3"><DatePicker id={`${row.editorKey}-period-end`} label="Periodo a" placeholder="Data finale" defaultDate={row.period_end || undefined} onChange={(_, value) => onChange({ period_end: value || undefined })} disabled={disabled} /></div>
-        <div className="xl:col-span-3"><Label htmlFor={`${row.editorKey}-distribution`}>Distribuzione</Label><Select id={`${row.editorKey}-distribution`} options={distributionOptions} value={row.distribution ?? ""} placeholder="Seleziona la distribuzione" allowEmpty onChange={(distribution) => onChange({ distribution: distribution || undefined })} disabled={disabled} /></div>
+        <div className="xl:col-span-4"><DatePicker id={`${row.editorKey}-spend-date`} label={row.type === "actual" ? "Data Actual (obbligatoria)" : "Data pianificata (opzionale)"} placeholder="Seleziona la data" defaultDate={row.spend_date || undefined} onChange={(_, value) => onChange({ spend_date: value || undefined })} disabled={disabled} /></div>
       </div></section>
 
       <section><h4 className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">Finanziamento</h4><div className="grid grid-cols-1 gap-4 md:grid-cols-2">

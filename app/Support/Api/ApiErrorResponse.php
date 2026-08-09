@@ -37,6 +37,11 @@ final class ApiErrorResponse
         'ACCOUNT_INACTIVE' => [403, 'The account is inactive.'],
         'PERMISSION_DENIED' => [403, 'You are not authorized to perform this operation.'],
         'PLATFORM_ABILITY_PROTECTED' => [403, 'The requested ability is protected.'],
+        'HISTORY_BEFORE_ACTIVATION' => [422, 'Historical data is not available before annual history activation.'],
+        'INVALID_HISTORY_CUTOFF' => [422, 'The requested historical cutoff is invalid.'],
+        'INVALID_REPORT_GROUPING' => [422, 'The requested report grouping is invalid.'],
+        'APPROVED_DIMENSION_REALLOCATION_REQUIRED' => [422, 'Approved dimensions require an explicit reallocation decision.'],
+        'TENANT_BUDGET_BASIS_LOCKED' => [409, 'The Tenant budget basis cannot change while approvals exist.'],
     ];
 
     public static function from(Throwable $exception, Request $request): JsonResponse

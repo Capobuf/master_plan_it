@@ -10,11 +10,9 @@ use App\Domain\Contracts\Data\SaveContractData;
 use App\Domain\Contracts\Data\SaveContractTermData;
 use App\Domain\Contracts\Enums\BillingCycle;
 use App\Domain\Contracts\Queries\ExpectedContractOccurrenceQuery;
-use App\Domain\Expenses\Actions\ConfirmActual;
 use App\Domain\Expenses\Actions\UpdateExpense;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
-use App\Domain\Expenses\Enums\ActualConfirmationState;
 use App\Domain\Expenses\Enums\Distribution;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
@@ -96,13 +94,6 @@ final class DemoDataSeeder extends Seeder
             }
             $first = Contract::query()->where('tenant_id', $tenant->id)->where('title', 'DEMO — Contract 01')->firstOrFail();
             $occ = app(ExpectedContractOccurrenceQuery::class)->forContract($first, $year);
-            if (isset($occ[0]) && $occ[0]->expenseId) {
-                $expense = Expense::query()->findOrFail($occ[0]->expenseId);
-                $row = $expense->rows()->first();
-                if ($row && $row->confirmation_state === ActualConfirmationState::ToConfirm) {
-                    app(ConfirmActual::class)->execute($administrator, $context, $expense, $row, $row->lock_version, $this->correlation());
-                }
-            }
             if (isset($occ[1]) && $occ[1]->expenseId) {
                 $expense = Expense::query()->with('rows')->findOrFail($occ[1]->expenseId);
                 $row = $expense->rows->first();
@@ -146,8 +137,7 @@ final class DemoDataSeeder extends Seeder
         $net = bcdiv($entered, '1', 2);
         $vat = bcdiv(bcmul($entered, '0.22', 6), '1', 2);
         $gross = bcadd($net, $vat, 2);
-        $actual = $type === ExpenseType::Actual;
-        ExpenseRow::query()->updateOrCreate(['tenant_id' => $tenant->id, 'expense_id' => $expense->id, 'position' => $position], ['vendor_id' => $vendorId, 'type' => $type, 'confirmation_state' => $actual ? ActualConfirmationState::Confirmed : null, 'confirmed_by_user_id' => $actual ? $actor->id : null, 'confirmed_at' => $actual ? now('UTC') : null, 'is_system_managed' => $system, 'description' => $description, 'quantity' => null, 'unit_price' => null, 'entered_amount' => $entered, 'amount_includes_vat' => false, 'vat_rate' => '22.000000', 'net_amount' => $net, 'vat_amount' => $vat, 'gross_amount' => $gross, 'is_extra' => $extra, 'funded_plafond_expense_id' => $funded, 'spend_date' => $spend, 'period_start' => $period['start'] ?? null, 'period_end' => $period['end'] ?? null, 'distribution' => $period['distribution'] ?? null, 'external_reference' => 'DEMO']);
+        ExpenseRow::query()->updateOrCreate(['tenant_id' => $tenant->id, 'expense_id' => $expense->id, 'position' => $position], ['vendor_id' => $vendorId, 'type' => $type, 'confirmation_state' => null, 'confirmed_by_user_id' => null, 'confirmed_at' => null, 'is_system_managed' => $system, 'description' => $description, 'quantity' => null, 'unit_price' => null, 'entered_amount' => $entered, 'amount_includes_vat' => false, 'vat_rate' => '22.000000', 'net_amount' => $net, 'vat_amount' => $vat, 'gross_amount' => $gross, 'is_extra' => $extra, 'funded_plafond_expense_id' => $funded, 'spend_date' => $spend, 'period_start' => $period['start'] ?? null, 'period_end' => $period['end'] ?? null, 'distribution' => $period['distribution'] ?? null, 'external_reference' => 'DEMO']);
     }
 
     private function correlation(): string

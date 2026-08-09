@@ -7,6 +7,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
+    "test": "npm run test:dark-tokens",
+    "test:dark-tokens": "node scripts/check-dark-tokens.mjs",
     "preview": "vite preview"
   },
   "dependencies": {

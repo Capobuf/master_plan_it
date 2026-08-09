@@ -15,7 +15,7 @@ final class EconomicEngine
     public function calculate(EconomicDataset $dataset): array
     {
         $basis = $dataset->scope->budgetBasis->value;
-        $amounts = array_fill_keys(['officialCurrentPosition', 'primary', 'proposed', 'idea', 'excluded', 'potential', 'net', 'vat', 'gross', 'estimate', 'quote', 'actual', 'actualToConfirm', 'actualConfirmed', 'extra', 'plafondAllocated', 'plafondConsumed', 'plafondResidual', 'plafondOverrun'], '0.00');
+        $amounts = array_fill_keys(['officialCurrentPosition', 'primary', 'proposed', 'idea', 'excluded', 'potential', 'net', 'vat', 'gross', 'planned', 'estimate', 'quote', 'actual', 'actualToConfirm', 'actualConfirmed', 'extra', 'plafondAllocated', 'plafondConsumed', 'plafondResidual', 'plafondOverrun'], '0.00');
         $monthly = [];
         for ($month = 1; $month <= 12; $month++) {
             $monthly[sprintf('%04d-%02d', $dataset->scope->yearLabel, $month)] = '0.00';
@@ -38,15 +38,12 @@ final class EconomicEngine
                 }
             }
             $amounts[$line->type] = bcadd($amounts[$line->type], $official, 2);
+            if (in_array($line->type, ['estimate', 'quote'], true)) {
+                $amounts['planned'] = bcadd($amounts['planned'], $official, 2);
+            }
             $byType[$line->type] = bcadd($byType[$line->type], $official, 2);
             if ($line->fundedPlafondExpenseId === null && $bucket === 'primary') {
                 $byCostCenter[$line->costCenterName] = bcadd($byCostCenter[$line->costCenterName] ?? '0.00', $official, 2);
-            }
-            if ($line->type === 'actual' && $line->confirmationState === 'to_confirm') {
-                $amounts['actualToConfirm'] = bcadd($amounts['actualToConfirm'], $official, 2);
-            }
-            if ($line->type === 'actual' && $line->confirmationState === 'confirmed') {
-                $amounts['actualConfirmed'] = bcadd($amounts['actualConfirmed'], $official, 2);
             }
             if ($line->isExtra) {
                 $amounts['extra'] = bcadd($amounts['extra'], $official, 2);
@@ -111,16 +108,7 @@ final class EconomicEngine
 
     public function classify(EconomicLine $line): string
     {
-        if ($line->type === 'actual' || $line->expenseKind === 'plafond' || $line->projectId === null || $line->projectStage === 'approved') {
-            return 'primary';
-        }
-
-        return match ($line->projectStage) {
-            'proposed' => 'proposed',
-            'idea' => 'idea',
-            'deferred', 'rejected' => 'excluded',
-            default => 'primary',
-        };
+        return 'primary';
     }
 
     /** @return array<string,string> */

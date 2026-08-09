@@ -22,10 +22,10 @@ final class ExpenseProjectRelationTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_same_tenant_project_is_accepted_and_foreign_deleted_or_project_plus_contract_is_rejected(): void
+    public function test_project_and_contract_are_accepted_only_when_the_contract_project_matches(): void
     {
         $tenant = Tenant::factory()->create();
-        $year = PlanningYear::factory()->for($tenant)->create();
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
         $center = CostCenter::factory()->for($tenant)->create();
         $vendor = Vendor::factory()->for($tenant)->create();
         $project = Project::factory()->for($tenant)->for($center)->create(['stage' => ProjectStage::Approved]);
@@ -49,9 +49,24 @@ final class ExpenseProjectRelationTest extends TestCase
 
         $contract = Contract::query()->create([
             'tenant_id' => $tenant->getKey(), 'vendor_id' => $vendor->getKey(), 'cost_center_id' => $center->getKey(),
-            'title' => 'Contract', 'active' => true, 'lock_version' => 1,
+            'project_id' => $project->getKey(), 'title' => 'Contract', 'active' => true, 'lock_version' => 1,
         ]);
-        $this->expectException(ValidationException::class);
-        $validator->validate($tenant, new SaveExpenseData((int) $year->getKey(), (int) $center->getKey(), ExpenseKind::Ordinary, 'Spesa', null, (int) $project->getKey(), (int) $contract->getKey(), null), [$row]);
+        $matching = $validator->validate($tenant, new SaveExpenseData((int) $year->getKey(), (int) $center->getKey(), ExpenseKind::Ordinary, 'Spesa', null, (int) $project->getKey(), (int) $contract->getKey(), null), [$row]);
+        $this->assertSame($project->getKey(), $matching['header']['project_id']);
+
+        $otherProject = Project::factory()->for($tenant)->create();
+        try {
+            $validator->validate($tenant, new SaveExpenseData((int) $year->getKey(), (int) $center->getKey(), ExpenseKind::Ordinary, 'Spesa', null, (int) $otherProject->getKey(), (int) $contract->getKey(), null), [$row]);
+            $this->fail('A Project different from the Contract Project was accepted.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('project_id', $exception->errors());
+        }
+
+        try {
+            $validator->validate($tenant, new SaveExpenseData((int) $year->getKey(), (int) $center->getKey(), ExpenseKind::Ordinary, 'Spesa', null, null, (int) $contract->getKey(), null), [$row]);
+            $this->fail('A Contract Project was omitted from the Expense.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('project_id', $exception->errors());
+        }
     }
 }

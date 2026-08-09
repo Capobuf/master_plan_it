@@ -16,5 +16,6 @@ final readonly class SaveContractData
         public ?string $renewalNotes,
         public ?int $expectedLockVersion,
         public array $terms,
+        public ?int $projectId = null,
     ) {}
 }

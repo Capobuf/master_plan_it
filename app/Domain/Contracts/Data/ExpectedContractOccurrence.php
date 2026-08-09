@@ -15,6 +15,8 @@ final readonly class ExpectedContractOccurrence
         public string $grossAmount,
         public bool $suppressed,
         public ?int $expenseId,
-        public ?string $generationState,
+        public ?string $planningState,
+        /** @var null|array{net:string,vat:string,gross:string} */
+        public ?array $expectedDifference,
     ) {}
 }

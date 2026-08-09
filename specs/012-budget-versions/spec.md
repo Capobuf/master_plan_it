@@ -2,6 +2,10 @@
 
 Status: `PROPOSED TARGET — persistence/domain foundation may exist; no implemented API capability`
 
+Nota dipendenza Feature 017: Budget annuale corrente, approvazioni/variazioni e vista storica a
+cutoff sono implementati. Una BudgetVersion resta uno snapshot deliberato, pubblicabile e
+confrontabile: non coincide né con l'Importo approvato corrente né con la proiezione revisionale.
+
 ## Problema
 
 Il Budget corrente è rolling. Serve conservare deliberatamente stati storici, manuali o approvati

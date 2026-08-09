@@ -270,7 +270,7 @@ trait ManagesCostCenterMutation
             $costCenter,
             $restoredFromVersionId,
         );
-        $version = $costCenter->latestVersions()->firstOrFail();
+        $version = $costCenter->versions()->orderByDesc('id')->firstOrFail();
 
         if (! $version instanceof Version) {
             throw new DomainException('REVISION_RESTORE_INVALID');

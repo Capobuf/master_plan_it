@@ -30,6 +30,11 @@ final class ContractResource extends JsonResource
                 'id' => (int) $contract->costCenter->getKey(),
                 'name' => (string) $contract->costCenter->name,
             ] : null,
+            'project_id' => $contract->project_id === null ? null : (int) $contract->project_id,
+            'project' => $contract->relationLoaded('project') && $contract->project !== null ? [
+                'id' => (int) $contract->project->getKey(),
+                'name' => (string) $contract->project->name,
+            ] : null,
             'title' => (string) $contract->title,
             'description' => $contract->description,
             'active' => (bool) $contract->active,

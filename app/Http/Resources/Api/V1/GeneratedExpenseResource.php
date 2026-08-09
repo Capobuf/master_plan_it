@@ -16,7 +16,7 @@ final class GeneratedExpenseResource extends JsonResource
         return [
             'id' => (int) $get('id'),
             'title' => (string) $get('title'),
-            'confirmation_state' => $get('confirmation_state'),
+            'planning_state' => $get('planning_state'),
             'is_system_managed' => (bool) $get('is_system_managed'),
             'source_key' => (string) $get('source_key'),
             'contract_term_id' => $get('contract_term_id') === null ? null : (int) $get('contract_term_id'),

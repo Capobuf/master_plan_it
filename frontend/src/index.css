@@ -186,7 +186,19 @@ layer(base);
     cursor: pointer;
   }
   body {
-    @apply relative font-normal font-outfit z-1 bg-gray-50;
+    @apply relative font-normal font-outfit z-1 bg-gray-50 text-gray-900 dark:bg-gray-900 dark:text-gray-100;
+  }
+  html.dark {
+    color-scheme: dark;
+  }
+  input,
+  textarea,
+  select,
+  button {
+    color: inherit;
+  }
+  option {
+    @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-gray-100;
   }
 }
 
@@ -773,7 +785,10 @@ span.flatpickr-weekday,
 .custom-calendar .fc-h-event {
   background-color: transparent;
   border: none;
-  color: black;
+  color: var(--color-gray-900);
+}
+.dark .custom-calendar .fc-h-event {
+  color: var(--color-gray-100);
 }
 .fc.fc-media-screen {
   @apply min-h-screen;

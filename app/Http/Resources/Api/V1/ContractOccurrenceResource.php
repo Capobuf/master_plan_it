@@ -29,7 +29,8 @@ final class ContractOccurrenceResource extends JsonResource
                 'vat_amount' => 'vatAmount',
                 'gross_amount' => 'grossAmount',
                 'expense_id' => 'expenseId',
-                'generation_state' => 'generationState',
+                'planning_state' => 'planningState',
+                'expected_difference' => 'expectedDifference',
             ][$key] ?? $key;
 
             return $row->{$property};
@@ -47,7 +48,8 @@ final class ContractOccurrenceResource extends JsonResource
             'official_basis' => $get('official_basis') ?? $request->attributes->get('official_basis'),
             'suppressed' => (bool) $get('suppressed'),
             'expense_id' => $get('expense_id') === null ? null : (int) $get('expense_id'),
-            'generation_state' => $get('generation_state'),
+            'planning_state' => $get('planning_state'),
+            'expected_difference' => $get('expected_difference'),
         ];
     }
 }

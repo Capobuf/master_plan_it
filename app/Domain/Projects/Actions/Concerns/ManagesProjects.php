@@ -108,7 +108,7 @@ trait ManagesProjects
         $batch = app(BeginRevisionBatch::class)->execute(
             $actor, $context, $operation, $reason, $correlationId, $project, $restoredFromVersionId,
         );
-        $version = $project->latestVersions()->first();
+        $version = $project->versions()->orderByDesc('id')->first();
         if ($version instanceof Version) {
             app(LinkVersionToRevisionBatch::class)->execute($batch, $version, 1);
         }

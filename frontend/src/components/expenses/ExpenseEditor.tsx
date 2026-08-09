@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
-import { useNavigate } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 import { ApiError } from "../../api/client";
 import {
   createExpense,
@@ -53,6 +53,7 @@ interface EditorHeader {
   notes: string;
   project_id: number | null;
   contract_id: number | null;
+  credit_for_expense_id: number | null;
 }
 
 function initialHeader(selectedPlanningYearId: number | null): EditorHeader {
@@ -64,6 +65,7 @@ function initialHeader(selectedPlanningYearId: number | null): EditorHeader {
     notes: "",
     project_id: null,
     contract_id: null,
+    credit_for_expense_id: null,
   };
 }
 
@@ -83,9 +85,7 @@ function toEditorRows(detail: ExpenseDetail): ExpenseEditorRow[] {
     is_extra: row.is_extra,
     funded_plafond_expense_id: row.funded_plafond_expense_id ?? undefined,
     spend_date: row.spend_date ?? undefined,
-    period_start: row.period_start ?? undefined,
-    period_end: row.period_end ?? undefined,
-    distribution: row.distribution ?? undefined,
+    is_current_planning: row.is_current_planning,
     external_reference: row.external_reference ?? undefined,
     lock_version: row.lock_version,
   }));
@@ -130,9 +130,13 @@ function byIdOption(
 
 export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { data: applicationContext, loading: contextLoading, hasAbility } = useApplicationContext();
   const { selectedPlanningYearId } = usePlanningYear();
   const editing = expenseId !== undefined;
+  const requestedCreditOrigin = !editing && /^\d+$/.test(searchParams.get("credit_for_expense_id") ?? "")
+    ? Number(searchParams.get("credit_for_expense_id"))
+    : null;
   const tenantId = applicationContext?.tenant?.id ?? null;
   const canSubmit = hasAbility(editing ? "expense.update" : "expense.create");
   const canView = hasAbility("expense.view");
@@ -155,6 +159,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
   const [error, setError] = useState<ApiError | null>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [lockVersion, setLockVersion] = useState<number | null>(null);
+  const [loadedState, setLoadedState] = useState<ExpenseDetail["state"] | null>(null);
 
   useEffect(() => {
     if (selectedPlanningYearId !== null && !editing && header.planning_year_id === null) {
@@ -177,6 +182,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
     setLoading(true);
     setError(null);
     const detailRequest = editing ? getExpense(expenseId as number) : Promise.resolve(null);
+    const creditOriginRequest = requestedCreditOrigin !== null ? getExpense(requestedCreditOrigin) : Promise.resolve(null);
 
     void Promise.all([
       canViewVendors ? listExpenseVendors() : Promise.resolve([]),
@@ -185,8 +191,9 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
       canViewContracts ? listExpenseContracts() : Promise.resolve([]),
       canViewProjects ? listProjectOptions() : Promise.resolve([]),
       detailRequest,
+      creditOriginRequest,
     ])
-      .then(([vendorOptions, costCenterOptions, yearOptions, contractOptions, projectOptions, detail]) => {
+      .then(([vendorOptions, costCenterOptions, yearOptions, contractOptions, projectOptions, detail, creditOrigin]) => {
         if (!active) return;
         setVendors(vendorOptions);
         setCostCenters(costCenterOptions);
@@ -202,9 +209,26 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
             notes: detail.notes ?? "",
             project_id: detail.project_id,
             contract_id: detail.contract_id,
+            credit_for_expense_id: detail.credit_for_expense_id,
           });
           setRows(toEditorRows(detail));
           setLockVersion(detail.lock_version);
+          setLoadedState(detail.state);
+        } else if (creditOrigin) {
+          const destinationYear = yearOptions
+            .filter((year) => year.label > creditOrigin.planning_year_label)
+            .sort((left, right) => left.label - right.label)[0];
+          setHeader((current) => ({
+            ...current,
+            planning_year_id: destinationYear?.id ?? null,
+            cost_center_id: creditOrigin.cost_center_id,
+            kind: "ordinary",
+            title: `Nota di credito — ${creditOrigin.title}`,
+            project_id: creditOrigin.project_id,
+            contract_id: creditOrigin.contract_id,
+            credit_for_expense_id: creditOrigin.id,
+          }));
+          setRows([{ ...newExpenseEditorRow(1), type: "actual", description: "Nota di credito", entered_amount: "-0.01" }]);
         } else {
           setHeader((current) => ({
             ...current,
@@ -222,7 +246,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
     return () => {
       active = false;
     };
-  }, [canSubmit, canUseLookups, canView, canViewContracts, canViewProjects, canViewVendors, contextLoading, editing, expenseId, selectedPlanningYearId, tenantId]);
+  }, [canSubmit, canUseLookups, canView, canViewContracts, canViewProjects, canViewVendors, contextLoading, editing, expenseId, requestedCreditOrigin, selectedPlanningYearId, tenantId]);
 
   useEffect(() => {
     if (tenantId === null || header.planning_year_id === null || !canView) {
@@ -344,6 +368,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
       ...(header.notes.trim() ? { notes: header.notes.trim() } : {}),
       ...(header.project_id !== null ? { project_id: header.project_id } : {}),
       ...(header.contract_id !== null ? { contract_id: header.contract_id } : {}),
+      ...(header.credit_for_expense_id !== null ? { credit_for_expense_id: header.credit_for_expense_id } : {}),
       rows: preparedRows.map(({ row, position, entered, quantity, unitPrice, vatRate }) => ({
         ...(row.id !== undefined ? { id: row.id } : {}),
         position,
@@ -358,9 +383,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
         is_extra: row.is_extra,
         ...(row.funded_plafond_expense_id !== undefined ? { funded_plafond_expense_id: row.funded_plafond_expense_id } : {}),
         ...(row.spend_date ? { spend_date: row.spend_date } : {}),
-        ...(row.period_start ? { period_start: row.period_start } : {}),
-        ...(row.period_end ? { period_end: row.period_end } : {}),
-        ...(row.distribution ? { distribution: row.distribution } : {}),
+        ...(row.is_current_planning ? { is_current_planning: true } : {}),
         ...(row.external_reference?.trim() ? { external_reference: row.external_reference.trim() } : {}),
         ...(row.lock_version !== undefined ? { lock_version: row.lock_version } : {}),
       })),
@@ -376,7 +399,8 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
             ...(deletedRows.length > 0 ? { deleted_rows: deletedRows } : {}),
           } satisfies ExpenseUpdate)
         : await createExpense(input);
-      navigate(routes.spesa(saved.id));
+      const reopened = loadedState === "closed" && saved.state === "open";
+      navigate(`${routes.spesa(saved.id)}${reopened ? "?reopened=1" : ""}`);
     } catch (requestError: unknown) {
       setError(ApiError.from(requestError));
     } finally {
@@ -394,6 +418,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
     <form className="space-y-6" onSubmit={(event) => void submit(event)}>
       {error && <Alert variant="error" title="Salvataggio non riuscito" message={`${error.message}${error.correlationId ? ` Riferimento tecnico: ${error.correlationId}` : ""}`} />}
       {validationMessage && <Alert variant="warning" title="Controlla i campi" message={validationMessage} />}
+      {header.credit_for_expense_id !== null ? <Alert variant="info" title="Nota di credito collegata" message={`Questa Spesa è collegata alla Spesa originaria #${header.credit_for_expense_id}. Usa solo righe Actual negative e seleziona un anno successivo.`} /> : null}
       <ComponentCard title="Dati della Spesa">
         <div className="grid gap-4 md:grid-cols-2">
           <div>
@@ -432,7 +457,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
               id="expense-editor-contract"
               value={header.contract_id === null ? NONE : String(header.contract_id)}
               options={contractOptions}
-              onChange={(value) => setHeader((current) => ({ ...current, contract_id: value === NONE ? null : Number(value), project_id: value === NONE ? current.project_id : null }))}
+              onChange={(value) => setHeader((current) => ({ ...current, contract_id: value === NONE ? null : Number(value) }))}
               disabled={disabled}
             />
           </div>
@@ -442,7 +467,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
               id="expense-editor-project"
               value={header.project_id === null ? NONE : String(header.project_id)}
               options={projectOptions}
-              onChange={(value) => setHeader((current) => ({ ...current, project_id: value === NONE ? null : Number(value), contract_id: value === NONE ? current.contract_id : null }))}
+              onChange={(value) => setHeader((current) => ({ ...current, project_id: value === NONE ? null : Number(value) }))}
               disabled={disabled}
             />
           </div> : null}

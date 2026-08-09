@@ -45,11 +45,11 @@ final class ExpenseProjectApiHttpTest extends TestCase
             ->assertJsonPath('data.0.project_title', 'Progetto API');
     }
 
-    public function test_expense_api_rejects_project_and_contract_together_without_partial_write(): void
+    public function test_expense_api_accepts_matching_project_and_contract_and_rejects_a_mismatch(): void
     {
         $tenant = Tenant::factory()->create();
         $user = $this->tenantUser($tenant);
-        $year = PlanningYear::factory()->for($tenant)->create();
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
         $center = CostCenter::factory()->for($tenant)->create();
         $vendor = Vendor::factory()->for($tenant)->create();
         $project = Project::factory()->for($tenant)->create();
@@ -57,6 +57,7 @@ final class ExpenseProjectApiHttpTest extends TestCase
             'tenant_id' => $tenant->getKey(),
             'vendor_id' => $vendor->getKey(),
             'cost_center_id' => $center->getKey(),
+            'project_id' => $project->getKey(),
             'title' => 'Contratto API',
             'active' => true,
             'lock_version' => 1,
@@ -66,8 +67,16 @@ final class ExpenseProjectApiHttpTest extends TestCase
         $this->actingAs($user, 'web');
 
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.project_id', $project->getKey())
+            ->assertJsonPath('data.contract_id', $contract->getKey());
+
+        $otherProject = Project::factory()->for($tenant)->create();
+        $payload['project_id'] = $otherProject->getKey();
+        $payload['title'] = 'Spesa progetto incoerente';
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $payload)
             ->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
-        $this->assertDatabaseMissing('expenses', ['tenant_id' => $tenant->getKey(), 'title' => 'Spesa progetto API']);
+        $this->assertDatabaseMissing('expenses', ['tenant_id' => $tenant->getKey(), 'title' => 'Spesa progetto incoerente']);
     }
 
     /** @return array<string, mixed> */
@@ -94,10 +103,8 @@ final class ExpenseProjectApiHttpTest extends TestCase
                 'is_extra' => false,
                 'funded_plafond_expense_id' => null,
                 'spend_date' => '2026-01-15',
-                'period_start' => null,
-                'period_end' => null,
-                'distribution' => null,
                 'external_reference' => null,
+                'is_current_planning' => true,
             ]],
         ];
     }

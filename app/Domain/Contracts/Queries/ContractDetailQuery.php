@@ -17,7 +17,7 @@ final class ContractDetailQuery
     {
         app(ContractPolicy::class)->viewAny($actor)->authorize();
         $contract = TenantOwnedRecordQuery::forTenant($context, Contract::class)
-            ->with(['vendor', 'costCenter', 'terms', 'expenses.rows'])
+            ->with(['vendor', 'costCenter', 'project', 'terms', 'expenses.rows'])
             ->whereKey($id)
             ->first();
         if (! $contract instanceof Contract) {

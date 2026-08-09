@@ -3,25 +3,26 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Domain\Contracts\Actions\DeleteGeneratedExpense;
-use App\Domain\Expenses\Actions\ConfirmActual;
+use App\Domain\Expenses\Actions\CloseExpense;
 use App\Domain\Expenses\Actions\CreateExpense;
 use App\Domain\Expenses\Actions\DeleteExpense;
+use App\Domain\Expenses\Actions\MoveExpense;
 use App\Domain\Expenses\Actions\UpdateExpense;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
-use App\Domain\Expenses\Enums\Distribution;
+use App\Domain\Expenses\Enums\ExpenseClosureOutcome;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Expenses\Queries\ExpenseDetailQuery;
 use App\Domain\Expenses\Queries\ExpenseRegisterQuery;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\ExpenseDetailResource;
 use App\Http\Resources\Api\V1\ExpenseMoneyResource;
 use App\Http\Resources\Api\V1\ExpenseRegisterResource;
-use App\Http\Resources\Api\V1\ExpenseRowResource;
 use App\Models\Expense;
-use App\Models\ExpenseRow;
+use App\Models\PlanningYear;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -150,26 +151,56 @@ final class ExpenseController extends Controller
         return response()->noContent();
     }
 
-    public function confirm(Request $request, int $expense, int $row, ConfirmActual $action): ExpenseRowResource
+    public function close(Request $request, int $expense, CloseExpense $action, ExpenseDetailQuery $detailQuery): ExpenseDetailResource
     {
-        $this->rejectUnexpectedFields($request, ['lock_version']);
-        $validated = $request->validate(['lock_version' => ['required', 'integer', 'min:1']]);
+        $this->rejectUnexpectedFields($request, ['lock_version', 'outcome']);
+        $validated = $request->validate([
+            'lock_version' => ['required', 'integer', 'min:1'],
+            'outcome' => ['nullable', Rule::enum(ExpenseClosureOutcome::class)],
+        ]);
         $context = $this->tenantContext($request);
         $target = $this->loadExpense($context, $expense, false);
-        $targetRow = ExpenseRow::query()
-            ->where('tenant_id', $context->tenantId)
-            ->where('expense_id', $target->getKey())
-            ->findOrFail($row);
-        $confirmed = $action->execute(
+        $closed = $action->execute(
             $this->actor($request),
             $context,
             $target,
-            $targetRow,
             (int) $validated['lock_version'],
+            isset($validated['outcome']) ? ExpenseClosureOutcome::from($validated['outcome']) : null,
             $this->correlationId($request),
         );
 
-        return ExpenseRowResource::make($confirmed->loadMissing('vendor'));
+        return ExpenseDetailResource::make($detailQuery->find($this->actor($request), $context, (int) $closed->getKey()));
+    }
+
+    public function move(Request $request, int $expense, MoveExpense $action, ExpenseDetailQuery $detailQuery): JsonResponse
+    {
+        $this->rejectUnexpectedFields($request, ['lock_version', 'target_planning_year_id']);
+        $validated = $request->validate([
+            'lock_version' => ['required', 'integer', 'min:1'],
+            'target_planning_year_id' => ['required', 'integer', 'min:1'],
+        ]);
+        $context = $this->tenantContext($request);
+        $target = $this->loadExpense($context, $expense, false);
+        TenantOwnedRecordQuery::forTenant($context, PlanningYear::class)
+            ->whereKey((int) $validated['target_planning_year_id'])
+            ->firstOrFail();
+        [$origin, $destination] = $action->execute(
+            $this->actor($request),
+            $context,
+            $target,
+            (int) $validated['lock_version'],
+            (int) $validated['target_planning_year_id'],
+            $this->correlationId($request),
+        );
+
+        return response()->json(['data' => [
+            'origin' => ExpenseDetailResource::make(
+                $detailQuery->find($this->actor($request), $context, (int) $origin->getKey()),
+            )->resolve($request),
+            'destination' => ExpenseDetailResource::make(
+                $detailQuery->find($this->actor($request), $context, (int) $destination->getKey()),
+            )->resolve($request),
+        ]]);
     }
 
     /** @return array{SaveExpenseData, list<SaveExpenseRowData>, list<array{id: int, lock_version: int}>} */
@@ -192,6 +223,7 @@ final class ExpenseController extends Controller
             'notes' => ['nullable', 'string'],
             'contract_id' => ['nullable', 'integer', 'min:1'],
             'project_id' => ['nullable', 'integer', 'min:1'],
+            'credit_for_expense_id' => ['nullable', 'integer', 'min:1'],
             'rows' => ['required', 'array', 'min:1'],
             'rows.*.id' => ['nullable', 'integer', 'min:1'],
             'rows.*.position' => ['required', 'integer', 'min:1'],
@@ -206,11 +238,9 @@ final class ExpenseController extends Controller
             'rows.*.is_extra' => ['required', 'boolean'],
             'rows.*.funded_plafond_expense_id' => ['nullable', 'integer', 'min:1'],
             'rows.*.spend_date' => ['nullable', 'date_format:Y-m-d'],
-            'rows.*.period_start' => ['nullable', 'date_format:Y-m-d'],
-            'rows.*.period_end' => ['nullable', 'date_format:Y-m-d'],
-            'rows.*.distribution' => ['nullable', Rule::enum(Distribution::class)],
             'rows.*.external_reference' => ['nullable', 'string', 'max:255'],
             'rows.*.lock_version' => ['nullable', 'integer', 'min:1'],
+            'rows.*.is_current_planning' => ['sometimes', 'boolean'],
             'deleted_rows' => ['sometimes', 'array'],
             'deleted_rows.*.id' => ['required', 'integer', 'min:1', 'distinct'],
             'deleted_rows.*.lock_version' => ['required', 'integer', 'min:1'],
@@ -238,6 +268,7 @@ final class ExpenseController extends Controller
             isset($validated['project_id']) ? (int) $validated['project_id'] : null,
             isset($validated['contract_id']) ? (int) $validated['contract_id'] : null,
             isset($validated['lock_version']) ? (int) $validated['lock_version'] : null,
+            isset($validated['credit_for_expense_id']) ? (int) $validated['credit_for_expense_id'] : null,
         );
         $rows = array_map(static fn (array $row): SaveExpenseRowData => new SaveExpenseRowData(
             isset($row['id']) ? (int) $row['id'] : null,
@@ -253,11 +284,12 @@ final class ExpenseController extends Controller
             (bool) $row['is_extra'],
             isset($row['funded_plafond_expense_id']) ? (int) $row['funded_plafond_expense_id'] : null,
             $row['spend_date'] ?? null,
-            $row['period_start'] ?? null,
-            $row['period_end'] ?? null,
-            isset($row['distribution']) ? Distribution::from($row['distribution']) : null,
+            null,
+            null,
+            null,
             $row['external_reference'] ?? null,
             isset($row['lock_version']) ? (int) $row['lock_version'] : null,
+            (bool) ($row['is_current_planning'] ?? false),
         ), $validated['rows']);
         $deletedRows = array_map(static fn (array $row): array => [
             'id' => (int) $row['id'],
@@ -270,7 +302,7 @@ final class ExpenseController extends Controller
     /** @return list<string> */
     private function expenseFields(): array
     {
-        return ['planning_year_id', 'cost_center_id', 'kind', 'title', 'notes', 'project_id', 'contract_id', 'rows'];
+        return ['planning_year_id', 'cost_center_id', 'kind', 'title', 'notes', 'project_id', 'contract_id', 'credit_for_expense_id', 'rows'];
     }
 
     /** @param list<string> $allowed */
@@ -289,7 +321,7 @@ final class ExpenseController extends Controller
         $allowed = [
             'id', 'position', 'vendor_id', 'type', 'description', 'quantity', 'unit_price', 'entered_amount',
             'amount_includes_vat', 'vat_rate', 'is_extra', 'funded_plafond_expense_id', 'spend_date',
-            'period_start', 'period_end', 'distribution', 'external_reference', 'lock_version',
+            'external_reference', 'lock_version', 'is_current_planning',
         ];
         $unexpected = array_diff(array_keys($row), $allowed);
 
@@ -303,8 +335,7 @@ final class ExpenseController extends Controller
 
     private function loadExpense(TenantContext $context, int $id, bool $withRows = true): Expense
     {
-        $query = Expense::query()
-            ->where('tenant_id', $context->tenantId)
+        $query = TenantOwnedRecordQuery::forTenant($context, Expense::class)
             ->whereKey($id)
             ->with(['planningYear', 'costCenter']);
 

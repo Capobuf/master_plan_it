@@ -1,17 +1,17 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { useNavigate, useParams, useSearchParams } from "react-router";
 import { ApiError } from "../../api/client";
 import {
-  confirmActual,
   getExpense,
   type ExpenseDetail as ExpenseDetailData,
-  type ExpenseRow,
 } from "../../api/expenses";
 import ComponentCard from "../../components/common/ComponentCard";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ExpenseActionModal from "../../components/expenses/ExpenseActionModal";
+import ExpenseCloseModal from "../../components/expenses/ExpenseCloseModal";
 import ExpenseKindBadge from "../../components/expenses/ExpenseKindBadge";
+import ExpenseMoveModal from "../../components/expenses/ExpenseMoveModal";
 import ExpenseRowsTable from "../../components/expenses/ExpenseRowsTable";
 import ExpenseTotals from "../../components/expenses/ExpenseTotals";
 import Alert from "../../components/ui/alert/Alert";
@@ -30,11 +30,13 @@ export default function ExpenseDetail() {
     useApplicationContext();
   const { expenseId: expenseIdParam } = useParams<{ expenseId: string }>();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [detailState, setDetailState] = useState<DetailState | null>(null);
   const [loading, setLoading] = useState(false);
-  const [confirmingRowId, setConfirmingRowId] = useState<number | null>(null);
+  const [closeOpen, setCloseOpen] = useState(false);
   const [actionError, setActionError] = useState<ApiError | null>(null);
   const [deleteOpen, setDeleteOpen] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
 
   const tenantId = applicationContext?.tenant?.id ?? null;
   const canView = hasAbility("expense.view");
@@ -62,20 +64,6 @@ export default function ExpenseDetail() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canView, contextLoading, expenseId, tenantId]);
 
-  async function handleConfirm(row: ExpenseRow) {
-    if (detail === null) return;
-    setConfirmingRowId(row.id);
-    setActionError(null);
-    try {
-      await confirmActual(detail.id, row.id, { lock_version: row.lock_version });
-      await loadDetail();
-    } catch (error: unknown) {
-      setActionError(ApiError.from(error));
-    } finally {
-      setConfirmingRowId(null);
-    }
-  }
-
   let body;
   if (contextLoading) {
     body = <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant in corso." />;
@@ -102,7 +90,8 @@ export default function ExpenseDetail() {
     body = <Alert variant="info" title="Caricamento spesa" message="Richiesta del dettaglio corrente." />;
   } else {
     const canEdit = hasAbility("expense.update");
-    const canConfirm = hasAbility("expense.confirm-actual");
+    const canMove = canEdit && hasAbility("expense.create") && detail.closure_outcome !== "moved";
+    const canCreateCredit = hasAbility("expense.create");
     const canDelete = hasAbility("expense.delete");
     const hasGeneratedRows = detail.rows.some((row) => row.generated);
 
@@ -115,10 +104,13 @@ export default function ExpenseDetail() {
             message={`${actionError.message}${actionError.correlationId ? ` Riferimento tecnico: ${actionError.correlationId}` : ""}`}
           />
         )}
+        {searchParams.get("reopened") === "1" ? <Alert variant="info" title="Spesa riaperta automaticamente" message="La modifica economica ha riaperto la Spesa. La modifica resta tracciata nelle revisioni." /> : null}
+        {detail.warnings.includes("BUDGET_CLOSED") && <Alert variant="warning" title="Budget chiuso" message="La modifica resta consentita, ma verrà registrata come variazione successiva alla chiusura." />}
         <ComponentCard title={detail.title}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-3">
               <ExpenseKindBadge kind={detail.kind} />
+              <span className="text-sm text-gray-500 dark:text-gray-400">Stato: {detail.state === "closed" ? "chiusa" : "aperta"}</span>
               {detail.rows.some((row) => row.is_system_managed) && (
                 <span className="text-sm text-gray-500 dark:text-gray-400">Contiene dati gestiti dal sistema</span>
               )}
@@ -129,11 +121,22 @@ export default function ExpenseDetail() {
                   Modifica
                 </Button>
               )}
+              {canMove && (
+                <Button variant="outline" onClick={() => setMoveOpen(true)} disabled={loading}>
+                  Sposta in un altro anno
+                </Button>
+              )}
+              {canCreateCredit && (
+                <Button variant="outline" onClick={() => navigate(`${routes.nuovaSpesa}?credit_for_expense_id=${detail.id}`)} disabled={loading}>
+                  Registra nota di credito futura
+                </Button>
+              )}
               {canDelete && (
                 <Button variant="outline" onClick={() => setDeleteOpen(true)} disabled={loading}>
                   Elimina
                 </Button>
               )}
+              {canEdit && detail.state === "open" ? <Button variant="outline" onClick={() => setCloseOpen(true)} disabled={loading}>Chiudi</Button> : null}
             </div>
           </div>
           <dl className="grid gap-4 border-t border-gray-100 pt-5 sm:grid-cols-2 lg:grid-cols-4 dark:border-gray-800">
@@ -157,6 +160,13 @@ export default function ExpenseDetail() {
               <dt className="text-sm text-gray-500 dark:text-gray-400">Righe correnti</dt>
               <dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.rows.length}</dd>
             </div>
+            <div><dt className="text-sm text-gray-500 dark:text-gray-400">Esito chiusura</dt><dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.closure_outcome === "not_incurred" ? "Non sostenuta" : detail.closure_outcome === "cancelled" ? "Annullata" : detail.closure_outcome === "moved" ? "Spostata" : "—"}</dd></div>
+            <div><dt className="text-sm text-gray-500 dark:text-gray-400">Pianificato</dt><dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.planned ?? "—"}</dd></div>
+            <div><dt className="text-sm text-gray-500 dark:text-gray-400">Approvato</dt><dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.approved_amount ?? "—"}</dd></div>
+            <div><dt className="text-sm text-gray-500 dark:text-gray-400">Actual</dt><dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.actual}</dd></div>
+            <div><dt className="text-sm text-gray-500 dark:text-gray-400">Residuo / scostamento</dt><dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.residual ?? "—"} / {detail.variance ?? "—"}{detail.variance_final ? " · finale" : ""}</dd></div>
+            {detail.moved_from_expense_id !== null ? <div><dt className="text-sm text-gray-500 dark:text-gray-400">Spostata da</dt><dd className="mt-1"><button type="button" className="font-medium text-brand-500 hover:text-brand-600" onClick={() => navigate(routes.spesa(detail.moved_from_expense_id as number))}>Spesa #{detail.moved_from_expense_id}</button></dd></div> : null}
+            {detail.credit_for_expense_id !== null ? <div><dt className="text-sm text-gray-500 dark:text-gray-400">Nota di credito per</dt><dd className="mt-1"><button type="button" className="font-medium text-brand-500 hover:text-brand-600" onClick={() => navigate(routes.spesa(detail.credit_for_expense_id as number))}>Spesa #{detail.credit_for_expense_id}</button></dd></div> : null}
           </dl>
           {detail.notes && (
             <div className="rounded-xl bg-gray-50 p-4 text-sm text-gray-600 dark:bg-white/[0.03] dark:text-gray-300">
@@ -168,11 +178,11 @@ export default function ExpenseDetail() {
         <ComponentCard title="Righe della Spesa">
           <ExpenseRowsTable
             rows={detail.rows}
-            canConfirm={canConfirm}
-            confirmingRowId={confirmingRowId}
-            onConfirm={(row) => void handleConfirm(row)}
           />
         </ComponentCard>
+        {hasAbility("expense.view-revisions") ? <ComponentCard title="Attività di revisione recente">
+          {detail.revision_activity.length === 0 ? <p className="text-sm text-gray-500 dark:text-gray-400">Nessuna revisione disponibile.</p> : <ol className="divide-y divide-gray-100 dark:divide-gray-800">{detail.revision_activity.map((revision) => <li key={revision.id} className="flex flex-wrap items-start justify-between gap-3 py-3 text-sm"><div><p className="font-medium text-gray-800 dark:text-white/90">{revision.operation}</p><p className="text-gray-500 dark:text-gray-400">{revision.summary ?? "Operazione sulla Spesa"}</p></div><p className="text-right text-gray-500 dark:text-gray-400">{revision.actor ?? "Sistema"}{revision.timestamp ? <><br />{new Date(revision.timestamp).toLocaleString("it-IT")}</> : null}</p></li>)}</ol>}
+        </ComponentCard> : null}
         {canDelete && (
           <ExpenseActionModal
             expenseId={detail.id}
@@ -184,6 +194,28 @@ export default function ExpenseDetail() {
             onDeleted={() => navigate(routes.spese)}
           />
         )}
+        {canMove && (
+          <ExpenseMoveModal
+            expenseId={detail.id}
+            lockVersion={detail.lock_version}
+            currentPlanningYearId={detail.planning_year_id}
+            isOpen={moveOpen}
+            onClose={() => setMoveOpen(false)}
+            onMoved={(destinationExpenseId) => navigate(routes.spesa(destinationExpenseId))}
+          />
+        )}
+        {canEdit && detail.state === "open" ? (
+          <ExpenseCloseModal
+            expenseId={detail.id}
+            lockVersion={detail.lock_version}
+            isOpen={closeOpen}
+            onClose={() => setCloseOpen(false)}
+            onClosed={(closed) => {
+              setCloseOpen(false);
+              setDetailState({ tenantId: tenantId as number, detail: closed, error: null });
+            }}
+          />
+        ) : null}
       </div>
     );
   }

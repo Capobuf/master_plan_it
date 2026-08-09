@@ -41,13 +41,14 @@ export interface ContractOccurrence {
   official_basis: string | null;
   suppressed: boolean;
   expense_id: number | null;
-  generation_state: string | null;
+  planning_state: "managed" | "manual" | null;
+  expected_difference: { net: string; vat: string; gross: string } | null;
 }
 
 export interface GeneratedExpense {
   id: number;
   title: string;
-  confirmation_state: string | null;
+  planning_state: "managed" | "manual";
   is_system_managed: boolean;
   source_key: string;
   contract_term_id: number | null;
@@ -74,6 +75,8 @@ export interface Contract {
   vendor: ContractParty | null;
   cost_center_id: number;
   cost_center: ContractParty | null;
+  project_id: number | null;
+  project: ContractParty | null;
   title: string;
   description: string | null;
   active: boolean;
@@ -109,6 +112,7 @@ export interface ContractTermInput {
 export interface ContractWrite {
   vendor_id: number;
   cost_center_id: number;
+  project_id?: number;
   title: string;
   description?: string;
   active: boolean;

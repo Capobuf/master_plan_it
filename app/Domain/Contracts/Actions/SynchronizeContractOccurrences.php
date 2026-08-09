@@ -5,7 +5,7 @@ namespace App\Domain\Contracts\Actions;
 use App\Domain\Contracts\Actions\Concerns\ManagesContracts;
 use App\Domain\Contracts\Queries\ExpectedContractOccurrenceQuery;
 use App\Domain\Expenses\Actions\Concerns\ManagesExpenseAggregate;
-use App\Domain\Expenses\Enums\ActualConfirmationState;
+use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Contract;
@@ -52,20 +52,24 @@ final class SynchronizeContractOccurrences
                     continue;
                 }
                 $row = ExpenseRow::query()->where('tenant_id', $context->tenantId)->where('source_key', $expected->sourceKey)->lockForUpdate()->first();
-                if (! $row instanceof ExpenseRow || $row->confirmation_state !== ActualConfirmationState::ToConfirm || ! $row->is_system_managed || $row->manual_override_at !== null) {
+                $expense = $row instanceof ExpenseRow
+                    ? Expense::query()->where('tenant_id', $context->tenantId)->lockForUpdate()->find($row->expense_id)
+                    : null;
+                if (! $row instanceof ExpenseRow || ! $expense instanceof Expense || $row->type !== ExpenseType::Quote || ! $row->is_system_managed
+                    || $row->manual_override_at !== null || (int) $expense->current_planning_row_id === (int) $row->getKey()) {
                     $counts['skipped']++;
 
                     continue;
                 }
                 $term = ContractTerm::query()->where('tenant_id', $context->tenantId)->find($expected->termId);
-                $expense = Expense::query()->where('tenant_id', $context->tenantId)->lockForUpdate()->find($row->expense_id);
-                if (! $term instanceof ContractTerm || ! $expense instanceof Expense) {
+                if (! $term instanceof ContractTerm) {
                     $counts['skipped']++;
 
                     continue;
                 }
-                $row->fill(['vendor_id' => $contract->vendor_id, 'description' => $contract->title, 'quantity' => $term->quantity, 'unit_price' => $term->unit_price, 'entered_amount' => $term->entered_amount, 'amount_includes_vat' => $term->amount_includes_vat, 'vat_rate' => $term->vat_rate, 'lock_version' => $row->lock_version + 1]);
-                $row->forceFill(['net_amount' => $term->net_amount, 'vat_amount' => $term->vat_amount, 'gross_amount' => $term->gross_amount])->save();
+                $vatRate = bccomp($expected->netAmount, '0', 6) === 0 ? '0.0000' : bcmul(bcdiv($expected->vatAmount, $expected->netAmount, 8), '100', 4);
+                $row->fill(['vendor_id' => $contract->vendor_id, 'description' => $contract->title, 'quantity' => null, 'unit_price' => null, 'entered_amount' => $expected->netAmount, 'amount_includes_vat' => false, 'vat_rate' => $vatRate, 'lock_version' => $row->lock_version + 1]);
+                $row->forceFill(['net_amount' => $expected->netAmount, 'vat_amount' => $expected->vatAmount, 'gross_amount' => $expected->grossAmount])->save();
                 $expense->fill(['cost_center_id' => $contract->cost_center_id, 'title' => $contract->title.' — '.$expected->occurrenceDate, 'lock_version' => $expense->lock_version + 1])->save();
                 $this->revisions($actor, $context, RevisionOperation::Update, $occurrenceCorrelationId, $expense, [$expense, $row]);
                 $counts['updated']++;

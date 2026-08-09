@@ -44,6 +44,7 @@ export interface Tenant {
   language_code: string;
   timezone: string;
   default_vat_rate: string;
+  budget_basis: "net" | "gross";
   state: string;
   lock_version: number;
 }

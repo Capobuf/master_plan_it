@@ -2,6 +2,10 @@
 
 Status: `PROPOSED TARGET — partial backend foundation exists; user capability incomplete`
 
+Nota dipendenza Feature 017: la proiezione annuale read-only a cutoff e i revision batch atomici
+sono implementati. Restano in questo scope compare/restore operativo uniforme dei record correnti;
+la proiezione storica annuale non è un restore e non sostituisce questa feature.
+
 ## Problema
 
 Vendor e Cost Center hanno già operazioni API di history/restore e Contract espone history, mentre
