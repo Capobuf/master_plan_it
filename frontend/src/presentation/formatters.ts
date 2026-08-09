@@ -73,6 +73,77 @@ export function normalizeDecimalInput(value: string, maxScale = 6): string {
   return normalized;
 }
 
+interface CalculatedAmountFields {
+  quantity?: string | null;
+  unit_price?: string | null;
+  entered_amount: string;
+}
+
+export function calculateEnteredAmount(
+  quantity: string | null | undefined,
+  unitPrice: string | null | undefined,
+): string | null {
+  if (!quantity?.trim() || !unitPrice?.trim()) return null;
+
+  try {
+    const normalizedQuantity = normalizeDecimalInput(quantity, 6);
+    const normalizedUnitPrice = normalizeDecimalInput(unitPrice, 6);
+    if (!/[1-9]/.test(normalizedUnitPrice)) return null;
+    return multiplyDecimals(normalizedQuantity, normalizedUnitPrice, 6);
+  } catch {
+    return null;
+  }
+}
+
+export function applyCalculatedAmount<T extends CalculatedAmountFields>(
+  current: T,
+  patch: Partial<Pick<T, "quantity" | "unit_price" | "entered_amount">>,
+): Partial<Pick<T, "quantity" | "unit_price" | "entered_amount">> {
+  const next = { ...current, ...patch };
+  const calculated = calculateEnteredAmount(next.quantity, next.unit_price);
+  if (calculated !== null) {
+    return { ...patch, entered_amount: calculated } as Partial<Pick<T, "quantity" | "unit_price" | "entered_amount">>;
+  }
+
+  const wasCalculated = calculateEnteredAmount(current.quantity, current.unit_price) !== null;
+  return wasCalculated
+    ? { ...patch, entered_amount: "" } as Partial<Pick<T, "quantity" | "unit_price" | "entered_amount">>
+    : patch;
+}
+
+function multiplyDecimals(left: string, right: string, targetScale: number): string {
+  const parse = (value: string) => {
+    const negative = value.startsWith("-");
+    const unsigned = negative ? value.slice(1) : value;
+    const [integer, fraction = ""] = unsigned.split(".");
+    return {
+      negative,
+      coefficient: BigInt(`${integer}${fraction}`),
+      scale: fraction.length,
+    };
+  };
+
+  const first = parse(left);
+  const second = parse(right);
+  let coefficient = first.coefficient * second.coefficient;
+  const productScale = first.scale + second.scale;
+
+  if (productScale > targetScale) {
+    const divisor = 10n ** BigInt(productScale - targetScale);
+    const remainder = coefficient % divisor;
+    coefficient /= divisor;
+    if (remainder * 2n >= divisor) coefficient += 1n;
+  } else if (productScale < targetScale) {
+    coefficient *= 10n ** BigInt(targetScale - productScale);
+  }
+
+  const digits = coefficient.toString().padStart(targetScale + 1, "0");
+  const integer = targetScale === 0 ? digits : digits.slice(0, -targetScale);
+  const fraction = targetScale === 0 ? "" : `.${digits.slice(-targetScale)}`;
+  const negative = first.negative !== second.negative && coefficient !== 0n;
+  return `${negative ? "-" : ""}${integer}${fraction}`;
+}
+
 export function compareDecimalStrings(left: string, right: string): number {
   const normalize = (value: string) => {
     const negative = value.startsWith("-");

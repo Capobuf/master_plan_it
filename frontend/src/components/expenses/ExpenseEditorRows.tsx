@@ -10,6 +10,7 @@ import Checkbox from "../form/input/Checkbox";
 import DecimalInput from "../form/input/DecimalInput";
 import InputField from "../form/input/InputField";
 import type { ExpenseEditorRow } from "./expenseEditorTypes";
+import { applyCalculatedAmount, calculateEnteredAmount } from "../../presentation/formatters";
 
 const rowTypeOptions = [{ value: "estimate", label: "Stima" }, { value: "quote", label: "Preventivo" }, { value: "actual", label: "Consuntivo" }];
 
@@ -33,11 +34,15 @@ function DraggableExpenseRow({ row, index, count, vendors, plafonds, plafondsLoa
   drag(drop(handleRef));
   const vendorOptions = vendors.filter((vendor) => vendor.active !== false || vendor.id === row.vendor_id).map((vendor) => ({ value: String(vendor.id), label: vendor.name }));
   const plafondOptions = plafonds.filter((plafond) => plafond.id !== row.id).map((plafond) => ({ value: String(plafond.id), label: `${plafond.title}${plafond.cost_center_name ? ` · ${plafond.cost_center_name}` : ""}` }));
+  const calculatedAmount = calculateEnteredAmount(row.quantity, row.unit_price);
+  const updateEconomicFields = (patch: Partial<Pick<ExpenseEditorRow, "quantity" | "unit_price" | "entered_amount">>) => {
+    onChange(applyCalculatedAmount(row, patch));
+  };
 
   return <fieldset className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.02] sm:p-5">
     <legend className="sr-only">Riga {index + 1}</legend>
     <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4 dark:border-gray-800">
-      <div className="flex items-center gap-3"><span ref={handleRef} className="inline-flex h-10 w-10 cursor-grab items-center justify-center rounded-lg border border-dashed border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400" title="Trascina per riordinare" aria-label={`Trascina la riga ${index + 1}`}><HorizontaLDots className="h-5 w-5" /></span><div><h3 className="font-semibold text-gray-800 dark:text-white/90">Riga {index + 1}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{row.id ? "Riga esistente" : "Nuova riga"}</p></div></div>
+      <div className="flex items-center gap-3"><span ref={handleRef} className="inline-flex h-10 w-10 cursor-grab items-center justify-center rounded-lg border border-dashed border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400" title="Trascina per riordinare" aria-hidden="true"><HorizontaLDots className="h-5 w-5" /></span><div><h3 className="font-semibold text-gray-800 dark:text-white/90">Riga {index + 1}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{row.id ? "Riga esistente" : "Nuova riga"}</p></div></div>
       <div className="flex items-center gap-2"><IconButton icon={ChevronUpIcon} label={`Sposta la riga ${index + 1} in alto`} onClick={() => onMove(index, index - 1)} disabled={disabled || index === 0} /><IconButton icon={ChevronDownIcon} label={`Sposta la riga ${index + 1} in basso`} onClick={() => onMove(index, index + 1)} disabled={disabled || index === count - 1} /><IconButton icon={TrashBinIcon} label={`Rimuovi la riga ${index + 1}`} onClick={onRemove} disabled={disabled || count === 1} destructive /></div>
     </div>
 
@@ -51,9 +56,9 @@ function DraggableExpenseRow({ row, index, count, vendors, plafonds, plafondsLoa
       {row.type !== "actual" ? <section><Checkbox label="Pianificazione corrente" checked={row.is_current_planning ?? false} onChange={(is_current_planning) => onChange({ is_current_planning })} disabled={disabled} /></section> : null}
 
       <section><h4 className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">Quantità e Importi</h4><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-12">
-        <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-quantity`}>Quantità</Label><DecimalInput id={`${row.editorKey}-quantity`} value={row.quantity ?? ""} onChange={(quantity) => onChange({ quantity })} trimTrailingZeros disabled={disabled} /></div>
-        <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-unit-price`}>Prezzo unitario</Label><DecimalInput id={`${row.editorKey}-unit-price`} value={row.unit_price ?? ""} onChange={(unit_price) => onChange({ unit_price })} trimTrailingZeros disabled={disabled} /></div>
-        <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-entered-amount`}>Importo</Label><DecimalInput id={`${row.editorKey}-entered-amount`} value={row.entered_amount} onChange={(entered_amount) => onChange({ entered_amount })} fixedScale={2} disabled={disabled} /></div>
+        <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-quantity`}>Quantità</Label><DecimalInput id={`${row.editorKey}-quantity`} value={row.quantity ?? ""} onChange={(quantity) => updateEconomicFields({ quantity })} trimTrailingZeros disabled={disabled} /></div>
+        <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-unit-price`}>Prezzo unitario</Label><DecimalInput id={`${row.editorKey}-unit-price`} value={row.unit_price ?? ""} onChange={(unit_price) => updateEconomicFields({ unit_price })} trimTrailingZeros disabled={disabled} /></div>
+        <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-entered-amount`}>Importo</Label><DecimalInput id={`${row.editorKey}-entered-amount`} value={row.entered_amount} onChange={(entered_amount) => onChange({ entered_amount })} fixedScale={2} readOnly={calculatedAmount !== null} hint={calculatedAmount !== null ? "Calcolato da quantità × prezzo unitario" : undefined} disabled={disabled} /></div>
         <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-vat-rate`}>Aliquota IVA</Label><DecimalInput id={`${row.editorKey}-vat-rate`} value={row.vat_rate ?? ""} onChange={(vat_rate) => onChange({ vat_rate })} fixedScale={2} disabled={disabled} /></div>
         <div className="flex items-center xl:col-span-2"><Checkbox label="Importo IVA inclusa" checked={row.amount_includes_vat} onChange={(amount_includes_vat) => onChange({ amount_includes_vat })} disabled={disabled} /></div>
         <div className="flex items-center xl:col-span-2"><Checkbox label="Spesa Extra" checked={row.is_extra} onChange={(is_extra) => onChange({ is_extra })} disabled={disabled} /></div>
