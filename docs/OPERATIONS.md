@@ -67,8 +67,15 @@ Dalla directory `frontend`:
 
 ```bash
 npm ci
-npm run build
+npm run verify
+```
+
+Il gate frontend esegue, nell'ordine:
+
+```bash
+npm test
 npm run lint
+npm run build
 ```
 
 Sviluppo:

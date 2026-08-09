@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Performance;
+namespace Tests\Accounting\Integration;
 
 use App\Domain\Budget\Queries\HistoricalAnnualBudgetQuery;
 use App\Domain\Expenses\Enums\ExpenseType;
@@ -19,7 +19,7 @@ use Illuminate\Support\Facades\DB;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
-final class HistoricalBudgetBenchmarkTest extends TestCase
+final class HistoricalBudgetQueryCountTest extends TestCase
 {
     use DatabaseTransactions;
 
@@ -39,15 +39,9 @@ final class HistoricalBudgetBenchmarkTest extends TestCase
         $this->assertLessThanOrEqual(10, $many['queries']);
         $this->assertSame(1, $single['expenses']);
         $this->assertSame(20, $many['expenses']);
-        fwrite(STDOUT, sprintf(
-            "Historical annual projection: %d fixed queries; 1 row %.2fms, 20 rows %.2fms\n",
-            $many['queries'],
-            $single['milliseconds'],
-            $many['milliseconds'],
-        ));
     }
 
-    /** @return array{queries: int, expenses: int, milliseconds: float} */
+    /** @return array{queries: int, expenses: int} */
     private function measure(int $expenseCount): array
     {
         $tenant = Tenant::factory()->create();
@@ -69,17 +63,15 @@ final class HistoricalBudgetBenchmarkTest extends TestCase
 
         DB::connection()->flushQueryLog();
         DB::connection()->enableQueryLog();
-        $started = hrtime(true);
         $result = app(HistoricalAnnualBudgetQuery::class)->execute(
             $actor,
             $context,
             (int) $year->getKey(),
             '2026-03-01T10:30:00Z',
         );
-        $milliseconds = (hrtime(true) - $started) / 1_000_000;
         $queries = count(DB::connection()->getQueryLog());
         DB::connection()->disableQueryLog();
 
-        return ['queries' => $queries, 'expenses' => count($result['expenses']), 'milliseconds' => $milliseconds];
+        return ['queries' => $queries, 'expenses' => count($result['expenses'])];
     }
 }

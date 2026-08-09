@@ -10,6 +10,7 @@
     "test": "npm run test:unit && npm run test:dark-tokens",
     "test:unit": "vitest run",
     "test:dark-tokens": "node scripts/check-dark-tokens.mjs",
+    "verify": "npm test && npm run lint && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -70,4 +70,26 @@ describe("BudgetView", () => {
 
     expect(screen.getByRole("link", { name: "Licenze software" })).toHaveAttribute("href", "/spese/42");
   });
+
+  it("lets historical read-only mode override mutation permissions", () => {
+    const historical: AnnualBudget = {
+      ...dataset,
+      mode: "historical",
+      requested_as_of: "2026-08-09T10:00:00Z",
+      cutoff_utc: "2026-08-09T10:00:00Z",
+      read_only: true,
+    };
+
+    render(
+      <MemoryRouter>
+        <BudgetView dataset={historical} asOf="2026-08-09T10:00" canApprove canClose onAsOfChange={() => undefined} onChange={() => undefined} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Vista storica in sola lettura")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Registra prima approvazione" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Registra variazione" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Chiudi Budget" })).not.toBeInTheDocument();
+    expect(screen.queryByText("Azioni Budget")).not.toBeInTheDocument();
+  });
 });

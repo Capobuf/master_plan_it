@@ -19,6 +19,44 @@ final class BudgetLifecycleApiTest extends TestCase
     use DatabaseTransactions;
     use InteractsWithApiFoundation;
 
+    public function test_close_endpoint_rejects_stale_version_without_side_effects(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $this->actingAs($user, 'web');
+
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/budget/'.$year->getKey().'/close', [
+            'lock_version' => 99,
+        ])->assertConflict()
+            ->assertJsonPath('error.code', 'STALE_VERSION');
+
+        $this->assertDatabaseHas('planning_years', [
+            'id' => $year->getKey(),
+            'budget_state' => 'preparation',
+            'lock_version' => 1,
+        ]);
+    }
+
+    public function test_close_endpoint_does_not_disclose_foreign_planning_year(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $foreignYear = PlanningYear::factory()->for(Tenant::factory()->create())->create(['year_label' => 2026]);
+        $this->actingAs($user, 'web');
+
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/budget/'.$foreignYear->getKey().'/close', [
+            'lock_version' => 1,
+        ])->assertNotFound()
+            ->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
+
+        $this->assertDatabaseHas('planning_years', [
+            'id' => $foreignYear->getKey(),
+            'budget_state' => 'preparation',
+            'lock_version' => 1,
+        ]);
+    }
+
     public function test_close_endpoint_requires_planning_year_update_and_not_expense_update(): void
     {
         $tenant = Tenant::factory()->create();
@@ -87,6 +125,73 @@ final class BudgetLifecycleApiTest extends TestCase
             'expense_id' => $response->json('data.destination.id'),
             'type' => 'actual',
         ]);
+    }
+
+    public function test_move_endpoint_rejects_stale_version_without_creating_destination(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $sourceYear = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $targetYear = PlanningYear::factory()->for($tenant)->create(['year_label' => 2027]);
+        $expense = Expense::factory()->for($tenant)->create(['planning_year_id' => $sourceYear->getKey()]);
+        $planning = ExpenseRow::factory()->for($expense)->create([
+            'tenant_id' => $tenant->getKey(),
+            'type' => ExpenseType::Estimate,
+            'spend_date' => null,
+        ]);
+        $expense->forceFill(['current_planning_row_id' => $planning->getKey()])->saveQuietly();
+        $before = Expense::query()->where('tenant_id', $tenant->getKey())->count();
+        $this->actingAs($user, 'web');
+
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses/'.$expense->getKey().'/move', [
+            'lock_version' => 99,
+            'target_planning_year_id' => $targetYear->getKey(),
+        ])->assertConflict()
+            ->assertJsonPath('error.code', 'STALE_VERSION');
+
+        $this->assertSame($before, Expense::query()->where('tenant_id', $tenant->getKey())->count());
+        $this->assertDatabaseHas('expenses', [
+            'id' => $expense->getKey(),
+            'state' => 'open',
+            'lock_version' => 1,
+        ]);
+        $this->assertDatabaseMissing('expenses', ['moved_from_expense_id' => $expense->getKey()]);
+    }
+
+    public function test_move_endpoint_requires_both_update_and_create_abilities(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $sourceYear = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $targetYear = PlanningYear::factory()->for($tenant)->create(['year_label' => 2027]);
+        $expense = Expense::factory()->for($tenant)->create(['planning_year_id' => $sourceYear->getKey()]);
+        $planning = ExpenseRow::factory()->for($expense)->create([
+            'tenant_id' => $tenant->getKey(),
+            'type' => ExpenseType::Quote,
+            'spend_date' => null,
+        ]);
+        $expense->forceFill(['current_planning_row_id' => $planning->getKey()])->saveQuietly();
+        $editor = Role::query()
+            ->where('tenant_id', $tenant->getKey())
+            ->where('name', 'Editor')
+            ->firstOrFail();
+        $editor->revokePermissionTo('expense.create');
+        $before = Expense::query()->where('tenant_id', $tenant->getKey())->count();
+        $this->actingAs($user, 'web');
+
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses/'.$expense->getKey().'/move', [
+            'lock_version' => 1,
+            'target_planning_year_id' => $targetYear->getKey(),
+        ])->assertForbidden()
+            ->assertJsonPath('error.code', 'PERMISSION_DENIED');
+
+        $this->assertSame($before, Expense::query()->where('tenant_id', $tenant->getKey())->count());
+        $this->assertDatabaseHas('expenses', [
+            'id' => $expense->getKey(),
+            'state' => 'open',
+            'lock_version' => 1,
+        ]);
+        $this->assertDatabaseMissing('expenses', ['moved_from_expense_id' => $expense->getKey()]);
     }
 
     public function test_expense_create_records_a_next_year_credit_link_with_only_negative_actual_rows(): void
