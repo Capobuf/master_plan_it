@@ -64,7 +64,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const apiError = ApiError.from(error);
 
         if (active && apiError.status !== 401) {
-          console.error("Unable to restore the authenticated session.", apiError);
+          console.error("Impossibile ripristinare la sessione autenticata.", apiError);
         }
       })
       .finally(() => {

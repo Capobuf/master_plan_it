@@ -3,6 +3,7 @@
 namespace Tests\Feature\Api\Expenses;
 
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
@@ -46,6 +47,35 @@ final class ExpenseApiHttpTest extends TestCase
             ->assertJsonPath('data.0.totals.currency', 'EUR')
             ->assertJsonPath('data.0.totals.official_basis', 'net')
             ->assertJsonPath('totals.gross', '146678.16');
+    }
+
+    public function test_register_filters_plafond_expenses_for_the_editor_lookup(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(),
+            'kind' => ExpenseKind::Ordinary,
+            'title' => 'Ordinary expense',
+        ]);
+        $plafond = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(),
+            'kind' => ExpenseKind::Plafond,
+            'title' => 'Eligible Plafond',
+        ]);
+        ExpenseRow::factory()->for($plafond)->create();
+        $this->actingAs($user, 'web');
+
+        $this->getJson('/api/v1/expenses?year='.$year->getKey().'&kind=plafond&per_page=100')
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $plafond->getKey())
+            ->assertJsonPath('data.0.kind', 'plafond');
+
+        $this->getJson('/api/v1/expenses?kind=unsupported')
+            ->assertStatus(422)
+            ->assertJsonPath('error.code', 'VALIDATION_FAILED');
     }
 
     public function test_foreign_expense_is_not_disclosed(): void

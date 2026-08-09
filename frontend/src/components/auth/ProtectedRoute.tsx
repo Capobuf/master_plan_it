@@ -1,5 +1,6 @@
 import { Navigate, Outlet, useLocation } from "react-router";
 import { useAuth } from "../../context/AuthContext";
+import { routes } from "../../navigation/routes";
 
 export default function ProtectedRoute() {
   const { authenticated, loading } = useAuth();
@@ -13,14 +14,14 @@ export default function ProtectedRoute() {
         aria-live="polite"
       >
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Loading session…
+          Caricamento della sessione…
         </p>
       </div>
     );
   }
 
   if (!authenticated) {
-    return <Navigate to="/signin" replace state={{ from: location }} />;
+    return <Navigate to={routes.accesso} replace state={{ from: location }} />;
   }
 
   return <Outlet />;

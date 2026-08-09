@@ -6,8 +6,8 @@ export default function SignIn() {
   return (
     <>
       <PageMeta
-        title="Sign in | Master Plan IT"
-        description="Sign in to the Master Plan IT application"
+        title="Accesso | Master Plan IT"
+        description="Accedi all'applicazione Master Plan IT"
       />
       <AuthLayout>
         <SignInForm />

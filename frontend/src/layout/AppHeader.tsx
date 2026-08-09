@@ -6,6 +6,7 @@ import TenantDropdown from "../components/header/TenantDropdown";
 import UserDropdown from "../components/header/UserDropdown";
 import { useSidebar } from "../context/SidebarContext";
 import { CloseLineIcon, ListIcon, MoreDotIcon } from "../icons";
+import { routes } from "../navigation/routes";
 
 const AppHeader: React.FC = () => {
   const [isApplicationMenuOpen, setApplicationMenuOpen] = useState(false);
@@ -27,7 +28,7 @@ const AppHeader: React.FC = () => {
             type="button"
             className="z-99999 flex h-10 w-10 items-center justify-center rounded-lg border-gray-200 text-gray-500 dark:border-gray-800 dark:text-gray-400 lg:h-11 lg:w-11 lg:border"
             onClick={handleToggle}
-            aria-label="Toggle sidebar"
+            aria-label="Apri o chiudi la barra laterale"
           >
             {isMobileOpen ? (
               <CloseLineIcon className="h-6 w-6" />
@@ -36,24 +37,16 @@ const AppHeader: React.FC = () => {
             )}
           </button>
 
-          <Link to="/" className="lg:hidden" aria-label="Master Plan IT home">
-            <img
-              className="dark:hidden"
-              src="/images/logo/logo.svg"
-              alt="Master Plan IT"
-            />
-            <img
-              className="hidden dark:block"
-              src="/images/logo/logo-dark.svg"
-              alt="Master Plan IT"
-            />
+          <Link to={routes.panoramica} className="flex items-center gap-2 font-semibold text-gray-800 dark:text-white/90 lg:hidden" aria-label="Panoramica Master Plan IT">
+            <img src="/images/logo/logo-icon.svg" alt="" className="h-8 w-8" />
+            Master Plan IT
           </Link>
 
           <button
             type="button"
             onClick={() => setApplicationMenuOpen((isOpen) => !isOpen)}
             className="z-99999 flex h-10 w-10 items-center justify-center rounded-lg text-gray-700 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800 lg:hidden"
-            aria-label="Toggle application menu"
+            aria-label="Apri o chiudi il menu applicativo"
             aria-expanded={isApplicationMenuOpen}
           >
             <MoreDotIcon className="h-6 w-6" />

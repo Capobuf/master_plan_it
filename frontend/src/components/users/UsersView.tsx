@@ -1,67 +1,29 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ApiError } from "../../api/client";
-import { assignUserRoles, createUser, deactivateUser, listUsers, resetUserPassword, updateUser, type TenantUser } from "../../api/users";
 import { listRoles, type Role } from "../../api/roles";
+import { assignUserRoles, createUser, deactivateUser, listUsers, resetUserPassword, updateUser, type TenantUser } from "../../api/users";
+import { CloseLineIcon, LockIcon, PencilIcon } from "../../icons";
+import { roleLabel } from "../../presentation/labels";
 import ComponentCard from "../common/ComponentCard";
-import InputField from "../form/input/InputField";
+import IconButton from "../common/IconButton";
+import PageBreadcrumb from "../common/PageBreadCrumb";
 import Label from "../form/Label";
-import Select from "../form/Select";
+import Checkbox from "../form/input/Checkbox";
+import InputField from "../form/input/InputField";
+import Alert from "../ui/alert/Alert";
 import Badge from "../ui/badge/Badge";
 import Button from "../ui/button/Button";
+import { Modal } from "../ui/modal";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 
-export default function UsersView({ canManage }: { canManage: boolean }) {
-  const [users, setUsers] = useState<TenantUser[]>([]);
-  const [roles, setRoles] = useState<Role[]>([]);
-  const [selected, setSelected] = useState<TenantUser | null>(null);
-  const [form, setForm] = useState({ name: "", email: "", password: "", role: "" });
-  const [search, setSearch] = useState("");
-  const [error, setError] = useState<string | null>(null);
-
-  const load = async () => {
-    if (!canManage) return;
-    try {
-      const [userResult, roleResult] = await Promise.all([listUsers({ q: search, per_page: 100 }), listRoles()]);
-      setUsers(userResult.data);
-      setRoles(roleResult.data);
-    } catch (e) { setError(ApiError.from(e).message); }
-  };
-  // The loader intentionally follows the access/search inputs rather than its function identity.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  useEffect(() => { void load(); }, [canManage, search]);
-  const begin = (user: TenantUser | null) => {
-    setSelected(user);
-    setForm({ name: user?.name ?? "", email: user?.email ?? "", password: "", role: "" });
-  };
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!canManage || (!selected && !form.role)) return;
-    try {
-      const result = selected
-        ? await updateUser(selected.id, { name: form.name, email: form.email })
-        : await createUser({ name: form.name, email: form.email, password: form.password, roles: [Number(form.role)] });
-      if (selected && form.role) await assignUserRoles(result.id, [Number(form.role)]);
-      setUsers((rows) => selected ? rows.map((row) => row.id === result.id ? result : row) : [result, ...rows]);
-      begin(null);
-    } catch (e) { setError(ApiError.from(e).message); }
-  };
-  const deactivate = async (user: TenantUser) => { try { const result = await deactivateUser(user.id); setUsers((rows) => rows.map((row) => row.id === result.id ? result : row)); } catch (e) { setError(ApiError.from(e).message); } };
-  const reset = async (user: TenantUser) => { const password = window.prompt("New password"); if (!password) return; try { await resetUserPassword(user.id, password, password); } catch (e) { setError(ApiError.from(e).message); } };
-
-  return <div className="space-y-6">
-    {canManage && <ComponentCard title={selected ? "Edit user" : "New user"}>
-      <form onSubmit={submit} className="grid gap-4 md:grid-cols-4">
-        <div><Label htmlFor="user-name">Name</Label><InputField id="user-name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-        <div><Label htmlFor="user-email">Email</Label><InputField id="user-email" type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-        {!selected && <div><Label htmlFor="user-password">Password</Label><InputField id="user-password" type="password" value={form.password} onChange={(e) => setForm({ ...form, password: e.target.value })} /></div>}
-        <div><Label>Role {selected ? "(optional reassignment)" : ""}</Label><Select key={`user-role-${selected?.id ?? "new"}`} options={roles.map((role) => ({ value: String(role.id), label: role.name }))} placeholder={selected ? "Keep current role assignment" : "Select a role"} defaultValue={form.role} onChange={(value) => setForm({ ...form, role: value })} /></div>
-        <div className="flex gap-2 md:col-span-4"><Button type="submit" disabled={!selected && !form.role}>{selected ? "Save user" : "Create user"}</Button>{selected && <Button type="button" variant="outline" onClick={() => begin(null)}>Cancel</Button>}</div>
-      </form>
-    </ComponentCard>}
-    {error && <p className="text-sm text-error-500">{error}</p>}
-    <ComponentCard title="Users" desc="Users and optional tenant role reassignment.">
-      <div className="mb-4 max-w-sm"><Label htmlFor="user-search">Search</Label><InputField id="user-search" type="search" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
-      <div className="max-w-full overflow-x-auto"><Table><TableHeader><TableRow>{["User", "Status", "Actions"].map((head) => <TableCell key={head} isHeader className="py-3 text-start text-xs font-medium text-gray-500">{head}</TableCell>)}</TableRow></TableHeader><TableBody className="divide-y divide-gray-100 dark:divide-gray-800">{users.map((user) => <TableRow key={user.id}><TableCell className="py-3"><p className="font-medium">{user.name}</p><p className="text-xs text-gray-500">{user.email}</p></TableCell><TableCell className="py-3"><Badge color={user.active ? "success" : "light"}>{user.active ? "Active" : "Inactive"}</Badge></TableCell><TableCell className="py-3"><div className="flex flex-wrap gap-2"><Button size="sm" variant="outline" onClick={() => begin(user)}>Edit / roles</Button>{user.active && <Button size="sm" variant="outline" onClick={() => void deactivate(user)}>Deactivate</Button>}<Button size="sm" variant="outline" onClick={() => void reset(user)}>Reset password</Button></div></TableCell></TableRow>)}</TableBody></Table></div>
-    </ComponentCard>
-  </div>;
+export default function UsersView({canManage}:{canManage:boolean}){
+  const [users,setUsers]=useState<TenantUser[]>([]); const [roles,setRoles]=useState<Role[]>([]); const [selected,setSelected]=useState<TenantUser|null>(null); const [form,setForm]=useState({name:"",email:"",password:"",roles:[] as number[]}); const [formOpen,setFormOpen]=useState(false); const [search,setSearch]=useState(""); const [appliedSearch,setAppliedSearch]=useState(""); const [resetTarget,setResetTarget]=useState<TenantUser|null>(null); const [password,setPassword]=useState(""); const [passwordConfirmation,setPasswordConfirmation]=useState(""); const [error,setError]=useState<string|null>(null); const [loading,setLoading]=useState(false); const [busy,setBusy]=useState(false);
+  const load=useCallback(async()=>{if(!canManage)return;setLoading(true);try{const [userResult,roleResult]=await Promise.all([listUsers({q:appliedSearch||undefined,per_page:100}),listRoles()]);setUsers(userResult.data);setRoles(roleResult.data);}catch(requestError){setError(ApiError.from(requestError).message);}finally{setLoading(false);}},[appliedSearch,canManage]); useEffect(()=>{void load();},[load]);
+  const begin=(user:TenantUser|null)=>{setSelected(user);setForm({name:user?.name??"",email:user?.email??"",password:"",roles:user?.role_ids??user?.roles?.map(role=>role.id)??[]});setFormOpen(true);};
+  const submit=async(event:React.FormEvent)=>{event.preventDefault();if(form.roles.length===0){setError("Seleziona almeno un ruolo.");return;}setBusy(true);try{let saved=selected?await updateUser(selected.id,{name:form.name,email:form.email}):await createUser({name:form.name,email:form.email,password:form.password,roles:form.roles});if(selected)saved=await assignUserRoles(saved.id,form.roles);setUsers(items=>selected?items.map(item=>item.id===saved.id?saved:item):[saved,...items]);setFormOpen(false);}catch(requestError){setError(ApiError.from(requestError).message);}finally{setBusy(false);}};
+  const deactivate=async(user:TenantUser)=>{setBusy(true);try{const saved=await deactivateUser(user.id);setUsers(items=>items.map(item=>item.id===saved.id?saved:item));}catch(requestError){setError(ApiError.from(requestError).message);}finally{setBusy(false);}};
+  const reset=async()=>{if(!resetTarget)return;if(password!==passwordConfirmation){setError("Le password non coincidono.");return;}setBusy(true);try{await resetUserPassword(resetTarget.id,password,passwordConfirmation);setResetTarget(null);setPassword("");setPasswordConfirmation("");}catch(requestError){setError(ApiError.from(requestError).message);}finally{setBusy(false);}};
+  return <><PageBreadcrumb pageTitle="Utenti" subtitle="Utenti e ruoli del Tenant corrente." actions={<Button size="sm" onClick={()=>begin(null)}>Nuovo Utente</Button>}/>{error?<Alert variant="error" title="Operazione non riuscita" message={error}/>:null}<ComponentCard title="Registro Utenti"><form onSubmit={event=>{event.preventDefault();setAppliedSearch(search.trim());}} className="mb-5 flex flex-col gap-3 sm:flex-row sm:items-end"><div className="flex-1"><Label htmlFor="user-search">Ricerca</Label><InputField id="user-search" type="search" value={search} onChange={event=>setSearch(event.target.value)} placeholder="Nome o email"/></div><Button>Applica Ricerca</Button></form>{loading?<Alert variant="info" title="Caricamento degli utenti" message="Recupero del registro in corso."/>:users.length===0?<Alert variant="info" title="Nessun utente" message="Nessun utente corrisponde alla ricerca corrente."/>:<div className="max-w-full overflow-x-auto"><Table><TableHeader className="border-y border-gray-100 dark:border-gray-800"><TableRow>{["Utente","Ruoli","Stato","Azioni"].map(head=><TableCell key={head} isHeader className="py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">{head}</TableCell>)}</TableRow></TableHeader><TableBody className="divide-y divide-gray-100 dark:divide-gray-800">{users.map(user=><TableRow key={user.id}><TableCell className="py-3"><p className="font-medium text-gray-800 dark:text-white/90">{user.name}</p><p className="text-xs text-gray-500 dark:text-gray-400">{user.email}</p></TableCell><TableCell className="py-3"><div className="flex flex-wrap gap-1">{user.roles?.length?user.roles.map(role=><Badge key={role.id} color="info" size="sm">{roleLabel(role.name)}</Badge>):<span className="text-sm text-gray-500 dark:text-gray-400">Nessun ruolo</span>}</div></TableCell><TableCell className="py-3"><Badge color={user.active?"success":"light"}>{user.active?"Attivo":"Inattivo"}</Badge></TableCell><TableCell className="py-3"><div className="flex items-center gap-2"><IconButton icon={PencilIcon} label={`Modifica ${user.name}`} onClick={()=>begin(user)} disabled={busy}/>{user.active?<IconButton icon={CloseLineIcon} label={`Disattiva ${user.name}`} onClick={()=>void deactivate(user)} disabled={busy}/>:null}<IconButton icon={LockIcon} label={`Reimposta la password di ${user.name}`} onClick={()=>{setResetTarget(user);setPassword("");setPasswordConfirmation("");}} disabled={busy}/></div></TableCell></TableRow>)}</TableBody></Table></div>}</ComponentCard>
+  <Modal isOpen={formOpen} onClose={()=>setFormOpen(false)} className="max-w-2xl p-6"><h2 className="pr-12 text-lg font-semibold text-gray-800 dark:text-white/90">{selected?"Modifica Utente":"Nuovo Utente"}</h2><form onSubmit={submit} className="mt-5 space-y-4"><div className="grid gap-4 md:grid-cols-2"><div><Label htmlFor="user-name">Nome</Label><InputField id="user-name" value={form.name} onChange={event=>setForm({...form,name:event.target.value})}/></div><div><Label htmlFor="user-email">Email</Label><InputField id="user-email" type="email" value={form.email} onChange={event=>setForm({...form,email:event.target.value})}/></div>{!selected?<div className="md:col-span-2"><Label htmlFor="user-password">Password</Label><InputField id="user-password" type="password" value={form.password} onChange={event=>setForm({...form,password:event.target.value})}/></div>:null}</div><fieldset><legend className="mb-3 text-sm font-medium text-gray-700 dark:text-gray-300">Ruoli</legend><div className="grid gap-3 sm:grid-cols-2">{roles.map(role=><Checkbox key={role.id} id={`user-role-${role.id}`} label={roleLabel(role.name)} checked={form.roles.includes(role.id)} onChange={checked=>setForm(current=>({...current,roles:checked?[...current.roles,role.id]:current.roles.filter(id=>id!==role.id)}))}/>)}</div></fieldset><div className="flex justify-end gap-3"><Button type="button" variant="outline" onClick={()=>setFormOpen(false)}>Annulla</Button><Button disabled={busy}>{busy?"Salvataggio…":selected?"Salva Modifiche":"Crea Utente"}</Button></div></form></Modal>
+  <Modal isOpen={resetTarget!==null} onClose={()=>setResetTarget(null)} className="max-w-lg p-6"><h2 className="pr-12 text-lg font-semibold text-gray-800 dark:text-white/90">Reimposta Password</h2><p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Imposta una nuova password per {resetTarget?.name}.</p><div className="mt-5 space-y-4"><div><Label htmlFor="reset-password">Nuova password</Label><InputField id="reset-password" type="password" value={password} onChange={event=>setPassword(event.target.value)}/></div><div><Label htmlFor="reset-password-confirmation">Conferma password</Label><InputField id="reset-password-confirmation" type="password" value={passwordConfirmation} onChange={event=>setPasswordConfirmation(event.target.value)}/></div></div><div className="mt-6 flex justify-end gap-3"><Button variant="outline" onClick={()=>setResetTarget(null)}>Annulla</Button><Button onClick={()=>void reset()} disabled={busy||!password||!passwordConfirmation}>{busy?"Salvataggio…":"Reimposta Password"}</Button></div></Modal></>;
 }

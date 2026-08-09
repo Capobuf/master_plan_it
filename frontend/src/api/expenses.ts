@@ -40,8 +40,6 @@ export interface ExpenseRegisterResponse extends PaginatedData<ExpenseRegisterIt
 
 export interface ExpenseListParams {
   planning_year_id?: number;
-  cost_center_id?: number;
-  q?: string;
   kind?: string;
   page?: number;
   per_page?: number;
@@ -137,6 +135,12 @@ export interface ExpenseContractOption {
   active?: boolean;
 }
 
+export interface PlafondExpenseOption {
+  id: number;
+  title: string;
+  cost_center_name: string | null;
+}
+
 export interface DeleteExpenseRequest {
   lock_version: number;
   deletion_reason?: string;
@@ -223,6 +227,21 @@ export async function listExpenseContracts(): Promise<ExpenseContractOption[]> {
   );
 
   return response.data.data;
+}
+
+export async function listEligiblePlafondExpenses(
+  planningYearId: number,
+): Promise<PlafondExpenseOption[]> {
+  const items: PlafondExpenseOption[] = [];
+  let page = 1;
+  let lastPage = 1;
+  do {
+    const response = await listExpenses({ planning_year_id: planningYearId, kind: "plafond", page, per_page: 100 });
+    items.push(...response.data.map((expense) => ({ id: expense.id, title: expense.title, cost_center_name: expense.cost_center_name })));
+    lastPage = response.meta.last_page;
+    page = response.meta.current_page + 1;
+  } while (page <= lastPage);
+  return items;
 }
 
 export async function createExpense(input: ExpenseWrite): Promise<ExpenseDetail> {

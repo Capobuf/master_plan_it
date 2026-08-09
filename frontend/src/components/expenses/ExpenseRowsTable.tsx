@@ -3,6 +3,8 @@ import Button from "../ui/button/Button";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 import ExpenseMoney from "./ExpenseMoney";
 import { ExpenseRowStateBadge } from "./ExpenseKindBadge";
+import { domainLabel } from "../../presentation/labels";
+import { formatDate } from "../../presentation/formatters";
 
 interface ExpenseRowsTableProps {
   rows: ExpenseRow[];
@@ -51,7 +53,7 @@ export default function ExpenseRowsTable({
             return (
               <TableRow key={row.id}>
                 <TableCell className="px-5 py-4 text-start text-sm font-medium text-gray-800 dark:text-white/90">
-                  {row.type}
+                  {domainLabel(row.type)}
                   {row.generated && (
                     <span className="mt-1 block text-xs font-normal text-gray-500 dark:text-gray-400">
                       Generata{row.contract_term_id ? ` · termine #${row.contract_term_id}` : ""}
@@ -62,11 +64,11 @@ export default function ExpenseRowsTable({
                   {row.description}
                   <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
                     {row.is_extra ? "Extra" : "Ordinaria"}
-                    {row.spend_date ? ` · ${row.spend_date}` : ""}
+                    {row.spend_date ? ` · ${formatDate(row.spend_date)}` : ""}
                   </span>
                 </TableCell>
                 <TableCell className="px-5 py-4 text-start text-sm text-gray-600 dark:text-gray-300">
-                  {row.vendor_name ?? (row.vendor_id ? `#${row.vendor_id}` : "—")}
+                  {row.vendor_name ?? "—"}
                 </TableCell>
                 <TableCell className="px-5 py-4 text-start">
                   {isActual ? <ExpenseRowStateBadge state={row.confirmation_state} /> : <span className="text-sm text-gray-500 dark:text-gray-400">—</span>}

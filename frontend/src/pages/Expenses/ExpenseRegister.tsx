@@ -20,6 +20,8 @@ import Alert from "../../components/ui/alert/Alert";
 import Button from "../../components/ui/button/Button";
 import { useApplicationContext } from "../../context/ApplicationContext";
 import { usePlanningYear } from "../../context/PlanningYearContext";
+import { routes } from "../../navigation/routes";
+import { useNavigate } from "react-router";
 
 const defaultPerPage = 15;
 
@@ -33,13 +35,10 @@ function readParams(searchParams: URLSearchParams): ExpenseListParams {
     return value > 0 ? value : undefined;
   };
 
-  const q = searchParams.get("q")?.trim() || undefined;
   const kind = searchParams.get("kind") || undefined;
 
   return {
     planning_year_id: numberParam("planning_year_id"),
-    cost_center_id: numberParam("cost_center_id"),
-    q,
     kind,
     page: numberParam("page") ?? 1,
     per_page: numberParam("per_page") ?? defaultPerPage,
@@ -52,8 +51,6 @@ function writeParams(
 ) {
   const next = new URLSearchParams();
   if (params.planning_year_id) next.set("planning_year_id", String(params.planning_year_id));
-  if (params.cost_center_id) next.set("cost_center_id", String(params.cost_center_id));
-  if (params.q) next.set("q", params.q);
   if (params.kind) next.set("kind", params.kind);
   if (params.page && params.page > 1) next.set("page", String(params.page));
   if (params.per_page && params.per_page !== defaultPerPage) next.set("per_page", String(params.per_page));
@@ -79,6 +76,7 @@ export default function ExpenseRegister() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [registerState, setRegisterState] = useState<RegisterState | null>(null);
   const [loading, setLoading] = useState(false);
+  const navigate = useNavigate();
 
   const tenantId = applicationContext?.tenant?.id ?? null;
   const canView = hasAbility("expense.view");
@@ -185,18 +183,18 @@ export default function ExpenseRegister() {
 
   let content;
   if (contextLoading) {
-    content = <Alert variant="info" title="Caricamento contesto" message="Verifica del tenant e dell'abilitazione expense.view." />;
+    content = <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant e dell'anno di pianificazione in corso." />;
   } else if (tenantId === null) {
-    content = <Alert variant="warning" title="Tenant richiesto" message="Seleziona un tenant dal menu dell'intestazione prima di aprire le spese." />;
+    content = <Alert variant="warning" title="Tenant richiesto" message="Seleziona un Tenant dall'intestazione prima di aprire le spese." />;
   } else if (!canView) {
-    content = <Alert variant="warning" title="Registro non disponibile" message="Il contesto corrente non concede l'abilitazione expense.view." />;
+    content = <Alert variant="warning" title="Registro non disponibile" message="Non disponi dell'autorizzazione necessaria per visualizzare questa pagina." />;
   } else if (currentState?.error) {
     content = (
       <div className="space-y-3">
         <Alert
           variant="error"
           title="Richiesta registro non riuscita"
-          message={`${currentState.error.message}${currentState.error.correlationId ? ` Correlation ID: ${currentState.error.correlationId}` : ""}`}
+          message={`${currentState.error.message}${currentState.error.correlationId ? ` Riferimento tecnico: ${currentState.error.correlationId}` : ""}`}
         />
         <Button variant="outline" onClick={() => updateParams(params)} disabled={loading}>
           Riprova
@@ -204,7 +202,7 @@ export default function ExpenseRegister() {
       </div>
     );
   } else if (!response) {
-    content = <Alert variant="info" title="Caricamento registro" message="Richiesta delle spese correnti del tenant." />;
+    content = <Alert variant="info" title="Caricamento del registro" message="Recupero delle spese correnti in corso." />;
   } else if (response.data.length === 0) {
     content = <Alert variant="info" title="Nessuna spesa" message="Non ci sono spese correnti per i filtri selezionati." />;
   } else {
@@ -229,9 +227,9 @@ export default function ExpenseRegister() {
   return (
     <>
       <PageMeta title="Spese | Master Plan IT" description="Registro delle spese correnti del tenant" />
-      <PageBreadcrumb pageTitle="Spese" />
+      <PageBreadcrumb pageTitle="Spese" subtitle="Registro delle spese dell'anno selezionato." actions={hasAbility("expense.create") ? <Button size="sm" onClick={() => navigate(routes.nuovaSpesa)}>Nuova Spesa</Button> : null} />
       <div className="space-y-6">
-        <ComponentCard title="Registro spese" desc="Valori correnti restituiti dal servizio expense con filtri e paginazione server-side.">
+        <ComponentCard title="Registro Spese">
           <ExpenseFilters
             value={params}
             yearOptions={yearOptions}

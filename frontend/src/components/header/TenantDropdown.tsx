@@ -7,6 +7,7 @@ import {
 import { ApiError, type Tenant } from "../../api/client";
 import { useApplicationContext } from "../../context/ApplicationContext";
 import { CheckCircleIcon, ChevronDownIcon } from "../../icons";
+import { domainLabel } from "../../presentation/labels";
 import Alert from "../ui/alert/Alert";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
@@ -16,7 +17,7 @@ function errorMessage(error: unknown): string {
   const isUnexpected = apiError.handledStatus === null || apiError.status === 500;
 
   if (isUnexpected && apiError.correlationId) {
-    return `${apiError.message} Reference: ${apiError.correlationId}`;
+    return `${apiError.message} Riferimento tecnico: ${apiError.correlationId}`;
   }
 
   return apiError.message;
@@ -56,10 +57,10 @@ export default function TenantDropdown() {
         <CheckCircleIcon className="h-5 w-5 fill-gray-500 dark:fill-gray-400" />
         <span>
           {contextLoading
-            ? "Loading tenant..."
+            ? "Caricamento Tenant…"
             : currentTenant
-              ? `${currentTenant.name} (${currentTenant.state})`
-              : "No tenant"}
+              ? `${currentTenant.name} (${domainLabel(currentTenant.state)})`
+              : "Nessun Tenant"}
         </span>
       </div>
     );
@@ -137,14 +138,14 @@ export default function TenantDropdown() {
       <button
         onClick={toggleDropdown}
         className="dropdown-toggle flex h-11 items-center gap-2 rounded-lg border border-gray-200 px-3 text-sm font-medium text-gray-700 dark:border-gray-800 dark:text-gray-400"
-        aria-label="Open tenant menu"
+        aria-label="Apri il menu Tenant"
         aria-expanded={isOpen}
       >
         <CheckCircleIcon className="h-5 w-5 fill-gray-500 dark:fill-gray-400" />
-        <span>{currentTenant?.name ?? "Platform administration"}</span>
+        <span>{currentTenant?.name ?? "Amministrazione di Piattaforma"}</span>
         {currentTenant ? (
           <span className="text-theme-xs text-gray-500 dark:text-gray-400">
-            {currentTenant.state}
+            {domainLabel(currentTenant.state)}
           </span>
         ) : null}
         <ChevronDownIcon
@@ -161,29 +162,29 @@ export default function TenantDropdown() {
       >
         <div className="border-b border-gray-200 pb-3 dark:border-gray-800">
           <span className="block text-theme-xs text-gray-500 dark:text-gray-400">
-            Current tenant
+            Tenant corrente
           </span>
           <span className="mt-0.5 block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {currentTenant?.name ?? "Platform administration"}
+            {currentTenant?.name ?? "Amministrazione di Piattaforma"}
           </span>
         </div>
 
         {tenantError ? (
           <div className="mt-3">
-            <Alert variant="error" title="Tenant switch failed" message={tenantError} />
+            <Alert variant="error" title="Cambio Tenant non riuscito" message={tenantError} />
           </div>
         ) : null}
 
         <ul className="flex flex-col gap-1 pt-3">
           {isLoading ? (
             <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-              Loading tenants...
+              Caricamento dei Tenant…
             </li>
           ) : null}
 
           {!isLoading && tenants !== null && availableTenants.length === 0 ? (
             <li className="px-3 py-2 text-sm text-gray-500 dark:text-gray-400">
-              No other tenants available.
+              Nessun altro Tenant disponibile.
             </li>
           ) : null}
 
@@ -195,7 +196,7 @@ export default function TenantDropdown() {
               >
                 <span>{tenant.name}</span>
                 <span className="text-theme-xs text-gray-500 dark:text-gray-400">
-                  {pendingTenantId === tenant.id ? "Entering..." : tenant.code}
+                  {pendingTenantId === tenant.id ? "Accesso…" : tenant.code}
                 </span>
               </DropdownItem>
             </li>
@@ -207,7 +208,7 @@ export default function TenantDropdown() {
             onClick={() => void handleLeaveTenant()}
             baseClassName="mt-3 flex w-full items-center gap-3 border-t border-gray-200 px-3 pt-3 pb-2 font-medium text-gray-700 text-theme-sm hover:text-gray-900 dark:border-gray-800 dark:text-gray-400 dark:hover:text-gray-300"
           >
-            {isLeaving ? "Leaving tenant..." : "Leave tenant"}
+            {isLeaving ? "Uscita dal Tenant…" : "Esci dal Tenant"}
           </DropdownItem>
         ) : null}
       </Dropdown>

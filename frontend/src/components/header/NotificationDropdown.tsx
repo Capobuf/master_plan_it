@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
 import { Link } from "react-router";
+import { routes } from "../../navigation/routes";
 
 export default function NotificationDropdown() {
   const [isOpen, setIsOpen] = useState(false);
@@ -190,7 +191,7 @@ export default function NotificationDropdown() {
             <DropdownItem
               onItemClick={closeDropdown}
               className="flex gap-3 rounded-lg border-b border-gray-100 p-3 px-4.5 py-3 hover:bg-gray-100 dark:border-gray-800 dark:hover:bg-white/5"
-              to="/"
+              to={routes.panoramica}
             >
               <span className="relative block w-full h-10 rounded-full z-1 max-w-10">
                 <img
@@ -369,7 +370,7 @@ export default function NotificationDropdown() {
           {/* Add more items as needed */}
         </ul>
         <Link
-          to="/"
+          to={routes.panoramica}
           className="block px-4 py-2 mt-3 text-sm font-medium text-center text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-100 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
         >
           View All Notifications

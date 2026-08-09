@@ -12,7 +12,7 @@ export function newExpenseEditorRow(position: number): ExpenseEditorRow {
     position,
     type: "estimate",
     description: "",
-    entered_amount: "0",
+    entered_amount: "0.00",
     amount_includes_vat: false,
     is_extra: false,
   };
@@ -23,8 +23,9 @@ export function normalizeDecimal(value: string | null | undefined): string {
     return "";
   }
 
-  const negative = value.trim().startsWith("-");
-  const unsigned = value.trim().replace(/^-/, "");
+  const canonical = value.trim().replace(",", ".");
+  const negative = canonical.startsWith("-");
+  const unsigned = canonical.replace(/^-/, "");
   const [rawInteger, rawFraction = ""] = unsigned.split(".", 2);
   const integer = rawInteger.replace(/^0+(?=\d)/, "") || "0";
   const fraction = rawFraction.replace(/0+$/, "");

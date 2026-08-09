@@ -12,6 +12,7 @@ import {
   TableIcon,
   UserCircleIcon,
 } from "../icons";
+import { routes } from "./routes";
 
 export interface ApplicationNavigationItem {
   route: string;
@@ -39,24 +40,24 @@ export function isNavigationGroup(
 
 export const applicationNavigation = [
   {
-    route: "/",
-    label: "Dashboard",
+    route: routes.panoramica,
+    label: "Panoramica",
     icon: GridIcon,
     requiredAbility: "dashboard.view",
   },
   {
     id: "planning",
-    label: "PIANIFICAZIONE",
+    label: "Pianificazione",
     icon: PieChartIcon,
     items: [
       {
-        route: "/budget",
+        route: routes.budget,
         label: "Budget",
         icon: DollarLineIcon,
         requiredAbility: "budget.view",
       },
       {
-        route: "/reports",
+        route: routes.report,
         label: "Report",
         icon: PieChartIcon,
         requiredAbility: "report.view",
@@ -65,23 +66,23 @@ export const applicationNavigation = [
   },
   {
     id: "operations",
-    label: "OPERATIVITÀ",
+    label: "Operatività",
     icon: TableIcon,
     items: [
       {
-        route: "/expenses",
+        route: routes.spese,
         label: "Spese",
         icon: TableIcon,
         requiredAbility: "expense.view",
       },
       {
-        route: "/contracts",
+        route: routes.contratti,
         label: "Contratti",
         icon: DocsIcon,
         requiredAbility: "contract.view",
       },
       {
-        route: "/vendors",
+        route: routes.fornitori,
         label: "Fornitori",
         icon: GroupIcon,
         requiredAbility: "vendor.view",
@@ -90,29 +91,29 @@ export const applicationNavigation = [
   },
   {
     id: "settings",
-    label: "IMPOSTAZIONI",
+    label: "Impostazioni",
     icon: BoxCubeIcon,
     items: [
       {
-        route: "/planning-years",
+        route: routes.anniDiPianificazione,
         label: "Anni di pianificazione",
         icon: CalenderIcon,
         requiredAbility: "planning-year.view",
       },
       {
-        route: "/cost-centers",
+        route: routes.centriDiCosto,
         label: "Centri di costo",
         icon: BoxCubeIcon,
         requiredAbility: "cost-center.view",
       },
       {
-        route: "/users",
+        route: routes.utenti,
         label: "Utenti",
         icon: UserCircleIcon,
         requiredAbility: "platform.users.manage",
       },
       {
-        route: "/roles",
+        route: routes.ruoli,
         label: "Ruoli",
         icon: LockIcon,
         requiredAbility: "platform.roles.manage",
@@ -121,11 +122,11 @@ export const applicationNavigation = [
   },
   {
     id: "platform",
-    label: "PIATTAFORMA",
+    label: "Piattaforma",
     icon: GridIcon,
     items: [
       {
-        route: "/tenants",
+        route: routes.tenant,
         label: "Tenant",
         icon: GridIcon,
         requiredAbility: "platform.tenants.view",

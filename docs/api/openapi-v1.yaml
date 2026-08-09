@@ -424,7 +424,7 @@ paths:
       operationId: listExpenses
       security: [{sessionAuth: []}]
       x-ability: expense.view
-      parameters: [{$ref: '#/components/parameters/PlanningYearQuery'}, {$ref: '#/components/parameters/CostCenterQuery'}, {$ref: '#/components/parameters/Search'}, {$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
+      parameters: [{$ref: '#/components/parameters/ExpenseYearQuery'}, {$ref: '#/components/parameters/ExpenseKindQuery'}, {$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
       responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Expenses'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}, '404': {$ref: '#/components/responses/NotFound'}, '422': {$ref: '#/components/responses/ValidationError'}}
     post:
       tags: [Expenses]
@@ -470,7 +470,7 @@ paths:
       operationId: listContracts
       security: [{sessionAuth: []}]
       x-ability: contract.view
-      parameters: [{$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}, {$ref: '#/components/parameters/Search'}]
+      parameters: [{$ref: '#/components/parameters/Page'}, {$ref: '#/components/parameters/PerPage'}]
       responses: {'500': {$ref: '#/components/responses/Unexpected'}, '200': {$ref: '#/components/responses/Contracts'}, '401': {$ref: '#/components/responses/Unauthenticated'}, '403': {$ref: '#/components/responses/Forbidden'}}
     post:
       tags: [Contracts]
@@ -610,6 +610,8 @@ components:
     Active: {name: active, in: query, schema: {type: boolean}}
     PlanningYearQuery: {name: planning_year_id, in: query, schema: {type: integer, minimum: 1}, description: Alias `year` is accepted by the current controller.}
     CostCenterQuery: {name: cost_center_id, in: query, schema: {type: integer, minimum: 1}, description: Alias `cost_center` is accepted by the current controller.}
+    ExpenseYearQuery: {name: year, in: query, schema: {type: integer, minimum: 1}, description: Identificatore dell'anno di pianificazione.}
+    ExpenseKindQuery: {name: kind, in: query, schema: {type: string, enum: [ordinary, plafond]}, description: Natura della spesa; supporta il lookup Plafond dell'editor.}
     TenantId: {name: tenant, in: path, required: true, schema: {type: integer, minimum: 1}}
     UserId: {name: user, in: path, required: true, schema: {type: integer, minimum: 1}}
     RoleId: {name: role, in: path, required: true, schema: {type: integer, minimum: 1}}

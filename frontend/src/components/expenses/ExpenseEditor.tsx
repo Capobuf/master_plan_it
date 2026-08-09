@@ -9,11 +9,13 @@ import {
   listExpenseContracts,
   listExpenseCostCenters,
   listExpensePlanningYears,
+  listEligiblePlafondExpenses,
   listExpenseVendors,
   updateExpense,
   type ExpenseContractOption,
   type ExpenseDetail,
   type ExpenseLookupOption,
+  type PlafondExpenseOption,
   type ExpenseUpdate,
   type ExpenseWrite,
 } from "../../api/expenses";
@@ -33,6 +35,8 @@ import {
   normalizeDecimal,
   type ExpenseEditorRow,
 } from "./expenseEditorTypes";
+import { formatEditableDecimal } from "../../presentation/formatters";
+import { routes } from "../../navigation/routes";
 
 const NONE = "__none__";
 
@@ -68,11 +72,11 @@ function toEditorRows(detail: ExpenseDetail): ExpenseEditorRow[] {
     vendor_id: row.vendor_id ?? undefined,
     type: row.type,
     description: row.description,
-    quantity: row.quantity === null ? undefined : normalizeDecimal(row.quantity),
-    unit_price: row.unit_price === null ? undefined : normalizeDecimal(row.unit_price),
-    entered_amount: normalizeDecimal(row.entered_amount),
+    quantity: row.quantity === null ? undefined : formatEditableDecimal(row.quantity, { trimTrailingZeros: true }),
+    unit_price: row.unit_price === null ? undefined : formatEditableDecimal(row.unit_price, { trimTrailingZeros: true }),
+    entered_amount: formatEditableDecimal(row.entered_amount, { fixedScale: 2 }),
     amount_includes_vat: row.amount_includes_vat,
-    vat_rate: row.vat_rate === null ? undefined : normalizeDecimal(row.vat_rate),
+    vat_rate: row.vat_rate === null ? undefined : formatEditableDecimal(row.vat_rate, { fixedScale: 2 }),
     is_extra: row.is_extra,
     funded_plafond_expense_id: row.funded_plafond_expense_id ?? undefined,
     spend_date: row.spend_date ?? undefined,
@@ -99,9 +103,9 @@ function EditorSelect({
 }) {
   return (
     <Select
-      key={`${id}-${value}`}
+      id={id}
       options={options}
-      defaultValue={value}
+      value={value}
       onChange={(next) => {
         if (!disabled) onChange(next);
       }}
@@ -129,12 +133,9 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
   const tenantId = applicationContext?.tenant?.id ?? null;
   const canSubmit = hasAbility(editing ? "expense.update" : "expense.create");
   const canView = hasAbility("expense.view");
-  const canUseLookups = [
-    "vendor.view",
-    "cost-center.view",
-    "planning-year.view",
-    "contract.view",
-  ].every(hasAbility);
+  const canUseLookups = ["cost-center.view", "planning-year.view"].every(hasAbility);
+  const canViewVendors = hasAbility("vendor.view");
+  const canViewContracts = hasAbility("contract.view");
   const [header, setHeader] = useState<EditorHeader>(() => initialHeader(selectedPlanningYearId));
   const [rows, setRows] = useState<ExpenseEditorRow[]>(() => [newExpenseEditorRow(1)]);
   const [deletedRows, setDeletedRows] = useState<Array<{ id: number; lock_version: number }>>([]);
@@ -142,11 +143,12 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
   const [costCenters, setCostCenters] = useState<ExpenseLookupOption[]>([]);
   const [planningYears, setPlanningYears] = useState<ExpenseLookupOption[]>([]);
   const [contracts, setContracts] = useState<ExpenseContractOption[]>([]);
+  const [plafonds, setPlafonds] = useState<PlafondExpenseOption[]>([]);
+  const [plafondsLoading, setPlafondsLoading] = useState(false);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
-  const [loadedId, setLoadedId] = useState<number | null>(null);
   const [lockVersion, setLockVersion] = useState<number | null>(null);
 
   useEffect(() => {
@@ -172,10 +174,10 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
     const detailRequest = editing ? getExpense(expenseId as number) : Promise.resolve(null);
 
     void Promise.all([
-      listExpenseVendors(),
+      canViewVendors ? listExpenseVendors() : Promise.resolve([]),
       listExpenseCostCenters(),
       listExpensePlanningYears(),
-      listExpenseContracts(),
+      canViewContracts ? listExpenseContracts() : Promise.resolve([]),
       detailRequest,
     ])
       .then(([vendorOptions, costCenterOptions, yearOptions, contractOptions, detail]) => {
@@ -195,7 +197,6 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
           });
           setRows(toEditorRows(detail));
           setLockVersion(detail.lock_version);
-          setLoadedId(detail.id);
         } else {
           setHeader((current) => ({
             ...current,
@@ -213,22 +214,36 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
     return () => {
       active = false;
     };
-  }, [canSubmit, canUseLookups, canView, contextLoading, editing, expenseId, selectedPlanningYearId, tenantId]);
+  }, [canSubmit, canUseLookups, canView, canViewContracts, canViewVendors, contextLoading, editing, expenseId, selectedPlanningYearId, tenantId]);
+
+  useEffect(() => {
+    if (tenantId === null || header.planning_year_id === null || !canView) {
+      setPlafonds([]);
+      return;
+    }
+    let active = true;
+    setPlafondsLoading(true);
+    void listEligiblePlafondExpenses(header.planning_year_id)
+      .then((items) => { if (active) setPlafonds(items.filter((item) => item.id !== expenseId)); })
+      .catch(() => { if (active) setPlafonds([]); })
+      .finally(() => { if (active) setPlafondsLoading(false); });
+    return () => { active = false; };
+  }, [canView, expenseId, header.planning_year_id, tenantId]);
 
   const disabled = loading || submitting || !canSubmit;
   const costCenterOptions = useMemo(
-    () => byIdOption(costCenters, header.cost_center_id, header.cost_center_id ? `Centro #${header.cost_center_id}` : "").map((option) => ({ value: String(option.id), label: option.name })),
+    () => byIdOption(costCenters, header.cost_center_id, "Centro di costo corrente").map((option) => ({ value: String(option.id), label: option.name })),
     [costCenters, header.cost_center_id],
   );
   const planningYearOptions = useMemo(
-    () => byIdOption(planningYears, header.planning_year_id, header.planning_year_id ? `Anno #${header.planning_year_id}` : "").map((option) => ({ value: String(option.id), label: option.name })),
+    () => byIdOption(planningYears, header.planning_year_id, "Anno corrente").map((option) => ({ value: String(option.id), label: option.name })),
     [header.planning_year_id, planningYears],
   );
   const contractOptions = useMemo(
     () => [
       { value: NONE, label: "Nessun contratto" },
       ...(header.contract_id !== null && !contracts.some((contract) => contract.id === header.contract_id)
-        ? [{ value: String(header.contract_id), label: `Contratto #${header.contract_id}` }]
+        ? [{ value: String(header.contract_id), label: "Contratto corrente" }]
         : []),
       ...contracts
         .filter((contract) => contract.active !== false || contract.id === header.contract_id)
@@ -337,7 +352,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
             ...(deletedRows.length > 0 ? { deleted_rows: deletedRows } : {}),
           } satisfies ExpenseUpdate)
         : await createExpense(input);
-      navigate(`/expenses/${saved.id}`);
+      navigate(routes.spesa(saved.id));
     } catch (requestError: unknown) {
       setError(ApiError.from(requestError));
     } finally {
@@ -345,19 +360,19 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
     }
   }
 
-  if (contextLoading) return <Alert variant="info" title="Caricamento contesto" message="Verifica del tenant e delle autorizzazioni." />;
-  if (tenantId === null) return <Alert variant="warning" title="Tenant richiesto" message="Seleziona un tenant prima di modificare una spesa." />;
-  if (!canSubmit || (editing && !canView)) return <Alert variant="warning" title="Editor non disponibile" message="Il contesto corrente non concede le abilità necessarie per questa operazione." />;
-  if (!canUseLookups) return <Alert variant="warning" title="Lookup non disponibili" message="Servono le abilità di lettura per vendor, centri di costo, anni e contratti." />;
+  if (contextLoading) return <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant e delle autorizzazioni in corso." />;
+  if (tenantId === null) return <Alert variant="warning" title="Tenant richiesto" message="Seleziona un Tenant prima di modificare una spesa." />;
+  if (!canSubmit || (editing && !canView)) return <Alert variant="warning" title="Editor non disponibile" message="Non disponi dell'autorizzazione necessaria per questa operazione." />;
+  if (!canUseLookups) return <Alert variant="warning" title="Dati di supporto non disponibili" message="Non puoi selezionare anno e centro di costo nel contesto corrente." />;
   if (error && !header.title && loading) return <Alert variant="error" title="Editor non disponibile" message={error.message} />;
 
   return (
     <form className="space-y-6" onSubmit={(event) => void submit(event)}>
-      {error && <Alert variant="error" title="Salvataggio non riuscito" message={`${error.message}${error.correlationId ? ` Correlation ID: ${error.correlationId}` : ""}`} />}
+      {error && <Alert variant="error" title="Salvataggio non riuscito" message={`${error.message}${error.correlationId ? ` Riferimento tecnico: ${error.correlationId}` : ""}`} />}
       {validationMessage && <Alert variant="warning" title="Controlla i campi" message={validationMessage} />}
-      <ComponentCard title="Dati spesa" desc={editing ? `Spesa #${loadedId ?? expenseId} · versione ${lockVersion ?? "—"}` : "Nuova spesa"}>
+      <ComponentCard title="Dati della Spesa">
         <div className="grid gap-4 md:grid-cols-2">
-          <div>
+          {canViewContracts ? <div>
             <Label>Anno di pianificazione</Label>
             <EditorSelect
               id="expense-editor-year"
@@ -366,7 +381,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
               onChange={(value) => setHeader((current) => ({ ...current, planning_year_id: value === NONE ? null : Number(value) }))}
               disabled={disabled}
             />
-          </div>
+          </div> : null}
           <div>
             <Label>Centro di costo</Label>
             <EditorSelect
@@ -407,9 +422,9 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
           </div>
         </div>
       </ComponentCard>
-      <ComponentCard title="Righe" desc="Riordina le righe trascinando il relativo indicatore. Gli importi sono inviati al server senza calcoli locali.">
+      <ComponentCard title="Righe della Spesa" desc="Puoi riordinare le righe trascinandole oppure usando i controlli Sposta Su e Sposta Giù.">
         <DndProvider backend={HTML5Backend}>
-          <ExpenseEditorRows rows={rows} vendors={vendors} onChange={updateRow} onMove={moveRow} onRemove={removeRow} disabled={disabled} />
+          <ExpenseEditorRows rows={rows} vendors={vendors} plafonds={plafonds} plafondsLoading={plafondsLoading} onChange={updateRow} onMove={moveRow} onRemove={removeRow} disabled={disabled} />
         </DndProvider>
         <div className="flex justify-end">
           <Button type="button" size="sm" variant="outline" onClick={() => setRows((current) => [...current, newExpenseEditorRow(current.length + 1)])} disabled={disabled}>
@@ -418,7 +433,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
         </div>
       </ComponentCard>
       <div className="flex flex-wrap justify-end gap-3">
-        <Button type="button" variant="outline" onClick={() => navigate(editing ? `/expenses/${expenseId}` : "/expenses")} disabled={submitting}>
+        <Button type="button" variant="outline" onClick={() => navigate(editing ? routes.spesa(expenseId as number) : routes.spese)} disabled={submitting}>
           Annulla
         </Button>
         <Button disabled={disabled}>{submitting ? "Salvataggio…" : editing ? "Salva modifiche" : "Crea spesa"}</Button>

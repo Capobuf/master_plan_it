@@ -69,6 +69,21 @@ function stringValue(value: unknown): string | null {
   return typeof value === "string" && value.length > 0 ? value : null;
 }
 
+function localizedErrorMessage(status: number | null, serverMessage: string | null): string {
+  const messages: Record<number, string> = {
+    401: "La sessione non è autenticata.",
+    403: "Non disponi dell'autorizzazione necessaria per questa operazione.",
+    404: "La risorsa richiesta non è stata trovata.",
+    409: "I dati sono stati modificati da un'altra sessione. Ricarica la pagina e riprova.",
+    422: "I dati inseriti non sono validi.",
+    429: "Sono state effettuate troppe richieste. Attendi e riprova.",
+    500: "Si è verificato un errore del servizio applicativo.",
+  };
+
+  if (status !== null && messages[status]) return messages[status];
+  return serverMessage ?? "Il servizio applicativo non è raggiungibile.";
+}
+
 export class ApiError extends Error {
   readonly cause: unknown;
   readonly status: number | null;
@@ -105,7 +120,7 @@ export class ApiError extends Error {
 
     if (!axios.isAxiosError<ErrorPayload>(error)) {
       return new ApiError({
-        message: error instanceof Error ? error.message : "Unexpected client error.",
+        message: error instanceof Error ? error.message : "Errore imprevisto dell'applicazione.",
         cause: error,
       });
     }
@@ -117,11 +132,10 @@ export class ApiError extends Error {
     );
 
     return new ApiError({
-      message:
-        stringValue(payload?.message) ??
-        (axiosError.response
-          ? `Request failed with status ${axiosError.response.status}.`
-          : "Unable to reach the application service."),
+      message: localizedErrorMessage(
+        axiosError.response?.status ?? null,
+        stringValue(payload?.message),
+      ),
       status: axiosError.response?.status ?? null,
       code: stringValue(payload?.code) ?? axiosError.code ?? "REQUEST_FAILED",
       fields: isRecord(payload?.fields) ? payload.fields : {},

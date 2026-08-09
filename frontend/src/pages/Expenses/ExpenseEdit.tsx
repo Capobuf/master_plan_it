@@ -10,8 +10,8 @@ export default function ExpenseEdit() {
 
   return (
     <>
-      <PageMeta title="Modifica spesa | Master Plan IT" description="Modifica una spesa esistente" />
-      <PageBreadcrumb pageTitle="Modifica spesa" />
+      <PageMeta title="Modifica Spesa | Master Plan IT" description="Modifica una spesa esistente" />
+      <PageBreadcrumb pageTitle="Modifica Spesa" subtitle="Aggiorna i dati mantenendo il controllo di versione corrente." />
       {expenseId === null ? (
         <Alert variant="error" title="Identificativo non valido" message="L'identificativo della spesa non è valido." />
       ) : (

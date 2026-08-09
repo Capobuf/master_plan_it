@@ -125,7 +125,6 @@ export interface ContractUpdate extends ContractWrite {
 export interface ContractListParams {
   page?: number;
   per_page?: number;
-  q?: string;
 }
 
 export interface DeleteRequest {

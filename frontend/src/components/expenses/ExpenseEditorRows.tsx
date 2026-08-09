@@ -1,310 +1,78 @@
 import { useRef } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import type { ExpenseLookupOption } from "../../api/expenses";
-import Checkbox from "../form/input/Checkbox";
+import type { ExpenseLookupOption, PlafondExpenseOption } from "../../api/expenses";
+import { ChevronDownIcon, ChevronUpIcon, HorizontaLDots, TrashBinIcon } from "../../icons";
+import IconButton from "../common/IconButton";
 import DatePicker from "../form/date-picker";
-import InputField from "../form/input/InputField";
 import Label from "../form/Label";
 import Select from "../form/Select";
-import Button from "../ui/button/Button";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHeader,
-  TableRow,
-} from "../ui/table";
+import Checkbox from "../form/input/Checkbox";
+import DecimalInput from "../form/input/DecimalInput";
+import InputField from "../form/input/InputField";
 import type { ExpenseEditorRow } from "./expenseEditorTypes";
 
-const NONE = "__none__";
-const rowTypeOptions = [
-  { value: "estimate", label: "Stima" },
-  { value: "quote", label: "Preventivo" },
-  { value: "actual", label: "Effettiva" },
-];
-const distributionOptions = [
-  { value: "all", label: "Tutto" },
-  { value: "start", label: "Inizio" },
-  { value: "end", label: "Fine" },
-];
+const rowTypeOptions = [{ value: "estimate", label: "Stima" }, { value: "quote", label: "Preventivo" }, { value: "actual", label: "Consuntivo" }];
+const distributionOptions = [{ value: "all", label: "Tutto il periodo" }, { value: "start", label: "Mese iniziale" }, { value: "end", label: "Mese finale" }];
 
 interface ExpenseEditorRowsProps {
   rows: ExpenseEditorRow[];
   vendors: ExpenseLookupOption[];
+  plafonds: PlafondExpenseOption[];
+  plafondsLoading?: boolean;
   onChange: (index: number, patch: Partial<ExpenseEditorRow>) => void;
   onMove: (from: number, to: number) => void;
   onRemove: (index: number) => void;
   disabled?: boolean;
 }
 
-interface DragItem {
-  index: number;
-}
+interface DragItem { index: number; }
 
-function EditorSelect({
-  id,
-  value,
-  options,
-  onChange,
-  disabled,
-}: {
-  id: string;
-  value: string | undefined;
-  options: Array<{ value: string; label: string }>;
-  onChange: (value: string | undefined) => void;
-  disabled: boolean;
-}) {
-  const selected = value || NONE;
-  return (
-    <Select
-      key={`${id}-${selected}`}
-      options={[{ value: NONE, label: "—" }, ...options]}
-      defaultValue={selected}
-      onChange={(next) => {
-        if (!disabled) onChange(next === NONE ? undefined : next);
-      }}
-      className={disabled ? "pointer-events-none opacity-60" : "min-w-32"}
-    />
-  );
-}
-
-function DraggableExpenseRow({
-  row,
-  index,
-  vendors,
-  onChange,
-  onMove,
-  onRemove,
-  disabled,
-}: {
-  row: ExpenseEditorRow;
-  index: number;
-  vendors: ExpenseLookupOption[];
-  onChange: (patch: Partial<ExpenseEditorRow>) => void;
-  onMove: (from: number, to: number) => void;
-  onRemove: () => void;
-  disabled: boolean;
-}) {
+function DraggableExpenseRow({ row, index, count, vendors, plafonds, plafondsLoading, onChange, onMove, onRemove, disabled }: { row: ExpenseEditorRow; index: number; count: number; vendors: ExpenseLookupOption[]; plafonds: PlafondExpenseOption[]; plafondsLoading: boolean; onChange: (patch: Partial<ExpenseEditorRow>) => void; onMove: (from: number, to: number) => void; onRemove: () => void; disabled: boolean }) {
   const handleRef = useRef<HTMLSpanElement>(null);
-  const [, drop] = useDrop<DragItem>({
-    accept: "EXPENSE_EDITOR_ROW",
-    hover(item) {
-      if (item.index === index) return;
-      onMove(item.index, index);
-      item.index = index;
-    },
-  });
-  const [, drag] = useDrag({
-    type: "EXPENSE_EDITOR_ROW",
-    item: { index },
-  });
+  const [, drop] = useDrop<DragItem>({ accept: "EXPENSE_EDITOR_ROW", hover(item) { if (item.index !== index) { onMove(item.index, index); item.index = index; } } });
+  const [, drag] = useDrag({ type: "EXPENSE_EDITOR_ROW", item: { index }, canDrag: !disabled });
   drag(drop(handleRef));
+  const vendorOptions = vendors.filter((vendor) => vendor.active !== false || vendor.id === row.vendor_id).map((vendor) => ({ value: String(vendor.id), label: vendor.name }));
+  const plafondOptions = plafonds.filter((plafond) => plafond.id !== row.id).map((plafond) => ({ value: String(plafond.id), label: `${plafond.title}${plafond.cost_center_name ? ` · ${plafond.cost_center_name}` : ""}` }));
 
-  const vendorOptions = vendors
-    .filter((vendor) => vendor.active !== false || vendor.id === row.vendor_id)
-    .map((vendor) => ({ value: String(vendor.id), label: vendor.name }));
-  if (row.vendor_id && !vendors.some((vendor) => vendor.id === row.vendor_id)) {
-    vendorOptions.unshift({ value: String(row.vendor_id), label: `Vendor #${row.vendor_id}` });
-  }
+  return <fieldset className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.02] sm:p-5">
+    <legend className="sr-only">Riga {index + 1}</legend>
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4 dark:border-gray-800">
+      <div className="flex items-center gap-3"><span ref={handleRef} className="inline-flex h-10 w-10 cursor-grab items-center justify-center rounded-lg border border-dashed border-gray-300 text-gray-500 dark:border-gray-700 dark:text-gray-400" title="Trascina per riordinare" aria-label={`Trascina la riga ${index + 1}`}><HorizontaLDots className="h-5 w-5" /></span><div><h3 className="font-semibold text-gray-800 dark:text-white/90">Riga {index + 1}</h3><p className="text-xs text-gray-500 dark:text-gray-400">{row.id ? "Riga esistente" : "Nuova riga"}</p></div></div>
+      <div className="flex items-center gap-2"><IconButton icon={ChevronUpIcon} label={`Sposta la riga ${index + 1} in alto`} onClick={() => onMove(index, index - 1)} disabled={disabled || index === 0} /><IconButton icon={ChevronDownIcon} label={`Sposta la riga ${index + 1} in basso`} onClick={() => onMove(index, index + 1)} disabled={disabled || index === count - 1} /><IconButton icon={TrashBinIcon} label={`Rimuovi la riga ${index + 1}`} onClick={onRemove} disabled={disabled || count === 1} destructive /></div>
+    </div>
 
-  return (
-    <TableRow>
-      <TableCell className="px-3 py-4 align-top">
-        <span
-          ref={handleRef}
-          title="Trascina per riordinare"
-          className="inline-flex cursor-grab select-none rounded-lg border border-dashed border-gray-300 px-3 py-2 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400"
-        >
-          {index + 1}
-        </span>
-      </TableCell>
-      <TableCell className="min-w-36 px-3 py-4 align-top">
-        <Label>Tipo</Label>
-        <EditorSelect
-          id={`${row.editorKey}-type`}
-          value={row.type}
-          options={rowTypeOptions}
-          onChange={(type) => onChange({ type: type ?? "estimate" })}
-          disabled={disabled}
-        />
-      </TableCell>
-      <TableCell className="min-w-48 px-3 py-4 align-top">
-        <Label>Vendor</Label>
-        <EditorSelect
-          id={`${row.editorKey}-vendor`}
-          value={row.vendor_id ? String(row.vendor_id) : undefined}
-          options={vendorOptions}
-          onChange={(vendor) => onChange({ vendor_id: vendor ? Number(vendor) : undefined })}
-          disabled={disabled}
-        />
-      </TableCell>
-      <TableCell className="min-w-64 px-3 py-4 align-top">
-        <Label htmlFor={`${row.editorKey}-description`}>Descrizione</Label>
-        <InputField
-          id={`${row.editorKey}-description`}
-          value={row.description}
-          onChange={(event) => onChange({ description: event.target.value })}
-          disabled={disabled}
-        />
-      </TableCell>
-      <TableCell className="min-w-32 px-3 py-4 align-top">
-        <Label htmlFor={`${row.editorKey}-quantity`}>Quantità</Label>
-        <InputField
-          id={`${row.editorKey}-quantity`}
-          value={row.quantity ?? ""}
-          onChange={(event) => onChange({ quantity: event.target.value })}
-          disabled={disabled}
-        />
-      </TableCell>
-      <TableCell className="min-w-32 px-3 py-4 align-top">
-        <Label htmlFor={`${row.editorKey}-unit-price`}>Prezzo unitario</Label>
-        <InputField
-          id={`${row.editorKey}-unit-price`}
-          value={row.unit_price ?? ""}
-          onChange={(event) => onChange({ unit_price: event.target.value })}
-          disabled={disabled}
-        />
-      </TableCell>
-      <TableCell className="min-w-32 px-3 py-4 align-top">
-        <Label htmlFor={`${row.editorKey}-entered-amount`}>Importo</Label>
-        <InputField
-          id={`${row.editorKey}-entered-amount`}
-          value={row.entered_amount}
-          onChange={(event) => onChange({ entered_amount: event.target.value })}
-          disabled={disabled}
-        />
-      </TableCell>
-      <TableCell className="min-w-32 px-3 py-4 align-top">
-        <Label htmlFor={`${row.editorKey}-vat-rate`}>IVA</Label>
-        <InputField
-          id={`${row.editorKey}-vat-rate`}
-          value={row.vat_rate ?? ""}
-          onChange={(event) => onChange({ vat_rate: event.target.value })}
-          disabled={disabled}
-        />
-      </TableCell>
-      <TableCell className="min-w-36 px-3 py-4 align-top">
-        <Checkbox
-          label="Importo include IVA"
-          checked={row.amount_includes_vat}
-          onChange={(checked) => onChange({ amount_includes_vat: checked })}
-          disabled={disabled}
-        />
-        <div className="mt-3">
-          <Checkbox
-            label="Extra"
-            checked={row.is_extra}
-            onChange={(checked) => onChange({ is_extra: checked })}
-            disabled={disabled}
-          />
-        </div>
-      </TableCell>
-      <TableCell className="min-w-40 px-3 py-4 align-top">
-        <div className={disabled ? "pointer-events-none opacity-60" : ""}>
-          <DatePicker
-            id={`${row.editorKey}-spend-date`}
-            label="Data spesa"
-            defaultDate={row.spend_date || undefined}
-            onChange={(_, dateString) => onChange({ spend_date: dateString || undefined })}
-          />
-        </div>
-      </TableCell>
-      <TableCell className="min-w-40 px-3 py-4 align-top">
-        <div className={disabled ? "pointer-events-none opacity-60" : ""}>
-          <DatePicker
-            id={`${row.editorKey}-period-start`}
-            label="Periodo da"
-            defaultDate={row.period_start || undefined}
-            onChange={(_, dateString) => onChange({ period_start: dateString || undefined })}
-          />
-        </div>
-        <div className="mt-3">
-          <div className={disabled ? "pointer-events-none opacity-60" : ""}>
-            <DatePicker
-              id={`${row.editorKey}-period-end`}
-              label="Periodo a"
-              defaultDate={row.period_end || undefined}
-              onChange={(_, dateString) => onChange({ period_end: dateString || undefined })}
-            />
-          </div>
-        </div>
-      </TableCell>
-      <TableCell className="min-w-36 px-3 py-4 align-top">
-        <Label>Distribuzione</Label>
-        <EditorSelect
-          id={`${row.editorKey}-distribution`}
-          value={row.distribution}
-          options={distributionOptions}
-          onChange={(distribution) => onChange({ distribution })}
-          disabled={disabled}
-        />
-      </TableCell>
-      <TableCell className="min-w-36 px-3 py-4 align-top">
-        <Label htmlFor={`${row.editorKey}-funded`}>Plafond ID</Label>
-        <InputField
-          id={`${row.editorKey}-funded`}
-          type="number"
-          min="1"
-          value={row.funded_plafond_expense_id ?? ""}
-          onChange={(event) =>
-            onChange({
-              funded_plafond_expense_id: event.target.value ? Number(event.target.value) : undefined,
-            })
-          }
-          disabled={disabled}
-        />
-        <Label htmlFor={`${row.editorKey}-external`} className="mt-3">Riferimento</Label>
-        <InputField
-          id={`${row.editorKey}-external`}
-          value={row.external_reference ?? ""}
-          onChange={(event) => onChange({ external_reference: event.target.value })}
-          disabled={disabled}
-        />
-      </TableCell>
-      <TableCell className="px-3 py-4 align-top">
-        <Button type="button" size="sm" variant="outline" onClick={onRemove} disabled={disabled}>
-          Rimuovi
-        </Button>
-      </TableCell>
-    </TableRow>
-  );
+    <div className="space-y-6">
+      <section><h4 className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">Classificazione</h4><div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
+        <div className="xl:col-span-3"><Label htmlFor={`${row.editorKey}-type`}>Tipo</Label><Select id={`${row.editorKey}-type`} options={rowTypeOptions} value={row.type} onChange={(type) => onChange({ type })} disabled={disabled} /></div>
+        <div className="xl:col-span-4"><Label htmlFor={`${row.editorKey}-vendor`}>Fornitore</Label><Select id={`${row.editorKey}-vendor`} options={vendorOptions} value={row.vendor_id ? String(row.vendor_id) : ""} placeholder="Nessun fornitore" allowEmpty onChange={(value) => onChange({ vendor_id: value ? Number.parseInt(value, 10) : undefined })} disabled={disabled} /></div>
+        <div className="md:col-span-2 xl:col-span-5"><Label htmlFor={`${row.editorKey}-description`}>Descrizione</Label><InputField id={`${row.editorKey}-description`} value={row.description} onChange={(event) => onChange({ description: event.target.value })} disabled={disabled} /></div>
+      </div></section>
+
+      <section><h4 className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">Quantità e Importi</h4><div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-12">
+        <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-quantity`}>Quantità</Label><DecimalInput id={`${row.editorKey}-quantity`} value={row.quantity ?? ""} onChange={(quantity) => onChange({ quantity })} trimTrailingZeros disabled={disabled} /></div>
+        <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-unit-price`}>Prezzo unitario</Label><DecimalInput id={`${row.editorKey}-unit-price`} value={row.unit_price ?? ""} onChange={(unit_price) => onChange({ unit_price })} trimTrailingZeros disabled={disabled} /></div>
+        <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-entered-amount`}>Importo</Label><DecimalInput id={`${row.editorKey}-entered-amount`} value={row.entered_amount} onChange={(entered_amount) => onChange({ entered_amount })} fixedScale={2} disabled={disabled} /></div>
+        <div className="xl:col-span-2"><Label htmlFor={`${row.editorKey}-vat-rate`}>Aliquota IVA</Label><DecimalInput id={`${row.editorKey}-vat-rate`} value={row.vat_rate ?? ""} onChange={(vat_rate) => onChange({ vat_rate })} fixedScale={2} disabled={disabled} /></div>
+        <div className="flex items-center xl:col-span-2"><Checkbox label="Importo IVA inclusa" checked={row.amount_includes_vat} onChange={(amount_includes_vat) => onChange({ amount_includes_vat })} disabled={disabled} /></div>
+        <div className="flex items-center xl:col-span-2"><Checkbox label="Spesa Extra" checked={row.is_extra} onChange={(is_extra) => onChange({ is_extra })} disabled={disabled} /></div>
+      </div></section>
+
+      <section><h4 className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">Competenza</h4><div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-12">
+        <div className="xl:col-span-3"><DatePicker id={`${row.editorKey}-spend-date`} label="Data spesa" placeholder="Seleziona la data" defaultDate={row.spend_date || undefined} onChange={(_, value) => onChange({ spend_date: value || undefined })} disabled={disabled} /></div>
+        <div className="xl:col-span-3"><DatePicker id={`${row.editorKey}-period-start`} label="Periodo da" placeholder="Data iniziale" defaultDate={row.period_start || undefined} onChange={(_, value) => onChange({ period_start: value || undefined })} disabled={disabled} /></div>
+        <div className="xl:col-span-3"><DatePicker id={`${row.editorKey}-period-end`} label="Periodo a" placeholder="Data finale" defaultDate={row.period_end || undefined} onChange={(_, value) => onChange({ period_end: value || undefined })} disabled={disabled} /></div>
+        <div className="xl:col-span-3"><Label htmlFor={`${row.editorKey}-distribution`}>Distribuzione</Label><Select id={`${row.editorKey}-distribution`} options={distributionOptions} value={row.distribution ?? ""} placeholder="Seleziona la distribuzione" allowEmpty onChange={(distribution) => onChange({ distribution: distribution || undefined })} disabled={disabled} /></div>
+      </div></section>
+
+      <section><h4 className="mb-3 text-sm font-semibold text-gray-800 dark:text-white/90">Finanziamento</h4><div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div><Label htmlFor={`${row.editorKey}-funded`}>Plafond di riferimento</Label><Select id={`${row.editorKey}-funded`} options={plafondOptions} value={row.funded_plafond_expense_id ? String(row.funded_plafond_expense_id) : ""} placeholder={plafondsLoading ? "Caricamento Plafond…" : plafondOptions.length ? "Nessun Plafond" : "Nessun Plafond disponibile"} allowEmpty onChange={(value) => onChange({ funded_plafond_expense_id: value ? Number.parseInt(value, 10) : undefined })} disabled={disabled || plafondsLoading || plafondOptions.length === 0} /></div>
+        <div><Label htmlFor={`${row.editorKey}-external`}>Riferimento esterno</Label><InputField id={`${row.editorKey}-external`} value={row.external_reference ?? ""} onChange={(event) => onChange({ external_reference: event.target.value })} disabled={disabled} placeholder="Riferimento opzionale" /></div>
+      </div></section>
+    </div>
+  </fieldset>;
 }
 
-export default function ExpenseEditorRows({
-  rows,
-  vendors,
-  onChange,
-  onMove,
-  onRemove,
-  disabled = false,
-}: ExpenseEditorRowsProps) {
-  return (
-    <div className="max-w-full overflow-x-auto rounded-xl border border-gray-200 dark:border-white/[0.05]">
-        <Table>
-          <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]">
-            <TableRow>
-              {["#", "Tipo", "Vendor", "Descrizione", "Quantità", "Prezzo unitario", "Importo", "IVA", "Flags", "Data", "Periodo", "Distribuzione", "Finanziamento", "Azioni"].map((heading) => (
-                <TableCell key={heading} isHeader className="whitespace-nowrap px-3 py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">
-                  {heading}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHeader>
-          <TableBody className="divide-y divide-gray-100 dark:divide-white/[0.05]">
-            {rows.map((row, index) => (
-              <DraggableExpenseRow
-                key={row.editorKey}
-                row={row}
-                index={index}
-                vendors={vendors}
-                onChange={(patch) => onChange(index, patch)}
-                onMove={onMove}
-                onRemove={() => onRemove(index)}
-                disabled={disabled}
-              />
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-  );
+export default function ExpenseEditorRows({ rows, vendors, plafonds, plafondsLoading = false, onChange, onMove, onRemove, disabled = false }: ExpenseEditorRowsProps) {
+  return <div className="space-y-5">{rows.map((row, index) => <DraggableExpenseRow key={row.editorKey} row={row} index={index} count={rows.length} vendors={vendors} plafonds={plafonds} plafondsLoading={plafondsLoading} onChange={(patch) => onChange(index, patch)} onMove={onMove} onRemove={() => onRemove(index)} disabled={disabled} />)}</div>;
 }

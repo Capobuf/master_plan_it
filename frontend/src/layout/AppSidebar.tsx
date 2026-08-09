@@ -13,6 +13,7 @@ import {
   type ApplicationNavigationGroup,
   type ApplicationNavigationItem,
 } from "../navigation/applicationNavigation";
+import { routes } from "../navigation/routes";
 
 function isActivePath(pathname: string, route: string): boolean {
   if (route === "/") {
@@ -39,7 +40,7 @@ const AppSidebar: React.FC = () => {
     toggleMobileSidebar,
     toggleSubmenu,
   } = useSidebar();
-  const { data, loading, hasAbility } = useApplicationContext();
+  const { loading, hasAbility } = useApplicationContext();
   const location = useLocation();
   const [subMenuHeights, setSubMenuHeights] = useState<Record<string, number>>(
     {},
@@ -142,24 +143,12 @@ const AppSidebar: React.FC = () => {
           !isExpanded && !isHovered ? "lg:justify-center" : "justify-start"
         }`}
       >
-        <Link to="/" onClick={handleItemClick} aria-label="Master Plan IT home">
+        <Link to={routes.panoramica} onClick={handleItemClick} aria-label="Panoramica Master Plan IT">
           {expanded ? (
-            <>
-              <img
-                className="dark:hidden"
-                src="/images/logo/logo.svg"
-                alt="Master Plan IT"
-                width={150}
-                height={40}
-              />
-              <img
-                className="hidden dark:block"
-                src="/images/logo/logo-dark.svg"
-                alt="Master Plan IT"
-                width={150}
-                height={40}
-              />
-            </>
+            <span className="flex items-center gap-3 text-lg font-semibold text-gray-800 dark:text-white/90">
+              <img src="/images/logo/logo-icon.svg" alt="" width={32} height={32} />
+              Master Plan IT
+            </span>
           ) : (
             <img
               src="/images/logo/logo-icon.svg"
@@ -172,26 +161,10 @@ const AppSidebar: React.FC = () => {
       </div>
 
       <div className="flex flex-col overflow-y-auto duration-300 ease-linear no-scrollbar">
-        <nav className="mb-6" aria-label="Application navigation">
+        <nav className="mb-6" aria-label="Navigazione applicativa">
           <div className="mb-5">
-            {expanded ? (
-              <div className="mb-3 rounded-lg border border-gray-200 px-3 py-2 dark:border-gray-800">
-                <span className="block text-xs uppercase text-gray-400">
-                  Tenant
-                </span>
-                <span className="mt-1 block truncate text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {data?.tenant?.name ?? "Platform administration"}
-                </span>
-                {data?.tenant ? (
-                  <span className="mt-0.5 block text-xs text-gray-500 dark:text-gray-400">
-                    {data.tenant.state}
-                  </span>
-                ) : null}
-              </div>
-            ) : null}
-
             <h2
-              className={`mb-4 flex text-xs uppercase leading-5 text-gray-400 ${
+              className={`mb-4 flex text-xs leading-5 text-gray-400 ${
                 !isExpanded && !isHovered
                   ? "lg:justify-center"
                   : "justify-start"

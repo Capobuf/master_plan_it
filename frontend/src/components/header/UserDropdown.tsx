@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router";
 import { ApiError } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
+import { useApplicationContext } from "../../context/ApplicationContext";
 import { ArrowRightIcon, ChevronDownIcon, UserCircleIcon } from "../../icons";
+import { routes } from "../../navigation/routes";
 import Alert from "../ui/alert/Alert";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
@@ -12,7 +14,7 @@ function errorMessage(error: unknown): string {
   const isUnexpected = apiError.handledStatus === null || apiError.status === 500;
 
   if (isUnexpected && apiError.correlationId) {
-    return `${apiError.message} Reference: ${apiError.correlationId}`;
+    return `${apiError.message} Riferimento tecnico: ${apiError.correlationId}`;
   }
 
   return apiError.message;
@@ -23,7 +25,13 @@ export default function UserDropdown() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const { currentUser, logout } = useAuth();
+  const { data: applicationContext } = useApplicationContext();
   const navigate = useNavigate();
+  const roleContext = applicationContext?.platformAdministrator
+    ? "Amministratore di Piattaforma"
+    : applicationContext?.tenant
+      ? "Utente del Tenant"
+      : "Utente";
 
   const closeDropdown = () => setIsOpen(false);
 
@@ -38,7 +46,7 @@ export default function UserDropdown() {
     try {
       await logout();
       closeDropdown();
-      navigate("/signin", { replace: true });
+      navigate(routes.accesso, { replace: true });
     } catch (error) {
       setLogoutError(errorMessage(error));
     } finally {
@@ -51,7 +59,7 @@ export default function UserDropdown() {
       <button
         onClick={() => setIsOpen((open) => !open)}
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
-        aria-label="Open user menu"
+        aria-label="Apri il menu utente"
         aria-expanded={isOpen}
       >
         <span className="mr-3 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
@@ -59,7 +67,7 @@ export default function UserDropdown() {
         </span>
 
         <span className="block mr-1 font-medium text-theme-sm">
-          {currentUser?.name ?? "User"}
+          {currentUser?.name ?? "Utente"}
         </span>
         <ChevronDownIcon
           className={`stroke-gray-500 dark:stroke-gray-400 transition-transform duration-200 ${
@@ -75,16 +83,16 @@ export default function UserDropdown() {
       >
         <div>
           <span className="block font-medium text-gray-700 text-theme-sm dark:text-gray-400">
-            {currentUser?.name ?? "User"}
+            {currentUser?.name ?? "Utente"}
           </span>
           <span className="mt-0.5 block text-theme-xs text-gray-500 dark:text-gray-400">
-            {currentUser?.email ?? ""}
+            {roleContext} · {currentUser?.email ?? ""}
           </span>
         </div>
 
         {logoutError ? (
           <div className="mt-3">
-            <Alert variant="error" title="Sign out failed" message={logoutError} />
+            <Alert variant="error" title="Disconnessione non riuscita" message={logoutError} />
           </div>
         ) : null}
 
@@ -93,7 +101,7 @@ export default function UserDropdown() {
           baseClassName="flex w-full items-center gap-3 px-3 py-2 mt-3 font-medium text-gray-700 rounded-lg group text-theme-sm hover:bg-gray-100 hover:text-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
         >
           <ArrowRightIcon className="h-6 w-6 fill-gray-500 group-hover:fill-gray-700 dark:fill-gray-400 dark:group-hover:fill-gray-300" />
-          {isLoggingOut ? "Signing out..." : "Sign out"}
+          {isLoggingOut ? "Disconnessione…" : "Esci"}
         </DropdownItem>
       </Dropdown>
     </div>

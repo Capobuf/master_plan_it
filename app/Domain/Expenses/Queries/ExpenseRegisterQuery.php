@@ -3,6 +3,7 @@
 namespace App\Domain\Expenses\Queries;
 
 use App\Domain\Expenses\Data\ExpenseRegisterRow;
+use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\User;
 use App\Policies\ExpensePolicy;
@@ -23,12 +24,13 @@ final class ExpenseRegisterQuery
         ?int $planningYearId,
         int $page,
         int $perPage,
+        ?ExpenseKind $kind = null,
     ): LengthAwarePaginator {
         $this->policy($context)->viewAny($actor)->authorize();
 
         $perPage = max(1, min($perPage, 100));
         $page = max(1, $page);
-        $paginator = $this->registerBuilder($context, $planningYearId)
+        $paginator = $this->registerBuilder($context, $planningYearId, $kind)
             ->orderByRaw('LOWER(expenses.title)')
             ->orderBy('expenses.id')
             ->paginate($perPage, ['*'], 'page', $page);
@@ -52,7 +54,7 @@ final class ExpenseRegisterQuery
     }
 
     /** @return array{net: string, vat: string, gross: string} */
-    public function totals(User $actor, TenantContext $context, ?int $planningYearId): array
+    public function totals(User $actor, TenantContext $context, ?int $planningYearId, ?ExpenseKind $kind = null): array
     {
         $this->policy($context)->viewAny($actor)->authorize();
 
@@ -65,6 +67,7 @@ final class ExpenseRegisterQuery
             ->whereNull('expenses.deleted_at')
             ->whereNull('expense_rows.deleted_at')
             ->when($planningYearId !== null, fn ($query) => $query->where('expenses.planning_year_id', $planningYearId))
+            ->when($kind !== null, fn ($query) => $query->where('expenses.kind', $kind->value))
             ->selectRaw('COALESCE(SUM(expense_rows.net_amount), 0) AS net_total')
             ->selectRaw('COALESCE(SUM(expense_rows.vat_amount), 0) AS vat_total')
             ->selectRaw('COALESCE(SUM(expense_rows.gross_amount), 0) AS gross_total')
@@ -95,7 +98,7 @@ final class ExpenseRegisterQuery
             ->all();
     }
 
-    private function registerBuilder(TenantContext $context, ?int $planningYearId): Builder
+    private function registerBuilder(TenantContext $context, ?int $planningYearId, ?ExpenseKind $kind = null): Builder
     {
         return DB::table('expenses')
             ->join('planning_years', function ($join): void {
@@ -118,6 +121,7 @@ final class ExpenseRegisterQuery
             ->where('expenses.tenant_id', $context->tenantId)
             ->whereNull('expenses.deleted_at')
             ->when($planningYearId !== null, fn ($query) => $query->where('expenses.planning_year_id', $planningYearId))
+            ->when($kind !== null, fn ($query) => $query->where('expenses.kind', $kind->value))
             ->groupBy([
                 'expenses.id',
                 'expenses.planning_year_id',

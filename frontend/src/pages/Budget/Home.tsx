@@ -28,19 +28,18 @@ export default function BudgetHome() {
 
   const current = state?.tenantId === tenantId ? state : null;
   let content: React.ReactNode;
-  if (contextLoading || planningYearLoading) content = <Alert variant="info" title="Loading application context" message="Checking the current tenant, planning year, and budget ability." />;
-  else if (tenantId === null) content = <Alert variant="warning" title="Tenant required" message="Enter a tenant from the header before loading the budget." />;
-  else if (!canView) content = <Alert variant="warning" title="Budget unavailable" message="The current application context does not grant the budget.view ability." />;
-  else if (current === null) content = <Alert variant="info" title="Loading budget" message="Requesting the current budget for the selected tenant." />;
-  else if (current.error) content = <Alert variant="error" title="Budget request failed" message={current.error.correlationId ? `${current.error.message} Correlation ID: ${current.error.correlationId}` : current.error.message} />;
+  if (contextLoading || planningYearLoading) content = <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant e dell'anno di pianificazione in corso." />;
+  else if (tenantId === null) content = <Alert variant="warning" title="Tenant richiesto" message="Seleziona un Tenant dall'intestazione per aprire il Budget." />;
+  else if (!canView) content = <Alert variant="warning" title="Budget non disponibile" message="Non disponi dell'autorizzazione necessaria per visualizzare questa pagina." />;
+  else if (current === null) content = <Alert variant="info" title="Caricamento del Budget" message="Recupero dei dati per l'anno selezionato." />;
+  else if (current.error) content = <Alert variant="error" title="Caricamento non riuscito" message={current.error.correlationId ? `${current.error.message} Riferimento tecnico: ${current.error.correlationId}` : current.error.message} />;
   else if (current.data) content = <BudgetView dataset={current.data} />;
-  else content = <Alert variant="info" title="No budget data" message="The budget endpoint returned no dataset." />;
+  else content = <Alert variant="info" title="Nessun dato Budget" message="Non sono disponibili dati per la selezione corrente." />;
 
   return (
     <>
-      <PageMeta title="Budget | Master Plan IT" description="Current rolling budget" />
-      <PageBreadcrumb pageTitle="Budget" />
-      <PlanningYearSelector />
+      <PageMeta title="Budget | Master Plan IT" description="Budget corrente dell'anno selezionato" />
+      <PageBreadcrumb pageTitle="Budget" actions={<PlanningYearSelector />} />
       {content}
     </>
   );

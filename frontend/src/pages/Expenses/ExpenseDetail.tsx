@@ -17,6 +17,7 @@ import ExpenseTotals from "../../components/expenses/ExpenseTotals";
 import Alert from "../../components/ui/alert/Alert";
 import Button from "../../components/ui/button/Button";
 import { useApplicationContext } from "../../context/ApplicationContext";
+import { routes } from "../../navigation/routes";
 
 interface DetailState {
   tenantId: number;
@@ -77,11 +78,11 @@ export default function ExpenseDetail() {
 
   let body;
   if (contextLoading) {
-    body = <Alert variant="info" title="Caricamento contesto" message="Verifica del tenant e dell'abilitazione expense.view." />;
+    body = <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant in corso." />;
   } else if (tenantId === null) {
-    body = <Alert variant="warning" title="Tenant richiesto" message="Seleziona un tenant dal menu dell'intestazione prima di aprire la spesa." />;
+    body = <Alert variant="warning" title="Tenant richiesto" message="Seleziona un Tenant dall'intestazione prima di aprire la spesa." />;
   } else if (!canView) {
-    body = <Alert variant="warning" title="Dettaglio non disponibile" message="Il contesto corrente non concede l'abilitazione expense.view." />;
+    body = <Alert variant="warning" title="Dettaglio non disponibile" message="Non disponi dell'autorizzazione necessaria per visualizzare questa spesa." />;
   } else if (expenseId === null) {
     body = <Alert variant="error" title="Identificativo non valido" message="L'identificativo della spesa non è valido." />;
   } else if (detailState?.error) {
@@ -90,7 +91,7 @@ export default function ExpenseDetail() {
         <Alert
           variant="error"
           title="Richiesta dettaglio non riuscita"
-          message={`${detailState.error.message}${detailState.error.correlationId ? ` Correlation ID: ${detailState.error.correlationId}` : ""}`}
+          message={`${detailState.error.message}${detailState.error.correlationId ? ` Riferimento tecnico: ${detailState.error.correlationId}` : ""}`}
         />
         <Button variant="outline" onClick={() => void loadDetail()} disabled={loading}>
           Riprova
@@ -111,10 +112,10 @@ export default function ExpenseDetail() {
           <Alert
             variant="error"
             title="Operazione non riuscita"
-            message={`${actionError.message}${actionError.correlationId ? ` Correlation ID: ${actionError.correlationId}` : ""}`}
+            message={`${actionError.message}${actionError.correlationId ? ` Riferimento tecnico: ${actionError.correlationId}` : ""}`}
           />
         )}
-        <ComponentCard title={detail.title} desc={`Spesa #${detail.id} · versione ${detail.lock_version}`}>
+        <ComponentCard title={detail.title}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="flex items-center gap-3">
               <ExpenseKindBadge kind={detail.kind} />
@@ -124,7 +125,7 @@ export default function ExpenseDetail() {
             </div>
             <div className="flex flex-wrap gap-2">
               {canEdit && (
-                <Button variant="outline" onClick={() => navigate(`/expenses/${detail.id}/edit`)} disabled={loading}>
+                <Button variant="outline" onClick={() => navigate(routes.modificaSpesa(detail.id))} disabled={loading}>
                   Modifica
                 </Button>
               )}
@@ -138,7 +139,7 @@ export default function ExpenseDetail() {
           <dl className="grid gap-4 border-t border-gray-100 pt-5 sm:grid-cols-2 lg:grid-cols-4 dark:border-gray-800">
             <div>
               <dt className="text-sm text-gray-500 dark:text-gray-400">Centro di costo</dt>
-              <dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.cost_center_name ?? `#${detail.cost_center_id}`}</dd>
+              <dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.cost_center_name ?? "—"}</dd>
             </div>
             <div>
               <dt className="text-sm text-gray-500 dark:text-gray-400">Anno</dt>
@@ -146,7 +147,7 @@ export default function ExpenseDetail() {
             </div>
             <div>
               <dt className="text-sm text-gray-500 dark:text-gray-400">Contratto</dt>
-              <dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.contract_id ? `Contratto #${detail.contract_id}` : "Nessun contratto"}</dd>
+              <dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{detail.contract_id ? "Contratto associato" : "Nessun contratto"}</dd>
             </div>
             <div>
               <dt className="text-sm text-gray-500 dark:text-gray-400">Righe correnti</dt>
@@ -159,8 +160,8 @@ export default function ExpenseDetail() {
             </div>
           )}
         </ComponentCard>
-        <ExpenseTotals totals={detail.totals} title="Totali esatti" />
-        <ComponentCard title="Righe della spesa" desc="Stati e importi sono quelli restituiti dal servizio expense.">
+        <ExpenseTotals totals={detail.totals} title="Totali della Spesa" />
+        <ComponentCard title="Righe della Spesa">
           <ExpenseRowsTable
             rows={detail.rows}
             canConfirm={canConfirm}
@@ -176,7 +177,7 @@ export default function ExpenseDetail() {
             contractId={detail.contract_id}
             isOpen={deleteOpen}
             onClose={() => setDeleteOpen(false)}
-            onDeleted={() => navigate("/expenses")}
+            onDeleted={() => navigate(routes.spese)}
           />
         )}
       </div>
@@ -185,8 +186,8 @@ export default function ExpenseDetail() {
 
   return (
     <>
-      <PageMeta title="Dettaglio spesa | Master Plan IT" description="Dettaglio della spesa corrente del tenant" />
-      <PageBreadcrumb pageTitle="Dettaglio spesa" />
+      <PageMeta title="Dettaglio Spesa | Master Plan IT" description="Dettaglio della spesa corrente del Tenant" />
+      <PageBreadcrumb pageTitle="Dettaglio Spesa" />
       {body}
     </>
   );

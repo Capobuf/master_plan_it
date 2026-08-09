@@ -2,6 +2,7 @@ import React from "react";
 import GridShape from "../../components/common/GridShape";
 import { Link } from "react-router";
 import ThemeTogglerTwo from "../../components/common/ThemeTogglerTwo";
+import { routes } from "../../navigation/routes";
 
 export default function AuthLayout({
   children,
@@ -17,17 +18,19 @@ export default function AuthLayout({
             {/* <!-- ===== Common Grid Shape Start ===== --> */}
             <GridShape />
             <div className="flex flex-col items-center max-w-xs">
-              <Link to="/" className="block mb-4">
+              <Link
+                to={routes.panoramica}
+                className="flex items-center gap-3 text-2xl font-semibold text-white"
+                aria-label="Panoramica Master Plan IT"
+              >
                 <img
-                  width={231}
-                  height={48}
-                  src="/images/logo/auth-logo.svg"
-                  alt="Master Plan IT"
+                  width={44}
+                  height={44}
+                  src="/images/logo/logo-icon.svg"
+                  alt=""
                 />
-              </Link>
-              <p className="text-center text-gray-400 dark:text-white/60">
                 Master Plan IT
-              </p>
+              </Link>
             </div>
           </div>
         </div>

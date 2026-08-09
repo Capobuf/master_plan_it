@@ -1,16 +1,5 @@
 import Badge from "../ui/badge/Badge";
-
-const labels: Record<string, string> = {
-  ordinary: "Ordinaria",
-  plafond: "Plafond",
-  estimate: "Stima",
-  quote: "Preventivo",
-  actual: "Effettiva",
-};
-
-function expenseKindLabel(kind: string): string {
-  return labels[kind.toLowerCase()] ?? kind;
-}
+import { domainLabel } from "../../presentation/labels";
 
 export default function ExpenseKindBadge({ kind }: { kind: string }) {
   const normalized = kind.toLowerCase();
@@ -18,19 +7,14 @@ export default function ExpenseKindBadge({ kind }: { kind: string }) {
 
   return (
     <Badge size="sm" color={color}>
-      {expenseKindLabel(kind)}
+      {domainLabel(kind)}
     </Badge>
   );
 }
 
 export function ExpenseRowStateBadge({ state }: { state: string | null }) {
   const normalized = state?.toLowerCase();
-  const label =
-    normalized === "to_confirm"
-      ? "Da confermare"
-      : normalized === "confirmed"
-        ? "Confermata"
-        : state ?? "—";
+  const label = domainLabel(state);
   const color = normalized === "confirmed" ? "success" : "warning";
 
   return (

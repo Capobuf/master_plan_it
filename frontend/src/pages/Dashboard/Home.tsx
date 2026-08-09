@@ -63,32 +63,32 @@ export default function Home() {
     content = (
       <Alert
         variant="info"
-        title="Loading application context"
-        message="Checking the current user, tenant, and dashboard ability."
+        title="Caricamento del contesto"
+        message="Verifica del Tenant e dell'anno di pianificazione in corso."
       />
     );
   } else if (tenantId === null) {
     content = (
       <Alert
         variant="warning"
-        title="Tenant required"
-        message="Enter a tenant from the header before loading the dashboard."
+        title="Tenant richiesto"
+        message="Seleziona un Tenant dall'intestazione per aprire la Panoramica."
       />
     );
   } else if (!canViewDashboard) {
     content = (
       <Alert
         variant="warning"
-        title="Dashboard unavailable"
-        message="The current application context does not grant the dashboard.view ability."
+        title="Panoramica non disponibile"
+        message="Non disponi dell'autorizzazione necessaria per visualizzare questa pagina."
       />
     );
   } else if (currentDashboardState === null) {
     content = (
       <Alert
         variant="info"
-        title="Loading dashboard"
-        message="Requesting the dashboard dataset for the current tenant."
+        title="Caricamento della Panoramica"
+        message="Recupero dei dati per l'anno selezionato."
       />
     );
   } else if (currentDashboardState.error) {
@@ -97,10 +97,10 @@ export default function Home() {
     content = (
       <Alert
         variant="error"
-        title="Dashboard request failed"
+        title="Caricamento non riuscito"
         message={
           correlationId
-            ? `${message} Correlation ID: ${correlationId}`
+            ? `${message} Riferimento tecnico: ${correlationId}`
             : message
         }
       />
@@ -113,11 +113,10 @@ export default function Home() {
   return (
     <>
       <PageMeta
-        title="Dashboard | Master Plan IT"
-        description="Decision dashboard for the selected planning year"
+        title="Panoramica | Master Plan IT"
+        description="Panoramica economica dell'anno di pianificazione selezionato"
       />
-      <PageBreadcrumb pageTitle="Dashboard" />
-      <PlanningYearSelector />
+      <PageBreadcrumb pageTitle="Panoramica" actions={<PlanningYearSelector />} />
       {content}
     </>
   );

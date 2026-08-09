@@ -1,26 +1,25 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router";
+import { routes } from "../../navigation/routes";
 
 interface BreadcrumbProps {
   pageTitle: string;
+  subtitle?: string;
+  actions?: ReactNode;
 }
 
-const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
+const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle, subtitle, actions }) => {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
-      <h2
-        className="text-xl font-semibold text-gray-800 dark:text-white/90"
-        x-text="pageName"
-      >
-        {pageTitle}
-      </h2>
-      <nav>
-        <ol className="flex items-center gap-1.5">
-          <li>
+    <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <nav aria-label="Percorso di navigazione">
+          <ol className="mb-2 flex items-center gap-1.5">
+            {pageTitle !== "Panoramica" ? <li>
             <Link
               className="inline-flex items-center gap-1.5 text-sm text-gray-500 dark:text-gray-400"
-              to="/"
+              to={routes.panoramica}
             >
-              Home
+              Panoramica
               <svg
                 className="stroke-current"
                 width="17"
@@ -38,13 +37,17 @@ const PageBreadcrumb: React.FC<BreadcrumbProps> = ({ pageTitle }) => {
                 />
               </svg>
             </Link>
-          </li>
-          <li className="text-sm text-gray-800 dark:text-white/90">
+            </li> : null}
+          {pageTitle !== "Panoramica" ? <li className="text-sm text-gray-800 dark:text-white/90">
             {pageTitle}
-          </li>
+          </li> : null}
         </ol>
       </nav>
-    </div>
+        <h1 className="text-2xl font-semibold text-gray-800 dark:text-white/90">{pageTitle}</h1>
+        {subtitle ? <p className="mt-1 max-w-3xl text-sm text-gray-500 dark:text-gray-400">{subtitle}</p> : null}
+      </div>
+      {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
+    </header>
   );
 };
 

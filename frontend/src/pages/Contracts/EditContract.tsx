@@ -3,12 +3,12 @@ import { useNavigate, useParams } from "react-router";
 
 import { ApiError } from "../../api/client";
 import { getContract, updateContract, type Contract, type ContractUpdate } from "../../api/contracts";
-import ComponentCard from "../../components/common/ComponentCard";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ContractForm from "../../components/contracts/ContractForm";
 import Alert from "../../components/ui/alert/Alert";
 import { useApplicationContext } from "../../context/ApplicationContext";
+import { routes } from "../../navigation/routes";
 
 export default function EditContract() {
   const { data, loading: contextLoading, hasAbility } = useApplicationContext();
@@ -37,7 +37,7 @@ export default function EditContract() {
     setError(null);
     try {
       const updated = await updateContract(contractId, input);
-      navigate(`/contracts/${updated.id}`, { replace: true });
+      navigate(routes.contratto(updated.id), { replace: true });
     } catch (requestError) {
       setError(ApiError.from(requestError));
     } finally {
@@ -46,15 +46,15 @@ export default function EditContract() {
   };
 
   let body: React.ReactNode;
-  if (contextLoading) body = <Alert variant="info" title="Loading context" message="Checking tenant and contract ability." />;
-  else if (tenantId === null) body = <Alert variant="warning" title="Tenant required" message="Enter a tenant before editing a contract." />;
-  else if (contractId === null) body = <Alert variant="error" title="Invalid contract ID" message="The route contract ID is not valid." />;
-  else if (!canView) body = <Alert variant="warning" title="Contract unavailable" message="The current context does not grant contract.view." />;
-  else if (loading) body = <Alert variant="info" title="Loading contract" message="Requesting the contract detail." />;
-  else if (error && contract === null) body = <Alert variant="error" title="Contract request failed" message={error.message} />;
-  else if (contract === null) body = <Alert variant="error" title="Contract not found" message="The contract detail could not be loaded." />;
-  else if (!canEdit) body = <Alert variant="warning" title="Editing unavailable" message="The current context does not grant contract.update." />;
+  if (contextLoading) body = <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant in corso." />;
+  else if (tenantId === null) body = <Alert variant="warning" title="Tenant richiesto" message="Seleziona un Tenant prima di modificare un contratto." />;
+  else if (contractId === null) body = <Alert variant="error" title="Contratto non valido" message="Il contratto richiesto non è valido." />;
+  else if (!canView) body = <Alert variant="warning" title="Contratto non disponibile" message="Non disponi dell'autorizzazione necessaria per visualizzare il contratto." />;
+  else if (loading) body = <Alert variant="info" title="Caricamento del contratto" message="Recupero dei dati in corso." />;
+  else if (error && contract === null) body = <Alert variant="error" title="Caricamento non riuscito" message={error.message} />;
+  else if (contract === null) body = <Alert variant="error" title="Contratto non trovato" message="Non è stato possibile caricare il contratto." />;
+  else if (!canEdit) body = <Alert variant="warning" title="Modifica non disponibile" message="Non disponi dell'autorizzazione necessaria per questa operazione." />;
   else body = <ContractForm contract={contract} canSubmit={canEdit} submitting={submitting} error={error?.message ?? null} onSubmit={async (input) => submit(input as ContractUpdate)} />;
 
-  return <><PageMeta title="Edit contract | Master Plan IT" description="Edit a tenant contract" /><PageBreadcrumb pageTitle="Edit contract" /><ComponentCard title="Edit contract" desc="The server lock version protects concurrent edits.">{body}</ComponentCard></>;
+  return <><PageMeta title="Modifica Contratto | Master Plan IT" description="Modifica un contratto" /><PageBreadcrumb pageTitle="Modifica Contratto" subtitle="Aggiorna dati e termini mantenendo il controllo di versione corrente." />{body}</>;
 }

@@ -11,14 +11,24 @@ interface SelectProps {
   onChange: (value: string) => void;
   className?: string;
   defaultValue?: string;
+  value?: string;
+  id?: string;
+  disabled?: boolean;
+  ariaLabel?: string;
+  allowEmpty?: boolean;
 }
 
 const Select: React.FC<SelectProps> = ({
   options,
-  placeholder = "Select an option",
+  placeholder = "Seleziona un'opzione",
   onChange,
   className = "",
   defaultValue = "",
+  value,
+  id,
+  disabled = false,
+  ariaLabel,
+  allowEmpty = false,
 }) => {
   // Manage the selected value
   const [selectedValue, setSelectedValue] = useState<string>(defaultValue);
@@ -36,13 +46,16 @@ const Select: React.FC<SelectProps> = ({
           ? "text-gray-800 dark:text-white/90"
           : "text-gray-400 dark:text-gray-400"
       } ${className}`}
-      value={selectedValue}
+      id={id}
+      value={value ?? selectedValue}
       onChange={handleChange}
+      disabled={disabled}
+      aria-label={ariaLabel}
     >
       {/* Placeholder option */}
       <option
         value=""
-        disabled
+        disabled={!allowEmpty}
         className="text-gray-700 dark:bg-gray-900 dark:text-gray-400"
       >
         {placeholder}

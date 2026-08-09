@@ -36,10 +36,15 @@ final class ExpenseController extends Controller
         $context = $this->tenantContext($request);
         $year = $request->query('year');
         $year = is_numeric($year) && (int) $year > 0 ? (int) $year : null;
+        $kindValue = $request->query('kind');
+        $kind = $kindValue === null ? null : ExpenseKind::tryFrom((string) $kindValue);
         $yearOptions = $query->yearOptions($this->actor($request), $context);
 
         if ($request->query('year') !== null && ($year === null || ! collect($yearOptions)->contains('id', $year))) {
             abort(404);
+        }
+        if ($kindValue !== null && ! $kind instanceof ExpenseKind) {
+            throw ValidationException::withMessages(['kind' => 'The selected expense kind is invalid.']);
         }
 
         $perPage = min(max($request->integer('per_page', 15), 1), 100);
@@ -49,8 +54,9 @@ final class ExpenseController extends Controller
             $year,
             max(1, $request->integer('page', 1)),
             $perPage,
+            $kind,
         );
-        $totals = $query->totals($this->actor($request), $context, $year);
+        $totals = $query->totals($this->actor($request), $context, $year, $kind);
 
         return ExpenseRegisterResource::collection($paginator)->additional([
             'totals' => ExpenseMoneyResource::make([

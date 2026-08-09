@@ -92,7 +92,7 @@ export default function ExpenseActionModal({
       {error && (
         <p className="mt-4 rounded-lg bg-error-50 p-3 text-sm text-error-600 dark:bg-error-500/15 dark:text-error-400">
           {error.message}
-          {error.correlationId ? ` Correlation ID: ${error.correlationId}` : ""}
+          {error.correlationId ? ` Riferimento tecnico: ${error.correlationId}` : ""}
         </p>
       )}
       <div className="mt-6 flex justify-end gap-3">

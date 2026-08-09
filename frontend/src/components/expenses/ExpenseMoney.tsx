@@ -1,4 +1,5 @@
 import type { ExpenseMoney as ExpenseMoneyValue } from "../../api/expenses";
+import { formatMoney } from "../../presentation/formatters";
 
 interface ExpenseMoneyProps {
   money: ExpenseMoneyValue;
@@ -12,12 +13,7 @@ export default function ExpenseMoney({
   className = "",
 }: ExpenseMoneyProps) {
   const value = money[component];
-  const formatted = new Intl.NumberFormat(undefined, {
-    style: "currency",
-    currency: money.currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(Number(value));
+  const formatted = formatMoney(value, money.currency);
 
   return <span className={className}>{formatted}</span>;
 }

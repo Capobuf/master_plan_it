@@ -8,6 +8,7 @@ interface InputProps {
   placeholder?: string;
   value?: string | number;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onBlur?: (e: React.FocusEvent<HTMLInputElement>) => void;
   className?: string;
   min?: string;
   max?: string;
@@ -17,6 +18,8 @@ interface InputProps {
   error?: boolean;
   hint?: string;
   autoComplete?: string;
+  inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
+  ariaLabel?: string;
 }
 
 const Input: FC<InputProps> = ({
@@ -26,6 +29,7 @@ const Input: FC<InputProps> = ({
   placeholder,
   value,
   onChange,
+  onBlur,
   className = "",
   min,
   max,
@@ -35,6 +39,8 @@ const Input: FC<InputProps> = ({
   error = false,
   hint,
   autoComplete,
+  inputMode,
+  ariaLabel,
 }) => {
   let inputClasses = ` h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
 
@@ -57,11 +63,14 @@ const Input: FC<InputProps> = ({
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        onBlur={onBlur}
         min={min}
         max={max}
         step={step}
         disabled={disabled}
         autoComplete={autoComplete}
+        inputMode={inputMode}
+        aria-label={ariaLabel}
         className={inputClasses}
       />
 

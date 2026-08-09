@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router";
+import { BrowserRouter as Router, Navigate, Routes, Route, useParams } from "react-router";
 import SignIn from "./pages/AuthPages/SignIn";
 import NotFound from "./pages/OtherPage/NotFound";
 import AppLayout from "./layout/AppLayout";
@@ -23,6 +23,7 @@ import Tenants from "./pages/Tenants/Home";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { ApplicationProvider } from "./context/ApplicationContext";
+import { legacyRoutePatterns, legacyRoutes, routePatterns, routes } from "./navigation/routes";
 
 export default function App() {
   return (
@@ -31,27 +32,44 @@ export default function App() {
       <AuthProvider>
         <ApplicationProvider>
           <Routes>
-            <Route path="/signin" element={<SignIn />} />
+            <Route path={routes.accesso} element={<SignIn />} />
+            <Route path={legacyRoutes.accesso} element={<Navigate to={routes.accesso} replace />} />
 
             <Route element={<ProtectedRoute />}>
               <Route element={<AppLayout />}>
-                <Route index path="/" element={<Dashboard />} />
-                <Route path="/budget" element={<Budget />} />
-                <Route path="/reports" element={<Reports />} />
-                <Route path="/expenses" element={<ExpenseRegister />} />
-                <Route path="/expenses/new" element={<ExpenseNew />} />
-                <Route path="/expenses/:expenseId" element={<ExpenseDetail />} />
-                <Route path="/expenses/:expenseId/edit" element={<ExpenseEdit />} />
-                <Route path="/contracts" element={<Contracts />} />
-                <Route path="/contracts/new" element={<NewContract />} />
-                <Route path="/contracts/:contractId" element={<ContractDetail />} />
-                <Route path="/contracts/:contractId/edit" element={<EditContract />} />
-                <Route path="/vendors" element={<Vendors />} />
-                <Route path="/cost-centers" element={<CostCenters />} />
-                <Route path="/planning-years" element={<PlanningYears />} />
-                <Route path="/users" element={<Users />} />
-                <Route path="/roles" element={<Roles />} />
-                <Route path="/tenants" element={<Tenants />} />
+                <Route index element={<Dashboard />} />
+                <Route path={routes.budget} element={<Budget />} />
+                <Route path={routes.report} element={<Reports />} />
+                <Route path={routes.spese} element={<ExpenseRegister />} />
+                <Route path={routes.nuovaSpesa} element={<ExpenseNew />} />
+                <Route path={routePatterns.spesa} element={<ExpenseDetail />} />
+                <Route path={routePatterns.modificaSpesa} element={<ExpenseEdit />} />
+                <Route path={routes.contratti} element={<Contracts />} />
+                <Route path={routes.nuovoContratto} element={<NewContract />} />
+                <Route path={routePatterns.contratto} element={<ContractDetail />} />
+                <Route path={routePatterns.modificaContratto} element={<EditContract />} />
+                <Route path={routes.fornitori} element={<Vendors />} />
+                <Route path={routes.centriDiCosto} element={<CostCenters />} />
+                <Route path={routes.anniDiPianificazione} element={<PlanningYears />} />
+                <Route path={routes.utenti} element={<Users />} />
+                <Route path={routes.ruoli} element={<Roles />} />
+                <Route path={routes.tenant} element={<Tenants />} />
+
+                <Route path={legacyRoutes.report} element={<Navigate to={routes.report} replace />} />
+                <Route path={legacyRoutePatterns.nuovaSpesa} element={<Navigate to={routes.nuovaSpesa} replace />} />
+                <Route path={legacyRoutePatterns.modificaSpesa} element={<LegacyExpenseEditRedirect />} />
+                <Route path={legacyRoutePatterns.spesa} element={<LegacyExpenseRedirect />} />
+                <Route path={legacyRoutes.spese} element={<Navigate to={routes.spese} replace />} />
+                <Route path={legacyRoutePatterns.nuovoContratto} element={<Navigate to={routes.nuovoContratto} replace />} />
+                <Route path={legacyRoutePatterns.modificaContratto} element={<LegacyContractEditRedirect />} />
+                <Route path={legacyRoutePatterns.contratto} element={<LegacyContractRedirect />} />
+                <Route path={legacyRoutes.contratti} element={<Navigate to={routes.contratti} replace />} />
+                <Route path={legacyRoutes.fornitori} element={<Navigate to={routes.fornitori} replace />} />
+                <Route path={legacyRoutes.centriDiCosto} element={<Navigate to={routes.centriDiCosto} replace />} />
+                <Route path={legacyRoutes.anniDiPianificazione} element={<Navigate to={routes.anniDiPianificazione} replace />} />
+                <Route path={legacyRoutes.utenti} element={<Navigate to={routes.utenti} replace />} />
+                <Route path={legacyRoutes.ruoli} element={<Navigate to={routes.ruoli} replace />} />
+                <Route path={legacyRoutes.tenant} element={<Navigate to={routes.tenant} replace />} />
               </Route>
             </Route>
 
@@ -61,4 +79,24 @@ export default function App() {
       </AuthProvider>
     </Router>
   );
+}
+
+function LegacyExpenseRedirect() {
+  const { expenseId = "" } = useParams();
+  return <Navigate to={routes.spesa(expenseId)} replace />;
+}
+
+function LegacyExpenseEditRedirect() {
+  const { expenseId = "" } = useParams();
+  return <Navigate to={routes.modificaSpesa(expenseId)} replace />;
+}
+
+function LegacyContractRedirect() {
+  const { contractId = "" } = useParams();
+  return <Navigate to={routes.contratto(contractId)} replace />;
+}
+
+function LegacyContractEditRedirect() {
+  const { contractId = "" } = useParams();
+  return <Navigate to={routes.modificaContratto(contractId)} replace />;
 }

@@ -12,17 +12,16 @@ export default function ReportsHome() {
   const canView = hasAbility("report.view");
   const { selectedPlanningYearId, loading: planningYearLoading } = usePlanningYear();
   let intro: React.ReactNode = null;
-  if (loading || planningYearLoading) intro = <Alert variant="info" title="Loading application context" message="Checking the current tenant, planning year, and report ability." />;
-  else if (tenantId === null) intro = <Alert variant="warning" title="Tenant required" message="Enter a tenant from the header before loading reports." />;
-  else if (!canView) intro = <Alert variant="warning" title="Reports unavailable" message="The current application context does not grant the report.view ability." />;
+  if (loading || planningYearLoading) intro = <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant e dell'anno di pianificazione in corso." />;
+  else if (tenantId === null) intro = <Alert variant="warning" title="Tenant richiesto" message="Seleziona un Tenant dall'intestazione per aprire il Report." />;
+  else if (!canView) intro = <Alert variant="warning" title="Report non disponibile" message="Non disponi dell'autorizzazione necessaria per visualizzare questa pagina." />;
 
   return (
     <>
-      <PageMeta title="Reports | Master Plan IT" description="Paginated economic report" />
-      <PageBreadcrumb pageTitle="Reports" />
-      <PlanningYearSelector />
+      <PageMeta title="Report | Master Plan IT" description="Report economico paginato" />
+      <PageBreadcrumb pageTitle="Report" actions={<PlanningYearSelector />} />
       {intro}
-      {!intro && <ReportsView tenantId={tenantId} planningYearId={selectedPlanningYearId} canView={canView} />}
+      {!intro && <ReportsView tenantId={tenantId} planningYearId={selectedPlanningYearId} canView={canView} canLoadCostCenters={hasAbility("cost-center.view")} />}
     </>
   );
 }

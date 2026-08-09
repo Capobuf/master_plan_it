@@ -5,8 +5,8 @@ import ExpenseEditor from "../../components/expenses/ExpenseEditor";
 export default function ExpenseNew() {
   return (
     <>
-      <PageMeta title="Nuova spesa | Master Plan IT" description="Crea una nuova spesa" />
-      <PageBreadcrumb pageTitle="Nuova spesa" />
+      <PageMeta title="Nuova Spesa | Master Plan IT" description="Crea una nuova spesa" />
+      <PageBreadcrumb pageTitle="Nuova Spesa" subtitle="Inserisci i dati generali e almeno una riga di spesa." />
       <ExpenseEditor />
     </>
   );

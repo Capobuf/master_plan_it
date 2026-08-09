@@ -1,55 +1,32 @@
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, type Tenant } from "../../api/client";
 import { createTenant, deactivateTenant, listTenants, reactivateTenant, updateTenant, type TenantInput } from "../../api/tenants";
+import { CheckCircleIcon, CloseLineIcon, PencilIcon } from "../../icons";
+import { formatPercentage, normalizeDecimalInput } from "../../presentation/formatters";
+import { domainLabel } from "../../presentation/labels";
 import ComponentCard from "../common/ComponentCard";
-import InputField from "../form/input/InputField";
+import IconButton from "../common/IconButton";
+import PageBreadcrumb from "../common/PageBreadCrumb";
 import Label from "../form/Label";
+import DecimalInput from "../form/input/DecimalInput";
+import InputField from "../form/input/InputField";
+import Alert from "../ui/alert/Alert";
 import Badge from "../ui/badge/Badge";
 import Button from "../ui/button/Button";
+import { Modal } from "../ui/modal";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 
-const empty: TenantInput = { name: "", code: "", currency_code: "EUR", language_code: "en", timezone: "UTC", default_vat_rate: "22" };
+const empty:TenantInput={name:"",code:"",currency_code:"",language_code:"",timezone:"",default_vat_rate:""};
 
-export default function TenantsView({ canView, canCreate, canUpdate, canDeactivate, canReactivate }: { canView: boolean; canCreate: boolean; canUpdate: boolean; canDeactivate: boolean; canReactivate: boolean }) {
-  const [tenants, setTenants] = useState<Tenant[]>([]);
-  const [selected, setSelected] = useState<Tenant | null>(null);
-  const [form, setForm] = useState<TenantInput>(empty);
-  const [error, setError] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    if (!canView) return;
-    try { setTenants((await listTenants({ per_page: 100 })).data); } catch (e) { setError(ApiError.from(e).message); }
-  }, [canView]);
-  useEffect(() => { void load(); }, [load]);
-  const begin = (tenant: Tenant | null) => {
-    setSelected(tenant);
-    setForm(tenant ? { name: tenant.name, code: tenant.code, currency_code: tenant.currency_code, language_code: tenant.language_code, timezone: tenant.timezone, default_vat_rate: tenant.default_vat_rate } : empty);
-  };
-  const submit = async (event: React.FormEvent) => {
-    event.preventDefault();
-    try {
-      const item = selected ? await updateTenant(selected.id, { ...form, lock_version: selected.lock_version }) : await createTenant(form);
-      setTenants((items) => selected ? items.map((row) => row.id === item.id ? item : row) : [item, ...items]);
-      begin(null);
-    } catch (e) { setError(ApiError.from(e).message); }
-  };
-  const change = async (tenant: Tenant, active: boolean) => {
-    try {
-      const item = active ? await reactivateTenant(tenant.id, tenant.lock_version) : await deactivateTenant(tenant.id, tenant.lock_version, window.prompt("Enter the tenant code to confirm deactivation", tenant.code) ?? "");
-      setTenants((items) => items.map((row) => row.id === item.id ? item : row));
-    } catch (e) { setError(ApiError.from(e).message); }
-  };
-  const field = (key: keyof TenantInput) => (event: React.ChangeEvent<HTMLInputElement>) => setForm((current) => ({ ...current, [key]: event.target.value }));
-  return <div className="space-y-6">
-    {(selected ? canUpdate : canCreate) && <ComponentCard title={selected ? "Edit tenant" : "New tenant"}>
-      <form onSubmit={submit} className="grid gap-4 md:grid-cols-3">
-        {(["name", "code", "currency_code", "language_code", "timezone", "default_vat_rate"] as const).map((key) => <div key={key}><Label htmlFor={`tenant-${key}`}>{key.replace(/_/g, " ")}</Label><InputField id={`tenant-${key}`} value={form[key]} onChange={field(key)} /></div>)}
-        <div className="flex gap-2 md:col-span-3"><Button>{selected ? "Save tenant" : "Create tenant"}</Button>{selected && <Button variant="outline" onClick={() => begin(null)}>Cancel</Button>}</div>
-      </form>
-    </ComponentCard>}
-    {error && <p className="text-sm text-error-500">{error}</p>}
-    <ComponentCard title="Tenants" desc="Platform tenant registry.">
-      <div className="max-w-full overflow-x-auto"><Table><TableHeader><TableRow>{["Tenant", "Locale", "Status", "Actions"].map((head) => <TableCell key={head} isHeader className="py-3 text-start text-xs font-medium text-gray-500">{head}</TableCell>)}</TableRow></TableHeader><TableBody className="divide-y divide-gray-100 dark:divide-gray-800">{tenants.map((tenant) => <TableRow key={tenant.id}><TableCell className="py-3"><p className="font-medium">{tenant.name}</p><p className="text-xs text-gray-500">{tenant.code}</p></TableCell><TableCell className="py-3 text-sm text-gray-500">{tenant.currency_code} · {tenant.timezone}</TableCell><TableCell className="py-3"><Badge color={tenant.state === "active" ? "success" : "light"}>{tenant.state}</Badge></TableCell><TableCell className="py-3"><div className="flex flex-wrap gap-2">{canUpdate && <Button size="sm" variant="outline" onClick={() => begin(tenant)}>Edit</Button>}{tenant.state === "active" && canDeactivate && <Button size="sm" variant="outline" onClick={() => void change(tenant, false)}>Deactivate</Button>}{tenant.state !== "active" && canReactivate && <Button size="sm" variant="outline" onClick={() => void change(tenant, true)}>Reactivate</Button>}</div></TableCell></TableRow>)}</TableBody></Table></div>
-    </ComponentCard>
-  </div>;
+export default function TenantsView({canView,canCreate,canUpdate,canDeactivate,canReactivate}:{canView:boolean;canCreate:boolean;canUpdate:boolean;canDeactivate:boolean;canReactivate:boolean}){
+  const [tenants,setTenants]=useState<Tenant[]>([]); const [selected,setSelected]=useState<Tenant|null>(null); const [form,setForm]=useState<TenantInput>(empty); const [formOpen,setFormOpen]=useState(false); const [deactivateTarget,setDeactivateTarget]=useState<Tenant|null>(null); const [confirmationCode,setConfirmationCode]=useState(""); const [error,setError]=useState<string|null>(null); const [loading,setLoading]=useState(false); const [busy,setBusy]=useState(false);
+  const load=useCallback(async()=>{if(!canView)return;setLoading(true);try{setTenants((await listTenants({per_page:100})).data);}catch(requestError){setError(ApiError.from(requestError).message);}finally{setLoading(false);}},[canView]); useEffect(()=>{void load();},[load]);
+  const begin=(tenant:Tenant|null)=>{setSelected(tenant);setForm(tenant?{name:tenant.name,code:tenant.code,currency_code:tenant.currency_code,language_code:tenant.language_code,timezone:tenant.timezone,default_vat_rate:tenant.default_vat_rate}:empty);setFormOpen(true);};
+  const submit=async(event:React.FormEvent)=>{event.preventDefault();setBusy(true);try{const input={...form,default_vat_rate:normalizeDecimalInput(form.default_vat_rate,6)};const saved=selected?await updateTenant(selected.id,{...input,lock_version:selected.lock_version}):await createTenant(input);setTenants(items=>selected?items.map(item=>item.id===saved.id?saved:item):[saved,...items]);setFormOpen(false);}catch(requestError){setError(ApiError.from(requestError).message);}finally{setBusy(false);}};
+  const reactivate=async(tenant:Tenant)=>{setBusy(true);try{const saved=await reactivateTenant(tenant.id,tenant.lock_version);setTenants(items=>items.map(item=>item.id===saved.id?saved:item));}catch(requestError){setError(ApiError.from(requestError).message);}finally{setBusy(false);}};
+  const deactivate=async()=>{if(!deactivateTarget)return;setBusy(true);try{const saved=await deactivateTenant(deactivateTarget.id,deactivateTarget.lock_version,confirmationCode);setTenants(items=>items.map(item=>item.id===saved.id?saved:item));setDeactivateTarget(null);setConfirmationCode("");}catch(requestError){setError(ApiError.from(requestError).message);}finally{setBusy(false);}};
+  const field=(key:keyof TenantInput)=>(event:React.ChangeEvent<HTMLInputElement>)=>setForm(current=>({...current,[key]:event.target.value}));
+  return <><PageBreadcrumb pageTitle="Tenant" subtitle="Registro dei Tenant disponibili sulla piattaforma." actions={canCreate?<Button size="sm" onClick={()=>begin(null)}>Nuovo Tenant</Button>:null}/>{error?<Alert variant="error" title="Operazione non riuscita" message={error}/>:null}<ComponentCard title="Registro Tenant">{loading?<Alert variant="info" title="Caricamento dei Tenant" message="Recupero del registro in corso."/>:tenants.length===0?<Alert variant="info" title="Nessun Tenant" message="Non sono presenti Tenant sulla piattaforma."/>:<div className="max-w-full overflow-x-auto"><Table><TableHeader className="border-y border-gray-100 dark:border-gray-800"><TableRow>{["Nome","Codice","Valuta e lingua","Fuso orario","IVA predefinita","Stato","Azioni"].map(head=><TableCell key={head} isHeader className="whitespace-nowrap py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">{head}</TableCell>)}</TableRow></TableHeader><TableBody className="divide-y divide-gray-100 dark:divide-gray-800">{tenants.map(tenant=><TableRow key={tenant.id}><TableCell className="py-3 font-medium text-gray-800 dark:text-white/90">{tenant.name}</TableCell><TableCell className="py-3 text-sm text-gray-600 dark:text-gray-300">{tenant.code}</TableCell><TableCell className="py-3 text-sm text-gray-600 dark:text-gray-300">{tenant.currency_code} · {tenant.language_code}</TableCell><TableCell className="py-3 text-sm text-gray-600 dark:text-gray-300">{tenant.timezone}</TableCell><TableCell className="py-3 text-sm text-gray-600 dark:text-gray-300">{formatPercentage(tenant.default_vat_rate)}</TableCell><TableCell className="py-3"><Badge color={tenant.state==="active"?"success":"light"}>{domainLabel(tenant.state)}</Badge></TableCell><TableCell className="py-3"><div className="flex items-center gap-2">{canUpdate?<IconButton icon={PencilIcon} label={`Modifica ${tenant.name}`} onClick={()=>begin(tenant)} disabled={busy}/>:null}{tenant.state==="active"&&canDeactivate?<IconButton icon={CloseLineIcon} label={`Disattiva ${tenant.name}`} onClick={()=>{setDeactivateTarget(tenant);setConfirmationCode("");}} disabled={busy}/>:null}{tenant.state!=="active"&&canReactivate?<IconButton icon={CheckCircleIcon} label={`Riattiva ${tenant.name}`} onClick={()=>void reactivate(tenant)} disabled={busy}/>:null}</div></TableCell></TableRow>)}</TableBody></Table></div>}</ComponentCard>
+  <Modal isOpen={formOpen} onClose={()=>setFormOpen(false)} className="max-w-3xl p-6"><h2 className="pr-12 text-lg font-semibold text-gray-800 dark:text-white/90">{selected?"Modifica Tenant":"Nuovo Tenant"}</h2><form onSubmit={submit} className="mt-5 grid gap-4 md:grid-cols-2"><div><Label htmlFor="tenant-name">Nome</Label><InputField id="tenant-name" value={form.name} onChange={field("name")}/></div><div><Label htmlFor="tenant-code">Codice</Label><InputField id="tenant-code" value={form.code} onChange={field("code")}/></div><div><Label htmlFor="tenant-currency">Valuta</Label><InputField id="tenant-currency" value={form.currency_code} onChange={field("currency_code")} placeholder="Codice valuta configurato"/></div><div><Label htmlFor="tenant-language">Lingua</Label><InputField id="tenant-language" value={form.language_code} onChange={field("language_code")} placeholder="Codice lingua configurato"/></div><div><Label htmlFor="tenant-timezone">Fuso orario</Label><InputField id="tenant-timezone" value={form.timezone} onChange={field("timezone")} placeholder="Fuso orario configurato"/></div><div><Label htmlFor="tenant-vat">Aliquota IVA predefinita</Label><DecimalInput id="tenant-vat" value={form.default_vat_rate} onChange={default_vat_rate=>setForm(current=>({...current,default_vat_rate}))} fixedScale={2}/></div><div className="flex justify-end gap-3 md:col-span-2"><Button type="button" variant="outline" onClick={()=>setFormOpen(false)}>Annulla</Button><Button disabled={busy}>{busy?"Salvataggio…":selected?"Salva Modifiche":"Crea Tenant"}</Button></div></form></Modal>
+  <Modal isOpen={deactivateTarget!==null} onClose={()=>setDeactivateTarget(null)} className="max-w-lg p-6"><h2 className="pr-12 text-lg font-semibold text-gray-800 dark:text-white/90">Disattivare il Tenant?</h2><p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Per confermare, digita esattamente il codice <span className="font-semibold text-gray-800 dark:text-white/90">{deactivateTarget?.code}</span>.</p><div className="mt-5"><Label htmlFor="tenant-confirmation-code">Codice Tenant</Label><InputField id="tenant-confirmation-code" value={confirmationCode} onChange={event=>setConfirmationCode(event.target.value)}/></div><div className="mt-6 flex justify-end gap-3"><Button variant="outline" onClick={()=>setDeactivateTarget(null)}>Annulla</Button><Button onClick={()=>void deactivate()} disabled={busy||confirmationCode!==deactivateTarget?.code}>{busy?"Disattivazione…":"Disattiva Tenant"}</Button></div></Modal></>;
 }

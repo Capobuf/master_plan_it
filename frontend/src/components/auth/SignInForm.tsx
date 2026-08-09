@@ -7,6 +7,7 @@ import Label from "../form/Label";
 import Input from "../form/input/InputField";
 import Alert from "../ui/alert/Alert";
 import Button from "../ui/button/Button";
+import { routes } from "../../navigation/routes";
 
 interface FieldErrors {
   email?: string;
@@ -52,14 +53,14 @@ export default function SignInForm() {
         aria-live="polite"
       >
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Loading session…
+          Caricamento della sessione…
         </p>
       </div>
     );
   }
 
   if (authenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to={routes.panoramica} replace />;
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -73,14 +74,18 @@ export default function SignInForm() {
       const routeState = location.state as
         | { from?: { pathname?: string } }
         | null;
-      navigate(routeState?.from?.pathname ?? "/", { replace: true });
+      navigate(routeState?.from?.pathname ?? routes.panoramica, { replace: true });
     } catch (error) {
       const apiError = ApiError.from(error);
 
       if (apiError.handledStatus === 422) {
         setFieldErrors({
-          email: firstFieldMessage(apiError.fields.email),
-          password: firstFieldMessage(apiError.fields.password),
+          email: firstFieldMessage(apiError.fields.email)
+            ? "Controlla l'indirizzo email."
+            : undefined,
+          password: firstFieldMessage(apiError.fields.password)
+            ? "Controlla la password."
+            : undefined,
         });
       }
 
@@ -97,7 +102,7 @@ export default function SignInForm() {
   };
 
   const errorMessage = formError?.correlationId
-    ? `${formError.message} Reference: ${formError.correlationId}`
+    ? `${formError.message} Riferimento tecnico: ${formError.correlationId}`
     : formError?.message;
 
   return (
@@ -106,10 +111,10 @@ export default function SignInForm() {
         <div>
           <div className="mb-5 sm:mb-8">
             <h1 className="mb-2 font-semibold text-gray-800 text-title-sm dark:text-white/90 sm:text-title-md">
-              Sign In
+              Accedi
             </h1>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              Enter your email and password to sign in.
+              Inserisci email e password per accedere a Master Plan IT.
             </p>
           </div>
           <form onSubmit={handleSubmit}>
@@ -117,7 +122,7 @@ export default function SignInForm() {
               {errorMessage ? (
                 <Alert
                   variant="error"
-                  title="Sign in failed"
+                  title="Accesso non riuscito"
                   message={errorMessage}
                 />
               ) : null}
@@ -148,7 +153,7 @@ export default function SignInForm() {
                     name="password"
                     type={showPassword ? "text" : "password"}
                     autoComplete="current-password"
-                    placeholder="Enter your password"
+                    placeholder="Inserisci la password"
                     value={password}
                     onChange={(event) => setPassword(event.target.value)}
                     disabled={submitting}
@@ -159,7 +164,7 @@ export default function SignInForm() {
                     type="button"
                     onClick={() => setShowPassword((visible) => !visible)}
                     className="absolute z-30 -translate-y-1/2 cursor-pointer right-4 top-1/2"
-                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-label={showPassword ? "Nascondi password" : "Mostra password"}
                     aria-pressed={showPassword}
                     disabled={submitting}
                   >
@@ -173,7 +178,7 @@ export default function SignInForm() {
               </div>
               <div>
                 <Button className="w-full" size="sm" disabled={submitting}>
-                  {submitting ? "Signing in…" : "Sign in"}
+                  {submitting ? "Accesso…" : "Accedi"}
                 </Button>
               </div>
             </div>
