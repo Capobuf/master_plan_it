@@ -7,7 +7,6 @@ import Alert from "../../components/ui/alert/Alert";
 import DashboardView from "../../components/dashboard/DashboardView";
 import { useApplicationContext } from "../../context/ApplicationContext";
 import { usePlanningYear } from "../../context/PlanningYearContext";
-import PlanningYearSelector from "../../components/dashboard/PlanningYearSelector";
 
 interface DashboardState {
   tenantId: number;
@@ -116,7 +115,7 @@ export default function Home() {
         title="Panoramica | Master Plan IT"
         description="Panoramica economica dell'anno di pianificazione selezionato"
       />
-      <PageBreadcrumb pageTitle="Panoramica" actions={<PlanningYearSelector />} />
+      <PageBreadcrumb pageTitle="Panoramica" />
       {content}
     </>
   );

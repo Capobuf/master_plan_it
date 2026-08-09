@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 
 import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
+import PlanningYearDropdown from "../components/header/PlanningYearDropdown";
 import TenantDropdown from "../components/header/TenantDropdown";
 import UserDropdown from "../components/header/UserDropdown";
 import { useSidebar } from "../context/SidebarContext";
@@ -16,6 +17,7 @@ const AppHeader: React.FC = () => {
     if (window.innerWidth >= 1024) {
       toggleSidebar();
     } else {
+      setApplicationMenuOpen(false);
       toggleMobileSidebar();
     }
   };
@@ -55,14 +57,19 @@ const AppHeader: React.FC = () => {
 
         <div
           className={`${
-            isApplicationMenuOpen ? "flex" : "hidden"
-          } w-full items-center justify-between gap-4 px-5 py-4 shadow-theme-md lg:flex lg:justify-end lg:px-0 lg:shadow-none`}
+            isApplicationMenuOpen ? "grid" : "hidden"
+          } w-full grid-cols-2 items-center gap-3 px-5 py-4 shadow-theme-md lg:flex lg:justify-end lg:gap-4 lg:px-0 lg:shadow-none`}
         >
-          <div className="flex items-center gap-2 2xsm:gap-3">
-            <ThemeToggleButton />
+          <div className="col-span-2 flex items-center gap-2 2xsm:gap-3 lg:order-2 lg:col-span-1">
             <TenantDropdown />
+            <PlanningYearDropdown />
           </div>
-          <UserDropdown />
+          <div className="lg:order-1">
+            <ThemeToggleButton />
+          </div>
+          <div className="justify-self-end lg:order-3">
+            <UserDropdown />
+          </div>
         </div>
       </div>
     </header>

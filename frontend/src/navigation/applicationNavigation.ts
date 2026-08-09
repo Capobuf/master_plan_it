@@ -21,34 +21,28 @@ export interface ApplicationNavigationItem {
   requiredAbility: string;
 }
 
-export interface ApplicationNavigationGroup {
+export interface ApplicationNavigationSection {
   id: string;
   label: string;
-  icon: ComponentType<SVGProps<SVGSVGElement>>;
   items: readonly ApplicationNavigationItem[];
-}
-
-export type ApplicationNavigationEntry =
-  | ApplicationNavigationItem
-  | ApplicationNavigationGroup;
-
-export function isNavigationGroup(
-  entry: ApplicationNavigationEntry,
-): entry is ApplicationNavigationGroup {
-  return "items" in entry;
 }
 
 export const applicationNavigation = [
   {
-    route: routes.panoramica,
-    label: "Panoramica",
-    icon: GridIcon,
-    requiredAbility: "dashboard.view",
+    id: "general",
+    label: "Generale",
+    items: [
+      {
+        route: routes.panoramica,
+        label: "Panoramica",
+        icon: GridIcon,
+        requiredAbility: "dashboard.view",
+      },
+    ],
   },
   {
     id: "planning",
     label: "Pianificazione",
-    icon: PieChartIcon,
     items: [
       {
         route: routes.budget,
@@ -67,7 +61,6 @@ export const applicationNavigation = [
   {
     id: "operations",
     label: "Operatività",
-    icon: TableIcon,
     items: [
       {
         route: routes.spese,
@@ -98,7 +91,6 @@ export const applicationNavigation = [
   {
     id: "settings",
     label: "Impostazioni",
-    icon: BoxCubeIcon,
     items: [
       {
         route: routes.anniDiPianificazione,
@@ -129,7 +121,6 @@ export const applicationNavigation = [
   {
     id: "platform",
     label: "Piattaforma",
-    icon: GridIcon,
     items: [
       {
         route: routes.tenant,
@@ -139,4 +130,4 @@ export const applicationNavigation = [
       },
     ],
   },
-] as const satisfies readonly ApplicationNavigationEntry[];
+] as const satisfies readonly ApplicationNavigationSection[];

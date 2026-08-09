@@ -61,6 +61,7 @@ export default function UserDropdown() {
         className="flex items-center text-gray-700 dropdown-toggle dark:text-gray-400"
         aria-label="Apri il menu utente"
         aria-expanded={isOpen}
+        aria-controls="user-dropdown"
       >
         <span className="mr-3 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
           <UserCircleIcon className="h-7 w-7 fill-gray-500 dark:fill-gray-400" />
@@ -79,6 +80,7 @@ export default function UserDropdown() {
       <Dropdown
         isOpen={isOpen}
         onClose={closeDropdown}
+        triggerId="user-dropdown"
         className="absolute right-0 mt-[17px] flex w-[280px] flex-col rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
       >
         <div>

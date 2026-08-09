@@ -140,11 +140,14 @@ export default function TenantDropdown() {
         className="dropdown-toggle flex h-11 items-center gap-2 rounded-lg border border-gray-200 px-3 text-sm font-medium text-gray-700 dark:border-gray-800 dark:text-gray-400"
         aria-label="Apri il menu Tenant"
         aria-expanded={isOpen}
+        aria-controls="tenant-dropdown"
       >
         <CheckCircleIcon className="h-5 w-5 fill-gray-500 dark:fill-gray-400" />
-        <span>{currentTenant?.name ?? "Amministrazione di Piattaforma"}</span>
+        <span className="max-w-[120px] truncate sm:max-w-[180px]">
+          {currentTenant?.name ?? "Amministrazione di Piattaforma"}
+        </span>
         {currentTenant ? (
-          <span className="text-theme-xs text-gray-500 dark:text-gray-400">
+          <span className="hidden text-theme-xs text-gray-500 dark:text-gray-400 xl:inline">
             {domainLabel(currentTenant.state)}
           </span>
         ) : null}
@@ -158,6 +161,7 @@ export default function TenantDropdown() {
       <Dropdown
         isOpen={isOpen}
         onClose={() => setIsOpen(false)}
+        triggerId="tenant-dropdown"
         className="absolute right-0 mt-[17px] flex max-h-[420px] w-[300px] flex-col overflow-y-auto rounded-2xl border border-gray-200 bg-white p-3 shadow-theme-lg dark:border-gray-800 dark:bg-gray-dark"
       >
         <div className="border-b border-gray-200 pb-3 dark:border-gray-800">

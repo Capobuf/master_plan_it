@@ -4,7 +4,6 @@ import PageMeta from "../../components/common/PageMeta";
 import Alert from "../../components/ui/alert/Alert";
 import ReportsView from "../../components/reports/ReportsView";
 import { usePlanningYear } from "../../context/PlanningYearContext";
-import PlanningYearSelector from "../../components/dashboard/PlanningYearSelector";
 
 export default function ReportsHome() {
   const { data, loading, hasAbility } = useApplicationContext();
@@ -19,7 +18,7 @@ export default function ReportsHome() {
   return (
     <>
       <PageMeta title="Report | Master Plan IT" description="Report economico paginato" />
-      <PageBreadcrumb pageTitle="Report" actions={<PlanningYearSelector />} />
+      <PageBreadcrumb pageTitle="Report" />
       {intro}
       {!intro && <ReportsView tenantId={tenantId} planningYearId={selectedPlanningYearId} canView={canView} canLoadCostCenters={hasAbility("cost-center.view")} />}
     </>

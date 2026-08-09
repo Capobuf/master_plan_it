@@ -37,7 +37,7 @@ The following upstream files have intentional, scoped changes:
 - `src/components/form/input/InputField.tsx`: added passthrough for the native `autocomplete` attribute used by the sign-in fields.
 - `src/layout/AppHeader.tsx`: replaced unsupported demo search/notifications with the application tenant and user dropdowns while retaining the TailAdmin shell.
 - `src/components/header/UserDropdown.tsx`: replaced demo identity/profile links with current-user data and API logout.
-- `src/layout/AppSidebar.tsx`: replaced demo navigation with the local ability-filtered route configuration.
+- `src/layout/AppSidebar.tsx`: adapted the TailAdmin Sectioned Sidebar Layout to the local ability-filtered route configuration.
 - `src/pages/Dashboard/Home.tsx`: replaced ecommerce demo data with the protected API connectivity surface using stock TailAdmin content components.
 - `src/pages/AuthPages/SignIn.tsx`, `src/pages/AuthPages/AuthPageLayout.tsx`, and `src/pages/OtherPage/NotFound.tsx`: changed application labels and metadata only.
 - `src/components/ecommerce/CountryMap.tsx`, `src/pages/Calendar.tsx`, and `src/svg.d.ts`: type-only corrections required for the upstream ESLint gate; runtime UI behavior is unchanged.
