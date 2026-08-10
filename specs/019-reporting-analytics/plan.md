@@ -4,7 +4,7 @@
 
 ## Summary
 
-Estendere il Report economico annuale esistente affinché carichi sempre il dataset completo del Tenant/Planning Year, riconcili il Plafond prima dei filtri Report e produca dallo stesso subset filtrato summary, cinque raggruppamenti, visualizzazioni limitate non paginate e dettaglio paginato. Ridisegnare la pagina React con filtri draft/apply, sei KPI, grafici ApexCharts/TailAdmin, attenzioni reali e tabella responsive, senza nuovi endpoint, permission, dipendenze o formule economiche client-side.
+Estendere il Report economico annuale esistente affinché carichi sempre il dataset completo del Tenant/Planning Year, riconcili il Plafond prima dei filtri Report e produca dallo stesso subset filtrato summary, cinque raggruppamenti, visualizzazioni limitate non paginate e dettaglio paginato. La pagina React usa filtri discreti automatici, sei KPI, grafici ApexCharts/TailAdmin e tabella responsive, senza pannello `Attenzioni` e senza nuovi endpoint, permission, dipendenze o formule economiche client-side.
 
 ## Technical Context
 
@@ -20,11 +20,11 @@ Estendere il Report economico annuale esistente affinché carichi sempre il data
 
 **Project Type**: web application backend + frontend
 
-**Performance Goals**: una richiesta Report per applicazione filtri o cambio pagina; visualizzazione limitata a 10 gruppi e donut a 6 segmenti; nessuna dipendenza dalla dimensione della pagina per i grafici
+**Performance Goals**: una richiesta Report per modifica di un filtro discreto valido o cambio pagina; nessuna richiesta storica prima di valorizzare il Cutoff; visualizzazione limitata a 10 gruppi e donut a 6 segmenti; nessuna dipendenza dalla dimensione della pagina per i grafici
 
 **Constraints**: stringhe decimali e BCMath per valori autorevoli; tenant isolation fail-closed; riconciliazione Plafond prima dei filtri; paginazione server-side; nessuna nuova dependency, migration, permission o formula economica React
 
-**Scale/Scope**: un endpoint esistente, un Planning Year, cinque dimensioni di grouping, tre filtri lookup opzionali, uno stato, due viste, sei KPI, quattro visualizzazioni e una tabella
+**Scale/Scope**: un endpoint esistente, un Planning Year, cinque dimensioni di grouping, tre filtri lookup opzionali, uno stato, due viste, sei KPI, quattro visualizzazioni e una tabella; il delta post-review è frontend-only
 
 ## Constitution Check
 
@@ -67,17 +67,18 @@ I gruppi principali sono ordinati server-side per la massima magnitudine assolut
 ```text
 ReportsHome
     └── ReportsView
-        ├── filter bar (draft → submit → applied query)
+        ├── filter bar (selezione discreta → query automatica, pagina 1)
         ├── EcommerceMetrics × 6
         ├── ReportEconomicChart — grouped Proposto/Approvato/Actual
         ├── BreakdownDonutChart — Ripartizione del Proposto
         ├── StatisticsChart — Scostamento orizzontale
         ├── BreakdownDonutChart — Stato Spese
-        ├── Alert/Badge — Attenzioni condizionali
         └── Table — dettaglio server-paginated
 ```
 
-`ReportsHome` passa separatamente `cost-center.view`, `project.view` e `vendor.view`. Ogni lookup viene caricato e gestito indipendentemente, così un errore locale non blocca gli altri filtri o la richiesta Report. La query applicata contiene soltanto i valori submitted; la paginazione modifica esclusivamente `page` sulla stessa query.
+`ReportsHome` passa separatamente `cost-center.view`, `project.view` e `vendor.view`. Ogni lookup viene caricato e gestito indipendentemente, così un errore locale non blocca gli altri filtri o la richiesta Report.
+
+`ReportsView` mantiene un solo stato dei filtri UI. Ogni Select discreto aggiorna il valore interessato e riporta `page` a 1; la query derivata avvia automaticamente il refresh. La Vista Storica mostra subito il Cutoff ma non invia richieste finché è vuoto; un Cutoff valido aggiunge `as_of`, mentre il ritorno alla Vista Corrente lo rimuove e ricarica la pagina 1. Durante i refresh successivi la response valida corrente resta visibile con un feedback discreto vicino ai filtri. La paginazione modifica esclusivamente `page` senza cambiare gli altri filtri.
 
 Il layout usa KPI 2×3 sui viewport stretti e 6 colonne desktop, due griglie analitiche 2/3 + 1/3 da `xl`, grafici compatti e colonne tabella responsive. Non sono richieste modifiche globali a `index.css`: gli override ApexCharts esistenti coprono light/dark.
 
@@ -122,6 +123,6 @@ frontend/src/components/reports/ReportsView.test.tsx
 
 1. `php artisan test tests/Feature/Api/Reporting/ReportingApiHttpTest.php`.
 2. `composer test:static`.
-3. Test Vitest focalizzato `ReportsView.test.tsx` se l'infrastruttura corrente lo consente.
+3. Test Vitest focalizzato `ReportsView.test.tsx` per filtri automatici, storico/Cutoff e assenza del pannello `Attenzioni`.
 4. Da `frontend`: `npm run test:dark-tokens`, `npm run lint`, `npm run build`.
-5. Verifica browser a circa 1440px light/dark e 390px light/dark, controllando filtri, KPI, grafici, attenzioni, valori negativi e tabella.
+5. Verifica browser a circa 1440px light/dark e 390px, controllando filtri automatici, storico/Cutoff, refresh senza scomparsa del Report, assenza di `Attenzioni`, KPI, grafici, valori negativi e tabella.

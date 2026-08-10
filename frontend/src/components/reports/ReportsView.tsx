@@ -10,7 +10,7 @@ import {
   type ReportsResponse,
 } from "../../api/reports";
 import { AlertHexaIcon, BoxIconLine, CheckCircleIcon, DollarLineIcon, ListIcon, PieChartIcon } from "../../icons";
-import { formatMoney, formatPercentage, isPositiveDecimal, toChartNumber } from "../../presentation/formatters";
+import { formatMoney, formatPercentage, toChartNumber } from "../../presentation/formatters";
 import ComponentCard from "../common/ComponentCard";
 import BreakdownDonutChart from "../dashboard/BreakdownDonutChart";
 import EcommerceMetrics, { type EcommerceMetric } from "../ecommerce/EcommerceMetrics";
@@ -31,7 +31,7 @@ const groupings: Array<{ value: ReportGrouping; label: string }> = [
   { value: "expense", label: "Spesa" },
 ];
 
-interface DraftFilters {
+interface ReportFiltersState {
   grouping: ReportGrouping;
   costCenter: string;
   project: string;
@@ -39,6 +39,7 @@ interface DraftFilters {
   expenseState: "" | ReportExpenseState;
   view: "current" | "historical";
   asOf: string;
+  page: number;
 }
 
 interface ReportsViewProps {
@@ -50,7 +51,7 @@ interface ReportsViewProps {
   canLoadVendors: boolean;
 }
 
-const defaultDraft = (): DraftFilters => ({
+const defaultFilters = (): ReportFiltersState => ({
   grouping: "cost_center",
   costCenter: "",
   project: "",
@@ -58,9 +59,8 @@ const defaultDraft = (): DraftFilters => ({
   expenseState: "",
   view: "current",
   asOf: "",
+  page: 1,
 });
-
-const defaultQuery = (): ReportsQuery => ({ page: 1, per_page: 15, group_by: "cost_center" });
 
 function ReportsPagination({ meta, onPage }: { meta: ReportsResponse["meta"]; onPage: (page: number) => void }) {
   if (meta.last_page <= 1) return null;
@@ -83,8 +83,7 @@ export default function ReportsView({
   canLoadProjects,
   canLoadVendors,
 }: ReportsViewProps) {
-  const [draft, setDraft] = useState<DraftFilters>(defaultDraft);
-  const [appliedQuery, setAppliedQuery] = useState<ReportsQuery>(defaultQuery);
+  const [filters, setFilters] = useState<ReportFiltersState>(defaultFilters);
   const [costCenters, setCostCenters] = useState<ExpenseLookupOption[]>([]);
   const [projects, setProjects] = useState<ProjectLookupOption[]>([]);
   const [vendors, setVendors] = useState<ExpenseLookupOption[]>([]);
@@ -95,6 +94,17 @@ export default function ReportsView({
     error: ApiError | null;
     loading: boolean;
   } | null>(null);
+
+  const reportQuery = useMemo<ReportsQuery>(() => ({
+    page: filters.page,
+    per_page: 15,
+    group_by: filters.grouping,
+    ...(filters.costCenter ? { cost_center_id: Number.parseInt(filters.costCenter, 10) } : {}),
+    ...(filters.project ? { project_id: Number.parseInt(filters.project, 10) } : {}),
+    ...(filters.vendor ? { vendor_id: Number.parseInt(filters.vendor, 10) } : {}),
+    ...(filters.expenseState ? { state: filters.expenseState } : {}),
+    ...(filters.view === "historical" && filters.asOf ? { as_of: filters.asOf } : {}),
+  }), [filters]);
 
   useEffect(() => {
     setCostCenters([]);
@@ -127,18 +137,36 @@ export default function ReportsView({
       return;
     }
     const scope = `${tenantId}:${planningYearId}`;
+    if (filters.view === "historical" && !filters.asOf) {
+      setReportState((current) => current?.scope === scope ? { ...current, error: null, loading: false } : current);
+      return;
+    }
     let active = true;
-    setReportState({ scope, response: null, error: null, loading: true });
-    void getReports({ ...appliedQuery, planning_year_id: planningYearId })
+    setReportState((current) => ({
+      scope,
+      response: current?.scope === scope ? current.response : null,
+      error: null,
+      loading: true,
+    }));
+    void getReports({ ...reportQuery, planning_year_id: planningYearId })
       .then((response) => { if (active) setReportState({ scope, response, error: null, loading: false }); })
-      .catch((error) => { if (active) setReportState({ scope, response: null, error: ApiError.from(error), loading: false }); });
+      .catch((error) => {
+        if (active) {
+          setReportState((current) => ({
+            scope,
+            response: current?.scope === scope ? current.response : null,
+            error: ApiError.from(error),
+            loading: false,
+          }));
+        }
+      });
     return () => { active = false; };
-  }, [appliedQuery, canView, planningYearId, tenantId]);
+  }, [canView, filters.asOf, filters.view, planningYearId, reportQuery, tenantId]);
 
   const currentScope = tenantId !== null && planningYearId !== null ? `${tenantId}:${planningYearId}` : null;
   const response = reportState?.scope === currentScope ? reportState.response : null;
   const error = reportState?.scope === currentScope ? reportState.error : null;
-  const loading = reportState?.scope === currentScope && reportState.loading;
+  const loading = Boolean(reportState?.scope === currentScope && reportState.loading);
   const currency = response?.summary.currency ?? "EUR";
   const dimension = groupings.find((item) => item.value === response?.filters.group_by)?.label ?? "Centro di Costo";
   const topGroups = response?.visualization.groups ?? [];
@@ -152,57 +180,42 @@ export default function ReportsView({
     { label: "Utilizzo", value: formatPercentage(response.summary.utilization_percentage), icon: ListIcon },
   ] : [], [currency, response]);
 
-  const applyFilters = () => {
-    setAppliedQuery({
-      page: 1,
-      per_page: 15,
-      group_by: draft.grouping,
-      ...(draft.costCenter ? { cost_center_id: Number.parseInt(draft.costCenter, 10) } : {}),
-      ...(draft.project ? { project_id: Number.parseInt(draft.project, 10) } : {}),
-      ...(draft.vendor ? { vendor_id: Number.parseInt(draft.vendor, 10) } : {}),
-      ...(draft.expenseState ? { state: draft.expenseState } : {}),
-      ...(draft.view === "historical" && draft.asOf ? { as_of: draft.asOf } : {}),
-    });
-  };
-
   const resetFilters = () => {
-    setDraft(defaultDraft());
-    setAppliedQuery(defaultQuery());
+    setFilters(defaultFilters());
   };
 
   if (planningYearId === null) {
     return <Alert variant="info" title="Planning Year richiesto" message="Seleziona il Planning Year globale dall'intestazione per aprire il Report." />;
   }
 
-  const showAttentions = Boolean(response && (response.summary.unapproved_actual_expenses > 0 || isPositiveDecimal(response.global_plafond_overrun)));
   const varianceHeight = Math.min(340, Math.max(180, topGroups.length * 30 + 90));
 
   return (
     <div className="space-y-5 sm:space-y-6">
-      <form
-        onSubmit={(event) => { event.preventDefault(); applyFilters(); }}
+      <section
+        aria-busy={loading}
         className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5"
       >
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-6">
-          <div><Label htmlFor="report-grouping">Raggruppa per</Label><Select id="report-grouping" options={groupings} value={draft.grouping} onChange={(value) => setDraft((current) => ({ ...current, grouping: value as ReportGrouping }))} /></div>
-          {canLoadCostCenters ? <div><Label htmlFor="report-cost-center">Centro di Costo</Label><Select id="report-cost-center" options={costCenters.map((item) => ({ value: String(item.id), label: item.name }))} value={draft.costCenter} placeholder="Tutti" allowEmpty onChange={(value) => setDraft((current) => ({ ...current, costCenter: value }))} /></div> : null}
-          {canLoadProjects ? <div><Label htmlFor="report-project">Progetto</Label><Select id="report-project" options={projects.map((item) => ({ value: String(item.id), label: item.title }))} value={draft.project} placeholder="Tutti" allowEmpty onChange={(value) => setDraft((current) => ({ ...current, project: value }))} /></div> : null}
-          {canLoadVendors ? <div><Label htmlFor="report-vendor">Fornitore</Label><Select id="report-vendor" options={vendors.map((item) => ({ value: String(item.id), label: item.name }))} value={draft.vendor} placeholder="Tutti" allowEmpty onChange={(value) => setDraft((current) => ({ ...current, vendor: value }))} /></div> : null}
-          <div><Label htmlFor="report-state">Stato Spesa</Label><Select id="report-state" options={[{ value: "open", label: "Aperte" }, { value: "closed", label: "Chiuse" }]} value={draft.expenseState} placeholder="Tutte" allowEmpty onChange={(value) => setDraft((current) => ({ ...current, expenseState: value as "" | ReportExpenseState }))} /></div>
-          <div><Label htmlFor="report-view">Vista</Label><Select id="report-view" options={[{ value: "current", label: "Corrente" }, { value: "historical", label: "Storica" }]} value={draft.view} onChange={(value) => setDraft((current) => ({ ...current, view: value as DraftFilters["view"], ...(value === "current" ? { asOf: "" } : {}) }))} /></div>
-          {draft.view === "historical" ? <div className="sm:col-span-2 xl:col-span-2"><Label htmlFor="report-as-of">Cutoff</Label><input id="report-as-of" type="datetime-local" required value={draft.asOf} onChange={(event) => setDraft((current) => ({ ...current, asOf: event.target.value }))} className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800" /></div> : null}
+          <div><Label htmlFor="report-grouping">Raggruppa per</Label><Select id="report-grouping" options={groupings} value={filters.grouping} onChange={(value) => setFilters((current) => ({ ...current, grouping: value as ReportGrouping, page: 1 }))} /></div>
+          {canLoadCostCenters ? <div><Label htmlFor="report-cost-center">Centro di Costo</Label><Select id="report-cost-center" options={costCenters.map((item) => ({ value: String(item.id), label: item.name }))} value={filters.costCenter} placeholder="Tutti" allowEmpty onChange={(value) => setFilters((current) => ({ ...current, costCenter: value, page: 1 }))} /></div> : null}
+          {canLoadProjects ? <div><Label htmlFor="report-project">Progetto</Label><Select id="report-project" options={projects.map((item) => ({ value: String(item.id), label: item.title }))} value={filters.project} placeholder="Tutti" allowEmpty onChange={(value) => setFilters((current) => ({ ...current, project: value, page: 1 }))} /></div> : null}
+          {canLoadVendors ? <div><Label htmlFor="report-vendor">Fornitore</Label><Select id="report-vendor" options={vendors.map((item) => ({ value: String(item.id), label: item.name }))} value={filters.vendor} placeholder="Tutti" allowEmpty onChange={(value) => setFilters((current) => ({ ...current, vendor: value, page: 1 }))} /></div> : null}
+          <div><Label htmlFor="report-state">Stato Spesa</Label><Select id="report-state" options={[{ value: "open", label: "Aperte" }, { value: "closed", label: "Chiuse" }]} value={filters.expenseState} placeholder="Tutte" allowEmpty onChange={(value) => setFilters((current) => ({ ...current, expenseState: value as "" | ReportExpenseState, page: 1 }))} /></div>
+          <div><Label htmlFor="report-view">Vista</Label><Select id="report-view" options={[{ value: "current", label: "Corrente" }, { value: "historical", label: "Storica" }]} value={filters.view} onChange={(value) => setFilters((current) => ({ ...current, view: value as ReportFiltersState["view"], asOf: value === "current" ? "" : current.asOf, page: 1 }))} /></div>
+          {filters.view === "historical" ? <div className="sm:col-span-2 xl:col-span-2"><Label htmlFor="report-as-of">Cutoff</Label><input id="report-as-of" type="datetime-local" required value={filters.asOf} onChange={(event) => setFilters((current) => ({ ...current, asOf: event.target.value, page: 1 }))} className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 text-sm text-gray-800 shadow-theme-xs focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/10 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:focus:border-brand-800" /></div> : null}
         </div>
-        <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div className="mt-4 flex flex-col-reverse gap-2 sm:flex-row sm:items-center sm:justify-end">
+          {loading && response ? <p className="text-sm text-gray-500 dark:text-gray-400" aria-live="polite">Aggiornamento…</p> : null}
           <Button type="button" variant="outline" onClick={resetFilters}>Azzera filtri</Button>
-          <Button type="submit">Applica filtri</Button>
         </div>
         {Object.entries(lookupErrors).map(([key, message]) => <p key={key} className="mt-2 text-sm text-error-600 dark:text-error-500">Filtro non disponibile: {message}</p>)}
-      </form>
+      </section>
 
       {response?.read_only ? <Alert variant="info" title="Report storico in sola lettura" message={`Cutoff: ${response.cutoff_utc ?? response.requested_as_of ?? "richiesto"}.`} /> : null}
       {response?.budget.warning ? <Alert variant="warning" title="Budget chiuso" message="Il Report include le modifiche economiche registrate dopo la chiusura." /> : null}
       {error ? <Alert variant="error" title="Caricamento del Report non riuscito" message={error.message} /> : null}
-      {loading || (!error && !response) ? <Alert variant="info" title="Caricamento del Report" message="Recupero dei dati annuali." /> : null}
+      {!response && loading ? <Alert variant="info" title="Caricamento del Report" message="Recupero dei dati annuali." /> : null}
 
       {response ? <EcommerceMetrics metrics={metrics} columns={6} /> : null}
       {response && response.data.length === 0 ? <Alert variant="info" title="Nessun risultato" message="Nessun gruppo corrisponde ai filtri applicati." /> : null}
@@ -251,26 +264,16 @@ export default function ReportsView({
                 <ComponentCard title={`Scostamento per ${dimension}`} compact><p className="rounded-xl border border-dashed border-gray-300 px-4 py-8 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">Nessun gruppo da rappresentare.</p></ComponentCard>
               )}
             </div>
-            <div className="space-y-4">
-              <BreakdownDonutChart
-                title="Stato Spese"
-                entries={[
-                  { label: "Aperte", value: response.visualization.expense_states.open, displayValue: String(response.visualization.expense_states.open), color: "#465FFF" },
-                  { label: "Chiuse", value: response.visualization.expense_states.closed, displayValue: String(response.visualization.expense_states.closed), color: "#12B76A" },
-                ]}
-                emptyMessage="Nessuna Spesa nel dataset filtrato."
-                centerLabel="Spese"
-                centerValue={String(response.visualization.expense_states.total)}
-              />
-              {showAttentions ? (
-                <ComponentCard title="Attenzioni" compact>
-                  <div className="flex flex-wrap gap-2">
-                    {response.summary.unapproved_actual_expenses > 0 ? <Badge color="warning">Actual senza approvato: {response.summary.unapproved_actual_expenses}</Badge> : null}
-                    {isPositiveDecimal(response.global_plafond_overrun) ? <Badge color="error">Sforamento Plafond complessivo: {formatMoney(response.global_plafond_overrun, currency)}</Badge> : null}
-                  </div>
-                </ComponentCard>
-              ) : null}
-            </div>
+            <BreakdownDonutChart
+              title="Stato Spese"
+              entries={[
+                { label: "Aperte", value: response.visualization.expense_states.open, displayValue: String(response.visualization.expense_states.open), color: "#465FFF" },
+                { label: "Chiuse", value: response.visualization.expense_states.closed, displayValue: String(response.visualization.expense_states.closed), color: "#12B76A" },
+              ]}
+              emptyMessage="Nessuna Spesa nel dataset filtrato."
+              centerLabel="Spese"
+              centerValue={String(response.visualization.expense_states.total)}
+            />
           </div>
 
           <section className="rounded-2xl border border-gray-200 bg-white p-4 dark:border-gray-800 dark:bg-white/[0.03] sm:p-5">
@@ -316,7 +319,7 @@ export default function ReportsView({
                 </Table>
               </div>
             )}
-            <div className="mt-5"><ReportsPagination meta={response.meta} onPage={(page) => setAppliedQuery((current) => ({ ...current, page }))} /></div>
+            <div className="mt-5"><ReportsPagination meta={response.meta} onPage={(page) => setFilters((current) => ({ ...current, page }))} /></div>
           </section>
         </>
       ) : null}

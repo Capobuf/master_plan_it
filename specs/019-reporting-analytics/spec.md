@@ -16,14 +16,14 @@ Come utente autorizzato voglio restringere il Report alle dimensioni economiche 
 
 **Why this priority**: Il dataset filtrato è la base comune di KPI, grafici e dettaglio; senza uno scope esplicito l'analisi non è affidabile.
 
-**Independent Test**: Selezionando Centro di Costo, Progetto, Fornitore, Stato Spesa, raggruppamento e vista, la richiesta parte solo con `Applica filtri` e tutti i risultati riflettono il subset applicato; `Azzera filtri` ripristina i valori iniziali.
+**Independent Test**: Modificando Raggruppamento, Centro di Costo, Progetto, Fornitore o Stato Spesa, il Report richiede automaticamente il nuovo dataset e tutti gli output riflettono immediatamente il filtro selezionato.
 
 **Acceptance Scenarios**:
 
 1. **Given** un Planning Year selezionato nell'header, **When** l'utente apre il Report, **Then** non vede un secondo selettore anno e il Report usa quel Planning Year.
-2. **Given** filtri modificati ma non applicati, **When** l'utente cambia uno o più controlli, **Then** i risultati correnti non vengono richiesti nuovamente finché non seleziona `Applica filtri`.
-3. **Given** filtri validi per Centro di Costo, Progetto, Fornitore e Stato, **When** l'utente li applica, **Then** summary, raggruppamenti, visualizzazioni e dettaglio derivano dallo stesso dataset filtrato.
-4. **Given** la Vista `Storica`, **When** l'utente compila e applica il Cutoff, **Then** il Report mostra la proiezione storica read-only; nella Vista `Corrente` il Cutoff non è mostrato né inviato.
+2. **Given** un filtro discreto valido, **When** l'utente lo modifica, **Then** il Report viene aggiornato automaticamente e la paginazione torna a pagina 1.
+3. **Given** filtri validi per Centro di Costo, Progetto, Fornitore e Stato, **When** l'utente li seleziona, **Then** summary, raggruppamenti, visualizzazioni e dettaglio derivano dallo stesso dataset filtrato.
+4. **Given** la Vista `Storica`, **When** l'utente la seleziona senza Cutoff, **Then** compare il campo Cutoff, non parte alcuna richiesta storica e il Report corrente può restare visibile; **When** valorizza il Cutoff, **Then** il Report storico read-only viene richiesto automaticamente; **When** torna alla Vista `Corrente`, **Then** il Cutoff viene rimosso e il Report corrente viene richiesto automaticamente dalla pagina 1.
 5. **Given** filtri applicati o pagina successiva, **When** l'utente seleziona `Azzera filtri`, **Then** torna a nessun narrowing, raggruppamento per Centro di Costo, Vista Corrente e pagina 1.
 6. **Given** `report.view` ma non l'ability di un lookup, **When** l'utente apre il Report, **Then** quel filtro non è mostrato e il Report continua a funzionare.
 
@@ -35,7 +35,7 @@ Come utente autorizzato voglio leggere immediatamente i valori principali, la co
 
 **Why this priority**: Trasforma il Report da tabella amministrativa in uno strumento di analisi mantenendo valori riconciliabili.
 
-**Independent Test**: Con un dataset filtrato rappresentativo, i sei KPI, i grafici e le eventuali attenzioni espongono valori server-side coerenti tra loro e con il Budget annuale.
+**Independent Test**: Con un dataset filtrato rappresentativo, i sei KPI e i grafici espongono valori server-side coerenti tra loro e con il Budget annuale, senza un pannello separato `Attenzioni`.
 
 **Acceptance Scenarios**:
 
@@ -44,7 +44,7 @@ Come utente autorizzato voglio leggere immediatamente i valori principali, la co
 3. **Given** importi proposti, **When** viene mostrata la ripartizione, **Then** il donut usa i primi cinque gruppi per Proposto e un eventuale `Altri` calcolato autorevolmente; il totale centrale coincide con il summary.
 4. **Given** Spese filtrate, **When** viene mostrato `Stato Spese`, **Then** Aperte e Chiuse sono conteggi e il centro mostra il numero complessivo di Spese filtrate.
 5. **Given** valori positivi, negativi o nulli di Scostamento, **When** viene mostrato il grafico relativo, **Then** il segno server-side `Actual - Approvato` non viene trasformato né classificato con soglie arbitrarie.
-6. **Given** Actual senza approvato o sforamento Plafond annuale, **When** il Report viene mostrato, **Then** compare un'attenzione reale; lo sforamento è identificato come complessivo e non come filtro-specifico.
+6. **Given** Actual senza approvato o sforamento Plafond annuale, **When** il Report viene mostrato, **Then** non compare un pannello separato `Attenzioni`; Actual senza approvato resta disponibile nel dettaglio e i dati API restano invariati.
 
 ---
 
@@ -80,7 +80,7 @@ Come utente autorizzato voglio consultare la tabella paginata per la dimensione 
 - **FR-001**: Il Report MUST usare un solo Planning Year alla volta, selezionato globalmente nell'header, senza un selettore anno locale.
 - **FR-002**: Il Report MUST richiedere `report.view` e MUST nascondere individualmente i filtri lookup non autorizzati senza bloccare l'intera pagina.
 - **FR-003**: I filtri MUST includere raggruppamento, Centro di Costo, Progetto, Fornitore, Stato Spesa e Vista Corrente/Storica; il Cutoff MUST comparire soltanto per la Vista Storica.
-- **FR-004**: Le modifiche ai filtri MUST restare in uno stato draft; una nuova analisi MUST essere richiesta soltanto con `Applica filtri`, con l'eccezione della paginazione sui filtri già applicati.
+- **FR-004**: Le modifiche a Raggruppamento, Centro di Costo, Progetto, Fornitore e Stato Spesa MUST aggiornare automaticamente la query Report e MUST riportare la pagina a 1 senza richiedere un submit manuale. La Vista Storica MUST attendere un Cutoff valorizzato prima di richiedere il Report storico; il ritorno alla Vista Corrente MUST rimuovere il Cutoff e aggiornare automaticamente il Report corrente dalla pagina 1.
 - **FR-005**: `Azzera filtri` MUST ripristinare nessun narrowing, Centro di Costo come raggruppamento, Vista Corrente e pagina 1.
 - **FR-006**: Centro di Costo, Progetto e Fornitore selezionati MUST appartenere al Tenant corrente e un ID estraneo MUST fallire closed.
 - **FR-007**: `state` MUST accettare soltanto `open` o `closed`; non è previsto un filtro Contratto, una ricerca testuale o periodi arbitrari.
@@ -93,7 +93,7 @@ Come utente autorizzato voglio consultare la tabella paginata per la dimensione 
 - **FR-014**: La ripartizione del Proposto MUST contenere i primi cinque gruppi per Proposto, un eventuale `Altri` server-side e il totale autorevole `summary.proposed`.
 - **FR-015**: `Stato Spese` MUST mostrare conteggi Aperte e Chiuse e il totale delle Spese filtrate, senza importi monetari.
 - **FR-016**: `Scostamento per {dimensione}` MUST usare il valore server-side `Actual - Approvato` dei gruppi principali, preservandone il segno e senza soglie interpretative.
-- **FR-017**: Il pannello `Attenzioni` MUST comparire soltanto quando Actual senza approvato o sforamento Plafond complessivo sono maggiori di zero.
+- **FR-017**: Il Report MUST NOT mostrare un pannello separato `Attenzioni`; `unapproved_actual_expenses` e `global_plafond_overrun` possono restare disponibili nel contratto API senza richiedere una rappresentazione dedicata nella pagina.
 - **FR-018**: La tabella MUST restare paginata server-side e mostrare Gruppo, Proposto, Approvato, Actual, Residuo, Scostamento, Utilizzo, Aperte/Chiuse, Actual senza approvato e Plafond.
 - **FR-019**: Il raggruppamento MUST continuare a supportare Centro di Costo, Progetto, Contratto, Fornitore e Spesa con l'ordinamento autorevole corrente per label.
 - **FR-020**: Il frontend MUST limitarsi a formattare, ordinare per presentazione e convertire stringhe decimali per i grafici; MUST NOT calcolare valori monetari autorevoli.
@@ -119,7 +119,7 @@ Come utente autorizzato voglio consultare la tabella paginata per la dimensione 
 - **SC-003**: Il grafico principale contiene al massimo 10 gruppi e resta identico cambiando soltanto la pagina del dettaglio.
 - **SC-004**: La somma della ripartizione del Proposto, incluso `Altri`, coincide al centesimo con `summary.proposed`; Aperte più Chiuse coincide con il numero di Spese filtrate.
 - **SC-005**: Un ID Cost Center, Project o Vendor di altro Tenant restituisce una risposta fail-closed e zero dati economici del Tenant estraneo.
-- **SC-006**: Un utente può modificare più filtri generando una sola nuova richiesta al submit e può ripristinare il default con una sola azione.
+- **SC-006**: Ogni modifica di un filtro discreto genera una sola nuova richiesta Report e `Azzera filtri` ripristina il default con una sola azione.
 - **SC-007**: A circa 1440px e 390px la pagina non presenta overflow orizzontale, mantiene filtri e grafici leggibili e conserva le informazioni tabellari prioritarie in light e dark mode.
 - **SC-008**: I test mirati backend e frontend e i gate statici, lint, build e dark token completano senza errori.
 
@@ -128,5 +128,5 @@ Come utente autorizzato voglio consultare la tabella paginata per la dimensione 
 - Autenticazione, Tenant context, selezione globale del Planning Year, abilities ed endpoint lookup esistenti restano invariati.
 - Il Vendor di filtro/raggruppamento è quello della pianificazione corrente della Spesa, coerentemente con il Report esistente.
 - `open` e `closed` sono gli unici stati Spesa del filtro e della visualizzazione.
-- Il valore Plafond complessivo può essere mostrato come attenzione globale ma non attribuito artificialmente al subset.
+- Il valore Plafond complessivo resta disponibile nel contratto API ma non richiede una rappresentazione dedicata nella pagina Report e non viene attribuito artificialmente al subset.
 - La directory della feature resta disponibile fino alla review e accettazione.

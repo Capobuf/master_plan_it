@@ -74,40 +74,72 @@ describe("ReportsView", () => {
     vi.mocked(listExpenseVendors).mockResolvedValue([{ id: 30, name: "Vendor Italia" }]);
   });
 
-  it("submits draft filters, reveals historical cutoff and renders the analytical response", async () => {
+  it("applies discrete filters automatically and omits the Attenzioni panel", async () => {
     render(<ReportsView tenantId={1} planningYearId={1} canView canLoadCostCenters canLoadProjects canLoadVendors />);
 
     await waitFor(() => expect(getReports).toHaveBeenCalledTimes(1));
     fireEvent.change(screen.getByLabelText("Raggruppa per"), { target: { value: "project" } });
-    fireEvent.change(screen.getByLabelText("Centro di Costo"), { target: { value: "10" } });
-    fireEvent.change(screen.getByLabelText("Progetto"), { target: { value: "20" } });
-    fireEvent.change(screen.getByLabelText("Fornitore"), { target: { value: "30" } });
-    fireEvent.change(screen.getByLabelText("Stato Spesa"), { target: { value: "open" } });
-    fireEvent.change(screen.getByLabelText("Vista"), { target: { value: "historical" } });
-    expect(screen.getByLabelText("Cutoff")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Cutoff"), { target: { value: "2026-08-10T12:30" } });
-    expect(getReports).toHaveBeenCalledTimes(1);
-
-    fireEvent.click(screen.getByRole("button", { name: "Applica filtri" }));
 
     await waitFor(() => expect(getReports).toHaveBeenLastCalledWith({
       planning_year_id: 1,
       page: 1,
       per_page: 15,
       group_by: "project",
-      cost_center_id: 10,
-      project_id: 20,
-      vendor_id: 30,
-      state: "open",
-      as_of: "2026-08-10T12:30",
     }));
+    expect(getReports).toHaveBeenCalledTimes(2);
+
+    fireEvent.change(screen.getByLabelText("Progetto"), { target: { value: "20" } });
+
+    await waitFor(() => expect(getReports).toHaveBeenLastCalledWith({
+      planning_year_id: 1,
+      page: 1,
+      per_page: 15,
+      group_by: "project",
+      project_id: 20,
+    }));
+    expect(getReports).toHaveBeenCalledTimes(3);
+
+    expect(screen.queryByRole("button", { name: "Applica filtri" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Attenzioni" })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Azzera filtri" })).toBeInTheDocument();
     expect(screen.getAllByText("Proposto").length).toBeGreaterThan(0);
     expect(screen.getByRole("heading", { name: "Proposto vs Approvato vs Actual per Progetto" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Ripartizione del Proposto per Progetto" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Scostamento per Progetto" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Stato Spese" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Attenzioni" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Dettaglio per Progetto" })).toBeInTheDocument();
     expect(screen.getAllByText((content) => content.includes("−150,00")).length).toBeGreaterThan(0);
+  });
+
+  it("waits for a historical cutoff and returns automatically to the current view", async () => {
+    render(<ReportsView tenantId={1} planningYearId={1} canView canLoadCostCenters canLoadProjects canLoadVendors />);
+
+    await waitFor(() => expect(getReports).toHaveBeenCalledTimes(1));
+    fireEvent.change(screen.getByLabelText("Vista"), { target: { value: "historical" } });
+
+    expect(screen.getByLabelText("Cutoff")).toBeInTheDocument();
+    expect(getReports).toHaveBeenCalledTimes(1);
+
+    fireEvent.change(screen.getByLabelText("Cutoff"), { target: { value: "2026-08-10T12:30" } });
+
+    await waitFor(() => expect(getReports).toHaveBeenLastCalledWith({
+      planning_year_id: 1,
+      page: 1,
+      per_page: 15,
+      group_by: "cost_center",
+      as_of: "2026-08-10T12:30",
+    }));
+    expect(getReports).toHaveBeenCalledTimes(2);
+
+    fireEvent.change(screen.getByLabelText("Vista"), { target: { value: "current" } });
+
+    expect(screen.queryByLabelText("Cutoff")).not.toBeInTheDocument();
+    await waitFor(() => expect(getReports).toHaveBeenLastCalledWith({
+      planning_year_id: 1,
+      page: 1,
+      per_page: 15,
+      group_by: "cost_center",
+    }));
+    expect(getReports).toHaveBeenCalledTimes(3);
   });
 });
