@@ -9,9 +9,9 @@ export interface EcommerceMetric {
   tone?: "default" | "warning";
 }
 
-export default function EcommerceMetrics({ metrics }: { metrics: EcommerceMetric[] }) {
+export default function EcommerceMetrics({ metrics, columns = 4 }: { metrics: EcommerceMetric[]; columns?: 4 | 6 }) {
   return (
-    <div className="grid grid-cols-2 gap-3 sm:gap-4 xl:grid-cols-4">
+    <div className={`grid grid-cols-2 gap-3 sm:gap-4 ${columns === 6 ? "xl:grid-cols-6" : "xl:grid-cols-4"}`}>
       {metrics.map((metric) => {
         const Icon = metric.icon;
         return (

@@ -4,6 +4,7 @@ namespace App\Domain\Reporting\Queries;
 
 use App\Domain\Budget\Queries\AnnualBudgetQuery;
 use App\Domain\Budget\Queries\HistoricalAnnualBudgetQuery;
+use App\Domain\Reporting\Data\EconomicReportFilterData;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\User;
 use DomainException;
@@ -13,24 +14,74 @@ final readonly class AnnualEconomicReportQuery
     public function __construct(private AnnualBudgetQuery $budgetQuery, private HistoricalAnnualBudgetQuery $historicalBudgetQuery) {}
 
     /** @return array<string, mixed> */
-    public function execute(
-        User $actor,
-        TenantContext $context,
-        int $planningYearId,
-        ?int $costCenterId,
-        string $groupBy,
-        int $page,
-        int $perPage,
-        ?string $asOf = null,
-    ): array {
-        if (! in_array($groupBy, ['cost_center', 'project', 'contract', 'vendor', 'expense'], true)) {
+    public function execute(User $actor, TenantContext $context, EconomicReportFilterData $filter): array
+    {
+        if (! in_array($filter->groupBy, ['cost_center', 'project', 'contract', 'vendor', 'expense'], true)) {
             throw new DomainException('INVALID_REPORT_GROUPING');
         }
-        $budget = $asOf === null
-            ? $this->budgetQuery->execute($actor, $context, $planningYearId, $costCenterId)
-            : $this->historicalBudgetQuery->execute($actor, $context, $planningYearId, $asOf, $costCenterId);
-        /** @var list<array<string, mixed>> $expenses */
-        $expenses = $this->reconciledGroupLines($budget['expenses']);
+        if ($filter->state !== null && ! in_array($filter->state, ['open', 'closed'], true)) {
+            throw new DomainException('INVALID_REPORT_STATE');
+        }
+
+        $budget = $filter->asOf === null
+            ? $this->budgetQuery->execute($actor, $context, $filter->planningYearId)
+            : $this->historicalBudgetQuery->execute($actor, $context, $filter->planningYearId, $filter->asOf);
+        /** @var list<array<string, mixed>> $annualExpenses */
+        $annualExpenses = $this->reconciledGroupLines($budget['expenses']);
+        $expenses = array_values(array_filter(
+            $annualExpenses,
+            static fn (array $expense): bool => ($filter->costCenterId === null || $expense['cost_center_id'] === $filter->costCenterId)
+                && ($filter->projectId === null || $expense['project_id'] === $filter->projectId)
+                && ($filter->vendorId === null || $expense['vendor_id'] === $filter->vendorId)
+                && ($filter->state === null || $expense['state'] === $filter->state),
+        ));
+
+        $summary = $this->summary($expenses, (string) $budget['summary']['currency'], (string) $budget['summary']['official_basis']);
+        $resultGroups = $this->groups($expenses, $filter->groupBy);
+        $visualization = $this->visualization($resultGroups, $summary);
+        usort($resultGroups, static function (array $left, array $right): int {
+            $labelComparison = strcasecmp((string) $left['label'], (string) $right['label']);
+
+            return $labelComparison !== 0 ? $labelComparison : strcmp((string) $left['key'], (string) $right['key']);
+        });
+
+        $total = count($resultGroups);
+        $lastPage = max(1, (int) ceil($total / $filter->perPage));
+        $page = min(max($filter->page, 1), $lastPage);
+
+        return [
+            'data' => array_slice($resultGroups, ($page - 1) * $filter->perPage, $filter->perPage),
+            'meta' => [
+                'current_page' => $page,
+                'last_page' => $lastPage,
+                'per_page' => $filter->perPage,
+                'total' => $total,
+            ],
+            'mode' => $budget['mode'],
+            'requested_as_of' => $budget['requested_as_of'],
+            'cutoff_utc' => $budget['cutoff_utc'],
+            'read_only' => $budget['read_only'],
+            'budget' => $budget['budget'],
+            'summary' => $summary,
+            'global_plafond_overrun' => (string) $budget['summary']['plafond_overrun'],
+            'visualization' => $visualization,
+            'filters' => [
+                'planning_year_id' => $filter->planningYearId,
+                'cost_center_id' => $filter->costCenterId,
+                'project_id' => $filter->projectId,
+                'vendor_id' => $filter->vendorId,
+                'state' => $filter->state,
+                'group_by' => $filter->groupBy,
+            ],
+        ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $expenses
+     * @return list<array<string, mixed>>
+     */
+    private function groups(array $expenses, string $groupBy): array
+    {
         /** @var array<string, array{key:string,label:string,group_by:string,proposed:string,approved:string,actual:string,open_expenses:int,closed_expenses:int,unapproved_actual_expenses:int,plafond_expenses:int}> $groups */
         $groups = [];
         foreach ($expenses as $expense) {
@@ -47,19 +98,14 @@ final readonly class AnnualEconomicReportQuery
                 'unapproved_actual_expenses' => 0,
                 'plafond_expenses' => 0,
             ];
-            $excluded = $expense['state'] === 'closed' && in_array($expense['closure_outcome'], ['not_incurred', 'cancelled', 'moved'], true);
-            if (! $excluded && $expense['planned'] !== null) {
+            if (! $this->excludedFromProposal($expense) && $expense['planned'] !== null) {
                 $groups[$key]['proposed'] = bcadd($groups[$key]['proposed'], $expense['planned'], 2);
             }
             if ($expense['approved'] !== null) {
                 $groups[$key]['approved'] = bcadd($groups[$key]['approved'], $expense['approved'], 2);
             }
             $groups[$key]['actual'] = bcadd($groups[$key]['actual'], $expense['actual'], 2);
-            if ($expense['state'] === 'open') {
-                $groups[$key]['open_expenses']++;
-            } else {
-                $groups[$key]['closed_expenses']++;
-            }
+            $expense['state'] === 'open' ? $groups[$key]['open_expenses']++ : $groups[$key]['closed_expenses']++;
             if ($expense['approved'] === null && $expense['has_actual']) {
                 $groups[$key]['unapproved_actual_expenses']++;
             }
@@ -67,41 +113,142 @@ final readonly class AnnualEconomicReportQuery
                 $groups[$key]['plafond_expenses']++;
             }
         }
-        /** @var list<array<string, mixed>> $resultGroups */
-        $resultGroups = [];
-        foreach ($groups as $group) {
-            $group['residual'] = bcsub($group['approved'], $group['actual'], 2);
-            $group['variance'] = bcsub($group['actual'], $group['approved'], 2);
-            $group['utilization_percentage'] = bccomp($group['approved'], '0', 2) === 1
-                ? bcdiv(bcmul($group['actual'], '100', 4), $group['approved'], 2)
-                : null;
-            $resultGroups[] = $group;
+
+        return array_values(array_map(fn (array $group): array => $this->completeGroup($group), $groups));
+    }
+
+    /**
+     * @param  array<string, mixed>  $group
+     * @return array<string, mixed>
+     */
+    private function completeGroup(array $group): array
+    {
+        $group['residual'] = bcsub($group['approved'], $group['actual'], 2);
+        $group['variance'] = bcsub($group['actual'], $group['approved'], 2);
+        $group['utilization_percentage'] = $this->utilization($group['actual'], $group['approved']);
+
+        return $group;
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $expenses
+     * @return array<string, mixed>
+     */
+    private function summary(array $expenses, string $currency, string $officialBasis): array
+    {
+        $proposed = $approved = $actual = '0.00';
+        $open = $closed = $unapproved = 0;
+        foreach ($expenses as $expense) {
+            if (! $this->excludedFromProposal($expense) && $expense['planned'] !== null) {
+                $proposed = bcadd($proposed, $expense['planned'], 2);
+            }
+            if ($expense['approved'] !== null) {
+                $approved = bcadd($approved, $expense['approved'], 2);
+            }
+            $actual = bcadd($actual, $expense['actual'], 2);
+            $expense['state'] === 'open' ? $open++ : $closed++;
+            if ($expense['approved'] === null && $expense['has_actual']) {
+                $unapproved++;
+            }
         }
-        usort($resultGroups, static fn (array $left, array $right): int => strcasecmp((string) $left['label'], (string) $right['label']));
-        $total = count($resultGroups);
-        $lastPage = max(1, (int) ceil($total / $perPage));
-        $page = min(max($page, 1), $lastPage);
 
         return [
-            'data' => array_slice($resultGroups, ($page - 1) * $perPage, $perPage),
-            'meta' => [
-                'current_page' => $page,
-                'last_page' => $lastPage,
-                'per_page' => $perPage,
-                'total' => $total,
-            ],
-            'mode' => $budget['mode'],
-            'requested_as_of' => $budget['requested_as_of'],
-            'cutoff_utc' => $budget['cutoff_utc'],
-            'read_only' => $budget['read_only'],
-            'budget' => $budget['budget'],
-            'summary' => $budget['summary'],
-            'filters' => [
-                'planning_year_id' => $planningYearId,
-                'cost_center_id' => $costCenterId,
-                'group_by' => $groupBy,
+            'currency' => $currency,
+            'official_basis' => $officialBasis,
+            'proposed' => $proposed,
+            'approved_current' => $approved,
+            'actual' => $actual,
+            'residual' => bcsub($approved, $actual, 2),
+            'variance' => bcsub($actual, $approved, 2),
+            'utilization_percentage' => $this->utilization($actual, $approved),
+            'open_expenses' => $open,
+            'closed_expenses' => $closed,
+            'unapproved_actual_expenses' => $unapproved,
+        ];
+    }
+
+    /**
+     * @param  list<array<string, mixed>>  $groups
+     * @param  array<string, mixed>  $summary
+     * @return array<string, mixed>
+     */
+    private function visualization(array $groups, array $summary): array
+    {
+        $ranked = $groups;
+        usort($ranked, function (array $left, array $right): int {
+            $magnitudeComparison = bccomp($this->groupMagnitude($right), $this->groupMagnitude($left), 2);
+            if ($magnitudeComparison !== 0) {
+                return $magnitudeComparison;
+            }
+            $labelComparison = strcasecmp((string) $left['label'], (string) $right['label']);
+
+            return $labelComparison !== 0 ? $labelComparison : strcmp((string) $left['key'], (string) $right['key']);
+        });
+        $visualizationGroups = array_map(static fn (array $group): array => [
+            'key' => $group['key'],
+            'label' => $group['label'],
+            'proposed' => $group['proposed'],
+            'approved' => $group['approved'],
+            'actual' => $group['actual'],
+            'residual' => $group['residual'],
+            'variance' => $group['variance'],
+            'utilization_percentage' => $group['utilization_percentage'],
+        ], array_slice($ranked, 0, 10));
+
+        $proposed = array_values(array_filter($groups, static fn (array $group): bool => bccomp($group['proposed'], '0.00', 2) === 1));
+        usort($proposed, static function (array $left, array $right): int {
+            $amountComparison = bccomp($right['proposed'], $left['proposed'], 2);
+            if ($amountComparison !== 0) {
+                return $amountComparison;
+            }
+            $labelComparison = strcasecmp((string) $left['label'], (string) $right['label']);
+
+            return $labelComparison !== 0 ? $labelComparison : strcmp((string) $left['key'], (string) $right['key']);
+        });
+        $breakdown = array_map(static fn (array $group): array => [
+            'key' => $group['key'],
+            'label' => $group['label'],
+            'proposed' => $group['proposed'],
+        ], array_slice($proposed, 0, 5));
+        $other = array_reduce(
+            array_slice($proposed, 5),
+            static fn (string $sum, array $group): string => bcadd($sum, $group['proposed'], 2),
+            '0.00',
+        );
+        if (bccomp($other, '0.00', 2) === 1) {
+            $breakdown[] = ['key' => 'other', 'label' => 'Altri', 'proposed' => $other];
+        }
+
+        return [
+            'groups' => $visualizationGroups,
+            'proposed_breakdown' => $breakdown,
+            'expense_states' => [
+                'open' => $summary['open_expenses'],
+                'closed' => $summary['closed_expenses'],
+                'total' => $summary['open_expenses'] + $summary['closed_expenses'],
             ],
         ];
+    }
+
+    /** @param array<string, mixed> $group */
+    private function groupMagnitude(array $group): string
+    {
+        return $this->maximum(
+            $this->absolute((string) $group['proposed']),
+            $this->maximum($this->absolute((string) $group['approved']), $this->absolute((string) $group['actual'])),
+        );
+    }
+
+    private function absolute(string $value): string
+    {
+        return str_starts_with($value, '-') ? substr($value, 1) : $value;
+    }
+
+    private function utilization(string $actual, string $approved): ?string
+    {
+        return bccomp($approved, '0', 2) === 1
+            ? bcdiv(bcmul($actual, '100', 4), $approved, 2)
+            : null;
     }
 
     /**
@@ -121,8 +268,8 @@ final readonly class AnnualEconomicReportQuery
     }
 
     /**
-     * Keep group totals cent-identical to the shared Budget summary by assigning
-     * covered consumption against the Plafond line before grouping.
+     * Keep report partitions cent-identical to the annual Budget by assigning
+     * covered consumption against each Plafond line before any Report filter.
      *
      * @param  list<array<string, mixed>>  $expenses
      * @return list<array<string, mixed>>
@@ -145,8 +292,7 @@ final readonly class AnnualEconomicReportQuery
                 throw new DomainException('TENANT_RELATION_MISMATCH');
             }
             $plafond = $expenses[$plafondIndex];
-            $plafondExcluded = $this->excludedFromProposal($plafond);
-            if (! $plafondExcluded && $plafond['planned'] !== null) {
+            if (! $this->excludedFromProposal($plafond) && $plafond['planned'] !== null) {
                 $consumerPlanned = array_reduce(
                     $consumers,
                     fn (string $sum, array $consumer): string => $this->excludedFromProposal($consumer)
@@ -187,5 +333,10 @@ final readonly class AnnualEconomicReportQuery
     private function minimum(string $left, string $right): string
     {
         return bccomp($left, $right, 2) <= 0 ? $left : $right;
+    }
+
+    private function maximum(string $left, string $right): string
+    {
+        return bccomp($left, $right, 2) >= 0 ? $left : $right;
     }
 }

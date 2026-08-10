@@ -21,6 +21,8 @@ interface StatisticsChartProps {
   horizontal?: boolean;
   height?: number;
   mobileHeight?: number;
+  colors?: string[];
+  distributed?: boolean;
 }
 
 export default function StatisticsChart({
@@ -34,9 +36,11 @@ export default function StatisticsChart({
   horizontal = false,
   height = 310,
   mobileHeight = 230,
+  colors = ["#465FFF"],
+  distributed = false,
 }: StatisticsChartProps) {
   const options = useMemo<ApexOptions>(() => ({
-    colors: ["#465FFF"],
+    colors,
     chart: { fontFamily: "Outfit, sans-serif", toolbar: { show: false }, animations: { enabled: true } },
     dataLabels: { enabled: false },
     legend: { show: false },
@@ -44,7 +48,7 @@ export default function StatisticsChart({
     fill: type === "area" ? { type: "gradient", gradient: { opacityFrom: 0.45, opacityTo: 0.05 } } : { opacity: 1 },
     grid: { xaxis: { lines: { show: false } }, yaxis: { lines: { show: true } } },
     ...(type === "bar"
-      ? { plotOptions: { bar: { borderRadius: 4, columnWidth: "48%", barHeight: "55%", horizontal } } }
+      ? { plotOptions: { bar: { borderRadius: 4, columnWidth: "48%", barHeight: "55%", horizontal, distributed } } }
       : {}),
     tooltip: { y: { formatter: (value) => formatMoney(String(value), currency) } },
     xaxis: {
@@ -62,7 +66,7 @@ export default function StatisticsChart({
         : { formatter: (value) => formatMoney(String(value), currency), style: { fontSize: "12px", colors: ["#6B7280"] } },
     },
     responsive: [{ breakpoint: 640, options: { xaxis: { tickAmount: horizontal ? 3 : 6, labels: { rotate: 0, hideOverlappingLabels: true } } } }],
-  }), [categories, currency, horizontal, type]);
+  }), [categories, colors, currency, distributed, horizontal, type]);
   const series = useMemo(() => [{ name: seriesName, data: values }], [seriesName, values]);
   const chartHeights = {
     "--chart-height": `${height}px`,

@@ -5,6 +5,7 @@ namespace Tests\Accounting\Integration;
 use App\Domain\Budget\Queries\AnnualBudgetQuery;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Domain\Reporting\Data\EconomicReportFilterData;
 use App\Domain\Reporting\Queries\AnnualEconomicReportQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\CostCenter;
@@ -60,14 +61,17 @@ final class AnnualBudgetDatasetTest extends TestCase
             $report = app(AnnualEconomicReportQuery::class)->execute(
                 $actor,
                 $context,
-                (int) $year->getKey(),
-                null,
-                $groupBy,
-                1,
-                100,
+                new EconomicReportFilterData(
+                    planningYearId: (int) $year->getKey(),
+                    groupBy: $groupBy,
+                    perPage: 100,
+                ),
             );
 
-            $this->assertSame($budget['summary'], $report['summary']);
+            $this->assertSame($budget['summary']['proposed'], $report['summary']['proposed']);
+            $this->assertSame($budget['summary']['approved_current'], $report['summary']['approved_current']);
+            $this->assertSame($budget['summary']['actual'], $report['summary']['actual']);
+            $this->assertSame($budget['summary']['plafond_overrun'], $report['global_plafond_overrun']);
             $this->assertSame('130.00', $this->sum($report['data'], 'proposed'), "Proposed mismatch for {$groupBy}.");
             $this->assertSame('130.00', $this->sum($report['data'], 'approved'), "Approved mismatch for {$groupBy}.");
             $this->assertSame('140.00', $this->sum($report['data'], 'actual'), "Actual mismatch for {$groupBy}.");

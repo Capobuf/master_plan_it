@@ -20,7 +20,7 @@ export default function ReportsHome() {
       <PageMeta title="Report | Master Plan IT" description="Report economico paginato" />
       <PageBreadcrumb pageTitle="Report" />
       {intro}
-      {!intro && <ReportsView tenantId={tenantId} planningYearId={selectedPlanningYearId} canView={canView} canLoadCostCenters={hasAbility("cost-center.view")} />}
+      {!intro && <ReportsView tenantId={tenantId} planningYearId={selectedPlanningYearId} canView={canView} canLoadCostCenters={hasAbility("cost-center.view")} canLoadProjects={hasAbility("project.view")} canLoadVendors={hasAbility("vendor.view")} />}
     </>
   );
 }

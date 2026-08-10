@@ -1,6 +1,6 @@
 # Stato funzionale
 
-Stato verificato dopo l'implementazione della Feature 017.
+Stato verificato dopo l'implementazione della Feature 019.
 
 Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cronologia.
 
@@ -21,7 +21,7 @@ Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cro
 | Collegamento Spesa-Progetto/Contract | Tenant-safe e coerente con il Project Contract | Implementato |
 | Dashboard | Planning selezionato e Actual immediati | Implementato |
 | Budget corrente | Riepilogo/dettaglio annuale e warning closed | Implementato |
-| Report economico | Cinque raggruppamenti con parità Budget | Implementato |
+| Report economico | Filtri tenant-safe, summary riconciliato, cinque raggruppamenti e dataset analitici non paginati | KPI, grafici, attenzioni e dettaglio responsive implementati |
 | Budget/Report storico | Cutoff Tenant, batch atomici, tombstone, read-only | Implementato |
 
 Il file globale `docs/api/openapi-v1.yaml` non è presente nel repository corrente. Fino alla sua
