@@ -20,6 +20,7 @@ export interface ReportingDataset {
   monthly?: Record<string, string>;
   by_type?: Record<string, string>;
   by_cost_center?: Record<string, string>;
+  by_project?: Record<string, string>;
   cost_center_id?: number | null;
   has_economic_data?: boolean;
   year_options?: Record<string, unknown>[];
@@ -35,8 +36,27 @@ export interface DashboardListItem {
   event_type?: string;
 }
 
+export interface DashboardRecentExpense {
+  id: number;
+  label: string;
+  date: string;
+  cost_center: string;
+  project: string | null;
+  vendor: string | null;
+  planned: string;
+  actual: string;
+  state: "open" | "closed";
+}
+
+export interface DashboardExpenseCounts {
+  total: number;
+  open: number;
+  closed: number;
+}
+
 export interface DashboardAncillary {
-  recentExpenses?: DashboardListItem[];
+  recentExpenses?: DashboardRecentExpense[];
+  expenseCounts?: DashboardExpenseCounts;
   generatedContractPlanning?: DashboardListItem[];
   activeContracts?: DashboardListItem[];
   upcomingContractEvents?: DashboardListItem[];

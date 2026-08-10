@@ -82,11 +82,12 @@ final class DashboardController extends Controller
             ?? $years->sortByDesc('year_label')->first();
     }
 
-    /** @return array<string, list<array<string, mixed>>> */
+    /** @return array<string, mixed> */
     private function emptyAncillary(): array
     {
         return [
             'recentExpenses' => [],
+            'expenseCounts' => ['total' => 0, 'open' => 0, 'closed' => 0],
             'generatedContractPlanning' => [],
             'activeContracts' => [],
             'upcomingContractEvents' => [],

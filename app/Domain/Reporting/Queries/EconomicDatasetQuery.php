@@ -54,11 +54,12 @@ final class EconomicDatasetQuery
                 'expense_rows.gross_amount', 'expense_rows.is_extra', 'expense_rows.funded_plafond_expense_id',
                 'expense_rows.spend_date', 'expense_rows.period_start', 'expense_rows.period_end',
                 'expense_rows.distribution', 'expenses.project_id', 'projects.stage as project_stage',
+                'projects.title as project_title',
             ]);
 
         return new EconomicDataset(
             new EconomicScope($context->tenantId, (int) $year->getKey(), (int) $year->year_label, $context->currencyCode, $context->budgetBasis),
-            $rows->map(fn ($row) => new EconomicLine((int) $row->expense_id, (int) $row->row_id, (string) $row->expense_kind, (string) $row->type, $row->confirmation_state === null ? null : (string) $row->confirmation_state, (int) $row->cost_center_id, (string) $row->cost_center_name, (string) $row->net_amount, (string) $row->vat_amount, (string) $row->gross_amount, $row->funded_plafond_expense_id === null ? null : (int) $row->funded_plafond_expense_id, $row->spend_date === null ? null : (string) $row->spend_date, $row->period_start === null ? null : (string) $row->period_start, $row->period_end === null ? null : (string) $row->period_end, $row->distribution === null ? null : (string) $row->distribution, (bool) $row->is_extra, $row->project_id === null ? null : (int) $row->project_id, $row->project_stage === null ? null : (string) $row->project_stage))->all(),
+            $rows->map(fn ($row) => new EconomicLine((int) $row->expense_id, (int) $row->row_id, (string) $row->expense_kind, (string) $row->type, $row->confirmation_state === null ? null : (string) $row->confirmation_state, (int) $row->cost_center_id, (string) $row->cost_center_name, (string) $row->net_amount, (string) $row->vat_amount, (string) $row->gross_amount, $row->funded_plafond_expense_id === null ? null : (int) $row->funded_plafond_expense_id, $row->spend_date === null ? null : (string) $row->spend_date, $row->period_start === null ? null : (string) $row->period_start, $row->period_end === null ? null : (string) $row->period_end, $row->distribution === null ? null : (string) $row->distribution, (bool) $row->is_extra, $row->project_id === null ? null : (int) $row->project_id, $row->project_stage === null ? null : (string) $row->project_stage, $row->project_title === null ? null : (string) $row->project_title))->all(),
         );
     }
 }

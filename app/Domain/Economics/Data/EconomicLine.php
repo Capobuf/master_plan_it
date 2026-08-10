@@ -12,5 +12,6 @@ final readonly class EconomicLine
         public bool $isExtra = false,
         public ?int $projectId = null,
         public ?string $projectStage = null,
+        public ?string $projectTitle = null,
     ) {}
 }

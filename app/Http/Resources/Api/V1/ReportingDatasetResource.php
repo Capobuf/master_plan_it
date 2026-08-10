@@ -7,7 +7,7 @@ use App\Domain\Economics\Data\EconomicSummary;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @property-read array{dataset: EconomicDataset, calculated: array{summary: EconomicSummary, monthly: array<string, string>, byType: array<string, string>, byCostCenter: array<string, string>}, cost_center_id: int|null} $resource */
+/** @property-read array{dataset: EconomicDataset, calculated: array{summary: EconomicSummary, monthly: array<string, string>, byType: array<string, string>, byCostCenter: array<string, string>, byProject: array<string, string>}, cost_center_id: int|null} $resource */
 final class ReportingDatasetResource extends JsonResource
 {
     /** @return array<string, mixed> */
@@ -24,6 +24,7 @@ final class ReportingDatasetResource extends JsonResource
                 'monthly' => [],
                 'by_type' => [],
                 'by_cost_center' => [],
+                'by_project' => [],
                 'cost_center_id' => null,
                 'has_economic_data' => false,
                 'year_options' => $payload['year_options'] ?? [],
@@ -38,6 +39,7 @@ final class ReportingDatasetResource extends JsonResource
             'monthly' => $calculated['monthly'],
             'by_type' => $calculated['byType'],
             'by_cost_center' => $calculated['byCostCenter'],
+            'by_project' => $calculated['byProject'],
             'cost_center_id' => $payload['cost_center_id'] ?? null,
             'has_economic_data' => $dataset->lines !== [],
         ];

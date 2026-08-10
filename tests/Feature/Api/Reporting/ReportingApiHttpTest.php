@@ -7,6 +7,7 @@ use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
+use App\Models\Project;
 use App\Models\Tenant;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -33,9 +34,9 @@ final class ReportingApiHttpTest extends TestCase
                 'data' => [
                     'scope' => ['planning_year_id', 'year', 'currency', 'official_basis'],
                     'summary' => ['official_basis', 'currency', 'amounts'],
-                    'monthly', 'by_type', 'by_cost_center', 'has_economic_data',
+                    'monthly', 'by_type', 'by_cost_center', 'by_project', 'has_economic_data',
                     'year_options', 'selected_year_id',
-                    'ancillary' => ['recentExpenses', 'generatedContractPlanning', 'activeContracts', 'upcomingContractEvents'],
+                    'ancillary' => ['recentExpenses', 'expenseCounts', 'generatedContractPlanning', 'activeContracts', 'upcomingContractEvents'],
                 ],
             ])
             ->assertJsonPath('data.summary.amounts.net', '100.00')
@@ -53,6 +54,17 @@ final class ReportingApiHttpTest extends TestCase
         $year = PlanningYear::factory()->for($tenant)->create(['year_label' => (int) now()->year, 'active' => true]);
         $expense = $this->expenseWithRow($tenant, $year, '100.00', '22.00', '122.00');
         $vendor = Vendor::factory()->for($tenant)->create();
+        $project = Project::factory()->for($tenant)->create(['title' => 'Migrazione Microsoft 365']);
+        $expense->forceFill(['title' => 'Rinnovo Microsoft 365', 'project_id' => $project->getKey()])->save();
+        $expense->currentPlanningRow()->update(['vendor_id' => $vendor->getKey()]);
+        ExpenseRow::factory()->for($expense)->create([
+            'tenant_id' => $tenant->getKey(),
+            'type' => 'actual',
+            'net_amount' => '25.00',
+            'vat_amount' => '5.50',
+            'gross_amount' => '30.50',
+            'spend_date' => '2026-02-15',
+        ]);
         $center = CostCenter::factory()->for($tenant)->create();
         Contract::query()->create([
             'tenant_id' => $tenant->getKey(),
@@ -68,6 +80,16 @@ final class ReportingApiHttpTest extends TestCase
         $response = $this->getJson('/api/v1/dashboard')->assertOk();
         $response->assertJsonPath('data.selected_year_id', $year->getKey())
             ->assertJsonPath('data.ancillary.recentExpenses.0.id', $expense->getKey())
+            ->assertJsonPath('data.ancillary.recentExpenses.0.cost_center', $expense->costCenter->name)
+            ->assertJsonPath('data.ancillary.recentExpenses.0.project', 'Migrazione Microsoft 365')
+            ->assertJsonPath('data.ancillary.recentExpenses.0.vendor', $vendor->name)
+            ->assertJsonPath('data.ancillary.recentExpenses.0.planned', '100.00')
+            ->assertJsonPath('data.ancillary.recentExpenses.0.actual', '25.00')
+            ->assertJsonPath('data.ancillary.recentExpenses.0.state', 'open')
+            ->assertJsonPath('data.ancillary.expenseCounts.total', 1)
+            ->assertJsonPath('data.ancillary.expenseCounts.open', 1)
+            ->assertJsonPath('data.ancillary.expenseCounts.closed', 0)
+            ->assertJsonPath('data.by_project.Migrazione Microsoft 365', '125.00')
             ->assertJsonMissingPath('data.ancillary.recentExpenses.0.href')
             ->assertJsonPath('data.ancillary.activeContracts.0.label', 'Active contract')
             ->assertJsonMissingPath('data.ancillary.activeContracts.0.href')
@@ -85,6 +107,8 @@ final class ReportingApiHttpTest extends TestCase
             ->assertJsonPath('data.scope', null)
             ->assertJsonPath('data.selected_year_id', null)
             ->assertJsonPath('data.has_economic_data', false)
+            ->assertJsonPath('data.by_project', [])
+            ->assertJsonPath('data.ancillary.expenseCounts.total', 0)
             ->assertJsonCount(0, 'data.year_options');
     }
 

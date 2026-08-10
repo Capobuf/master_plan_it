@@ -11,7 +11,7 @@ use DateTimeImmutable;
 
 final class EconomicEngine
 {
-    /** @return array{summary:EconomicSummary,monthly:array<string,string>,byType:array<string,string>,byCostCenter:array<string,string>} */
+    /** @return array{summary:EconomicSummary,monthly:array<string,string>,byType:array<string,string>,byCostCenter:array<string,string>,byProject:array<string,string>} */
     public function calculate(EconomicDataset $dataset): array
     {
         $basis = $dataset->scope->budgetBasis->value;
@@ -22,6 +22,7 @@ final class EconomicEngine
         }
         $byType = ['estimate' => '0.00', 'quote' => '0.00', 'actual' => '0.00'];
         $byCostCenter = [];
+        $byProject = [];
         $plafondGroups = [];
         $consumedGroups = [];
         $fundedLines = [];
@@ -44,6 +45,8 @@ final class EconomicEngine
             $byType[$line->type] = bcadd($byType[$line->type], $official, 2);
             if ($line->fundedPlafondExpenseId === null && $bucket === 'primary') {
                 $byCostCenter[$line->costCenterName] = bcadd($byCostCenter[$line->costCenterName] ?? '0.00', $official, 2);
+                $projectLabel = $line->projectTitle ?? 'Senza progetto';
+                $byProject[$projectLabel] = bcadd($byProject[$projectLabel] ?? '0.00', $official, 2);
             }
             if ($line->isExtra) {
                 $amounts['extra'] = bcadd($amounts['extra'], $official, 2);
@@ -88,6 +91,8 @@ final class EconomicEngine
                 $line = $fundedLines[$group] ?? null;
                 if ($line !== null) {
                     $byCostCenter[$line->costCenterName] = bcadd($byCostCenter[$line->costCenterName] ?? '0.00', $overrun, 2);
+                    $projectLabel = $line->projectTitle ?? 'Senza progetto';
+                    $byProject[$projectLabel] = bcadd($byProject[$projectLabel] ?? '0.00', $overrun, 2);
                     foreach ($this->monthly($dataset, $line->spendDate, $line->periodStart, $line->periodEnd, $line->distribution, $overrun) as $key => $value) {
                         if (isset($monthly[$key])) {
                             $monthly[$key] = bcadd($monthly[$key], $value, 2);
@@ -103,7 +108,7 @@ final class EconomicEngine
 
         $amounts['potential'] = bcadd(bcadd($amounts['primary'], $amounts['proposed'], 2), $amounts['idea'], 2);
 
-        return ['summary' => new EconomicSummary($basis, $amounts), 'monthly' => $monthly, 'byType' => $byType, 'byCostCenter' => $byCostCenter];
+        return ['summary' => new EconomicSummary($basis, $amounts), 'monthly' => $monthly, 'byType' => $byType, 'byCostCenter' => $byCostCenter, 'byProject' => $byProject];
     }
 
     public function classify(EconomicLine $line): string

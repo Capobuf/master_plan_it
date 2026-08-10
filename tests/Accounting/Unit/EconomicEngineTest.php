@@ -106,6 +106,27 @@ class EconomicEngineTest extends TestCase
         $this->assertSame($amounts['primary'], $amounts['officialCurrentPosition']);
     }
 
+    public function test_project_breakdown_uses_official_amounts_and_only_attributes_plafond_overrun(): void
+    {
+        $dataset = new EconomicDataset(
+            new EconomicScope(1, 1, 2026, 'EUR', BudgetBasis::Net),
+            [
+                $this->line(10, 10, 'estimate', null, '1000.00', '220.00', '1220.00', 'plafond', projectTitle: 'Piattaforma'),
+                $this->line(11, 11, 'actual', null, '1200.00', '264.00', '1464.00', fundedPlafondExpenseId: 10, projectTitle: 'Migrazione'),
+                $this->line(20, 20, 'estimate', null, '50.00', '11.00', '61.00'),
+            ],
+        );
+
+        $calculated = app(EconomicEngine::class)->calculate($dataset);
+
+        $this->assertSame('1250.00', $calculated['summary']->amounts['officialCurrentPosition']);
+        $this->assertSame([
+            'Piattaforma' => '1000.00',
+            'Senza progetto' => '50.00',
+            'Migrazione' => '200.00',
+        ], $calculated['byProject']);
+    }
+
     private function line(
         int $expenseId,
         int $rowId,
@@ -117,6 +138,7 @@ class EconomicEngineTest extends TestCase
         string $expenseKind = 'ordinary',
         ?int $fundedPlafondExpenseId = null,
         ?string $projectStage = null,
+        ?string $projectTitle = null,
     ): EconomicLine {
         return new EconomicLine(
             $expenseId,
@@ -137,6 +159,7 @@ class EconomicEngineTest extends TestCase
             false,
             $projectStage === null ? null : 99,
             $projectStage,
+            $projectTitle,
         );
     }
 }

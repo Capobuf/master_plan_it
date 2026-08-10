@@ -1,15 +1,13 @@
-import { Link } from "react-router";
-import type { DashboardListItem, ReportingDataset } from "../../api/dashboard";
-import { AlertHexaIcon, CheckCircleIcon, DollarLineIcon } from "../../icons";
-import { routes } from "../../navigation/routes";
-import { compareDecimalStrings, formatDate, formatMoney, isPositiveDecimal, toChartNumber } from "../../presentation/formatters";
-import { domainLabel } from "../../presentation/labels";
+import type { ReportingDataset } from "../../api/dashboard";
+import { CheckCircleIcon, DollarLineIcon, ListIcon, PieChartIcon } from "../../icons";
+import { compareDecimalStrings, formatMoney, isPositiveDecimal, toChartNumber } from "../../presentation/formatters";
 import ComponentCard from "../common/ComponentCard";
 import EcommerceMetrics, { type EcommerceMetric } from "../ecommerce/EcommerceMetrics";
 import RecentOrders from "../ecommerce/RecentOrders";
 import StatisticsChart from "../ecommerce/StatisticsChart";
 import Alert from "../ui/alert/Alert";
-import Badge from "../ui/badge/Badge";
+import BreakdownDonutChart from "./BreakdownDonutChart";
+import RenewalTimeline from "./RenewalTimeline";
 
 const monthLabels: Record<string, string> = {
   "01": "Gen", "02": "Feb", "03": "Mar", "04": "Apr", "05": "Mag", "06": "Giu",
@@ -22,53 +20,99 @@ function EmptyState({ message }: { message: string }) {
   return <p className="rounded-xl border border-dashed border-gray-300 px-4 py-6 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">{message}</p>;
 }
 
-function ListPanel({ title, items, emptyMessage, href }: { title: string; items: DashboardListItem[]; emptyMessage: string; href?: (id: number) => string }) {
-  return <ComponentCard title={title} className="h-full">
-    {items.length === 0 ? <EmptyState message={emptyMessage} /> : <ul className="divide-y divide-gray-100 dark:divide-gray-800">
-      {items.map((item, index) => <li key={`${item.id}-${index}`} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
-        <div className="min-w-0">
-          {href ? <Link to={href(item.id)} className="truncate text-sm font-medium text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400">{item.label}</Link> : <p className="truncate text-sm font-medium text-gray-800 dark:text-white/90">{item.label}</p>}
-          {item.date ? <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">{formatDate(item.date)}</p> : null}
-        </div>
-        {item.event_type || item.state ? <Badge color={item.state === "active" ? "success" : "info"} size="sm">{domainLabel(item.event_type ?? item.state)}</Badge> : null}
-      </li>)}
-    </ul>}
-  </ComponentCard>;
-}
-
 export default function DashboardView({ dataset }: { dataset: ReportingDataset }) {
   const currency = dataset.summary?.currency ?? dataset.scope?.currency ?? "EUR";
   const amounts = dataset.summary?.amounts ?? {};
   const ancillary = dataset.ancillary ?? {};
+  const expenseCounts = ancillary.expenseCounts ?? { total: 0, open: 0, closed: 0 };
   const monthly = Object.entries(dataset.monthly ?? {}).sort(([left], [right]) => left.localeCompare(right));
-  const composition = Object.entries(dataset.by_type ?? {});
-  const costCenters = Object.entries(dataset.by_cost_center ?? {}).sort(([, left], [, right]) => compareDecimalStrings(right, left)).slice(0, 8);
+  const costCenters = Object.entries(dataset.by_cost_center ?? {})
+    .sort(([, left], [, right]) => compareDecimalStrings(right, left))
+    .slice(0, 6);
+  const projects = Object.entries(dataset.by_project ?? {})
+    .sort(([, left], [, right]) => compareDecimalStrings(right, left))
+    .slice(0, 5);
+  const projectChartHeight = Math.min(220, Math.max(105, projects.length * 34 + 66));
+  const projectMobileHeight = Math.min(200, Math.max(105, projects.length * 32 + 68));
   const metrics: EcommerceMetric[] = [
-    { label: "Pianificato selezionato", value: formatMoney(amount(dataset, "planned"), currency), icon: DollarLineIcon },
+    { label: "Posizione Economica", value: formatMoney(amount(dataset, "official_current_position"), currency), icon: DollarLineIcon },
+    { label: "Pianificato", value: formatMoney(amount(dataset, "planned"), currency), icon: PieChartIcon },
     { label: "Actual", value: formatMoney(amount(dataset, "actual"), currency), icon: CheckCircleIcon },
+    { label: "Spese Aperte", value: String(expenseCounts.open), icon: ListIcon },
   ];
-  if (amounts.extra !== undefined) metrics.push({ label: "Spese Extra", value: formatMoney(amounts.extra, currency), icon: AlertHexaIcon });
 
-  return <div className="space-y-6">
-    {!dataset.has_economic_data ? <Alert variant="info" title="Nessun dato economico" message="Non sono ancora disponibili dati per l'anno di pianificazione selezionato." /> : null}
-    <EcommerceMetrics metrics={metrics} />
-    {isPositiveDecimal(amounts.plafond_overrun) ? <Alert variant="warning" title="Superamento Plafond" message={`Il Plafond risulta superato di ${formatMoney(amounts.plafond_overrun, currency)}.`} /> : null}
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
-      <div className="lg:col-span-8">
-        {monthly.length ? <StatisticsChart title="Andamento Mensile" description="Posizione economica mensile dell'anno selezionato." categories={monthly.map(([key]) => monthLabels[key.slice(-2)] ?? key)} values={monthly.map(([, value]) => toChartNumber(value))} currency={currency} seriesName="Posizione mensile" /> : <ComponentCard title="Andamento Mensile"><EmptyState message="Nessun andamento mensile disponibile." /></ComponentCard>}
+  return (
+    <div className="space-y-3 overflow-x-clip sm:space-y-4 xl:space-y-6">
+      {!dataset.has_economic_data ? <Alert variant="info" title="Nessun dato economico" message="Non sono ancora disponibili dati per l'anno di pianificazione selezionato." /> : null}
+      <EcommerceMetrics metrics={metrics} />
+      {isPositiveDecimal(amounts.plafond_overrun) ? <Alert variant="warning" title="Superamento Plafond" message={`Il Plafond risulta superato di ${formatMoney(amounts.plafond_overrun, currency)}.`} /> : null}
+
+      <div className="grid grid-cols-1 items-start gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-12 xl:gap-6">
+        <div className="xl:col-span-3">
+          <BreakdownDonutChart
+            title="Spese per Centro di Costo"
+            entries={costCenters.map(([label, value]) => ({ label, value: toChartNumber(value), displayValue: formatMoney(value, currency) }))}
+            emptyMessage="Nessun centro di costo valorizzato."
+            chartClassName="h-[165px]"
+            totalLabel="Totale"
+            totalValue={formatMoney(amount(dataset, "official_current_position"), currency)}
+          />
+        </div>
+        <div className="md:col-span-2 xl:col-span-6">
+          {monthly.length > 0 ? (
+            <StatisticsChart
+              title="Andamento Mensile"
+              categories={monthly.map(([key]) => monthLabels[key.slice(-2)] ?? key)}
+              values={monthly.map(([, value]) => toChartNumber(value))}
+              currency={currency}
+              seriesName="Posizione mensile"
+              height={340}
+              mobileHeight={230}
+            />
+          ) : (
+            <ComponentCard title="Andamento Mensile" compact><EmptyState message="Nessun andamento mensile disponibile." /></ComponentCard>
+          )}
+        </div>
+        <div className="grid gap-3 sm:gap-4 md:col-span-2 md:grid-cols-2 xl:col-span-3 xl:grid-cols-1">
+          {projects.length > 0 ? (
+            <StatisticsChart
+              title="Spese per Progetto"
+              categories={projects.map(([label]) => label)}
+              values={projects.map(([, value]) => toChartNumber(value))}
+              currency={currency}
+              type="bar"
+              horizontal
+              seriesName="Importo"
+              height={projectChartHeight}
+              mobileHeight={projectMobileHeight}
+            />
+          ) : (
+            <ComponentCard title="Spese per Progetto" compact><EmptyState message="Nessun progetto valorizzato." /></ComponentCard>
+          )}
+          <BreakdownDonutChart
+            title="Stato Spese"
+            entries={[
+              { label: "Aperte", value: expenseCounts.open, displayValue: String(expenseCounts.open), color: "#0BA5EC" },
+              { label: "Chiuse", value: expenseCounts.closed, displayValue: String(expenseCounts.closed), color: "#12B76A" },
+            ]}
+            emptyMessage="Nessuna Spesa presente nell'anno selezionato."
+            centerLabel="Totale"
+            centerValue={String(expenseCounts.total)}
+            chartClassName="h-[150px] sm:h-[120px]"
+          />
+        </div>
       </div>
-      <div className="lg:col-span-4">
-        {composition.length ? <StatisticsChart title="Composizione tra pianificazione selezionata e Actual" categories={composition.map(([type]) => domainLabel(type))} values={composition.map(([, value]) => toChartNumber(value))} currency={currency} type="bar" seriesName="Composizione" /> : <ComponentCard title="Composizione tra pianificazione selezionata e Actual"><EmptyState message="Nessuna composizione disponibile." /></ComponentCard>}
+
+      <div className="grid grid-cols-1 items-start gap-3 sm:gap-4 xl:grid-cols-12 xl:gap-6">
+        <div className="xl:col-span-9">
+          {(ancillary.recentExpenses ?? []).length > 0
+            ? <RecentOrders items={ancillary.recentExpenses ?? []} currency={currency} />
+            : <ComponentCard title="Ultime Spese" compact><EmptyState message="Nessuna spesa recente." /></ComponentCard>}
+        </div>
+        <div className="xl:col-span-3">
+          <RenewalTimeline items={ancillary.upcomingContractEvents ?? []} />
+        </div>
       </div>
     </div>
-    <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-      <ListPanel title="Rinnovi e Scadenze" items={ancillary.upcomingContractEvents ?? []} emptyMessage="Nessun rinnovo o scadenza nei prossimi dodici mesi." href={routes.contratto} />
-      <ListPanel title="Contratti Attivi" items={ancillary.activeContracts ?? []} emptyMessage="Nessun contratto attivo." href={routes.contratto} />
-      <ComponentCard title="Centri di Costo Principali" className="h-full">
-        {costCenters.length === 0 ? <EmptyState message="Nessun centro di costo valorizzato." /> : <ul className="space-y-1">{costCenters.map(([name, value]) => <li key={name} className="flex items-center justify-between gap-4 rounded-lg px-3 py-2.5 hover:bg-gray-50 dark:hover:bg-white/[0.03]"><span className="truncate text-sm text-gray-600 dark:text-gray-300">{name}</span><span className="whitespace-nowrap text-sm font-medium text-gray-800 dark:text-white/90">{formatMoney(value, currency)}</span></li>)}</ul>}
-      </ComponentCard>
-      <ListPanel title="Pianificazioni da Contratto" items={ancillary.generatedContractPlanning ?? []} emptyMessage="Nessuna pianificazione generata da Contratto." href={routes.spesa} />
-    </div>
-    {(ancillary.recentExpenses ?? []).length ? <RecentOrders items={(ancillary.recentExpenses ?? []).map((item) => ({ id: item.id, label: item.label, date: item.date, href: routes.spesa(item.id) }))} /> : <ComponentCard title="Spese Recenti"><EmptyState message="Nessuna spesa recente." /></ComponentCard>}
-  </div>;
+  );
 }
