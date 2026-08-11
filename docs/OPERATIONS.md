@@ -1,7 +1,6 @@
 # Operazioni
 
-Stato: `VERIFIED CURRENT` per i comandi e le responsabilità presenti nel repository alla baseline
-`8f0f5660b409b562d354589d9e00012f31df8ef2`.
+Stato: `VERIFIED CURRENT` il 2026-08-11 per i comandi e le responsabilità presenti nel repository.
 
 ## Topologia locale
 

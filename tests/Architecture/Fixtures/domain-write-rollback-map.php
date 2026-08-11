@@ -2,8 +2,36 @@
 
 return [
     'schema' => 3,
-    'expectedDomainWriteCount' => 57,
+    'expectedDomainWriteCount' => 59,
     'writes' => [
+        'app/Domain/Platform/Actions/UpdateAuditRetention.php' => [
+            'actionClass' => 'App\\Domain\\Platform\\Actions\\UpdateAuditRetention',
+            'actionReference' => 'UpdateAuditRetention::class',
+            'actionInvocation' => [
+                'mode' => 'assigned-container',
+                'variable' => '$action',
+                'method' => 'execute',
+            ],
+            'testFile' => 'tests/Feature/PlatformOperations/TenantSettingsTest.php',
+            'testMethod' => 'test_update_audit_retention_failure_rolls_back_setting_pruning_and_audit',
+            'failureTrigger' => 'throw new ',
+            'failureExpectation' => 'expectException(',
+            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseMissing(', 'assertDatabaseCount('],
+        ],
+        'app/Domain/Tenancy/Actions/UpdateTenantSettings.php' => [
+            'actionClass' => 'App\\Domain\\Tenancy\\Actions\\UpdateTenantSettings',
+            'actionReference' => 'UpdateTenantSettings::class',
+            'actionInvocation' => [
+                'mode' => 'assigned-container',
+                'variable' => '$action',
+                'method' => 'execute',
+            ],
+            'testFile' => 'tests/Feature/PlatformOperations/TenantSettingsTest.php',
+            'testMethod' => 'test_update_tenant_settings_audit_failure_rolls_back_tenant_and_audit',
+            'failureTrigger' => 'throw new ',
+            'failureExpectation' => 'expectException(',
+            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseMissing(', 'assertDatabaseCount('],
+        ],
         'app/Domain/Tenancy/Actions/EnterTenantContext.php' => [
             'actionClass' => 'App\\Domain\\Tenancy\\Actions\\EnterTenantContext',
             'actionReference' => 'EnterTenantContext::class',

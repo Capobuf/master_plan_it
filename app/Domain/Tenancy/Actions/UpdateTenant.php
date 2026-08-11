@@ -29,6 +29,7 @@ final class UpdateTenant
         'timezone',
         'default_vat_rate',
         'budget_basis',
+        'attachment_quota_bytes',
     ];
 
     public function __construct(
@@ -120,7 +121,7 @@ final class UpdateTenant
             throw ValidationException::withMessages(['changes' => 'At least one tenant field is required.']);
         }
 
-        return Validator::make($changes, [
+        $validated = Validator::make($changes, [
             'name' => ['sometimes', 'required', 'string', 'max:255', 'not_regex:/^\s*$/u'],
             'code' => ['sometimes', 'required', 'string', 'max:255', 'not_regex:/^\s*$/u', Rule::unique('tenants', 'code')->ignore($target->getKey())],
             'currency_code' => ['sometimes', 'required', 'string', 'regex:/^[A-Za-z]{3}$/D'],
@@ -128,7 +129,15 @@ final class UpdateTenant
             'timezone' => ['sometimes', 'required', 'string', 'timezone'],
             'default_vat_rate' => ['sometimes', 'required', 'string', 'regex:/^[0-9]{1,10}(?:\.[0-9]{1,2})?$/D'],
             'budget_basis' => ['sometimes', 'required', Rule::enum(BudgetBasis::class)],
+            'attachment_quota_bytes' => ['sometimes', 'required', 'string', 'regex:/^(?:0|[1-9][0-9]{0,19})$/D'],
         ])->validate();
+
+        if (isset($validated['attachment_quota_bytes'])
+            && bccomp($validated['attachment_quota_bytes'], '18446744073709551615', 0) === 1) {
+            throw ValidationException::withMessages(['attachment_quota_bytes' => 'The attachment quota is too large.']);
+        }
+
+        return $validated;
     }
 
     private function lockedTenant(Tenant $target): Tenant

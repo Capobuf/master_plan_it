@@ -4,6 +4,7 @@ namespace App\Models\Builders;
 
 use App\Models\AuditEvent;
 use Closure;
+use DateTimeInterface;
 use Illuminate\Database\Eloquent\Builder;
 
 /**
@@ -11,6 +12,13 @@ use Illuminate\Database\Eloquent\Builder;
  */
 final class AuditEventBuilder extends Builder
 {
+    public function pruneBefore(DateTimeInterface $cutoff): int
+    {
+        return $this->toBase()
+            ->where('occurred_at', '<', $cutoff)
+            ->delete();
+    }
+
     /**
      * @param  array<string, mixed>  $attributes
      * @param  (Closure(): array<string, mixed>)|array<string, mixed>  $values

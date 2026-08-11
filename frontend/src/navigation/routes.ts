@@ -21,6 +21,17 @@ export const routes = {
   utenti: "/utenti",
   ruoli: "/ruoli",
   tenant: "/tenant",
+  impostazioni: "/impostazioni",
+  impostazioniGenerali: "/impostazioni/generali",
+  impostazioniUtenti: "/impostazioni/utenti",
+  impostazioniRuoli: "/impostazioni/ruoli",
+  impostazioniAnni: "/impostazioni/anni-di-pianificazione",
+  impostazioniCentri: "/impostazioni/centri-di-costo",
+  password: "/profilo/password",
+  audit: "/audit",
+  auditGlobale: "/piattaforma/audit",
+  piattaformaOverview: "/piattaforma/panoramica",
+  piattaformaSettings: "/piattaforma/impostazioni",
 } as const;
 
 export const routePatterns = {

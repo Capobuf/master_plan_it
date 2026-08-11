@@ -2,12 +2,12 @@
 
 Gli Spec Kit storici del replatform `001`–`007` sono ritirati.
 
-Questa directory contiene gli Spec Kit attivi e le Feature 017 e 020 completate. La Feature 020
-resta disponibile fino all'accettazione del Product Owner, come richiesto dalla slice.
+Questa directory contiene gli Spec Kit attivi e le Feature 008, 017 e 020 completate. Le Feature
+008 e 020 restano disponibili fino all'accettazione del Product Owner, come richiesto dalle slice.
 
 | ID | Feature | Stato corrente |
 |---|---|---|
-| 008 | Platform operations | Specificata, da pianificare |
+| 008 | Platform operations | Implementata e verificata; in attesa di review Product Owner |
 | 009 | Operational revisions | Specificata, da pianificare |
 | 010 | Projects | Specificata, da pianificare |
 | 011 | Expense attachments | Specificata, da pianificare |

@@ -553,6 +553,7 @@ class PermissionCatalogueTest extends TestCase
         return self::sorted([
             ...self::protectedPlatformAbilities(),
             'dashboard.view', 'audit.view', 'notification.view',
+            'tenant-settings.view', 'tenant-settings.update', 'tenant-users.view', 'tenant-users.manage', 'tenant-roles.view', 'tenant-roles.manage',
             'planning-year.view', 'planning-year.create', 'planning-year.update', 'planning-year.deactivate', 'planning-year.reactivate',
             'cost-center.view', 'cost-center.create', 'cost-center.update', 'cost-center.delete', 'cost-center.deactivate', 'cost-center.reactivate', 'cost-center.view-revisions', 'cost-center.restore-revision',
             'vendor.view', 'vendor.create', 'vendor.update', 'vendor.delete', 'vendor.deactivate', 'vendor.reactivate', 'vendor.view-revisions', 'vendor.restore-revision',
@@ -572,7 +573,7 @@ class PermissionCatalogueTest extends TestCase
     {
         return self::sorted([
             'platform.tenants.view', 'platform.tenants.create', 'platform.tenants.update', 'platform.tenants.deactivate', 'platform.tenants.reactivate',
-            'platform.users.manage', 'platform.roles.manage', 'platform.settings.manage', 'deletion-reason-setting.manage', 'platform.audit.view-global',
+            'platform.settings.manage', 'platform.audit.view-global',
             'platform.migration.run', 'platform.portability.import', 'platform.backup.run', 'platform.restore.run', 'platform.deploy.view',
         ]);
     }

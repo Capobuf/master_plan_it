@@ -34,9 +34,9 @@ const AppSidebar: React.FC = () => {
     () =>
       applicationNavigation.reduce<ApplicationNavigationSection[]>(
         (sections, section) => {
-          const items = section.items.filter((item) =>
-            hasAbility(item.requiredAbility),
-          );
+          const items = section.items.filter((item) => item.requiredAbility
+            ? hasAbility(item.requiredAbility)
+            : item.requiredAbilities?.some(hasAbility) ?? false);
 
           if (items.length > 0) {
             sections.push({ ...section, items });

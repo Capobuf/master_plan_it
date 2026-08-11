@@ -98,6 +98,11 @@ Gli errori devono essere osservabili e diagnosticabili.
 - Le permissions sono additive; l'assenza è deny.
 - La selezione Tenant, le relazioni e le query falliscono closed: nessun fallback unscoped.
 - Nessuna permission può bypassare invarianti economici, source-key uniqueness o tenant isolation.
+- Le API delle impostazioni delegate risolvono il solo Tenant corrente tramite `TenantContext` e
+  non accettano un `tenant_id` scelto dal client; le API globali Tenant restano distinte e protette.
+- Le abilities tenant-scoped sono verificate nel permission team del Tenant corrente.
+  L'`Administrator`, dopo una selezione esplicita, usa le stesse superfici senza impersonazione e
+  senza diventare membro del Tenant.
 
 ## Meccanismi separati
 

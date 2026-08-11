@@ -1,0 +1,1 @@
+import PageBreadcrumb from"../../components/common/PageBreadCrumb";import PlatformOverviewView from"../../components/platform/PlatformOverviewView";export default function PlatformOverview(){return <><PageBreadcrumb pageTitle="Panoramica operativa" subtitle="Stato globale non economico della piattaforma."/><PlatformOverviewView/></>}

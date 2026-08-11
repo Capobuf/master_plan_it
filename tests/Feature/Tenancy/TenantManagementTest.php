@@ -449,6 +449,7 @@ class TenantManagementTest extends TestCase
             'language_code' => 'en',
             'timezone' => 'UTC',
             'default_vat_rate' => '10.50',
+            'attachment_quota_bytes' => '4294967296',
         ];
 
         $updated = app(UpdateTenant::class)->execute(
@@ -464,7 +465,7 @@ class TenantManagementTest extends TestCase
             $this->assertSame($value, $updated->{$field});
         }
         $this->assertSame(8, $updated->lock_version);
-        $this->assertSame('2147483648', $updated->attachment_quota_bytes);
+        $this->assertSame('4294967296', $updated->attachment_quota_bytes);
         $this->assertFalse($updated->deletion_reason_required);
         $this->assertLifecycleAudit(
             $administrator,
@@ -489,7 +490,6 @@ class TenantManagementTest extends TestCase
             'state' => TenantState::Inactive->value,
             'state_changed_by_user_id' => $administrator->getKey(),
             'state_changed_at' => now()->toDateTimeString(),
-            'attachment_quota_bytes' => '0',
             'deletion_reason_required' => true,
             'company_name' => 'Later branding task',
             'address' => 'Later branding task',

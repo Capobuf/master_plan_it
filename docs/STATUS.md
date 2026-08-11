@@ -1,6 +1,6 @@
 # Stato funzionale
 
-Stato verificato dopo l'implementazione della Feature 020.
+Stato verificato dopo l'implementazione delle Feature 008 e 020.
 
 Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cronologia.
 
@@ -9,8 +9,12 @@ Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cro
 | Area | Backend/API | Frontend |
 |---|---|---|
 | Login, logout, sessione, contesto Tenant | Implementato | Implementato |
-| Tenant | CRUD/lifecycle implementato | Implementato |
-| Utenti e ruoli | Implementato | Implementato |
+| Tenant | CRUD/lifecycle e quota allegati globali Administrator-only | Implementato, separato da Impostazioni |
+| Impostazioni Tenant | Projection corrente, optimistic locking, audit, IVA forward-only e budget lock | Generali read-only/update con route italiane |
+| Utenti e ruoli | Abilities tenant-scoped view/manage e catalogo protetto | Modalità read-only/manage nell'area Impostazioni |
+| Audit e notifiche | Audit tenant/globale protetto; notifiche actor-scoped e payload minimizzato | Viste operative con loading/error/empty state |
+| Operazioni piattaforma | Retention globale e overview non economica Administrator-only | Implementato |
+| Password | Cambio personale e reset emergenza Administrator con invalidazione sessioni | Cambio personale implementato |
 | Planning year / Budget annuale | Lifecycle, approvazioni atomiche, chiusura | Implementato |
 | Fornitori | CRUD/lifecycle/history/restore | Implementato |
 | Centri di costo | CRUD/tree/lifecycle/history/restore | Implementato |
@@ -32,14 +36,13 @@ le route e i Resource testati. Non va dichiarato aggiornato un OpenAPI globale i
 
 | Priorità logica | Slice verticale | Spec Kit |
 |---:|---|---|
-| 1 | Operazioni piattaforma, impostazioni, audit e notifiche | `specs/008-platform-operations` |
-| 2 | History/compare/restore operativo; distinto dalla proiezione annuale read-only già disponibile | `specs/009-operational-revisions` |
-| 3 | Allegati delle spese con revisioni e quota | `specs/011-expense-attachments` |
-| 4 | BudgetVersion, riferimento e confronto | `specs/012-budget-versions` |
-| 5 | Scenari what-if | `specs/013-scenarios` |
-| 6 | Export CSV/XLSX e stampa | `specs/014-exports-and-print` |
-| 7 | Migrazione legacy e portabilità Tenant | `specs/015-migration-and-portability` |
-| 8 | Backup/restore, scheduler, release e deployment | `specs/016-backup-and-operations` |
+| 1 | History/compare/restore operativo; distinto dalla proiezione annuale read-only già disponibile | `specs/009-operational-revisions` |
+| 2 | Allegati delle spese con revisioni e quota | `specs/011-expense-attachments` |
+| 3 | BudgetVersion, riferimento e confronto | `specs/012-budget-versions` |
+| 4 | Scenari what-if | `specs/013-scenarios` |
+| 5 | Export CSV/XLSX e stampa | `specs/014-exports-and-print` |
+| 6 | Migrazione legacy e portabilità Tenant | `specs/015-migration-and-portability` |
+| 7 | Backup/restore, scheduler, release e deployment | `specs/016-backup-and-operations` |
 
 L'ordine è una dipendenza tecnica iniziale, non una promessa di priorità prodotto. Il Product Owner
 può cambiare l'ordine purché le dipendenze della slice scelta siano soddisfatte.

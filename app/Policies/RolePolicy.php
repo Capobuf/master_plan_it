@@ -3,10 +3,10 @@
 namespace App\Policies;
 
 use App\Domain\Tenancy\Data\TenantContext;
-use App\Models\Tenant;
 use App\Models\User;
 use App\Policies\Concerns\AuthorizesTenantOwnership;
 use App\Support\Authorization\PlatformAdministrator;
+use App\Support\Authorization\TenantAbilityAuthorizer;
 use Illuminate\Auth\Access\Response;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
@@ -19,21 +19,22 @@ final class RolePolicy
         private readonly TenantContext $tenantContext,
         private readonly PermissionRegistrar $permissionRegistrar,
         private readonly PlatformAdministrator $platformAdministrator,
+        private readonly TenantAbilityAuthorizer $tenantAbilityAuthorizer,
     ) {}
 
     public function viewAny(User $user): Response
     {
-        return $this->authorizeCollection($user);
+        return $this->collection($user, 'tenant-roles.view');
     }
 
     public function view(User $user, Role $role): Response
     {
-        return $this->authorizeRecord($user, $role);
+        return $this->record($user, $role, 'tenant-roles.view');
     }
 
     public function create(User $user): Response
     {
-        return $this->authorizeCollection($user);
+        return $this->collection($user, 'tenant-roles.manage');
     }
 
     public function allowsCreate(User $user): Response
@@ -43,7 +44,7 @@ final class RolePolicy
 
     public function update(User $user, Role $role): Response
     {
-        return $this->authorizeRecord($user, $role);
+        return $this->record($user, $role, 'tenant-roles.manage');
     }
 
     public function allowsUpdate(User $user, Role $role): Response
@@ -53,7 +54,7 @@ final class RolePolicy
 
     public function delete(User $user, Role $role): Response
     {
-        return $this->authorizeRecord($user, $role);
+        return $this->record($user, $role, 'tenant-roles.manage');
     }
 
     public function allowsDelete(User $user, Role $role): Response
@@ -96,66 +97,14 @@ final class RolePolicy
         return false;
     }
 
-    private function authorizeRecord(User $user, Role $role): Response
+    private function record(User $actor, Role $role, string $ability): Response
     {
-        return $this->authorizeTenantOwnership(
-            $user,
-            'platform.roles.manage',
-            $this->tenantContext,
-            $role,
-            $this->permissionRegistrar,
-            $this->platformAdministrator,
-        );
+        return $this->authorizeTenantOwnership($actor, $ability, $this->tenantContext, $role, $this->permissionRegistrar, $this->platformAdministrator);
     }
 
-    private function authorizeCollection(User $user): Response
+    private function collection(User $actor, string $ability): Response
     {
-        $persistedUser = $this->persistedPlatformActor($user);
-
-        if ($persistedUser === null || ! $this->platformAdministrator->allows($persistedUser, 'platform.roles.manage')) {
-            return Response::deny('PERMISSION_DENIED');
-        }
-
-        if (! $this->contextMatches($persistedUser)) {
-            return Response::deny('TENANT_CONTEXT_REQUIRED');
-        }
-
-        return Response::allow();
-    }
-
-    private function persistedPlatformActor(User $user): ?User
-    {
-        $key = $user->getKey();
-        $originalKey = $user->getRawOriginal($user->getKeyName());
-
-        if (! $user->exists || $key === null || $key !== $originalKey) {
-            return null;
-        }
-
-        return User::query()
-            ->whereKey($originalKey)
-            ->whereNull('tenant_id')
-            ->where('is_active', true)
-            ->first();
-    }
-
-    private function contextMatches(User $persistedUser): bool
-    {
-        $contextActor = $this->tenantContext->actor;
-        $contextTenant = $this->tenantContext->tenant;
-        $actorKey = $contextActor->getKey();
-        $actorOriginalKey = $contextActor->getRawOriginal($contextActor->getKeyName());
-        $tenantKey = $contextTenant->getKey();
-        $tenantOriginalKey = $contextTenant->getRawOriginal($contextTenant->getKeyName());
-
-        return $contextActor->exists
-            && $actorKey !== null
-            && $actorKey === $actorOriginalKey
-            && $actorKey === $persistedUser->getKey()
-            && $contextTenant->exists
-            && $tenantKey !== null
-            && $tenantKey === $tenantOriginalKey
-            && (int) $tenantKey === $this->tenantContext->tenantId
-            && Tenant::query()->whereKey($tenantOriginalKey)->exists();
+        return $this->tenantAbilityAuthorizer->allows($actor, $this->tenantContext, $ability)
+            ? Response::allow() : Response::deny('PERMISSION_DENIED');
     }
 }

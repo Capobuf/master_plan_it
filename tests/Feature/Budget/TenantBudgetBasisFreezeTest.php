@@ -7,6 +7,7 @@ use App\Domain\Budget\Data\ApplyApprovalData;
 use App\Domain\Budget\Data\ApprovalChangeData;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Tenancy\Actions\UpdateTenant;
+use App\Domain\Tenancy\Actions\UpdateTenantSettings;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
@@ -72,6 +73,25 @@ final class TenantBudgetBasisFreezeTest extends TestCase
                 (string) str()->uuid(),
             );
             $this->fail('The approved basis must be frozen.');
+        } catch (DomainException $exception) {
+            $this->assertSame('TENANT_BUDGET_BASIS_LOCKED', $exception->getMessage());
+        }
+
+        try {
+            app(UpdateTenantSettings::class)->execute(
+                $actor,
+                new TenantContext($tenant->fresh(), $actor),
+                [
+                    'name' => $tenant->name,
+                    'timezone' => $tenant->timezone,
+                    'default_vat_rate' => $tenant->default_vat_rate,
+                    'budget_basis' => 'net',
+                    'deletion_reason_required' => $tenant->deletion_reason_required,
+                ],
+                2,
+                (string) str()->uuid(),
+            );
+            $this->fail('The delegated settings surface must preserve the approved basis lock.');
         } catch (DomainException $exception) {
             $this->assertSame('TENANT_BUDGET_BASIS_LOCKED', $exception->getMessage());
         }

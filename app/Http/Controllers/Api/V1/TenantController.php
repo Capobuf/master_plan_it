@@ -140,6 +140,7 @@ final class TenantController extends Controller
 
         if ($partial) {
             $rules['budget_basis'] = ['sometimes', Rule::in(['net', 'gross'])];
+            $rules['attachment_quota_bytes'] = ['sometimes', 'string', 'regex:/^(?:0|[1-9][0-9]{0,19})$/D'];
         }
 
         return $rules;

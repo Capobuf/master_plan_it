@@ -1,8 +1,6 @@
 import type { ComponentType, SVGProps } from "react";
 
 import {
-  BoxCubeIcon,
-  CalenderIcon,
   DocsIcon,
   DollarLineIcon,
   GridIcon,
@@ -10,7 +8,6 @@ import {
   LockIcon,
   PieChartIcon,
   TableIcon,
-  UserCircleIcon,
 } from "../icons";
 import { routes } from "./routes";
 
@@ -18,7 +15,8 @@ export interface ApplicationNavigationItem {
   route: string;
   label: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
-  requiredAbility: string;
+  requiredAbility?: string;
+  requiredAbilities?: readonly string[];
 }
 
 export interface ApplicationNavigationSection {
@@ -27,7 +25,7 @@ export interface ApplicationNavigationSection {
   items: readonly ApplicationNavigationItem[];
 }
 
-export const applicationNavigation = [
+export const applicationNavigation: readonly ApplicationNavigationSection[] = [
   {
     id: "general",
     label: "Generale",
@@ -38,6 +36,7 @@ export const applicationNavigation = [
         icon: GridIcon,
         requiredAbility: "dashboard.view",
       },
+      { route: routes.audit, label: "Audit", icon: DocsIcon, requiredAbility: "audit.view" },
     ],
   },
   {
@@ -93,28 +92,10 @@ export const applicationNavigation = [
     label: "Impostazioni",
     items: [
       {
-        route: routes.anniDiPianificazione,
-        label: "Anni di pianificazione",
-        icon: CalenderIcon,
-        requiredAbility: "planning-year.view",
-      },
-      {
-        route: routes.centriDiCosto,
-        label: "Centri di costo",
-        icon: BoxCubeIcon,
-        requiredAbility: "cost-center.view",
-      },
-      {
-        route: routes.utenti,
-        label: "Utenti",
-        icon: UserCircleIcon,
-        requiredAbility: "platform.users.manage",
-      },
-      {
-        route: routes.ruoli,
-        label: "Ruoli",
+        route: routes.impostazioni,
+        label: "Impostazioni",
         icon: LockIcon,
-        requiredAbility: "platform.roles.manage",
+        requiredAbilities: ["tenant-settings.view","tenant-users.view","tenant-users.manage","tenant-roles.view","tenant-roles.manage","planning-year.view","cost-center.view"],
       },
     ],
   },
@@ -128,6 +109,9 @@ export const applicationNavigation = [
         icon: GridIcon,
         requiredAbility: "platform.tenants.view",
       },
+      { route: routes.piattaformaOverview, label: "Panoramica operativa", icon: GridIcon, requiredAbility: "platform.settings.manage" },
+      { route: routes.piattaformaSettings, label: "Impostazioni piattaforma", icon: LockIcon, requiredAbility: "platform.settings.manage" },
+      { route: routes.auditGlobale, label: "Audit globale", icon: DocsIcon, requiredAbility: "platform.audit.view-global" },
     ],
   },
 ] as const satisfies readonly ApplicationNavigationSection[];

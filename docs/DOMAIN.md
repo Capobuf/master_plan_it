@@ -1,6 +1,6 @@
 # Regole di dominio implementate
 
-Stato: `VERIFIED CURRENT` dopo l'implementazione della Feature 017.
+Stato: `VERIFIED CURRENT` dopo l'implementazione delle Feature 008, 017 e 020.
 
 Questo documento descrive soltanto regole che devono restare dopo la rimozione degli Spec Kit
 storici. Le funzionalità non implementate sono descritte esclusivamente negli Spec Kit attivi.
@@ -16,6 +16,24 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 - Un Tenant inattivo blocca i tenant user. Administrator può mantenerne l'accesso autorizzato e
   riattivarlo.
 - La disattivazione di un user conserva authorship e storico.
+
+## Operazioni e impostazioni Tenant
+
+- La gestione globale dei Tenant, inclusi stato, quota allegati e proprietà infrastrutturali, è
+  riservata all'`Administrator` e resta separata dalle impostazioni del Tenant corrente.
+- Nome operativo, IVA predefinita, Base Budget, timezone e obbligo della motivazione di
+  cancellazione appartengono al Tenant corrente e sono delegabili mediante abilities
+  tenant-scoped. La valuta non è una normale impostazione delegabile.
+- Il default IVA si applica soltanto a nuove Expense row e nuovi Contract term che non specificano
+  un'aliquota. L'aliquota effettiva e i valori Net/VAT/Gross sono persistiti; modificare il default
+  non riscrive record, revisioni o storia esistenti.
+- La Base Budget ufficiale può essere `net` o `gross` e non è più modificabile dopo la prima
+  approvazione.
+- `deletion_reason_required` influenza soltanto le cancellazioni future già supportate di Project,
+  Contract e Contract term; non modifica eventi o revisioni pregresse.
+- Gestione Utenti e Ruoli è separata in abilities di consultazione e gestione. Il catalogo
+  permissions è chiuso dall'applicazione: un ruolo Tenant non può ricevere abilities protette di
+  piattaforma né nomi arbitrari.
 
 ## Anni di pianificazione
 

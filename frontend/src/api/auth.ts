@@ -30,3 +30,14 @@ export async function logout(): Promise<void> {
   await apiClient.post("/api/v1/auth/logout");
 }
 
+export async function changeOwnPassword(
+  currentPassword: string,
+  password: string,
+  passwordConfirmation: string,
+): Promise<void> {
+  await apiClient.put("/api/v1/auth/password", {
+    current_password: currentPassword,
+    password,
+    password_confirmation: passwordConfirmation,
+  });
+}

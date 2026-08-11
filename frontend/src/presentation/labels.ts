@@ -60,10 +60,13 @@ export const abilityLabels: Record<string, string> = {
   "platform.tenants.update": "Modificare Tenant",
   "platform.tenants.deactivate": "Disattivare Tenant",
   "platform.tenants.reactivate": "Riattivare Tenant",
-  "platform.users.manage": "Gestire gli utenti di piattaforma",
-  "platform.roles.manage": "Gestire i ruoli di piattaforma",
   "platform.settings.manage": "Gestire le impostazioni di piattaforma",
-  "deletion-reason-setting.manage": "Gestire le motivazioni di eliminazione",
+  "tenant-settings.view": "Visualizzare le impostazioni del Tenant",
+  "tenant-settings.update": "Modificare le impostazioni del Tenant",
+  "tenant-users.view": "Visualizzare gli utenti del Tenant",
+  "tenant-users.manage": "Gestire gli utenti del Tenant",
+  "tenant-roles.view": "Visualizzare ruoli e permessi",
+  "tenant-roles.manage": "Gestire ruoli e permessi",
   "platform.audit.view-global": "Visualizzare l'audit globale",
   "platform.migration.run": "Eseguire migrazioni",
   "platform.portability.import": "Importare dati di portabilità",
@@ -163,7 +166,9 @@ export const abilityGroupLabels: Record<string, string> = {
   "budget-version": "Versioni Budget",
   scenario: "Scenari",
   "tenant-portability": "Portabilità Tenant",
-  "deletion-reason-setting": "Motivazioni di eliminazione",
+  "tenant-settings": "Impostazioni Tenant",
+  "tenant-users": "Utenti Tenant",
+  "tenant-roles": "Ruoli e Permessi",
 };
 
 export function abilityGroup(ability: string): string {

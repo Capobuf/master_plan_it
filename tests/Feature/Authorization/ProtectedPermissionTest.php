@@ -34,10 +34,7 @@ class ProtectedPermissionTest extends TestCase
         'platform.tenants.update',
         'platform.tenants.deactivate',
         'platform.tenants.reactivate',
-        'platform.users.manage',
-        'platform.roles.manage',
         'platform.settings.manage',
-        'deletion-reason-setting.manage',
         'platform.audit.view-global',
         'platform.migration.run',
         'platform.portability.import',
@@ -240,14 +237,14 @@ class ProtectedPermissionTest extends TestCase
         $this->assertDatabaseCount('model_has_permissions', 0);
     }
 
-    public function test_each_action_requires_its_exact_platform_management_ability_and_restores_team_scope(): void
+    public function test_each_action_requires_its_exact_tenant_management_ability_and_restores_team_scope(): void
     {
         [$administrator, $context] = $this->administratorContext();
         $administratorRole = Role::query()->whereNull('tenant_id')->where('name', 'Administrator')->firstOrFail();
         $registrar = app(PermissionRegistrar::class);
         $operations = $this->actionOperations($administrator, $context);
 
-        foreach (['platform.roles.manage', 'platform.users.manage'] as $ability) {
+        foreach (['tenant-roles.manage', 'tenant-users.manage'] as $ability) {
             $administratorRole->revokePermissionTo($ability);
             $registrar->forgetCachedPermissions();
 
@@ -434,13 +431,13 @@ class ProtectedPermissionTest extends TestCase
         $deactivateUser = User::factory()->create(['tenant_id' => $targetTenantId]);
 
         return [
-            ['name' => 'CreateTenantRole', 'ability' => 'platform.roles.manage', 'invoke' => fn () => app(CreateTenantRole::class)->execute($actor, $context, 'Authorization Create '.str()->uuid(), ['dashboard.view'], (string) str()->uuid())],
-            ['name' => 'UpdateTenantRole', 'ability' => 'platform.roles.manage', 'invoke' => fn () => app(UpdateTenantRole::class)->execute($actor, $context, $roleToUpdate, 'Authorization Updated', ['planning-year.view'], (string) str()->uuid())],
-            ['name' => 'DeleteTenantRole', 'ability' => 'platform.roles.manage', 'invoke' => fn () => app(DeleteTenantRole::class)->execute($actor, $context, $roleToDelete, (string) str()->uuid())],
-            ['name' => 'AssignTenantRoles', 'ability' => 'platform.users.manage', 'invoke' => fn () => app(AssignTenantRoles::class)->execute($actor, $context, $assignmentUser, [$roleToAssign], (string) str()->uuid())],
-            ['name' => 'CreateTenantUser', 'ability' => 'platform.users.manage', 'invoke' => fn () => app(CreateTenantUser::class)->execute($actor, $context, 'Authorization Create User', 'create-'.str()->uuid().'@example.test', 'temporary-password', [$roleToAssign], (string) str()->uuid())],
-            ['name' => 'UpdateTenantUser', 'ability' => 'platform.users.manage', 'invoke' => fn () => app(UpdateTenantUser::class)->execute($actor, $context, $updateUser, 'Authorization Updated User', 'update-'.str()->uuid().'@example.test', (string) str()->uuid())],
-            ['name' => 'DeactivateTenantUser', 'ability' => 'platform.users.manage', 'invoke' => fn () => app(DeactivateTenantUser::class)->execute($actor, $context, $deactivateUser, [9, 3], (string) str()->uuid())],
+            ['name' => 'CreateTenantRole', 'ability' => 'tenant-roles.manage', 'invoke' => fn () => app(CreateTenantRole::class)->execute($actor, $context, 'Authorization Create '.str()->uuid(), ['dashboard.view'], (string) str()->uuid())],
+            ['name' => 'UpdateTenantRole', 'ability' => 'tenant-roles.manage', 'invoke' => fn () => app(UpdateTenantRole::class)->execute($actor, $context, $roleToUpdate, 'Authorization Updated', ['planning-year.view'], (string) str()->uuid())],
+            ['name' => 'DeleteTenantRole', 'ability' => 'tenant-roles.manage', 'invoke' => fn () => app(DeleteTenantRole::class)->execute($actor, $context, $roleToDelete, (string) str()->uuid())],
+            ['name' => 'AssignTenantRoles', 'ability' => 'tenant-users.manage', 'invoke' => fn () => app(AssignTenantRoles::class)->execute($actor, $context, $assignmentUser, [$roleToAssign], (string) str()->uuid())],
+            ['name' => 'CreateTenantUser', 'ability' => 'tenant-users.manage', 'invoke' => fn () => app(CreateTenantUser::class)->execute($actor, $context, 'Authorization Create User', 'create-'.str()->uuid().'@example.test', 'temporary-password', [$roleToAssign], (string) str()->uuid())],
+            ['name' => 'UpdateTenantUser', 'ability' => 'tenant-users.manage', 'invoke' => fn () => app(UpdateTenantUser::class)->execute($actor, $context, $updateUser, 'Authorization Updated User', 'update-'.str()->uuid().'@example.test', (string) str()->uuid())],
+            ['name' => 'DeactivateTenantUser', 'ability' => 'tenant-users.manage', 'invoke' => fn () => app(DeactivateTenantUser::class)->execute($actor, $context, $deactivateUser, [9, 3], (string) str()->uuid())],
         ];
     }
 

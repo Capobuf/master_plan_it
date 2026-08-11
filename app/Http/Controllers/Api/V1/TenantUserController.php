@@ -10,6 +10,7 @@ use App\Domain\IdentityAccess\Actions\UpdateTenantUser;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\Api\V1\TenantRoleOptionResource;
 use App\Http\Resources\Api\V1\TenantUserResource;
 use App\Models\User;
 use Illuminate\Contracts\Validation\Rule;
@@ -23,6 +24,15 @@ use Spatie\Permission\Models\Role;
 
 final class TenantUserController extends Controller
 {
+    public function roleOptions(Request $request): AnonymousResourceCollection
+    {
+        $roles = TenantOwnedRecordQuery::forTenant($this->tenantContext($request), Role::class)
+            ->where('guard_name', 'web')->orderByRaw('LOWER(name)')->orderBy('id')
+            ->paginate(min(max($request->integer('per_page', 100), 1), 100));
+
+        return TenantRoleOptionResource::collection($roles);
+    }
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $context = $this->tenantContext($request);

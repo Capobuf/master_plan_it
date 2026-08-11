@@ -3,9 +3,11 @@
 namespace Tests\Feature\Api\Users;
 
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Hash;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
 
@@ -114,5 +116,47 @@ final class ApiUsersHttpTest extends TestCase
             'unexpected' => 'reject-me',
         ])->assertStatus(422)->assertJsonPath('error.code', 'VALIDATION_FAILED');
         $this->assertSame($previousHash, (string) $target->refresh()->password);
+    }
+
+    public function test_tenant_users_view_is_read_only_and_does_not_expose_role_assignment_lookup(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $viewer = $this->tenantUserWithOperationsAbilities($tenant, ['tenant-users.view']);
+        $target = User::factory()->create(['tenant_id' => $tenant->getKey()]);
+        $this->actingAs($viewer, 'web');
+
+        $this->getJson('/api/v1/users')->assertOk();
+        $this->getJson('/api/v1/users/'.$target->getKey())->assertOk();
+        $this->getJson('/api/v1/user-role-options')->assertForbidden();
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/users', [
+            'name' => 'Denied mutation',
+            'email' => 'denied-mutation@example.test',
+            'password' => 'Strong-password-123!',
+            'roles' => [],
+        ])->assertForbidden()->assertJsonPath('error.code', 'PERMISSION_DENIED');
+    }
+
+    public function test_tenant_users_manage_implies_read_and_can_load_existing_role_options(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $manager = $this->tenantUserWithOperationsAbilities($tenant, ['tenant-users.manage']);
+        $role = Role::query()->where('tenant_id', $tenant->getKey())->firstOrFail();
+        $this->actingAs($manager, 'web');
+
+        $this->getJson('/api/v1/users')->assertOk();
+        $this->getJson('/api/v1/user-role-options')
+            ->assertOk()
+            ->assertJsonFragment(['id' => $role->getKey(), 'name' => $role->name]);
+    }
+
+    /** @param list<string> $abilities */
+    private function tenantUserWithOperationsAbilities(Tenant $tenant, array $abilities): User
+    {
+        $user = $this->tenantUser($tenant);
+        $role = Role::query()->where('tenant_id', $tenant->getKey())->where('name', 'Editor')->firstOrFail();
+        $role->syncPermissions($abilities);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return $user;
     }
 }

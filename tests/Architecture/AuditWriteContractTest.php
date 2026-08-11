@@ -19,7 +19,9 @@ class AuditWriteContractTest extends TestCase
         'Domain/Audit/AuditRecorder.php',
     ];
 
-    private const RETENTION_DELETE_ALLOWLIST = [];
+    private const RETENTION_DELETE_ALLOWLIST = [
+        'Domain/Platform/Actions/UpdateAuditRetention.php',
+    ];
 
     public function test_valid_nested_json_safe_properties_are_immutable_values(): void
     {
@@ -229,7 +231,7 @@ class AuditWriteContractTest extends TestCase
     public function test_application_audit_writes_use_only_the_explicit_writer_allowlist(): void
     {
         $this->assertSame(['Domain/Audit/AuditRecorder.php'], self::ORDINARY_CREATE_ALLOWLIST);
-        $this->assertSame([], self::RETENTION_DELETE_ALLOWLIST);
+        $this->assertSame(['Domain/Platform/Actions/UpdateAuditRetention.php'], self::RETENTION_DELETE_ALLOWLIST);
 
         $appPath = dirname(__DIR__, 2).'/app';
         $files = new RecursiveIteratorIterator(
@@ -315,7 +317,8 @@ class AuditWriteContractTest extends TestCase
         );
 
         foreach ($databaseChains['chain'] as $chain) {
-            if (preg_match("~(?:table|from)\\s*\\(\\s*['\"]audit_events['\"]\\s*\\)~i", $chain) === 1
+            if (! $allowRetentionDelete
+                && preg_match("~(?:table|from)\\s*\\(\\s*['\"]audit_events['\"]\\s*\\)~i", $chain) === 1
                 && preg_match('~->\s*'.$mutationMethods.'\s*\(~i', $chain, $match) === 1) {
                 $violations[] = 'raw audit_events '.$match[0];
             }

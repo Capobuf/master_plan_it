@@ -3,7 +3,10 @@
 namespace Tests\Feature\Api\Roles;
 
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
 
@@ -54,7 +57,53 @@ final class ApiRolesHttpTest extends TestCase
 
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/roles', [
             'name' => 'Invalid role',
-            'abilities' => ['platform.users.manage'],
+            'abilities' => ['platform.tenants.view'],
         ])->assertStatus(422);
+    }
+
+    public function test_tenant_roles_view_is_read_only(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $viewer = $this->tenantRoleActor($tenant, ['tenant-roles.view']);
+        $this->actingAs($viewer, 'web');
+
+        $this->getJson('/api/v1/roles')->assertOk();
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/roles', [
+            'name' => 'Denied role',
+            'abilities' => ['dashboard.view'],
+        ])->assertForbidden()->assertJsonPath('error.code', 'PERMISSION_DENIED');
+    }
+
+    public function test_tenant_roles_manage_implies_read_and_can_assign_only_catalogued_tenant_abilities(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $manager = $this->tenantRoleActor($tenant, ['tenant-roles.manage']);
+        $this->actingAs($manager, 'web');
+
+        $this->getJson('/api/v1/roles')->assertOk();
+        $this->getJson('/api/v1/abilities')->assertOk()->assertJsonFragment(['name' => 'tenant-settings.view']);
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/roles', [
+            'name' => 'Tenant operations',
+            'abilities' => ['tenant-settings.view', 'tenant-users.manage', 'tenant-roles.view'],
+        ])->assertCreated();
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/roles', [
+            'name' => 'Arbitrary permission',
+            'abilities' => ['tenant.custom.unregistered'],
+        ])->assertUnprocessable();
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/roles', [
+            'name' => 'Platform escalation',
+            'abilities' => ['platform.tenants.update'],
+        ])->assertUnprocessable();
+    }
+
+    /** @param list<string> $abilities */
+    private function tenantRoleActor(Tenant $tenant, array $abilities): User
+    {
+        $user = $this->tenantUser($tenant);
+        $role = Role::query()->where('tenant_id', $tenant->getKey())->where('name', 'Editor')->firstOrFail();
+        $role->syncPermissions($abilities);
+        app(PermissionRegistrar::class)->forgetCachedPermissions();
+
+        return $user;
     }
 }

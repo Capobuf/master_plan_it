@@ -24,6 +24,13 @@ import PlanningYears from "./pages/PlanningYears/Home";
 import Users from "./pages/Users/Home";
 import Roles from "./pages/Roles/Home";
 import Tenants from "./pages/Tenants/Home";
+import SettingsLayout from "./pages/Settings/Layout";
+import SettingsIndex from "./pages/Settings/Index";
+import GeneralSettings from "./pages/Settings/General";
+import Password from "./pages/Profile/Password";
+import AuditHome from "./pages/Audit/Home";
+import PlatformOverview from "./pages/Platform/Overview";
+import PlatformSettings from "./pages/Platform/Settings";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { ApplicationProvider } from "./context/ApplicationContext";
@@ -57,11 +64,20 @@ export default function App() {
                 <Route path={routePatterns.progetto} element={<ProjectDetail />} />
                 <Route path={routePatterns.modificaProgetto} element={<EditProject />} />
                 <Route path={routes.fornitori} element={<Vendors />} />
-                <Route path={routes.centriDiCosto} element={<CostCenters />} />
-                <Route path={routes.anniDiPianificazione} element={<PlanningYears />} />
-                <Route path={routes.utenti} element={<Users />} />
-                <Route path={routes.ruoli} element={<Roles />} />
                 <Route path={routes.tenant} element={<Tenants />} />
+                <Route path={routes.password} element={<Password />} />
+                <Route path={routes.audit} element={<AuditHome />} />
+                <Route path={routes.auditGlobale} element={<AuditHome global />} />
+                <Route path={routes.piattaformaOverview} element={<PlatformOverview />} />
+                <Route path={routes.piattaformaSettings} element={<PlatformSettings />} />
+                <Route path={routes.impostazioni} element={<SettingsLayout />}>
+                  <Route index element={<SettingsIndex />} />
+                  <Route path="generali" element={<GeneralSettings />} />
+                  <Route path="utenti" element={<Users />} />
+                  <Route path="ruoli" element={<Roles />} />
+                  <Route path="anni-di-pianificazione" element={<PlanningYears />} />
+                  <Route path="centri-di-costo" element={<CostCenters />} />
+                </Route>
 
                 <Route path={legacyRoutes.report} element={<Navigate to={routes.report} replace />} />
                 <Route path={legacyRoutePatterns.nuovaSpesa} element={<Navigate to={routes.nuovaSpesa} replace />} />
@@ -78,6 +94,10 @@ export default function App() {
                 <Route path={legacyRoutes.utenti} element={<Navigate to={routes.utenti} replace />} />
                 <Route path={legacyRoutes.ruoli} element={<Navigate to={routes.ruoli} replace />} />
                 <Route path={legacyRoutes.tenant} element={<Navigate to={routes.tenant} replace />} />
+                <Route path={routes.utenti} element={<Navigate to={routes.impostazioniUtenti} replace />} />
+                <Route path={routes.ruoli} element={<Navigate to={routes.impostazioniRuoli} replace />} />
+                <Route path={routes.anniDiPianificazione} element={<Navigate to={routes.impostazioniAnni} replace />} />
+                <Route path={routes.centriDiCosto} element={<Navigate to={routes.impostazioniCentri} replace />} />
               </Route>
             </Route>
 
