@@ -1,0 +1,150 @@
+<?php
+
+namespace App\Domain\IdentityAccess\Actions;
+
+use App\Domain\Audit\AuditRecorder;
+use App\Domain\Audit\Data\AuditProperties;
+use App\Domain\Tenancy\Data\TenantContext;
+use App\Models\Tenant;
+use App\Models\User;
+use App\Support\Authorization\PermissionCatalogue;
+use App\Support\Authorization\TenantAbilityAuthorizer;
+use DomainException;
+use Illuminate\Database\UniqueConstraintViolationException;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
+
+final class CreateTenantRole
+{
+    public function __construct(
+        private readonly TenantAbilityAuthorizer $tenantAbilityAuthorizer,
+        private readonly PermissionRegistrar $permissionRegistrar,
+        private readonly AuditRecorder $auditRecorder,
+    ) {}
+
+    /**
+     * @param  list<string>  $abilities
+     */
+    public function execute(
+        User $actor,
+        TenantContext $context,
+        string $name,
+        array $abilities,
+        string $correlationId,
+    ): Role {
+        $previousTeamId = $this->permissionRegistrar->getPermissionsTeamId();
+
+        try {
+            [$persistedActor, $tenant] = $this->authorize($actor, $context);
+            $this->permissionRegistrar->setPermissionsTeamId((int) $tenant->getKey());
+            $validatedName = $this->validatedName($name, (int) $tenant->getKey());
+            $permissions = $this->validatedPermissions($abilities);
+
+            return DB::transaction(function () use ($correlationId, $permissions, $persistedActor, $tenant, $validatedName): Role {
+                try {
+                    $role = Role::query()->create([
+                        'tenant_id' => $tenant->getKey(),
+                        'name' => $validatedName,
+                        'guard_name' => 'web',
+                    ]);
+                } catch (UniqueConstraintViolationException) {
+                    throw ValidationException::withMessages([
+                        'name' => 'The tenant role name has already been taken.',
+                    ]);
+                }
+
+                $role->syncPermissions($permissions);
+
+                $this->auditRecorder->record(
+                    eventType: 'tenant.role.created',
+                    correlationId: $correlationId,
+                    properties: new AuditProperties([]),
+                    actor: $persistedActor,
+                    tenantId: (int) $tenant->getKey(),
+                    subject: $role,
+                );
+
+                return $role;
+            });
+        } finally {
+            $actor->unsetRelation('roles');
+            $actor->unsetRelation('permissions');
+            $context->actor->unsetRelation('roles');
+            $context->actor->unsetRelation('permissions');
+            $this->permissionRegistrar->setPermissionsTeamId($previousTeamId);
+        }
+    }
+
+    private function validatedName(string $name, int $tenantId): string
+    {
+        $name = trim($name);
+        Validator::make(['name' => $name], [
+            'name' => ['required', 'string', 'max:255', 'not_regex:/^\s*$/u'],
+        ])->validate();
+
+        if (Role::query()
+            ->where('tenant_id', $tenantId)
+            ->where('guard_name', 'web')
+            ->where('name', $name)
+            ->exists()) {
+            throw ValidationException::withMessages([
+                'name' => 'The tenant role name has already been taken.',
+            ]);
+        }
+
+        return $name;
+    }
+
+    /**
+     * @param  list<string>  $abilities
+     * @return list<Permission>
+     */
+    private function validatedPermissions(array $abilities): array
+    {
+        Validator::make(['abilities' => $abilities], [
+            'abilities' => ['array'],
+            'abilities.*' => ['required', 'string', 'distinct'],
+        ])->validate();
+
+        if (array_intersect(PermissionCatalogue::protectedAbilities(), $abilities) !== []) {
+            throw new DomainException('PLATFORM_ABILITY_PROTECTED');
+        }
+
+        foreach ($abilities as $index => $ability) {
+            if (! PermissionCatalogue::isTenant($ability)) {
+                throw ValidationException::withMessages([
+                    "abilities.{$index}" => 'The selected ability is not in the permission catalogue.',
+                ]);
+            }
+        }
+
+        $permissions = Permission::query()
+            ->where('guard_name', 'web')
+            ->whereIn('name', $abilities)
+            ->get()
+            ->keyBy('name');
+
+        foreach ($abilities as $index => $ability) {
+            if (! $permissions->has($ability)) {
+                throw ValidationException::withMessages([
+                    "abilities.{$index}" => 'The selected ability is not in the permission catalogue.',
+                ]);
+            }
+        }
+
+        return array_values(array_map(
+            static fn (string $ability): Permission => $permissions->get($ability),
+            $abilities,
+        ));
+    }
+
+    /** @return array{User, Tenant} */
+    private function authorize(User $actor, TenantContext $context): array
+    {
+        return $this->tenantAbilityAuthorizer->authorize($actor, $context, 'tenant-roles.manage');
+    }
+}

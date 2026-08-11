@@ -1,0 +1,1 @@
+import PageBreadcrumb from"../../components/common/PageBreadCrumb";import AuditRetentionForm from"../../components/platform/AuditRetentionForm";export default function PlatformSettings(){return <><PageBreadcrumb pageTitle="Impostazioni piattaforma" subtitle="Operazioni globali riservate all'Administrator."/><AuditRetentionForm/></>}

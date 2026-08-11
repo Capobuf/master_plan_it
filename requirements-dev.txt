@@ -1,2 +1,0 @@
-# Development and test dependencies — not installed in production.
-pytest>=9.0.2

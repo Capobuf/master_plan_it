@@ -1,8 +1,0 @@
-[pre_model_sync]
-master_plan_it.patches.v1_0.remove_legacy_mpit_navigation_records
-master_plan_it.patches.v1_0.clear_project_print_format_default_language
-master_plan_it.patches.v1_1.refactor_budget_model_project_contract_expense
-master_plan_it.patches.v1_2.remove_expense_parent_state_and_vendor
-
-[post_model_sync]
-master_plan_it.patches.v1_2.drop_removed_expense_parent_columns

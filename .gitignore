@@ -1,55 +1,32 @@
-/data
-# Environment files
-.env
-.env.local
-.env.*.local
-.envrc
-/artifacts
-/tools
-
-# Python artifacts
-*.py[cod]
-*.pyc
-__pycache__/
-.pytest_cache/
-.mypy_cache/
-.coverage
-coverage/
-htmlcov/
-
-# Swap files
-*.swp
-*.swo
-
-# Virtual environments
-.venv/
-venv/
-
-# Packaging/build
-dist/
-build/
-*.egg-info/
-pip-wheel-metadata/
-
-# Node/npm
-node_modules/
-npm-debug.log*
-yarn-error.log*
-
-# OS / editors
+*.log
 .DS_Store
-.vscode/
-.idea/
-.cache/
-.copilot/
-
-# Database / data
-*.sqlite3
-*.db
-/data/sites/*/private/
-/data/sites/*/files/
-/data/logs/
-/data/db/
-/data/redis/
-private/
-sites/
+.env
+.env.backup
+.env.production
+.env.testing
+.phpactor.json
+.phpunit.result.cache
+/.cursor/
+/.idea
+/.nova
+/.phpunit.cache
+/.vscode
+/.zed
+/auth.json
+/node_modules
+/public/build
+/public/css
+/public/js
+/public/fonts
+/public/fonts-manifest.dev.json
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/tests/Browser/console
+/tests/Browser/screenshots
+/vendor
+_ide_helper.php
+Homestead.json
+Homestead.yaml
+Thumbs.db

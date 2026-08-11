@@ -1,0 +1,1 @@
+import PageBreadcrumb from"../../components/common/PageBreadCrumb";import ChangePasswordForm from"../../components/profile/ChangePasswordForm";export default function Password(){return <><PageBreadcrumb pageTitle="Password" subtitle="Aggiorna la password del tuo account."/><ChangePasswordForm/></>}

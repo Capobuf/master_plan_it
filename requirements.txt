@@ -1,3 +1,0 @@
-# Runtime Python dependencies for master_plan_it.
-# Frappe and its dependencies are provided by the bench environment.
-# This app has no additional runtime Python requirements.
