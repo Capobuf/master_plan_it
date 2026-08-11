@@ -3,6 +3,7 @@ import { useNavigate } from "react-router";
 import { ApiError } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import { useApplicationContext } from "../../context/ApplicationContext";
+import { useTheme } from "../../context/ThemeContext";
 import { ArrowRightIcon, ChevronDownIcon, UserCircleIcon } from "../../icons";
 import { routes } from "../../navigation/routes";
 import Alert from "../ui/alert/Alert";
@@ -26,6 +27,7 @@ export default function UserDropdown() {
   const [logoutError, setLogoutError] = useState<string | null>(null);
   const { currentUser, logout } = useAuth();
   const { data: applicationContext } = useApplicationContext();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const roleContext = applicationContext?.platformAdministrator
     ? "Amministratore di Piattaforma"
@@ -34,6 +36,12 @@ export default function UserDropdown() {
       : "Utente";
 
   const closeDropdown = () => setIsOpen(false);
+
+  const selectTheme = (selectedTheme: "light" | "dark") => {
+    if (theme !== selectedTheme) {
+      toggleTheme();
+    }
+  };
 
   const handleLogout = async () => {
     if (isLoggingOut) {
@@ -97,6 +105,48 @@ export default function UserDropdown() {
             <Alert variant="error" title="Disconnessione non riuscita" message={logoutError} />
           </div>
         ) : null}
+
+        <div className="mt-3 border-y border-gray-100 py-3 dark:border-gray-800">
+          <span
+            id="theme-selection-label"
+            className="mb-2 block px-3 text-theme-xs font-medium text-gray-500 dark:text-gray-400"
+          >
+            Tema
+          </span>
+          <div
+            role="radiogroup"
+            aria-labelledby="theme-selection-label"
+            className="grid grid-cols-2 gap-2 px-3"
+          >
+            {([
+              ["light", "Chiaro"],
+              ["dark", "Scuro"],
+            ] as const).map(([value, label]) => {
+              const isSelected = theme === value;
+
+              return (
+                <label
+                  key={value}
+                  className={`cursor-pointer rounded-lg border px-3 py-2 text-center text-theme-sm font-medium transition-colors focus-within:ring-3 focus-within:ring-brand-500/20 ${
+                    isSelected
+                      ? "border-brand-500 bg-brand-50 text-brand-700 dark:border-brand-400 dark:bg-brand-500/15 dark:text-brand-300"
+                      : "border-gray-200 text-gray-600 hover:bg-gray-100 hover:text-gray-800 dark:border-gray-700 dark:text-gray-400 dark:hover:bg-white/5 dark:hover:text-gray-300"
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="theme"
+                    value={value}
+                    checked={isSelected}
+                    onChange={() => selectTheme(value)}
+                    className="sr-only"
+                  />
+                  {label}
+                </label>
+              );
+            })}
+          </div>
+        </div>
 
         <DropdownItem
           onClick={() => void handleLogout()}

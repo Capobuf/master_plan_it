@@ -11,6 +11,7 @@ use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Project;
+use App\Models\RevisionBatchItem;
 use App\Models\Tenant;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -320,6 +321,24 @@ final class ExpenseApiHttpTest extends TestCase
         $this->assertDatabaseMissing('expenses', ['title' => 'API expense']);
     }
 
+    public function test_ordinary_row_without_vendor_returns_the_indexed_validation_field(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $center = CostCenter::factory()->for($tenant)->create();
+        $vendor = Vendor::factory()->for($tenant)->create();
+        $payload = $this->payload($year->getKey(), $center->getKey(), $vendor->getKey());
+        unset($payload['rows'][0]['vendor_id']);
+        $this->actingAs($user, 'web');
+
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $payload)
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'VALIDATION_FAILED')
+            ->assertJsonStructure(['error' => ['fields' => ['rows.0.vendor_id']]]);
+        $this->assertDatabaseMissing('expenses', ['title' => 'API expense']);
+    }
+
     public function test_expense_row_decimals_reject_a_third_fractional_digit(): void
     {
         $tenant = Tenant::factory()->create();
@@ -365,6 +384,78 @@ final class ExpenseApiHttpTest extends TestCase
             ->assertJsonPath('data.rows.0.totals.net', '13.19')
             ->assertJsonPath('data.rows.0.totals.vat', '1.38')
             ->assertJsonPath('data.rows.0.totals.gross', '14.57');
+    }
+
+    public function test_expense_history_compare_and_restore_use_one_logical_aggregate_revision(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $center = CostCenter::factory()->for($tenant)->create(['name' => 'Operations']);
+        $vendor = Vendor::factory()->for($tenant)->create(['name' => 'Fornitore leggibile']);
+        $payload = $this->payload((int) $year->getKey(), (int) $center->getKey(), (int) $vendor->getKey());
+        $payload['rows'][0]['quantity'] = '1.00';
+        $payload['rows'][0]['unit_price'] = '100.00';
+        $payload['rows'][] = [...$payload['rows'][0], 'position' => 2, 'description' => 'Seconda riga', 'is_current_planning' => false];
+        $this->actingAs($user, 'web');
+        $headers = $this->csrfHeaders();
+
+        $created = $this->withHeaders($headers)->postJson('/api/v1/expenses', $payload)->assertCreated();
+        $id = (int) $created->json('data.id');
+        $rows = $created->json('data.rows');
+        $update = $payload;
+        $update['title'] = 'Spesa corrente';
+        $update['notes'] = 'Nota corrente';
+        $update['lock_version'] = $created->json('data.lock_version');
+        $update['rows'] = array_map(static fn (array $row, int $index): array => [
+            ...$row,
+            'id' => $rows[$index]['id'],
+            'lock_version' => $rows[$index]['lock_version'],
+            'description' => $index === 0 ? 'Prima riga corrente' : $row['description'],
+        ], $update['rows'], array_keys($update['rows']));
+        $updated = $this->withHeaders($headers)->putJson('/api/v1/expenses/'.$id, $update)->assertOk();
+
+        $history = $this->getJson('/api/v1/expenses/'.$id.'/history?year='.$year->getKey())
+            ->assertOk()
+            ->assertJsonCount(2, 'data');
+        $source = collect($history->json('data'))->firstWhere('operation', 'create');
+        $currentRevision = collect($history->json('data'))->firstWhere('operation', 'update');
+        $this->assertSame(3, $source['changed_count']);
+        $this->assertSame(2, $currentRevision['changed_count']);
+        $this->assertSame(3, RevisionBatchItem::query()->where('revision_batch_id', $currentRevision['id'])->count());
+        $this->assertSame(2, RevisionBatchItem::query()->where('revision_batch_id', $currentRevision['id'])->where('is_changed', true)->count());
+        $this->assertSame($user->name, $source['actor']['label']);
+
+        $sourceRowItem = RevisionBatchItem::query()
+            ->where('revision_batch_id', $source['id'])
+            ->where('versionable_type', app(ExpenseRow::class)->getMorphClass())
+            ->orderBy('sequence')
+            ->firstOrFail();
+        $legacySnapshot = $sourceRowItem->snapshot_contents;
+        $legacySnapshot['quantity'] = '1.000000';
+        $legacySnapshot['unit_price'] = '100.000000';
+        $legacySnapshot['entered_amount'] = '100.000000';
+        $legacySnapshot['vat_rate'] = '22.000000';
+        $sourceRowItem->forceFill(['snapshot_contents' => $legacySnapshot])->save();
+
+        $comparison = $this->getJson('/api/v1/expenses/'.$id.'/history/'.$source['id'].'?year='.$year->getKey())
+            ->assertOk()
+            ->assertJsonPath('data.revision.id', $source['id'])
+            ->assertJsonFragment(['label' => 'Titolo', 'revision_value' => 'API expense', 'current_value' => 'Spesa corrente']);
+        $this->assertStringNotContainsString('lock_version', $comparison->getContent());
+        $this->assertStringContainsString('Prima riga corrente', $comparison->getContent());
+        $this->assertEmpty(array_intersect(
+            ['quantity', 'unit_price', 'entered_amount', 'vat_rate'],
+            collect($comparison->json('data.changes'))->pluck('field')->all(),
+        ));
+
+        $restored = $this->withHeaders($headers)->postJson('/api/v1/expenses/'.$id.'/history/'.$source['id'].'/restore', [
+            'lock_version' => $updated->json('data.lock_version'),
+        ])->assertOk()->assertJsonPath('data.title', 'API expense')->assertJsonCount(2, 'data.rows');
+
+        $this->assertSame(3, $restored->json('data.lock_version'));
+        $this->getJson('/api/v1/expenses/'.$id.'/history?year='.$year->getKey())
+            ->assertOk()->assertJsonCount(3, 'data')->assertJsonPath('data.0.operation', 'restore');
     }
 
     /** @return array<string, mixed> */

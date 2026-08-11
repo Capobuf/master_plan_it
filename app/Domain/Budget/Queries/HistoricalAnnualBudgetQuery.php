@@ -132,9 +132,9 @@ final class HistoricalAnnualBudgetQuery
     private function latestItems(int $tenantId, CarbonImmutable $cutoff, int $planningYearId): array
     {
         $ranked = DB::table('revision_batch_items as items')->join('revision_batches as batches', 'batches.id', '=', 'items.revision_batch_id')
-            ->join('versions', 'versions.id', '=', 'items.version_id')->where('items.tenant_id', $tenantId)
+            ->where('items.tenant_id', $tenantId)
             ->where('items.planning_year_id', $planningYearId)->where('batches.occurred_at', '<=', $cutoff)
-            ->select(['items.versionable_type', 'items.versionable_id', 'items.mutation', 'versions.contents'])
+            ->select(['items.versionable_type', 'items.versionable_id', 'items.mutation', 'items.snapshot_contents as contents'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY items.versionable_type, items.versionable_id ORDER BY batches.occurred_at DESC, batches.id DESC, items.sequence DESC) AS revision_rank');
 
         return DB::query()->fromSub($ranked, 'ranked')->where('revision_rank', 1)->get()->map(function (object $row): array {
@@ -194,10 +194,17 @@ final class HistoricalAnnualBudgetQuery
             ->filter()->unique()->values()->all();
         $vendorIds = collect($vendorIds)->concat(collect($contracts)->pluck('vendor_id'))->filter()->unique()->values()->all();
 
-        $termParents = DB::table('contract_terms')->where('tenant_id', $tenantId)
-            ->whereIn('contract_id', $contractIds)->pluck('contract_id', 'id');
-        $terms = collect($this->referenceSnapshots($tenantId, $cutoff, ContractTerm::class, $termParents->keys()->all()))
-            ->map(fn (array $term): array => ['contract_id' => (int) $termParents->get($term['id']), ...$term])
+        $termIds = DB::table('revision_batch_items as items')
+            ->join('revision_batches as batches', 'batches.id', '=', 'items.revision_batch_id')
+            ->where('items.tenant_id', $tenantId)
+            ->where('items.versionable_type', $this->morphClass(ContractTerm::class))
+            ->where('batches.occurred_at', '<=', $cutoff)
+            ->whereIn('items.operational_root_id', $contractIds)
+            ->distinct()
+            ->pluck('items.versionable_id')
+            ->map(static fn ($id): int => (int) $id)
+            ->all();
+        $terms = collect($this->referenceSnapshots($tenantId, $cutoff, ContractTerm::class, $termIds))
             ->values()->all();
 
         return [
@@ -228,15 +235,18 @@ final class HistoricalAnnualBudgetQuery
         }
 
         $ranked = DB::table('revision_batch_items as items')->join('revision_batches as batches', 'batches.id', '=', 'items.revision_batch_id')
-            ->join('versions', 'versions.id', '=', 'items.version_id')->where('items.tenant_id', $tenantId)
+            ->where('items.tenant_id', $tenantId)
             ->where('items.versionable_type', $this->morphClass($model))->whereIn('items.versionable_id', $ids)
             ->where('batches.occurred_at', '<=', $cutoff)
-            ->select(['items.versionable_id', 'items.mutation', 'versions.contents'])
+            ->select(['items.versionable_id', 'items.mutation', 'items.operational_root_id', 'items.snapshot_contents as contents'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY items.versionable_id ORDER BY batches.occurred_at DESC, batches.id DESC, items.sequence DESC) AS revision_rank');
 
         return $this->referenceSnapshotCache[$cacheKey] = DB::query()->fromSub($ranked, 'ranked')->where('revision_rank', 1)->where('mutation', 'upsert')->get()
-            ->map(static function (object $row): array {
+            ->map(function (object $row) use ($model): array {
                 $contents = json_decode((string) $row->contents, true, 512, JSON_THROW_ON_ERROR);
+                if ($model === ContractTerm::class && ! array_key_exists('contract_id', $contents)) {
+                    $contents['contract_id'] = (int) $row->operational_root_id;
+                }
 
                 return ['id' => (int) $row->versionable_id, ...$contents];
             })->values()->all();

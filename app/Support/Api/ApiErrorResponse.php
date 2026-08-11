@@ -43,6 +43,9 @@ final class ApiErrorResponse
         'APPROVED_DIMENSION_REALLOCATION_REQUIRED' => [422, 'Approved dimensions require an explicit reallocation decision.'],
         'EXPENSE_BULK_ITEM_NOT_APPLICABLE' => [422, 'At least one selected expense cannot use this bulk action.'],
         'TENANT_BUDGET_BASIS_LOCKED' => [409, 'The Tenant budget basis cannot change while approvals exist.'],
+        'ATTACHMENT_QUOTA_EXCEEDED' => [422, 'The attachment would exceed the Tenant storage quota.'],
+        'ATTACHMENT_FILE_MISSING' => [500, 'The attachment metadata exists but its private file is unavailable.'],
+        'ATTACHMENT_STORAGE_FAILURE' => [500, 'The private attachment storage operation failed.'],
     ];
 
     public static function from(Throwable $exception, Request $request): JsonResponse

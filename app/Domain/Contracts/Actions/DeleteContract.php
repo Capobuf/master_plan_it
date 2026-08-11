@@ -2,6 +2,7 @@
 
 namespace App\Domain\Contracts\Actions;
 
+use App\Domain\Attachments\Actions\PurgeAttachments;
 use App\Domain\Contracts\Actions\Concerns\ManagesContracts;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
@@ -36,6 +37,7 @@ final class DeleteContract
             $this->contractRevisions($actor, $context, RevisionOperation::Delete, $correlationId, $contract, $changed, $reason);
             $this->contractAudit('contract.deleted', $correlationId, $actor, $tenant, $contract);
             $contract->delete();
+            app(PurgeAttachments::class)->forParent($actor, $context, $contract, $correlationId);
         });
     }
 }

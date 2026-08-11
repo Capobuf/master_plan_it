@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ApiError } from "../../api/client";
 import { listExpenseCostCenters, listExpensePlanningYears } from "../../api/expenses";
 import ProjectForm from "./ProjectForm";
 
@@ -13,9 +14,13 @@ vi.mock("../../api/expenses", async (importOriginal) => {
 });
 
 describe("ProjectForm", () => {
-  it("clears a deferred target before submitting a different stage", async () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
     vi.mocked(listExpenseCostCenters).mockResolvedValue([{ id: 10, name: "IT" }]);
     vi.mocked(listExpensePlanningYears).mockResolvedValue([{ id: 20, label: 2027, active: true }]);
+  });
+
+  it("clears a deferred target before submitting a different stage", async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     render(
       <ProjectForm
@@ -45,5 +50,32 @@ describe("ProjectForm", () => {
         deferred_target_planning_year_id: null,
       });
     });
+  });
+
+  it("highlights and focuses a field rejected by the API", async () => {
+    const error = new ApiError({
+      message: "I dati inseriti non sono validi.",
+      status: 422,
+      fields: { cost_center_id: ["The selected cost center is invalid."] },
+    });
+    render(<ProjectForm submitting={false} error={error} onSubmit={vi.fn()} onCancel={vi.fn()} />);
+
+    const costCenter = await screen.findByRole("combobox", { name: "Centro di costo" });
+    expect(costCenter).toHaveAttribute("aria-invalid", "true");
+    expect(costCenter).toHaveAccessibleDescription("Seleziona un Centro di costo disponibile.");
+    await waitFor(() => expect(document.activeElement).toBe(costCenter));
+  });
+
+  it("focuses the first locally invalid field and keeps suggestions on the others", async () => {
+    render(<ProjectForm submitting={false} error={null} onSubmit={vi.fn()} onCancel={vi.fn()} />);
+    await screen.findByRole("option", { name: "IT" });
+
+    fireEvent.click(screen.getByRole("button", { name: "Crea progetto" }));
+
+    const title = screen.getByRole("textbox", { name: "Titolo" });
+    expect(title).toHaveAttribute("aria-invalid", "true");
+    expect(title).toHaveAccessibleDescription("Inserisci un titolo.");
+    expect(screen.getByRole("combobox", { name: "Centro di costo" })).toHaveAttribute("aria-invalid", "true");
+    await waitFor(() => expect(document.activeElement).toBe(title));
   });
 });

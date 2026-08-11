@@ -1,16 +1,18 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { ApiError } from "../../api/client";
-import { deleteContract, deleteContractTerm, deleteGeneratedExpense, generateContractOccurrence, getContract, getContractHistory, resumeAndGenerateContractOccurrence, resumeContractOccurrence, suppressContractOccurrence, synchronizeContract, type Contract, type ContractOccurrence, type ContractRevision, type GeneratedExpense } from "../../api/contracts";
+import { deleteContract, deleteContractTerm, deleteGeneratedExpense, generateContractOccurrence, getContract, getContractHistory, getContractRevision, restoreContractRevision, resumeAndGenerateContractOccurrence, resumeContractOccurrence, suppressContractOccurrence, synchronizeContract, type Contract, type ContractOccurrence, type ContractRevision, type GeneratedExpense } from "../../api/contracts";
 import ComponentCard from "../../components/common/ComponentCard";
+import AttachmentPanel from "../../components/attachments/AttachmentPanel";
 import IconButton from "../../components/common/IconButton";
+import ObjectTabs from "../../components/common/ObjectTabs";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
-import ContractHistoryTable from "../../components/contracts/ContractHistoryTable";
 import ContractOccurrenceTable from "../../components/contracts/ContractOccurrenceTable";
 import Checkbox from "../../components/form/input/Checkbox";
 import InputField from "../../components/form/input/InputField";
 import Label from "../../components/form/Label";
+import RevisionHistoryPanel from "../../components/revisions/RevisionHistoryPanel";
 import Alert from "../../components/ui/alert/Alert";
 import Badge from "../../components/ui/badge/Badge";
 import Button from "../../components/ui/button/Button";
@@ -33,6 +35,8 @@ export default function ContractDetail() {
   const [history, setHistory] = useState<ContractRevision[]>([]);
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"details" | "attachments" | "history">("details");
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [error, setError] = useState<ApiError | null>(null);
   const [actionError, setActionError] = useState<ApiError | null>(null);
@@ -54,13 +58,15 @@ export default function ContractDetail() {
     try { setContract(await getContract(contractId)); } catch (requestError) { setContract(null); setError(ApiError.from(requestError)); } finally { setLoading(false); }
   }, [canView, contractId, tenantId]);
   useEffect(() => { if (!contextLoading) void load(); }, [contextLoading, load]);
+  useEffect(() => { setActiveTab("details"); setHistory([]); setHistoryError(null); }, [contractId, tenantId]);
 
   const runAction = async (key: string, action: () => Promise<void>) => {
     setBusyKey(key); setActionError(null);
     try { await action(); await load(); return true; } catch (requestError) { setActionError(ApiError.from(requestError)); return false; } finally { setBusyKey(null); }
   };
   const closeModal = () => { setModal(null); setReason(""); setTargetOccurrence(null); setTargetTermId(null); setTargetGeneratedExpense(null); };
-  const loadHistory = async () => { if (contractId === null || !hasAbility("contract.view-revisions")) return; setHistoryLoading(true); try { setHistory((await getContractHistory(contractId, { per_page: 100 })).data); } catch (requestError) { setActionError(ApiError.from(requestError)); } finally { setHistoryLoading(false); } };
+  const loadHistory = async () => { if (contractId === null || !hasAbility("contract.view-revisions")) return; setHistoryLoading(true); setHistoryError(null); try { setHistory((await getContractHistory(contractId, { per_page: 10 })).data); } catch (requestError) { setHistoryError(ApiError.from(requestError).message); } finally { setHistoryLoading(false); } };
+  const changeTab = (tab: "details" | "attachments" | "history") => { setActiveTab(tab); if (tab === "history" && history.length === 0 && !historyLoading) void loadHistory(); };
   const confirmModal = async () => {
     if (!contract) return;
     let completed = false;
@@ -86,9 +92,11 @@ export default function ContractDetail() {
       <dl className="grid grid-cols-1 gap-4 border-t border-gray-100 pt-5 md:grid-cols-2 lg:grid-cols-4 dark:border-gray-800"><div><dt className="text-sm text-gray-500 dark:text-gray-400">Fornitore</dt><dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{contract.vendor?.name ?? "—"}</dd></div><div><dt className="text-sm text-gray-500 dark:text-gray-400">Centro di costo</dt><dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{contract.cost_center?.name ?? "—"}</dd></div><div><dt className="text-sm text-gray-500 dark:text-gray-400">Data di rinnovo</dt><dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{formatDate(contract.renewal_date)}</dd></div><div><dt className="text-sm text-gray-500 dark:text-gray-400">Preavviso</dt><dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{contract.renewal_notice_days===null ? "—" : `${contract.renewal_notice_days} giorni`}</dd></div></dl>
       {contract.description ? <p className="rounded-xl bg-gray-50 p-4 text-sm text-gray-600 dark:bg-white/[0.03] dark:text-gray-300">{contract.description}</p> : null}{contract.renewal_notes ? <p className="text-sm text-gray-600 dark:text-gray-300"><span className="font-medium text-gray-800 dark:text-white/90">Note sul rinnovo:</span> {contract.renewal_notes}</p> : null}
     </ComponentCard>
+    <ObjectTabs tabs={[{ key: "details" as const, label: "Dettagli" }, ...(hasAbility("attachment.view") ? [{ key: "attachments" as const, label: "Allegati" }] : []), ...(hasAbility("contract.view-revisions") ? [{ key: "history" as const, label: "Storico" }] : [])]} active={activeTab} onChange={changeTab} />
+    {activeTab === "details" ? <div className="space-y-6">
     <ComponentCard title="Termini Contrattuali">{contract.terms.length===0 ? <p className="text-sm text-gray-500 dark:text-gray-400">Nessun termine disponibile.</p> : <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">{contract.terms.map((term,index)=><article key={term.id ?? term.local_key} className="rounded-xl border border-gray-200 p-4 dark:border-gray-800"><div className="flex items-center justify-between gap-3"><h3 className="font-semibold text-gray-800 dark:text-white/90">Termine {index+1}</h3>{hasAbility("contract.update") && term.id!==null ? <Button size="sm" variant="outline" onClick={()=>{setTargetTermId(term.id);setModal("delete-term");}}>Rimuovi</Button>:null}</div><dl className="mt-4 grid grid-cols-2 gap-4 text-sm"><div><dt className="text-gray-500 dark:text-gray-400">Validità</dt><dd className="mt-1 text-gray-800 dark:text-white/90">{formatDate(term.effective_start)} – {formatDate(term.effective_end)}</dd></div><div><dt className="text-gray-500 dark:text-gray-400">Ciclo</dt><dd className="mt-1 text-gray-800 dark:text-white/90">{domainLabel(term.billing_cycle)}</dd></div><div><dt className="text-gray-500 dark:text-gray-400">Importo</dt><dd className="mt-1 text-gray-800 dark:text-white/90">{formatMoney(term.entered_amount,term.currency??"EUR")}</dd></div><div><dt className="text-gray-500 dark:text-gray-400">Aliquota IVA</dt><dd className="mt-1 text-gray-800 dark:text-white/90">{formatPercentage(term.vat_rate)}</dd></div><div><dt className="text-gray-500 dark:text-gray-400">Netto</dt><dd className="mt-1 text-gray-800 dark:text-white/90">{formatMoney(term.net,term.currency??"EUR")}</dd></div><div><dt className="text-gray-500 dark:text-gray-400">Lordo</dt><dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{formatMoney(term.gross,term.currency??"EUR")}</dd></div></dl><div className="mt-4 flex flex-wrap gap-2">{term.amount_includes_vat ? <Badge color="info" size="sm">IVA inclusa</Badge>:null}{term.auto_renew ? <Badge color="success" size="sm">Rinnovo automatico</Badge>:null}</div></article>)}</div>}</ComponentCard>
     <ComponentCard title="Generazione e Spese"><ContractOccurrenceTable occurrences={contract.occurrences} generatedExpenses={contract.generated_expenses} canGenerate={hasAbility("contract.generate-occurrence")} canSuppress={hasAbility("contract.suppress-generation")} canResume={hasAbility("contract.resume-generation")} canDeleteGenerated={hasAbility("expense.delete")} busyKey={busyKey} onSynchronize={()=>void runAction("synchronize",async()=>{await synchronizeContract(contract.id);})} onSuppress={(occurrence)=>{setTargetOccurrence(occurrence);setModal("suppress");}} onResume={(occurrence)=>void runAction(`occurrence:${occurrence.source_key}`,async()=>{await resumeContractOccurrence(contract.id,occurrence.source_key);})} onResumeAndGenerate={(occurrence)=>void runAction(`occurrence:${occurrence.source_key}`,async()=>{await resumeAndGenerateContractOccurrence(contract.id,occurrence.source_key);})} onDeleteGenerated={(expense)=>{setTargetGeneratedExpense(expense);setAllowRegeneration(false);setModal("delete-expense");}} /></ComponentCard>
-    {hasAbility("contract.view-revisions") ? <ComponentCard title="Storico Revisioni"><div className="mb-4 flex justify-end"><Button size="sm" variant="outline" onClick={()=>void loadHistory()} disabled={historyLoading}>{historyLoading ? "Caricamento…" : "Carica Storico"}</Button></div><ContractHistoryTable revisions={history} /></ComponentCard> : null}
+    </div> : activeTab === "attachments" ? <AttachmentPanel parent={{ kind: "contract", contractId: contract.id }} /> : <RevisionHistoryPanel revisions={history} loading={historyLoading} loadError={historyError} onReload={loadHistory} onCompare={(revisionId) => getContractRevision(contract.id, revisionId)} onRestore={async (revisionId) => { setContract(await restoreContractRevision(contract.id, revisionId, contract.lock_version)); await loadHistory(); }} />}
   </div>;
 
   return <><PageMeta title="Dettaglio Contratto | Master Plan IT" description="Dettaglio del contratto" /><PageBreadcrumb pageTitle="Dettaglio Contratto" />{body}<Modal isOpen={modal!==null} onClose={closeModal} className="max-w-lg p-6">{modal ? <ModalContent kind={modal} reason={reason} setReason={setReason} generationYear={generationYear} setGenerationYear={setGenerationYear} allowRegeneration={allowRegeneration} setAllowRegeneration={setAllowRegeneration} busy={busyKey!==null} onCancel={closeModal} onConfirm={()=>void confirmModal()} /> : null}</Modal></>;

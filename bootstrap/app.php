@@ -1,5 +1,6 @@
 <?php
 
+use App\Console\Commands\ApplyOperationalRevisionRetentionCommand;
 use App\Console\Commands\PromoteDeferredProjectsCommand;
 use App\Http\Middleware\AssignCorrelationId;
 use App\Http\Middleware\AuthorizeApplicationAbility;
@@ -7,6 +8,7 @@ use App\Http\Middleware\EnsureActiveUser;
 use App\Http\Middleware\EnsureTenantIsActive;
 use App\Http\Middleware\ResolveTenantContext;
 use App\Http\Middleware\SetPermissionTeamContext;
+use App\Models\Version;
 use App\Support\Api\ApiErrorResponse;
 use App\Support\Diagnostics\CorrelationId;
 use Illuminate\Console\Scheduling\Schedule;
@@ -19,6 +21,7 @@ use Symfony\Component\HttpFoundation\Response;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
+        ApplyOperationalRevisionRetentionCommand::class,
         PromoteDeferredProjectsCommand::class,
     ])
     ->withRouting(
@@ -45,6 +48,8 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withSchedule(function (Schedule $schedule): void {
         $schedule->command('projects:promote-deferred')->dailyAt('00:15')->withoutOverlapping();
+        $schedule->command('revisions:apply-retention')->dailyAt('00:30')->withoutOverlapping();
+        $schedule->command('model:prune', ['--model' => Version::class])->dailyAt('00:45')->withoutOverlapping();
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

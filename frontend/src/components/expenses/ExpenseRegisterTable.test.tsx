@@ -3,7 +3,6 @@ import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 import {
   getExpense,
-  updateExpenseRegisterPreferences,
   type ExpenseColumnPreference,
   type ExpenseDetail,
   type ExpenseRegisterItem,
@@ -15,7 +14,6 @@ vi.mock("../../api/expenses", async (importOriginal) => {
   return {
     ...actual,
     getExpense: vi.fn(),
-    updateExpenseRegisterPreferences: vi.fn(),
   };
 });
 
@@ -83,14 +81,12 @@ describe("ExpenseRegisterTable", () => {
 
     render(<MemoryRouter><ExpenseRegisterTable expenses={[expense]} planningYearId={7} planningYears={[]} columnPreferences={columns} canEdit canCreate canDelete canViewProjects onChanged={vi.fn()} onPlanningYearChange={vi.fn()} /></MemoryRouter>);
 
-    expect(screen.getByRole("button", { name: "Colonne" })).toBeInTheDocument();
     expect(screen.queryByText(/Spese selezionate/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("checkbox", { name: "Seleziona Licenze operative" }));
     expect(screen.getByText("1 Spese selezionate")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Chiudi" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Sposta" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Elimina" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Colonne" })).toBeInTheDocument();
 
     const expander = screen.getByRole("button", { name: "Espandi righe di Licenze operative" });
     const actions = screen.getByRole("button", { name: "Azioni Licenze operative" });
@@ -102,18 +98,14 @@ describe("ExpenseRegisterTable", () => {
     expect(screen.getByText("Acme")).toBeInTheDocument();
   });
 
-  it("persists column visibility and ordering", async () => {
-    vi.mocked(updateExpenseRegisterPreferences).mockImplementation(async (next) => next);
-    render(<MemoryRouter><ExpenseRegisterTable expenses={[expense]} planningYearId={7} planningYears={[]} columnPreferences={columns} canEdit={false} canCreate={false} canDelete={false} canViewProjects={false} onChanged={vi.fn()} onPlanningYearChange={vi.fn()} /></MemoryRouter>);
+  it("renders column visibility as a controlled preference", () => {
+    const { rerender } = render(<MemoryRouter><ExpenseRegisterTable expenses={[expense]} planningYearId={7} planningYears={[]} columnPreferences={columns} canEdit={false} canCreate={false} canDelete={false} canViewProjects={false} onChanged={vi.fn()} onPlanningYearChange={vi.fn()} /></MemoryRouter>);
 
-    fireEvent.click(screen.getByRole("button", { name: "Colonne" }));
-    fireEvent.click(screen.getByRole("checkbox", { name: "Mostra Contratto" }));
-    await waitFor(() => expect(screen.queryByRole("columnheader", { name: "Contratto" })).not.toBeInTheDocument());
+    expect(screen.getByRole("columnheader", { name: "Contratto" })).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Sposta Lordo in alto" }));
-    await waitFor(() => expect(updateExpenseRegisterPreferences).toHaveBeenCalledTimes(2));
-    const calls = vi.mocked(updateExpenseRegisterPreferences).mock.calls;
-    const lastColumns: ExpenseColumnPreference[] = calls[calls.length - 1]?.[0] ?? [];
-    expect(lastColumns.findIndex(({ key }) => key === "gross")).toBeLessThan(lastColumns.findIndex(({ key }) => key === "vat"));
+    const nextColumns = columns.map((column) => column.key === "contract" ? { ...column, visible: false } : column);
+    rerender(<MemoryRouter><ExpenseRegisterTable expenses={[expense]} planningYearId={7} planningYears={[]} columnPreferences={nextColumns} canEdit={false} canCreate={false} canDelete={false} canViewProjects={false} onChanged={vi.fn()} onPlanningYearChange={vi.fn()} /></MemoryRouter>);
+
+    expect(screen.queryByRole("columnheader", { name: "Contratto" })).not.toBeInTheDocument();
   });
 });

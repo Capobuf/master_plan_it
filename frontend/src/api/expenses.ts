@@ -3,6 +3,7 @@ import {
   type DataEnvelope,
   type PaginatedData,
 } from "./client";
+import type { OperationalRevision, RevisionComparison } from "./revisions";
 
 export interface ExpenseMoney {
   net: string;
@@ -132,13 +133,7 @@ export interface ExpenseDetail {
   totals: ExpenseMoney;
 }
 
-export interface ExpenseRevision {
-  id: number;
-  operation: string;
-  actor: string | null;
-  timestamp: string | null;
-  summary: string | null;
-}
+export type ExpenseRevision = OperationalRevision;
 
 export interface ExpenseRowInput {
   id?: number;
@@ -392,5 +387,20 @@ export async function closeExpense(expenseId: number, request: CloseExpenseReque
 
 export async function moveExpense(expenseId: number, request: MoveExpenseRequest): Promise<MoveExpenseResponse> {
   const response = await apiClient.post<DataEnvelope<MoveExpenseResponse>>(`/api/v1/expenses/${expenseId}/move`, request);
+  return response.data.data;
+}
+
+export async function getExpenseHistory(expenseId: number, planningYearId: number): Promise<PaginatedData<ExpenseRevision>> {
+  const response = await apiClient.get<PaginatedData<ExpenseRevision>>(`/api/v1/expenses/${expenseId}/history`, { params: { year: planningYearId, per_page: 10 } });
+  return response.data;
+}
+
+export async function getExpenseRevision(expenseId: number, revisionId: number, planningYearId: number): Promise<RevisionComparison> {
+  const response = await apiClient.get<DataEnvelope<RevisionComparison>>(`/api/v1/expenses/${expenseId}/history/${revisionId}`, { params: { year: planningYearId } });
+  return response.data.data;
+}
+
+export async function restoreExpenseRevision(expenseId: number, revisionId: number, lockVersion: number): Promise<ExpenseDetail> {
+  const response = await apiClient.post<DataEnvelope<ExpenseDetail>>(`/api/v1/expenses/${expenseId}/history/${revisionId}/restore`, { lock_version: lockVersion });
   return response.data.data;
 }

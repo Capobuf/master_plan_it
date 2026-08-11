@@ -15,6 +15,7 @@ interface DecimalInputProps {
   error?: boolean;
   hint?: string;
   ariaLabel?: string;
+  suffix?: string;
 }
 
 export default function DecimalInput({
@@ -30,6 +31,7 @@ export default function DecimalInput({
   error,
   hint,
   ariaLabel,
+  suffix,
 }: DecimalInputProps) {
   const formattedValue = formatEditableDecimal(value, { fixedScale, trimTrailingZeros });
   const [displayValue, setDisplayValue] = useState(formattedValue.replace(".", ","));
@@ -78,6 +80,7 @@ export default function DecimalInput({
       error={error}
       hint={hint}
       ariaLabel={ariaLabel}
+      suffix={suffix}
     />
   );
 }

@@ -73,10 +73,28 @@ final class SynchronizeContractOccurrences
                     Money::fromDecimal($expected->netAmount, $context->currencyCode),
                     Money::fromDecimal($expected->vatAmount, $context->currencyCode),
                 );
-                $row->fill(['vendor_id' => $contract->vendor_id, 'description' => $contract->title, 'quantity' => null, 'unit_price' => null, 'entered_amount' => $expected->netAmount, 'amount_includes_vat' => false, 'vat_rate' => $vatRate, 'lock_version' => $row->lock_version + 1]);
-                $row->forceFill(['net_amount' => $expected->netAmount, 'vat_amount' => $expected->vatAmount, 'gross_amount' => $expected->grossAmount])->save();
-                $expense->fill(['cost_center_id' => $contract->cost_center_id, 'title' => $contract->title.' — '.$expected->occurrenceDate, 'lock_version' => $expense->lock_version + 1])->save();
-                $this->revisions($actor, $context, RevisionOperation::Update, $occurrenceCorrelationId, $expense, [$expense, $row]);
+                $row->fill(['vendor_id' => $contract->vendor_id, 'description' => $contract->title, 'quantity' => null, 'unit_price' => null, 'entered_amount' => $expected->netAmount, 'amount_includes_vat' => false, 'vat_rate' => $vatRate]);
+                $row->forceFill(['net_amount' => $expected->netAmount, 'vat_amount' => $expected->vatAmount, 'gross_amount' => $expected->grossAmount]);
+                $expense->fill(['cost_center_id' => $contract->cost_center_id, 'title' => $contract->title.' — '.$expected->occurrenceDate]);
+                $rowChanged = $row->isDirty();
+                $expenseChanged = $expense->isDirty();
+                if (! $rowChanged && ! $expenseChanged) {
+                    $counts['skipped']++;
+
+                    continue;
+                }
+                if ($rowChanged) {
+                    $row->forceFill(['lock_version' => $row->lock_version + 1])->save();
+                }
+                $expense->forceFill(['lock_version' => $expense->lock_version + 1])->save();
+                $this->revisions(
+                    $actor,
+                    $context,
+                    RevisionOperation::Update,
+                    $occurrenceCorrelationId,
+                    $expense,
+                    $rowChanged ? [$expense, $row] : [$expense],
+                );
                 $counts['updated']++;
             }
             $this->contractAudit('contract.synchronized', $correlationId, $actor, $context->tenant, $contract, $counts);

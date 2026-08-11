@@ -11,9 +11,9 @@ use App\Models\RevisionBatch;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
-use App\Models\Version;
 use Database\Seeders\PermissionCatalogueSeeder;
 use DomainException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Artisan;
@@ -43,7 +43,8 @@ class VendorRevisionTest extends TestCase
     {
         [$tenant, $actor, $context] = $this->context('vendor.create', 'vendor.update', 'vendor.restore-revision');
         $vendor = app(CreateVendor::class)->execute($actor, $context, 'Original supplier', 'IT001', null, null, null, 'create');
-        $original = $vendor->oldestVersions()->firstOrFail();
+        $original = RevisionBatch::query()->where('correlation_id', 'create')->firstOrFail();
+        $originalVersionId = $original->items()->value('version_id');
         $updated = app(UpdateVendor::class)->execute($actor, $context, $vendor, 'Updated supplier', 'IT002', 'payables@example.test', null, null, 1, 'update');
 
         $this->assertSame('Updated supplier', $updated->name);
@@ -58,12 +59,13 @@ class VendorRevisionTest extends TestCase
         $restored = app(RestoreVendorRevision::class)->execute($actor, $context, $updated, $original, 2, 'restore');
         $this->assertSame('Original supplier', $restored->name);
         $this->assertSame(3, $restored->lock_version);
-        $this->assertGreaterThan($original->getKey(), $restored->latestVersions()->firstOrFail()->getKey());
+        $this->assertGreaterThan($originalVersionId, $restored->latestVersions()->firstOrFail()->getKey());
         $this->assertDatabaseHas('revision_batches', [
             'tenant_id' => $tenant->getKey(),
             'root_subject_id' => $vendor->getKey(),
             'operation' => 'restore',
-            'restored_from_version_id' => $original->getKey(),
+            'restored_from_batch_id' => $original->getKey(),
+            'restored_from_version_id' => null,
             'correlation_id' => 'restore',
         ]);
         $this->assertDatabaseHas('audit_events', ['event_type' => 'vendor.restored', 'correlation_id' => 'restore']);
@@ -74,17 +76,19 @@ class VendorRevisionTest extends TestCase
         [$tenant, $actor, $context] = $this->context('vendor.create', 'vendor.update', 'vendor.restore-revision');
         $vendor = app(CreateVendor::class)->execute($actor, $context, 'Local vendor', null, null, null, null, 'create');
         app(UpdateVendor::class)->execute($actor, $context, $vendor, 'Local current', null, null, null, null, 1, 'update');
-        $foreign = Vendor::factory()->for(Tenant::factory())->create(['name' => 'Foreign vendor']);
-        $foreignVersion = $foreign->oldestVersions()->firstOrFail();
+        app(CreateVendor::class)->execute($actor, $context, 'Other local vendor', null, null, null, null, 'other-local');
+        $foreignVersion = RevisionBatch::query()->where('correlation_id', 'other-local')->firstOrFail();
 
+        $relationshipFailure = null;
         try {
             app(RestoreVendorRevision::class)->execute($actor, $context, $vendor, $foreignVersion, 2, 'foreign');
             $this->fail('A foreign revision was restored.');
-        } catch (DomainException $exception) {
-            $this->assertSame('TENANT_RELATION_MISMATCH', $exception->getMessage());
+        } catch (ModelNotFoundException $exception) {
+            $relationshipFailure = $exception;
         }
+        $this->assertInstanceOf(ModelNotFoundException::class, $relationshipFailure);
 
-        $version = $vendor->oldestVersions()->firstOrFail();
+        $version = RevisionBatch::query()->where('correlation_id', 'create')->firstOrFail();
         try {
             app(RestoreVendorRevision::class)->execute($actor, $context, $vendor, $version, 1, 'stale');
             $this->fail('A stale revision restore overwrote the vendor.');
@@ -99,25 +103,25 @@ class VendorRevisionTest extends TestCase
     {
         [$tenant, $actor, $context] = $this->context('vendor.create', 'vendor.update', 'vendor.restore-revision');
         $vendor = app(CreateVendor::class)->execute($actor, $context, 'Persisted original', 'IT001', null, null, null, 'create');
-        $original = $vendor->oldestVersions()->firstOrFail();
+        $original = RevisionBatch::query()->where('correlation_id', 'create')->firstOrFail();
         $updated = app(UpdateVendor::class)->execute($actor, $context, $vendor, 'Persisted current', 'IT002', null, null, null, 1, 'update');
-        $otherVersion = Vendor::factory()->for($tenant)->create(['name' => 'Other'])->oldestVersions()->firstOrFail();
-        $spoofed = Version::query()->findOrFail($original->getKey());
-        $spoofed->forceFill([$spoofed->getKeyName() => $otherVersion->getKey()]);
+        $spoofed = clone $original;
+        $spoofed->forceFill([$spoofed->getKeyName() => (int) $original->getKey() + 100000]);
         $batchCount = RevisionBatch::query()->count();
 
+        $spoofFailure = null;
         try {
             app(RestoreVendorRevision::class)->execute($actor, $context, $updated, $spoofed, 2, 'spoofed');
-            $this->fail('A spoofed Version primary key was accepted.');
-        } catch (DomainException $exception) {
-            $this->assertSame('TENANT_RELATION_MISMATCH', $exception->getMessage());
+            $this->fail('A spoofed revision batch primary key was accepted.');
+        } catch (ModelNotFoundException $exception) {
+            $spoofFailure = $exception;
         }
+        $this->assertInstanceOf(ModelNotFoundException::class, $spoofFailure);
         $this->assertDatabaseHas('vendors', ['id' => $vendor->getKey(), 'name' => 'Persisted current', 'lock_version' => 2]);
         $this->assertDatabaseCount('revision_batches', $batchCount);
 
-        $tampered = Version::query()->findOrFail($original->getKey());
-        $tampered->setAttribute('contents', ['name' => 'Injected', 'vat_number' => 'EVIL', 'active' => false]);
-        $tampered->setRelation('versionable', Vendor::factory()->for($tenant)->create(['name' => 'Relation tamper']));
+        $tampered = clone $original;
+        $tampered->setRelation('items', collect());
         $restored = app(RestoreVendorRevision::class)->execute($actor, $context, $updated, $tampered, 2, 'tamper-safe-restore');
 
         $this->assertSame('Persisted original', $restored->name);
@@ -152,9 +156,9 @@ class VendorRevisionTest extends TestCase
 
     public function test_restore_vendor_revision_audit_failure_restores_current_fields_lock_and_batch(): void
     {
-        [$tenant, $actor, $context] = $this->context('vendor.update', 'vendor.restore-revision');
-        $vendor = Vendor::factory()->for($tenant)->create(['name' => 'Restore original', 'lock_version' => 1]);
-        $original = $vendor->oldestVersions()->firstOrFail();
+        [$tenant, $actor, $context] = $this->context('vendor.create', 'vendor.update', 'vendor.restore-revision');
+        $vendor = app(CreateVendor::class)->execute($actor, $context, 'Restore original', null, null, null, null, 'create-restore-source');
+        $original = RevisionBatch::query()->where('correlation_id', 'create-restore-source')->firstOrFail();
         $updated = app(UpdateVendor::class)->execute($actor, $context, $vendor, 'Restore current', null, null, null, null, 1, 'prepare-restore');
         $correlationId = '00000000-0000-4000-8000-000000000206';
         $batchCount = RevisionBatch::query()->count();

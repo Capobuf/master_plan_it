@@ -44,15 +44,18 @@ final class UpdateExpense
                 $submittedIds = array_values(array_filter(array_map(fn ($row) => $row->id, $rows), fn ($id) => $id !== null));
                 if ((int) $expense->planning_year_id !== $data->planningYearId
                     || (int) $expense->contract_id !== (int) $data->contractId
-                    || $data->projectId !== null
+                    || $this->nullableId($expense->project_id) !== $data->projectId
                     || array_diff($sourceRowIds, $submittedIds) !== []) {
                     throw new DomainException('TENANT_RELATION_MISMATCH');
                 }
             }
-            $expense->lock_version++;
             $changed = $this->saveAggregate($expense, $tenant, $data, $rows, $actor, $deletedRows);
+            if ($changed === []) {
+                return $expense->fresh(['rows']);
+            }
             $this->revisions($actor, $context, RevisionOperation::Update, $correlationId, $expense, $changed);
             $this->audit('expense.updated', $correlationId, $actor, $tenant, $expense, ['rows' => count($rows)]);
+            $this->purgeDeletedRowAttachments($actor, $context, $deletedRows, $correlationId);
 
             return $expense->fresh(['rows']);
         });

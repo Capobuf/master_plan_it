@@ -30,9 +30,13 @@ final class UpdateVendor
             $vendor = $this->lockedTarget($target, $this->lockTenantVendors($tenant));
             $this->assertExpectedVersion($vendor, $expectedLockVersion);
             $old = $vendor->only(array_keys($details));
+            $vendor->fill($details);
+            if (! $vendor->isDirty()) {
+                return $vendor->refresh();
+            }
 
             try {
-                $vendor->fill([...$details, 'lock_version' => $expectedLockVersion + 1])->save();
+                $vendor->forceFill(['lock_version' => $expectedLockVersion + 1])->save();
             } catch (UniqueConstraintViolationException) {
                 throw ValidationException::withMessages([
                     'name' => 'The vendor name already exists for the current tenant.',

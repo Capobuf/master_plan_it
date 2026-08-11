@@ -25,10 +25,11 @@ final class UpdateProject
             if (! $project instanceof Project || $data->expectedLockVersion === null || $project->lock_version !== $data->expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');
             }
-            $project->fill([
-                ...$this->validatedProjectAttributes($tenant, $data, $project),
-                'lock_version' => $project->lock_version + 1,
-            ])->save();
+            $project->fill($this->validatedProjectAttributes($tenant, $data, $project));
+            if (! $project->isDirty()) {
+                return $project->fresh(['costCenter', 'deferredTargetPlanningYear']);
+            }
+            $project->forceFill(['lock_version' => $project->lock_version + 1])->save();
             $this->projectRevision($actor, $context, RevisionOperation::Update, $correlationId, $project);
             $this->projectAudit('project.updated', $correlationId, $actor, $tenant, $project);
 

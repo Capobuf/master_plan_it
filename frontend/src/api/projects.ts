@@ -1,4 +1,5 @@
 import { apiClient, type DataEnvelope, type PaginatedData } from "./client";
+import type { OperationalRevision, RevisionComparison } from "./revisions";
 
 export type ProjectStage = "idea" | "proposed" | "approved" | "deferred" | "rejected";
 
@@ -21,15 +22,7 @@ export interface ProjectExpense {
   planning_year_label: number;
 }
 
-export interface ProjectRevision {
-  id: number;
-  operation: string;
-  actor: string | null;
-  timestamp: string | null;
-  summary: string | null;
-  source_revision_id?: number | null;
-  restored_from_revision_id: number | null;
-}
+export type ProjectRevision = OperationalRevision;
 
 export interface Project {
   id: number;
@@ -67,11 +60,7 @@ export interface ProjectLookupOption {
   stage: ProjectStage;
 }
 
-export interface ProjectRevisionComparison {
-  revision: ProjectRevision;
-  snapshot: Pick<Project, "title" | "stage" | "cost_center_id" | "deferred_target_planning_year_id">;
-  current: Pick<Project, "title" | "stage" | "cost_center_id" | "deferred_target_planning_year_id" | "lock_version">;
-}
+export type ProjectRevisionComparison = RevisionComparison;
 
 export async function listProjects(params: ProjectListParams = {}): Promise<PaginatedData<Project>> {
   const response = await apiClient.get<PaginatedData<Project>>("/api/v1/projects", { params });
@@ -111,7 +100,7 @@ export async function deleteProject(projectId: number, input: { lock_version: nu
 }
 
 export async function getProjectHistory(projectId: number): Promise<PaginatedData<ProjectRevision>> {
-  const response = await apiClient.get<PaginatedData<ProjectRevision>>(`/api/v1/projects/${projectId}/history`, { params: { per_page: 100 } });
+  const response = await apiClient.get<PaginatedData<ProjectRevision>>(`/api/v1/projects/${projectId}/history`, { params: { per_page: 10 } });
   return response.data;
 }
 

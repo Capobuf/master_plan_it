@@ -17,6 +17,10 @@ final class ContractRevisionResource extends JsonResource
             'actor' => $this->resource['actor'],
             'timestamp' => $this->resource['timestamp'],
             'summary' => $this->resource['summary'],
+            'changed_count' => (int) $this->resource['changed_count'],
+            'changed_fields' => $this->resource['changed_fields'],
+            'can_compare' => (bool) $this->resource['can_compare'],
+            'can_restore' => (bool) $this->resource['can_restore'],
         ];
     }
 }

@@ -178,8 +178,11 @@ final class ProjectApiHttpTest extends TestCase
 
         $this->getJson('/api/v1/projects/'.$projectId.'/history/'.$revisionId)
             ->assertOk()
-            ->assertJsonPath('data.snapshot.title', 'Versione iniziale')
-            ->assertJsonPath('data.current.title', 'Versione corrente');
+            ->assertJsonPath('data.changes.0.label', 'Titolo')
+            ->assertJsonPath('data.changes.0.revision_value', 'Versione iniziale')
+            ->assertJsonPath('data.changes.0.current_value', 'Versione corrente')
+            ->assertJsonMissingPath('data.snapshot')
+            ->assertJsonMissingPath('data.current');
 
         $restored = $this->withHeaders($headers)->postJson('/api/v1/projects/'.$projectId.'/history/'.$revisionId.'/restore', [
             'lock_version' => $updated->json('data.lock_version'),

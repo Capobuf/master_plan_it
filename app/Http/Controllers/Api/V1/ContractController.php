@@ -7,6 +7,7 @@ use App\Domain\Contracts\Actions\DeleteContract;
 use App\Domain\Contracts\Actions\DeleteContractTerm;
 use App\Domain\Contracts\Actions\DeleteGeneratedExpense;
 use App\Domain\Contracts\Actions\GenerateContractOccurrenceForYear;
+use App\Domain\Contracts\Actions\RestoreContractRevision;
 use App\Domain\Contracts\Actions\ResumeAndGenerateOccurrence;
 use App\Domain\Contracts\Actions\ResumeContractOccurrence;
 use App\Domain\Contracts\Actions\SuppressContractOccurrence;
@@ -18,18 +19,17 @@ use App\Domain\Contracts\Data\SaveContractTermData;
 use App\Domain\Contracts\Enums\BillingCycle;
 use App\Domain\Contracts\Queries\ContractDetailQuery;
 use App\Domain\Contracts\Queries\ContractListQuery;
-use App\Domain\Revisions\Data\RevisionOperation;
+use App\Domain\Contracts\Queries\ContractRevisionQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\AuthorizeApplicationAbility;
 use App\Http\Resources\Api\V1\ContractResource;
-use App\Http\Resources\Api\V1\ContractRevisionResource;
 use App\Http\Resources\Api\V1\GeneratedExpenseResource;
+use App\Http\Resources\Api\V1\OperationalRevisionResource;
 use App\Models\Contract;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
-use App\Models\RevisionBatch;
 use Carbon\CarbonInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\JsonResponse;
@@ -37,7 +37,6 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Collection;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -185,36 +184,40 @@ final class ContractController extends Controller
         return response()->noContent();
     }
 
-    public function history(Request $request, int $contract): AnonymousResourceCollection
+    public function history(Request $request, int $contract, ContractRevisionQuery $query): AnonymousResourceCollection
     {
         $this->authorize($request, 'contract.view-revisions');
         $context = $this->tenantContext($request);
         $subject = $this->contract($context, $contract);
-        /** @var \Illuminate\Database\Eloquent\Collection<int, RevisionBatch> $batches */
-        $batches = TenantOwnedRecordQuery::forTenant($context, RevisionBatch::class)
-            ->where('root_subject_type', $subject->getMorphClass())
-            ->where('root_subject_id', $subject->getKey())
-            ->with('actor')
-            ->latest('occurred_at')
-            ->get();
-        /** @var Collection<int, array<string, mixed>> $rows */
-        $rows = $batches->map(static function (RevisionBatch $batch): array {
-            $operation = $batch->getAttribute('operation');
-
-            return [
-                'id' => (int) $batch->getKey(),
-                'operation' => $operation instanceof RevisionOperation ? $operation->value : (string) $batch->getRawOriginal('operation'),
-                'actor' => $batch->actor?->name,
-                'timestamp' => $batch->occurred_at instanceof CarbonInterface ? $batch->occurred_at->toIso8601String() : null,
-                'summary' => $batch->reason,
-            ];
-        });
-        $perPage = min(max($request->integer('per_page', 15), 1), 100);
+        $rows = $query->history($this->actor($request), $context, $subject);
+        $perPage = min(max($request->integer('per_page', 10), 1), 10);
         $page = max($request->integer('page', 1), 1);
         $pageRows = $rows->forPage($page, $perPage)->values()->all();
         $paginator = new LengthAwarePaginator($pageRows, $rows->count(), $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
 
-        return ContractRevisionResource::collection($paginator);
+        return OperationalRevisionResource::collection($paginator);
+    }
+
+    public function revision(Request $request, int $contract, int $revision, ContractRevisionQuery $query): OperationalRevisionResource
+    {
+        $this->authorize($request, 'contract.view-revisions');
+        $context = $this->tenantContext($request);
+
+        return OperationalRevisionResource::make($query->comparison($this->actor($request), $context, $this->contract($context, $contract), $revision));
+    }
+
+    public function restore(Request $request, int $contract, int $revision, ContractRevisionQuery $revisionQuery, RestoreContractRevision $action): ContractResource
+    {
+        $this->authorize($request, 'contract.restore-revision');
+        $this->rejectUnexpected($request, ['lock_version']);
+        $input = $request->validate(['lock_version' => ['required', 'integer', 'min:1']]);
+        $context = $this->tenantContext($request);
+        $subject = $this->contract($context, $contract);
+        $source = $revisionQuery->sourceBatchForRestore($this->actor($request), $context, $subject, $revision);
+        $restored = $action->execute($this->actor($request), $context, $subject, $source, (int) $input['lock_version'], $this->correlationId($request));
+        $this->setCurrency($request, $context);
+
+        return ContractResource::make($this->payload($request, $context, $restored, app(ContractDetailQuery::class)->find($this->actor($request), $context, (int) $restored->getKey())['occurrences']));
     }
 
     private function contractData(Request $request, bool $update): SaveContractData
@@ -307,20 +310,7 @@ final class ContractController extends Controller
             $expenses[] = $this->generatedExpenseData($expense, $context, $row);
         }
 
-        /** @var \Illuminate\Database\Eloquent\Collection<int, RevisionBatch> $revisionBatches */
-        $revisionBatches = TenantOwnedRecordQuery::forTenant($context, RevisionBatch::class)
-            ->where('root_subject_type', $contract->getMorphClass())
-            ->where('root_subject_id', $contract->getKey())
-            ->with('actor')
-            ->latest('occurred_at')
-            ->limit(10)
-            ->get();
-        /** @var list<array<string, mixed>> $revisions */
-        $revisions = $revisionBatches->map(static function (RevisionBatch $batch): array {
-            $operation = $batch->getAttribute('operation');
-
-            return ['id' => (int) $batch->getKey(), 'operation' => $operation instanceof RevisionOperation ? $operation->value : (string) $batch->getRawOriginal('operation'), 'actor' => $batch->actor?->name, 'timestamp' => $batch->occurred_at instanceof CarbonInterface ? $batch->occurred_at->toIso8601String() : null, 'summary' => $batch->reason];
-        })->all();
+        $revisions = app(ContractRevisionQuery::class)->history($this->actor($request), $context, $contract)->all();
 
         return ['contract' => $contract, 'occurrences' => $occurrences, 'generated_expenses' => $expenses, 'revision_activity' => $revisions, 'currency' => $context->currencyCode, 'official_basis' => $context->budgetBasis->value];
     }

@@ -2,6 +2,7 @@
 
 namespace App\Domain\Projects\Actions;
 
+use App\Domain\Attachments\Actions\PurgeAttachments;
 use App\Domain\Projects\Actions\Concerns\ManagesProjects;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
@@ -45,6 +46,7 @@ final class DeleteProject
             $this->projectRevision($actor, $context, RevisionOperation::Delete, $correlationId, $project, $normalizedReason);
             $this->projectAudit('project.deleted', $correlationId, $actor, $tenant, $project);
             $project->delete();
+            app(PurgeAttachments::class)->forParent($actor, $context, $project, $correlationId);
         });
     }
 }

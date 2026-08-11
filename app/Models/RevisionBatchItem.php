@@ -15,9 +15,13 @@ class RevisionBatchItem extends Model
         'tenant_id',
         'planning_year_id',
         'mutation',
+        'is_changed',
         'version_id',
         'versionable_type',
         'versionable_id',
+        'snapshot_contents',
+        'operational_root_type',
+        'operational_root_id',
         'sequence',
     ];
 
@@ -29,6 +33,9 @@ class RevisionBatchItem extends Model
         return [
             'sequence' => 'integer',
             'mutation' => RevisionMutation::class,
+            'is_changed' => 'boolean',
+            'snapshot_contents' => 'array',
+            'operational_root_id' => 'integer',
         ];
     }
 

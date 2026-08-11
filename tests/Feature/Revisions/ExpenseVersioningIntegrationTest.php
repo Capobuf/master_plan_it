@@ -3,18 +3,28 @@
 namespace Tests\Feature\Revisions;
 
 use App\Domain\Expenses\Actions\CloseExpense;
+use App\Domain\Expenses\Actions\CreateExpense;
+use App\Domain\Expenses\Actions\UpdateExpense;
 use App\Domain\Expenses\Data\ExpenseRevisionSnapshot;
+use App\Domain\Expenses\Data\SaveExpenseData;
+use App\Domain\Expenses\Data\SaveExpenseRowData;
+use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseState;
+use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Revisions\Actions\BeginRevisionBatch;
 use App\Domain\Revisions\Actions\LinkVersionToRevisionBatch;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\AuditEvent;
+use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
+use App\Models\PlanningYear;
+use App\Models\RevisionBatch;
 use App\Models\RevisionBatchItem;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\Vendor;
 use App\Models\Version as ApplicationVersion;
 use App\Support\Authorization\PlatformAdministrator;
 use Database\Seeders\PermissionCatalogueSeeder;
@@ -65,7 +75,6 @@ class ExpenseVersioningIntegrationTest extends TestCase
             'current_planning_row_id',
             'moved_from_expense_id',
             'credit_for_expense_id',
-            'lock_version',
         ], $expense->getVersionable());
         $this->assertSame([
             'tenant_id',
@@ -108,7 +117,6 @@ class ExpenseVersioningIntegrationTest extends TestCase
             'source_deleted_term_end',
             'source_term_deleted_at',
             'source_term_deletion_reason',
-            'lock_version',
         ], $row->getVersionable());
 
         foreach ([$expense, $row] as $model) {
@@ -239,6 +247,97 @@ class ExpenseVersioningIntegrationTest extends TestCase
         $serializedAudit = json_encode($audit->properties, JSON_THROW_ON_ERROR);
         $this->assertStringNotContainsString('payload', $serializedAudit);
         $this->assertDatabaseCount('audit_events', $auditCount + 1);
+    }
+
+    public function test_noop_save_creates_no_revision_but_still_rejects_a_stale_lock(): void
+    {
+        [$actor, $context, $year, $center, $vendor, $expense] = $this->editableExpense();
+        $row = $expense->rows()->firstOrFail();
+        $batchCount = RevisionBatch::query()->count();
+
+        $same = app(UpdateExpense::class)->execute(
+            $actor,
+            $context,
+            $expense,
+            $this->saveData($year, $center, $expense->title, $expense->notes, 1),
+            [$this->saveRow($row, $vendor, 1)],
+            (string) Str::uuid(),
+        );
+
+        $this->assertSame(1, $same->lock_version);
+        $this->assertDatabaseCount('revision_batches', $batchCount);
+
+        try {
+            app(UpdateExpense::class)->execute(
+                $actor,
+                $context,
+                $same,
+                $this->saveData($year, $center, $same->title, $same->notes, 999),
+                [$this->saveRow($row, $vendor, 1)],
+                (string) Str::uuid(),
+            );
+            $this->fail('A stale no-op save was accepted.');
+        } catch (DomainException $exception) {
+            $this->assertSame('STALE_VERSION', $exception->getMessage());
+        }
+        $this->assertDatabaseCount('revision_batches', $batchCount);
+    }
+
+    public function test_notes_only_change_creates_one_logical_revision_and_lock_only_creates_none(): void
+    {
+        [$actor, $context, $year, $center, $vendor, $expense] = $this->editableExpense();
+        $row = $expense->rows()->firstOrFail();
+        $batchCount = RevisionBatch::query()->count();
+
+        $updated = app(UpdateExpense::class)->execute(
+            $actor,
+            $context,
+            $expense,
+            $this->saveData($year, $center, $expense->title, 'Nota significativa', 1),
+            [$this->saveRow($row, $vendor, 1)],
+            (string) Str::uuid(),
+        );
+
+        $this->assertSame('Nota significativa', $updated->notes);
+        $this->assertDatabaseCount('revision_batches', $batchCount + 1);
+        $batch = RevisionBatch::query()->latest('id')->firstOrFail();
+        $this->assertSame(2, $batch->items()->count());
+        $this->assertSame(1, $batch->items()->where('is_changed', true)->count());
+
+        $updated->forceFill(['lock_version' => 3])->save();
+        $this->assertDatabaseCount('revision_batches', $batchCount + 1);
+        $this->assertArrayNotHasKey('lock_version', $updated->latestVersions()->firstOrFail()->contents);
+    }
+
+    /** @return array{User,TenantContext,PlanningYear,CostCenter,Vendor,Expense} */
+    private function editableExpense(): array
+    {
+        $tenant = Tenant::factory()->create();
+        $actor = User::factory()->create(['tenant_id' => null, 'is_active' => true]);
+        app(PlatformAdministrator::class)->assign($actor);
+        $context = new TenantContext($tenant, $actor);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $center = CostCenter::factory()->for($tenant)->create();
+        $vendor = Vendor::factory()->for($tenant)->create();
+        $expense = app(CreateExpense::class)->execute(
+            $actor,
+            $context,
+            $this->saveData($year, $center, 'Spesa versionata', null, null),
+            [new SaveExpenseRowData(null, 1, $vendor->getKey(), ExpenseType::Estimate, 'Riga versionata', null, null, '100.00', false, '22.00', false, null, '2026-02-01', null, null, null, null, null, true)],
+            (string) Str::uuid(),
+        );
+
+        return [$actor, $context, $year, $center, $vendor, $expense];
+    }
+
+    private function saveData(PlanningYear $year, CostCenter $center, string $title, ?string $notes, ?int $lock): SaveExpenseData
+    {
+        return new SaveExpenseData($year->getKey(), $center->getKey(), ExpenseKind::Ordinary, $title, $notes, null, null, $lock);
+    }
+
+    private function saveRow(ExpenseRow $row, Vendor $vendor, int $lock): SaveExpenseRowData
+    {
+        return new SaveExpenseRowData((int) $row->getKey(), 1, $vendor->getKey(), ExpenseType::Estimate, 'Riga versionata', null, null, '100.00', false, '22.00', false, null, '2026-02-01', null, null, null, null, $lock, true);
     }
 
     private function actorContext(): array

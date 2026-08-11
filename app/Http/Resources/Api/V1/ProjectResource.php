@@ -3,8 +3,6 @@
 namespace App\Http\Resources\Api\V1;
 
 use App\Domain\Projects\Enums\ProjectStage;
-use App\Domain\Revisions\Data\RevisionOperation;
-use App\Models\RevisionBatch;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -39,28 +37,8 @@ final class ProjectResource extends JsonResource
             'expenses' => $payload['expenses'] ?? [],
             'lock_version' => (int) $project->lock_version,
             'revision_activity' => ($payload['revision_activity'] ?? null) instanceof Collection
-                ? $this->revisionActivity($payload['revision_activity'])
+                ? $payload['revision_activity']->values()->all()
                 : [],
         ];
-    }
-
-    /**
-     * @param  Collection<int, RevisionBatch>  $activity
-     * @return list<array<string, mixed>>
-     */
-    private function revisionActivity(Collection $activity): array
-    {
-        return $activity->map(static function (RevisionBatch $batch): array {
-            $operation = $batch->operation;
-
-            return [
-                'id' => (int) $batch->getKey(),
-                'operation' => $operation instanceof RevisionOperation ? $operation->value : (string) $batch->getRawOriginal('operation'),
-                'actor' => $batch->actor?->name,
-                'timestamp' => $batch->occurred_at?->toIso8601String(),
-                'summary' => $batch->reason,
-                'restored_from_revision_id' => $batch->restored_from_version_id === null ? null : (int) $batch->restored_from_version_id,
-            ];
-        })->values()->all();
     }
 }

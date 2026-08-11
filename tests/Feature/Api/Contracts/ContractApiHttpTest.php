@@ -7,6 +7,7 @@ use App\Models\Contract;
 use App\Models\ContractTerm;
 use App\Models\CostCenter;
 use App\Models\PlanningYear;
+use App\Models\RevisionBatchItem;
 use App\Models\Tenant;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -158,6 +159,55 @@ final class ContractApiHttpTest extends TestCase
         $this->withHeaders($headers)->postJson('/api/v1/contracts/'.$contract->getKey().'/occurrences/'.$sourceKey.'/resume-and-generate')
             ->assertSuccessful()->assertJsonPath('data.source_key', $sourceKey);
         $this->assertNotNull($generated->json('data.id'));
+    }
+
+    public function test_contract_history_compare_and_restore_keep_terms_in_one_logical_revision(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $vendor = Vendor::factory()->for($tenant)->create(['name' => 'Vendor semantico']);
+        $costCenter = CostCenter::factory()->for($tenant)->create(['name' => 'Centro semantico']);
+        $this->actingAs($user, 'web');
+        $headers = $this->csrfHeaders();
+        $payload = $this->payload((int) $vendor->getKey(), (int) $costCenter->getKey());
+        $payload['terms'][] = [...$payload['terms'][0], 'local_key' => 'term-two', 'effective_start' => '2027-01-01', 'effective_end' => '2027-12-31'];
+
+        $created = $this->withHeaders($headers)->postJson('/api/v1/contracts', $payload)->assertSuccessful();
+        $id = (int) $created->json('data.id');
+        $terms = $created->json('data.terms');
+        $update = $payload;
+        $update['title'] = 'Contratto corrente';
+        $update['lock_version'] = $created->json('data.lock_version');
+        $update['terms'] = array_map(static fn (array $term, int $index): array => [
+            ...$term,
+            'id' => $terms[$index]['id'],
+            'local_key' => $terms[$index]['local_key'],
+            'lock_version' => $terms[$index]['lock_version'],
+            'entered_amount' => $index === 0 ? '150.00' : $term['entered_amount'],
+        ], $update['terms'], array_keys($update['terms']));
+        $updated = $this->withHeaders($headers)->putJson('/api/v1/contracts/'.$id, $update)->assertOk();
+
+        $history = $this->getJson('/api/v1/contracts/'.$id.'/history')->assertOk()->assertJsonCount(2, 'data');
+        $source = collect($history->json('data'))->firstWhere('operation', 'create');
+        $currentRevision = collect($history->json('data'))->firstWhere('operation', 'update');
+        $this->assertSame(3, $source['changed_count']);
+        $this->assertSame(2, $currentRevision['changed_count']);
+        $this->assertSame(3, RevisionBatchItem::query()->where('revision_batch_id', $currentRevision['id'])->count());
+        $this->assertSame(2, RevisionBatchItem::query()->where('revision_batch_id', $currentRevision['id'])->where('is_changed', true)->count());
+        $this->assertSame($user->name, $source['actor']['label']);
+
+        $comparison = $this->getJson('/api/v1/contracts/'.$id.'/history/'.$source['id'])
+            ->assertOk()
+            ->assertJsonFragment(['label' => 'Titolo', 'revision_value' => 'Created API contract', 'current_value' => 'Contratto corrente'])
+            ->assertJsonFragment(['label' => 'Importo inserito', 'revision_value' => '100.00', 'current_value' => '150.00']);
+        $this->assertStringNotContainsString('vendor_id', $comparison->getContent());
+        $this->assertStringNotContainsString('lock_version', $comparison->getContent());
+
+        $restored = $this->withHeaders($headers)->postJson('/api/v1/contracts/'.$id.'/history/'.$source['id'].'/restore', [
+            'lock_version' => $updated->json('data.lock_version'),
+        ])->assertOk()->assertJsonPath('data.title', 'Created API contract')->assertJsonCount(2, 'data.terms');
+        $this->assertSame('100.00', $restored->json('data.terms.0.entered_amount'));
+        $this->getJson('/api/v1/contracts/'.$id.'/history')->assertOk()->assertJsonCount(3, 'data')->assertJsonPath('data.0.operation', 'restore');
     }
 
     /** @return array<string, mixed> */

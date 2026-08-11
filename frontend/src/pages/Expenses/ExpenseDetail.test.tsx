@@ -1,8 +1,13 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it, vi } from "vitest";
-import { getExpense, type ExpenseDetail as ExpenseDetailData } from "../../api/expenses";
+import { getExpense, getExpenseHistory, type ExpenseDetail as ExpenseDetailData } from "../../api/expenses";
 import ExpenseDetail from "./ExpenseDetail";
+
+vi.mock("../../api/attachments", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../api/attachments")>();
+  return { ...actual, listAttachments: vi.fn().mockResolvedValue({ data: [], meta: { used_bytes: "0", quota_bytes: "2147483648" }, abilities: { upload: true, download: true, delete: true } }) };
+});
 
 vi.mock("../../context/ApplicationContext", () => ({
   useApplicationContext: () => ({
@@ -16,7 +21,7 @@ vi.mock("../../context/PlanningYearContext", () => ({
 }));
 vi.mock("../../api/expenses", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/expenses")>();
-  return { ...actual, getExpense: vi.fn() };
+  return { ...actual, getExpense: vi.fn(), getExpenseHistory: vi.fn() };
 });
 
 const money = { net: "100.00", vat: "22.00", gross: "122.00", currency: "EUR", official_basis: "net" };
@@ -47,5 +52,33 @@ describe("ExpenseDetail", () => {
     for (const name of ["Modifica Spesa", "Sposta in un altro anno", "Registra nota di credito futura", "Chiudi Spesa", "Elimina Spesa"]) {
       expect(screen.getByRole("button", { name })).toBeInTheDocument();
     }
+  });
+
+  it("loads the logical history only after opening the Storico tab", async () => {
+    vi.mocked(getExpense).mockResolvedValue(detail);
+    vi.mocked(getExpenseHistory).mockResolvedValue({
+      data: [{ id: 9, operation: "update", actor: { kind: "system", label: "Sistema" }, timestamp: "2026-08-11T09:30:00Z", summary: "Note aggiornate", changed_count: 1, changed_fields: ["Note"], can_compare: true, can_restore: false }],
+      links: { first: null, last: null, prev: null, next: null },
+      meta: { current_page: 1, last_page: 1, per_page: 10, total: 1 },
+    });
+
+    render(<MemoryRouter initialEntries={["/expenses/42"]}><Routes><Route path="/expenses/:expenseId" element={<ExpenseDetail />} /></Routes></MemoryRouter>);
+    await screen.findByText("Licenze operative");
+    expect(getExpenseHistory).not.toHaveBeenCalled();
+
+    fireEvent.click(screen.getByRole("tab", { name: "Storico" }));
+    await waitFor(() => expect(getExpenseHistory).toHaveBeenCalledWith(42, 7));
+    expect(await screen.findByText("Note aggiornate")).toBeInTheDocument();
+    expect(screen.getAllByText("Sistema").length).toBeGreaterThan(0);
+  });
+
+  it("shows Allegati between Dettagli and Storico and groups Expense rows", async () => {
+    vi.mocked(getExpense).mockResolvedValue(detail);
+    render(<MemoryRouter initialEntries={["/expenses/42"]}><Routes><Route path="/expenses/:expenseId" element={<ExpenseDetail />} /></Routes></MemoryRouter>);
+    await screen.findByText("Licenze operative");
+    expect(screen.getAllByRole("tab").map((tab) => tab.textContent)).toEqual(["Dettagli", "Allegati", "Storico"]);
+    fireEvent.click(screen.getByRole("tab", { name: "Allegati" }));
+    expect(await screen.findByText("Righe della Spesa")).toBeInTheDocument();
+    expect(screen.getByText(/Riga 1 · Canone/)).toBeInTheDocument();
   });
 });

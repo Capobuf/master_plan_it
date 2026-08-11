@@ -17,7 +17,6 @@ use App\Models\Project;
 use App\Models\RevisionBatch;
 use App\Models\Tenant;
 use App\Models\User;
-use App\Models\Version;
 use App\Support\Authorization\PlatformAdministrator;
 use Database\Seeders\PermissionCatalogueSeeder;
 use Illuminate\Events\Dispatcher;
@@ -117,8 +116,13 @@ final class ProjectActionRollbackTest extends TestCase
     {
         [$actor, $context] = $this->administratorContext();
         [$project, $center] = $this->project($actor, $context);
-        $source = $project->latestVersions()->firstOrFail();
-        self::assertInstanceOf(Version::class, $source);
+        $source = RevisionBatch::query()
+            ->where('tenant_id', $context->tenant->getKey())
+            ->where('root_subject_type', $project->getMorphClass())
+            ->where('root_subject_id', $project->getKey())
+            ->latest('id')
+            ->firstOrFail();
+        self::assertInstanceOf(RevisionBatch::class, $source);
         $project = app(UpdateProject::class)->execute(
             $actor, $context, $project,
             new SaveProjectData('Current project', (int) $center->getKey(), ProjectStage::Approved, null, 1),

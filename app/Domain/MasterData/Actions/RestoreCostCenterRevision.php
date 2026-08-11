@@ -6,10 +6,11 @@ use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\MasterData\Actions\Concerns\ManagesCostCenterMutation;
 use App\Domain\Revisions\Data\RevisionOperation;
+use App\Domain\Revisions\Queries\OperationalRevisionQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\CostCenter;
+use App\Models\RevisionBatch;
 use App\Models\User;
-use App\Models\Version;
 use DomainException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Support\Facades\DB;
@@ -21,18 +22,22 @@ final class RestoreCostCenterRevision
 
     public function __construct(private readonly AuditRecorder $auditRecorder) {}
 
-    public function execute(User $actor, TenantContext $context, CostCenter $target, Version $version, int $expectedLockVersion, string $correlationId): CostCenter
+    public function execute(User $actor, TenantContext $context, CostCenter $target, RevisionBatch $source, int $expectedLockVersion, string $correlationId): CostCenter
     {
         $this->policy($context)->restoreRevision($actor, $target)->authorize();
         $tenant = $this->activeContextTenant($context);
         $persistedActor = $this->persistedActiveActor($actor);
 
-        return DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $persistedActor, $target, $tenant, $version): CostCenter {
+        return DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $persistedActor, $source, $target, $tenant): CostCenter {
             $costCenters = $this->lockTenantCostCenters($tenant);
             $costCenter = $this->lockedTarget($target, $costCenters);
             $this->assertExpectedVersion($costCenter, $expectedLockVersion);
-            $persistedVersion = $this->persistedTargetVersion($version, $costCenter);
-            $contents = $persistedVersion->contents;
+            $logical = app(OperationalRevisionQuery::class);
+            $batch = $logical->findVisibleBatch($context, $costCenter, (int) $source->getKey());
+            $contents = $logical->snapshot($context, $costCenter, $batch)[$costCenter->getMorphClass()][(int) $costCenter->getKey()] ?? null;
+            if (! is_array($contents)) {
+                throw new DomainException('REVISION_RESTORE_INVALID');
+            }
             $parentId = array_key_exists('parent_id', $contents) && $contents['parent_id'] !== null
                 ? (int) $contents['parent_id']
                 : null;
@@ -44,19 +49,22 @@ final class RestoreCostCenterRevision
                     'name' => $name,
                     'parent_id' => $parentId,
                     'active' => (bool) ($contents['active'] ?? false),
-                    'lock_version' => $expectedLockVersion + 1,
-                ])->save();
+                ]);
+                if (! $costCenter->isDirty()) {
+                    throw new DomainException('REVISION_RESTORE_INVALID');
+                }
+                $costCenter->forceFill(['lock_version' => $expectedLockVersion + 1])->save();
             } catch (UniqueConstraintViolationException) {
                 throw ValidationException::withMessages([
                     'name' => 'The restored cost center name already exists for the current tenant.',
                 ]);
             }
 
-            $this->recordRevision($actor, $context, RevisionOperation::Restore, $correlationId, $costCenter, (int) $persistedVersion->getKey());
+            $this->recordRevision($actor, $context, RevisionOperation::Restore, $correlationId, $costCenter, (int) $batch->getKey());
             $this->auditRecorder->record(
                 eventType: 'cost-center.restored',
                 correlationId: $correlationId,
-                properties: new AuditProperties(['restored_from_version_id' => $persistedVersion->getKey()]),
+                properties: new AuditProperties(['restored_from_batch_id' => $batch->getKey()]),
                 actor: $persistedActor,
                 tenantId: $context->tenantId,
                 subject: $costCenter,
@@ -64,27 +72,5 @@ final class RestoreCostCenterRevision
 
             return $costCenter->refresh();
         });
-    }
-
-    private function persistedTargetVersion(Version $version, CostCenter $target): Version
-    {
-        $key = $version->getKey();
-        $originalKey = $version->getRawOriginal($version->getKeyName());
-
-        if (! $version->exists || $key === null || $originalKey === null || $key !== $originalKey) {
-            throw new DomainException('TENANT_RELATION_MISMATCH');
-        }
-
-        $persisted = Version::query()
-            ->whereKey($originalKey)
-            ->where('versionable_type', $target->getMorphClass())
-            ->where('versionable_id', $target->getKey())
-            ->first();
-
-        if (! $persisted instanceof Version) {
-            throw new DomainException('TENANT_RELATION_MISMATCH');
-        }
-
-        return $persisted;
     }
 }

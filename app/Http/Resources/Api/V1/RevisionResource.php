@@ -12,12 +12,15 @@ final class RevisionResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => (int) $this->resource['id'],
             'operation' => (string) $this->resource['operation'],
             'actor' => $this->resource['actor'],
             'timestamp' => $this->resource['timestamp'],
-            'reason' => $this->resource['reason'],
-            'source_revision_id' => $this->resource['source_revision_id'],
-            'restored_from_revision_id' => $this->resource['restored_from_revision_id'],
+            'summary' => $this->resource['summary'],
+            'changed_count' => (int) $this->resource['changed_count'],
+            'changed_fields' => $this->resource['changed_fields'] ?? [],
+            'can_compare' => (bool) ($this->resource['can_compare'] ?? false),
+            'can_restore' => (bool) $this->resource['can_restore'],
         ];
     }
 }

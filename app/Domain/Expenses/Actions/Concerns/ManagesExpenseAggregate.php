@@ -2,6 +2,7 @@
 
 namespace App\Domain\Expenses\Actions\Concerns;
 
+use App\Domain\Attachments\Actions\PurgeAttachments;
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Expenses\Data\SaveExpenseData;
@@ -14,6 +15,7 @@ use App\Domain\Revisions\Actions\LinkVersionToRevisionBatch;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\TenantState;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\Tenant;
@@ -68,11 +70,14 @@ trait ManagesExpenseAggregate
     private function saveAggregate(Expense $expense, Tenant $tenant, SaveExpenseData $data, array $rows, User $actor, array $deletedRows = []): array
     {
         $validated = app(ExpenseAggregateValidator::class)->validate($tenant, $data, $rows, $expense->exists ? $expense : null);
-        $wasClosed = $expense->exists && $expense->state === ExpenseState::Closed;
-        $originalEconomic = $expense->exists ? $expense->only(['planning_year_id', 'cost_center_id', 'kind', 'project_id', 'contract_id']) : [];
+        $wasExisting = $expense->exists;
+        $wasClosed = $wasExisting && $expense->state === ExpenseState::Closed;
+        $originalEconomic = $wasExisting ? $expense->only(['planning_year_id', 'cost_center_id', 'kind', 'project_id', 'contract_id']) : [];
         $expense->fill($validated['header']);
         $expense->tenant_id = $tenant->getKey();
-        $expense->save();
+        if (! $wasExisting) {
+            $expense->save();
+        }
 
         $existing = $expense->rows()->lockForUpdate()->get()->keyBy(fn (ExpenseRow $row): int => (int) $row->getKey());
         $submittedIds = array_filter(array_column($validated['rows'], 'id'));
@@ -91,7 +96,7 @@ trait ManagesExpenseAggregate
             $positions[$attributes['position']] = true;
         }
         $submitted = [];
-        $changed = [$expense];
+        $changed = $wasExisting ? [] : [$expense];
         $selectedPlanningRowId = null;
         $rowEconomicChanged = false;
         foreach ($validated['rows'] as $attributes) {
@@ -146,15 +151,21 @@ trait ManagesExpenseAggregate
                     $serverAttributes['is_system_managed'] = false;
                     $serverAttributes['manual_override_at'] = null;
                 }
-                $attributes['lock_version'] = (int) $row->lock_version + 1;
             }
             $row->fill($attributes);
             $row->forceFill($serverAttributes);
-            $row->save();
-            if (! $row->wasRecentlyCreated && $beforeEconomic !== $row->only(array_keys($beforeEconomic))) {
+            $rowWasCreated = ! $row->exists;
+            if ($rowWasCreated) {
+                $row->save();
+                $changed[] = $row;
+            } elseif ($row->isDirty()) {
+                $row->forceFill(['lock_version' => (int) $row->lock_version + 1])->save();
+                $changed[] = $row;
+            }
+            if (! $rowWasCreated && $beforeEconomic !== $row->only(array_keys($beforeEconomic))) {
                 $rowEconomicChanged = true;
             }
-            if ($row->wasRecentlyCreated) {
+            if ($rowWasCreated) {
                 $rowEconomicChanged = true;
             }
             if ($isCurrentPlanning) {
@@ -166,7 +177,6 @@ trait ManagesExpenseAggregate
                 $rowEconomicChanged = true;
             }
             $submitted[(int) $row->getKey()] = true;
-            $changed[] = $row;
         }
 
         $deleted = [];
@@ -207,22 +217,82 @@ trait ManagesExpenseAggregate
                 'closed_by_user_id' => null,
             ]);
         }
-        if ($expense->isDirty()) {
+        $rootBusinessChanged = $expense->isDirty();
+        if ($wasExisting && ($rootBusinessChanged || $changed !== [])) {
+            $expense->forceFill(['lock_version' => (int) $expense->lock_version + 1])->save();
+            if ($rootBusinessChanged) {
+                array_unshift($changed, $expense);
+            }
+        } elseif (! $wasExisting && $rootBusinessChanged) {
             $expense->save();
         }
 
         return $changed;
     }
 
-    /** @param list<Expense|ExpenseRow> $models */
-    private function revisions(User $actor, TenantContext $context, RevisionOperation $operation, string $correlationId, Expense $root, array $models): void
+    /** @param list<array{id: int, lock_version: int}> $deletedRows */
+    private function purgeDeletedRowAttachments(User $actor, TenantContext $context, array $deletedRows, string $correlationId): void
     {
-        $batch = app(BeginRevisionBatch::class)->execute($actor, $context, $operation, null, $correlationId, $root, null);
-        $sequence = 1;
+        foreach ($deletedRows as $deletedRow) {
+            $row = TenantOwnedRecordQuery::forTenant($context, ExpenseRow::class)
+                ->withTrashed()
+                ->whereKey($deletedRow['id'])
+                ->first();
+            if ($row instanceof ExpenseRow) {
+                app(PurgeAttachments::class)
+                    ->forParent($actor, $context, $row, $correlationId);
+            }
+        }
+    }
+
+    /** @param list<Expense|ExpenseRow> $models */
+    private function revisions(
+        User $actor,
+        TenantContext $context,
+        RevisionOperation $operation,
+        string $correlationId,
+        Expense $root,
+        array $models,
+        ?int $restoredFromBatchId = null,
+    ): void {
+        if ($models === []) {
+            return;
+        }
+        $changed = [];
         foreach ($models as $model) {
+            $changed[$model->getMorphClass().'#'.$model->getKey()] = true;
+        }
+        if ($operation !== RevisionOperation::Delete) {
+            $models = [
+                $root,
+                ...$root->rows()->orderBy('position')->orderBy('id')->get()->all(),
+            ];
+        }
+        $batch = app(BeginRevisionBatch::class)->execute(
+            $actor,
+            $context,
+            $operation,
+            null,
+            $correlationId,
+            $root,
+            restoredFromBatchId: $restoredFromBatchId,
+        );
+        $sequence = 1;
+        $seen = [];
+        foreach ($models as $model) {
+            $identity = $model->getMorphClass().'#'.$model->getKey();
+            if (isset($seen[$identity])) {
+                continue;
+            }
+            $seen[$identity] = true;
             $version = $model->versions()->orderByDesc('id')->first();
             if ($version instanceof Version) {
-                app(LinkVersionToRevisionBatch::class)->execute($batch, $version, $sequence++);
+                app(LinkVersionToRevisionBatch::class)->execute(
+                    $batch,
+                    $version,
+                    $sequence++,
+                    changed: isset($changed[$identity]),
+                );
             }
         }
     }

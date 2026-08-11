@@ -30,7 +30,7 @@ final readonly class ExpenseDetail
      *     vat_amount: string,
      *     gross_amount: string
      * }> $rows
-     * @param  list<array{id:int,operation:string,actor:?string,timestamp:?string,summary:?string}>  $revisionActivity
+     * @param  list<array<string, mixed>>  $revisionActivity
      */
     public function __construct(
         public int $id,

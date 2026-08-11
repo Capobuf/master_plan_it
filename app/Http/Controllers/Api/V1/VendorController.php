@@ -10,17 +10,14 @@ use App\Domain\MasterData\Actions\RestoreVendorRevision;
 use App\Domain\MasterData\Actions\UpdateVendor;
 use App\Domain\MasterData\Queries\VendorListQuery;
 use App\Domain\Revisions\Data\RevisionOperation;
-use App\Domain\Revisions\Queries\RevisionHistoryQuery;
-use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Revisions\Queries\OperationalRevisionQuery;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
 use App\Http\Middleware\AuthorizeApplicationAbility;
 use App\Http\Resources\Api\V1\RevisionResource;
 use App\Http\Resources\Api\V1\VendorResource;
 use App\Models\RevisionBatch;
-use App\Models\RevisionBatchItem;
 use App\Models\Vendor;
-use App\Models\Version;
 use Carbon\CarbonInterface;
 use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
@@ -121,26 +118,27 @@ final class VendorController extends Controller
         return response()->noContent();
     }
 
-    public function history(Request $request, int $vendor, RevisionHistoryQuery $history): AnonymousResourceCollection
+    public function history(Request $request, int $vendor, OperationalRevisionQuery $history): AnonymousResourceCollection
     {
         $this->authorize($request, 'vendor.view-revisions');
         $context = $this->tenantContext($request);
         $subject = $this->vendor($request, $vendor);
-        $rows = $history->forSubject($context, $subject)->map(function (RevisionBatch $batch) use ($context, $history, $subject): array {
-            $source = $history->forBatch($batch, $context)->first(fn ($row): bool => $row->versionableType === $subject->getMorphClass() && $row->versionableId === (int) $subject->getKey());
+        $canRestore = $this->authorizeAbility->allows($request, $this->actor($request), 'vendor.restore-revision');
+        $rows = $history->visibleForRoot($context, $subject)->map(function (RevisionBatch $batch) use ($canRestore): array {
             $operation = $batch->getAttribute('operation');
 
             return [
+                'id' => (int) $batch->getKey(),
                 'operation' => $operation instanceof RevisionOperation ? $operation->value : (string) $batch->getRawOriginal('operation'),
-                'actor' => $batch->actor?->name,
+                'actor' => ['kind' => $batch->visualActorKind()->value, 'label' => $batch->visualActorLabel()],
                 'timestamp' => $batch->occurred_at instanceof CarbonInterface ? $batch->occurred_at->toIso8601String() : null,
-                'reason' => $batch->reason,
-                'source_revision_id' => $source?->versionId,
-                'restored_from_revision_id' => $batch->restored_from_version_id === null ? null : (int) $batch->restored_from_version_id,
+                'summary' => $batch->reason ?? 'Modifica fornitore',
+                'changed_count' => $batch->items->count(),
+                'can_restore' => $canRestore,
             ];
         });
 
-        $perPage = min(max($request->integer('per_page', 15), 1), 100);
+        $perPage = min(max($request->integer('per_page', 10), 1), OperationalRevisionQuery::LIMIT);
         $page = max($request->integer('page', 1), 1);
         $historyPage = new LengthAwarePaginator(
             $rows->forPage($page, $perPage)->values(),
@@ -153,14 +151,14 @@ final class VendorController extends Controller
         return RevisionResource::collection($historyPage);
     }
 
-    public function restore(Request $request, int $vendor, int $version, RestoreVendorRevision $action): VendorResource
+    public function restore(Request $request, int $vendor, int $revision, RestoreVendorRevision $action, OperationalRevisionQuery $history): VendorResource
     {
         $this->authorize($request, 'vendor.restore-revision');
         $input = $this->lockVersion($request);
         $context = $this->tenantContext($request);
         $subject = $this->vendor($request, $vendor);
-        $revision = $this->version($context, $subject, $version);
-        $updated = $action->execute($this->actor($request), $context, $subject, $revision, $input, $this->correlationId($request));
+        $source = $history->findVisibleBatch($context, $subject, $revision);
+        $updated = $action->execute($this->actor($request), $context, $subject, $source, $input, $this->correlationId($request));
 
         return VendorResource::make($updated);
     }
@@ -200,22 +198,6 @@ final class VendorController extends Controller
         $this->rejectUnexpected($request, ['lock_version']);
 
         return (int) $request->validate(['lock_version' => ['required', 'integer', 'min:1']])['lock_version'];
-    }
-
-    private function version(TenantContext $context, Vendor $vendor, int $versionId): Version
-    {
-        $item = TenantOwnedRecordQuery::forTenant($context, RevisionBatchItem::class)
-            ->where('version_id', $versionId)
-            ->where('versionable_type', $vendor->getMorphClass())
-            ->where('versionable_id', $vendor->getKey())
-            ->whereHas('batch', fn ($query) => $query->where('tenant_id', $context->tenantId)->where('root_subject_type', $vendor->getMorphClass())->where('root_subject_id', $vendor->getKey()))
-            ->with('version')
-            ->firstOrFail();
-
-        /** @var Version $version */
-        $version = $item->version;
-
-        return $version;
     }
 
     /** @param list<string> $allowed */

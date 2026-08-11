@@ -3,7 +3,7 @@
 Stato: `VERIFIED CURRENT` per il runtime implementato; i vincoli di progetto elencati derivano
 dalle decisioni approvate e dal codice corrente.
 
-Baseline funzionale: Feature 017 verificata nel worktree corrente.
+Baseline funzionale: Feature 009 e 011 verificate nel worktree corrente.
 
 ## Runtime
 
@@ -64,7 +64,9 @@ Gli errori devono essere osservabili e diagnosticabili.
 ## Denaro e dataset economico
 
 - I valori autorevoli non usano float.
-- MySQL usa decimali esatti; PHP usa stringhe decimali e il Money layer basato su BCMath.
+- MySQL usa decimali esatti a scala due per gli importi autorevoli; PHP usa stringhe decimali e il
+  Money layer basato su BCMath. Il frontend localizza i valori senza esporre scale tecniche come
+  `1.000000`.
 - Net, VAT e Gross restano componenti separate.
 - Solo le Expense row correnti e non eliminate contribuiscono ai totali correnti.
 - Project e Contract sono contesto o generatori, non sorgenti monetarie aggiuntive.
@@ -80,12 +82,48 @@ Gli errori devono essere osservabili e diagnosticabili.
 - Approvazione, variazione, spostamento e chiusura sono Actions transazionali con lock ottimistico,
   audit e un unico revision batch per mutazione logica.
 - `revision_batch_items` denormalizza Tenant, Planning Year e mutation (`upsert`/`delete`).
+- Ogni item conserva anche uno `snapshot_contents` immutabile. Le batch Expense/Contract nuove
+  includono root e insieme completo dei figli correnti; `is_changed` distingue il contesto dello
+  snapshot dagli item realmente mutati. La proiezione annuale legge questi snapshot e non dipende
+  dalla permanenza della riga package `versions`.
 - L'attivazione storica crea il baseline annuale; la proiezione seleziona l'ultimo item completo per
   soggetto ordinando per timestamp batch, ID batch e sequence.
 - La risposta storica include le righe Expense ricostruite e il contesto annuale collegato di
   approvazioni, Cost Center, Project, Contract, Contract term e Vendor.
 - Le letture storiche non iterano `versionAt()`, non usano audit come snapshot e non espongono
   restore.
+
+## Revisioni operative e retention
+
+- `RevisionBatch.id` è l'identità di una revisione logica. Expense con tutte le ExpenseRow e
+  Contract con tutti i ContractTerm contano una sola revisione per mutazione aggregate; Project,
+  Vendor e Cost Center sono root singole.
+- Una batch nasce solo dopo un cambiamento business riuscito. `lock_version`, timestamp e no-op non
+  sono trigger autonomi; le automazioni reali usano actor visuale `Sistema`.
+- Le API history/compare/restore risolvono sempre Tenant, root e le dieci batch operative più
+  recenti. Compare restituisce differenze semantiche e label umane, non snapshot raw o FK.
+- Restore usa l'Action specifica dell'aggregate, rivalida le invarianti correnti, applica optimistic
+  locking e crea una nuova batch senza riscrivere la sorgente.
+- La retention operativa e il cleanup fisico sono distinti: oltre dieci una batch non è più
+  consultabile; solo le `Version` rese ridondanti dallo snapshot dell'item vengono prima scollegate,
+  soft-deleted e poi force-deleted da Laravel `Prunable`. Batch, item, audit e storia annuale non
+  vengono potati da questa manutenzione.
+
+## Allegati privati
+
+- Expense, ExpenseRow, Contract e Project possono possedere allegati correnti tramite Spatie Media
+  Library base; non esiste un endpoint morph generico né un secondo backend documentale.
+- `App\Models\Media` conserva `tenant_id` e `uploaded_by_user_id` indicizzati. Ogni query risolve
+  fail-closed Tenant, parent, relazione esatta e collection privata prima di leggere metadata o
+  payload.
+- Il disk `attachments` scrive in `storage/app/private/attachments`, non è servito pubblicamente e
+  non possiede fallback. Download e delete passano sempre da endpoint Laravel autorizzati.
+- La quota usa esclusivamente `Tenant.attachment_quota_bytes`; l'uso è la somma dei byte Media
+  correnti e gli upload sono serializzati sul record Tenant per non superarla in concorrenza.
+- Upload e delete producono audit minimizzato ma nessuna revisione operativa. Restore business non
+  modifica gli allegati; delete esplicito, rimozione di ExpenseRow e delete terminale della root
+  eliminano sia metadata sia payload.
+- Non sono attive conversioni, preview, deduplicazione, upload remoto, queue o Media Library Pro.
 
 ## Tenancy e autorizzazione
 
@@ -106,9 +144,10 @@ Non unificare in un generico sistema di "storia":
 1. current domain record;
 2. operational revision;
 3. audit event;
-4. immutable BudgetVersion;
-5. Scenario non ufficiale;
-6. generation exception non economica.
+4. storia annuale tramite revision batch;
+5. immutable BudgetVersion;
+6. Scenario non ufficiale;
+7. generation exception non economica.
 
 ## UI
 
@@ -120,6 +159,8 @@ Non unificare in un generico sistema di "storia":
 - Riutilizzare i componenti e i pattern nativi di TailAdmin React Free quando esistono.
 - Non costruire un design system parallelo. Un componente applicativo nuovo è giustificato solo da
   comportamento di dominio o riuso concreto non già coperto da TailAdmin.
+- I dettagli Expense, Contract e Project usano le tab `Dettagli | Allegati | Storico`; i contenuti
+  Allegati sono caricati soltanto all'apertura della tab e riusano lista, uploader e conferme comuni.
 
 ## Contratto API
 

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Revisions;
 
+use App\Domain\Revisions\Data\RevisionActorKind;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Models\RevisionBatch;
 use App\Models\RevisionBatchItem;
@@ -31,6 +32,7 @@ class RevisionBatchSchemaTest extends TestCase
             'id',
             'tenant_id',
             'actor_user_id',
+            'actor_kind',
             'root_subject_type',
             'root_subject_id',
             'operation',
@@ -46,14 +48,18 @@ class RevisionBatchSchemaTest extends TestCase
             'id',
             'revision_batch_id',
             'version_id',
+            'is_changed',
             'versionable_type',
             'versionable_id',
+            'snapshot_contents',
+            'operational_root_type',
+            'operational_root_id',
             'sequence',
             'created_at',
             'updated_at',
         ]));
 
-        foreach (['tenant_id', 'actor_user_id', 'root_subject_type', 'root_subject_id', 'operation', 'correlation_id', 'occurred_at'] as $column) {
+        foreach (['tenant_id', 'actor_user_id', 'actor_kind', 'root_subject_type', 'root_subject_id', 'operation', 'correlation_id', 'occurred_at'] as $column) {
             $this->assertFalse(
                 $this->column('revision_batches', $column)['nullable'],
                 "revision_batches.{$column} must be required.",
@@ -67,10 +73,17 @@ class RevisionBatchSchemaTest extends TestCase
             );
         }
 
-        foreach (['revision_batch_id', 'version_id', 'versionable_type', 'versionable_id', 'sequence'] as $column) {
+        foreach (['revision_batch_id', 'is_changed', 'versionable_type', 'versionable_id', 'snapshot_contents', 'sequence'] as $column) {
             $this->assertFalse(
                 $this->column('revision_batch_items', $column)['nullable'],
                 "revision_batch_items.{$column} must be required.",
+            );
+        }
+
+        foreach (['version_id', 'operational_root_type', 'operational_root_id'] as $column) {
+            $this->assertTrue(
+                $this->column('revision_batch_items', $column)['nullable'],
+                "revision_batch_items.{$column} must support the safe legacy/retention bridge.",
             );
         }
 
@@ -99,6 +112,10 @@ class RevisionBatchSchemaTest extends TestCase
         $this->assertSame(
             "enum('create','update','deactivate','reactivate','restore','delete')",
             strtolower($this->column('revision_batches', 'operation')['type']),
+        );
+        $this->assertSame(
+            "enum('human','system')",
+            strtolower($this->column('revision_batches', 'actor_kind')['type']),
         );
         $this->assertSame('timestamp', strtolower($this->column('revision_batches', 'occurred_at')['type_name']));
         $this->assertStringContainsString(
@@ -166,6 +183,7 @@ class RevisionBatchSchemaTest extends TestCase
         $this->assertIndex('revision_batches', ['tenant_id', 'root_subject_type', 'root_subject_id', 'occurred_at']);
         $this->assertIndex('revision_batch_items', ['revision_batch_id', 'version_id'], unique: true);
         $this->assertIndex('revision_batch_items', ['revision_batch_id', 'sequence'], unique: true);
+        $this->assertIndex('revision_batch_items', ['tenant_id', 'operational_root_type', 'operational_root_id', 'revision_batch_id']);
 
         $this->assertRestrictiveForeignKey('revision_batches', ['tenant_id'], 'tenants', ['id']);
         $this->assertRestrictiveForeignKey('revision_batches', ['actor_user_id'], 'users', ['id']);
@@ -235,7 +253,7 @@ class RevisionBatchSchemaTest extends TestCase
 
     public function test_revision_batch_models_expose_operation_casts_and_explicit_history_relationships(): void
     {
-        foreach ([RevisionBatch::class, RevisionBatchItem::class, RevisionOperation::class] as $class) {
+        foreach ([RevisionBatch::class, RevisionBatchItem::class, RevisionOperation::class, RevisionActorKind::class] as $class) {
             $this->assertTrue(class_exists($class) || enum_exists($class), "{$class} is missing.");
         }
 
@@ -245,8 +263,10 @@ class RevisionBatchSchemaTest extends TestCase
         $item->setRawAttributes(['versionable_type' => Vendor::class]);
 
         $this->assertSame(RevisionOperation::class, $batch->getCasts()['operation'] ?? null);
+        $this->assertSame(RevisionActorKind::class, $batch->getCasts()['actor_kind'] ?? null);
         $this->assertSame('datetime', $batch->getCasts()['occurred_at'] ?? null);
         $this->assertSame('integer', $item->getCasts()['sequence'] ?? null);
+        $this->assertSame('array', $item->getCasts()['snapshot_contents'] ?? null);
 
         $this->assertBelongsTo($batch->tenant(), Tenant::class, 'tenant_id', 'id');
         $this->assertBelongsTo($batch->actor(), User::class, 'actor_user_id', 'id');
@@ -390,11 +410,18 @@ class RevisionBatchSchemaTest extends TestCase
 
     private function insertRevisionBatchItem(int $batchId, int $versionId, int $vendorId): int
     {
+        $tenantId = (int) DB::table('revision_batches')->where('id', $batchId)->value('tenant_id');
+        $contents = (string) DB::table('versions')->where('id', $versionId)->value('contents');
+
         return DB::table('revision_batch_items')->insertGetId([
             'revision_batch_id' => $batchId,
+            'tenant_id' => $tenantId,
             'version_id' => $versionId,
             'versionable_type' => Vendor::class,
             'versionable_id' => $vendorId,
+            'snapshot_contents' => $contents,
+            'operational_root_type' => Vendor::class,
+            'operational_root_id' => $vendorId,
             'sequence' => 1,
             'created_at' => now(),
             'updated_at' => now(),

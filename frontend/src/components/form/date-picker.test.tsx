@@ -38,4 +38,14 @@ describe("DatePicker", () => {
     fireEvent.click(screen.getByRole("button", { name: "Apri calendario: Data finale" }));
     expect(endSource?.closest(".flatpickr-wrapper")?.querySelector(".flatpickr-calendar")).toHaveClass("open");
   });
+
+  it("associates an error only with the visible localized field", () => {
+    render(<DatePicker id="renewal" label="Data di rinnovo" error hint="Inserisci una data valida." />);
+
+    const source = document.querySelector<HTMLInputElement>("#renewal");
+    const visible = screen.getByRole("textbox", { name: "Data di rinnovo" });
+    expect(source).not.toHaveAttribute("aria-invalid");
+    expect(visible).toHaveAttribute("aria-invalid", "true");
+    expect(visible).toHaveAccessibleDescription("Inserisci una data valida.");
+  });
 });

@@ -59,7 +59,21 @@ export default function ExpenseColumnSettings({ value, onChange, disabled = fals
   }
 
   return <div className="relative shrink-0">
-    <Button type="button" size="sm" variant="outline" className="shrink-0 whitespace-nowrap" startIcon={<GridIcon className="size-4" />} onClick={() => setOpen((current) => !current)} disabled={disabled || saving}>Colonne</Button>
+    <button
+      type="button"
+      aria-label="Colonne"
+      aria-controls="expense-column-settings"
+      aria-expanded={open}
+      title="Configura le colonne"
+      onClick={() => setOpen((current) => !current)}
+      disabled={disabled || saving}
+      className="group relative inline-flex size-11 items-center justify-center rounded-lg border border-gray-300 bg-white text-gray-600 shadow-theme-xs transition-colors hover:bg-gray-50 hover:text-gray-800 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:opacity-40 dark:border-gray-700 dark:bg-gray-900 dark:text-gray-300 dark:hover:bg-white/[0.05] dark:hover:text-white"
+    >
+      <GridIcon className="size-5" aria-hidden="true" />
+      <span role="tooltip" className="pointer-events-none absolute bottom-full right-0 z-50 mb-2 w-max rounded-md bg-gray-900 px-2 py-1 text-xs font-medium text-white opacity-0 shadow-theme-sm transition-opacity group-hover:opacity-100 group-focus:opacity-100 dark:bg-gray-100 dark:text-gray-900">
+        Configura le colonne
+      </span>
+    </button>
     <Dropdown isOpen={open} onClose={() => setOpen(false)} className="w-80 p-3" triggerId="expense-column-settings">
       <p className="px-2 pb-2 text-sm font-semibold text-gray-800 dark:text-white/90">Visibilità e ordine</p>
       <ul className="space-y-1">

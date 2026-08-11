@@ -54,7 +54,7 @@ export default function EditContract() {
   else if (error && contract === null) body = <Alert variant="error" title="Caricamento non riuscito" message={error.message} />;
   else if (contract === null) body = <Alert variant="error" title="Contratto non trovato" message="Non è stato possibile caricare il contratto." />;
   else if (!canEdit) body = <Alert variant="warning" title="Modifica non disponibile" message="Non disponi dell'autorizzazione necessaria per questa operazione." />;
-  else body = <ContractForm contract={contract} canSubmit={canEdit} submitting={submitting} error={error?.message ?? null} onSubmit={async (input) => submit(input as ContractUpdate)} />;
+  else body = <ContractForm contract={contract} canSubmit={canEdit} submitting={submitting} error={error} onSubmit={async (input) => submit(input as ContractUpdate)} />;
 
   return <><PageMeta title="Modifica Contratto | Master Plan IT" description="Modifica un contratto" /><PageBreadcrumb pageTitle="Modifica Contratto" subtitle="Aggiorna dati e termini mantenendo il controllo di versione corrente." />{body}</>;
 }

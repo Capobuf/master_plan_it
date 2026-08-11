@@ -2,6 +2,7 @@
 
 namespace App\Domain\Expenses\Actions;
 
+use App\Domain\Attachments\Actions\PurgeAttachments;
 use App\Domain\Contracts\Actions\SuppressContractOccurrence;
 use App\Domain\Expenses\Actions\Concerns\ManagesExpenseAggregate;
 use App\Domain\Revisions\Data\RevisionOperation;
@@ -41,6 +42,7 @@ final class DeleteExpense
             $this->revisions($actor, $context, RevisionOperation::Delete, $correlationId, $expense, [$expense, ...$deletedRows->all()]);
             $this->audit('expense.deleted', $correlationId, $actor, $tenant, $expense, ['suppressed' => $suppressOccurrence]);
             $expense->delete();
+            app(PurgeAttachments::class)->forExpenseAggregate($actor, $context, $expense, $correlationId);
         });
     }
 }

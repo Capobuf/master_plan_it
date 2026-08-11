@@ -12,20 +12,24 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Overtrue\LaravelVersionable\Versionable;
 use Overtrue\LaravelVersionable\VersionStrategy;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[Fillable([
     'tenant_id', 'cost_center_id', 'title', 'stage', 'deferred_target_planning_year_id',
     'lock_version', 'deleted_by_user_id', 'deleted_by_at', 'deletion_reason',
 ])]
-class Project extends Model
+class Project extends Model implements HasMedia
 {
     /** @use HasFactory<ProjectFactory> */
-    use HasFactory, SoftDeletes, Versionable;
+    use HasFactory, InteractsWithMedia, SoftDeletes, Versionable;
+
+    public const ATTACHMENT_COLLECTION = 'attachments';
 
     /** @var list<string> */
     protected array $versionable = [
         'cost_center_id', 'title', 'stage', 'deferred_target_planning_year_id',
-        'deleted_by_user_id', 'deleted_by_at', 'deletion_reason', 'lock_version',
+        'deleted_by_user_id', 'deleted_by_at', 'deletion_reason',
     ];
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
@@ -62,5 +66,10 @@ class Project extends Model
     public function expenses(): HasMany
     {
         return $this->hasMany(Expense::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection(self::ATTACHMENT_COLLECTION)->useDisk('attachments');
     }
 }

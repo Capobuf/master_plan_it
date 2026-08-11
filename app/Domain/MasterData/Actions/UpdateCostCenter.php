@@ -33,13 +33,13 @@ final class UpdateCostCenter
             $parentId = $this->parentId($parent, $costCenters);
             $this->assertValidHierarchy($costCenters, (int) $costCenter->getKey(), $parentId);
             $old = ['name' => $costCenter->name, 'parent_id' => $costCenter->parent_id];
+            $costCenter->fill(['name' => $name, 'parent_id' => $parentId]);
+            if (! $costCenter->isDirty()) {
+                return $costCenter->refresh();
+            }
 
             try {
-                $costCenter->fill([
-                    'name' => $name,
-                    'parent_id' => $parentId,
-                    'lock_version' => $expectedLockVersion + 1,
-                ])->save();
+                $costCenter->forceFill(['lock_version' => $expectedLockVersion + 1])->save();
             } catch (UniqueConstraintViolationException) {
                 throw ValidationException::withMessages([
                     'name' => 'The cost center name already exists for the current tenant.',

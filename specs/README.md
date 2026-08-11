@@ -8,9 +8,9 @@ resta disponibile fino all'accettazione del Product Owner, come richiesto dalla 
 | ID | Feature | Stato corrente |
 |---|---|---|
 | 008 | Platform operations | Specificata, da pianificare |
-| 009 | Operational revisions | Specificata, da pianificare |
+| 009 | Operational revisions | Implementata e verificata; in attesa di review Product Owner |
 | 010 | Projects | Specificata, da pianificare |
-| 011 | Expense attachments | Specificata, da pianificare |
+| 011 | Private attachments | Implementata e verificata; in attesa di review Product Owner |
 | 012 | Budget versions | Specificata, da pianificare |
 | 013 | Scenarios | Specificata; richiede clarify |
 | 014 | Exports and print | Specificata, da pianificare |
@@ -28,3 +28,6 @@ Una directory resta qui solo finché rappresenta lavoro ancora aperto. A feature
 - eventuali regole durevoli entrano nei documenti minimi;
 - `docs/STATUS.md` viene aggiornato;
 - gli artefatti della feature vengono rimossi.
+
+Le directory 009 e 011 costituiscono eccezione esplicita: restano presenti fino alla review del
+Product Owner anche dopo implementazione e verifica.

@@ -4,6 +4,7 @@ namespace App\Domain\Projects\Actions;
 
 use App\Domain\Projects\Actions\Concerns\ManagesProjects;
 use App\Domain\Projects\Enums\ProjectStage;
+use App\Domain\Revisions\Data\RevisionActorKind;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Project;
@@ -38,7 +39,15 @@ final class PromoteDeferredProjects
                     'lock_version' => $project->lock_version + 1,
                 ])->save();
                 $correlationId = (string) str()->uuid();
-                $this->projectRevision($actor, $context, RevisionOperation::Update, $correlationId, $project, 'Deferred target year reached.');
+                $this->projectRevision(
+                    $actor,
+                    $context,
+                    RevisionOperation::Update,
+                    $correlationId,
+                    $project,
+                    'Anno di destinazione raggiunto.',
+                    actorKind: RevisionActorKind::System,
+                );
                 $this->projectAudit('project.deferred-promoted', $correlationId, $actor, $tenant, $project, ['target_year_reached' => $currentYear]);
             }
 

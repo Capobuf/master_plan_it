@@ -13,6 +13,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Overtrue\LaravelVersionable\Versionable;
 use Overtrue\LaravelVersionable\VersionStrategy;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[Fillable([
     'position',
@@ -33,10 +35,12 @@ use Overtrue\LaravelVersionable\VersionStrategy;
     'external_reference',
     'lock_version',
 ])]
-class ExpenseRow extends Model
+class ExpenseRow extends Model implements HasMedia
 {
     /** @use HasFactory<ExpenseRowFactory> */
-    use HasFactory, SoftDeletes, Versionable;
+    use HasFactory, InteractsWithMedia, SoftDeletes, Versionable;
+
+    public const ATTACHMENT_COLLECTION = 'attachments';
 
     /** @var list<string> */
     protected array $versionable = [
@@ -80,7 +84,6 @@ class ExpenseRow extends Model
         'source_deleted_term_end',
         'source_term_deleted_at',
         'source_term_deletion_reason',
-        'lock_version',
     ];
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
@@ -161,5 +164,10 @@ class ExpenseRow extends Model
     public function contractTerm(): BelongsTo
     {
         return $this->belongsTo(ContractTerm::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection(self::ATTACHMENT_COLLECTION)->useDisk('attachments');
     }
 }

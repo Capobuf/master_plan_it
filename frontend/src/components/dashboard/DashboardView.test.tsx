@@ -67,4 +67,47 @@ describe("DashboardView", () => {
     expect(screen.getByRole("link", { name: "Licenze cloud" })).toHaveAttribute("href", "/spese/42");
     expect(screen.getByRole("link", { name: "Cloud annuale" })).toHaveAttribute("href", "/contratti/7");
   });
+
+  it("keeps the main and secondary dashboard columns independent", () => {
+    render(
+      <MemoryRouter>
+        <DashboardView dataset={dataset} />
+      </MemoryRouter>,
+    );
+
+    const primaryFlow = document.querySelector('[data-dashboard-flow="primary"]');
+    const secondaryFlow = document.querySelector('[data-dashboard-flow="secondary"]');
+
+    expect(primaryFlow).toContainElement(screen.getByRole("heading", { name: "Andamento Mensile" }));
+    expect(primaryFlow).toContainElement(screen.getByRole("heading", { name: "Ultime Spese" }));
+    expect(secondaryFlow).toContainElement(screen.getByRole("heading", { name: "Spese per Progetto" }));
+    expect(secondaryFlow).toContainElement(screen.getByRole("heading", { name: "Rinnovi e Scadenze" }));
+  });
+
+  it("shows the plafond overrun before the overview cards", () => {
+    const datasetWithOverrun: ReportingDataset = {
+      ...dataset,
+      summary: {
+        ...dataset.summary,
+        amounts: {
+          ...dataset.summary?.amounts,
+          plafond_overrun: "2825.00",
+        },
+      },
+    };
+
+    render(
+      <MemoryRouter>
+        <DashboardView dataset={datasetWithOverrun} />
+      </MemoryRouter>,
+    );
+
+    const alert = screen.getByRole("heading", { name: "Superamento Plafond" }).closest("div.rounded-xl");
+    const firstMetric = screen.getByText("Posizione Economica").closest("article");
+
+    expect(screen.getByText("Il Plafond risulta superato di 2.825,00 €.")).toBeInTheDocument();
+    expect(alert).toBeTruthy();
+    expect(firstMetric).toBeTruthy();
+    expect(alert!.compareDocumentPosition(firstMetric!) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
 });

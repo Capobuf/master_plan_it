@@ -6,6 +6,7 @@ use App\Domain\Expenses\Actions\BulkExpenseAction;
 use App\Domain\Expenses\Actions\CloseExpense;
 use App\Domain\Expenses\Actions\CreateExpense;
 use App\Domain\Expenses\Actions\DeleteExpense;
+use App\Domain\Expenses\Actions\RestoreExpenseRevision;
 use App\Domain\Expenses\Actions\UpdateExpense;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
@@ -17,6 +18,7 @@ use App\Models\AuditEvent;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\PlanningYear;
+use App\Models\RevisionBatch;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
@@ -119,6 +121,39 @@ final class ExpenseActionRollbackTest extends TestCase
         } finally {
             $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
             $this->assertDatabaseHas('expenses', ['id' => $expense->getKey(), 'state' => ExpenseState::Open->value, 'lock_version' => 1]);
+            $this->assertDatabaseCount('audit_events', $auditCount);
+        }
+    }
+
+    public function test_restore_expense_revision_audit_failure_rolls_back_the_whole_aggregate(): void
+    {
+        [$actor, $context, $year, $center, $vendor] = $this->administratorContext();
+        $expense = $this->existingExpense($actor, $context, $year, $center, $vendor);
+        $source = RevisionBatch::query()->where('root_subject_type', $expense->getMorphClass())->where('root_subject_id', $expense->getKey())->oldest('id')->firstOrFail();
+        $row = $expense->rows()->firstOrFail();
+        $current = app(UpdateExpense::class)->execute(
+            $actor,
+            $context,
+            $expense,
+            $this->expenseData($year, $center, 'Current after source', 1),
+            [$this->rowData($vendor, ExpenseType::Estimate, (int) $row->getKey(), 1)],
+            (string) str()->uuid(),
+        );
+        $correlationId = (string) str()->uuid();
+        $batchCount = RevisionBatch::query()->count();
+        $auditCount = AuditEvent::query()->count();
+        [$dispatcher, $eventName, $listeners] = $this->auditCreatingListeners($correlationId, static fn (): never => throw new RuntimeException('forced restore audit failure'));
+
+        try {
+            $this->expectException(RuntimeException::class);
+            self::assertTrue(class_exists(RestoreExpenseRevision::class));
+            $action = app(RestoreExpenseRevision::class);
+            $action->execute($actor, $context, $current, $source, 2, $correlationId);
+        } finally {
+            $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
+            $this->assertDatabaseHas('expenses', ['id' => $expense->getKey(), 'title' => 'Current after source', 'lock_version' => 2]);
+            $this->assertDatabaseHas('expense_rows', ['id' => $row->getKey(), 'deleted_at' => null]);
+            $this->assertDatabaseCount('revision_batches', $batchCount);
             $this->assertDatabaseCount('audit_events', $auditCount);
         }
     }

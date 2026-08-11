@@ -64,11 +64,40 @@ final class ContractPolicy
         return $this->record($user, 'contract.view-revisions', $contract);
     }
 
+    public function restoreRevision(User $user, Contract $contract): Response
+    {
+        return $this->record($user, 'contract.restore-revision', $contract);
+    }
+
+    public function viewAttachment(User $user, Contract $contract): Response
+    {
+        return $this->recordWithParentAbility($user, 'attachment.view', 'contract.view', $contract);
+    }
+
+    public function uploadAttachment(User $user, Contract $contract): Response
+    {
+        return $this->recordWithParentAbility($user, 'attachment.upload', 'contract.update', $contract);
+    }
+
+    public function deleteAttachment(User $user, Contract $contract): Response
+    {
+        return $this->recordWithParentAbility($user, 'attachment.delete', 'contract.delete', $contract);
+    }
+
     private function record(User $user, string $ability, Contract $contract): Response
     {
         $response = $this->authorizeTenantOwnership($user, $ability, $this->context, $contract, $this->registrar, $this->administrator);
 
         return $response->denied() ? $response : $this->active();
+    }
+
+    private function recordWithParentAbility(User $user, string $attachmentAbility, string $parentAbility, Contract $contract): Response
+    {
+        $parentResponse = $this->record($user, $parentAbility, $contract);
+
+        return $parentResponse->denied()
+            ? $parentResponse
+            : $this->record($user, $attachmentAbility, $contract);
     }
 
     private function collection(User $user, string $ability): Response

@@ -169,7 +169,7 @@ trait ManagesVendorMutation
         RevisionOperation $operation,
         string $correlationId,
         Vendor $vendor,
-        ?int $restoredFromVersionId = null,
+        ?int $restoredFromBatchId = null,
     ): void {
         $batch = $this->beginRevisionBatch(
             $actor,
@@ -177,7 +177,7 @@ trait ManagesVendorMutation
             $operation,
             $correlationId,
             $vendor,
-            $restoredFromVersionId,
+            $restoredFromBatchId,
         );
         $version = $vendor->versions()->orderByDesc('id')->firstOrFail();
 
@@ -194,7 +194,7 @@ trait ManagesVendorMutation
         RevisionOperation $operation,
         string $correlationId,
         Vendor $vendor,
-        ?int $restoredFromVersionId = null,
+        ?int $restoredFromBatchId = null,
     ): RevisionBatch {
         return app(BeginRevisionBatch::class)->execute(
             $actor,
@@ -203,7 +203,7 @@ trait ManagesVendorMutation
             null,
             $correlationId,
             $vendor,
-            $restoredFromVersionId,
+            restoredFromBatchId: $restoredFromBatchId,
         );
     }
 

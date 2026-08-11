@@ -8,9 +8,14 @@ use App\Domain\Budget\Data\ApprovalChangeData;
 use App\Domain\Budget\Queries\HistoricalAnnualBudgetQuery;
 use App\Domain\Contracts\Enums\BillingCycle;
 use App\Domain\Expenses\Actions\DeleteExpense;
+use App\Domain\Expenses\Actions\UpdateExpense;
+use App\Domain\Expenses\Data\SaveExpenseData;
+use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Revisions\Actions\ActivateAnnualHistory;
+use App\Domain\Revisions\Actions\ApplyOperationalRevisionRetention;
+use App\Domain\Revisions\Queries\OperationalRevisionQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Contract;
 use App\Models\ContractTerm;
@@ -20,6 +25,7 @@ use App\Models\PlanningYear;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Models\Version;
 use App\Support\Authorization\PlatformAdministrator;
 use Carbon\CarbonImmutable;
 use Database\Seeders\PermissionCatalogueSeeder;
@@ -43,6 +49,7 @@ final class HistoricalBudgetQueryTest extends TestCase
         [$actor, $context, $year, $expense] = $this->fixture();
         $this->travelTo(CarbonImmutable::parse('2026-03-01 10:00:00', 'UTC'));
         app(ActivateAnnualHistory::class)->execute($actor, $context, $year, (string) str()->uuid());
+        $this->assertCount(0, app(OperationalRevisionQuery::class)->visibleForRoot($context, $expense));
 
         $this->travelTo(CarbonImmutable::parse('2026-03-01 11:00:00', 'UTC'));
         app(DeleteExpense::class)->execute($actor, $context, $expense, 1, false, (string) str()->uuid());
@@ -82,6 +89,78 @@ final class HistoricalBudgetQueryTest extends TestCase
         $this->assertSame('2026-03-01T22:59:59.999999Z', $result['cutoff_utc']);
         $this->assertSame('historical', $result['mode']);
         $this->assertTrue($result['read_only']);
+    }
+
+    public function test_operational_retention_and_physical_pruning_preserve_annual_history_snapshots(): void
+    {
+        [$actor, $context, $year, $expense] = $this->fixture();
+        $this->travelTo(CarbonImmutable::parse('2026-03-01 10:00:00', 'UTC'));
+        app(ActivateAnnualHistory::class)->execute($actor, $context, $year, (string) str()->uuid());
+        $expected = app(HistoricalAnnualBudgetQuery::class)->execute(
+            $actor,
+            $context,
+            (int) $year->getKey(),
+            '2026-03-01T10:30:00Z',
+        );
+
+        foreach (range(1, 10) as $position) {
+            $this->travelTo(CarbonImmutable::parse('2026-03-01 11:00:00', 'UTC')->addMinutes($position));
+            $current = $expense->fresh();
+            $row = $current->rows()->firstOrFail();
+            $amount = number_format(100 + $position, 2, '.', '');
+            app(UpdateExpense::class)->execute(
+                $actor,
+                $context,
+                $current,
+                new SaveExpenseData(
+                    (int) $year->getKey(),
+                    (int) $current->cost_center_id,
+                    ExpenseKind::Ordinary,
+                    (string) $current->title,
+                    $current->notes,
+                    $current->project_id,
+                    $current->contract_id,
+                    (int) $current->lock_version,
+                ),
+                [new SaveExpenseRowData(
+                    (int) $row->getKey(),
+                    (int) $row->position,
+                    $row->vendor_id,
+                    $row->type,
+                    (string) $row->description,
+                    $row->quantity,
+                    $amount,
+                    $amount,
+                    (bool) $row->amount_includes_vat,
+                    (string) $row->vat_rate,
+                    (bool) $row->is_extra,
+                    $row->funded_plafond_expense_id,
+                    $row->spend_date?->format('Y-m-d'),
+                    $row->period_start?->format('Y-m-d'),
+                    $row->period_end?->format('Y-m-d'),
+                    $row->distribution,
+                    $row->external_reference,
+                    (int) $row->lock_version,
+                    true,
+                )],
+                (string) str()->uuid(),
+            );
+        }
+
+        $versionsBeforePrune = Version::query()->count();
+        $this->assertCount(10, app(OperationalRevisionQuery::class)->visibleForRoot($context, $expense));
+        $this->assertGreaterThan(0, app(ApplyOperationalRevisionRetention::class)->execute());
+        (new Version)->pruneAll();
+
+        $actual = app(HistoricalAnnualBudgetQuery::class)->execute(
+            $actor,
+            $context,
+            (int) $year->getKey(),
+            '2026-03-01T10:30:00Z',
+        );
+        $this->assertLessThan($versionsBeforePrune, Version::query()->count());
+        $this->assertSame($expected['expenses'], $actual['expenses']);
+        $this->assertSame($expected['summary'], $actual['summary']);
     }
 
     public function test_historical_summary_reconciles_plafond_exactly_like_the_current_budget(): void

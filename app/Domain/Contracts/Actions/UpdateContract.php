@@ -25,8 +25,10 @@ final class UpdateContract
             if (! $contract instanceof Contract || $data->expectedLockVersion === null || $contract->lock_version !== $data->expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');
             }
-            $contract->lock_version++;
             $changed = $this->saveContract($contract, $tenant, $data);
+            if ($changed === []) {
+                return $contract->fresh(['terms']);
+            }
             $this->contractRevisions($actor, $context, RevisionOperation::Update, $correlationId, $contract, $changed);
             $this->contractAudit('contract.updated', $correlationId, $actor, $tenant, $contract, ['terms' => count($data->terms)]);
 

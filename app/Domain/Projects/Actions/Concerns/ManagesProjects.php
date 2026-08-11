@@ -8,6 +8,7 @@ use App\Domain\Projects\Data\SaveProjectData;
 use App\Domain\Projects\Enums\ProjectStage;
 use App\Domain\Revisions\Actions\BeginRevisionBatch;
 use App\Domain\Revisions\Actions\LinkVersionToRevisionBatch;
+use App\Domain\Revisions\Data\RevisionActorKind;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\TenantState;
@@ -104,9 +105,12 @@ trait ManagesProjects
         Project $project,
         ?string $reason = null,
         ?int $restoredFromVersionId = null,
+        ?int $restoredFromBatchId = null,
+        RevisionActorKind $actorKind = RevisionActorKind::Human,
     ): void {
         $batch = app(BeginRevisionBatch::class)->execute(
-            $actor, $context, $operation, $reason, $correlationId, $project, $restoredFromVersionId,
+            $actor, $context, $operation, $reason, $correlationId, $project,
+            $restoredFromVersionId, $restoredFromBatchId, $actorKind,
         );
         $version = $project->versions()->orderByDesc('id')->first();
         if ($version instanceof Version) {

@@ -85,14 +85,18 @@ trait ManagesContracts
             $this->contractFail('terms', 'At least one term is required.');
         }
 
+        $wasExisting = $contract->exists;
         $contract->fill(['vendor_id' => $data->vendorId, 'cost_center_id' => $data->costCenterId, 'project_id' => $data->projectId, 'title' => trim($data->title), 'description' => $data->description, 'active' => $data->active, 'renewal_date' => $data->renewalDate, 'renewal_notice_days' => $data->renewalNoticeDays, 'renewal_notes' => $data->renewalNotes]);
         $contract->tenant_id = $tenant->getKey();
-        $contract->save();
+        $contractBusinessChanged = $contract->isDirty();
+        if (! $wasExisting) {
+            $contract->save();
+        }
         $existing = $contract->terms()->lockForUpdate()->get();
         $existing = $existing->keyBy('id');
         $periods = [];
         $kept = [];
-        $changed = [$contract];
+        $changed = $wasExisting ? [] : [$contract];
         foreach ($data->terms as $index => $termData) {
             if (! $termData instanceof SaveContractTermData) {
                 $this->contractFail("terms.{$index}", 'The term is invalid.');
@@ -136,16 +140,24 @@ trait ManagesContracts
                 $term->tenant_id = $tenant->getKey();
                 $term->contract_id = $contract->getKey();
                 $term->source_rule_key = (string) Str::uuid();
-            } else {
-                $term->lock_version++;
+                $term->save();
+                $changed[] = $term;
+            } elseif ($term->isDirty()) {
+                $term->forceFill(['lock_version' => $term->lock_version + 1])->save();
+                $changed[] = $term;
             }
-            $term->save();
             $kept[(int) $term->getKey()] = true;
-            $changed[] = $term;
         }
         foreach ($existing as $term) {
             if (! isset($kept[(int) $term->getKey()])) {
                 throw new DomainException('STALE_VERSION');
+            }
+        }
+
+        if ($wasExisting && ($contractBusinessChanged || $changed !== [])) {
+            $contract->forceFill(['lock_version' => $contract->lock_version + 1])->save();
+            if ($contractBusinessChanged) {
+                array_unshift($changed, $contract);
             }
         }
 
@@ -252,9 +264,38 @@ trait ManagesContracts
     }
 
     /** @param list<Contract|ContractTerm|ExpenseRow> $models */
-    private function contractRevisions(User $actor, TenantContext $context, RevisionOperation $operation, string $correlationId, Contract $contract, array $models, ?string $reason = null): void
-    {
-        $batch = app(BeginRevisionBatch::class)->execute($actor, $context, $operation, $reason, $correlationId, $contract, null);
+    private function contractRevisions(
+        User $actor,
+        TenantContext $context,
+        RevisionOperation $operation,
+        string $correlationId,
+        Contract $contract,
+        array $models,
+        ?string $reason = null,
+        ?int $restoredFromBatchId = null,
+    ): void {
+        if ($models === []) {
+            return;
+        }
+        $changed = [];
+        foreach ($models as $model) {
+            $changed[$model->getMorphClass().'#'.$model->getKey()] = true;
+        }
+        if ($operation !== RevisionOperation::Delete) {
+            $models = [
+                $contract,
+                ...$contract->terms()->orderBy('effective_start')->orderBy('id')->get()->all(),
+            ];
+        }
+        $batch = app(BeginRevisionBatch::class)->execute(
+            $actor,
+            $context,
+            $operation,
+            $reason,
+            $correlationId,
+            $contract,
+            restoredFromBatchId: $restoredFromBatchId,
+        );
         $sequence = 1;
         $seen = [];
         foreach ($models as $model) {
@@ -265,7 +306,12 @@ trait ManagesContracts
             $seen[$identity] = true;
             $version = $model->versions()->orderByDesc('id')->first();
             if ($version instanceof Version) {
-                app(LinkVersionToRevisionBatch::class)->execute($batch, $version, $sequence++);
+                app(LinkVersionToRevisionBatch::class)->execute(
+                    $batch,
+                    $version,
+                    $sequence++,
+                    changed: isset($changed[$identity]),
+                );
             }
         }
     }

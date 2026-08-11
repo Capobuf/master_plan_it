@@ -260,7 +260,7 @@ trait ManagesCostCenterMutation
         RevisionOperation $operation,
         string $correlationId,
         CostCenter $costCenter,
-        ?int $restoredFromVersionId = null,
+        ?int $restoredFromBatchId = null,
     ): void {
         $batch = $this->beginRevisionBatch(
             $actor,
@@ -268,7 +268,7 @@ trait ManagesCostCenterMutation
             $operation,
             $correlationId,
             $costCenter,
-            $restoredFromVersionId,
+            $restoredFromBatchId,
         );
         $version = $costCenter->versions()->orderByDesc('id')->firstOrFail();
 
@@ -285,7 +285,7 @@ trait ManagesCostCenterMutation
         RevisionOperation $operation,
         string $correlationId,
         CostCenter $costCenter,
-        ?int $restoredFromVersionId = null,
+        ?int $restoredFromBatchId = null,
     ): RevisionBatch {
         return app(BeginRevisionBatch::class)->execute(
             $actor,
@@ -294,7 +294,7 @@ trait ManagesCostCenterMutation
             null,
             $correlationId,
             $costCenter,
-            $restoredFromVersionId,
+            restoredFromBatchId: $restoredFromBatchId,
         );
     }
 

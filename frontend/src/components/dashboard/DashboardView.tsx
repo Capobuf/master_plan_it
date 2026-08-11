@@ -43,74 +43,86 @@ export default function DashboardView({ dataset }: { dataset: ReportingDataset }
 
   return (
     <div className="space-y-3 overflow-x-clip sm:space-y-4 xl:space-y-6">
+      {isPositiveDecimal(amounts.plafond_overrun) ? <Alert variant="warning" title="Superamento Plafond" message={`Il Plafond risulta superato di ${formatMoney(amounts.plafond_overrun, currency)}.`} /> : null}
       {!dataset.has_economic_data ? <Alert variant="info" title="Nessun dato economico" message="Non sono ancora disponibili dati per l'anno di pianificazione selezionato." /> : null}
       <EcommerceMetrics metrics={metrics} />
-      {isPositiveDecimal(amounts.plafond_overrun) ? <Alert variant="warning" title="Superamento Plafond" message={`Il Plafond risulta superato di ${formatMoney(amounts.plafond_overrun, currency)}.`} /> : null}
-
-      <div className="grid grid-cols-1 items-start gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-12 xl:gap-6">
-        <div className="xl:col-span-3">
-          <BreakdownDonutChart
-            title="Spese per Centro di Costo"
-            entries={costCenters.map(([label, value]) => ({ label, value: toChartNumber(value), displayValue: formatMoney(value, currency) }))}
-            emptyMessage="Nessun centro di costo valorizzato."
-            chartClassName="h-[165px]"
-            totalLabel="Totale"
-            totalValue={formatMoney(amount(dataset, "official_current_position"), currency)}
-          />
-        </div>
-        <div className="md:col-span-2 xl:col-span-6">
-          {monthly.length > 0 ? (
-            <StatisticsChart
-              title="Andamento Mensile"
-              categories={monthly.map(([key]) => monthLabels[key.slice(-2)] ?? key)}
-              values={monthly.map(([, value]) => toChartNumber(value))}
-              currency={currency}
-              seriesName="Posizione mensile"
-              height={340}
-              mobileHeight={230}
-            />
-          ) : (
-            <ComponentCard title="Andamento Mensile" compact><EmptyState message="Nessun andamento mensile disponibile." /></ComponentCard>
-          )}
-        </div>
-        <div className="grid gap-3 sm:gap-4 md:col-span-2 md:grid-cols-2 xl:col-span-3 xl:grid-cols-1">
-          {projects.length > 0 ? (
-            <StatisticsChart
-              title="Spese per Progetto"
-              categories={projects.map(([label]) => label)}
-              values={projects.map(([, value]) => toChartNumber(value))}
-              currency={currency}
-              type="bar"
-              horizontal
-              seriesName="Importo"
-              height={projectChartHeight}
-              mobileHeight={projectMobileHeight}
-            />
-          ) : (
-            <ComponentCard title="Spese per Progetto" compact><EmptyState message="Nessun progetto valorizzato." /></ComponentCard>
-          )}
-          <BreakdownDonutChart
-            title="Stato Spese"
-            entries={[
-              { label: "Aperte", value: expenseCounts.open, displayValue: String(expenseCounts.open), color: "#0BA5EC" },
-              { label: "Chiuse", value: expenseCounts.closed, displayValue: String(expenseCounts.closed), color: "#12B76A" },
-            ]}
-            emptyMessage="Nessuna Spesa presente nell'anno selezionato."
-            centerLabel="Totale"
-            centerValue={String(expenseCounts.total)}
-            chartClassName="h-[150px] sm:h-[120px]"
-          />
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 items-start gap-3 sm:gap-4 xl:grid-cols-12 xl:gap-6">
-        <div className="xl:col-span-9">
-          {(ancillary.recentExpenses ?? []).length > 0
-            ? <RecentOrders items={ancillary.recentExpenses ?? []} currency={currency} />
-            : <ComponentCard title="Ultime Spese" compact><EmptyState message="Nessuna spesa recente." /></ComponentCard>}
+        <div
+          data-dashboard-flow="primary"
+          className="contents xl:col-span-9 xl:block xl:min-w-0 xl:space-y-6"
+        >
+          <div className="order-1 grid min-w-0 grid-cols-1 items-start gap-3 sm:gap-4 md:grid-cols-3 xl:gap-6">
+            <div className="min-w-0 md:col-span-1">
+              <BreakdownDonutChart
+                title="Spese per Centro di Costo"
+                entries={costCenters.map(([label, value]) => ({ label, value: toChartNumber(value), displayValue: formatMoney(value, currency) }))}
+                emptyMessage="Nessun centro di costo valorizzato."
+                chartClassName="h-[165px]"
+                totalLabel="Totale"
+                totalValue={formatMoney(amount(dataset, "official_current_position"), currency)}
+              />
+            </div>
+            <div className="min-w-0 md:col-span-2">
+              {monthly.length > 0 ? (
+                <StatisticsChart
+                  title="Andamento Mensile"
+                  categories={monthly.map(([key]) => monthLabels[key.slice(-2)] ?? key)}
+                  values={monthly.map(([, value]) => toChartNumber(value))}
+                  currency={currency}
+                  seriesName="Posizione mensile"
+                  height={340}
+                  mobileHeight={230}
+                />
+              ) : (
+                <ComponentCard title="Andamento Mensile" compact><EmptyState message="Nessun andamento mensile disponibile." /></ComponentCard>
+              )}
+            </div>
+          </div>
+
+          <div className="order-3 min-w-0">
+            {(ancillary.recentExpenses ?? []).length > 0
+              ? <RecentOrders items={ancillary.recentExpenses ?? []} currency={currency} />
+              : <ComponentCard title="Ultime Spese" compact><EmptyState message="Nessuna spesa recente." /></ComponentCard>}
+          </div>
         </div>
-        <div className="xl:col-span-3">
-          <RenewalTimeline items={ancillary.upcomingContractEvents ?? []} />
+
+        <div
+          data-dashboard-flow="secondary"
+          className="contents xl:col-span-3 xl:block xl:min-w-0 xl:space-y-6"
+        >
+          <div className="order-2 grid min-w-0 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-1 xl:gap-6">
+            {projects.length > 0 ? (
+              <StatisticsChart
+                title="Spese per Progetto"
+                categories={projects.map(([label]) => label)}
+                values={projects.map(([, value]) => toChartNumber(value))}
+                currency={currency}
+                type="bar"
+                horizontal
+                seriesName="Importo"
+                height={projectChartHeight}
+                mobileHeight={projectMobileHeight}
+              />
+            ) : (
+              <ComponentCard title="Spese per Progetto" compact><EmptyState message="Nessun progetto valorizzato." /></ComponentCard>
+            )}
+            <BreakdownDonutChart
+              title="Stato Spese"
+              entries={[
+                { label: "Aperte", value: expenseCounts.open, displayValue: String(expenseCounts.open), color: "#0BA5EC" },
+                { label: "Chiuse", value: expenseCounts.closed, displayValue: String(expenseCounts.closed), color: "#12B76A" },
+              ]}
+              emptyMessage="Nessuna Spesa presente nell'anno selezionato."
+              centerLabel="Totale"
+              centerValue={String(expenseCounts.total)}
+              chartClassName="h-[150px] sm:h-[120px]"
+            />
+          </div>
+
+          <div className="order-4 min-w-0">
+            <RenewalTimeline items={ancillary.upcomingContractEvents ?? []} />
+          </div>
         </div>
       </div>
     </div>

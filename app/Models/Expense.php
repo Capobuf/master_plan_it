@@ -14,6 +14,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Overtrue\LaravelVersionable\Versionable;
 use Overtrue\LaravelVersionable\VersionStrategy;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 #[Fillable([
     'planning_year_id',
@@ -30,10 +32,12 @@ use Overtrue\LaravelVersionable\VersionStrategy;
     'credit_for_expense_id',
     'lock_version',
 ])]
-class Expense extends Model
+class Expense extends Model implements HasMedia
 {
     /** @use HasFactory<ExpenseFactory> */
-    use HasFactory, SoftDeletes, Versionable;
+    use HasFactory, InteractsWithMedia, SoftDeletes, Versionable;
+
+    public const ATTACHMENT_COLLECTION = 'attachments';
 
     /** @var list<string> */
     protected array $versionable = [
@@ -54,7 +58,6 @@ class Expense extends Model
         'current_planning_row_id',
         'moved_from_expense_id',
         'credit_for_expense_id',
-        'lock_version',
     ];
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
@@ -142,5 +145,10 @@ class Expense extends Model
     public function approvalItems(): HasMany
     {
         return $this->hasMany(ApprovalItem::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection(self::ATTACHMENT_COLLECTION)->useDisk('attachments');
     }
 }

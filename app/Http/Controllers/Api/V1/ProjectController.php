@@ -90,7 +90,7 @@ final class ProjectController extends Controller
         $context = $this->tenantContext($request);
         $subject = $this->project($context, $project);
         $rows = $query->history($this->actor($request), $context, $subject);
-        $perPage = min(max($request->integer('per_page', 15), 1), 100);
+        $perPage = min(max($request->integer('per_page', 10), 1), 10);
         $page = max($request->integer('page', 1), 1);
         $paginator = new LengthAwarePaginator($rows->forPage($page, $perPage)->values(), $rows->count(), $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
 
@@ -112,7 +112,7 @@ final class ProjectController extends Controller
         $input = $request->validate(['lock_version' => ['required', 'integer', 'min:1']]);
         $context = $this->tenantContext($request);
         $subject = $this->project($context, $project);
-        $source = $revisionQuery->sourceVersionForRestore($this->actor($request), $context, $subject, $revision);
+        $source = $revisionQuery->sourceBatchForRestore($this->actor($request), $context, $subject, $revision);
         $restored = $action->execute($this->actor($request), $context, $subject, $source, (int) $input['lock_version'], $this->correlationId($request));
 
         return ProjectResource::make($restored);

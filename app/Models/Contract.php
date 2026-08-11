@@ -10,6 +10,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Overtrue\LaravelVersionable\Versionable;
 use Overtrue\LaravelVersionable\VersionStrategy;
+use Spatie\MediaLibrary\HasMedia;
+use Spatie\MediaLibrary\InteractsWithMedia;
 
 /**
  * @property int $id
@@ -25,12 +27,14 @@ use Overtrue\LaravelVersionable\VersionStrategy;
  * @property int $lock_version
  */
 #[Fillable(['tenant_id', 'vendor_id', 'cost_center_id', 'project_id', 'title', 'description', 'active', 'renewal_date', 'renewal_notice_days', 'renewal_notes', 'lock_version', 'deleted_by_user_id', 'deleted_by_at', 'deletion_reason'])]
-class Contract extends Model
+class Contract extends Model implements HasMedia
 {
-    use SoftDeletes, Versionable;
+    use InteractsWithMedia, SoftDeletes, Versionable;
+
+    public const ATTACHMENT_COLLECTION = 'attachments';
 
     /** @var list<string> */
-    protected array $versionable = ['vendor_id', 'cost_center_id', 'project_id', 'title', 'description', 'active', 'renewal_date', 'renewal_notice_days', 'renewal_notes', 'deleted_by_user_id', 'deleted_by_at', 'deletion_reason', 'lock_version'];
+    protected array $versionable = ['vendor_id', 'cost_center_id', 'project_id', 'title', 'description', 'active', 'renewal_date', 'renewal_notice_days', 'renewal_notes', 'deleted_by_user_id', 'deleted_by_at', 'deletion_reason'];
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
 
@@ -79,5 +83,10 @@ class Contract extends Model
     public function generationExceptions(): HasMany
     {
         return $this->hasMany(ContractGenerationException::class);
+    }
+
+    public function registerMediaCollections(): void
+    {
+        $this->addMediaCollection(self::ATTACHMENT_COLLECTION)->useDisk('attachments');
     }
 }

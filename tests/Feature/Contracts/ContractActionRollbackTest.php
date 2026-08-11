@@ -7,6 +7,7 @@ use App\Domain\Contracts\Actions\DeleteContract;
 use App\Domain\Contracts\Actions\DeleteContractTerm;
 use App\Domain\Contracts\Actions\DeleteGeneratedExpense;
 use App\Domain\Contracts\Actions\GenerateContractOccurrenceForYear;
+use App\Domain\Contracts\Actions\RestoreContractRevision;
 use App\Domain\Contracts\Actions\ResumeAndGenerateOccurrence;
 use App\Domain\Contracts\Actions\ResumeContractOccurrence;
 use App\Domain\Contracts\Actions\SuppressContractOccurrence;
@@ -23,6 +24,7 @@ use App\Models\ContractGenerationException;
 use App\Models\ContractTerm;
 use App\Models\CostCenter;
 use App\Models\PlanningYear;
+use App\Models\RevisionBatch;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
@@ -107,6 +109,34 @@ final class ContractActionRollbackTest extends TestCase
         } finally {
             $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
             $this->assertDatabaseHas('contracts', ['id' => $contract->getKey(), 'active' => 1, 'deleted_at' => null]);
+            $this->assertDatabaseCount('audit_events', $auditCount);
+        }
+    }
+
+    public function test_restore_contract_revision_audit_failure_rolls_back_contract_and_terms(): void
+    {
+        [$actor, $context] = $this->administratorContext();
+        $vendor = Vendor::factory()->for($context->tenant)->create();
+        $center = CostCenter::factory()->for($context->tenant)->create();
+        $contract = app(CreateContract::class)->execute($actor, $context, $this->contractData($vendor, $center, 'Restore source'), 'restore-contract-source');
+        $source = RevisionBatch::query()->where('correlation_id', 'restore-contract-source')->firstOrFail();
+        $term = $contract->terms()->firstOrFail();
+        $current = app(UpdateContract::class)->execute($actor, $context, $contract, $this->contractData($vendor, $center, 'Restore current', $term, 1), 'restore-contract-current');
+        $correlationId = (string) str()->uuid();
+        $batchCount = RevisionBatch::query()->count();
+        $auditCount = AuditEvent::query()->count();
+        [$dispatcher, $eventName, $listeners] = $this->auditCreatingListeners($correlationId, static fn (): never => throw new RuntimeException('forced restore audit failure'));
+
+        try {
+            $this->expectException(RuntimeException::class);
+            self::assertTrue(class_exists(RestoreContractRevision::class));
+            $action = app(RestoreContractRevision::class);
+            $action->execute($actor, $context, $current, $source, 2, $correlationId);
+        } finally {
+            $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
+            $this->assertDatabaseHas('contracts', ['id' => $contract->getKey(), 'title' => 'Restore current', 'lock_version' => 2]);
+            $this->assertDatabaseHas('contract_terms', ['id' => $term->getKey(), 'deleted_at' => null]);
+            $this->assertDatabaseCount('revision_batches', $batchCount);
             $this->assertDatabaseCount('audit_events', $auditCount);
         }
     }

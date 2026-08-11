@@ -8,7 +8,6 @@ use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Models\RevisionBatch;
 use App\Models\RevisionBatchItem;
 use App\Models\Tenant;
-use App\Models\Version as ApplicationVersion;
 use DomainException;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
@@ -55,16 +54,19 @@ final class RevisionHistoryQuery
             ->orderBy('sequence')
             ->orderBy('id')
             ->get()
-            ->map(fn (RevisionBatchItem $item): RevisionHistoryRow => new RevisionHistoryRow(
-                tenantId: (int) $persistedBatch->tenant_id,
-                sequence: (int) $item->sequence,
-                versionId: (int) $item->version_id,
-                versionableType: (string) $item->versionable_type,
-                versionableId: (int) $item->versionable_id,
-                contents: $item->version instanceof ApplicationVersion
-                    ? (array) $item->version->contents
-                    : [],
-            ));
+            ->map(function (RevisionBatchItem $item) use ($persistedBatch): RevisionHistoryRow {
+                /** @var array<string, mixed> $contents */
+                $contents = (array) $item->snapshot_contents;
+
+                return new RevisionHistoryRow(
+                    tenantId: (int) $persistedBatch->tenant_id,
+                    sequence: (int) $item->sequence,
+                    versionId: (int) ($item->version_id ?? 0),
+                    versionableType: (string) $item->versionable_type,
+                    versionableId: (int) $item->versionable_id,
+                    contents: $contents,
+                );
+            });
     }
 
     private function persistedSameTenantBatch(RevisionBatch $batch, TenantContext $context): RevisionBatch

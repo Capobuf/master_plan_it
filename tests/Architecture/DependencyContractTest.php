@@ -24,6 +24,7 @@ class DependencyContractTest extends TestCase
             'laravel/tinker' => '3.0.2',
             'openspout/openspout' => '4.32.0',
             'overtrue/laravel-versionable' => '6.0.0',
+            'spatie/laravel-medialibrary' => '11.23.3',
             'spatie/laravel-permission' => '8.3.0',
         ];
 

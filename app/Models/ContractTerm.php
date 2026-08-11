@@ -36,7 +36,7 @@ class ContractTerm extends Model
     use SoftDeletes, Versionable;
 
     /** @var list<string> */
-    protected array $versionable = ['effective_start', 'effective_end', 'billing_cycle', 'quantity', 'unit_price', 'entered_amount', 'amount_includes_vat', 'vat_rate', 'net_amount', 'vat_amount', 'gross_amount', 'auto_renew', 'deleted_by_user_id', 'deleted_by_at', 'deletion_reason', 'lock_version'];
+    protected array $versionable = ['effective_start', 'effective_end', 'billing_cycle', 'quantity', 'unit_price', 'entered_amount', 'amount_includes_vat', 'vat_rate', 'net_amount', 'vat_amount', 'gross_amount', 'auto_renew', 'deleted_by_user_id', 'deleted_by_at', 'deletion_reason'];
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
 

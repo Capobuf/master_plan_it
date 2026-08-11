@@ -60,7 +60,7 @@ final class ActivateAnnualHistory
             $sequence = 1;
             foreach ($models->unique(fn (Model $model): string => $model->getMorphClass().'#'.$model->getKey()) as $model) {
                 /** @var PlanningYear|Expense|ExpenseRow|CostCenter|Project|Contract|ContractTerm|Vendor $model */
-                $version = $model->createVersion($model->getAttributes(), $activatedAt);
+                $version = Version::createForModel($model, [], $activatedAt);
                 if ($version instanceof Version) {
                     app(LinkVersionToRevisionBatch::class)->execute($batch, $version, $sequence++);
                 }

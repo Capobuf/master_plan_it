@@ -100,4 +100,12 @@ class Tenant extends Model
     {
         return $this->hasMany(AuditEvent::class);
     }
+
+    /**
+     * @return HasMany<Media, $this>
+     */
+    public function media(): HasMany
+    {
+        return $this->hasMany(Media::class);
+    }
 }

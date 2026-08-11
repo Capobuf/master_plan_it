@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Domain\Revisions\Data\RevisionActorKind;
 use App\Domain\Revisions\Data\RevisionOperation;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
@@ -21,6 +22,7 @@ class RevisionBatch extends Model
     protected $fillable = [
         'tenant_id',
         'actor_user_id',
+        'actor_kind',
         'root_subject_type',
         'root_subject_id',
         'operation',
@@ -37,6 +39,7 @@ class RevisionBatch extends Model
     protected function casts(): array
     {
         return [
+            'actor_kind' => RevisionActorKind::class,
             'operation' => RevisionOperation::class,
             'occurred_at' => 'datetime',
         ];
@@ -88,5 +91,22 @@ class RevisionBatch extends Model
     public function items(): HasMany
     {
         return $this->hasMany(RevisionBatchItem::class, 'revision_batch_id');
+    }
+
+    public function visualActorKind(): RevisionActorKind
+    {
+        $kind = $this->getAttribute('actor_kind');
+
+        return $kind instanceof RevisionActorKind ? $kind : RevisionActorKind::Human;
+    }
+
+    public function visualActorLabel(): string
+    {
+        if ($this->visualActorKind() === RevisionActorKind::System) {
+            return 'Sistema';
+        }
+        $actor = $this->getRelationValue('actor');
+
+        return $actor instanceof User ? (string) $actor->name : 'Utente non disponibile';
     }
 }

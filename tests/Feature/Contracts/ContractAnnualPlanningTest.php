@@ -6,11 +6,17 @@ use App\Domain\Contracts\Actions\GenerateContractOccurrenceForYear;
 use App\Domain\Contracts\Actions\SynchronizeContractOccurrences;
 use App\Domain\Contracts\Enums\BillingCycle;
 use App\Domain\Contracts\Queries\ExpectedContractOccurrenceQuery;
+use App\Domain\Expenses\Actions\UpdateExpense;
+use App\Domain\Expenses\Data\SaveExpenseData;
+use App\Domain\Expenses\Data\SaveExpenseRowData;
+use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Contract;
 use App\Models\ContractTerm;
 use App\Models\CostCenter;
 use App\Models\PlanningYear;
+use App\Models\Project;
+use App\Models\RevisionBatch;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
@@ -34,10 +40,12 @@ final class ContractAnnualPlanningTest extends TestCase
         $context = new TenantContext($tenant, $actor);
         $vendor = Vendor::factory()->for($tenant)->create();
         $center = CostCenter::factory()->for($tenant)->create();
+        $project = Project::factory()->for($tenant)->for($center)->create();
         $contract = Contract::query()->create([
             'tenant_id' => $tenant->getKey(),
             'vendor_id' => $vendor->getKey(),
             'cost_center_id' => $center->getKey(),
+            'project_id' => $project->getKey(),
             'title' => 'Annual planning',
             'active' => true,
             'lock_version' => 1,
@@ -65,7 +73,47 @@ final class ContractAnnualPlanningTest extends TestCase
         $this->assertSame('quote', $row->type->value);
         $this->assertSame('1200.00', $row->net_amount);
         $this->assertNull($expense->current_planning_row_id);
+        $this->assertSame($project->getKey(), $expense->project_id);
         $this->assertDatabaseMissing('expense_rows', ['expense_id' => $expense->getKey(), 'type' => 'actual']);
+
+        $expense = app(UpdateExpense::class)->execute(
+            $actor,
+            $context,
+            $expense,
+            new SaveExpenseData(
+                (int) $expense->planning_year_id,
+                (int) $expense->cost_center_id,
+                ExpenseKind::Ordinary,
+                $expense->title,
+                'Nota aggiornata sulla Spesa generata.',
+                (int) $project->getKey(),
+                (int) $contract->getKey(),
+                (int) $expense->lock_version,
+            ),
+            [new SaveExpenseRowData(
+                (int) $row->getKey(),
+                (int) $row->position,
+                (int) $row->vendor_id,
+                $row->type,
+                $row->description,
+                $row->quantity,
+                $row->unit_price,
+                $row->entered_amount,
+                (bool) $row->amount_includes_vat,
+                $row->vat_rate,
+                (bool) $row->is_extra,
+                $row->funded_plafond_expense_id,
+                $row->spend_date?->toDateString(),
+                $row->period_start?->toDateString(),
+                $row->period_end?->toDateString(),
+                $row->distribution,
+                $row->external_reference,
+                (int) $row->lock_version,
+            )],
+            (string) str()->uuid(),
+        );
+        $this->assertSame('Nota aggiornata sulla Spesa generata.', $expense->notes);
+        $this->assertSame($project->getKey(), $expense->project_id);
 
         $term->forceFill([
             'entered_amount' => '110.00',
@@ -93,5 +141,13 @@ final class ContractAnnualPlanningTest extends TestCase
             'vat' => '26.40',
             'gross' => '146.40',
         ], $occurrence->expectedDifference);
+
+        $batchCount = RevisionBatch::query()->count();
+        $versionCount = app('db')->table('versions')->count();
+        $result = app(SynchronizeContractOccurrences::class)->execute($actor, $context, $contract, (string) str()->uuid());
+        $this->assertSame(0, $result['created']);
+        $this->assertSame(0, $result['updated']);
+        $this->assertSame($batchCount, RevisionBatch::query()->count());
+        $this->assertSame($versionCount, app('db')->table('versions')->count());
     }
 }

@@ -4,9 +4,11 @@ namespace Tests\Feature\Projects;
 
 use App\Domain\Projects\Actions\PromoteDeferredProjects;
 use App\Domain\Projects\Enums\ProjectStage;
+use App\Domain\Projects\Queries\ProjectRevisionQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\PlanningYear;
 use App\Models\Project;
+use App\Models\RevisionBatch;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
@@ -52,7 +54,13 @@ final class DeferredProjectTest extends TestCase
         $this->assertSame(2, $due->lock_version);
         $this->assertSame(ProjectStage::Deferred, $notDue->refresh()->stage);
         $this->assertSame(ProjectStage::Deferred, $foreign->refresh()->stage);
-        $this->assertSame(0, $action->execute($actor, new TenantContext($tenant, $actor)));
+        $context = new TenantContext($tenant, $actor);
+        $batchCount = RevisionBatch::query()->count();
+        $history = app(ProjectRevisionQuery::class)->history($actor, $context, $due->fresh());
+        $this->assertSame('system', $history->first()['actor']['kind']);
+        $this->assertSame('Sistema', $history->first()['actor']['label']);
+        $this->assertSame(0, $action->execute($actor, $context));
+        $this->assertDatabaseCount('revision_batches', $batchCount);
         $this->assertSame(1, $due->versions()->where('contents->stage', ProjectStage::Proposed->value)->count());
     }
 }

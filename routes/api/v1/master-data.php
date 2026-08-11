@@ -25,9 +25,9 @@ Route::middleware(RejectBearerTokens::class)
                 ->middleware('application-ability:vendor.delete')->whereNumber('vendor')->name('destroy');
             Route::get('/{vendor}/history', [VendorController::class, 'history'])
                 ->middleware('application-ability:vendor.view-revisions')->whereNumber('vendor')->name('history');
-            Route::post('/{vendor}/history/{version}/restore', [VendorController::class, 'restore'])
+            Route::post('/{vendor}/history/{revision}/restore', [VendorController::class, 'restore'])
                 ->middleware('application-ability:vendor.restore-revision')
-                ->whereNumber(['vendor', 'version'])->name('restore');
+                ->whereNumber(['vendor', 'revision'])->name('restore');
         });
 
         Route::prefix('cost-centers')->name('api.v1.cost-centers.')->group(function (): void {
@@ -49,8 +49,8 @@ Route::middleware(RejectBearerTokens::class)
                 ->middleware('application-ability:cost-center.delete')->whereNumber('costCenter')->name('destroy');
             Route::get('/{costCenter}/history', [CostCenterController::class, 'history'])
                 ->middleware('application-ability:cost-center.view-revisions')->whereNumber('costCenter')->name('history');
-            Route::post('/{costCenter}/history/{version}/restore', [CostCenterController::class, 'restore'])
+            Route::post('/{costCenter}/history/{revision}/restore', [CostCenterController::class, 'restore'])
                 ->middleware('application-ability:cost-center.restore-revision')
-                ->whereNumber(['costCenter', 'version'])->name('restore');
+                ->whereNumber(['costCenter', 'revision'])->name('restore');
         });
     });

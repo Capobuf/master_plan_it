@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Link } from "react-router";
 
-import { ThemeToggleButton } from "../components/common/ThemeToggleButton";
 import PlanningYearDropdown from "../components/header/PlanningYearDropdown";
 import TenantDropdown from "../components/header/TenantDropdown";
 import UserDropdown from "../components/header/UserDropdown";
@@ -64,10 +63,7 @@ const AppHeader: React.FC = () => {
             <TenantDropdown />
             <PlanningYearDropdown />
           </div>
-          <div className="lg:order-1">
-            <ThemeToggleButton />
-          </div>
-          <div className="justify-self-end lg:order-3">
+          <div className="col-span-2 justify-self-end lg:order-3 lg:col-span-1">
             <UserDropdown />
           </div>
         </div>

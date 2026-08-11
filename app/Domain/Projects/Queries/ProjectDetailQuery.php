@@ -2,7 +2,6 @@
 
 namespace App\Domain\Projects\Queries;
 
-use App\Domain\Revisions\Queries\RevisionHistoryQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Models\Project;
@@ -50,7 +49,7 @@ final class ProjectDetailQuery
             'project' => $project,
             'expenses' => $expenses,
             'revision_activity' => $policy->viewRevisions($actor, $project)->allowed()
-                ? app(RevisionHistoryQuery::class)->forSubject($context, $project)->take(10)
+                ? app(ProjectRevisionQuery::class)->history($actor, $context, $project)
                 : collect(),
         ];
     }

@@ -63,11 +63,35 @@ final class ProjectPolicy
         return $this->record($user, 'project.restore-revision', $project);
     }
 
+    public function viewAttachment(User $user, Project $project): Response
+    {
+        return $this->recordWithParentAbility($user, 'attachment.view', 'project.view', $project);
+    }
+
+    public function uploadAttachment(User $user, Project $project): Response
+    {
+        return $this->recordWithParentAbility($user, 'attachment.upload', 'project.update', $project);
+    }
+
+    public function deleteAttachment(User $user, Project $project): Response
+    {
+        return $this->recordWithParentAbility($user, 'attachment.delete', 'project.delete', $project);
+    }
+
     private function record(User $user, string $ability, Project $project): Response
     {
         $response = $this->authorizeTenantOwnership($user, $ability, $this->context, $project, $this->registrar, $this->administrator);
 
         return $response->denied() ? $response : $this->active();
+    }
+
+    private function recordWithParentAbility(User $user, string $attachmentAbility, string $parentAbility, Project $project): Response
+    {
+        $parentResponse = $this->record($user, $parentAbility, $project);
+
+        return $parentResponse->denied()
+            ? $parentResponse
+            : $this->record($user, $attachmentAbility, $project);
     }
 
     private function collection(User $user, string $ability): Response

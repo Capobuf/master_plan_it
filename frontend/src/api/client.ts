@@ -75,7 +75,7 @@ function localizedErrorMessage(status: number | null, serverMessage: string | nu
     401: "La sessione non è autenticata.",
     403: "Non disponi dell'autorizzazione necessaria per questa operazione.",
     404: "La risorsa richiesta non è stata trovata.",
-    409: "I dati sono stati modificati da un'altra sessione. Ricarica la pagina e riprova.",
+    409: "L'operazione è in conflitto con lo stato corrente. Ricarica la pagina e riprova.",
     422: "I dati inseriti non sono validi.",
     429: "Sono state effettuate troppe richieste. Attendi e riprova.",
     500: "Si è verificato un errore del servizio applicativo.",
@@ -91,6 +91,18 @@ function localizedCodeMessage(code: string | null): string | null {
   }
   if (code === "STALE_VERSION") {
     return "I dati sono stati modificati da un'altra sessione. Ricarica la pagina e riprova.";
+  }
+  if (code === "TENANT_RELATION_MISMATCH") {
+    return "Una relazione della Spesa non è coerente con i dati correnti. Ricarica la pagina e verifica Progetto, Contratto e righe.";
+  }
+  if (code === "ATTACHMENT_QUOTA_EXCEEDED") {
+    return "La quota allegati del Tenant non consente di caricare questo file.";
+  }
+  if (code === "ATTACHMENT_FILE_MISSING") {
+    return "Il file dell'allegato non è disponibile nello storage privato.";
+  }
+  if (code === "ATTACHMENT_STORAGE_FAILURE") {
+    return "Lo storage privato degli allegati non ha completato l'operazione.";
   }
   return null;
 }

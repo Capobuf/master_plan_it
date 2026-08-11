@@ -1,6 +1,6 @@
 # Regole di dominio implementate
 
-Stato: `VERIFIED CURRENT` dopo l'implementazione della Feature 017.
+Stato: `VERIFIED CURRENT` dopo l'implementazione delle Feature 009 e 011.
 
 Questo documento descrive soltanto regole che devono restare dopo la rimozione degli Spec Kit
 storici. Le funzionalità non implementate sono descritte esclusivamente negli Spec Kit attivi.
@@ -87,6 +87,42 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 - La cancellazione è terminale, richiede assenza di Expense correnti collegate, non effettua detach
   o cascade e non può essere annullata da revision restore.
 
+## Revisioni operative
+
+- Una revisione rappresenta uno stato business realmente raggiunto. Un salvataggio invariato o una
+  modifica di solo bookkeeping non crea batch; una modifica alle Note è business e la crea.
+- Expense e tutte le ExpenseRow formano un aggregate revisionale. Contract e tutti i ContractTerm
+  ne formano un altro. La batch conserva lo stato completo dell'aggregate e marca separatamente gli
+  elementi realmente cambiati. Ogni mutazione aggregate riuscita conta una sola revisione logica.
+- Project, Vendor e Cost Center mantengono le rispettive capability usando la stessa identità
+  `RevisionBatch` e lo stesso limite operativo.
+- Lo Storico espone al massimo le dieci revisioni logiche più recenti della root. Una revisione
+  espulsa non è elencabile, confrontabile o ripristinabile neppure tramite URL diretto.
+- Compare è soltanto revisione selezionata contro stato corrente e restituisce label business. Il
+  restore è transazionale, rivalida l'aggregate, non applica il lock storico e produce una nuova
+  revisione logica.
+- Il restore Contract non riattiva term terminalmente eliminati e non modifica Expense generate,
+  source key, suppression o generation history. Il restore di una root terminalmente eliminata è
+  vietato.
+- Le mutazioni automatiche che cambiano business state sono revisionate con actor visuale
+  `Sistema`; i job idempotenti senza cambiamento non producono history.
+
+## Allegati
+
+- Soltanto Expense, ExpenseRow, Contract e Project supportano allegati; ogni allegato appartiene a
+  un solo Tenant, parent e autore di upload.
+- Sono ammessi PDF, JPEG/JPG, PNG, CSV, XLSX e DOCX non vuoti fino a 10 MiB. Estensione, MIME
+  rilevato e contenuto devono essere coerenti e il filename non può contenere segmenti pericolosi.
+- La quota del Tenant conta ogni copia fisicamente corrente per la propria dimensione; zero è un
+  limite valido e ridurre la quota sotto l'uso non elimina dati esistenti.
+- Gli allegati sono stato corrente indipendente dalle revisioni operative: upload e delete non
+  consumano revisioni e il restore di Expense, Contract o Project non modifica il set dei file.
+- Il delete di un allegato è definitivo. Il delete di una ExpenseRow ne elimina gli allegati; il
+  delete terminale di Expense, Contract o Project elimina anche tutti i relativi payload senza
+  conservarne copie per restore.
+- Lista, upload, download e delete richiedono Tenant, parent, relazione e ability correnti; nessun
+  payload compare in JSON, audit, revisioni, log applicativi o URL pubblici permanenti.
+
 ## Contratti e generazione
 
 - I Contract sono tenant-owned e non costituiscono una sorgente economica aggiuntiva.
@@ -139,6 +175,8 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 - Il cutoff è interpretato nel timezone Tenant; una data senza ora usa la fine della giornata
   locale e viene normalizzata in UTC.
 - Le mutazioni multi-record sono lette tramite revision batch completi; i delete sono tombstone.
+- Gli snapshot annuali sono persistiti negli item della batch e restano leggibili anche quando una
+  `Version` package ridondante è stata eliminata fisicamente dalla manutenzione.
 - Budget e Report storici sono tenant/year-scoped, read-only, preservano label e relazioni al
   cutoff e non costituiscono restore implicito.
 - La proiezione usa un numero costante di query rispetto al numero di Spese nel benchmark.

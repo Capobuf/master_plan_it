@@ -6,10 +6,11 @@ use App\Domain\Projects\Actions\Concerns\ManagesProjects;
 use App\Domain\Projects\Data\SaveProjectData;
 use App\Domain\Projects\Enums\ProjectStage;
 use App\Domain\Revisions\Data\RevisionOperation;
+use App\Domain\Revisions\Queries\OperationalRevisionQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Project;
+use App\Models\RevisionBatch;
 use App\Models\User;
-use App\Models\Version;
 use DomainException;
 use Illuminate\Support\Facades\DB;
 
@@ -17,7 +18,7 @@ final class RestoreProjectRevision
 {
     use ManagesProjects;
 
-    public function execute(User $actor, TenantContext $context, Project $target, Version $source, int $expectedLockVersion, string $correlationId): Project
+    public function execute(User $actor, TenantContext $context, Project $target, RevisionBatch $source, int $expectedLockVersion, string $correlationId): Project
     {
         $this->projectPolicy($context)->restoreRevision($actor, $target)->authorize();
         [$actor, $tenant] = $this->persistedProjectContext($actor, $context);
@@ -27,15 +28,13 @@ final class RestoreProjectRevision
             if (! $project instanceof Project || $project->lock_version !== $expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');
             }
-            $version = Version::query()
-                ->whereKey($source->getRawOriginal($source->getKeyName()))
-                ->where('versionable_type', $project->getMorphClass())
-                ->where('versionable_id', $project->getKey())
-                ->first();
-            if (! $version instanceof Version) {
-                throw new DomainException('TENANT_RELATION_MISMATCH');
+            $logical = app(OperationalRevisionQuery::class);
+            $batch = $logical->findVisibleBatch($context, $project, (int) $source->getKey());
+            $state = $logical->snapshot($context, $project, $batch);
+            $contents = $state[$project->getMorphClass()][(int) $project->getKey()] ?? null;
+            if (! is_array($contents)) {
+                throw new DomainException('REVISION_RESTORE_INVALID');
             }
-            $contents = $version->contents;
             $stageValue = $contents['stage'] ?? null;
             $stage = $stageValue instanceof ProjectStage ? $stageValue : ProjectStage::tryFrom((string) $stageValue);
             if ($stage === null) {
@@ -48,12 +47,20 @@ final class RestoreProjectRevision
                 isset($contents['deferred_target_planning_year_id']) ? (int) $contents['deferred_target_planning_year_id'] : null,
                 $expectedLockVersion,
             );
-            $project->fill([
-                ...$this->validatedProjectAttributes($tenant, $data),
-                'lock_version' => $project->lock_version + 1,
-            ])->save();
-            $this->projectRevision($actor, $context, RevisionOperation::Restore, $correlationId, $project, null, (int) $version->getKey());
-            $this->projectAudit('project.restored', $correlationId, $actor, $tenant, $project, ['restored_from_version_id' => (int) $version->getKey()]);
+            $project->fill($this->validatedProjectAttributes($tenant, $data));
+            if (! $project->isDirty()) {
+                throw new DomainException('REVISION_RESTORE_INVALID');
+            }
+            $project->forceFill(['lock_version' => $project->lock_version + 1])->save();
+            $this->projectRevision(
+                $actor,
+                $context,
+                RevisionOperation::Restore,
+                $correlationId,
+                $project,
+                restoredFromBatchId: (int) $batch->getKey(),
+            );
+            $this->projectAudit('project.restored', $correlationId, $actor, $tenant, $project, ['restored_from_batch_id' => (int) $batch->getKey()]);
 
             return $project->fresh(['costCenter', 'deferredTargetPlanningYear']);
         });

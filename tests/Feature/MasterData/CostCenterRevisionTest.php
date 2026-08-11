@@ -14,6 +14,7 @@ use App\Models\User;
 use App\Models\Version;
 use Database\Seeders\PermissionCatalogueSeeder;
 use DomainException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Illuminate\Support\Facades\Artisan;
@@ -43,7 +44,8 @@ class CostCenterRevisionTest extends TestCase
     {
         [$tenant, $actor, $context] = $this->context('cost-center.create', 'cost-center.update', 'cost-center.restore-revision');
         $costCenter = app(CreateCostCenter::class)->execute($actor, $context, 'Original name', null, 'create');
-        $original = $costCenter->oldestVersions()->firstOrFail();
+        $original = RevisionBatch::query()->where('correlation_id', 'create')->firstOrFail();
+        $originalVersionId = $original->items()->value('version_id');
         $updated = app(UpdateCostCenter::class)->execute($actor, $context, $costCenter, 'Corrected name', null, 1, 'update');
 
         $this->assertSame('Corrected name', $updated->name);
@@ -66,12 +68,13 @@ class CostCenterRevisionTest extends TestCase
 
         $this->assertSame('Original name', $restored->name);
         $this->assertSame(3, $restored->lock_version);
-        $this->assertGreaterThan($original->getKey(), $restored->latestVersions()->firstOrFail()->getKey());
+        $this->assertGreaterThan($originalVersionId, $restored->latestVersions()->firstOrFail()->getKey());
         $this->assertDatabaseHas('revision_batches', [
             'tenant_id' => $tenant->getKey(),
             'root_subject_id' => $costCenter->getKey(),
             'operation' => 'restore',
-            'restored_from_version_id' => $original->getKey(),
+            'restored_from_batch_id' => $original->getKey(),
+            'restored_from_version_id' => null,
             'correlation_id' => 'restore',
         ]);
         $this->assertDatabaseHas('audit_events', ['event_type' => 'cost-center.restored', 'correlation_id' => 'restore']);
@@ -82,17 +85,19 @@ class CostCenterRevisionTest extends TestCase
         [$tenant, $actor, $context] = $this->context('cost-center.create', 'cost-center.update', 'cost-center.restore-revision');
         $costCenter = app(CreateCostCenter::class)->execute($actor, $context, 'Local', null, 'create-local');
         app(UpdateCostCenter::class)->execute($actor, $context, $costCenter, 'Local current', null, 1, 'update-local');
-        $foreign = CostCenter::factory()->for(Tenant::factory())->create(['name' => 'Foreign']);
-        $foreignVersion = $foreign->oldestVersions()->firstOrFail();
+        app(CreateCostCenter::class)->execute($actor, $context, 'Other local center', null, 'other-local');
+        $foreignVersion = RevisionBatch::query()->where('correlation_id', 'other-local')->firstOrFail();
 
+        $relationshipFailure = null;
         try {
             app(RestoreCostCenterRevision::class)->execute($actor, $context, $costCenter, $foreignVersion, 2, 'foreign-restore');
             $this->fail('A foreign revision was restored.');
-        } catch (DomainException $exception) {
-            $this->assertSame('TENANT_RELATION_MISMATCH', $exception->getMessage());
+        } catch (ModelNotFoundException $exception) {
+            $relationshipFailure = $exception;
         }
+        $this->assertInstanceOf(ModelNotFoundException::class, $relationshipFailure);
 
-        $version = $costCenter->oldestVersions()->firstOrFail();
+        $version = RevisionBatch::query()->where('correlation_id', 'create-local')->firstOrFail();
         try {
             app(RestoreCostCenterRevision::class)->execute($actor, $context, $costCenter, $version, 1, 'stale-restore');
             $this->fail('A stale restoration overwrote the current record.');
@@ -108,22 +113,23 @@ class CostCenterRevisionTest extends TestCase
         [$tenant, $actor, $context] = $this->context('cost-center.create', 'cost-center.update', 'cost-center.restore-revision');
         $costCenter = app(CreateCostCenter::class)->execute($actor, $context, 'Original', null, 'restore-original');
         app(UpdateCostCenter::class)->execute($actor, $context, $costCenter, 'Current', null, 1, 'restore-current');
-        $version = $costCenter->oldestVersions()->firstOrFail();
+        $version = RevisionBatch::query()->where('correlation_id', 'restore-original')->firstOrFail();
         $batchCount = RevisionBatch::query()->count();
         $auditCount = AuditEvent::query()->count();
 
         $spoofed = clone $version;
-        $spoofed->forceFill([$spoofed->getKeyName() => $version->getKey() + 100000]);
+        $spoofed->forceFill([$spoofed->getKeyName() => (int) $version->getKey() + 100000]);
+        $spoofFailure = null;
         try {
             app(RestoreCostCenterRevision::class)->execute($actor, $context, $costCenter, $spoofed, 2, 'restore-spoofed');
             $this->fail('A primary-key-spoofed Version was accepted.');
-        } catch (DomainException $exception) {
-            $this->assertSame('TENANT_RELATION_MISMATCH', $exception->getMessage());
+        } catch (ModelNotFoundException $exception) {
+            $spoofFailure = $exception;
         }
+        $this->assertInstanceOf(ModelNotFoundException::class, $spoofFailure);
 
         $tampered = clone $version;
-        $tampered->forceFill(['contents' => ['name' => 'Tampered', 'parent_id' => null, 'active' => true]]);
-        $tampered->setRelation('versionable', CostCenter::factory()->for(Tenant::factory())->create(['name' => 'Tampered relation']));
+        $tampered->setRelation('items', collect());
         $restored = app(RestoreCostCenterRevision::class)->execute($actor, $context, $costCenter, $tampered, 2, 'restore-reloaded');
         $this->assertSame('Original', $restored->name);
         $this->assertSame(3, $restored->lock_version);
@@ -162,10 +168,10 @@ class CostCenterRevisionTest extends TestCase
 
     public function test_restore_cost_center_revision_audit_failure_restores_current_snapshot_lock_and_batch(): void
     {
-        [$tenant, $actor, $context] = $this->context('cost-center.restore-revision');
-        $costCenter = CostCenter::factory()->for($tenant)->create(['name' => 'Rollback restore', 'lock_version' => 8]);
-        $version = $costCenter->oldestVersions()->firstOrFail();
-        $costCenter->forceFill(['name' => 'Current restore', 'lock_version' => 9])->save();
+        [$tenant, $actor, $context] = $this->context('cost-center.create', 'cost-center.restore-revision');
+        $costCenter = app(CreateCostCenter::class)->execute($actor, $context, 'Rollback restore', null, 'rollback-restore-source');
+        $version = RevisionBatch::query()->where('correlation_id', 'rollback-restore-source')->firstOrFail();
+        $costCenter->forceFill(['name' => 'Current restore', 'lock_version' => 2])->save();
         $correlationId = '00000000-0000-4000-8000-000000000106';
         $batchCount = RevisionBatch::query()->count();
         $versionCount = Version::query()->count();
@@ -180,10 +186,10 @@ class CostCenterRevisionTest extends TestCase
         try {
             $this->expectException(RuntimeException::class);
             $action = app(RestoreCostCenterRevision::class);
-            $action->execute($actor, $context, $costCenter, $version, 9, $correlationId);
+            $action->execute($actor, $context, $costCenter, $version, 2, $correlationId);
         } finally {
             $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
-            $this->assertDatabaseHas('cost_centers', ['id' => $costCenter->getKey(), 'name' => 'Current restore', 'lock_version' => 9]);
+            $this->assertDatabaseHas('cost_centers', ['id' => $costCenter->getKey(), 'name' => 'Current restore', 'lock_version' => 2]);
             $this->assertDatabaseCount('versions', $versionCount);
             $this->assertDatabaseCount('revision_batches', $batchCount);
             $this->assertDatabaseCount('audit_events', $auditCount);
@@ -196,7 +202,7 @@ class CostCenterRevisionTest extends TestCase
         $create = app(CreateCostCenter::class);
         $destinationRoot = $create->execute($actor, $context, 'Restore destination', null, 'restore-depth-destination');
         $moving = $create->execute($actor, $context, 'Restore moving', $destinationRoot, 'restore-depth-moving');
-        $parentedVersion = $moving->oldestVersions()->firstOrFail();
+        $parentedVersion = RevisionBatch::query()->where('correlation_id', 'restore-depth-moving')->firstOrFail();
         $moving = app(UpdateCostCenter::class)->execute($actor, $context, $moving, 'Restore moving', null, 1, 'restore-depth-detach');
         $child = $create->execute($actor, $context, 'Restore child', $moving, 'restore-depth-child');
         $create->execute($actor, $context, 'Restore grandchild', $child, 'restore-depth-grandchild');
@@ -224,7 +230,7 @@ class CostCenterRevisionTest extends TestCase
             'name' => 'Restore moving',
             'lock_version' => 2,
         ]);
-        $this->assertDatabaseHas('versions', ['id' => $parentedVersion->getKey()]);
+        $this->assertDatabaseHas('revision_batches', ['id' => $parentedVersion->getKey()]);
         $this->assertDatabaseCount('versions', $versionCount);
         $this->assertDatabaseCount('revision_batches', $batchCount);
         $this->assertDatabaseCount('audit_events', $auditCount);

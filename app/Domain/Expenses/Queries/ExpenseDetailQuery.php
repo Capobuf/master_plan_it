@@ -3,7 +3,6 @@
 namespace App\Domain\Expenses\Queries;
 
 use App\Domain\Expenses\Data\ExpenseDetail;
-use App\Domain\Revisions\Queries\RevisionHistoryQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Models\Expense;
@@ -149,13 +148,7 @@ final class ExpenseDetailQuery
             ->first();
 
         $revisionActivity = $policy->viewRevisions($actor, $expense)->allowed()
-            ? app(RevisionHistoryQuery::class)->forSubject($context, $expense)->take(10)->map(static fn ($batch): array => [
-                'id' => (int) $batch->getKey(),
-                'operation' => $batch->operation->value,
-                'actor' => $batch->actor?->name,
-                'timestamp' => $batch->occurred_at?->toISOString(),
-                'summary' => $batch->reason,
-            ])->values()->all()
+            ? app(ExpenseRevisionQuery::class)->history($actor, $context, $expense)->values()->all()
             : [];
 
         return new ExpenseDetail(

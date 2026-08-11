@@ -4,11 +4,16 @@ namespace App\Domain\Revisions\Actions;
 
 use App\Domain\Revisions\Data\RevisionMutation;
 use App\Domain\Revisions\Data\RevisionOperation;
+use App\Models\Contract;
+use App\Models\ContractTerm;
+use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
+use App\Models\Project;
 use App\Models\RevisionBatch;
 use App\Models\RevisionBatchItem;
+use App\Models\Vendor;
 use App\Models\Version as ApplicationVersion;
 use DomainException;
 use Illuminate\Database\Eloquent\Model;
@@ -16,24 +21,35 @@ use Illuminate\Support\Facades\DB;
 
 final class LinkVersionToRevisionBatch
 {
-    public function execute(RevisionBatch $batch, ApplicationVersion $version, int $sequence, ?RevisionMutation $mutation = null): RevisionBatchItem
-    {
-        return DB::transaction(function () use ($batch, $mutation, $sequence, $version): RevisionBatchItem {
+    public function execute(
+        RevisionBatch $batch,
+        ApplicationVersion $version,
+        int $sequence,
+        ?RevisionMutation $mutation = null,
+        bool $changed = true,
+    ): RevisionBatchItem {
+        return DB::transaction(function () use ($batch, $changed, $mutation, $sequence, $version): RevisionBatchItem {
             $persistedBatch = $this->persistedBatch($batch);
             $persistedVersion = $this->persistedVersion($version);
             $versionable = $this->sameTenantVersionable($persistedBatch, $persistedVersion);
             $this->assertSequenceAvailable($persistedBatch, $sequence);
             $planningYearId = $this->planningYearId($versionable);
             $resolvedMutation = $mutation ?? $this->mutation($persistedBatch, $versionable);
+            $snapshot = (array) $persistedVersion->contents;
+            [$rootType, $rootId] = $this->operationalRoot($versionable, $snapshot);
 
             return RevisionBatchItem::query()->create([
                 'revision_batch_id' => $persistedBatch->getKey(),
                 'tenant_id' => $persistedBatch->tenant_id,
                 'planning_year_id' => $planningYearId,
                 'mutation' => $resolvedMutation,
+                'is_changed' => $changed,
                 'version_id' => $persistedVersion->getKey(),
                 'versionable_type' => (string) $persistedVersion->getAttribute('versionable_type'),
                 'versionable_id' => (int) $persistedVersion->getAttribute('versionable_id'),
+                'snapshot_contents' => $snapshot,
+                'operational_root_type' => $rootType,
+                'operational_root_id' => $rootId,
                 'sequence' => $sequence,
             ]);
         });
@@ -111,6 +127,35 @@ final class LinkVersionToRevisionBatch
         }
 
         return null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $snapshot
+     * @return array{string|null, int|null}
+     */
+    private function operationalRoot(Model $versionable, array $snapshot): array
+    {
+        if ($versionable instanceof Expense) {
+            return [$versionable->getMorphClass(), (int) $versionable->getKey()];
+        }
+        if ($versionable instanceof ExpenseRow) {
+            $expenseId = $snapshot['expense_id'] ?? $versionable->expense_id;
+
+            return $expenseId === null ? [null, null] : [(new Expense)->getMorphClass(), (int) $expenseId];
+        }
+        if ($versionable instanceof Contract) {
+            return [$versionable->getMorphClass(), (int) $versionable->getKey()];
+        }
+        if ($versionable instanceof ContractTerm) {
+            $contractId = $snapshot['contract_id'] ?? $versionable->contract_id;
+
+            return $contractId === null ? [null, null] : [(new Contract)->getMorphClass(), (int) $contractId];
+        }
+        if ($versionable instanceof Project || $versionable instanceof Vendor || $versionable instanceof CostCenter) {
+            return [$versionable->getMorphClass(), (int) $versionable->getKey()];
+        }
+
+        return [null, null];
     }
 
     private function mutation(RevisionBatch $batch, Model $versionable): RevisionMutation

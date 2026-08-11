@@ -1,17 +1,27 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router";
 import { ApiError } from "../../api/client";
-import { getExpense, type ExpenseDetail as ExpenseDetailData } from "../../api/expenses";
+import {
+  getExpense,
+  getExpenseHistory,
+  getExpenseRevision,
+  restoreExpenseRevision,
+  type ExpenseDetail as ExpenseDetailData,
+  type ExpenseRevision,
+} from "../../api/expenses";
 import ComponentCard from "../../components/common/ComponentCard";
 import IconButton from "../../components/common/IconButton";
+import ObjectTabs from "../../components/common/ObjectTabs";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ExpenseActionModal from "../../components/expenses/ExpenseActionModal";
+import ExpenseAttachmentsPanel from "../../components/attachments/ExpenseAttachmentsPanel";
 import ExpenseCloseModal from "../../components/expenses/ExpenseCloseModal";
 import ExpenseKindBadge from "../../components/expenses/ExpenseKindBadge";
 import ExpenseMoveModal from "../../components/expenses/ExpenseMoveModal";
 import ExpenseRowsTable from "../../components/expenses/ExpenseRowsTable";
 import ExpenseTotals from "../../components/expenses/ExpenseTotals";
+import RevisionHistoryPanel from "../../components/revisions/RevisionHistoryPanel";
 import Alert from "../../components/ui/alert/Alert";
 import Button from "../../components/ui/button/Button";
 import { useApplicationContext } from "../../context/ApplicationContext";
@@ -33,6 +43,10 @@ export default function ExpenseDetail() {
   const [closeOpen, setCloseOpen] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<"details" | "attachments" | "history">("details");
+  const [history, setHistory] = useState<ExpenseRevision[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyError, setHistoryError] = useState<string | null>(null);
   const tenantId = applicationContext?.tenant?.id ?? null;
   const expenseId = expenseIdParam && /^\d+$/.test(expenseIdParam) ? Number(expenseIdParam) : null;
   const canView = hasAbility("expense.view");
@@ -47,6 +61,20 @@ export default function ExpenseDetail() {
   }, [canView, expenseId, selectedPlanningYearId, tenantId]);
 
   useEffect(() => { if (!contextLoading && !yearLoading) void loadDetail(); }, [contextLoading, loadDetail, yearLoading]);
+  useEffect(() => { setActiveTab("details"); setHistory([]); setHistoryError(null); }, [expenseId, selectedPlanningYearId, tenantId]);
+
+  const loadHistory = useCallback(async () => {
+    if (expenseId === null || selectedPlanningYearId === null || !hasAbility("expense.view-revisions")) return;
+    setHistoryLoading(true); setHistoryError(null);
+    try { setHistory((await getExpenseHistory(expenseId, selectedPlanningYearId)).data); }
+    catch (error: unknown) { setHistoryError(ApiError.from(error).message); }
+    finally { setHistoryLoading(false); }
+  }, [expenseId, hasAbility, selectedPlanningYearId]);
+
+  const changeTab = (tab: "details" | "attachments" | "history") => {
+    setActiveTab(tab);
+    if (tab === "history" && history.length === 0 && !historyLoading) void loadHistory();
+  };
 
   let body;
   if (contextLoading || yearLoading) body = <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant e del Planning Year in corso." />;
@@ -81,6 +109,8 @@ export default function ExpenseDetail() {
           </div>
         </div>
       </section>
+      <ObjectTabs tabs={[{ key: "details" as const, label: "Dettagli" }, ...(hasAbility("attachment.view") ? [{ key: "attachments" as const, label: "Allegati" }] : []), ...(hasAbility("expense.view-revisions") ? [{ key: "history" as const, label: "Storico" }] : [])]} active={activeTab} onChange={changeTab} />
+      {activeTab === "details" ? <div className="space-y-4">
       <div className="grid gap-4 xl:grid-cols-5">
         <ComponentCard title="Classificazione" compact className="xl:col-span-2"><dl className="grid gap-3 sm:grid-cols-2">
           {[['Natura', detail.kind === 'ordinary' ? 'Ordinaria' : 'Plafond'], ['Centro di Costo', detail.cost_center_name ?? '—'], ['Progetto', detail.project_title ?? '—'], ['Contratto', detail.contract_title ?? '—'], ['Anno', String(detail.planning_year_label)]].map(([label, value]) => <div key={label}><dt className="text-xs text-gray-500">{label}</dt><dd className="mt-1 font-medium text-gray-800 dark:text-white/90">{value}</dd></div>)}
@@ -90,7 +120,7 @@ export default function ExpenseDetail() {
       <ComponentCard title="Righe della Spesa" compact><ExpenseRowsTable rows={detail.rows} /></ComponentCard>
       <ExpenseTotals totals={detail.totals} title="Totali della Spesa" />
       {detail.notes ? <ComponentCard title="Note" compact><p className="whitespace-pre-wrap text-sm text-gray-600 dark:text-gray-300">{detail.notes}</p></ComponentCard> : null}
-      {hasAbility("expense.view-revisions") ? <details className="rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-white/[0.03]"><summary className="cursor-pointer px-5 py-4 font-semibold text-gray-800 dark:text-white/90">Revisioni ({detail.revision_activity.length})</summary><ol className="divide-y divide-gray-100 border-t border-gray-100 px-5 dark:divide-gray-800 dark:border-gray-800">{detail.revision_activity.map((revision) => <li key={revision.id} className="flex justify-between gap-3 py-3 text-sm"><span>{revision.summary ?? revision.operation}</span><span className="text-right text-gray-500">{revision.actor ?? "Sistema"}{revision.timestamp ? <><br />{new Date(revision.timestamp).toLocaleString("it-IT")}</> : null}</span></li>)}</ol></details> : null}
+      </div> : activeTab === "attachments" ? <ExpenseAttachmentsPanel expense={detail} /> : <RevisionHistoryPanel revisions={history} loading={historyLoading} loadError={historyError} onReload={loadHistory} onCompare={(revisionId) => getExpenseRevision(detail.id, revisionId, detail.planning_year_id)} onRestore={async (revisionId) => { const restored = await restoreExpenseRevision(detail.id, revisionId, detail.lock_version); setDetailState({ tenantId: tenantId as number, yearId: selectedPlanningYearId as number, detail: restored, error: null }); await loadHistory(); }} />}
       {canDelete ? <ExpenseActionModal expenseId={detail.id} lockVersion={detail.lock_version} generated={detail.rows.some((row) => row.generated)} contractId={detail.contract_id} isOpen={deleteOpen} onClose={() => setDeleteOpen(false)} onDeleted={() => navigate(routes.spese)} /> : null}
       {canMove ? <ExpenseMoveModal expenseId={detail.id} lockVersion={detail.lock_version} currentPlanningYearId={detail.planning_year_id} isOpen={moveOpen} onClose={() => setMoveOpen(false)} onMoved={(destinationId, yearId) => { selectPlanningYear(yearId); navigate(routes.spesa(destinationId)); }} /> : null}
       {canEdit && detail.state === "open" ? <ExpenseCloseModal expenseId={detail.id} lockVersion={detail.lock_version} isOpen={closeOpen} onClose={() => setCloseOpen(false)} onClosed={(closed) => { setCloseOpen(false); setDetailState({ tenantId: tenantId as number, yearId: selectedPlanningYearId as number, detail: closed, error: null }); }} /> : null}

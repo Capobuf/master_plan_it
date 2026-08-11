@@ -6,7 +6,6 @@ import { AngleDownIcon, AngleRightIcon, MoreDotIcon } from "../../icons";
 import { routes } from "../../navigation/routes";
 import ExpenseActionModal from "./ExpenseActionModal";
 import ExpenseBulkActions from "./ExpenseBulkActions";
-import ExpenseColumnSettings from "./ExpenseColumnSettings";
 import ExpenseKindBadge from "./ExpenseKindBadge";
 import ExpenseMoney from "./ExpenseMoney";
 import ExpenseRowsTable from "./ExpenseRowsTable";
@@ -58,14 +57,13 @@ function RowActions({ expense, planningYearId, canEdit, canDelete, disabled, onD
 
 export default function ExpenseRegisterTable({ expenses, planningYearId, planningYears, columnPreferences, canEdit, canCreate, canDelete, canViewProjects, onChanged, onPlanningYearChange, disabled = false }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
-  const [columns, setColumns] = useState(columnPreferences);
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [details, setDetails] = useState<Record<number, ExpenseDetail>>({});
   const [detailErrors, setDetailErrors] = useState<Record<number, ApiError>>({});
   const [loadingIds, setLoadingIds] = useState<Set<number>>(new Set());
   const [deleteTarget, setDeleteTarget] = useState<ExpenseDetail | null>(null);
   const headerCheckbox = useRef<HTMLInputElement>(null);
-  const visibleColumns = columns.filter((column) => column.visible);
+  const visibleColumns = columnPreferences.filter((column) => column.visible);
   const allSelected = selectedIds.size === expenses.length && expenses.length > 0;
   const selected = useMemo(() => expenses.filter((expense) => selectedIds.has(expense.id)), [expenses, selectedIds]);
 
@@ -99,12 +97,11 @@ export default function ExpenseRegisterTable({ expenses, planningYearId, plannin
   }
 
   return <>
-    <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-white/[0.05]">
-      <div className="min-w-0 flex-1">
+    {selected.length > 0 ? (
+      <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-white/[0.05]">
         <ExpenseBulkActions selected={selected} planningYearId={planningYearId} planningYears={planningYears} canEdit={canEdit} canCreate={canCreate} canDelete={canDelete} onChanged={onChanged} onPlanningYearChange={onPlanningYearChange} />
       </div>
-      <ExpenseColumnSettings value={columns} onChange={setColumns} disabled={disabled} />
-    </div>
+    ) : null}
     <div className="max-w-full overflow-x-auto">
       <Table className="text-sm">
         <TableHeader className="border-b border-gray-100 dark:border-white/[0.05]"><TableRow>

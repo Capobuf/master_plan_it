@@ -13,8 +13,12 @@ type PropsType = {
   onChange?: Hook | Hook[];
   defaultDate?: DateOption;
   label?: string;
+  hideLabel?: boolean;
+  staticPosition?: boolean;
   placeholder?: string;
   disabled?: boolean;
+  error?: boolean;
+  hint?: string;
 };
 
 export default function DatePicker({
@@ -22,9 +26,13 @@ export default function DatePicker({
   mode,
   onChange,
   label,
+  hideLabel = false,
+  staticPosition = true,
   defaultDate,
   placeholder,
   disabled = false,
+  error = false,
+  hint,
 }: PropsType) {
   const inputRef = useRef<HTMLInputElement>(null);
   const pickerRef = useRef<flatpickr.Instance | null>(null);
@@ -39,7 +47,7 @@ export default function DatePicker({
 
     const flatPickr = flatpickr(inputRef.current, {
       mode: mode || "single",
-      static: true,
+      static: staticPosition,
       monthSelectorType: "static",
       dateFormat: "Y-m-d",
       altInput: true,
@@ -63,7 +71,7 @@ export default function DatePicker({
       }
       pickerRef.current = null;
     };
-  }, [mode]);
+  }, [mode, staticPosition]);
 
   useEffect(() => {
     if (!pickerRef.current) return;
@@ -85,11 +93,22 @@ export default function DatePicker({
     if (!altInput) return;
     altInput.id = `${id}-display`;
     altInput.setAttribute("aria-label", label ?? placeholder ?? "Data");
-  }, [id, label, placeholder]);
+    altInput.className = `${inputRef.current?.className ?? ""} form-control input`;
+    if (error) altInput.setAttribute("aria-invalid", "true");
+    else altInput.removeAttribute("aria-invalid");
+    if (hint) altInput.setAttribute("aria-describedby", `${id}-hint`);
+    else altInput.removeAttribute("aria-describedby");
+  }, [error, hint, id, label, placeholder]);
+
+  const inputClasses = `h-11 w-full appearance-none rounded-lg border bg-transparent px-4 py-2.5 pr-12 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-50 dark:bg-gray-900 dark:placeholder:text-white/30 dark:disabled:bg-gray-800 ${
+    error
+      ? "border-error-500 text-error-800 focus:border-error-300 focus:ring-error-500/10 dark:border-error-500 dark:text-error-400 dark:focus:border-error-800"
+      : "border-gray-300 text-gray-800 focus:border-brand-300 focus:ring-brand-500/20 dark:border-gray-700 dark:text-white/90 dark:focus:border-brand-800"
+  }`;
 
   return (
     <div>
-      {label && <Label htmlFor={`${id}-display`}>{label}</Label>}
+      {label && !hideLabel ? <Label htmlFor={`${id}-display`}>{label}</Label> : null}
 
       <div className="relative">
         <input
@@ -99,7 +118,7 @@ export default function DatePicker({
           aria-hidden="true"
           placeholder={placeholder}
           disabled={disabled}
-          className="h-11 w-full appearance-none rounded-lg border border-gray-300 bg-transparent px-4 py-2.5 pr-12 text-sm text-gray-800 shadow-theme-xs placeholder:text-gray-400 focus:border-brand-300 focus:outline-hidden focus:ring-3 focus:ring-brand-500/20 disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-50 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 dark:disabled:bg-gray-800 dark:focus:border-brand-800"
+          className={inputClasses}
         />
 
         <button
@@ -112,6 +131,7 @@ export default function DatePicker({
           <CalenderIcon className="size-6" />
         </button>
       </div>
+      {hint ? <p id={`${id}-hint`} className={`mt-1.5 text-xs ${error ? "text-error-500" : "text-gray-500 dark:text-gray-400"}`}>{hint}</p> : null}
     </div>
   );
 }

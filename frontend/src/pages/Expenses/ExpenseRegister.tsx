@@ -7,6 +7,7 @@ import {
   listExpenseVendors,
   listExpenses,
   type ExpenseContractOption,
+  type ExpenseColumnPreference,
   type ExpenseListParams,
   type ExpenseLookupOption,
   type ExpenseRegisterResponse,
@@ -16,6 +17,7 @@ import ComponentCard from "../../components/common/ComponentCard";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
 import PageMeta from "../../components/common/PageMeta";
 import ExpenseFilters from "../../components/expenses/ExpenseFilters";
+import ExpenseColumnSettings from "../../components/expenses/ExpenseColumnSettings";
 import ExpensePagination from "../../components/expenses/ExpensePagination";
 import ExpenseRegisterTable from "../../components/expenses/ExpenseRegisterTable";
 import ExpenseTotals from "../../components/expenses/ExpenseTotals";
@@ -76,6 +78,10 @@ export default function ExpenseRegister() {
   const [lookupError, setLookupError] = useState<ApiError | null>(null);
   const [loading, setLoading] = useState(false);
   const [refreshVersion, setRefreshVersion] = useState(0);
+  const [columnState, setColumnState] = useState<{
+    tenantId: number;
+    columns: ExpenseColumnPreference[];
+  } | null>(null);
   const navigate = useNavigate();
   const tenantId = applicationContext?.tenant?.id ?? null;
   const canView = hasAbility("expense.view");
@@ -116,6 +122,11 @@ export default function ExpenseRegister() {
 
   const currentState = registerState?.tenantId === tenantId ? registerState : null;
   const response = currentState?.response;
+  const columns = response
+    ? columnState?.tenantId === tenantId
+      ? columnState.columns
+      : response.column_preferences
+    : [];
   let content;
   if (contextLoading || planningYearLoading) content = <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant e dell'anno di pianificazione in corso." />;
   else if (tenantId === null) content = <Alert variant="warning" title="Tenant richiesto" message="Seleziona un Tenant dall'intestazione prima di aprire le spese." />;
@@ -130,7 +141,7 @@ export default function ExpenseRegister() {
       expenses={response.data}
       planningYearId={selectedPlanningYearId}
       planningYears={activePlanningYears.map((year) => ({ id: year.id, label: year.year_label, active: year.active }))}
-      columnPreferences={response.column_preferences}
+      columnPreferences={columns}
       canEdit={hasAbility("expense.update")}
       canCreate={hasAbility("expense.create")}
       canDelete={hasAbility("expense.delete")}
@@ -152,11 +163,36 @@ export default function ExpenseRegister() {
     <PageBreadcrumb pageTitle="Spese" subtitle="Registro delle spese dell'anno selezionato." actions={hasAbility("expense.create") ? <Button size="sm" onClick={() => navigate(routes.nuovaSpesa)}>Nuova Spesa</Button> : null} />
     <div className="space-y-4">
       <ComponentCard title="Registro Spese" compact>
-        <ExpenseFilters value={params} costCenters={costCenters} vendors={vendors} projects={projects} contracts={contracts} showCostCenters={hasAbility("cost-center.view")} showVendors={hasAbility("vendor.view")} showProjects={hasAbility("project.view")} showContracts={hasAbility("contract.view")} onChange={updateParams} disabled={loading || tenantId === null || !canView} />
+        <ExpenseFilters
+          value={params}
+          costCenters={costCenters}
+          vendors={vendors}
+          projects={projects}
+          contracts={contracts}
+          showCostCenters={hasAbility("cost-center.view")}
+          showVendors={hasAbility("vendor.view")}
+          showProjects={hasAbility("project.view")}
+          showContracts={hasAbility("contract.view")}
+          actions={response && tenantId !== null ? (
+            <ExpenseColumnSettings
+              value={columns}
+              onChange={(nextColumns) => setColumnState({ tenantId, columns: nextColumns })}
+              disabled={loading}
+            />
+          ) : null}
+          onChange={updateParams}
+          disabled={loading || tenantId === null || !canView}
+        />
         {lookupError ? <Alert variant="warning" title="Lookup non disponibili" message={lookupError.message} /> : null}
         {content}
       </ComponentCard>
-      {response ? <ExpenseTotals totals={response.totals} title="Totali del registro" /> : null}
+      {response ? (
+        <ExpenseTotals
+          totals={response.totals}
+          title="Totali del Registro"
+          description="Somma delle spese che corrispondono ai filtri applicati."
+        />
+      ) : null}
     </div>
   </>;
 }

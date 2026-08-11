@@ -3,6 +3,7 @@ import {
   type DataEnvelope,
   type PaginatedData,
 } from "./client";
+import type { OperationalRevision, RevisionComparison } from "./revisions";
 
 export interface ContractParty {
   id: number;
@@ -61,13 +62,7 @@ export interface GeneratedExpense {
   lock_version: number;
 }
 
-export interface ContractRevision {
-  id: number;
-  operation: string;
-  actor: string | null;
-  timestamp: string | null;
-  summary: string | null;
-}
+export type ContractRevision = OperationalRevision;
 
 export interface Contract {
   id: number;
@@ -276,6 +271,16 @@ export async function getContractHistory(
     { params },
   );
   return response.data;
+}
+
+export async function getContractRevision(contractId: number, revisionId: number): Promise<RevisionComparison> {
+  const response = await apiClient.get<DataEnvelope<RevisionComparison>>(`/api/v1/contracts/${contractId}/history/${revisionId}`);
+  return response.data.data;
+}
+
+export async function restoreContractRevision(contractId: number, revisionId: number, lockVersion: number): Promise<Contract> {
+  const response = await apiClient.post<DataEnvelope<Contract>>(`/api/v1/contracts/${contractId}/history/${revisionId}/restore`, { lock_version: lockVersion });
+  return response.data.data;
 }
 
 export async function deleteGeneratedExpense(

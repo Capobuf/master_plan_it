@@ -8,6 +8,7 @@ use App\Domain\Expenses\Actions\CloseExpense;
 use App\Domain\Expenses\Actions\CreateExpense;
 use App\Domain\Expenses\Actions\DeleteExpense;
 use App\Domain\Expenses\Actions\MoveExpense;
+use App\Domain\Expenses\Actions\RestoreExpenseRevision;
 use App\Domain\Expenses\Actions\UpdateExpense;
 use App\Domain\Expenses\Data\ExpenseRegisterColumns;
 use App\Domain\Expenses\Data\ExpenseRegisterFilterData;
@@ -19,6 +20,7 @@ use App\Domain\Expenses\Enums\ExpenseState;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Expenses\Queries\ExpenseDetailQuery;
 use App\Domain\Expenses\Queries\ExpenseRegisterQuery;
+use App\Domain\Expenses\Queries\ExpenseRevisionQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Http\Controllers\Controller;
@@ -26,6 +28,7 @@ use App\Http\Middleware\AuthorizeApplicationAbility;
 use App\Http\Resources\Api\V1\ExpenseDetailResource;
 use App\Http\Resources\Api\V1\ExpenseMoneyResource;
 use App\Http\Resources\Api\V1\ExpenseRegisterResource;
+use App\Http\Resources\Api\V1\OperationalRevisionResource;
 use App\Models\Contract;
 use App\Models\CostCenter;
 use App\Models\Expense;
@@ -38,6 +41,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -116,6 +120,56 @@ final class ExpenseController extends Controller
         TenantOwnedRecordQuery::findOrFail($context, PlanningYear::class, $year);
 
         return ExpenseDetailResource::make($detailQuery->find($this->actor($request), $context, $expense, $year));
+    }
+
+    public function history(Request $request, int $expense, ExpenseRevisionQuery $query): AnonymousResourceCollection
+    {
+        $validated = $request->validate([
+            'year' => ['required', 'integer', 'min:1'],
+            'page' => ['nullable', 'integer', 'min:1'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:10'],
+        ]);
+        $context = $this->tenantContext($request);
+        $subject = $this->loadExpense($context, $expense, false);
+        if ((int) $subject->planning_year_id !== (int) $validated['year']) {
+            abort(404, 'RESOURCE_NOT_FOUND');
+        }
+        $rows = $query->history($this->actor($request), $context, $subject);
+        $perPage = (int) ($validated['per_page'] ?? 10);
+        $page = (int) ($validated['page'] ?? 1);
+        $paginator = new LengthAwarePaginator($rows->forPage($page, $perPage)->values(), $rows->count(), $perPage, $page, ['path' => $request->url(), 'query' => $request->query()]);
+
+        return OperationalRevisionResource::collection($paginator);
+    }
+
+    public function revision(Request $request, int $expense, int $revision, ExpenseRevisionQuery $query): OperationalRevisionResource
+    {
+        $validated = $request->validate(['year' => ['required', 'integer', 'min:1']]);
+        $context = $this->tenantContext($request);
+        $subject = $this->loadExpense($context, $expense, false);
+        if ((int) $subject->planning_year_id !== (int) $validated['year']) {
+            abort(404, 'RESOURCE_NOT_FOUND');
+        }
+
+        return OperationalRevisionResource::make($query->comparison($this->actor($request), $context, $subject, $revision));
+    }
+
+    public function restore(
+        Request $request,
+        int $expense,
+        int $revision,
+        ExpenseRevisionQuery $revisionQuery,
+        RestoreExpenseRevision $action,
+        ExpenseDetailQuery $detailQuery,
+    ): ExpenseDetailResource {
+        $this->rejectUnexpectedFields($request, ['lock_version']);
+        $input = $request->validate(['lock_version' => ['required', 'integer', 'min:1']]);
+        $context = $this->tenantContext($request);
+        $subject = $this->loadExpense($context, $expense, false);
+        $source = $revisionQuery->sourceBatchForRestore($this->actor($request), $context, $subject, $revision);
+        $restored = $action->execute($this->actor($request), $context, $subject, $source, (int) $input['lock_version'], $this->correlationId($request));
+
+        return ExpenseDetailResource::make($detailQuery->find($this->actor($request), $context, (int) $restored->getKey(), (int) $restored->planning_year_id));
     }
 
     public function updateRegisterPreferences(Request $request): JsonResponse

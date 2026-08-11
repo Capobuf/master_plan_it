@@ -4,6 +4,7 @@ namespace App\Domain\Revisions\Actions;
 
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
+use App\Domain\Revisions\Data\RevisionActorKind;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\RevisionBatch;
@@ -28,24 +29,33 @@ final class BeginRevisionBatch
         ?string $reason,
         string $correlationId,
         Model $root,
-        ?int $restoredFromVersionId,
+        ?int $restoredFromVersionId = null,
+        ?int $restoredFromBatchId = null,
+        RevisionActorKind $actorKind = RevisionActorKind::Human,
     ): RevisionBatch {
         [$persistedActor, $tenant] = $this->verifyPersistedContext($actor, $context);
         $persistedRoot = $this->persistedSameTenantRoot($root, $tenant);
-        $restoreSource = $this->persistedRestoreSource($operation, $restoredFromVersionId, $persistedRoot);
+        [$restoreBatch, $restoreVersion] = $this->persistedRestoreSource(
+            $operation,
+            $restoredFromBatchId,
+            $restoredFromVersionId,
+            $persistedRoot,
+            $tenant,
+        );
         $occurredAt = CarbonImmutable::now('UTC');
 
-        return DB::transaction(function () use ($correlationId, $occurredAt, $operation, $persistedActor, $persistedRoot, $reason, $restoreSource, $tenant): RevisionBatch {
+        return DB::transaction(function () use ($actorKind, $correlationId, $occurredAt, $operation, $persistedActor, $persistedRoot, $reason, $restoreBatch, $restoreVersion, $tenant): RevisionBatch {
             $batch = RevisionBatch::query()->create([
                 'tenant_id' => $tenant->getKey(),
                 'actor_user_id' => $persistedActor->getKey(),
+                'actor_kind' => $actorKind,
                 'root_subject_type' => $persistedRoot->getMorphClass(),
                 'root_subject_id' => $persistedRoot->getKey(),
                 'operation' => $operation,
                 'reason' => $reason,
                 'correlation_id' => $correlationId,
-                'restored_from_batch_id' => null,
-                'restored_from_version_id' => $restoreSource?->getKey(),
+                'restored_from_batch_id' => $restoreBatch?->getKey(),
+                'restored_from_version_id' => $restoreVersion?->getKey(),
                 'occurred_at' => $occurredAt,
             ]);
 
@@ -135,21 +145,40 @@ final class BeginRevisionBatch
         return $persistedRoot;
     }
 
+    /** @return array{RevisionBatch|null, ApplicationVersion|null} */
     private function persistedRestoreSource(
         RevisionOperation $operation,
+        ?int $restoredFromBatchId,
         ?int $restoredFromVersionId,
         Model $persistedRoot,
-    ): ?ApplicationVersion {
+        Tenant $tenant,
+    ): array {
         if ($operation !== RevisionOperation::Restore) {
-            if ($restoredFromVersionId !== null) {
+            if ($restoredFromVersionId !== null || $restoredFromBatchId !== null) {
                 throw new DomainException('TENANT_RELATION_MISMATCH');
             }
 
-            return null;
+            return [null, null];
         }
 
-        if ($restoredFromVersionId === null) {
+        if (($restoredFromVersionId === null) === ($restoredFromBatchId === null)) {
             throw new DomainException('TENANT_RELATION_MISMATCH');
+        }
+
+        if ($restoredFromBatchId !== null) {
+            $sourceBatch = RevisionBatch::query()
+                ->where('tenant_id', $tenant->getKey())
+                ->whereKey($restoredFromBatchId)
+                ->whereHas('items', fn ($query) => $query
+                    ->where('operational_root_type', $persistedRoot->getMorphClass())
+                    ->where('operational_root_id', $persistedRoot->getKey()))
+                ->first();
+
+            if (! $sourceBatch instanceof RevisionBatch) {
+                throw new DomainException('TENANT_RELATION_MISMATCH');
+            }
+
+            return [$sourceBatch, null];
         }
 
         $source = ApplicationVersion::query()->whereKey($restoredFromVersionId)->first();
@@ -160,6 +189,6 @@ final class BeginRevisionBatch
             throw new DomainException('TENANT_RELATION_MISMATCH');
         }
 
-        return $source;
+        return [null, $source];
     }
 }

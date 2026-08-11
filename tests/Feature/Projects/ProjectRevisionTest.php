@@ -38,16 +38,22 @@ final class ProjectRevisionTest extends TestCase
         $context = new TenantContext($tenant, $actor);
         $center = CostCenter::factory()->for($tenant)->create();
         $project = app(CreateProject::class)->execute($actor, $context, new SaveProjectData('Prima', (int) $center->getKey(), ProjectStage::Idea, null, null), (string) str()->uuid());
-        $sourceBatch = app(ProjectRevisionQuery::class)->history($actor, $context, $project)->last();
-        $source = app(ProjectRevisionQuery::class)->sourceVersion($actor, $context, $project, (int) $sourceBatch->getKey());
-        $sourceContents = $source->contents;
+        $sourceRevision = app(ProjectRevisionQuery::class)->history($actor, $context, $project)->last();
+        $source = app(ProjectRevisionQuery::class)->sourceBatchForRestore($actor, $context, $project, (int) $sourceRevision['id']);
+        $sourceItem = $source->items->firstWhere('versionable_id', $project->getKey());
+        $sourceContents = $sourceItem?->snapshot_contents;
         $project = app(UpdateProject::class)->execute($actor, $context, $project, new SaveProjectData('Seconda', (int) $center->getKey(), ProjectStage::Approved, null, 1), (string) str()->uuid());
 
         $restored = app(RestoreProjectRevision::class)->execute($actor, $context, $project, $source, 2, (string) str()->uuid());
         $this->assertSame('Prima', $restored->title);
         $this->assertSame(3, $restored->lock_version);
-        $this->assertSame($sourceContents, $source->fresh()->contents);
-        $this->assertDatabaseHas('revision_batches', ['root_subject_id' => $project->getKey(), 'operation' => 'restore', 'restored_from_version_id' => $source->getKey()]);
+        $this->assertSame($sourceContents, $sourceItem?->fresh()->snapshot_contents);
+        $this->assertDatabaseHas('revision_batches', [
+            'root_subject_id' => $project->getKey(),
+            'operation' => 'restore',
+            'restored_from_batch_id' => $source->getKey(),
+            'restored_from_version_id' => null,
+        ]);
 
         $this->expectException(DomainException::class);
         $this->expectExceptionMessage('STALE_VERSION');
@@ -67,7 +73,8 @@ final class ProjectRevisionTest extends TestCase
             new SaveProjectData('Terminale', (int) $center->getKey(), ProjectStage::Idea, null, null),
             (string) str()->uuid(),
         );
-        $source = $project->latestVersions()->firstOrFail();
+        $sourceRevision = app(ProjectRevisionQuery::class)->history($actor, $context, $project)->first();
+        $source = app(ProjectRevisionQuery::class)->sourceBatchForRestore($actor, $context, $project, (int) $sourceRevision['id']);
         app(DeleteProject::class)->execute($actor, $context, $project, 1, null, (string) str()->uuid());
 
         $this->expectException(AuthorizationException::class);

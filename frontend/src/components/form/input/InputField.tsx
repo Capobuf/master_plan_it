@@ -21,6 +21,7 @@ interface InputProps {
   autoComplete?: string;
   inputMode?: React.HTMLAttributes<HTMLInputElement>["inputMode"];
   ariaLabel?: string;
+  suffix?: string;
 }
 
 const Input: FC<InputProps> = ({
@@ -43,8 +44,9 @@ const Input: FC<InputProps> = ({
   autoComplete,
   inputMode,
   ariaLabel,
+  suffix,
 }) => {
-  let inputClasses = ` h-11 w-full rounded-lg border appearance-none px-4 py-2.5 text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
+  let inputClasses = ` h-11 w-full rounded-lg border appearance-none py-2.5 pl-4 ${suffix ? "pr-10" : "pr-4"} text-sm shadow-theme-xs placeholder:text-gray-400 focus:outline-hidden focus:ring-3  dark:bg-gray-900 dark:text-white/90 dark:placeholder:text-white/30 ${className}`;
 
   if (disabled) {
     inputClasses += ` text-gray-500 border-gray-300 opacity-40 bg-gray-100 cursor-not-allowed dark:bg-gray-800 dark:text-gray-400 dark:border-gray-700 opacity-40`;
@@ -74,11 +76,23 @@ const Input: FC<InputProps> = ({
         autoComplete={autoComplete}
         inputMode={inputMode}
         aria-label={ariaLabel}
+        aria-invalid={error || undefined}
+        aria-describedby={hint && id ? `${id}-hint` : undefined}
         className={inputClasses}
       />
 
+      {suffix ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute right-3 top-[22px] -translate-y-1/2 text-xs font-semibold text-gray-500 dark:text-gray-400"
+        >
+          {suffix}
+        </span>
+      ) : null}
+
       {hint && (
         <p
+          id={id ? `${id}-hint` : undefined}
           className={`mt-1.5 text-xs ${
             error
               ? "text-error-500"
