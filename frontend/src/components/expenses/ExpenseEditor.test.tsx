@@ -26,7 +26,8 @@ vi.mock("../../api/expenses", async (importOriginal) => {
   return {
     ...actual,
     getExpense: vi.fn(),
-    listExpenseVendors: vi.fn().mockResolvedValue([]),
+    createExpense: vi.fn(),
+    listExpenseVendors: vi.fn().mockResolvedValue([{ id: 9, name: "Acme" }]),
     listExpenseCostCenters: vi.fn().mockResolvedValue([{ id: 3, name: "Operations" }]),
     listExpensePlanningYears: vi.fn().mockResolvedValue([
       { id: 7, label: 2026, active: true },
@@ -48,6 +49,30 @@ describe("ExpenseEditor", () => {
     fireEvent.click(screen.getByRole("button", { name: "+ Aggiungi Riga" }));
     fireEvent.click(screen.getByRole("button", { name: "+ Aggiungi Riga" }));
     expect(screen.getAllByRole("group", { name: /Riga/ })).toHaveLength(3);
+  });
+
+  it("keeps title and notes at expense level and submits row description from details", async () => {
+    vi.mocked(expenseApi.createExpense).mockResolvedValue({
+      id: 99,
+      planning_year_id: 7,
+      state: "open",
+    } as never);
+    render(<MemoryRouter><ExpenseEditor /></MemoryRouter>);
+
+    fireEvent.change(await screen.findByRole("textbox", { name: "Titolo" }), { target: { value: "Licenze" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Note" }), { target: { value: "Nota generale" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Centro di costo" }), { target: { value: "3" } });
+    fireEvent.change(screen.getByRole("combobox", { name: "Fornitore" }), { target: { value: "9" } });
+    fireEvent.click(screen.getByRole("button", { name: "Mostra dettagli riga 1" }));
+    fireEvent.change(screen.getByRole("textbox", { name: "Descrizione" }), { target: { value: "Canone annuale" } });
+    fireEvent.click(screen.getByRole("button", { name: "Crea spesa" }));
+
+    await waitFor(() => expect(expenseApi.createExpense).toHaveBeenCalledTimes(1));
+    expect(expenseApi.createExpense).toHaveBeenCalledWith(expect.objectContaining({
+      title: "Licenze",
+      notes: "Nota generale",
+      rows: [expect.objectContaining({ description: "Canone annuale" })],
+    }));
   });
 
   it("keeps an explicit future destination year only for credit flow", async () => {

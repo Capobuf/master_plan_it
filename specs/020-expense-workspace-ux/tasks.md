@@ -54,6 +54,12 @@
 - [X] T020-012 Rifinire toolbar tabella / controllo Colonne e rimuovere Base Ufficiale in `frontend/src/components/expenses/ExpenseRegisterTable.tsx`, `frontend/src/components/expenses/ExpenseColumnSettings.tsx`, `frontend/src/components/expenses/ExpenseBulkActions.tsx` e `frontend/src/components/expenses/ExpenseTotals.tsx`
 - [X] T020-013 Aggiornare i test frontend coinvolti ed eseguire verifica responsive light/dark, test focalizzati, dark tokens, lint e build
 
+## Phase 8: Post-review Expense row grid
+
+- [X] T020-014 Preservare `ExpenseRow.description` in dominio, API, schema, contract generation e read-only, documentando la sua collocazione secondaria nell'editor in `specs/020-expense-workspace-ux/spec.md`, `specs/020-expense-workspace-ux/plan.md` e `specs/020-expense-workspace-ux/contracts/expenses-api.md`
+- [X] T020-015 Ricomporre `ExpenseEditorRows` come vera griglia ERP responsive con intestazione unica, campi frequenti inline, Descrizione e opzioni secondarie nei Dettagli, reorder accessibile e Add Row nell'header in `frontend/src/components/common/ComponentCard.tsx`, `frontend/src/components/expenses/ExpenseEditor.tsx` e `frontend/src/components/expenses/ExpenseEditorRows.tsx`
+- [X] T020-016 Allineare test frontend e verifica visuale desktop/mobile preservando la tabella read-only e il payload `description` in `frontend/src/components/expenses/ExpenseEditor.test.tsx`, `frontend/src/components/expenses/ExpenseEditorRows.test.tsx`, `frontend/src/components/expenses/ExpenseRowsTable.tsx` e `specs/020-expense-workspace-ux/contracts/expenses-api.md`
+
 ## Dependencies & Execution Order
 
 - T020-001 precede ogni implementazione.
@@ -65,6 +71,7 @@
 - T020-009 riusa `IconButton`/pattern definiti senza dipendere dalla toolbar bulk.
 - T020-010 segue tutti i task di implementazione e test.
 - T020-011 e T020-012 sono correzioni post-review frontend-only e possono essere implementate in sequenza; T020-013 segue entrambe.
+- T020-014 registra la decisione prodotto aggiornata e precede T020-015; T020-016 segue T020-015 senza riaprire i task precedenti.
 
 ## Implementation Strategy
 

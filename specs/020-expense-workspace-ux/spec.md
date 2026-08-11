@@ -23,6 +23,14 @@
 - Una sola toolbar immediatamente sopra l'header tabella ospita bulk count/azioni a sinistra quando presenti e il controllo `Colonne` sempre a destra, con dimensione naturale stabile e wrapping utilizzabile su mobile.
 - Le pagine Spese mostrano soltanto Netto, IVA e Lordo nei totali: il copy `Base Ufficiale` non viene reso, mentre `official_basis` resta invariato nel contratto API e nel dominio.
 
+## Post-review Expense row grid
+
+- `ExpenseRow.description` resta parte del dominio, dello schema, delle API, della generazione Contract e della storia; nell'editor è un campo secondario dentro `Dettagli`, non una colonna primaria.
+- La griglia editor desktop usa una sola intestazione e una sola riga compatta per Expense row con drag handle, Tipo, Fornitore, Quantità, Prezzo unitario, Importo, IVA, Data, Corrente, Dettagli ed Elimina.
+- `Dettagli` è indipendente per ciascuna riga e contiene Descrizione, Importo IVA inclusa, Spesa Extra, Plafond di riferimento, Riferimento esterno e i controlli keyboard-accessible di riordino.
+- Su mobile la stessa DOM mostra subito Tipo, Fornitore, Importo e Data; Dettagli rivela anche Quantità, Prezzo unitario, IVA, Corrente e tutti i campi secondari senza duplicare i form control.
+- `Aggiungi Riga` vive nell'header della sezione; non viene introdotto alcun totale client-side delle righe. Titolo e Note restano esclusivamente nei Dati generali della Expense.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Trovare e confrontare Spese rapidamente (Priority: P1)
@@ -98,12 +106,12 @@ Come utente autorizzato voglio compilare più righe in una griglia ERP, mantenen
 1. **Given** una nuova Spesa ordinaria, **When** l'utente apre l'editor, **Then** l'anno globale è usato senza mostrare un secondo selettore.
 2. **Given** una modifica ordinaria, **When** l'utente apre l'editor, **Then** l'anno è contesto read-only e non può essere cambiato come parte dell'aggiornamento ordinario.
 3. **Given** una nota di credito futura, **When** l'utente apre il workflow, **Then** resta disponibile Anno destinazione e contiene soltanto anni successivi validi.
-4. **Given** tre righe desktop, **When** l'editor è visibile, **Then** Tipo, Fornitore, Descrizione, Quantità, Prezzo unitario, Importo, IVA, Data e Pianificazione sono confrontabili inline.
-5. **Given** una singola riga, **When** l'utente apre Dettagli, **Then** vede Importo IVA inclusa, Spesa Extra, Plafond di riferimento e Riferimento esterno senza nascondere campi obbligatori.
+4. **Given** tre righe desktop, **When** l'editor è visibile, **Then** una sola intestazione rende Tipo, Fornitore, Quantità, Prezzo unitario, Importo, IVA, Data e Pianificazione confrontabili inline senza ripetere label o titoli visivi per riga.
+5. **Given** una singola riga, **When** l'utente apre Dettagli, **Then** vede Descrizione, Importo IVA inclusa, Spesa Extra, Plafond di riferimento e Riferimento esterno in una fascia subordinata.
 6. **Given** una riga Actual, **When** viene compilata, **Then** la data resta obbligatoria e Actual non può diventare pianificazione corrente.
 7. **Given** una riga con Extra o Plafond, **When** l'utente cambia uno dei due campi, **Then** la mutua esclusione corrente resta preservata.
 8. **Given** l'azione Aggiungi Riga, **When** viene attivata, **Then** una riga vuota compare immediatamente senza modal.
-9. **Given** un viewport mobile, **When** l'editor mostra più righe, **Then** ogni riga diventa una card compatta con Tipo, Fornitore, Descrizione, Importo e Data, mentre gli altri campi restano nei Dettagli.
+9. **Given** un viewport mobile, **When** l'editor mostra più righe, **Then** la stessa riga diventa una card compatta con Tipo, Fornitore, Importo e Data, mentre Descrizione e gli altri campi restano nei Dettagli.
 
 ### Edge Cases
 
@@ -148,11 +156,11 @@ Come utente autorizzato voglio compilare più righe in una griglia ERP, mantenen
 - **FR-024**: Soltanto il workflow Nota di credito futura MUST conservare un controllo Anno destinazione limitato a Planning Year successivi validi.
 - **FR-025**: L'editor MUST separare Dati generali, contenente Titolo e Note, da Classificazione, contenente Natura, Centro di Costo, Progetto e Contratto.
 - **FR-026**: Il Fornitore MUST restare proprietà della singola riga e MUST essere una colonna primaria sempre visibile nella griglia editor, mai un campo Expense-level.
-- **FR-027**: La griglia desktop MUST mostrare più righe contemporaneamente con Tipo, Fornitore, Descrizione, Quantità, Prezzo unitario, Importo, IVA, Data e Pianificazione inline, oltre ad azioni di riordino, dettagli e rimozione.
+- **FR-027**: La griglia desktop MUST mostrare una sola intestazione e più righe contemporaneamente con Tipo, Fornitore, Quantità, Prezzo unitario, Importo, IVA, Data e Pianificazione inline, oltre a drag handle, dettagli e rimozione; non MUST mostrare titoli o label visuali ripetuti per riga.
 - **FR-028**: Il riordino righe corrente MUST essere preservato insieme a controlli keyboard-accessible su/giù.
-- **FR-029**: I dettagli espandibili per riga MUST contenere soltanto Importo IVA inclusa, Spesa Extra, Plafond di riferimento e Riferimento esterno; metadata gestiti dal sistema possono comparire soltanto se utili e read-only.
+- **FR-029**: I dettagli espandibili per riga MUST contenere Descrizione, Importo IVA inclusa, Spesa Extra, Plafond di riferimento e Riferimento esterno, oltre ai controlli keyboard-accessible di riordino; metadata gestiti dal sistema possono comparire soltanto se utili e read-only.
 - **FR-030**: Le invarianti già implementate su Actual, Estimate/Quote, planning corrente, quantità e prezzo, Extra/Plafond, credito, generazione e valori economici MUST restare fonte di verità e non essere ridefinite o ricalcolate nel client.
-- **FR-031**: `Aggiungi Riga` MUST creare immediatamente una riga vuota senza modal e l'editor MUST restare confrontabile con 3–10 righe senza virtualizzazione.
+- **FR-031**: `Aggiungi Riga` MUST apparire una sola volta nell'header della sezione, creare immediatamente una riga vuota senza modal e mantenere l'editor confrontabile con 3–10 righe senza virtualizzazione; il client MUST NOT mostrare un totale economico indiscriminato delle righe.
 - **FR-032**: Su mobile il Registro MUST conservare filtri, colonne essenziali, expander e menu azioni; ogni riga dell'editor MUST diventare una card compatta con campi primari e Dettagli, senza overflow pagina.
 - **FR-033**: Tutte le superfici MUST conservare light/dark mode e token visuali esistenti senza colori normali hardcoded e senza un nuovo design system.
 - **FR-034**: La feature MUST NOT introdurre allegati, upload, storage file, nuove permission, nuovi calcoli economici client-side o nuove librerie di data grid, stato globale, tooltip o drag-and-drop.
