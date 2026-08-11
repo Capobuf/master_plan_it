@@ -50,7 +50,7 @@ export default function ExpenseFilters({
     onChange({ ...value, ...patch, page: 1 });
 
   return (
-    <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+    <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-[minmax(12rem,1.35fr)_repeat(6,minmax(0,1fr))]">
       <InputField
         id="expense-search"
         value={search}
@@ -74,7 +74,6 @@ export default function ExpenseFilters({
       {showProjects ? <Select id="expense-project" options={projects.map((item) => ({ value: String(item.id), label: item.title }))} value={value.project_id ? String(value.project_id) : ""} placeholder="Tutti i progetti" ariaLabel="Progetto" allowEmpty disabled={disabled} onChange={(id) => select({ project_id: id ? Number(id) : undefined })} /> : null}
       {showContracts ? <Select id="expense-contract" options={contracts.map((item) => ({ value: String(item.id), label: item.title }))} value={value.contract_id ? String(value.contract_id) : ""} placeholder="Tutti i contratti" ariaLabel="Contratto" allowEmpty disabled={disabled} onChange={(id) => select({ contract_id: id ? Number(id) : undefined })} /> : null}
       <Select id="expense-state" options={[{ value: "open", label: "Aperte" }, { value: "closed", label: "Chiuse" }]} value={value.state ?? ""} placeholder="Tutti gli stati" ariaLabel="Stato" allowEmpty disabled={disabled} onChange={(state) => select({ state: state ? state as "open" | "closed" : undefined })} />
-      <Select id="expense-per-page" options={[25, 50, 100].map((size) => ({ value: String(size), label: `${size} per pagina` }))} value={String(value.per_page ?? 25)} ariaLabel="Risultati per pagina" disabled={disabled} onChange={(size) => select({ per_page: Number(size) })} />
     </div>
   );
 }

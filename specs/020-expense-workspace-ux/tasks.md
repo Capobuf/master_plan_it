@@ -48,6 +48,12 @@
 
 - [X] T020-010 Eseguire test Expense backend focalizzati, `composer test:static`, test frontend focalizzati, `npm run test:dark-tokens`, lint/build, verifica browser 1440px dark/light e 390px; correggere un solo pass di polish e aggiornare `specs/020-expense-workspace-ux/contracts/expenses-api.md`, `docs/STATUS.md` e `specs/README.md`
 
+## Phase 7: Post-review UI polish
+
+- [X] T020-011 Compattare filter bar e spostare page-size nella paginazione in `frontend/src/components/expenses/ExpenseFilters.tsx`, `frontend/src/components/expenses/ExpensePagination.tsx` e `frontend/src/pages/Expenses/ExpenseRegister.tsx`
+- [X] T020-012 Rifinire toolbar tabella / controllo Colonne e rimuovere Base Ufficiale in `frontend/src/components/expenses/ExpenseRegisterTable.tsx`, `frontend/src/components/expenses/ExpenseColumnSettings.tsx`, `frontend/src/components/expenses/ExpenseBulkActions.tsx` e `frontend/src/components/expenses/ExpenseTotals.tsx`
+- [X] T020-013 Aggiornare i test frontend coinvolti ed eseguire verifica responsive light/dark, test focalizzati, dark tokens, lint e build
+
 ## Dependencies & Execution Order
 
 - T020-001 precede ogni implementazione.
@@ -58,6 +64,7 @@
 - T020-007 e T020-008 possono procedere in parallelo dopo i rispettivi backend.
 - T020-009 riusa `IconButton`/pattern definiti senza dipendere dalla toolbar bulk.
 - T020-010 segue tutti i task di implementazione e test.
+- T020-011 e T020-012 sono correzioni post-review frontend-only e possono essere implementate in sequenza; T020-013 segue entrambe.
 
 ## Implementation Strategy
 

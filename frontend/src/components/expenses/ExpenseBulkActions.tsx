@@ -45,8 +45,8 @@ export default function ExpenseBulkActions({ selected, planningYearId, planningY
 
   const eligibleYears = planningYears.filter((year) => year.active && year.id !== planningYearId);
   return <>
-    <div className="flex flex-wrap items-center gap-2 rounded-xl border border-brand-200 bg-brand-50 px-3 py-2 dark:border-brand-500/20 dark:bg-brand-500/10">
-      <span className="mr-auto text-sm font-semibold text-brand-700 dark:text-brand-300">{selected.length} Spese selezionate</span>
+    <div className="flex flex-wrap items-center gap-2">
+      <span className="mr-1 text-sm font-semibold text-brand-700 dark:text-brand-300">{selected.length} Spese selezionate</span>
       {canEdit ? <Button type="button" size="sm" variant="outline" onClick={() => setKind("close")}>Chiudi</Button> : null}
       {canEdit && canCreate ? <Button type="button" size="sm" variant="outline" onClick={() => setKind("move")}>Sposta</Button> : null}
       {canDelete ? <Button type="button" size="sm" variant="outline" onClick={() => setKind("delete")}>Elimina</Button> : null}

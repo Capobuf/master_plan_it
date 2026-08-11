@@ -39,6 +39,12 @@ Trasformare Registro, Dettaglio ed Editor Spese in un workspace operativo compat
 
 Il gate resta PASS dopo il design. La nuova tabella è giustificata esclusivamente dalla decisione Q2 di sincronizzare le preferenze tra dispositivi; non contiene dati economici né introduce un sistema di impostazioni generico.
 
+## Post-review UI polish
+
+Il pass post-review è frontend-only e non modifica API, persistenza, query, calcoli o Money layer. `ExpenseFilters` conserva i sette controlli e la semantica automatica, ma usa una griglia responsive più densa che arriva a sette colonne soltanto sui desktop larghi. Il selector 25/50/100 viene rimosso dai filtri e integrato una sola volta in `ExpensePagination`, il cui callback aggiorna `per_page` e `page: 1` conservando gli altri parametri.
+
+`ExpenseRegisterTable` rende una sola toolbar sopra l'header: `ExpenseBulkActions` fornisce conteggio e azioni senza wrapper visuale proprio, mentre `ExpenseColumnSettings` resta allineato a destra con Button small, `shrink-0` e testo non spezzabile. `ExpenseTotals` smette esclusivamente di presentare `official_basis`; Netto, IVA, Lordo e il contratto dati restano intatti. I test restano comportamentali e la verifica copre 1920px dark, 1440px dark/light e 390px dark.
+
 ## Design
 
 ### Backend — Register e dettaglio year-scoped
@@ -109,7 +115,7 @@ ExpenseRegister
 
 I Select aggiornano subito URL/query e riportano `page` a 1. Il campo cerca mantiene un valore digitato locale e pubblica `q` dopo 300 ms senza nuove dependency. Il page-size selector offre 25, 50 e 100, con 25 default. Lookup non autorizzati non vengono mostrati; un errore lookup è locale e diagnosticabile.
 
-La selezione vive nel Register, contiene soltanto ID della pagina corrente e viene azzerata su cambio filtro, anno, pagina o page size. L'header checkbox implementa checked/unchecked/indeterminate sulla pagina corrente. La toolbar appare soltanto con selezioni e mostra le tre azioni secondo abilities e applicabilità.
+La selezione vive nel Register, contiene soltanto ID della pagina corrente e viene azzerata su cambio filtro, anno, pagina o page size. L'header checkbox implementa checked/unchecked/indeterminate sulla pagina corrente. La toolbar tabella resta compatta e sempre presente per ospitare Colonne a destra; conteggio e tre azioni compaiono a sinistra soltanto con selezioni.
 
 Le colonne configurabili sono `kind`, `contract`, `project`, `cost_center`, `vendor`, `net`, `vat`, `gross`, `state`; Spesa e le colonne checkbox/expander/azioni restano strutturali. Il default desktop segue l'ordine approvato e tiene Vendor nascosto. Il controllo usa Dropdown e pulsanti su/giù, salva via API con feedback e permette reset esplicito.
 

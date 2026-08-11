@@ -139,7 +139,12 @@ export default function ExpenseRegister() {
       onPlanningYearChange={selectPlanningYear}
       onChanged={() => setRefreshVersion((version) => version + 1)}
     />
-    <ExpensePagination meta={response.meta as PaginationMeta} onPageChange={(page) => updateParams({ ...params, page })} disabled={loading} />
+    <ExpensePagination
+      meta={response.meta as PaginationMeta}
+      onPageChange={(page) => updateParams({ ...params, page })}
+      onPerPageChange={(perPage) => updateParams({ ...params, per_page: perPage, page: 1 })}
+      disabled={loading}
+    />
   </div>;
 
   return <>

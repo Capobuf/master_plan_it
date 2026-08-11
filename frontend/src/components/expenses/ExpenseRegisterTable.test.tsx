@@ -83,9 +83,14 @@ describe("ExpenseRegisterTable", () => {
 
     render(<MemoryRouter><ExpenseRegisterTable expenses={[expense]} planningYearId={7} planningYears={[]} columnPreferences={columns} canEdit canCreate canDelete canViewProjects onChanged={vi.fn()} onPlanningYearChange={vi.fn()} /></MemoryRouter>);
 
+    expect(screen.getByRole("button", { name: "Colonne" })).toBeInTheDocument();
     expect(screen.queryByText(/Spese selezionate/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("checkbox", { name: "Seleziona Licenze operative" }));
     expect(screen.getByText("1 Spese selezionate")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Chiudi" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Sposta" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Elimina" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Colonne" })).toBeInTheDocument();
 
     const expander = screen.getByRole("button", { name: "Espandi righe di Licenze operative" });
     const actions = screen.getByRole("button", { name: "Azioni Licenze operative" });

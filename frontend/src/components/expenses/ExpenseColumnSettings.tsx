@@ -58,8 +58,8 @@ export default function ExpenseColumnSettings({ value, onChange, disabled = fals
     void save(next);
   }
 
-  return <div className="relative">
-    <Button type="button" size="sm" variant="outline" startIcon={<GridIcon className="size-4" />} onClick={() => setOpen((current) => !current)} disabled={disabled || saving}>Colonne</Button>
+  return <div className="relative shrink-0">
+    <Button type="button" size="sm" variant="outline" className="shrink-0 whitespace-nowrap" startIcon={<GridIcon className="size-4" />} onClick={() => setOpen((current) => !current)} disabled={disabled || saving}>Colonne</Button>
     <Dropdown isOpen={open} onClose={() => setOpen(false)} className="w-80 p-3" triggerId="expense-column-settings">
       <p className="px-2 pb-2 text-sm font-semibold text-gray-800 dark:text-white/90">Visibilità e ordine</p>
       <ul className="space-y-1">

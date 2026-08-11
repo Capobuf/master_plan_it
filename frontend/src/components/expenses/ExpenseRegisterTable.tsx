@@ -99,9 +99,11 @@ export default function ExpenseRegisterTable({ expenses, planningYearId, plannin
   }
 
   return <>
-    <div className="space-y-3 border-b border-gray-100 p-3 dark:border-white/[0.05]">
-      <div className="flex justify-end"><ExpenseColumnSettings value={columns} onChange={setColumns} disabled={disabled} /></div>
-      <ExpenseBulkActions selected={selected} planningYearId={planningYearId} planningYears={planningYears} canEdit={canEdit} canCreate={canCreate} canDelete={canDelete} onChanged={onChanged} onPlanningYearChange={onPlanningYearChange} />
+    <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-white/[0.05]">
+      <div className="min-w-0 flex-1">
+        <ExpenseBulkActions selected={selected} planningYearId={planningYearId} planningYears={planningYears} canEdit={canEdit} canCreate={canCreate} canDelete={canDelete} onChanged={onChanged} onPlanningYearChange={onPlanningYearChange} />
+      </div>
+      <ExpenseColumnSettings value={columns} onChange={setColumns} disabled={disabled} />
     </div>
     <div className="max-w-full overflow-x-auto">
       <Table className="text-sm">

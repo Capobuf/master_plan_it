@@ -16,6 +16,13 @@
 - Q: Dove devono essere salvate visibilità e ordine personalizzato delle colonne? → A: Nel profilo utente server-side, sincronizzato tra dispositivi e isolato per Tenant e vista.
 - Q: Come deve comportarsi l'applicazione quando si apre direttamente una Spesa di un anno diverso da quello globale? → A: La Spesa non deve essere visibile; la lettura deve fallire closed finché non è selezionato il suo Planning Year.
 
+## Post-review UI polish
+
+- La filter bar del Registro contiene soltanto Cerca Spesa, Natura, Centro di Costo, Fornitore, Progetto, Contratto e Stato, conserva applicazione automatica e debounce correnti e sfrutta una sola riga sui desktop larghi quando lo spazio lo consente.
+- La dimensione pagina 25/50/100 non è un filtro: vive una sola volta nella footer di paginazione, torna a pagina 1 al cambio e conserva filtri e reset della selezione page-scoped.
+- Una sola toolbar immediatamente sopra l'header tabella ospita bulk count/azioni a sinistra quando presenti e il controllo `Colonne` sempre a destra, con dimensione naturale stabile e wrapping utilizzabile su mobile.
+- Le pagine Spese mostrano soltanto Netto, IVA e Lordo nei totali: il copy `Base Ufficiale` non viene reso, mentre `official_basis` resta invariato nel contratto API e nel dominio.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Trovare e confrontare Spese rapidamente (Priority: P1)
@@ -126,11 +133,11 @@ Come utente autorizzato voglio compilare più righe in una griglia ERP, mantenen
 - **FR-009**: L'expander MUST caricare lazy il dettaglio corrente della Spesa, mostrare le righe sotto la parent row, mantenere una cache in memoria durante il montaggio e rendere visibile un errore locale.
 - **FR-010**: Le righe espanse MUST mostrare Tipo, Fornitore, Descrizione, Quantità, Prezzo unitario, Importo inserito, IVA, Data e Pianificazione usando dati già autorevoli.
 - **FR-011**: Il menu azioni della parent row MUST essere aperto da un'icona dedicata e MUST contenere soltanto operazioni esistenti e autorizzate appropriate al contesto.
-- **FR-012**: Il controllo Colonne MUST consentire mostra/nascondi, riordino delle colonne opzionali e ripristino default senza permettere di nascondere checkbox, expander, Spesa, azioni o tutte le informazioni economiche.
+- **FR-012**: Il controllo Colonne MUST appartenere a una toolbar compatta immediatamente sopra la tabella, restare sempre allineato a destra con dimensione naturale stabile e consentire mostra/nascondi, riordino delle colonne opzionali e ripristino default senza permettere di nascondere checkbox, expander, Spesa, azioni o tutte le informazioni economiche.
 - **FR-013**: Il riordino colonne MUST usare un'interazione semplice già disponibile o controlli su/giù e MUST NOT introdurre una nuova data grid o dipendenza.
 - **FR-014**: Le preferenze colonne MUST essere persistite nel profilo utente server-side, isolate per Tenant e vista, e MUST seguire l'utente tra dispositivi e browser; configurazioni obsolete MUST ignorare esplicitamente colonne non più esistenti.
 - **FR-015**: Il Registro MUST supportare checkbox individuali e header limitate alla pagina corrente, mostrare `N Spese selezionate` soltanto quando il conteggio è maggiore di zero e azzerare la selezione su cambio anno, filtro, pagina o dimensione pagina.
-- **FR-016**: La toolbar massiva MUST offrire `Chiudi`, `Sposta in altro anno` ed `Elimina` secondo ability e applicabilità; la dimensione pagina MUST essere selezionabile tra 25, 50 e 100 risultati.
+- **FR-016**: La toolbar tabella MUST offrire `Chiudi`, `Sposta in altro anno` ed `Elimina` secondo ability e applicabilità quando esiste una selezione; la dimensione pagina MUST essere selezionabile tra 25, 50 e 100 risultati esclusivamente nella footer di paginazione e MUST tornare a pagina 1 al cambio.
 - **FR-017**: Ogni mutazione massiva approvata MUST essere tenant-scoped, autorizzata record per record, atomica senza successi parziali silenziosi, diagnosticabile e coerente con lock ottimistico, revisioni e regole lifecycle esistenti.
 - **FR-018**: Il Dettaglio MUST essere una object page compatta con titolo, Natura, Stato, Anno e azioni principali a icona secondo ability.
 - **FR-019**: Ogni azione iconica MUST avere nome accessibile e hint visibile sia su hover sia su focus keyboard senza introdurre una nuova libreria.
@@ -149,6 +156,8 @@ Come utente autorizzato voglio compilare più righe in una griglia ERP, mantenen
 - **FR-032**: Su mobile il Registro MUST conservare filtri, colonne essenziali, expander e menu azioni; ogni riga dell'editor MUST diventare una card compatta con campi primari e Dettagli, senza overflow pagina.
 - **FR-033**: Tutte le superfici MUST conservare light/dark mode e token visuali esistenti senza colori normali hardcoded e senza un nuovo design system.
 - **FR-034**: La feature MUST NOT introdurre allegati, upload, storage file, nuove permission, nuovi calcoli economici client-side o nuove librerie di data grid, stato globale, tooltip o drag-and-drop.
+- **FR-035**: La filter bar MUST contenere soltanto i sette controlli di ricerca e filtro approvati, usare una colonna mobile, due tablet, tre o quattro su desktop medio e sfruttare una sola riga su desktop largo quando lo spazio è sufficiente, senza larghezze rigide globali o CSS custom.
+- **FR-036**: I totali nelle pagine Spese MUST mostrare Netto, IVA e Lordo senza rendere il copy della base ufficiale; il campo API `official_basis` e ogni regola economica MUST restare invariati.
 
 ### Key Entities
 
