@@ -45,6 +45,14 @@ Il pass post-review è frontend-only e non modifica API, persistenza, query, cal
 
 `ExpenseRegisterTable` rende una sola toolbar sopra l'header: `ExpenseBulkActions` fornisce conteggio e azioni senza wrapper visuale proprio, mentre `ExpenseColumnSettings` resta allineato a destra con Button small, `shrink-0` e testo non spezzabile. `ExpenseTotals` smette esclusivamente di presentare `official_basis`; Netto, IVA, Lordo e il contratto dati restano intatti. I test restano comportamentali e la verifica copre 1920px dark, 1440px dark/light e 390px dark.
 
+## Post-review Expense row grid
+
+Il secondo pass post-review conserva integralmente `ExpenseRow.description` in dominio, schema, API, generazione Contract, seed, revisioni e tabella read-only. Il delta è frontend: `description` passa dai campi primari dell'editor alla fascia `Dettagli`.
+
+`ComponentCard` riceve un action slot opzionale e backward-compatible per collocare `Aggiungi Riga` nell'header. `ExpenseEditorRows` usa una sola CSS grid Tailwind table-like: header `hidden lg:grid`, stessa griglia per ogni riga desktop e stessa DOM ricomposta a card su mobile. La riga primaria desktop contiene drag, Tipo, Fornitore, Q.tà, Prezzo unitario, Importo, IVA, Data, Corrente, chevron e cestino con pesi di colonna differenziati. La fascia secondaria contiene Descrizione, IVA inclusa, Extra, Plafond, Riferimento esterno e controlli su/giù accessibili; più righe possono restare espanse.
+
+I test React verificano intestazione unica, tre righe, campi primari, dettagli, Actual non corrente, add/remove/move e payload con `description`. `ExpenseRowsTable` continua a esporre la Descrizione perché il dato resta parte della Expense row. Non sono richieste migration o modifiche PHP.
+
 ## Design
 
 ### Backend — Register e dettaglio year-scoped
@@ -131,7 +139,7 @@ Classificazione, Sintesi economica e Totali sono blocchi distinti. `ExpenseRowsT
 
 `ExpenseEditor` separa `Dati generali` (Titolo, Note) e `Classificazione` (Natura, Centro di Costo, Progetto, Contratto). In creazione ordinaria usa l'anno globale senza controllo; in modifica mostra label read-only; soltanto il credito mostra `Anno destinazione` con anni attivi successivi all'origine.
 
-`ExpenseEditorRows` mantiene React DnD esistente e pulsanti su/giù. Desktop usa una tabella/griglia compatta con una riga per Expense row e campi frequenti inline. Un chevron per riga apre Importo IVA inclusa, Spesa Extra, Plafond e Riferimento esterno. Su mobile ogni riga usa la stessa struttura dati in una card con Tipo, Fornitore, Descrizione, Importo e Data primari; quantità, prezzo, IVA, corrente e dettagli restano in sezioni espandibili. `Aggiungi Riga` resta testuale e immediato.
+`ExpenseEditorRows` mantiene React DnD esistente; i pulsanti su/giù si spostano nei Dettagli. Desktop usa una CSS grid compatta con una sola intestazione e una riga primaria per Expense row: Tipo, Fornitore, Quantità, Prezzo unitario, Importo, IVA, Data e Corrente. Un chevron per riga apre Descrizione, Importo IVA inclusa, Spesa Extra, Plafond e Riferimento esterno. Su mobile la stessa DOM rende Tipo, Fornitore, Importo e Data primari; quantità, prezzo, IVA, corrente e i campi secondari compaiono nei Dettagli. `Aggiungi Riga` resta testuale, immediato e collocato nell'header della sezione.
 
 Il client conserva il calcolo di cortesia `quantity × unit_price → entered_amount` già implementato, ma non calcola Net/IVA/Lordo. Actual/data, current planning e mutua esclusione Extra/Plafond continuano a essere validate autorevolmente dal backend; l'UI disabilita o azzera soltanto combinazioni chiaramente incompatibili.
 

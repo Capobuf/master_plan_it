@@ -66,9 +66,23 @@ describe("ExpenseEditorRows", () => {
     render(<ExpenseEditorRows {...props} rows={rows} onMove={onMove} />);
 
     expect(screen.getAllByRole("group", { name: /Riga/ })).toHaveLength(3);
+    expect(screen.getAllByRole("columnheader", { name: "Tipo" })).toHaveLength(1);
+    expect(screen.getAllByRole("columnheader", { name: "Fornitore" })).toHaveLength(1);
+    expect(screen.getAllByRole("columnheader", { name: "Q.tà" })).toHaveLength(1);
+    expect(screen.getAllByRole("columnheader", { name: "Prezzo unit." })).toHaveLength(1);
+    expect(screen.getAllByRole("columnheader", { name: "Importo" })).toHaveLength(1);
+    expect(screen.getAllByRole("columnheader", { name: "IVA" })).toHaveLength(1);
+    expect(screen.getAllByRole("columnheader", { name: "Data" })).toHaveLength(1);
+    expect(screen.queryByRole("textbox", { name: "Descrizione" })).not.toBeInTheDocument();
+
     const details = screen.getByRole("button", { name: "Mostra dettagli riga 2" });
     fireEvent.click(details);
     expect(screen.getByRole("button", { name: "Nascondi dettagli riga 2" })).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("textbox", { name: "Descrizione" })).toHaveValue("Preventivo");
+    expect(screen.getByRole("checkbox", { name: "IVA inclusa" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Spesa Extra" })).toBeInTheDocument();
+    expect(screen.getByRole("combobox", { name: "Plafond di riferimento" })).toBeInTheDocument();
+    expect(screen.getByRole("textbox", { name: "Riferimento esterno" })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Sposta la riga 2 in alto" }));
     expect(onMove).toHaveBeenCalledWith(1, 0);
   });

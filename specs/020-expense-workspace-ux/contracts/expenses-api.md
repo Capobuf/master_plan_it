@@ -2,6 +2,10 @@
 
 Tutti gli endpoint restano Laravel Sanctum SPA, active-user, active-Tenant, tenant-context e ability protected. Gli identificatori di altro Tenant o fuori dal Planning Year richiesto falliscono closed senza data leakage. Gli importi restano stringhe decimali esatte calcolate dal backend.
 
+## Post-review Expense row grid
+
+`ExpenseRow.description` resta un campo obbligatorio `string`, massimo 255 caratteri, sia nelle request create/update sia nelle response detail. La composizione ERP lo presenta nei `Dettagli` della riga editor, ma non modifica il contratto API, la generazione Contract o la tabella read-only.
+
 ## `GET /api/v1/expenses`
 
 Endpoint Register invariato; non viene creato un endpoint search separato.
