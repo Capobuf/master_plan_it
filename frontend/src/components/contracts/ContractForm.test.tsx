@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/client";
-import { listContractCostCenters, listContractVendors } from "../../api/contracts";
+import { listContractCostCenters, listContractVendors, type Contract } from "../../api/contracts";
 import { listProjectOptions } from "../../api/projects";
 import ContractForm from "./ContractForm";
 
@@ -50,5 +50,63 @@ describe("ContractForm", () => {
     expect(unitPrice).toHaveAttribute("aria-invalid", "true");
     expect(unitPrice).toHaveAccessibleDescription("Inserisci un prezzo valido con massimo 2 decimali.");
     await waitFor(() => expect(document.activeElement).toBe(unitPrice));
+  });
+
+  it("keeps VAT omitted for the first and every newly added term", async () => {
+    render(<ContractForm canSubmit onSubmit={vi.fn()} />);
+
+    const initialVat = await screen.findByRole("textbox", { name: "Aliquota IVA" });
+    expect(initialVat).toHaveValue("");
+
+    fireEvent.click(screen.getByRole("button", { name: "Aggiungi Termine" }));
+
+    expect(screen.getAllByRole("textbox", { name: "Aliquota IVA" })).toHaveLength(2);
+    screen.getAllByRole("textbox", { name: "Aliquota IVA" }).forEach((input) => {
+      expect(input).toHaveValue("");
+    });
+  });
+
+  it("preserves persisted VAT while newly added terms remain omitted", async () => {
+    const contract = {
+      id: 18,
+      vendor_id: 5,
+      cost_center_id: 7,
+      project_id: null,
+      title: "Contratto corrente",
+      description: null,
+      active: true,
+      renewal_date: null,
+      renewal_notice_days: null,
+      renewal_notes: null,
+      lock_version: 2,
+      terms: [{
+        id: 31,
+        local_key: "persisted-term",
+        effective_start: "2026-01-01",
+        effective_end: "2026-12-31",
+        billing_cycle: "monthly",
+        quantity: null,
+        unit_price: null,
+        entered_amount: "100.00",
+        amount_includes_vat: false,
+        vat_rate: "22.00",
+        auto_renew: false,
+        net: "100.00",
+        vat: "22.00",
+        gross: "122.00",
+        currency: "EUR",
+        official_basis: "net",
+        lock_version: 4,
+      }],
+    } as Contract;
+
+    render(<ContractForm contract={contract} canSubmit onSubmit={vi.fn()} />);
+
+    expect(await screen.findByRole("textbox", { name: "Aliquota IVA" })).toHaveValue("22,00");
+    fireEvent.click(screen.getByRole("button", { name: "Aggiungi Termine" }));
+
+    const vatInputs = screen.getAllByRole("textbox", { name: "Aliquota IVA" });
+    expect(vatInputs[0]).toHaveValue("22,00");
+    expect(vatInputs[1]).toHaveValue("");
   });
 });

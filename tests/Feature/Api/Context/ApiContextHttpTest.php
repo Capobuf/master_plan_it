@@ -59,6 +59,27 @@ final class ApiContextHttpTest extends TestCase
         $this->withHeaders($this->csrfHeaders())->getJson('/api/v1/context')->assertJsonPath('data.tenant', null);
     }
 
+    public function test_administrator_receives_tenant_settings_abilities_only_after_entering_a_tenant(): void
+    {
+        $administrator = $this->administrator();
+        $tenant = Tenant::factory()->create();
+        $this->actingAs($administrator, 'web');
+
+        $outsideContext = $this->getJson('/api/v1/context')->assertOk();
+        $this->assertNotContains('tenant-settings.view', $outsideContext->json('data.abilities'));
+        $this->assertNotContains('tenant-settings.update', $outsideContext->json('data.abilities'));
+
+        $this->withHeaders($this->csrfHeaders())
+            ->postJson('/api/v1/tenants/'.$tenant->getKey().'/enter')
+            ->assertOk();
+
+        $insideContext = $this->getJson('/api/v1/context')
+            ->assertOk()
+            ->assertJsonPath('data.tenant.id', $tenant->getKey());
+        $this->assertContains('tenant-settings.view', $insideContext->json('data.abilities'));
+        $this->assertContains('tenant-settings.update', $insideContext->json('data.abilities'));
+    }
+
     public function test_leave_without_context_fails_closed_with_uniform_error(): void
     {
         $administrator = $this->administrator();

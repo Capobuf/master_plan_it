@@ -24,6 +24,9 @@ import PlanningYears from "./pages/PlanningYears/Home";
 import Users from "./pages/Users/Home";
 import Roles from "./pages/Roles/Home";
 import Tenants from "./pages/Tenants/Home";
+import TenantGeneralSettings from "./pages/Settings/General";
+import SettingsIndex from "./pages/Settings/Index";
+import SettingsLayout from "./pages/Settings/Layout";
 import ProtectedRoute from "./components/auth/ProtectedRoute";
 import { AuthProvider } from "./context/AuthContext";
 import { ApplicationProvider } from "./context/ApplicationContext";
@@ -57,11 +60,15 @@ export default function App() {
                 <Route path={routePatterns.progetto} element={<ProjectDetail />} />
                 <Route path={routePatterns.modificaProgetto} element={<EditProject />} />
                 <Route path={routes.fornitori} element={<Vendors />} />
-                <Route path={routes.centriDiCosto} element={<CostCenters />} />
-                <Route path={routes.anniDiPianificazione} element={<PlanningYears />} />
-                <Route path={routes.utenti} element={<Users />} />
-                <Route path={routes.ruoli} element={<Roles />} />
                 <Route path={routes.tenant} element={<Tenants />} />
+                <Route path={routes.impostazioni} element={<SettingsLayout />}>
+                  <Route index element={<SettingsIndex />} />
+                  <Route path={routes.impostazioniGenerali} element={<TenantGeneralSettings />} />
+                  <Route path={routes.impostazioniUtenti} element={<Users />} />
+                  <Route path={routes.impostazioniRuoli} element={<Roles />} />
+                  <Route path={routes.impostazioniAnni} element={<PlanningYears />} />
+                  <Route path={routes.impostazioniCentri} element={<CostCenters />} />
+                </Route>
 
                 <Route path={legacyRoutes.report} element={<Navigate to={routes.report} replace />} />
                 <Route path={legacyRoutePatterns.nuovaSpesa} element={<Navigate to={routes.nuovaSpesa} replace />} />
@@ -73,11 +80,15 @@ export default function App() {
                 <Route path={legacyRoutePatterns.contratto} element={<LegacyContractRedirect />} />
                 <Route path={legacyRoutes.contratti} element={<Navigate to={routes.contratti} replace />} />
                 <Route path={legacyRoutes.fornitori} element={<Navigate to={routes.fornitori} replace />} />
-                <Route path={legacyRoutes.centriDiCosto} element={<Navigate to={routes.centriDiCosto} replace />} />
-                <Route path={legacyRoutes.anniDiPianificazione} element={<Navigate to={routes.anniDiPianificazione} replace />} />
-                <Route path={legacyRoutes.utenti} element={<Navigate to={routes.utenti} replace />} />
-                <Route path={legacyRoutes.ruoli} element={<Navigate to={routes.ruoli} replace />} />
+                <Route path={legacyRoutes.centriDiCosto} element={<Navigate to={routes.impostazioniCentri} replace />} />
+                <Route path={legacyRoutes.anniDiPianificazione} element={<Navigate to={routes.impostazioniAnni} replace />} />
+                <Route path={legacyRoutes.utenti} element={<Navigate to={routes.impostazioniUtenti} replace />} />
+                <Route path={legacyRoutes.ruoli} element={<Navigate to={routes.impostazioniRuoli} replace />} />
                 <Route path={legacyRoutes.tenant} element={<Navigate to={routes.tenant} replace />} />
+                <Route path={routes.centriDiCosto} element={<Navigate to={routes.impostazioniCentri} replace />} />
+                <Route path={routes.anniDiPianificazione} element={<Navigate to={routes.impostazioniAnni} replace />} />
+                <Route path={routes.utenti} element={<Navigate to={routes.impostazioniUtenti} replace />} />
+                <Route path={routes.ruoli} element={<Navigate to={routes.impostazioniRuoli} replace />} />
               </Route>
             </Route>
 

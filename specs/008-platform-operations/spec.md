@@ -26,14 +26,13 @@ Administrator visualizza e modifica il retention period globale, default 24 mesi
 l'operazione di retention con conferma rinforzata quando la riduzione può eliminare eventi più
 vecchi.
 
-### US-008-03 — Gestire impostazioni Tenant protette
+### US-008-03 — Gestire la quota allegati Tenant protetta
 
-Administrator, su un Tenant selezionato, modifica:
+Administrator, su un Tenant selezionato, modifica la attachment quota, default 2 GiB.
 
-- attachment quota, default 2 GiB;
-- deletion-reason-required, default false.
-
-I normali ruoli Tenant non possono ricevere queste abilities protette.
+I normali ruoli Tenant non possono ricevere questa ability protetta. Le impostazioni generali del
+Tenant corrente, incluso `deletion_reason_required`, appartengono alla Feature 021 e non sono
+ridefinite qui.
 
 ### US-008-04 — Consultare audit
 
@@ -69,10 +68,10 @@ Administrator, con input nascosto e invalidazione delle sessioni.
   non deve cancellare payload esistenti.
 - FR-008-007: non deve esistere un massimo prodotto della quota inferiore alla rappresentabilità
   tecnica persistita.
-- FR-008-008: `deletion-reason-required` è booleano, default false e influisce solo su future
-  cancellazioni di Project/Contract/Contract term.
-- FR-008-009: quota e deletion-reason setting sono modificabili solo da Administrator tramite
-  abilities protette distinte per il Tenant esplicitamente selezionato.
+- FR-008-008: le impostazioni generali delegabili del Tenant corrente sono fuori scope e restano
+  definite dalla Feature 021.
+- FR-008-009: la quota è modificabile solo da Administrator tramite una ability protetta per il
+  Tenant esplicitamente selezionato.
 - FR-008-010: audit view deve essere paginata/minimizzata, tenant-scoped e priva di segreti o file
   payload.
 - FR-008-011: audit export è fuori scope.
@@ -88,7 +87,7 @@ Administrator, con input nascosto e invalidazione delle sessioni.
 - stesso Tenant/permission funziona; permission mancante e altro Tenant falliscono senza disclosure;
 - la riduzione retention non modifica alcun business record;
 - quota zero blocca soltanto operazioni future che richiedono nuovi payload;
-- una modifica settings non riscrive evidenze pregresse;
+- una modifica della quota non elimina payload o evidenze pregresse;
 - password/segreti non compaiono in audit, notification, log applicativi o response;
 - il global overview resta operativo e non economico.
 

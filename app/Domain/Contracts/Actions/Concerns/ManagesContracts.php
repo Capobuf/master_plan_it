@@ -133,7 +133,14 @@ trait ManagesContracts
                 }
                 $entered = (new MoneyCalculator)->multiply(Money::fromDecimal($unitPrice, $currency), $quantity)->amount();
             }
-            $rate = $this->contractDecimal(trim($termData->vatRate) === '' ? (string) $tenant->default_vat_rate : $termData->vatRate, "terms.{$index}.vat_rate", false, 10);
+            $rate = $this->contractDecimal(
+                trim($termData->vatRate) === ''
+                    ? (string) ($term->exists ? $term->vat_rate : $tenant->default_vat_rate)
+                    : $termData->vatRate,
+                "terms.{$index}.vat_rate",
+                false,
+                10,
+            );
             $breakdown = $termData->amountIncludesVat ? (new VatCalculator)->fromIncludedAmount(Money::fromDecimal($entered, $currency), $rate) : (new VatCalculator)->fromExcludedAmount(Money::fromDecimal($entered, $currency), $rate);
             $term->fill(['effective_start' => $start->toDateString(), 'effective_end' => $end->toDateString(), 'billing_cycle' => $termData->billingCycle, 'quantity' => $quantity, 'unit_price' => $unitPrice, 'entered_amount' => $entered, 'amount_includes_vat' => $termData->amountIncludesVat, 'vat_rate' => $rate, 'net_amount' => $breakdown->net()->amount(), 'vat_amount' => $breakdown->vat()->amount(), 'gross_amount' => $breakdown->gross()->amount(), 'auto_renew' => $termData->autoRenew]);
             if (! $term->exists) {

@@ -1,6 +1,6 @@
 # Regole di dominio implementate
 
-Stato: `VERIFIED CURRENT` dopo l'implementazione delle Feature 009 e 011.
+Stato: `VERIFIED CURRENT` dopo l'implementazione delle Feature 009, 011 e 021.
 
 Questo documento descrive soltanto regole che devono restare dopo la rimozione degli Spec Kit
 storici. Le funzionalità non implementate sono descritte esclusivamente negli Spec Kit attivi.
@@ -16,6 +16,17 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 - Un Tenant inattivo blocca i tenant user. Administrator può mantenerne l'accesso autorizzato e
   riattivarlo.
 - La disattivazione di un user conserva authorship e storico.
+- Le impostazioni generali operano sempre sul Tenant corrente e comprendono nome, fuso orario,
+  IVA predefinita, Base Budget e obbligo della motivazione di cancellazione; la valuta è visibile
+  ma non modificabile da questa superficie.
+- Il registro globale crea il Tenant con nome, codice, valuta, lingua, fuso orario e IVA come
+  valori bootstrap. Dopo la creazione può modificare soltanto codice, valuta e lingua: nome
+  operativo, fuso orario, IVA predefinita, Base Budget e obbligo della motivazione appartengono
+  esclusivamente alle impostazioni generali del Tenant corrente.
+- Lettura e modifica delle impostazioni generali usano abilities tenant-scoped distinte. Il Tenant
+  non è selezionabile dal payload e l'update è transazionale, versionato e auditato con i soli nomi
+  dei campi modificati.
+- La Base Budget non può cambiare dopo la prima approvazione.
 
 ## Anni di pianificazione
 
@@ -156,6 +167,12 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
   implicitamente nei valori correnti.
 - Net, VAT e Gross restano esatti; il Tenant può usare Net o Gross come base ufficiale, con Net come
   default approvato.
+- L'IVA predefinita del Tenant si applica soltanto a nuove Expense row e nuovi Contract term che
+  omettono l'aliquota. Un valore esplicito, incluso zero, prevale sempre; dati e revisioni esistenti
+  non vengono riscritti. Se un update omette l'IVA di un figlio esistente, resta valida l'aliquota
+  persistita.
+- Generazione e sincronizzazione da un Contract usano i valori IVA persistiti nel termine sorgente,
+  non un default Tenant modificato successivamente.
 - Il Plafond non deve produrre doppio conteggio della parte già coperta dall'allocazione.
 - Budget e Report condividono lo stesso dataset annuale: proposto, approvazione iniziale,
   variazioni, approvato corrente, Actual, residuo, scostamento, utilizzo e conteggi lifecycle.

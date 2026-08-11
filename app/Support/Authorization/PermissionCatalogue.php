@@ -14,6 +14,7 @@ final class PermissionCatalogue
     /** @var list<string> */
     private const TENANT_ABILITIES = [
         'dashboard.view', 'audit.view', 'notification.view',
+        'tenant-settings.view', 'tenant-settings.update',
         'planning-year.view', 'planning-year.create', 'planning-year.update', 'planning-year.deactivate', 'planning-year.reactivate',
         'cost-center.view', 'cost-center.create', 'cost-center.update', 'cost-center.delete', 'cost-center.deactivate', 'cost-center.reactivate', 'cost-center.view-revisions', 'cost-center.restore-revision',
         'vendor.view', 'vendor.create', 'vendor.update', 'vendor.delete', 'vendor.deactivate', 'vendor.reactivate', 'vendor.view-revisions', 'vendor.restore-revision',
@@ -86,5 +87,14 @@ final class PermissionCatalogue
     public static function isTenant(string $ability): bool
     {
         return in_array($ability, self::TENANT_ABILITIES, true);
+    }
+
+    /** @return list<string> */
+    public static function authorizationCandidates(string $ability): array
+    {
+        return match ($ability) {
+            'tenant-settings.view' => ['tenant-settings.view', 'tenant-settings.update'],
+            default => [$ability],
+        };
     }
 }

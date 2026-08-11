@@ -2,8 +2,8 @@
 
 Gli Spec Kit storici del replatform `001`–`007` sono ritirati.
 
-Questa directory contiene gli Spec Kit attivi e le Feature 017 e 020 completate. La Feature 020
-resta disponibile fino all'accettazione del Product Owner, come richiesto dalla slice.
+Questa directory contiene gli Spec Kit attivi e le Feature 017, 020 e 021 completate. Le Feature
+020 e 021 restano disponibili fino all'accettazione del Product Owner, come richiesto dalle slice.
 
 | ID | Feature | Stato corrente |
 |---|---|---|
@@ -18,6 +18,7 @@ resta disponibile fino all'accettazione del Product Owner, come richiesto dalla 
 | 016 | Backup and operations | Specificata; dipende da evidenze hosting |
 | 017 | Budget annuale, approvazioni e ciclo Spese | Implementata e verificata |
 | 020 | Expense workspace UX | Implementata e verificata; in attesa di review Product Owner |
+| 021 | Workspace Impostazioni e IVA predefinita del Tenant | Implementata e verificata; in attesa di review Product Owner |
 
 ## Regola
 
@@ -29,5 +30,5 @@ Una directory resta qui solo finché rappresenta lavoro ancora aperto. A feature
 - `docs/STATUS.md` viene aggiornato;
 - gli artefatti della feature vengono rimossi.
 
-Le directory 009 e 011 costituiscono eccezione esplicita: restano presenti fino alla review del
-Product Owner anche dopo implementazione e verifica.
+Le directory 009, 011, 020 e 021 costituiscono eccezione esplicita: restano presenti fino alla
+review del Product Owner anche dopo implementazione e verifica.

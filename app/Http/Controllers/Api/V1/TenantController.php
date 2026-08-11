@@ -16,7 +16,6 @@ use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
-use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
 final class TenantController extends Controller
@@ -46,7 +45,7 @@ final class TenantController extends Controller
     public function store(Request $request, CreateTenant $createTenant): TenantResource
     {
         $this->authorizeAbility($request, 'platform.tenants.create');
-        $this->rejectUnexpectedFields($request, array_keys($this->tenantRules()));
+        $this->rejectUnexpectedFields($request, array_keys($this->createRules()));
         $tenant = $createTenant->execute($this->actor($request), $this->tenantInput($request), $this->correlationId($request));
 
         return TenantResource::make($tenant);
@@ -55,9 +54,9 @@ final class TenantController extends Controller
     public function update(Request $request, Tenant $tenant, UpdateTenant $updateTenant): TenantResource
     {
         $this->authorizeAbility($request, 'platform.tenants.update');
-        $this->rejectUnexpectedFields($request, [...array_keys($this->tenantRules(true)), 'lock_version']);
+        $this->rejectUnexpectedFields($request, [...array_keys($this->updateRules()), 'lock_version']);
         $validated = $request->validate([
-            ...$this->tenantRules(true),
+            ...$this->updateRules(),
             'lock_version' => ['required', 'integer', 'min:1'],
         ]);
         $expectedLockVersion = (int) $validated['lock_version'];
@@ -121,28 +120,30 @@ final class TenantController extends Controller
     /** @return array<string, mixed> */
     private function tenantInput(Request $request): array
     {
-        return $request->validate($this->tenantRules());
+        return $request->validate($this->createRules());
     }
 
     /** @return array<string, list<string>> */
-    private function tenantRules(bool $partial = false): array
+    private function createRules(): array
     {
-        $presence = $partial ? 'sometimes' : 'required';
-
-        $rules = [
-            'name' => [$presence, 'string', 'max:255'],
-            'code' => [$presence, 'string', 'max:255'],
-            'currency_code' => [$presence, 'string', 'regex:/^[A-Za-z]{3}$/D'],
-            'language_code' => [$presence, 'string', 'regex:/^[A-Za-z]{1,10}$/D'],
-            'timezone' => [$presence, 'string', 'timezone'],
-            'default_vat_rate' => [$presence, 'string', 'regex:/^[0-9]{1,10}(?:\.[0-9]{1,2})?$/D'],
+        return [
+            'name' => ['required', 'string', 'max:255'],
+            'code' => ['required', 'string', 'max:255'],
+            'currency_code' => ['required', 'string', 'regex:/^[A-Za-z]{3}$/D'],
+            'language_code' => ['required', 'string', 'regex:/^[A-Za-z]{1,10}$/D'],
+            'timezone' => ['required', 'string', 'timezone'],
+            'default_vat_rate' => ['required', 'string', 'regex:/^[0-9]{1,10}(?:\.[0-9]{1,2})?$/D'],
         ];
+    }
 
-        if ($partial) {
-            $rules['budget_basis'] = ['sometimes', Rule::in(['net', 'gross'])];
-        }
-
-        return $rules;
+    /** @return array<string, list<string>> */
+    private function updateRules(): array
+    {
+        return [
+            'code' => ['sometimes', 'string', 'max:255'],
+            'currency_code' => ['sometimes', 'string', 'regex:/^[A-Za-z]{3}$/D'],
+            'language_code' => ['sometimes', 'string', 'regex:/^[A-Za-z]{1,10}$/D'],
+        ];
     }
 
     private function authorizeAbility(Request $request, string $ability): void

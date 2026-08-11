@@ -4,6 +4,7 @@ namespace Tests\Feature\Authorization;
 
 use App\Models\Tenant;
 use App\Models\User;
+use App\Support\Authorization\PermissionCatalogue;
 use App\Support\Authorization\PlatformAdministrator;
 use Database\Seeders\DatabaseSeeder;
 use Database\Seeders\PermissionCatalogueSeeder;
@@ -75,6 +76,83 @@ class PermissionCatalogueTest extends TestCase
         foreach (self::protectedPlatformAbilities() as $ability) {
             $this->assertFalse($editor->hasPermissionTo($ability));
             $this->assertFalse($viewer->hasPermissionTo($ability));
+        }
+    }
+
+    public function test_tenant_settings_update_implies_view_without_granting_settings_to_editor_or_viewer(): void
+    {
+        Artisan::call('db:seed', ['--class' => PermissionCatalogueSeeder::class, '--force' => true]);
+
+        $administrator = Role::query()
+            ->whereNull('tenant_id')
+            ->where('name', 'Administrator')
+            ->firstOrFail();
+        $editor = Role::query()->whereNull('tenant_id')->where('name', 'Editor')->firstOrFail();
+        $viewer = Role::query()->whereNull('tenant_id')->where('name', 'Viewer')->firstOrFail();
+
+        $this->assertSame(
+            ['tenant-settings.view', 'tenant-settings.update'],
+            PermissionCatalogue::authorizationCandidates('tenant-settings.view'),
+        );
+        $this->assertSame(
+            ['tenant-settings.update'],
+            PermissionCatalogue::authorizationCandidates('tenant-settings.update'),
+        );
+        $this->assertTrue($administrator->hasPermissionTo('tenant-settings.view'));
+        $this->assertTrue($administrator->hasPermissionTo('tenant-settings.update'));
+        $this->assertFalse($editor->hasPermissionTo('tenant-settings.view'));
+        $this->assertFalse($editor->hasPermissionTo('tenant-settings.update'));
+        $this->assertFalse($viewer->hasPermissionTo('tenant-settings.view'));
+        $this->assertFalse($viewer->hasPermissionTo('tenant-settings.update'));
+    }
+
+    public function test_tenant_settings_permission_upgrade_refreshes_a_warm_cache_and_is_idempotent(): void
+    {
+        Artisan::call('db:seed', ['--class' => PermissionCatalogueSeeder::class, '--force' => true]);
+
+        $administrator = User::factory()->create([
+            'tenant_id' => null,
+            'is_active' => true,
+        ]);
+        $boundary = app(PlatformAdministrator::class);
+        $boundary->assign($administrator);
+        $administratorRole = Role::query()
+            ->whereNull('tenant_id')
+            ->where('name', 'Administrator')
+            ->where('guard_name', 'web')
+            ->firstOrFail();
+        $abilities = ['tenant-settings.view', 'tenant-settings.update'];
+
+        $permissionIds = Permission::query()
+            ->where('guard_name', 'web')
+            ->whereIn('name', $abilities)
+            ->pluck('id');
+        DB::table('role_has_permissions')->whereIn('permission_id', $permissionIds)->delete();
+        Permission::query()->whereIn('id', $permissionIds)->delete();
+
+        $registrar = app(PermissionRegistrar::class);
+        $registrar->forgetCachedPermissions();
+        $this->assertSame(
+            [],
+            $registrar->getPermissions()->whereIn('name', $abilities)->pluck('name')->all(),
+        );
+
+        $migration = require database_path('migrations/2026_08_11_000006_add_tenant_settings_abilities.php');
+        $migration->up();
+        $migration->up();
+
+        foreach ($abilities as $ability) {
+            $permission = Permission::query()
+                ->where('name', $ability)
+                ->where('guard_name', 'web')
+                ->sole();
+
+            $this->assertSame(1, DB::table('role_has_permissions')->where([
+                'permission_id' => $permission->getKey(),
+                'role_id' => $administratorRole->getKey(),
+            ])->count());
+            $this->assertTrue($registrar->getPermissions()->contains('name', $ability));
+            $this->assertTrue($boundary->allows($administrator, $ability));
         }
     }
 
@@ -553,6 +631,7 @@ class PermissionCatalogueTest extends TestCase
         return self::sorted([
             ...self::protectedPlatformAbilities(),
             'dashboard.view', 'audit.view', 'notification.view',
+            'tenant-settings.view', 'tenant-settings.update',
             'planning-year.view', 'planning-year.create', 'planning-year.update', 'planning-year.deactivate', 'planning-year.reactivate',
             'cost-center.view', 'cost-center.create', 'cost-center.update', 'cost-center.delete', 'cost-center.deactivate', 'cost-center.reactivate', 'cost-center.view-revisions', 'cost-center.restore-revision',
             'vendor.view', 'vendor.create', 'vendor.update', 'vendor.delete', 'vendor.deactivate', 'vendor.reactivate', 'vendor.view-revisions', 'vendor.restore-revision',

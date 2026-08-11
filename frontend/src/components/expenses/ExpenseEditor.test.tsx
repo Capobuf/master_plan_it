@@ -67,6 +67,61 @@ describe("ExpenseEditor", () => {
     expect(screen.getAllByRole("group", { name: /Riga/ })).toHaveLength(3);
   });
 
+  it("omits VAT for new rows so the backend can apply the Tenant default", async () => {
+    vi.mocked(expenseApi.createExpense).mockResolvedValue({ id: 91 } as never);
+    render(<MemoryRouter><ExpenseEditor /></MemoryRouter>);
+
+    await screen.findByRole("option", { name: "Operations" });
+    fireEvent.change(screen.getByRole("combobox", { name: "Centro di Costo" }), {
+      target: { value: "3" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Titolo" }), {
+      target: { value: "Spesa con IVA Tenant" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Descrizione riga 1" }), {
+      target: { value: "Riga senza override" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Crea spesa" }));
+
+    await waitFor(() => expect(expenseApi.createExpense).toHaveBeenCalledTimes(1));
+    const input = vi.mocked(expenseApi.createExpense).mock.calls[0][0];
+    expect(input.rows[0]).not.toHaveProperty("vat_rate");
+  });
+
+  it("keeps omission on added rows and sends an explicit VAT override", async () => {
+    vi.mocked(expenseApi.createExpense).mockResolvedValue({ id: 92 } as never);
+    render(<MemoryRouter><ExpenseEditor /></MemoryRouter>);
+
+    await screen.findByRole("option", { name: "Operations" });
+    fireEvent.click(screen.getByRole("button", { name: "+ Aggiungi Riga" }));
+    const vatInputs = Array.from(
+      document.querySelectorAll<HTMLInputElement>('input[aria-label^="IVA riga"]'),
+    );
+    expect(vatInputs).toHaveLength(2);
+    expect(vatInputs[0]).toHaveValue("");
+    expect(vatInputs[1]).toHaveValue("");
+    fireEvent.change(vatInputs[0], { target: { value: "10,00" } });
+
+    fireEvent.change(screen.getByRole("combobox", { name: "Centro di Costo" }), {
+      target: { value: "3" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Titolo" }), {
+      target: { value: "Spesa con override" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Descrizione riga 1" }), {
+      target: { value: "Override esplicito" },
+    });
+    fireEvent.change(screen.getByRole("textbox", { name: "Descrizione riga 2" }), {
+      target: { value: "Default Tenant" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Crea spesa" }));
+
+    await waitFor(() => expect(expenseApi.createExpense).toHaveBeenCalledTimes(1));
+    const input = vi.mocked(expenseApi.createExpense).mock.calls[0][0];
+    expect(input.rows[0]).toHaveProperty("vat_rate", "10");
+    expect(input.rows[1]).not.toHaveProperty("vat_rate");
+  });
+
   it("keeps an explicit future destination year only for credit flow", async () => {
     vi.mocked(expenseApi.getExpense).mockResolvedValue({
       id: 11,
@@ -149,6 +204,52 @@ describe("ExpenseEditor", () => {
     await waitFor(() => expect(document.activeElement).toBe(invalidVendor));
     expect(screen.queryByText(/Riga 2 · Fornitore/)).not.toBeInTheDocument();
     expect(screen.queryByText(/rows\.1\.vendor_id/)).not.toBeInTheDocument();
+  });
+
+  it("preserves the persisted VAT when editing an existing row", async () => {
+    vi.mocked(expenseApi.listExpenseVendors).mockResolvedValue([{ id: 5, name: "Fornitore corrente" }]);
+    vi.mocked(expenseApi.getExpense).mockResolvedValue({
+      id: 8,
+      planning_year_id: 7,
+      planning_year_label: 2026,
+      cost_center_id: 3,
+      kind: "ordinary",
+      title: "Spesa esistente",
+      notes: null,
+      project_id: null,
+      contract_id: null,
+      credit_for_expense_id: null,
+      state: "open",
+      lock_version: 2,
+      rows: [{
+        id: 9,
+        position: 1,
+        vendor_id: 5,
+        type: "actual",
+        description: "Riga corrente",
+        quantity: null,
+        unit_price: null,
+        entered_amount: "100.00",
+        amount_includes_vat: false,
+        vat_rate: "22.00",
+        is_extra: false,
+        funded_plafond_expense_id: null,
+        spend_date: "2026-01-15",
+        external_reference: null,
+        lock_version: 4,
+        is_current_planning: false,
+      }],
+    } as ExpenseDetail);
+    vi.mocked(expenseApi.updateExpense).mockResolvedValue({ id: 8 } as never);
+
+    render(<MemoryRouter><ExpenseEditor expenseId={8} /></MemoryRouter>);
+
+    await screen.findByDisplayValue("Spesa esistente");
+    fireEvent.click(screen.getByRole("button", { name: "Salva modifiche" }));
+
+    await waitFor(() => expect(expenseApi.updateExpense).toHaveBeenCalledTimes(1));
+    const input = vi.mocked(expenseApi.updateExpense).mock.calls[0][1];
+    expect(input.rows[0]).toHaveProperty("vat_rate", "22");
   });
 
   it("highlights and focuses the first invalid local field", async () => {

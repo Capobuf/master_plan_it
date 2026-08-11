@@ -240,6 +240,27 @@ class ProtectedPermissionTest extends TestCase
         $this->assertDatabaseCount('model_has_permissions', 0);
     }
 
+    public function test_tenant_settings_abilities_are_assignable_and_are_not_protected_platform_abilities(): void
+    {
+        [$administrator, $context] = $this->administratorContext();
+        $name = 'Tenant settings '.str()->uuid();
+
+        $role = app(CreateTenantRole::class)->execute(
+            $administrator,
+            $context,
+            $name,
+            ['tenant-settings.view', 'tenant-settings.update'],
+            (string) str()->uuid(),
+        );
+
+        $this->assertSame(
+            ['tenant-settings.update', 'tenant-settings.view'],
+            $role->permissions()->orderBy('name')->pluck('name')->all(),
+        );
+        $this->assertNotContains('tenant-settings.view', self::PROTECTED_ABILITIES);
+        $this->assertNotContains('tenant-settings.update', self::PROTECTED_ABILITIES);
+    }
+
     public function test_each_action_requires_its_exact_platform_management_ability_and_restores_team_scope(): void
     {
         [$administrator, $context] = $this->administratorContext();

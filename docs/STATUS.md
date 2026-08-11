@@ -1,6 +1,6 @@
 # Stato funzionale
 
-Stato verificato dopo l'implementazione delle Feature 009 e 011.
+Stato verificato dopo l'implementazione delle Feature 009, 011 e 021.
 
 Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cronologia.
 
@@ -9,7 +9,8 @@ Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cro
 | Area | Backend/API | Frontend |
 |---|---|---|
 | Login, logout, sessione, contesto Tenant | Implementato | Implementato |
-| Tenant | CRUD/lifecycle implementato | Implementato |
+| Tenant | Creazione bootstrap completa; update globale ristretto a codice, valuta e lingua; lifecycle implementato | Registro globale senza duplicazione dei campi operativi |
+| Impostazioni Tenant | API Generali tenant-scoped, permessi delegabili, lock/audit, ownership esclusiva dei campi operativi e IVA forward-only | Workspace unico con Generali, Utenti, Ruoli e permessi, Anni e Centri filtrati per ability; refresh del contesto dopo il salvataggio |
 | Utenti e ruoli | Implementato | Implementato |
 | Planning year / Budget annuale | Lifecycle, approvazioni atomiche, chiusura | Implementato |
 | Fornitori | CRUD/lifecycle/history/restore | Implementato |
@@ -35,7 +36,7 @@ le route e i Resource testati. Non va dichiarato aggiornato un OpenAPI globale i
 
 | Priorità logica | Slice verticale | Spec Kit |
 |---:|---|---|
-| 1 | Operazioni piattaforma, impostazioni, audit e notifiche | `specs/008-platform-operations` |
+| 1 | Operazioni piattaforma residue, quota allegati protetta, audit e notifiche | `specs/008-platform-operations` |
 | 2 | BudgetVersion, riferimento e confronto | `specs/012-budget-versions` |
 | 3 | Scenari what-if | `specs/013-scenarios` |
 | 4 | Export CSV/XLSX e stampa | `specs/014-exports-and-print` |

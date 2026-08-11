@@ -2,7 +2,7 @@
 
 return [
     'schema' => 3,
-    'expectedDomainWriteCount' => 63,
+    'expectedDomainWriteCount' => 64,
     'writes' => [
         'app/Domain/Attachments/Actions/UploadAttachment.php' => [
             'actionClass' => 'App\\Domain\\Attachments\\Actions\\UploadAttachment',
@@ -89,6 +89,20 @@ return [
             'failureTrigger' => 'throw new ',
             'failureExpectation' => 'expectException(',
             'rollbackAssertions' => ['assertDatabaseCount(', 'assertDatabaseMissing('],
+        ],
+        'app/Domain/Tenancy/Actions/UpdateTenantSettings.php' => [
+            'actionClass' => 'App\\Domain\\Tenancy\\Actions\\UpdateTenantSettings',
+            'actionReference' => 'UpdateTenantSettings::class',
+            'actionInvocation' => [
+                'mode' => 'assigned-container',
+                'variable' => '$action',
+                'method' => 'execute',
+            ],
+            'testFile' => 'tests/Feature/PlatformOperations/TenantSettingsTest.php',
+            'testMethod' => 'test_audit_failure_rolls_back_settings_and_audit',
+            'failureTrigger' => 'throw new ',
+            'failureExpectation' => 'expectException(',
+            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseMissing(', 'assertDatabaseCount('],
         ],
         'app/Domain/Tenancy/Actions/DeactivateTenant.php' => [
             'actionClass' => 'App\\Domain\\Tenancy\\Actions\\DeactivateTenant',

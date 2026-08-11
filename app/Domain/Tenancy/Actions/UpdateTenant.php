@@ -4,8 +4,6 @@ namespace App\Domain\Tenancy\Actions;
 
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
-use App\Domain\Tenancy\Enums\BudgetBasis;
-use App\Models\ApprovalOperation;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
@@ -22,13 +20,9 @@ final class UpdateTenant
 {
     /** @var list<string> */
     private const INPUT_FIELDS = [
-        'name',
         'code',
         'currency_code',
         'language_code',
-        'timezone',
-        'default_vat_rate',
-        'budget_basis',
     ];
 
     public function __construct(
@@ -58,11 +52,6 @@ final class UpdateTenant
 
             if ($tenant->lock_version !== $expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');
-            }
-            if (array_key_exists('budget_basis', $values)
-                && $values['budget_basis'] !== $tenant->getRawOriginal('budget_basis')
-                && ApprovalOperation::query()->where('tenant_id', $tenant->getKey())->exists()) {
-                throw new DomainException('TENANT_BUDGET_BASIS_LOCKED');
             }
 
             $occurredAt = CarbonImmutable::now('UTC');
@@ -121,13 +110,9 @@ final class UpdateTenant
         }
 
         return Validator::make($changes, [
-            'name' => ['sometimes', 'required', 'string', 'max:255', 'not_regex:/^\s*$/u'],
             'code' => ['sometimes', 'required', 'string', 'max:255', 'not_regex:/^\s*$/u', Rule::unique('tenants', 'code')->ignore($target->getKey())],
             'currency_code' => ['sometimes', 'required', 'string', 'regex:/^[A-Za-z]{3}$/D'],
             'language_code' => ['sometimes', 'required', 'string', 'regex:/^[A-Za-z]{1,10}$/D'],
-            'timezone' => ['sometimes', 'required', 'string', 'timezone'],
-            'default_vat_rate' => ['sometimes', 'required', 'string', 'regex:/^[0-9]{1,10}(?:\.[0-9]{1,2})?$/D'],
-            'budget_basis' => ['sometimes', 'required', Rule::enum(BudgetBasis::class)],
         ])->validate();
     }
 

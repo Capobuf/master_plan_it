@@ -22,6 +22,20 @@ function TermsHarness() {
   return <ContractTermsEditor terms={terms} onChange={setTerms} />;
 }
 
+function EmptyTermsHarness() {
+  const [terms, setTerms] = useState<ContractTermInput[]>([
+    { ...term, vat_rate: null },
+  ]);
+  return (
+    <>
+      <ContractTermsEditor terms={terms} onChange={setTerms} />
+      <output data-testid="vat-values">
+        {JSON.stringify(terms.map((item) => item.vat_rate))}
+      </output>
+    </>
+  );
+}
+
 describe("ContractTermsEditor", () => {
   it("populates the amount from quantity and unit price", () => {
     render(<TermsHarness />);
@@ -32,5 +46,17 @@ describe("ContractTermsEditor", () => {
     expect(screen.getByLabelText("Importo")).toHaveValue("25,00");
     expect(screen.getByLabelText("Importo")).toHaveAttribute("readonly");
     expect(screen.getByText("Calcolato da quantità × prezzo unitario")).toBeInTheDocument();
+  });
+
+  it("preserves omission for new terms and explicit VAT overrides", () => {
+    render(<EmptyTermsHarness />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Aggiungi Termine" }));
+    expect(screen.getByTestId("vat-values")).toHaveTextContent("[null,null]");
+
+    fireEvent.change(screen.getAllByRole("textbox", { name: "Aliquota IVA" })[1], {
+      target: { value: "10,00" },
+    });
+    expect(screen.getByTestId("vat-values")).toHaveTextContent('[null,"10,00"]');
   });
 });

@@ -6,6 +6,7 @@ import { useSidebar } from "../context/SidebarContext";
 import { CloseLineIcon, HorizontaLDots } from "../icons";
 import {
   applicationNavigation,
+  canAccessApplicationNavigationItem,
   type ApplicationNavigationSection,
 } from "../navigation/applicationNavigation";
 import { routes } from "../navigation/routes";
@@ -35,7 +36,7 @@ const AppSidebar: React.FC = () => {
       applicationNavigation.reduce<ApplicationNavigationSection[]>(
         (sections, section) => {
           const items = section.items.filter((item) =>
-            hasAbility(item.requiredAbility),
+            canAccessApplicationNavigationItem(item, hasAbility),
           );
 
           if (items.length > 0) {

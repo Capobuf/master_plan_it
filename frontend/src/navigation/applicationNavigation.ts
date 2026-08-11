@@ -1,16 +1,12 @@
 import type { ComponentType, SVGProps } from "react";
 
 import {
-  BoxCubeIcon,
-  CalenderIcon,
   DocsIcon,
   DollarLineIcon,
   GridIcon,
   GroupIcon,
-  LockIcon,
   PieChartIcon,
   TableIcon,
-  UserCircleIcon,
 } from "../icons";
 import { routes } from "./routes";
 
@@ -18,13 +14,22 @@ export interface ApplicationNavigationItem {
   route: string;
   label: string;
   icon: ComponentType<SVGProps<SVGSVGElement>>;
-  requiredAbility: string;
+  requiredAbility: string | readonly string[];
 }
 
 export interface ApplicationNavigationSection {
   id: string;
   label: string;
   items: readonly ApplicationNavigationItem[];
+}
+
+export function canAccessApplicationNavigationItem(
+  item: ApplicationNavigationItem,
+  hasAbility: (ability: string) => boolean,
+): boolean {
+  return typeof item.requiredAbility === "string"
+    ? hasAbility(item.requiredAbility)
+    : item.requiredAbility.some(hasAbility);
 }
 
 export const applicationNavigation = [
@@ -93,28 +98,17 @@ export const applicationNavigation = [
     label: "Impostazioni",
     items: [
       {
-        route: routes.anniDiPianificazione,
-        label: "Anni di pianificazione",
-        icon: CalenderIcon,
-        requiredAbility: "planning-year.view",
-      },
-      {
-        route: routes.centriDiCosto,
-        label: "Centri di costo",
-        icon: BoxCubeIcon,
-        requiredAbility: "cost-center.view",
-      },
-      {
-        route: routes.utenti,
-        label: "Utenti",
-        icon: UserCircleIcon,
-        requiredAbility: "platform.users.manage",
-      },
-      {
-        route: routes.ruoli,
-        label: "Ruoli",
-        icon: LockIcon,
-        requiredAbility: "platform.roles.manage",
+        route: routes.impostazioni,
+        label: "Impostazioni",
+        icon: GridIcon,
+        requiredAbility: [
+          "tenant-settings.view",
+          "tenant-settings.update",
+          "platform.users.manage",
+          "platform.roles.manage",
+          "planning-year.view",
+          "cost-center.view",
+        ],
       },
     ],
   },

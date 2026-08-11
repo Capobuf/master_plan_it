@@ -6,7 +6,7 @@ use App\Domain\Budget\Actions\ApplyBudgetApproval;
 use App\Domain\Budget\Data\ApplyApprovalData;
 use App\Domain\Budget\Data\ApprovalChangeData;
 use App\Domain\Expenses\Enums\ExpenseType;
-use App\Domain\Tenancy\Actions\UpdateTenant;
+use App\Domain\Tenancy\Actions\UpdateTenantSettings;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
@@ -36,10 +36,16 @@ final class TenantBudgetBasisFreezeTest extends TestCase
         $tenant = Tenant::factory()->create(['budget_basis' => 'net']);
         $actor = User::factory()->create(['tenant_id' => null, 'is_active' => true]);
         app(PlatformAdministrator::class)->assign($actor);
-        $tenant = app(UpdateTenant::class)->execute(
+        $tenant = app(UpdateTenantSettings::class)->execute(
             $actor,
-            $tenant,
-            ['budget_basis' => 'gross'],
+            new TenantContext($tenant, $actor),
+            [
+                'name' => $tenant->name,
+                'timezone' => $tenant->timezone,
+                'default_vat_rate' => $tenant->default_vat_rate,
+                'budget_basis' => 'gross',
+                'deletion_reason_required' => $tenant->deletion_reason_required,
+            ],
             1,
             (string) str()->uuid(),
         );
@@ -64,10 +70,16 @@ final class TenantBudgetBasisFreezeTest extends TestCase
         );
 
         try {
-            app(UpdateTenant::class)->execute(
+            app(UpdateTenantSettings::class)->execute(
                 $actor,
-                $tenant->fresh(),
-                ['budget_basis' => 'net'],
+                new TenantContext($tenant->fresh(), $actor),
+                [
+                    'name' => $tenant->name,
+                    'timezone' => $tenant->timezone,
+                    'default_vat_rate' => $tenant->default_vat_rate,
+                    'budget_basis' => 'net',
+                    'deletion_reason_required' => $tenant->deletion_reason_required,
+                ],
                 2,
                 (string) str()->uuid(),
             );

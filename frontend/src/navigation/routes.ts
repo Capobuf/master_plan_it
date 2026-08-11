@@ -20,6 +20,12 @@ export const routes = {
   anniDiPianificazione: "/anni-di-pianificazione",
   utenti: "/utenti",
   ruoli: "/ruoli",
+  impostazioni: "/impostazioni",
+  impostazioniGenerali: "/impostazioni/generali",
+  impostazioniUtenti: "/impostazioni/utenti",
+  impostazioniRuoli: "/impostazioni/ruoli",
+  impostazioniAnni: "/impostazioni/anni-di-pianificazione",
+  impostazioniCentri: "/impostazioni/centri-di-costo",
   tenant: "/tenant",
 } as const;
 

@@ -224,7 +224,7 @@ class TenantManagementTest extends TestCase
         $tenant = app(UpdateTenant::class)->execute(
             $administrator,
             $tenant,
-            ['name' => 'Updated with persisted actor'],
+            ['code' => 'persisted-actor-label-updated'],
             1,
             $correlations['update'],
         );
@@ -256,7 +256,7 @@ class TenantManagementTest extends TestCase
             $tenant,
             'tenant.updated',
             $correlations['update'],
-            ['changed_fields' => ['name']],
+            ['changed_fields' => ['code']],
         );
         $this->assertLifecycleAudit(
             $administrator,
@@ -344,8 +344,8 @@ class TenantManagementTest extends TestCase
         $this->assertDatabaseMissing('audit_events', ['correlation_id' => $correlationId]);
     }
 
-    #[DataProvider('invalidSchemaFieldValues')]
-    public function test_update_rejects_schema_invalid_q_012_values_without_side_effects(
+    #[DataProvider('invalidGlobalUpdateFieldValues')]
+    public function test_update_rejects_schema_invalid_global_values_without_side_effects(
         string $field,
         string $invalidValue,
     ): void {
@@ -437,18 +437,15 @@ class TenantManagementTest extends TestCase
         $this->assertDatabaseMissing('audit_events', ['correlation_id' => $correlationId]);
     }
 
-    public function test_administrator_updates_every_approved_tenant_field_with_compare_and_swap_locking_and_audit_attribution(): void
+    public function test_administrator_updates_only_global_tenant_identifiers_with_compare_and_swap_locking_and_audit_attribution(): void
     {
         $administrator = $this->administrator();
         $tenant = Tenant::factory()->create(['lock_version' => 7]);
         $correlationId = (string) str()->uuid();
         $changes = [
-            'name' => 'Renamed tenant',
             'code' => 'renamed-tenant-code',
             'currency_code' => 'USD',
             'language_code' => 'en',
-            'timezone' => 'UTC',
-            'default_vat_rate' => '10.50',
         ];
 
         $updated = app(UpdateTenant::class)->execute(
@@ -475,7 +472,7 @@ class TenantManagementTest extends TestCase
         );
     }
 
-    public function test_update_rejects_lifecycle_operational_and_later_owned_fields_without_mutation_or_audit(): void
+    public function test_update_rejects_settings_lifecycle_and_later_owned_fields_atomically_without_mutation_or_audit(): void
     {
         $administrator = $this->administrator();
         $tenant = Tenant::factory()->create([
@@ -484,13 +481,19 @@ class TenantManagementTest extends TestCase
             'state_changed_by_user_id' => null,
             'state_changed_at' => null,
         ]);
+        $original = $this->persistedTenantAttributes($tenant);
+        $auditCount = AuditEvent::query()->count();
 
         $forbiddenChanges = [
+            'name' => 'Settings-owned name',
+            'timezone' => 'UTC',
+            'default_vat_rate' => '10.50',
+            'budget_basis' => BudgetBasis::Gross->value,
+            'deletion_reason_required' => true,
             'state' => TenantState::Inactive->value,
             'state_changed_by_user_id' => $administrator->getKey(),
             'state_changed_at' => now()->toDateTimeString(),
             'attachment_quota_bytes' => '0',
-            'deletion_reason_required' => true,
             'company_name' => 'Later branding task',
             'address' => 'Later branding task',
             'contact_name' => 'Later branding task',
@@ -507,12 +510,13 @@ class TenantManagementTest extends TestCase
             $this->assertValidationFailure($field, fn () => app(UpdateTenant::class)->execute(
                 $administrator,
                 $tenant,
-                [$field => $value],
+                ['code' => 'must-not-change-'.$field, $field => $value],
                 13,
                 $correlationId,
             ));
 
             $tenant->refresh();
+            $this->assertSame($original, $this->persistedTenantAttributes($tenant));
             $this->assertSame(TenantState::Active, $tenant->state);
             $this->assertSame(13, $tenant->lock_version);
             $this->assertSame('2147483648', $tenant->attachment_quota_bytes);
@@ -526,6 +530,7 @@ class TenantManagementTest extends TestCase
             $this->assertNull($tenant->contact_email);
             $this->assertNull($tenant->contact_phone);
             $this->assertNull($tenant->report_logo_path);
+            $this->assertDatabaseCount('audit_events', $auditCount);
             $this->assertDatabaseMissing('audit_events', ['correlation_id' => $correlationId]);
         }
     }
@@ -533,14 +538,14 @@ class TenantManagementTest extends TestCase
     public function test_stale_tenant_update_fails_without_mutating_the_record_or_writing_audit(): void
     {
         $administrator = $this->administrator();
-        $tenant = Tenant::factory()->create(['name' => 'Original tenant', 'lock_version' => 4]);
+        $tenant = Tenant::factory()->create(['code' => 'original-tenant-code', 'lock_version' => 4]);
         $correlationId = (string) str()->uuid();
 
         $this->assertDomainFailure('STALE_VERSION', function () use ($administrator, $tenant, $correlationId): void {
             app(UpdateTenant::class)->execute(
                 $administrator,
                 $tenant,
-                ['name' => 'Stale tenant name'],
+                ['code' => 'stale-tenant-code'],
                 3,
                 $correlationId,
             );
@@ -548,7 +553,7 @@ class TenantManagementTest extends TestCase
 
         $tenant->refresh();
 
-        $this->assertSame('Original tenant', $tenant->name);
+        $this->assertSame('original-tenant-code', $tenant->code);
         $this->assertSame(4, $tenant->lock_version);
         $this->assertDatabaseMissing('audit_events', ['correlation_id' => $correlationId]);
     }
@@ -586,7 +591,7 @@ class TenantManagementTest extends TestCase
             fn () => app(UpdateTenant::class)->execute(
                 $tenantUser,
                 $tenant,
-                ['name' => 'Tenant user cannot change this'],
+                ['code' => 'tenant-user-cannot-change-this'],
                 12,
                 $correlationIds[1],
             ),
@@ -865,7 +870,7 @@ class TenantManagementTest extends TestCase
     public function test_update_tenant_rolls_back_when_its_audit_write_fails(): void
     {
         $administrator = $this->administrator();
-        $tenant = Tenant::factory()->create(['name' => 'Before failed update', 'lock_version' => 9]);
+        $tenant = Tenant::factory()->create(['code' => 'before-failed-update', 'lock_version' => 9]);
         $correlationId = (string) str()->uuid();
         $auditCount = AuditEvent::query()->count();
         [$dispatcher, $eventName, $listeners] = $this->auditCreatingListeners();
@@ -879,11 +884,11 @@ class TenantManagementTest extends TestCase
         try {
             $this->expectException(RuntimeException::class);
             $action = app(UpdateTenant::class);
-            $action->execute($administrator, $tenant, ['name' => 'Unsafe partial update'], 9, $correlationId);
+            $action->execute($administrator, $tenant, ['code' => 'unsafe-partial-update'], 9, $correlationId);
         } finally {
             $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
             $tenant->refresh();
-            $this->assertSame('Before failed update', $tenant->name);
+            $this->assertSame('before-failed-update', $tenant->code);
             $this->assertSame(9, $tenant->lock_version);
             $this->assertDatabaseCount('audit_events', $auditCount);
             $this->assertDatabaseMissing('audit_events', ['correlation_id' => $correlationId]);
@@ -977,6 +982,18 @@ class TenantManagementTest extends TestCase
             'VAT is negative' => ['default_vat_rate', '-0.01'],
             'VAT has more than two decimal places' => ['default_vat_rate', '22.123'],
             'VAT exceeds DECIMAL 12,2 range' => ['default_vat_rate', '10000000000.00'],
+        ];
+    }
+
+    /** @return array<string, array{string, string}> */
+    public static function invalidGlobalUpdateFieldValues(): array
+    {
+        return [
+            'code is empty' => ['code', ''],
+            'currency contains non-ASCII' => ['currency_code', 'E€R'],
+            'currency contains non-letters' => ['currency_code', '12$'],
+            'language contains punctuation' => ['language_code', 'it-IT'],
+            'language contains a digit' => ['language_code', 'it2'],
         ];
     }
 
@@ -1104,7 +1121,7 @@ class TenantManagementTest extends TestCase
             'update' => app(UpdateTenant::class)->execute(
                 $actor,
                 $target ?? throw new \LogicException('Update target is required.'),
-                ['name' => 'Rejected actor update'],
+                ['code' => 'rejected-actor-update'],
                 40,
                 $correlationId,
             ),

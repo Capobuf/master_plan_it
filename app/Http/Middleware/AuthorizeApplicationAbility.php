@@ -48,7 +48,13 @@ final class AuthorizeApplicationAbility
         }
 
         if ($actor->tenant_id === null) {
-            return $this->platformAdministrator->allows($actor, $ability);
+            foreach (PermissionCatalogue::authorizationCandidates($ability) as $candidate) {
+                if ($this->platformAdministrator->allows($actor, $candidate)) {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         if (
@@ -59,7 +65,13 @@ final class AuthorizeApplicationAbility
         }
 
         try {
-            return $actor->checkPermissionTo($ability, 'web');
+            foreach (PermissionCatalogue::authorizationCandidates($ability) as $candidate) {
+                if ($actor->checkPermissionTo($candidate, 'web')) {
+                    return true;
+                }
+            }
+
+            return false;
         } catch (PermissionDoesNotExist) {
             return false;
         }

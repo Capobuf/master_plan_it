@@ -10,7 +10,7 @@ export function newContractTerm(): ContractTermInput {
     unit_price: null,
     entered_amount: "0.00",
     amount_includes_vat: false,
-    vat_rate: "0.00",
+    vat_rate: null,
     auto_renew: false,
   };
 }

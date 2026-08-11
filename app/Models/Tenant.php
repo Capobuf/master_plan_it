@@ -102,6 +102,14 @@ class Tenant extends Model
     }
 
     /**
+     * @return HasMany<ApprovalOperation, $this>
+     */
+    public function approvalOperations(): HasMany
+    {
+        return $this->hasMany(ApprovalOperation::class);
+    }
+
+    /**
      * @return HasMany<Media, $this>
      */
     public function media(): HasMany

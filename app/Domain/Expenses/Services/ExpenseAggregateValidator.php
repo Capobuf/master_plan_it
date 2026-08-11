@@ -188,8 +188,13 @@ final class ExpenseAggregateValidator
         if ($row->type !== ExpenseType::Actual && bccomp($entered, '0', Money::SCALE) < 0) {
             $this->fail("{$prefix}.entered_amount", 'Estimate and Quote amounts cannot be negative.');
         }
+        $persistedVatRate = $row->id === null || ! $currentExpense instanceof Expense
+            ? null
+            : $currentExpense->rows()->whereKey($row->id)->value('vat_rate');
         $vatRate = $this->plainDecimal(
-            trim($row->vatRate) === '' ? (string) $tenant->default_vat_rate : $row->vatRate,
+            trim($row->vatRate) === ''
+                ? (string) ($persistedVatRate ?? $tenant->default_vat_rate)
+                : $row->vatRate,
             "{$prefix}.vat_rate",
             false,
             10,
