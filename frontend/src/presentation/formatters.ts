@@ -65,7 +65,7 @@ export function formatEditableDecimal(
   return trimmed ? `${integer}.${trimmed}` : integer;
 }
 
-export function normalizeDecimalInput(value: string, maxScale = 6): string {
+export function normalizeDecimalInput(value: string, maxScale = 2): string {
   const normalized = value.trim().replace(",", ".");
   if (!new RegExp(`^-?\\d+(?:\\.\\d{1,${maxScale}})?$`).test(normalized)) {
     throw new Error(`Inserisci un numero con al massimo ${maxScale} decimali.`);
@@ -86,10 +86,10 @@ export function calculateEnteredAmount(
   if (!quantity?.trim() || !unitPrice?.trim()) return null;
 
   try {
-    const normalizedQuantity = normalizeDecimalInput(quantity, 6);
-    const normalizedUnitPrice = normalizeDecimalInput(unitPrice, 6);
+    const normalizedQuantity = normalizeDecimalInput(quantity, 2);
+    const normalizedUnitPrice = normalizeDecimalInput(unitPrice, 2);
     if (!/[1-9]/.test(normalizedUnitPrice)) return null;
-    return multiplyDecimals(normalizedQuantity, normalizedUnitPrice, 6);
+    return multiplyDecimals(normalizedQuantity, normalizedUnitPrice, 2);
   } catch {
     return null;
   }

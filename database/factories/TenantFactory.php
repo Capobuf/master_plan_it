@@ -26,7 +26,7 @@ class TenantFactory extends Factory
             'currency_code' => 'EUR',
             'language_code' => 'it',
             'timezone' => 'Europe/Rome',
-            'default_vat_rate' => '22.000000',
+            'default_vat_rate' => '22.00',
             'budget_basis' => BudgetBasis::Net,
             'attachment_quota_bytes' => '2147483648',
             'deletion_reason_required' => false,

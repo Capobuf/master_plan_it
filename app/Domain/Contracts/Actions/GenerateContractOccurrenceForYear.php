@@ -8,6 +8,8 @@ use App\Domain\Contracts\Queries\ExpectedContractOccurrenceQuery;
 use App\Domain\Expenses\Actions\Concerns\ManagesExpenseAggregate;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Domain\Money\Money;
+use App\Domain\Money\Services\VatCalculator;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Contract;
@@ -84,7 +86,10 @@ final class GenerateContractOccurrenceForYear
             'is_system_managed' => true, 'manual_override_at' => null, 'contract_term_id' => $term->getKey(), 'contract_source_rule_key' => $term->source_rule_key,
             'contract_occurrence_date' => $expected->occurrenceDate, 'source_key' => $expected->sourceKey, 'description' => $contract->title,
             'quantity' => null, 'unit_price' => null, 'entered_amount' => $expected->netAmount, 'amount_includes_vat' => false,
-            'vat_rate' => bccomp($expected->netAmount, '0', 6) === 0 ? '0.0000' : bcmul(bcdiv($expected->vatAmount, $expected->netAmount, 8), '100', 4), 'net_amount' => $expected->netAmount, 'vat_amount' => $expected->vatAmount, 'gross_amount' => $expected->grossAmount,
+            'vat_rate' => (new VatCalculator)->rateFromAmounts(
+                Money::fromDecimal($expected->netAmount, $context->currencyCode),
+                Money::fromDecimal($expected->vatAmount, $context->currencyCode),
+            ), 'net_amount' => $expected->netAmount, 'vat_amount' => $expected->vatAmount, 'gross_amount' => $expected->grossAmount,
             'is_extra' => false, 'funded_plafond_expense_id' => null, 'spend_date' => null, 'period_start' => null, 'period_end' => null,
             'distribution' => null, 'external_reference' => null,
         ]);

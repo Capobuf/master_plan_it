@@ -70,16 +70,17 @@ final class ExpenseSchemaTest extends TestCase
             ->where('table_schema', DB::getDatabaseName())
             ->whereIn('table_name', ['expense_rows', 'expenses', 'approval_items'])
             ->whereIn('column_name', [
-                'entered_amount', 'net_amount', 'vat_amount', 'gross_amount',
+                'quantity', 'unit_price', 'entered_amount', 'vat_rate', 'net_amount', 'vat_amount', 'gross_amount',
                 'approved_amount', 'previous_amount', 'new_amount', 'delta_amount',
             ])
             ->get()
             ->keyBy(fn (object $column): string => $column->table_name.'.'.$column->column_name);
 
-        foreach (['entered_amount', 'net_amount', 'vat_amount', 'gross_amount'] as $name) {
+        foreach (['quantity', 'unit_price', 'entered_amount', 'vat_rate', 'net_amount', 'vat_amount', 'gross_amount'] as $name) {
             $column = $columns->get('expense_rows.'.$name);
             $this->assertNotNull($column);
             $this->assertSame('decimal', $column->data_type);
+            $this->assertSame(2, (int) $column->numeric_scale);
         }
         $this->assertSame('YES', $columns->get('expenses.approved_amount')->is_nullable);
         $this->assertSame(2, (int) $columns->get('expenses.approved_amount')->numeric_scale);
@@ -238,7 +239,7 @@ final class ExpenseSchemaTest extends TestCase
     ): SaveExpenseRowData {
         return new SaveExpenseRowData(
             null, $position, $vendor->getKey(), $type, 'Row', null, null, '100.00', false,
-            '22.000000', false, null, $date, null, null, null, null, null, $current,
+            '22.00', false, null, $date, null, null, null, null, null, $current,
         );
     }
 }

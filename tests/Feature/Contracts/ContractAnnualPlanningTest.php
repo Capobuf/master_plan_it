@@ -49,9 +49,9 @@ final class ContractAnnualPlanningTest extends TestCase
             'effective_start' => '2026-01-01',
             'effective_end' => '2026-12-31',
             'billing_cycle' => BillingCycle::Monthly,
-            'entered_amount' => '100.000000',
+            'entered_amount' => '100.00',
             'amount_includes_vat' => false,
-            'vat_rate' => '22.000000',
+            'vat_rate' => '22.00',
             'net_amount' => '100.00',
             'vat_amount' => '22.00',
             'gross_amount' => '122.00',
@@ -68,7 +68,7 @@ final class ContractAnnualPlanningTest extends TestCase
         $this->assertDatabaseMissing('expense_rows', ['expense_id' => $expense->getKey(), 'type' => 'actual']);
 
         $term->forceFill([
-            'entered_amount' => '110.000000',
+            'entered_amount' => '110.00',
             'net_amount' => '110.00',
             'vat_amount' => '24.20',
             'gross_amount' => '134.20',
@@ -78,7 +78,7 @@ final class ContractAnnualPlanningTest extends TestCase
 
         $expense->forceFill(['current_planning_row_id' => $row->getKey()])->save();
         $term->forceFill([
-            'entered_amount' => '120.000000',
+            'entered_amount' => '120.00',
             'net_amount' => '120.00',
             'vat_amount' => '26.40',
             'gross_amount' => '146.40',
@@ -89,9 +89,9 @@ final class ContractAnnualPlanningTest extends TestCase
         $this->assertSame('1320.00', $row->fresh()->net_amount);
         $this->assertSame('managed', $occurrence->planningState);
         $this->assertSame([
-            'net' => '120.000000',
-            'vat' => '26.400000',
-            'gross' => '146.400000',
+            'net' => '120.00',
+            'vat' => '26.40',
+            'gross' => '146.40',
         ], $occurrence->expectedDifference);
     }
 }

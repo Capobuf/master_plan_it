@@ -47,7 +47,7 @@ class Tenant extends Model
     {
         return [
             'state' => TenantState::class,
-            'default_vat_rate' => 'decimal:6',
+            'default_vat_rate' => 'decimal:2',
             'budget_basis' => BudgetBasis::class,
             'attachment_quota_bytes' => 'string',
             'deletion_reason_required' => 'boolean',

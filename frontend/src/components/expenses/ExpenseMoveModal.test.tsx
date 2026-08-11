@@ -19,7 +19,7 @@ describe("ExpenseMoveModal", () => {
       { id: 2, label: 2027, active: false },
       { id: 3, label: 2028, active: true },
     ]);
-    vi.mocked(moveExpense).mockResolvedValue({ destination: { id: 88 } } as never);
+    vi.mocked(moveExpense).mockResolvedValue({ destination: { id: 88, planning_year_id: 3 } } as never);
     const onMoved = vi.fn();
     render(
       <ExpenseMoveModal
@@ -45,7 +45,7 @@ describe("ExpenseMoveModal", () => {
         lock_version: 7,
         target_planning_year_id: 3,
       });
-      expect(onMoved).toHaveBeenCalledWith(88);
+      expect(onMoved).toHaveBeenCalledWith(88, 3);
     });
   });
 });

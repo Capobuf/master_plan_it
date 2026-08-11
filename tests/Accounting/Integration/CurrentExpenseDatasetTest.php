@@ -2,6 +2,7 @@
 
 namespace Tests\Accounting\Integration;
 
+use App\Domain\Expenses\Data\ExpenseRegisterFilterData;
 use App\Domain\Expenses\Queries\ExpenseRegisterQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\BudgetBasis;
@@ -106,8 +107,9 @@ class CurrentExpenseDatasetTest extends TestCase
         DB::flushQueryLog();
         DB::enableQueryLog();
         $query = app(ExpenseRegisterQuery::class);
-        $page = $query->paginate($actor, $context, (int) $year->getKey(), page: 1, perPage: 15);
-        $totals = $query->totals($actor, $context, (int) $year->getKey());
+        $filters = new ExpenseRegisterFilterData(planningYearId: (int) $year->getKey());
+        $page = $query->paginate($actor, $context, $filters, page: 1, perPage: 15);
+        $totals = $query->totals($actor, $context, $filters);
         $sql = strtolower(implode('\n', array_column(DB::getQueryLog(), 'query')));
         DB::disableQueryLog();
 

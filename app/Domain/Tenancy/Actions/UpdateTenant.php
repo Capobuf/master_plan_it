@@ -126,7 +126,7 @@ final class UpdateTenant
             'currency_code' => ['sometimes', 'required', 'string', 'regex:/^[A-Za-z]{3}$/D'],
             'language_code' => ['sometimes', 'required', 'string', 'regex:/^[A-Za-z]{1,10}$/D'],
             'timezone' => ['sometimes', 'required', 'string', 'timezone'],
-            'default_vat_rate' => ['sometimes', 'required', 'string', 'regex:/^[0-9]{1,6}(?:\.[0-9]{1,6})?$/D'],
+            'default_vat_rate' => ['sometimes', 'required', 'string', 'regex:/^[0-9]{1,10}(?:\.[0-9]{1,2})?$/D'],
             'budget_basis' => ['sometimes', 'required', Rule::enum(BudgetBasis::class)],
         ])->validate();
     }

@@ -13,7 +13,7 @@ class MonthlyAllocatorTest extends TestCase
     public function test_all_distribution_splits_months_and_assigns_the_residual_to_the_last_eligible_month(): void
     {
         $allocation = (new MonthlyAllocator)->allocate(
-            Money::fromDecimal('10.000000', 'EUR'),
+            Money::fromDecimal('10.00', 'EUR'),
             new DateTimeImmutable('2026-01-01'),
             new DateTimeImmutable('2026-03-31'),
             'all',
@@ -29,7 +29,7 @@ class MonthlyAllocatorTest extends TestCase
     public function test_start_distribution_assigns_the_full_amount_to_the_first_eligible_month(): void
     {
         $allocation = (new MonthlyAllocator)->allocate(
-            Money::fromDecimal('10.000000', 'EUR'),
+            Money::fromDecimal('10.00', 'EUR'),
             new DateTimeImmutable('2026-01-01'),
             new DateTimeImmutable('2026-03-31'),
             'start',
@@ -43,7 +43,7 @@ class MonthlyAllocatorTest extends TestCase
     public function test_end_distribution_assigns_the_full_amount_to_the_last_eligible_month(): void
     {
         $allocation = (new MonthlyAllocator)->allocate(
-            Money::fromDecimal('10.000000', 'EUR'),
+            Money::fromDecimal('10.00', 'EUR'),
             new DateTimeImmutable('2026-01-01'),
             new DateTimeImmutable('2026-03-31'),
             'end',
@@ -57,7 +57,7 @@ class MonthlyAllocatorTest extends TestCase
     public function test_all_distribution_assigns_a_negative_residual_to_the_last_eligible_month(): void
     {
         $allocation = (new MonthlyAllocator)->allocate(
-            Money::fromDecimal('10.010000', 'EUR'),
+            Money::fromDecimal('10.01', 'EUR'),
             new DateTimeImmutable('2026-01-01'),
             new DateTimeImmutable('2026-03-31'),
             'all',
@@ -73,7 +73,7 @@ class MonthlyAllocatorTest extends TestCase
     public function test_all_distribution_assigns_a_minimal_cent_residual_to_the_last_eligible_month(): void
     {
         $allocation = (new MonthlyAllocator)->allocate(
-            Money::fromDecimal('0.010000', 'EUR'),
+            Money::fromDecimal('0.01', 'EUR'),
             new DateTimeImmutable('2026-01-01'),
             new DateTimeImmutable('2026-03-31'),
             'all',
@@ -136,7 +136,7 @@ class MonthlyAllocatorTest extends TestCase
     ): void {
         try {
             (new MonthlyAllocator)->allocate(
-                Money::fromDecimal('10.000000', 'EUR'),
+                Money::fromDecimal('10.00', 'EUR'),
                 $start,
                 $end,
                 $distribution,

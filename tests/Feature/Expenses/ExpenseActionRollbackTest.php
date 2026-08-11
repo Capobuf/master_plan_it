@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Expenses;
 
+use App\Domain\Expenses\Actions\BulkExpenseAction;
 use App\Domain\Expenses\Actions\CloseExpense;
 use App\Domain\Expenses\Actions\CreateExpense;
 use App\Domain\Expenses\Actions\DeleteExpense;
@@ -122,6 +123,46 @@ final class ExpenseActionRollbackTest extends TestCase
         }
     }
 
+    public function test_bulk_expense_audit_failure_rolls_back_every_selected_expense(): void
+    {
+        [$actor, $context, $year, $center, $vendor] = $this->administratorContext();
+        $first = $this->existingExpense($actor, $context, $year, $center, $vendor);
+        $second = $this->existingExpense($actor, $context, $year, $center, $vendor);
+        $auditCount = AuditEvent::query()->count();
+        $dispatcher = AuditEvent::getEventDispatcher();
+        $this->assertInstanceOf(Dispatcher::class, $dispatcher);
+        $eventName = 'eloquent.creating: '.AuditEvent::class;
+        $listeners = $dispatcher->getRawListeners()[$eventName] ?? [];
+        $seen = 0;
+        $dispatcher->listen($eventName, static function () use (&$seen): void {
+            if (++$seen === 2) {
+                throw new RuntimeException('forced second bulk audit failure');
+            }
+        });
+
+        try {
+            $this->expectException(RuntimeException::class);
+            self::assertTrue(class_exists(BulkExpenseAction::class));
+            $action = app(BulkExpenseAction::class);
+            $action->execute(
+                $actor,
+                $context,
+                'close',
+                (int) $year->getKey(),
+                [
+                    ['id' => (int) $first->getKey(), 'lock_version' => 1],
+                    ['id' => (int) $second->getKey(), 'lock_version' => 1],
+                ],
+                (string) str()->uuid(),
+            );
+        } finally {
+            $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
+            $this->assertDatabaseHas('expenses', ['id' => $first->getKey(), 'state' => 'open', 'lock_version' => 1]);
+            $this->assertDatabaseHas('expenses', ['id' => $second->getKey(), 'state' => 'open', 'lock_version' => 1]);
+            $this->assertDatabaseCount('audit_events', $auditCount);
+        }
+    }
+
     /** @return array{User,TenantContext,PlanningYear,CostCenter,Vendor} */
     private function administratorContext(): array
     {
@@ -153,7 +194,7 @@ final class ExpenseActionRollbackTest extends TestCase
 
     private function rowData(Vendor $vendor, ExpenseType $type, ?int $id = null, ?int $expectedLockVersion = null): SaveExpenseRowData
     {
-        return new SaveExpenseRowData($id, 1, $vendor->getKey(), $type, 'Rollback row', null, null, '100.00', false, '22.000000', false, null, '2026-01-15', null, null, null, null, $expectedLockVersion);
+        return new SaveExpenseRowData($id, 1, $vendor->getKey(), $type, 'Rollback row', null, null, '100.00', false, '22.00', false, null, '2026-01-15', null, null, null, null, $expectedLockVersion);
     }
 
     /** @return array{Dispatcher,string,array<int,mixed>} */

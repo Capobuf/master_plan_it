@@ -24,11 +24,11 @@ return new class extends Migration
             $table->unsignedBigInteger('contract_term_id')->nullable();
             $table->string('source_key')->nullable();
             $table->string('description');
-            $table->decimal('quantity', 19, 6)->nullable();
-            $table->decimal('unit_price', 19, 6)->nullable();
-            $table->decimal('entered_amount', 19, 6);
+            $table->decimal('quantity', 19, 2)->nullable();
+            $table->decimal('unit_price', 19, 2)->nullable();
+            $table->decimal('entered_amount', 19, 2);
             $table->boolean('amount_includes_vat');
-            $table->decimal('vat_rate', 12, 6);
+            $table->decimal('vat_rate', 12, 2);
             $table->decimal('net_amount', 19, 2);
             $table->decimal('vat_amount', 19, 2);
             $table->decimal('gross_amount', 19, 2);

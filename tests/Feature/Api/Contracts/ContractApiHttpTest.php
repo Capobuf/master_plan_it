@@ -83,7 +83,7 @@ final class ContractApiHttpTest extends TestCase
             'terms' => [[
                 'local_key' => 'new-term', 'effective_start' => '2026-01-01', 'effective_end' => '2026-12-31',
                 'billing_cycle' => 'monthly', 'entered_amount' => '100.00', 'amount_includes_vat' => false,
-                'vat_rate' => '22.000000', 'auto_renew' => false,
+                'vat_rate' => '22.00', 'auto_renew' => false,
             ]],
         ];
 
@@ -175,7 +175,7 @@ final class ContractApiHttpTest extends TestCase
             'terms' => [[
                 'local_key' => 'term-input', 'effective_start' => '2026-01-01', 'effective_end' => '2026-12-31',
                 'billing_cycle' => 'monthly', 'quantity' => null, 'unit_price' => null, 'entered_amount' => '100.00',
-                'amount_includes_vat' => false, 'vat_rate' => '22.000000', 'auto_renew' => false,
+                'amount_includes_vat' => false, 'vat_rate' => '22.00', 'auto_renew' => false,
             ]],
         ];
     }
@@ -192,7 +192,7 @@ final class ContractApiHttpTest extends TestCase
             'tenant_id' => $tenant->getKey(), 'contract_id' => $contract->getKey(), 'source_rule_key' => (string) Str::uuid(),
             'effective_start' => '2026-01-01', 'effective_end' => '2026-12-31', 'billing_cycle' => 'monthly',
             'quantity' => null, 'unit_price' => null, 'entered_amount' => '100.00', 'amount_includes_vat' => false,
-            'vat_rate' => '22.000000', 'net_amount' => '100.00', 'vat_amount' => '22.00', 'gross_amount' => '122.00',
+            'vat_rate' => '22.00', 'net_amount' => '100.00', 'vat_amount' => '22.00', 'gross_amount' => '122.00',
             'auto_renew' => false, 'lock_version' => 1,
         ]);
 

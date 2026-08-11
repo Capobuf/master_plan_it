@@ -25,6 +25,7 @@ final class ExpenseRegisterResource extends JsonResource
             'cost_center_id' => $row->costCenterId,
             'cost_center_name' => $row->costCenterName,
             'kind' => $row->kind,
+            'state' => $row->state,
             'title' => $row->title,
             'project_id' => $row->projectId,
             'project_title' => $row->projectTitle,
@@ -32,7 +33,10 @@ final class ExpenseRegisterResource extends JsonResource
             'contract_id' => $row->contractId,
             'contract_title' => $row->contractTitle,
             'contract_current' => $row->contractCurrent,
+            'vendor_count' => $row->vendorCount,
+            'vendor_summary' => $row->vendorSummary,
             'row_count' => $row->rowCount,
+            'lock_version' => $row->lockVersion,
             'totals' => ExpenseMoneyResource::make([
                 'net' => $row->netTotal,
                 'vat' => $row->vatTotal,

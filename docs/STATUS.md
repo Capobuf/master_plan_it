@@ -1,6 +1,6 @@
 # Stato funzionale
 
-Stato verificato dopo l'implementazione della Feature 019.
+Stato verificato dopo l'implementazione della Feature 020.
 
 Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cronologia.
 
@@ -14,7 +14,7 @@ Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cro
 | Planning year / Budget annuale | Lifecycle, approvazioni atomiche, chiusura | Implementato |
 | Fornitori | CRUD/lifecycle/history/restore | Implementato |
 | Centri di costo | CRUD/tree/lifecycle/history/restore | Implementato |
-| Spese | Planning selezionato, Actual immediato, close/reopen, move e crediti | Implementato |
+| Spese | Planning selezionato, filtri Register e totali riconciliati, detail year-scoped, bulk atomico, Actual immediato, close/reopen, move e crediti | Workspace operativo con anno globale, colonne utente, selezione/expander, object detail ed editor ERP responsive |
 | Contratti | CRUD/term/history | Implementato |
 | Generazione contratti | Una Quote annuale, Project, sync protetto e differenza attesa | Implementato |
 | Progetti | CRUD/Deferred/history/compare/restore/delete terminale | Implementato |
@@ -49,7 +49,6 @@ può cambiare l'ordine purché le dipendenze della slice scelta siano soddisfatt
 Le API correnti non implementano:
 
 - ricerca testuale dei Contract tramite `q`;
-- ricerca testuale e filtro Cost Center nel register Expense.
 
 Gli artefatti approvati non definiscono abbastanza semantica prodotto per trasformarli
 automaticamente in requisito. Non sono quindi inclusi negli Spec Kit senza una decisione del

@@ -17,7 +17,7 @@ final class MonthlyAllocator
 
         $months = $this->months($start, $end);
         $calculator = new MoneyCalculator;
-        $total = $calculator->round($amount, 2);
+        $total = $amount;
 
         if ($distribution === 'start') {
             return [$months[0] => $total];
@@ -27,10 +27,7 @@ final class MonthlyAllocator
             return [$months[array_key_last($months)] => $total];
         }
 
-        $share = $calculator->round(
-            Money::fromDecimal(bcdiv($total->amount(), (string) count($months), 6), $total->currency()),
-            2,
-        );
+        $share = $calculator->divide($total, (string) count($months));
         $allocation = [];
         $allocated = '0.00';
 
@@ -40,10 +37,9 @@ final class MonthlyAllocator
         }
 
         $lastMonth = $months[array_key_last($months)];
-        $allocation[$lastMonth] = Money::fromDecimal(
-            bcadd($allocation[$lastMonth]->amount(), bcsub($total->amount(), $allocated, 2), 2),
-            $total->currency(),
-            2,
+        $allocation[$lastMonth] = $calculator->add(
+            $allocation[$lastMonth],
+            Money::fromDecimal(bcsub($total->amount(), $allocated, Money::SCALE), $total->currency()),
         );
 
         return $allocation;

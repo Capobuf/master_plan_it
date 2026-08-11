@@ -38,13 +38,13 @@ final class ExpectedContractOccurrenceQuery
                 $bucket = $annual[$date->year] ?? [
                     'term_id' => (int) $term->getKey(),
                     'date' => $date,
-                    'net' => '0.000000',
-                    'vat' => '0.000000',
-                    'gross' => '0.000000',
+                    'net' => '0.00',
+                    'vat' => '0.00',
+                    'gross' => '0.00',
                 ];
-                $bucket['net'] = bcadd($bucket['net'], (string) $term->net_amount, 6);
-                $bucket['vat'] = bcadd($bucket['vat'], (string) $term->vat_amount, 6);
-                $bucket['gross'] = bcadd($bucket['gross'], (string) $term->gross_amount, 6);
+                $bucket['net'] = bcadd($bucket['net'], (string) $term->net_amount, 2);
+                $bucket['vat'] = bcadd($bucket['vat'], (string) $term->vat_amount, 2);
+                $bucket['gross'] = bcadd($bucket['gross'], (string) $term->gross_amount, 2);
                 $annual[$date->year] = $bucket;
             }
         }
@@ -71,9 +71,9 @@ final class ExpectedContractOccurrenceQuery
                     || bccomp($bucket['vat'], (string) $row->vat_amount, 6) !== 0
                     || bccomp($bucket['gross'], (string) $row->gross_amount, 6) !== 0
                 ) ? [
-                    'net' => bcsub($bucket['net'], (string) $row->net_amount, 6),
-                    'vat' => bcsub($bucket['vat'], (string) $row->vat_amount, 6),
-                    'gross' => bcsub($bucket['gross'], (string) $row->gross_amount, 6),
+                    'net' => bcsub($bucket['net'], (string) $row->net_amount, 2),
+                    'vat' => bcsub($bucket['vat'], (string) $row->vat_amount, 2),
+                    'gross' => bcsub($bucket['gross'], (string) $row->gross_amount, 2),
                 ] : null,
             );
         }

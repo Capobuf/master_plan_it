@@ -116,7 +116,7 @@ final class ExpenseAggregateValidator
         }
         if ($creditFor instanceof Expense) {
             foreach ($rows as $index => $row) {
-                if ($row->type !== ExpenseType::Actual || bccomp(Money::fromDecimal($row->enteredAmount, 'EUR')->amount(), '0', 6) >= 0) {
+                if ($row->type !== ExpenseType::Actual || bccomp(Money::fromDecimal($row->enteredAmount, 'EUR')->amount(), '0', Money::SCALE) >= 0) {
                     $this->fail("rows.{$index}.entered_amount", 'A linked next-year credit accepts only negative Actual rows.');
                 }
             }
@@ -173,10 +173,10 @@ final class ExpenseAggregateValidator
         }
 
         $this->dateShape($row, $prefix, $year);
-        $quantity = $this->nullableDecimal($row->quantity, "{$prefix}.quantity");
-        $unitPrice = $this->nullableDecimal($row->unitPrice, "{$prefix}.unit_price");
-        $entered = $this->decimal($row->enteredAmount, "{$prefix}.entered_amount");
-        if ($unitPrice !== null && bccomp($unitPrice, '0', 6) !== 0) {
+        $quantity = $this->nullablePlainDecimal($row->quantity, "{$prefix}.quantity");
+        $unitPrice = $this->nullableMoney($row->unitPrice, "{$prefix}.unit_price", (string) $tenant->currency_code);
+        $entered = $this->money($row->enteredAmount, "{$prefix}.entered_amount", (string) $tenant->currency_code);
+        if ($unitPrice !== null && bccomp($unitPrice, '0', Money::SCALE) !== 0) {
             if ($quantity === null) {
                 $this->fail("{$prefix}.quantity", 'Quantity is required with a unit price.');
             }
@@ -185,10 +185,15 @@ final class ExpenseAggregateValidator
                 $quantity,
             )->amount();
         }
-        if ($row->type !== ExpenseType::Actual && bccomp($entered, '0', 6) < 0) {
+        if ($row->type !== ExpenseType::Actual && bccomp($entered, '0', Money::SCALE) < 0) {
             $this->fail("{$prefix}.entered_amount", 'Estimate and Quote amounts cannot be negative.');
         }
-        $vatRate = trim($row->vatRate) === '' ? (string) $tenant->default_vat_rate : $row->vatRate;
+        $vatRate = $this->plainDecimal(
+            trim($row->vatRate) === '' ? (string) $tenant->default_vat_rate : $row->vatRate,
+            "{$prefix}.vat_rate",
+            false,
+            10,
+        );
         $amount = Money::fromDecimal($entered, (string) $tenant->currency_code);
         $breakdown = $row->amountIncludesVat
             ? (new VatCalculator)->fromIncludedAmount($amount, $vatRate)
@@ -242,18 +247,48 @@ final class ExpenseAggregateValidator
         }
     }
 
-    private function decimal(string $value, string $field): string
+    private function money(string $value, string $field, string $currency): string
     {
         try {
-            return Money::fromDecimal($value, 'EUR')->amount();
+            return Money::fromDecimal($value, $currency)->amount();
         } catch (\Throwable) {
-            $this->fail($field, 'The amount must be a decimal with at most 6 places.');
+            $this->fail($field, 'The amount must be a decimal with at most 2 places.');
         }
     }
 
-    private function nullableDecimal(?string $value, string $field): ?string
+    private function nullableMoney(?string $value, string $field, string $currency): ?string
     {
-        return $value === null || trim($value) === '' ? null : $this->decimal($value, $field);
+        return $value === null || trim($value) === '' ? null : $this->money($value, $field, $currency);
+    }
+
+    private function plainDecimal(
+        string $value,
+        string $field,
+        bool $allowNegative = true,
+        int $maxIntegerDigits = 17,
+    ): string {
+        $pattern = $allowNegative ? '/^-?\d+(?:\.\d{1,2})?$/' : '/^\d+(?:\.\d{1,2})?$/';
+        if (! preg_match($pattern, $value)) {
+            $this->fail($field, 'The value must be a decimal with at most 2 places.');
+        }
+
+        [$integer, $fraction] = array_pad(explode('.', ltrim($value, '-'), 2), 2, '');
+        $integer = ltrim($integer, '0');
+        $integer = $integer === '' ? '0' : $integer;
+        if (strlen($integer) > $maxIntegerDigits) {
+            $this->fail($field, 'The decimal value is too large.');
+        }
+
+        $normalized = $integer.'.'.str_pad($fraction, Money::SCALE, '0');
+
+        return str_starts_with($value, '-') && bccomp($normalized, '0', Money::SCALE) !== 0
+            ? '-'.$normalized
+            : $normalized;
+    }
+
+    private function nullablePlainDecimal(?string $value, string $field): ?string
+    {
+        return $value === null || trim($value) === '' ? null : $this->plainDecimal($value, $field);
     }
 
     private function nullableText(?string $value): ?string

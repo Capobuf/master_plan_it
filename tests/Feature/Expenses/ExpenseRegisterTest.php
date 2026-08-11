@@ -3,6 +3,7 @@
 namespace Tests\Feature\Expenses;
 
 use App\Domain\Expenses\Data\ExpenseDetail;
+use App\Domain\Expenses\Data\ExpenseRegisterFilterData;
 use App\Domain\Expenses\Data\ExpenseRegisterRow;
 use App\Domain\Expenses\Queries\ExpenseDetailQuery;
 use App\Domain\Expenses\Queries\ExpenseRegisterQuery;
@@ -59,8 +60,9 @@ class ExpenseRegisterTest extends TestCase
         }
 
         $query = app(ExpenseRegisterQuery::class);
-        $first = $query->paginate($actor, $context, (int) $year2026->getKey(), page: 1, perPage: 2);
-        $second = $query->paginate($actor, $context, (int) $year2026->getKey(), page: 2, perPage: 2);
+        $filters = new ExpenseRegisterFilterData((int) $year2026->getKey());
+        $first = $query->paginate($actor, $context, $filters, page: 1, perPage: 2);
+        $second = $query->paginate($actor, $context, $filters, page: 2, perPage: 2);
 
         $this->assertContainsOnlyInstancesOf(ExpenseRegisterRow::class, $first->items());
         $this->assertSame(['Alpha', 'Bravo'], array_map(fn (ExpenseRegisterRow $row): string => $row->title, $first->items()));
@@ -162,7 +164,13 @@ class ExpenseRegisterTest extends TestCase
         $this->expectException(AuthorizationException::class);
         $this->expectExceptionMessage('PERMISSION_DENIED');
 
-        app(ExpenseRegisterQuery::class)->paginate($actor, $context, null, page: 1, perPage: 15);
+        app(ExpenseRegisterQuery::class)->paginate(
+            $actor,
+            $context,
+            new ExpenseRegisterFilterData(1),
+            page: 1,
+            perPage: 15,
+        );
     }
 
     /** @return array{Tenant, User, TenantContext} */

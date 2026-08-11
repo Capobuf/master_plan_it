@@ -135,7 +135,7 @@ final class TenantController extends Controller
             'currency_code' => [$presence, 'string', 'regex:/^[A-Za-z]{3}$/D'],
             'language_code' => [$presence, 'string', 'regex:/^[A-Za-z]{1,10}$/D'],
             'timezone' => [$presence, 'string', 'timezone'],
-            'default_vat_rate' => [$presence, 'string', 'regex:/^[0-9]{1,6}(?:\.[0-9]{1,6})?$/D'],
+            'default_vat_rate' => [$presence, 'string', 'regex:/^[0-9]{1,10}(?:\.[0-9]{1,2})?$/D'],
         ];
 
         if ($partial) {

@@ -30,11 +30,11 @@ describe("ExpenseEditorRows", () => {
   it("shows current planning only for non-actual rows", () => {
     const { rerender } = render(<ExpenseEditorRows {...props} rows={[estimate]} />);
 
-    expect(screen.getByRole("checkbox", { name: "Pianificazione corrente" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Corrente" })).toBeInTheDocument();
 
     rerender(<ExpenseEditorRows {...props} rows={[{ ...estimate, type: "actual" }]} />);
 
-    expect(screen.queryByRole("checkbox", { name: "Pianificazione corrente" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("checkbox", { name: "Corrente" })).not.toBeInTheDocument();
   });
 
   it("keeps the only row and removes the selected row when multiple rows exist", () => {
@@ -54,5 +54,22 @@ describe("ExpenseEditorRows", () => {
 
     expect(screen.getByRole("button", { name: "Rimuovi la riga 1" })).toBeEnabled();
     expect(onRemove).toHaveBeenCalledWith(1);
+  });
+
+  it("shows three ERP rows together and keeps keyboard move and expandable details", () => {
+    const onMove = vi.fn();
+    const rows = [
+      estimate,
+      { ...estimate, editorKey: "quote-row", position: 2, type: "quote", description: "Preventivo" },
+      { ...estimate, editorKey: "actual-row", position: 3, type: "actual", description: "Consuntivo" },
+    ];
+    render(<ExpenseEditorRows {...props} rows={rows} onMove={onMove} />);
+
+    expect(screen.getAllByRole("group", { name: /Riga/ })).toHaveLength(3);
+    const details = screen.getByRole("button", { name: "Mostra dettagli riga 2" });
+    fireEvent.click(details);
+    expect(screen.getByRole("button", { name: "Nascondi dettagli riga 2" })).toHaveAttribute("aria-expanded", "true");
+    fireEvent.click(screen.getByRole("button", { name: "Sposta la riga 2 in alto" }));
+    expect(onMove).toHaveBeenCalledWith(1, 0);
   });
 });

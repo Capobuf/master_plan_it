@@ -41,6 +41,7 @@ final class ApiErrorResponse
         'INVALID_HISTORY_CUTOFF' => [422, 'The requested historical cutoff is invalid.'],
         'INVALID_REPORT_GROUPING' => [422, 'The requested report grouping is invalid.'],
         'APPROVED_DIMENSION_REALLOCATION_REQUIRED' => [422, 'Approved dimensions require an explicit reallocation decision.'],
+        'EXPENSE_BULK_ITEM_NOT_APPLICABLE' => [422, 'At least one selected expense cannot use this bulk action.'],
         'TENANT_BUDGET_BASIS_LOCKED' => [409, 'The Tenant budget basis cannot change while approvals exist.'],
     ];
 

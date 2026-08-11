@@ -3,8 +3,9 @@ import { applyCalculatedAmount, calculateEnteredAmount } from "./formatters";
 
 describe("calculated amounts", () => {
   it("multiplies quantity and unit price without floating-point loss", () => {
-    expect(calculateEnteredAmount("2", "12.50")).toBe("25.000000");
-    expect(calculateEnteredAmount("0.333333", "0.333333")).toBe("0.111111");
+    expect(calculateEnteredAmount("2", "12.50")).toBe("25.00");
+    expect(calculateEnteredAmount("1.25", "10.55")).toBe("13.19");
+    expect(calculateEnteredAmount("0.333", "0.33")).toBeNull();
     expect(calculateEnteredAmount("3", "0")).toBeNull();
   });
 
@@ -16,7 +17,7 @@ describe("calculated amounts", () => {
     };
     expect(applyCalculatedAmount(current, { unit_price: "12.50" })).toEqual({
       unit_price: "12.50",
-      entered_amount: "25.000000",
+      entered_amount: "25.00",
     });
     expect(applyCalculatedAmount({ ...current, unit_price: "12.50" }, { quantity: null })).toEqual({
       quantity: null,

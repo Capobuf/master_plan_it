@@ -7,42 +7,72 @@ use DomainException;
 
 final class MoneyCalculator
 {
+    private const CALCULATION_SCALE = 12;
+
     public function add(Money $first, Money $second): Money
     {
         $this->assertSameCurrency($first, $second);
 
-        return Money::fromDecimal(bcadd($first->amount(), $second->amount(), 6), $first->currency());
+        return $this->calculatedMoney(
+            bcadd($first->amount(), $second->amount(), self::CALCULATION_SCALE),
+            $first->currency(),
+        );
     }
 
     public function subtract(Money $first, Money $second): Money
     {
         $this->assertSameCurrency($first, $second);
 
-        return Money::fromDecimal(bcsub($first->amount(), $second->amount(), 6), $first->currency());
+        return $this->calculatedMoney(
+            bcsub($first->amount(), $second->amount(), self::CALCULATION_SCALE),
+            $first->currency(),
+        );
     }
 
     public function multiply(Money $money, string $multiplier): Money
     {
-        $normalizedMultiplier = Money::fromDecimal($multiplier, $money->currency());
-        $product = bcmul($money->amount(), $normalizedMultiplier->amount(), 12);
+        $normalizedMultiplier = $this->normalizeMultiplier($multiplier);
+        $product = bcmul($money->amount(), $normalizedMultiplier, self::CALCULATION_SCALE);
 
-        return Money::fromDecimal(
-            $this->roundDecimal($product, 6),
+        return $this->calculatedMoney($product, $money->currency());
+    }
+
+    public function divide(Money $money, string $divisor): Money
+    {
+        $normalizedDivisor = $this->normalizeMultiplier($divisor);
+        if (bccomp($normalizedDivisor, '0', Money::SCALE) === 0) {
+            throw new DomainException('INVALID_MONEY');
+        }
+
+        return $this->calculatedMoney(
+            bcdiv($money->amount(), $normalizedDivisor, self::CALCULATION_SCALE),
             $money->currency(),
         );
     }
 
-    public function round(Money $money, int $scale): Money
+    private function calculatedMoney(string $amount, string $currency): Money
     {
-        if ($scale < 0 || $scale > 6) {
-            throw new DomainException('INVALID_MONEY');
+        return Money::fromDecimal($this->roundDecimal($amount, Money::SCALE), $currency);
+    }
+
+    private function normalizeMultiplier(string $multiplier): string
+    {
+        if (! preg_match('/^-?\d+(?:\.\d{1,2})?$/', $multiplier)) {
+            throw new DomainException('INVALID_DECIMAL');
         }
 
-        return Money::fromDecimal(
-            $this->roundDecimal($money->amount(), $scale),
-            $money->currency(),
-            $scale,
-        );
+        [$integer, $fraction] = array_pad(explode('.', ltrim($multiplier, '-'), 2), 2, '');
+        $integer = ltrim($integer, '0');
+        $integer = $integer === '' ? '0' : $integer;
+        if (strlen($integer) > 17) {
+            throw new DomainException('INVALID_DECIMAL');
+        }
+
+        $normalized = $integer.'.'.str_pad($fraction, Money::SCALE, '0');
+
+        return str_starts_with($multiplier, '-') && bccomp($normalized, '0', Money::SCALE) !== 0
+            ? '-'.$normalized
+            : $normalized;
     }
 
     private function roundDecimal(string $amount, int $scale): string

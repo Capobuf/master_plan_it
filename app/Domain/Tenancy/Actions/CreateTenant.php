@@ -98,7 +98,7 @@ final class CreateTenant
             'currency_code' => ['required', 'string', 'regex:/^[A-Za-z]{3}$/D'],
             'language_code' => ['required', 'string', 'regex:/^[A-Za-z]{1,10}$/D'],
             'timezone' => ['required', 'string', 'timezone'],
-            'default_vat_rate' => ['required', 'string', 'regex:/^[0-9]{1,6}(?:\.[0-9]{1,6})?$/D'],
+            'default_vat_rate' => ['required', 'string', 'regex:/^[0-9]{1,10}(?:\.[0-9]{1,2})?$/D'],
         ])->validate();
     }
 

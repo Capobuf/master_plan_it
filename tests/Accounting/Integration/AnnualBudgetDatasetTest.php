@@ -45,7 +45,7 @@ final class AnnualBudgetDatasetTest extends TestCase
             'position' => 2,
             'type' => ExpenseType::Actual,
             'spend_date' => '2026-05-01',
-            'entered_amount' => '140.000000',
+            'entered_amount' => '140.00',
             'net_amount' => '140.00',
             'vat_amount' => '30.80',
             'gross_amount' => '170.80',

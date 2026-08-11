@@ -35,5 +35,5 @@ export function normalizeDecimal(value: string | null | undefined): string {
 }
 
 export function isDecimalText(value: string): boolean {
-  return /^-?\d+(?:\.\d{1,6})?$/.test(value);
+  return /^-?\d+(?:\.\d{1,2})?$/.test(value);
 }

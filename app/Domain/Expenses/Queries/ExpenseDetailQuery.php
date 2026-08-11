@@ -16,13 +16,14 @@ use Spatie\Permission\PermissionRegistrar;
 
 final class ExpenseDetailQuery
 {
-    public function find(User $actor, TenantContext $context, int $expenseId): ExpenseDetail
+    public function find(User $actor, TenantContext $context, int $expenseId, ?int $planningYearId = null): ExpenseDetail
     {
         $policy = $this->policy($context);
         $policy->viewAny($actor)->authorize();
 
         $expense = TenantOwnedRecordQuery::forTenant($context, Expense::class)
             ->whereKey($expenseId)
+            ->when($planningYearId !== null, fn ($query) => $query->where('planning_year_id', $planningYearId))
             ->first(['id', 'tenant_id']);
 
         if (! $expense instanceof Expense) {
@@ -44,8 +45,13 @@ final class ExpenseDetailQuery
                 $join->on('projects.id', '=', 'expenses.project_id')
                     ->on('projects.tenant_id', '=', 'expenses.tenant_id');
             })
+            ->leftJoin('contracts', function ($join): void {
+                $join->on('contracts.id', '=', 'expenses.contract_id')
+                    ->on('contracts.tenant_id', '=', 'expenses.tenant_id');
+            })
             ->where('expenses.tenant_id', $context->tenantId)
             ->where('expenses.id', $expenseId)
+            ->when($planningYearId !== null, fn ($query) => $query->where('expenses.planning_year_id', $planningYearId))
             ->whereNull('expenses.deleted_at')
             ->first([
                 'expenses.id',
@@ -59,6 +65,7 @@ final class ExpenseDetailQuery
                 'expenses.project_id',
                 'projects.title as project_title',
                 'expenses.contract_id',
+                'contracts.title as contract_title',
                 'planning_years.budget_state',
                 'expenses.state',
                 'expenses.closure_outcome',
@@ -75,46 +82,39 @@ final class ExpenseDetailQuery
         }
 
         $rows = DB::table('expense_rows')
-            ->where('tenant_id', $context->tenantId)
-            ->where('expense_id', $expenseId)
-            ->whereNull('deleted_at')
-            ->orderBy('position')
-            ->orderBy('id')
+            ->leftJoin('vendors', function ($join): void {
+                $join->on('vendors.id', '=', 'expense_rows.vendor_id')
+                    ->on('vendors.tenant_id', '=', 'expense_rows.tenant_id');
+            })
+            ->where('expense_rows.tenant_id', $context->tenantId)
+            ->where('expense_rows.expense_id', $expenseId)
+            ->whereNull('expense_rows.deleted_at')
+            ->orderBy('expense_rows.position')
+            ->orderBy('expense_rows.id')
             ->get([
-                'id',
-                'position',
-                'vendor_id',
-                'type',
-                'description',
-                'quantity',
-                'unit_price',
-                'entered_amount',
-                'amount_includes_vat',
-                'vat_rate',
-                'is_extra',
-                'funded_plafond_expense_id',
-                'spend_date',
-                'external_reference',
-                'lock_version',
-                'is_system_managed',
-                'source_key',
-                'contract_term_id',
-                'net_amount',
-                'vat_amount',
-                'gross_amount',
+                'expense_rows.id', 'expense_rows.position', 'expense_rows.vendor_id',
+                'vendors.name as vendor_name', 'expense_rows.type', 'expense_rows.description',
+                'expense_rows.quantity', 'expense_rows.unit_price', 'expense_rows.entered_amount',
+                'expense_rows.amount_includes_vat', 'expense_rows.vat_rate', 'expense_rows.is_extra',
+                'expense_rows.funded_plafond_expense_id', 'expense_rows.spend_date',
+                'expense_rows.external_reference', 'expense_rows.lock_version',
+                'expense_rows.is_system_managed', 'expense_rows.source_key',
+                'expense_rows.contract_term_id', 'expense_rows.net_amount',
+                'expense_rows.vat_amount', 'expense_rows.gross_amount',
             ])
             ->map(fn (object $row): array => [
                 'id' => (int) $row->id,
                 'position' => (int) $row->position,
                 'vendor_id' => $row->vendor_id === null ? null : (int) $row->vendor_id,
+                'vendor_name' => $row->vendor_name === null ? null : (string) $row->vendor_name,
                 'type' => (string) $row->type,
                 'is_current_planning' => (int) $header->current_planning_row_id === (int) $row->id,
                 'description' => (string) $row->description,
-                'quantity' => $row->quantity === null ? null : $this->decimal($row->quantity, 6),
-                'unit_price' => $row->unit_price === null ? null : $this->decimal($row->unit_price, 6),
-                'entered_amount' => $this->decimal($row->entered_amount, 6),
+                'quantity' => $row->quantity === null ? null : $this->decimal($row->quantity),
+                'unit_price' => $row->unit_price === null ? null : $this->decimal($row->unit_price),
+                'entered_amount' => $this->decimal($row->entered_amount),
                 'amount_includes_vat' => (bool) $row->amount_includes_vat,
-                'vat_rate' => $this->decimal($row->vat_rate, 6),
+                'vat_rate' => $this->decimal($row->vat_rate),
                 'is_extra' => (bool) $row->is_extra,
                 'funded_plafond_expense_id' => $row->funded_plafond_expense_id === null ? null : (int) $row->funded_plafond_expense_id,
                 'spend_date' => $row->spend_date === null ? null : (string) $row->spend_date,
@@ -170,6 +170,7 @@ final class ExpenseDetailQuery
             projectId: $header->project_id === null ? null : (int) $header->project_id,
             projectTitle: $header->project_title === null ? null : (string) $header->project_title,
             contractId: $header->contract_id === null ? null : (int) $header->contract_id,
+            contractTitle: $header->contract_title === null ? null : (string) $header->contract_title,
             budgetState: (string) $header->budget_state,
             state: (string) $header->state,
             closureOutcome: $header->closure_outcome === null ? null : (string) $header->closure_outcome,

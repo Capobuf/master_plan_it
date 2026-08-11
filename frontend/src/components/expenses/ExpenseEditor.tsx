@@ -132,7 +132,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { data: applicationContext, loading: contextLoading, hasAbility } = useApplicationContext();
-  const { selectedPlanningYearId } = usePlanningYear();
+  const { selectedPlanningYear, selectedPlanningYearId, selectPlanningYear } = usePlanningYear();
   const editing = expenseId !== undefined;
   const requestedCreditOrigin = !editing && /^\d+$/.test(searchParams.get("credit_for_expense_id") ?? "")
     ? Number(searchParams.get("credit_for_expense_id"))
@@ -160,12 +160,13 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
   const [validationMessage, setValidationMessage] = useState<string | null>(null);
   const [lockVersion, setLockVersion] = useState<number | null>(null);
   const [loadedState, setLoadedState] = useState<ExpenseDetail["state"] | null>(null);
+  const [creditOriginYearLabel, setCreditOriginYearLabel] = useState<number | null>(null);
 
   useEffect(() => {
-    if (selectedPlanningYearId !== null && !editing && header.planning_year_id === null) {
+    if (selectedPlanningYearId !== null && !editing && requestedCreditOrigin === null) {
       setHeader((current) => ({ ...current, planning_year_id: selectedPlanningYearId }));
     }
-  }, [editing, header.planning_year_id, selectedPlanningYearId]);
+  }, [editing, requestedCreditOrigin, selectedPlanningYearId]);
 
   useEffect(() => {
     if (
@@ -173,6 +174,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
       tenantId === null ||
       !canSubmit ||
       !canUseLookups ||
+      selectedPlanningYearId === null ||
       (editing && (!canView || expenseId === undefined))
     ) {
       return;
@@ -181,8 +183,8 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
     let active = true;
     setLoading(true);
     setError(null);
-    const detailRequest = editing ? getExpense(expenseId as number) : Promise.resolve(null);
-    const creditOriginRequest = requestedCreditOrigin !== null ? getExpense(requestedCreditOrigin) : Promise.resolve(null);
+    const detailRequest = editing ? getExpense(expenseId as number, selectedPlanningYearId) : Promise.resolve(null);
+    const creditOriginRequest = requestedCreditOrigin !== null ? getExpense(requestedCreditOrigin, selectedPlanningYearId) : Promise.resolve(null);
 
     void Promise.all([
       canViewVendors ? listExpenseVendors() : Promise.resolve([]),
@@ -215,6 +217,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
           setLockVersion(detail.lock_version);
           setLoadedState(detail.state);
         } else if (creditOrigin) {
+          setCreditOriginYearLabel(creditOrigin.planning_year_label);
           const destinationYear = yearOptions
             .filter((year) => year.label > creditOrigin.planning_year_label)
             .sort((left, right) => left.label - right.label)[0];
@@ -273,8 +276,10 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
     [costCenters, header.cost_center_id],
   );
   const planningYearOptions = useMemo(
-    () => byIdOption(planningYears, header.planning_year_id, "Anno corrente").map((option) => ({ value: String(option.id), label: option.name })),
-    [header.planning_year_id, planningYears],
+    () => planningYears
+      .filter((option) => option.active !== false && (creditOriginYearLabel === null || Number(option.name) > creditOriginYearLabel))
+      .map((option) => ({ value: String(option.id), label: option.name })),
+    [creditOriginYearLabel, planningYears],
   );
   const contractOptions = useMemo(
     () => [
@@ -353,10 +358,10 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
       !isDecimalText(entered) ||
       (quantity !== "" && !isDecimalText(quantity)) ||
       (unitPrice !== "" && !isDecimalText(unitPrice)) ||
-      (vatRate !== "" && !/^\d+(?:\.\d{1,6})?$/.test(vatRate)),
+      (vatRate !== "" && !/^\d+(?:\.\d{1,2})?$/.test(vatRate)),
     );
     if (invalid) {
-      setValidationMessage("Controlla descrizione e valori decimali delle righe (massimo 6 cifre).");
+      setValidationMessage("Controlla descrizione e valori decimali delle righe (massimo 2 cifre).");
       return;
     }
 
@@ -399,6 +404,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
             ...(deletedRows.length > 0 ? { deleted_rows: deletedRows } : {}),
           } satisfies ExpenseUpdate)
         : await createExpense(input);
+      if (saved.planning_year_id !== selectedPlanningYearId) selectPlanningYear(saved.planning_year_id);
       const reopened = loadedState === "closed" && saved.state === "open";
       navigate(`${routes.spesa(saved.id)}${reopened ? "?reopened=1" : ""}`);
     } catch (requestError: unknown) {
@@ -419,18 +425,24 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
       {error && <Alert variant="error" title="Salvataggio non riuscito" message={`${error.message}${error.correlationId ? ` Riferimento tecnico: ${error.correlationId}` : ""}`} />}
       {validationMessage && <Alert variant="warning" title="Controlla i campi" message={validationMessage} />}
       {header.credit_for_expense_id !== null ? <Alert variant="info" title="Nota di credito collegata" message={`Questa Spesa è collegata alla Spesa originaria #${header.credit_for_expense_id}. Usa solo righe Actual negative e seleziona un anno successivo.`} /> : null}
-      <ComponentCard title="Dati della Spesa">
-        <div className="grid gap-4 md:grid-cols-2">
+      <ComponentCard title="Dati generali" compact>
+        <div className="grid gap-4">
           <div>
-            <Label htmlFor="expense-editor-year">Anno di pianificazione</Label>
-            <EditorSelect
-              id="expense-editor-year"
-              value={header.planning_year_id === null ? NONE : String(header.planning_year_id)}
-              options={[{ value: NONE, label: "Seleziona un anno" }, ...planningYearOptions]}
-              onChange={(value) => setHeader((current) => ({ ...current, planning_year_id: value === NONE ? null : Number(value) }))}
-              disabled={disabled}
-            />
+            <Label htmlFor="expense-editor-title">Titolo</Label>
+            <InputField id="expense-editor-title" value={header.title} onChange={(event) => setHeader((current) => ({ ...current, title: event.target.value }))} disabled={disabled} />
           </div>
+          <div>
+            <Label htmlFor="expense-editor-notes">Note</Label>
+            <TextArea id="expense-editor-notes" value={header.notes} onChange={(notes) => setHeader((current) => ({ ...current, notes }))} disabled={disabled} placeholder="Note opzionali" />
+          </div>
+        </div>
+      </ComponentCard>
+      <ComponentCard title="Classificazione" compact>
+        <div className="grid gap-4 md:grid-cols-2">
+          {header.credit_for_expense_id !== null ? <div>
+            <Label htmlFor="expense-editor-year">Anno destinazione</Label>
+            <EditorSelect id="expense-editor-year" value={header.planning_year_id === null ? NONE : String(header.planning_year_id)} options={[{ value: NONE, label: "Seleziona un anno successivo" }, ...planningYearOptions]} onChange={(value) => setHeader((current) => ({ ...current, planning_year_id: value === NONE ? null : Number(value) }))} disabled={disabled} />
+          </div> : <div><p className="text-sm font-medium text-gray-700 dark:text-gray-300">Anno</p><p className="mt-2 flex h-11 items-center rounded-lg border border-gray-200 bg-gray-50 px-4 text-sm font-medium text-gray-800 dark:border-gray-700 dark:bg-gray-800 dark:text-white/90">{editing ? planningYears.find((year) => year.id === header.planning_year_id)?.name ?? selectedPlanningYear?.year_label ?? "—" : selectedPlanningYear?.year_label ?? "—"}</p></div>}
           <div>
             <Label htmlFor="expense-editor-cost-center">Centro di costo</Label>
             <EditorSelect
@@ -471,23 +483,15 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
               disabled={disabled}
             />
           </div> : null}
-          <div className="md:col-span-2">
-            <Label htmlFor="expense-editor-title">Titolo</Label>
-            <InputField id="expense-editor-title" value={header.title} onChange={(event) => setHeader((current) => ({ ...current, title: event.target.value }))} disabled={disabled} />
-          </div>
-          <div className="md:col-span-2">
-            <Label htmlFor="expense-editor-notes">Note</Label>
-            <TextArea id="expense-editor-notes" value={header.notes} onChange={(notes) => setHeader((current) => ({ ...current, notes }))} disabled={disabled} placeholder="Note opzionali" />
-          </div>
         </div>
       </ComponentCard>
-      <ComponentCard title="Righe della Spesa" desc="Puoi riordinare le righe trascinandole oppure usando i controlli Sposta Su e Sposta Giù.">
+      <ComponentCard title="Righe della Spesa" desc="Campi frequenti inline; usa Dettagli per le opzioni secondarie." compact>
         <DndProvider backend={HTML5Backend}>
           <ExpenseEditorRows rows={rows} vendors={vendors} plafonds={plafonds} plafondsLoading={plafondsLoading} onChange={updateRow} onMove={moveRow} onRemove={removeRow} disabled={disabled} />
         </DndProvider>
         <div className="flex justify-end">
           <Button type="button" size="sm" variant="outline" onClick={() => setRows((current) => [...current, newExpenseEditorRow(current.length + 1)])} disabled={disabled}>
-            Aggiungi riga
+            + Aggiungi Riga
           </Button>
         </div>
       </ComponentCard>

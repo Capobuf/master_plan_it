@@ -32,4 +32,13 @@ describe("DecimalInput", () => {
     rerender(<DecimalInput id="decimal" value="8.5" onChange={() => undefined} fixedScale={2} ariaLabel="IVA" />);
     expect(screen.getByRole("textbox", { name: "IVA" })).toHaveValue("8,50");
   });
+
+  it("prevents entering a third decimal digit", () => {
+    render(<ControlledDecimalInput initialValue="1.23" />);
+    const input = screen.getByRole("textbox", { name: "Importo" });
+
+    fireEvent.change(input, { target: { value: "1,234" } });
+
+    expect(input).toHaveValue("1,23");
+  });
 });

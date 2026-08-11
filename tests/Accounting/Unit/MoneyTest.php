@@ -10,49 +10,41 @@ use PHPUnit\Framework\TestCase;
 
 class MoneyTest extends TestCase
 {
-    public function test_it_normalizes_sub_scale_decimal_string_input_to_six_places_without_float_conversion(): void
+    public function test_it_normalizes_authoritative_money_to_exactly_two_places(): void
     {
-        $money = Money::fromDecimal('-12.5', 'eur');
+        $this->assertSame('1.00', Money::fromDecimal('1', 'EUR')->amount());
+        $this->assertSame('1.20', Money::fromDecimal('1.2', 'EUR')->amount());
+        $this->assertSame('1.23', Money::fromDecimal('1.23', 'EUR')->amount());
 
-        $this->assertSame('-12.500000', $money->amount());
+        $money = Money::fromDecimal('-12.5', 'eur');
+        $this->assertSame('-12.50', $money->amount());
         $this->assertSame('EUR', $money->currency());
     }
 
-    public function test_it_accepts_the_decimal_19_6_boundaries_and_rejects_range_overflow(): void
+    public function test_it_rejects_input_with_more_than_two_decimal_places(): void
     {
-        $this->assertSame(
-            '9999999999999.999999',
-            Money::fromDecimal('9999999999999.999999', 'EUR')->amount(),
-        );
-        $this->assertSame(
-            '-9999999999999.999999',
-            Money::fromDecimal('-9999999999999.999999', 'EUR')->amount(),
-        );
-
-        foreach (['10000000000000.000000', '-10000000000000.000000'] as $amount) {
-            $this->assertInvalidMoney(static fn (): Money => Money::fromDecimal($amount, 'EUR'));
-        }
+        $this->assertInvalidMoney(static fn (): Money => Money::fromDecimal('1.234', 'EUR'));
     }
 
     public function test_it_accepts_the_decimal_19_2_boundaries_and_rejects_range_overflow(): void
     {
         $this->assertSame(
             '99999999999999999.99',
-            Money::fromDecimal('99999999999999999.99', 'EUR', 2)->amount(),
+            Money::fromDecimal('99999999999999999.99', 'EUR')->amount(),
         );
         $this->assertSame(
             '-99999999999999999.99',
-            Money::fromDecimal('-99999999999999999.99', 'EUR', 2)->amount(),
+            Money::fromDecimal('-99999999999999999.99', 'EUR')->amount(),
         );
 
         foreach (['100000000000000000.00', '-100000000000000000.00'] as $amount) {
-            $this->assertInvalidMoney(static fn (): Money => Money::fromDecimal($amount, 'EUR', 2));
+            $this->assertInvalidMoney(static fn (): Money => Money::fromDecimal($amount, 'EUR'));
         }
     }
 
     public function test_it_rejects_malformed_exponent_and_over_scale_decimal_input(): void
     {
-        foreach (['', ' 1.000000', '1e3', '12.1234567'] as $amount) {
+        foreach (['', ' 1.00', '1e3', '12.123'] as $amount) {
             $this->assertInvalidMoney(static fn (): Money => Money::fromDecimal($amount, 'EUR'));
         }
     }
@@ -60,67 +52,39 @@ class MoneyTest extends TestCase
     public function test_it_rejects_invalid_currency_codes(): void
     {
         foreach (['', 'EU', 'EURO', 'E1R'] as $currency) {
-            $this->assertInvalidMoney(static fn (): Money => Money::fromDecimal('1.000000', $currency));
+            $this->assertInvalidMoney(static fn (): Money => Money::fromDecimal('1.00', $currency));
         }
     }
 
-    public function test_money_is_readonly(): void
+    public function test_money_and_vat_breakdown_are_readonly(): void
     {
         $this->assertTrue((new \ReflectionClass(Money::class))->isReadOnly());
-    }
-
-    public function test_vat_breakdown_is_readonly(): void
-    {
         $this->assertTrue((new \ReflectionClass(VatBreakdown::class))->isReadOnly());
     }
 
-    public function test_exact_addition_subtraction_and_multiplication_preserve_currency_and_decimal_strings(): void
+    public function test_addition_subtraction_and_multiplication_return_canonical_money(): void
     {
         $calculator = new MoneyCalculator;
-        $first = Money::fromDecimal('12.500000', 'EUR');
-        $second = Money::fromDecimal('0.200000', 'EUR');
+        $first = Money::fromDecimal('12.50', 'EUR');
+        $second = Money::fromDecimal('0.20', 'EUR');
 
         $sum = $calculator->add($first, $second);
 
-        $this->assertSame('12.700000', $sum->amount());
-        $this->assertSame('12.300000', $calculator->subtract($first, $second)->amount());
-        $this->assertSame('50.000000', $calculator->multiply($first, '4.000000')->amount());
+        $this->assertSame('12.70', $sum->amount());
+        $this->assertSame('12.30', $calculator->subtract($first, $second)->amount());
+        $this->assertSame('50.00', $calculator->multiply($first, '4.00')->amount());
         $this->assertSame('EUR', $sum->currency());
         $this->assertNotSame($first, $sum);
-        $this->assertSame('12.500000', $first->amount());
-        $this->assertSame('0.200000', $second->amount());
+        $this->assertSame('12.50', $first->amount());
+        $this->assertSame('0.20', $second->amount());
     }
 
-    public function test_half_up_rounding_is_explicit_at_the_business_result_boundary(): void
+    public function test_multiplication_uses_high_precision_and_rounds_half_up_to_canonical_scale(): void
     {
         $calculator = new MoneyCalculator;
 
-        $this->assertSame('100.01', $calculator->round(Money::fromDecimal('100.005000', 'EUR'), 2)->amount());
-        $this->assertSame('-100.01', $calculator->round(Money::fromDecimal('-100.005000', 'EUR'), 2)->amount());
-    }
-
-    public function test_rounding_the_maximum_decimal_19_6_value_can_produce_a_valid_decimal_19_2_result(): void
-    {
-        $calculator = new MoneyCalculator;
-
-        $this->assertSame(
-            '10000000000000.00',
-            $calculator->round(Money::fromDecimal('9999999999999.999999', 'EUR'), 2)->amount(),
-        );
-    }
-
-    public function test_multiplication_quantizes_the_full_precision_product_half_up_to_six_decimals(): void
-    {
-        $calculator = new MoneyCalculator;
-
-        $this->assertSame(
-            '0.111111',
-            $calculator->multiply(Money::fromDecimal('0.333333', 'EUR'), '0.333333')->amount(),
-        );
-        $this->assertSame(
-            '-0.111111',
-            $calculator->multiply(Money::fromDecimal('-0.333333', 'EUR'), '0.333333')->amount(),
-        );
+        $this->assertSame('13.19', $calculator->multiply(Money::fromDecimal('10.55', 'EUR'), '1.25')->amount());
+        $this->assertSame('-13.19', $calculator->multiply(Money::fromDecimal('-10.55', 'EUR'), '1.25')->amount());
     }
 
     public function test_mixed_currencies_are_rejected_instead_of_converted(): void
@@ -131,8 +95,8 @@ class MoneyTest extends TestCase
         $this->expectExceptionMessage('INVALID_MONEY');
 
         $calculator->add(
-            Money::fromDecimal('1.000000', 'EUR'),
-            Money::fromDecimal('1.000000', 'USD'),
+            Money::fromDecimal('1.00', 'EUR'),
+            Money::fromDecimal('1.00', 'USD'),
         );
     }
 

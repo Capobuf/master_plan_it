@@ -14,7 +14,7 @@ interface ExpenseMoveModalProps {
   currentPlanningYearId: number;
   isOpen: boolean;
   onClose: () => void;
-  onMoved: (destinationExpenseId: number) => void;
+  onMoved: (destinationExpenseId: number, planningYearId: number) => void;
 }
 
 export default function ExpenseMoveModal({
@@ -56,7 +56,7 @@ export default function ExpenseMoveModal({
         lock_version: lockVersion,
         target_planning_year_id: Number(targetYearId),
       });
-      onMoved(result.destination.id);
+      onMoved(result.destination.id, result.destination.planning_year_id);
     } catch (requestError: unknown) {
       setError(ApiError.from(requestError));
     } finally {

@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('currency_code', 3);
             $table->string('language_code', 10);
             $table->string('timezone');
-            $table->decimal('default_vat_rate', 12, 6);
+            $table->decimal('default_vat_rate', 12, 2);
             $table->enum('budget_basis', ['net', 'gross'])->default('net');
             $table->unsignedBigInteger('attachment_quota_bytes')->default(2147483648);
             $table->boolean('deletion_reason_required')->default(false);

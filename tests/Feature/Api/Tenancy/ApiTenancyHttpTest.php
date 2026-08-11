@@ -42,7 +42,7 @@ final class ApiTenancyHttpTest extends TestCase
             'currency_code' => 'EUR',
             'language_code' => 'it',
             'timezone' => 'Europe/Rome',
-            'default_vat_rate' => '22.000000',
+            'default_vat_rate' => '22.00',
         ]);
 
         $response->assertStatus(403)->assertJsonPath('error.code', 'PERMISSION_DENIED');
@@ -59,7 +59,7 @@ final class ApiTenancyHttpTest extends TestCase
             'currency_code' => 'EUR',
             'language_code' => 'it',
             'timezone' => 'Europe/Rome',
-            'default_vat_rate' => '22.000000',
+            'default_vat_rate' => '22.00',
         ];
 
         $created = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/tenants', $payload)

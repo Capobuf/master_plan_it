@@ -2,7 +2,7 @@
 
 return [
     'schema' => 3,
-    'expectedDomainWriteCount' => 56,
+    'expectedDomainWriteCount' => 57,
     'writes' => [
         'app/Domain/Tenancy/Actions/EnterTenantContext.php' => [
             'actionClass' => 'App\\Domain\\Tenancy\\Actions\\EnterTenantContext',
@@ -665,6 +665,16 @@ return [
             'failureTrigger' => 'throw new ',
             'failureExpectation' => 'expectException(',
             'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseMissing(', 'assertDatabaseCount('],
+        ],
+        'app/Domain/Expenses/Actions/BulkExpenseAction.php' => [
+            'actionClass' => 'App\\Domain\\Expenses\\Actions\\BulkExpenseAction',
+            'actionReference' => 'BulkExpenseAction::class',
+            'actionInvocation' => ['mode' => 'assigned-container', 'variable' => '$action', 'method' => 'execute'],
+            'testFile' => 'tests/Feature/Expenses/ExpenseActionRollbackTest.php',
+            'testMethod' => 'test_bulk_expense_audit_failure_rolls_back_every_selected_expense',
+            'failureTrigger' => 'throw new ',
+            'failureExpectation' => 'expectException(',
+            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseCount('],
         ],
         'app/Domain/Budget/Actions/ApplyBudgetApproval.php' => [
             'actionClass' => 'App\\Domain\\Budget\\Actions\\ApplyBudgetApproval',

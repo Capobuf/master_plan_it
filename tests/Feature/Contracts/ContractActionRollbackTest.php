@@ -294,7 +294,7 @@ final class ContractActionRollbackTest extends TestCase
             'tenant_id' => $tenant->getKey(), 'contract_id' => $contract->getKey(), 'source_rule_key' => (string) str()->uuid(),
             'effective_start' => '2026-01-01', 'effective_end' => '2026-12-31', 'billing_cycle' => BillingCycle::Monthly,
             'quantity' => null, 'unit_price' => null, 'entered_amount' => '100.00', 'amount_includes_vat' => false,
-            'vat_rate' => '22.000000', 'net_amount' => '100.00', 'vat_amount' => '22.00', 'gross_amount' => '122.00',
+            'vat_rate' => '22.00', 'net_amount' => '100.00', 'vat_amount' => '22.00', 'gross_amount' => '122.00',
             'auto_renew' => false, 'lock_version' => 1,
         ]);
         PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
@@ -308,7 +308,7 @@ final class ContractActionRollbackTest extends TestCase
             $vendor->getKey(), $center->getKey(), $title, null, true, null, null, null, $expectedLockVersion,
             [new SaveContractTermData(
                 $term?->getKey(), 'rollback-term', '2026-01-01', '2026-12-31', BillingCycle::Monthly,
-                null, null, '100.00', false, '22.000000', false, $term?->lock_version,
+                null, null, '100.00', false, '22.00', false, $term?->lock_version,
             )],
         );
     }

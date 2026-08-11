@@ -157,18 +157,18 @@ class TenantSchemaTest extends TestCase
         ]);
     }
 
-    public function test_default_vat_rate_is_decimal_12_6_with_exact_string_round_trip(): void
+    public function test_default_vat_rate_is_decimal_12_2_with_exact_string_round_trip(): void
     {
         $this->assertTenantTableExists();
 
         $vatColumn = $this->column('default_vat_rate');
         $this->assertSame('decimal', strtolower($vatColumn['type_name']));
-        $this->assertSame('decimal(12,6)', strtolower($vatColumn['type']));
+        $this->assertSame('decimal(12,2)', strtolower($vatColumn['type']));
 
         DB::table('tenants')->insert([
             ...$this->requiredTenantAttributes(),
             'code' => 'exact-vat-rate',
-            'default_vat_rate' => '22.123456',
+            'default_vat_rate' => '22.12',
         ]);
 
         $storedVatRate = DB::table('tenants')
@@ -176,7 +176,7 @@ class TenantSchemaTest extends TestCase
             ->value('default_vat_rate');
 
         $this->assertIsString($storedVatRate);
-        $this->assertSame('22.123456', $storedVatRate);
+        $this->assertSame('22.12', $storedVatRate);
     }
 
     public function test_attachment_quota_is_an_unsigned_bigint_without_an_application_cap_or_float_rounding(): void
@@ -256,7 +256,7 @@ class TenantSchemaTest extends TestCase
             'code' => 'model-casts',
             'state' => 'inactive',
             'budget_basis' => 'gross',
-            'default_vat_rate' => '22.123456',
+            'default_vat_rate' => '22.12',
             'attachment_quota_bytes' => '18446744073709551615',
             'deletion_reason_required' => true,
             'lock_version' => 7,
@@ -269,7 +269,7 @@ class TenantSchemaTest extends TestCase
         $this->assertInstanceOf(BudgetBasis::class, $tenant->budget_basis);
         $this->assertSame('gross', $tenant->budget_basis->value);
         $this->assertIsString($tenant->default_vat_rate);
-        $this->assertSame('22.123456', $tenant->default_vat_rate);
+        $this->assertSame('22.12', $tenant->default_vat_rate);
         $this->assertIsString($tenant->attachment_quota_bytes);
         $this->assertSame('18446744073709551615', $tenant->attachment_quota_bytes);
         $this->assertTrue($tenant->deletion_reason_required);
@@ -286,7 +286,7 @@ class TenantSchemaTest extends TestCase
             'currency_code' => 'EUR',
             'language_code' => 'it',
             'timezone' => 'Europe/Rome',
-            'default_vat_rate' => '22.000000',
+            'default_vat_rate' => '22.00',
             'created_at' => now(),
             'updated_at' => now(),
         ];

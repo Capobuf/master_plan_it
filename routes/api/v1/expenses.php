@@ -15,6 +15,11 @@ Route::middleware(RejectBearerTokens::class)
         Route::post('/', [ExpenseController::class, 'store'])
             ->middleware('application-ability:expense.create')
             ->name('store');
+        Route::put('/register-preferences', [ExpenseController::class, 'updateRegisterPreferences'])
+            ->middleware('application-ability:expense.view')
+            ->name('register-preferences.update');
+        Route::post('/bulk-actions', [ExpenseController::class, 'bulk'])
+            ->name('bulk');
         Route::get('/{expense}', [ExpenseController::class, 'show'])
             ->whereNumber('expense')
             ->middleware('application-ability:expense.view')

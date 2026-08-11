@@ -19,6 +19,7 @@ export interface ExpenseRegisterItem {
   cost_center_id: number;
   cost_center_name: string | null;
   kind: string;
+  state: "open" | "closed";
   title: string;
   project_id: number | null;
   project_title: string | null;
@@ -26,7 +27,10 @@ export interface ExpenseRegisterItem {
   contract_id: number | null;
   contract_title: string | null;
   contract_current: boolean;
+  vendor_count: number;
+  vendor_summary: string;
   row_count: number;
+  lock_version: number;
   totals: ExpenseMoney;
 }
 
@@ -37,15 +41,38 @@ export interface ExpenseYearOption {
 }
 
 export interface ExpenseRegisterResponse extends PaginatedData<ExpenseRegisterItem> {
-  totals?: ExpenseMoney;
+  totals: ExpenseMoney;
   year_options?: ExpenseYearOption[];
+  column_preferences: ExpenseColumnPreference[];
 }
 
 export interface ExpenseListParams {
   planning_year_id?: number;
   kind?: string;
+  q?: string;
+  cost_center_id?: number;
+  project_id?: number;
+  contract_id?: number;
+  vendor_id?: number;
+  state?: "open" | "closed";
   page?: number;
   per_page?: number;
+}
+
+export type ExpenseColumnKey =
+  | "kind"
+  | "contract"
+  | "project"
+  | "cost_center"
+  | "vendor"
+  | "net"
+  | "vat"
+  | "gross"
+  | "state";
+
+export interface ExpenseColumnPreference {
+  key: ExpenseColumnKey;
+  visible: boolean;
 }
 
 export interface ExpenseRow {
@@ -84,6 +111,7 @@ export interface ExpenseDetail {
   project_id: number | null;
   project_title: string | null;
   contract_id: number | null;
+  contract_title: string | null;
   budget_state: "preparation" | "approved" | "closed";
   state: "open" | "closed";
   closure_outcome: "not_incurred" | "cancelled" | "moved" | null;
@@ -202,11 +230,50 @@ export async function listExpenses(
   return response.data;
 }
 
-export async function getExpense(expenseId: number): Promise<ExpenseDetail> {
+export async function getExpense(expenseId: number, planningYearId: number): Promise<ExpenseDetail> {
   const response = await apiClient.get<DataEnvelope<ExpenseDetail>>(
     `/api/v1/expenses/${expenseId}`,
+    { params: { year: planningYearId } },
   );
 
+  return response.data.data;
+}
+
+export async function updateExpenseRegisterPreferences(
+  columns: ExpenseColumnPreference[],
+): Promise<ExpenseColumnPreference[]> {
+  const response = await apiClient.put<DataEnvelope<{ columns: ExpenseColumnPreference[] }>>(
+    "/api/v1/expenses/register-preferences",
+    { columns },
+  );
+  return response.data.data.columns;
+}
+
+interface ExpenseBulkBase {
+  planning_year_id: number;
+  items: Array<{ id: number; lock_version: number }>;
+}
+
+export type ExpenseBulkRequest =
+  | (ExpenseBulkBase & { action: "close"; outcome: "not_incurred" | "cancelled" | null })
+  | (ExpenseBulkBase & { action: "move"; target_planning_year_id: number })
+  | (ExpenseBulkBase & { action: "delete"; allow_regeneration: boolean });
+
+export interface ExpenseBulkResponse {
+  action: ExpenseBulkRequest["action"];
+  affected_count: number;
+  destinations: Array<{
+    origin_expense_id: number;
+    destination_expense_id: number;
+    planning_year_id: number;
+  }>;
+}
+
+export async function bulkExpenseAction(input: ExpenseBulkRequest): Promise<ExpenseBulkResponse> {
+  const response = await apiClient.post<DataEnvelope<ExpenseBulkResponse>>(
+    "/api/v1/expenses/bulk-actions",
+    input,
+  );
   return response.data.data;
 }
 

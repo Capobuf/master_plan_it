@@ -35,7 +35,7 @@ final class AnnualReportApiTest extends TestCase
             'vendor_id' => $vendor->getKey(),
             'type' => 'quote',
             'spend_date' => null,
-            'entered_amount' => '100.000000',
+            'entered_amount' => '100.00',
             'net_amount' => '100.00',
             'vat_amount' => '22.00',
             'gross_amount' => '122.00',

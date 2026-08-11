@@ -37,7 +37,7 @@ final class ExpenseProjectApiHttpTest extends TestCase
             ->assertJsonPath('data.project_title', 'Progetto API');
 
         $expenseId = (int) $created->json('data.id');
-        $this->getJson('/api/v1/expenses/'.$expenseId)
+        $this->getJson('/api/v1/expenses/'.$expenseId.'?year='.$year->getKey())
             ->assertOk()->assertJsonPath('data.project_id', $project->getKey());
         $this->getJson('/api/v1/expenses?year='.$year->getKey())
             ->assertOk()
@@ -97,9 +97,9 @@ final class ExpenseProjectApiHttpTest extends TestCase
                 'description' => 'Riga progetto',
                 'quantity' => null,
                 'unit_price' => null,
-                'entered_amount' => '100.000000',
+                'entered_amount' => '100.00',
                 'amount_includes_vat' => false,
-                'vat_rate' => '22.000000',
+                'vat_rate' => '22.00',
                 'is_extra' => false,
                 'funded_plafond_expense_id' => null,
                 'spend_date' => '2026-01-15',

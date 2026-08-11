@@ -220,7 +220,7 @@ final class TenantQueryScopeTest extends TestCase
             'language_code' => 'it',
             'timezone' => 'Europe/Rome',
             'currency_code' => 'EUR',
-            'default_vat_rate' => '22.000000',
+            'default_vat_rate' => '22.00',
             'budget_basis' => 'net',
         ]);
         $tenant->syncOriginal();

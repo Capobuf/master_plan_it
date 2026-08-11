@@ -6,6 +6,8 @@ use App\Domain\Contracts\Actions\Concerns\ManagesContracts;
 use App\Domain\Contracts\Queries\ExpectedContractOccurrenceQuery;
 use App\Domain\Expenses\Actions\Concerns\ManagesExpenseAggregate;
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Domain\Money\Money;
+use App\Domain\Money\Services\VatCalculator;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Contract;
@@ -67,7 +69,10 @@ final class SynchronizeContractOccurrences
 
                     continue;
                 }
-                $vatRate = bccomp($expected->netAmount, '0', 6) === 0 ? '0.0000' : bcmul(bcdiv($expected->vatAmount, $expected->netAmount, 8), '100', 4);
+                $vatRate = (new VatCalculator)->rateFromAmounts(
+                    Money::fromDecimal($expected->netAmount, $context->currencyCode),
+                    Money::fromDecimal($expected->vatAmount, $context->currencyCode),
+                );
                 $row->fill(['vendor_id' => $contract->vendor_id, 'description' => $contract->title, 'quantity' => null, 'unit_price' => null, 'entered_amount' => $expected->netAmount, 'amount_includes_vat' => false, 'vat_rate' => $vatRate, 'lock_version' => $row->lock_version + 1]);
                 $row->forceFill(['net_amount' => $expected->netAmount, 'vat_amount' => $expected->vatAmount, 'gross_amount' => $expected->grossAmount])->save();
                 $expense->fill(['cost_center_id' => $contract->cost_center_id, 'title' => $contract->title.' — '.$expected->occurrenceDate, 'lock_version' => $expense->lock_version + 1])->save();

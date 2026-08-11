@@ -153,7 +153,7 @@ final class AnnualBudgetLifecycleTest extends TestCase
             'project_id' => $project->getKey(), 'title' => 'Annual service', 'active' => true, 'lock_version' => 1]);
         ContractTerm::query()->create(['tenant_id' => $context->tenantId, 'contract_id' => $contract->getKey(), 'source_rule_key' => (string) str()->uuid(),
             'effective_start' => '2026-01-01', 'effective_end' => '2026-12-31', 'billing_cycle' => BillingCycle::Monthly,
-            'entered_amount' => '100.000000', 'amount_includes_vat' => false, 'vat_rate' => '22.000000', 'net_amount' => '100.00', 'vat_amount' => '22.00', 'gross_amount' => '122.00', 'auto_renew' => false, 'lock_version' => 1]);
+            'entered_amount' => '100.00', 'amount_includes_vat' => false, 'vat_rate' => '22.00', 'net_amount' => '100.00', 'vat_amount' => '22.00', 'gross_amount' => '122.00', 'auto_renew' => false, 'lock_version' => 1]);
 
         $expense = app(GenerateContractOccurrenceForYear::class)->execute($actor, $context, $contract, 2026, (string) str()->uuid());
 
@@ -172,7 +172,7 @@ final class AnnualBudgetLifecycleTest extends TestCase
         [$consumer] = $this->expense($context->tenant, $year, $center, $vendor, '1200.00');
         $consumer->currentPlanningRow->forceFill(['funded_plafond_expense_id' => $plafond->getKey()])->save();
         ExpenseRow::factory()->for($consumer)->create(['tenant_id' => $context->tenantId, 'type' => ExpenseType::Actual, 'spend_date' => '2026-06-01',
-            'entered_amount' => '1200.000000', 'net_amount' => '1200.00', 'vat_amount' => '264.00', 'gross_amount' => '1464.00']);
+            'entered_amount' => '1200.00', 'net_amount' => '1200.00', 'vat_amount' => '264.00', 'gross_amount' => '1464.00']);
 
         $result = app(AnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey());
         $this->assertSame(['ordinary', 'plafond'], collect($result['expenses'])->pluck('kind')->sort()->values()->all());
@@ -277,7 +277,7 @@ final class AnnualBudgetLifecycleTest extends TestCase
 
     private function rowData(Vendor $vendor, string $amount, int $id, int $lockVersion, bool $current): SaveExpenseRowData
     {
-        return new SaveExpenseRowData($id, 1, (int) $vendor->getKey(), ExpenseType::Estimate, 'Plan', null, null, $amount, false, '22.000000', false, null, null, null, null, null, null, $lockVersion, $current);
+        return new SaveExpenseRowData($id, 1, (int) $vendor->getKey(), ExpenseType::Estimate, 'Plan', null, null, $amount, false, '22.00', false, null, null, null, null, null, null, $lockVersion, $current);
     }
 
     /** @return array{Dispatcher,string,array<int,mixed>} */

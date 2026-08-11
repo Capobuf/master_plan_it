@@ -448,7 +448,7 @@ class TenantManagementTest extends TestCase
             'currency_code' => 'USD',
             'language_code' => 'en',
             'timezone' => 'UTC',
-            'default_vat_rate' => '10.500000',
+            'default_vat_rate' => '10.50',
         ];
 
         $updated = app(UpdateTenant::class)->execute(
@@ -974,8 +974,9 @@ class TenantManagementTest extends TestCase
             'currency contains non-letters' => ['currency_code', '12$'],
             'language contains punctuation' => ['language_code', 'it-IT'],
             'language contains a digit' => ['language_code', 'it2'],
-            'VAT is negative' => ['default_vat_rate', '-0.000001'],
-            'VAT exceeds DECIMAL 12,6 range' => ['default_vat_rate', '1000000.000000'],
+            'VAT is negative' => ['default_vat_rate', '-0.01'],
+            'VAT has more than two decimal places' => ['default_vat_rate', '22.123'],
+            'VAT exceeds DECIMAL 12,2 range' => ['default_vat_rate', '10000000000.00'],
         ];
     }
 
@@ -1007,7 +1008,7 @@ class TenantManagementTest extends TestCase
             'currency_code' => 'EUR',
             'language_code' => 'it',
             'timezone' => 'Europe/Rome',
-            'default_vat_rate' => '22.000000',
+            'default_vat_rate' => '22.00',
         ];
     }
 

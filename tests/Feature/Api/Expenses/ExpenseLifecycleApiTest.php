@@ -4,6 +4,7 @@ namespace Tests\Feature\Api\Expenses;
 
 use App\Models\CostCenter;
 use App\Models\Expense;
+use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Tenant;
 use App\Models\Vendor;
@@ -120,5 +121,107 @@ final class ExpenseLifecycleApiTest extends TestCase
             ->assertJsonPath('data.state', 'closed')
             ->assertJsonPath('data.variance_final', true)
             ->assertJsonPath('data.actual', '-20.00');
+    }
+
+    public function test_bulk_close_is_atomic_when_one_item_has_a_stale_version(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $first = Expense::factory()->for($tenant)->create(['planning_year_id' => $year->getKey()]);
+        $second = Expense::factory()->for($tenant)->create(['planning_year_id' => $year->getKey()]);
+        $this->actingAs($user, 'web');
+
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses/bulk-actions', [
+            'action' => 'close',
+            'planning_year_id' => $year->getKey(),
+            'items' => [
+                ['id' => $first->getKey(), 'lock_version' => 1],
+                ['id' => $second->getKey(), 'lock_version' => 99],
+            ],
+            'outcome' => null,
+        ])->assertConflict()->assertJsonPath('error.code', 'STALE_VERSION');
+
+        foreach ([$first, $second] as $expense) {
+            $this->assertDatabaseHas('expenses', [
+                'id' => $expense->getKey(),
+                'state' => 'open',
+                'lock_version' => 1,
+                'closed_at' => null,
+            ]);
+        }
+    }
+
+    public function test_bulk_close_move_and_delete_reuse_the_existing_lifecycle_actions(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year2026 = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $year2027 = PlanningYear::factory()->for($tenant)->create(['year_label' => 2027]);
+        $this->actingAs($user, 'web');
+
+        $closeItems = collect(range(1, 2))->map(fn (): Expense => Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year2026->getKey(),
+        ]));
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses/bulk-actions', [
+            'action' => 'close',
+            'planning_year_id' => $year2026->getKey(),
+            'items' => $closeItems->map(fn (Expense $expense): array => [
+                'id' => $expense->getKey(), 'lock_version' => 1,
+            ])->all(),
+            'outcome' => null,
+        ])->assertOk()
+            ->assertJsonPath('data.action', 'close')
+            ->assertJsonPath('data.affected_count', 2);
+        foreach ($closeItems as $expense) {
+            $this->assertDatabaseHas('expenses', ['id' => $expense->getKey(), 'state' => 'closed']);
+        }
+
+        $moveItems = collect(range(1, 2))->map(function () use ($tenant, $year2026): Expense {
+            $expense = Expense::factory()->for($tenant)->create(['planning_year_id' => $year2026->getKey()]);
+            $row = ExpenseRow::factory()->for($expense)->create(['spend_date' => '2026-06-15']);
+            $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
+
+            return $expense;
+        });
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses/bulk-actions', [
+            'action' => 'move',
+            'planning_year_id' => $year2026->getKey(),
+            'items' => $moveItems->map(fn (Expense $expense): array => [
+                'id' => $expense->getKey(), 'lock_version' => 1,
+            ])->all(),
+            'target_planning_year_id' => $year2027->getKey(),
+        ])->assertOk()
+            ->assertJsonPath('data.action', 'move')
+            ->assertJsonPath('data.affected_count', 2)
+            ->assertJsonCount(2, 'data.destinations');
+        foreach ($moveItems as $expense) {
+            $this->assertDatabaseHas('expenses', [
+                'id' => $expense->getKey(),
+                'state' => 'closed',
+                'closure_outcome' => 'moved',
+            ]);
+            $this->assertDatabaseHas('expenses', [
+                'moved_from_expense_id' => $expense->getKey(),
+                'planning_year_id' => $year2027->getKey(),
+            ]);
+        }
+
+        $deleteItems = collect(range(1, 2))->map(fn (): Expense => Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year2026->getKey(),
+        ]));
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses/bulk-actions', [
+            'action' => 'delete',
+            'planning_year_id' => $year2026->getKey(),
+            'items' => $deleteItems->map(fn (Expense $expense): array => [
+                'id' => $expense->getKey(), 'lock_version' => 1,
+            ])->all(),
+            'allow_regeneration' => false,
+        ])->assertOk()
+            ->assertJsonPath('data.action', 'delete')
+            ->assertJsonPath('data.affected_count', 2);
+        foreach ($deleteItems as $expense) {
+            $this->assertSoftDeleted('expenses', ['id' => $expense->getKey()]);
+        }
     }
 }

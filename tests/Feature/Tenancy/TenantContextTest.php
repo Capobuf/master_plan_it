@@ -35,7 +35,7 @@ class TenantContextTest extends TestCase
             'language_code' => 'it',
             'timezone' => 'Europe/Rome',
             'currency_code' => 'EUR',
-            'default_vat_rate' => '22.125000',
+            'default_vat_rate' => '22.12',
         ]);
         $actor = User::factory()->create(['tenant_id' => $tenant->getKey()]);
 
@@ -48,7 +48,7 @@ class TenantContextTest extends TestCase
         $this->assertSame('it', $context->languageCode);
         $this->assertSame('Europe/Rome', $context->timezone);
         $this->assertSame('EUR', $context->currencyCode);
-        $this->assertSame('22.125000', $context->defaultVatRate);
+        $this->assertSame('22.12', $context->defaultVatRate);
     }
 
     public function test_synthetic_tenant_without_budget_basis_gets_a_non_authoritative_fallback(): void
@@ -59,7 +59,7 @@ class TenantContextTest extends TestCase
             'language_code' => 'it',
             'timezone' => 'Europe/Rome',
             'currency_code' => 'EUR',
-            'default_vat_rate' => '22.000000',
+            'default_vat_rate' => '22.00',
         ]);
         $actor = new User;
 

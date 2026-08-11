@@ -30,6 +30,7 @@ final class ExpenseDetailResource extends JsonResource
             'project_id' => $expense->projectId,
             'project_title' => $expense->projectTitle,
             'contract_id' => $expense->contractId,
+            'contract_title' => $expense->contractTitle,
             'budget_state' => $expense->budgetState,
             'state' => $expense->state,
             'closure_outcome' => $expense->closureOutcome,

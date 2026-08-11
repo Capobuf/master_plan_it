@@ -22,7 +22,7 @@ export default function DecimalInput({
   value,
   onChange,
   fixedScale,
-  maxScale = 6,
+  maxScale = 2,
   trimTrailingZeros = false,
   disabled,
   readOnly,
@@ -53,6 +53,9 @@ export default function DecimalInput({
       value={displayValue}
       onChange={(event) => {
         const nextValue = event.target.value;
+        const canonical = nextValue.replace(",", ".");
+        const decimalMatch = canonical.match(/^-?\d*\.(\d*)$/);
+        if (decimalMatch && decimalMatch[1].length > maxScale) return;
         pendingInputValue.current = { value: nextValue };
         setDisplayValue(nextValue);
         onChange(nextValue);

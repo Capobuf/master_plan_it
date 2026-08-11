@@ -126,6 +126,6 @@ final class EconomicEngine
             return [];
         }
 
-        return array_map(fn (Money $money) => $money->amount(), (new MonthlyAllocator)->allocate(Money::fromDecimal($amount, $dataset->scope->currency, 2), new DateTimeImmutable($start), new DateTimeImmutable($end), $distribution));
+        return array_map(fn (Money $money) => $money->amount(), (new MonthlyAllocator)->allocate(Money::fromDecimal($amount, $dataset->scope->currency), new DateTimeImmutable($start), new DateTimeImmutable($end), $distribution));
     }
 }

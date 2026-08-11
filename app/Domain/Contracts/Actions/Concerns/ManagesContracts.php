@@ -119,16 +119,19 @@ trait ManagesContracts
             if ($term->exists && (int) $term->lock_version !== (int) $termData->expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');
             }
-            $entered = Money::fromDecimal($termData->enteredAmount, (string) $tenant->currency_code)->amount();
-            if ($termData->unitPrice !== null && trim($termData->unitPrice) !== '' && bccomp($termData->unitPrice, '0', 6) !== 0) {
-                if ($termData->quantity === null) {
+            $currency = (string) $tenant->currency_code;
+            $quantity = $this->nullableContractDecimal($termData->quantity, "terms.{$index}.quantity");
+            $unitPrice = $this->nullableContractMoney($termData->unitPrice, "terms.{$index}.unit_price", $currency);
+            $entered = $this->contractMoney($termData->enteredAmount, "terms.{$index}.entered_amount", $currency);
+            if ($unitPrice !== null && bccomp($unitPrice, '0', Money::SCALE) !== 0) {
+                if ($quantity === null) {
                     $this->contractFail("terms.{$index}.quantity", 'Quantity is required with a unit price.');
                 }
-                $entered = (new MoneyCalculator)->multiply(Money::fromDecimal($termData->unitPrice, (string) $tenant->currency_code), $termData->quantity)->amount();
+                $entered = (new MoneyCalculator)->multiply(Money::fromDecimal($unitPrice, $currency), $quantity)->amount();
             }
-            $rate = trim($termData->vatRate) === '' ? (string) $tenant->default_vat_rate : $termData->vatRate;
-            $breakdown = $termData->amountIncludesVat ? (new VatCalculator)->fromIncludedAmount(Money::fromDecimal($entered, (string) $tenant->currency_code), $rate) : (new VatCalculator)->fromExcludedAmount(Money::fromDecimal($entered, (string) $tenant->currency_code), $rate);
-            $term->fill(['effective_start' => $start->toDateString(), 'effective_end' => $end->toDateString(), 'billing_cycle' => $termData->billingCycle, 'quantity' => $termData->quantity, 'unit_price' => $termData->unitPrice, 'entered_amount' => $entered, 'amount_includes_vat' => $termData->amountIncludesVat, 'vat_rate' => $rate, 'net_amount' => $breakdown->net()->amount(), 'vat_amount' => $breakdown->vat()->amount(), 'gross_amount' => $breakdown->gross()->amount(), 'auto_renew' => $termData->autoRenew]);
+            $rate = $this->contractDecimal(trim($termData->vatRate) === '' ? (string) $tenant->default_vat_rate : $termData->vatRate, "terms.{$index}.vat_rate", false, 10);
+            $breakdown = $termData->amountIncludesVat ? (new VatCalculator)->fromIncludedAmount(Money::fromDecimal($entered, $currency), $rate) : (new VatCalculator)->fromExcludedAmount(Money::fromDecimal($entered, $currency), $rate);
+            $term->fill(['effective_start' => $start->toDateString(), 'effective_end' => $end->toDateString(), 'billing_cycle' => $termData->billingCycle, 'quantity' => $quantity, 'unit_price' => $unitPrice, 'entered_amount' => $entered, 'amount_includes_vat' => $termData->amountIncludesVat, 'vat_rate' => $rate, 'net_amount' => $breakdown->net()->amount(), 'vat_amount' => $breakdown->vat()->amount(), 'gross_amount' => $breakdown->gross()->amount(), 'auto_renew' => $termData->autoRenew]);
             if (! $term->exists) {
                 $term->tenant_id = $tenant->getKey();
                 $term->contract_id = $contract->getKey();
@@ -271,6 +274,46 @@ trait ManagesContracts
     private function contractAudit(string $event, string $correlationId, User $actor, Tenant $tenant, Contract $contract, array $properties = []): void
     {
         app(AuditRecorder::class)->record($event, $correlationId, new AuditProperties($properties), $actor, (int) $tenant->getKey(), $contract);
+    }
+
+    private function contractMoney(string $value, string $field, string $currency): string
+    {
+        try {
+            return Money::fromDecimal($value, $currency)->amount();
+        } catch (\Throwable) {
+            $this->contractFail($field, 'The amount must be a decimal with at most 2 places.');
+        }
+    }
+
+    private function nullableContractMoney(?string $value, string $field, string $currency): ?string
+    {
+        return $value === null || trim($value) === '' ? null : $this->contractMoney($value, $field, $currency);
+    }
+
+    private function contractDecimal(string $value, string $field, bool $allowNegative = true, int $maxIntegerDigits = 17): string
+    {
+        $pattern = $allowNegative ? '/^-?\d+(?:\.\d{1,2})?$/' : '/^\d+(?:\.\d{1,2})?$/';
+        if (! preg_match($pattern, $value)) {
+            $this->contractFail($field, 'The value must be a decimal with at most 2 places.');
+        }
+
+        [$integer, $fraction] = array_pad(explode('.', ltrim($value, '-'), 2), 2, '');
+        $integer = ltrim($integer, '0');
+        $integer = $integer === '' ? '0' : $integer;
+        if (strlen($integer) > $maxIntegerDigits) {
+            $this->contractFail($field, 'The decimal value is too large.');
+        }
+
+        $normalized = $integer.'.'.str_pad($fraction, Money::SCALE, '0');
+
+        return str_starts_with($value, '-') && bccomp($normalized, '0', Money::SCALE) !== 0
+            ? '-'.$normalized
+            : $normalized;
+    }
+
+    private function nullableContractDecimal(?string $value, string $field): ?string
+    {
+        return $value === null || trim($value) === '' ? null : $this->contractDecimal($value, $field);
     }
 
     private function contractFail(string $field, string $message): never

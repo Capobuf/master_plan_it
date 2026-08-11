@@ -6,14 +6,18 @@ use DomainException;
 
 final readonly class Money
 {
+    public const SCALE = 2;
+
+    private const PRECISION = 19;
+
     private function __construct(
         private string $amount,
         private string $currency,
     ) {}
 
-    public static function fromDecimal(string $amount, string $currency, int $scale = 6): self
+    public static function fromDecimal(string $amount, string $currency): self
     {
-        if ($scale < 0 || $scale > 6 || ! preg_match('/^-?\d+(?:\.\d+)?$/', $amount)) {
+        if (! preg_match('/^-?\d+(?:\.\d+)?$/', $amount)) {
             throw new DomainException('INVALID_MONEY');
         }
 
@@ -25,24 +29,22 @@ final readonly class Money
 
         [$integer, $fraction] = array_pad(explode('.', ltrim($amount, '-'), 2), 2, '');
 
-        if (strlen($fraction) > 6 || strlen($fraction) > $scale) {
+        if (strlen($fraction) > self::SCALE) {
             throw new DomainException('INVALID_MONEY');
         }
 
         $integer = ltrim($integer, '0');
         $integer = $integer === '' ? '0' : $integer;
 
-        if (strlen($integer) > 19 - $scale) {
+        if (strlen($integer) > self::PRECISION - self::SCALE) {
             throw new DomainException('INVALID_MONEY');
         }
 
         $normalizedAmount = $integer;
 
-        if ($scale > 0) {
-            $normalizedAmount .= '.'.str_pad($fraction, $scale, '0');
-        }
+        $normalizedAmount .= '.'.str_pad($fraction, self::SCALE, '0');
 
-        if (str_starts_with($amount, '-') && bccomp($normalizedAmount, '0', $scale) !== 0) {
+        if (str_starts_with($amount, '-') && bccomp($normalizedAmount, '0', self::SCALE) !== 0) {
             $normalizedAmount = '-'.$normalizedAmount;
         }
 

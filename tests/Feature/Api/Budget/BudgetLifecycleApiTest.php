@@ -211,7 +211,7 @@ final class BudgetLifecycleApiTest extends TestCase
             'vendor_id' => $vendor->getKey(),
             'type' => ExpenseType::Actual,
             'spend_date' => '2026-12-20',
-            'entered_amount' => '100.000000',
+            'entered_amount' => '100.00',
             'net_amount' => '100.00',
         ]);
         $this->actingAs($user, 'web');
