@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router";
 import { EyeCloseIcon, EyeIcon } from "../../icons";
-import { ApiError } from "../../api/client";
+import { ApiError, type User } from "../../api/client";
 import { useAuth } from "../../context/AuthContext";
 import Label from "../form/Label";
 import Input from "../form/input/InputField";
@@ -17,6 +17,10 @@ interface FieldErrors {
 interface FormError {
   message: string;
   correlationId: string | null;
+}
+
+function landingRouteFor(user: User): string {
+  return user.tenant_id === null ? routes.tenant : routes.panoramica;
 }
 
 function firstFieldMessage(value: unknown): string | undefined {
@@ -35,7 +39,7 @@ function firstFieldMessage(value: unknown): string | undefined {
 }
 
 export default function SignInForm() {
-  const { authenticated, loading, login } = useAuth();
+  const { authenticated, currentUser, loading, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [showPassword, setShowPassword] = useState(false);
@@ -59,8 +63,8 @@ export default function SignInForm() {
     );
   }
 
-  if (authenticated) {
-    return <Navigate to={routes.panoramica} replace />;
+  if (authenticated && currentUser) {
+    return <Navigate to={landingRouteFor(currentUser)} replace />;
   }
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -70,11 +74,13 @@ export default function SignInForm() {
     setFormError(null);
 
     try {
-      await login({ email, password });
+      const user = await login({ email, password });
       const routeState = location.state as
         | { from?: { pathname?: string } }
         | null;
-      navigate(routeState?.from?.pathname ?? routes.panoramica, { replace: true });
+      navigate(routeState?.from?.pathname ?? landingRouteFor(user), {
+        replace: true,
+      });
     } catch (error) {
       const apiError = ApiError.from(error);
 

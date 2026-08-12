@@ -48,4 +48,14 @@ describe("DatePicker", () => {
     expect(visible).toHaveAttribute("aria-invalid", "true");
     expect(visible).toHaveAccessibleDescription("Inserisci una data valida.");
   });
+
+  it("disables dates outside the configured range", () => {
+    render(<DatePicker id="history" label="Vista temporale" defaultDate="2026-08-10" minDate="2026-08-09" maxDate="2026-08-12" />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Apri calendario: Vista temporale" }));
+    const wrapper = document.querySelector<HTMLInputElement>("#history")?.closest(".flatpickr-wrapper");
+    expect(within(wrapper as HTMLElement).getByLabelText(/Agosto 8, 2026/i)).toHaveClass("flatpickr-disabled");
+    expect(within(wrapper as HTMLElement).getByLabelText(/Agosto 9, 2026/i)).not.toHaveClass("flatpickr-disabled");
+    expect(within(wrapper as HTMLElement).getByLabelText(/Agosto 13, 2026/i)).toHaveClass("flatpickr-disabled");
+  });
 });

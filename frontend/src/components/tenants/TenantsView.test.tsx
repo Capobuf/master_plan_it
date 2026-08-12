@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -7,8 +7,14 @@ import {
   listTenants,
   updateTenant,
 } from "../../api/tenants";
+import { enterTenant } from "../../api/context";
 import type { Tenant } from "../../api/client";
+import { routes } from "../../navigation/routes";
 import TenantsView from "./TenantsView";
+
+const applicationContext = vi.hoisted(() => ({
+  refreshContext: vi.fn(),
+}));
 
 vi.mock("../../api/tenants", () => ({
   listTenants: vi.fn(),
@@ -16,6 +22,16 @@ vi.mock("../../api/tenants", () => ({
   updateTenant: vi.fn(),
   deactivateTenant: vi.fn(),
   reactivateTenant: vi.fn(),
+}));
+
+vi.mock("../../api/context", () => ({
+  enterTenant: vi.fn(),
+}));
+
+vi.mock("../../context/ApplicationContext", () => ({
+  useApplicationContext: () => ({
+    refreshContext: applicationContext.refreshContext,
+  }),
 }));
 
 const tenant: Tenant = {
@@ -53,14 +69,14 @@ const tenantPage = {
 
 function renderView() {
   return render(
-    <MemoryRouter>
-      <TenantsView
-        canView
-        canCreate
-        canUpdate
-        canDeactivate={false}
-        canReactivate={false}
-      />
+    <MemoryRouter initialEntries={[routes.tenant]}>
+      <Routes>
+        <Route
+          path={routes.tenant}
+          element={<TenantsView canView canCreate canUpdate canDeactivate={false} canReactivate={false} />}
+        />
+        <Route path={routes.panoramica} element={<p>Panoramica Tenant</p>} />
+      </Routes>
     </MemoryRouter>,
   );
 }
@@ -70,6 +86,22 @@ describe("TenantsView", () => {
     vi.mocked(listTenants).mockResolvedValue(tenantPage);
     vi.mocked(createTenant).mockResolvedValue(createdTenant);
     vi.mocked(updateTenant).mockResolvedValue(tenant);
+    vi.mocked(enterTenant).mockResolvedValue(tenant);
+    applicationContext.refreshContext.mockResolvedValue(null);
+  });
+
+  it("enters the selected Tenant from its name and opens the overview", async () => {
+    renderView();
+
+    fireEvent.click(
+      await screen.findByRole("button", { name: "Accedi a Acme Italia" }),
+    );
+
+    await waitFor(() => {
+      expect(enterTenant).toHaveBeenCalledWith(17);
+      expect(applicationContext.refreshContext).toHaveBeenCalledOnce();
+    });
+    expect(await screen.findByText("Panoramica Tenant")).toBeInTheDocument();
   });
 
   it("keeps all six bootstrap fields in the create modal and normalizes VAT", async () => {

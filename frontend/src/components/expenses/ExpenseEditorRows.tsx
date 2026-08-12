@@ -35,6 +35,7 @@ const columnHeadings = [
 
 interface ExpenseEditorRowsProps {
   rows: ExpenseEditorRow[];
+  defaultVatRate?: string | null;
   vendors: ExpenseLookupOption[];
   plafonds: PlafondExpenseOption[];
   plafondsLoading?: boolean;
@@ -51,6 +52,7 @@ interface DragItem {
 
 function DraggableExpenseRow({
   row,
+  defaultVatRate,
   index,
   count,
   vendors,
@@ -63,6 +65,7 @@ function DraggableExpenseRow({
   validationErrors,
 }: {
   row: ExpenseEditorRow;
+  defaultVatRate: string | null;
   index: number;
   count: number;
   vendors: ExpenseLookupOption[];
@@ -347,14 +350,18 @@ function DraggableExpenseRow({
             <DecimalInput
               id={`${row.editorKey}-vat-rate`}
               ariaLabel={`IVA riga ${index + 1}`}
-              value={row.vat_rate ?? ""}
-              onChange={(vat_rate) => onChange({ vat_rate })}
+              value={row.id === undefined && row.vat_rate === undefined
+                ? defaultVatRate ?? ""
+                : row.vat_rate ?? ""}
+              onChange={(vat_rate) => onChange({ vat_rate: vat_rate || undefined })}
               fixedScale={2}
               maxScale={2}
               suffix="%"
               disabled={disabled}
               error={Boolean(errorFor("vat_rate"))}
-              hint={errorFor("vat_rate")}
+              hint={errorFor("vat_rate") ?? (row.id === undefined && row.vat_rate === undefined
+                ? "Valore predefinito del Tenant; modificalo per applicare un override."
+                : undefined)}
             />
           </div>
           <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
@@ -426,6 +433,7 @@ function DraggableExpenseRow({
 
 export default function ExpenseEditorRows({
   rows,
+  defaultVatRate = null,
   vendors,
   plafonds,
   plafondsLoading = false,
@@ -449,9 +457,10 @@ export default function ExpenseEditorRows({
         </div>
 
         {rows.map((row, index) => (
-          <DraggableExpenseRow
-            key={row.editorKey}
-            row={row}
+      <DraggableExpenseRow
+        key={row.editorKey}
+        row={row}
+        defaultVatRate={defaultVatRate}
             index={index}
             count={rows.length}
             vendors={vendors}

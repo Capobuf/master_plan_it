@@ -1,12 +1,14 @@
 import type { ComponentType, SVGProps } from "react";
 
 import {
+  BoxCubeIcon,
   DocsIcon,
   DollarLineIcon,
   GridIcon,
   GroupIcon,
   PieChartIcon,
   TableIcon,
+  TaskIcon,
 } from "../icons";
 import { routes } from "./routes";
 
@@ -100,7 +102,7 @@ export const applicationNavigation = [
       {
         route: routes.impostazioni,
         label: "Impostazioni",
-        icon: GridIcon,
+        icon: TaskIcon,
         requiredAbility: [
           "tenant-settings.view",
           "tenant-settings.update",
@@ -119,7 +121,7 @@ export const applicationNavigation = [
       {
         route: routes.tenant,
         label: "Tenant",
-        icon: GridIcon,
+        icon: BoxCubeIcon,
         requiredAbility: "platform.tenants.view",
       },
     ],

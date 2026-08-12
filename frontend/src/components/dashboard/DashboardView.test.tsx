@@ -66,6 +66,11 @@ describe("DashboardView", () => {
     expect(screen.getByRole("heading", { name: "Rinnovi e Scadenze" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Licenze cloud" })).toHaveAttribute("href", "/spese/42");
     expect(screen.getByRole("link", { name: "Cloud annuale" })).toHaveAttribute("href", "/contratti/7");
+
+    const renewalDate = screen.getByRole("link", { name: "Cloud annuale" }).closest("li")?.querySelector("time");
+    expect(renewalDate).toHaveTextContent("01");
+    expect(renewalDate).toHaveTextContent("OTT");
+    expect(renewalDate).not.toHaveTextContent("2026");
   });
 
   it("keeps the main and secondary dashboard columns independent", () => {

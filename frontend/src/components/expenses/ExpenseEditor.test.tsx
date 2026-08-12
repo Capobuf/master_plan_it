@@ -8,7 +8,7 @@ import ExpenseEditor from "./ExpenseEditor";
 
 vi.mock("../../context/ApplicationContext", () => ({
   useApplicationContext: () => ({
-    data: { tenant: { id: 1 }, abilities: [] },
+    data: { tenant: { id: 1, default_vat_rate: "22.00" }, abilities: [] },
     loading: false,
     hasAbility: () => true,
   }),
@@ -67,11 +67,12 @@ describe("ExpenseEditor", () => {
     expect(screen.getAllByRole("group", { name: /Riga/ })).toHaveLength(3);
   });
 
-  it("omits VAT for new rows so the backend can apply the Tenant default", async () => {
+  it("shows the Tenant VAT default while omitting inherited VAT from the payload", async () => {
     vi.mocked(expenseApi.createExpense).mockResolvedValue({ id: 91 } as never);
     render(<MemoryRouter><ExpenseEditor /></MemoryRouter>);
 
     await screen.findByRole("option", { name: "Operations" });
+    expect(document.querySelector<HTMLInputElement>('input[aria-label="IVA riga 1"]')).toHaveValue("22,00");
     fireEvent.change(screen.getByRole("combobox", { name: "Centro di Costo" }), {
       target: { value: "3" },
     });
@@ -88,7 +89,7 @@ describe("ExpenseEditor", () => {
     expect(input.rows[0]).not.toHaveProperty("vat_rate");
   });
 
-  it("keeps omission on added rows and sends an explicit VAT override", async () => {
+  it("shows the default on added rows and sends only an explicit VAT override", async () => {
     vi.mocked(expenseApi.createExpense).mockResolvedValue({ id: 92 } as never);
     render(<MemoryRouter><ExpenseEditor /></MemoryRouter>);
 
@@ -98,8 +99,8 @@ describe("ExpenseEditor", () => {
       document.querySelectorAll<HTMLInputElement>('input[aria-label^="IVA riga"]'),
     );
     expect(vatInputs).toHaveLength(2);
-    expect(vatInputs[0]).toHaveValue("");
-    expect(vatInputs[1]).toHaveValue("");
+    expect(vatInputs[0]).toHaveValue("22,00");
+    expect(vatInputs[1]).toHaveValue("22,00");
     fireEvent.change(vatInputs[0], { target: { value: "10,00" } });
 
     fireEvent.change(screen.getByRole("combobox", { name: "Centro di Costo" }), {
@@ -137,6 +138,7 @@ describe("ExpenseEditor", () => {
 
     const year = await screen.findByRole("combobox", { name: "Anno destinazione" });
     await waitFor(() => expect(year).toHaveValue("8"));
+    expect(document.querySelector<HTMLInputElement>('input[aria-label="IVA riga 1"]')).toHaveValue("22,00");
     expect(screen.queryByRole("option", { name: "2026" })).not.toBeInTheDocument();
     expect(screen.getByRole("option", { name: "2027" })).toBeInTheDocument();
     expect(expenseApi.getExpense).toHaveBeenCalledWith(11, 7);

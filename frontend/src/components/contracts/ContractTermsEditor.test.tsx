@@ -28,7 +28,7 @@ function EmptyTermsHarness() {
   ]);
   return (
     <>
-      <ContractTermsEditor terms={terms} onChange={setTerms} />
+      <ContractTermsEditor terms={terms} onChange={setTerms} defaultVatRate="22.00" />
       <output data-testid="vat-values">
         {JSON.stringify(terms.map((item) => item.vat_rate))}
       </output>
@@ -48,11 +48,14 @@ describe("ContractTermsEditor", () => {
     expect(screen.getByText("Calcolato da quantità × prezzo unitario")).toBeInTheDocument();
   });
 
-  it("preserves omission for new terms and explicit VAT overrides", () => {
+  it("shows inherited VAT while preserving omission and explicit overrides", () => {
     render(<EmptyTermsHarness />);
 
     fireEvent.click(screen.getByRole("button", { name: "Aggiungi Termine" }));
     expect(screen.getByTestId("vat-values")).toHaveTextContent("[null,null]");
+    screen.getAllByRole("textbox", { name: "Aliquota IVA" }).forEach((input) => {
+      expect(input).toHaveValue("22,00");
+    });
 
     fireEvent.change(screen.getAllByRole("textbox", { name: "Aliquota IVA" })[1], {
       target: { value: "10,00" },

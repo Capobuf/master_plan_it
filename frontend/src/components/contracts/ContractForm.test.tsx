@@ -52,17 +52,17 @@ describe("ContractForm", () => {
     await waitFor(() => expect(document.activeElement).toBe(unitPrice));
   });
 
-  it("keeps VAT omitted for the first and every newly added term", async () => {
-    render(<ContractForm canSubmit onSubmit={vi.fn()} />);
+  it("shows the Tenant VAT default for the first and every newly added term", async () => {
+    render(<ContractForm defaultVatRate="22.00" canSubmit onSubmit={vi.fn()} />);
 
     const initialVat = await screen.findByRole("textbox", { name: "Aliquota IVA" });
-    expect(initialVat).toHaveValue("");
+    expect(initialVat).toHaveValue("22,00");
 
     fireEvent.click(screen.getByRole("button", { name: "Aggiungi Termine" }));
 
     expect(screen.getAllByRole("textbox", { name: "Aliquota IVA" })).toHaveLength(2);
     screen.getAllByRole("textbox", { name: "Aliquota IVA" }).forEach((input) => {
-      expect(input).toHaveValue("");
+      expect(input).toHaveValue("22,00");
     });
   });
 
@@ -100,13 +100,13 @@ describe("ContractForm", () => {
       }],
     } as Contract;
 
-    render(<ContractForm contract={contract} canSubmit onSubmit={vi.fn()} />);
+    render(<ContractForm contract={contract} defaultVatRate="20.00" canSubmit onSubmit={vi.fn()} />);
 
     expect(await screen.findByRole("textbox", { name: "Aliquota IVA" })).toHaveValue("22,00");
     fireEvent.click(screen.getByRole("button", { name: "Aggiungi Termine" }));
 
     const vatInputs = screen.getAllByRole("textbox", { name: "Aliquota IVA" });
     expect(vatInputs[0]).toHaveValue("22,00");
-    expect(vatInputs[1]).toHaveValue("");
+    expect(vatInputs[1]).toHaveValue("20,00");
   });
 });

@@ -35,7 +35,7 @@ export default function NewContract() {
     <>
       <PageMeta title="Nuovo Contratto | Master Plan IT" description="Crea un nuovo contratto" />
       <PageBreadcrumb pageTitle="Nuovo Contratto" subtitle="Inserisci i dati generali e i termini contrattuali." />
-      {contextLoading ? <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant in corso." /> : tenantId === null ? <Alert variant="warning" title="Tenant richiesto" message="Seleziona un Tenant prima di creare un contratto." /> : !canCreate ? <Alert variant="warning" title="Creazione non disponibile" message="Non disponi dell'autorizzazione necessaria per questa operazione." /> : <ContractForm canSubmit={canCreate} submitting={submitting} error={error} onSubmit={async (input) => submit(input as ContractWrite)} />}
+      {contextLoading ? <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant in corso." /> : tenantId === null ? <Alert variant="warning" title="Tenant richiesto" message="Seleziona un Tenant prima di creare un contratto." /> : !canCreate ? <Alert variant="warning" title="Creazione non disponibile" message="Non disponi dell'autorizzazione necessaria per questa operazione." /> : <ContractForm defaultVatRate={data?.tenant?.default_vat_rate} canSubmit={canCreate} submitting={submitting} error={error} onSubmit={async (input) => submit(input as ContractWrite)} />}
     </>
   );
 }

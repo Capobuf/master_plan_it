@@ -233,6 +233,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
     ? Number(searchParams.get("credit_for_expense_id"))
     : null;
   const tenantId = applicationContext?.tenant?.id ?? null;
+  const tenantDefaultVatRate = applicationContext?.tenant?.default_vat_rate;
   const canSubmit = hasAbility(editing ? "expense.update" : "expense.create");
   const canView = hasAbility("expense.view");
   const canUseLookups = ["cost-center.view", "planning-year.view"].every(hasAbility);
@@ -653,7 +654,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
         <div id="expense-editor-rows" tabIndex={-1} className="focus:outline-hidden focus:ring-3 focus:ring-error-500/10">
           {fieldError("rows") ? <p className="mb-3 text-xs text-error-500">{fieldError("rows")}</p> : null}
           <DndProvider backend={HTML5Backend}>
-            <ExpenseEditorRows rows={rows} vendors={vendors} plafonds={plafonds} plafondsLoading={plafondsLoading} onChange={updateRow} onMove={moveRow} onRemove={removeRow} disabled={disabled} validationErrors={validationErrors} />
+            <ExpenseEditorRows rows={rows} defaultVatRate={tenantDefaultVatRate} vendors={vendors} plafonds={plafonds} plafondsLoading={plafondsLoading} onChange={updateRow} onMove={moveRow} onRemove={removeRow} disabled={disabled} validationErrors={validationErrors} />
           </DndProvider>
         </div>
         <div className="flex justify-end">

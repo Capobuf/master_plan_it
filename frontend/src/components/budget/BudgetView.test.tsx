@@ -15,7 +15,7 @@ const dataset: AnnualBudget = {
     state: "preparation",
     lock_version: 1,
     warning: null,
-    history_activated_at: null,
+    history_activated_at: "2026-08-09T10:00:00Z",
   },
   summary: {
     currency: "EUR",
@@ -64,11 +64,24 @@ describe("BudgetView", () => {
   it("links each annual expense to its detail page", () => {
     render(
       <MemoryRouter>
-        <BudgetView dataset={dataset} asOf="" canApprove={false} canClose={false} onAsOfChange={() => undefined} onChange={() => undefined} />
+        <BudgetView dataset={dataset} asOf="" tenantTimezone="Europe/Rome" canApprove={false} canClose={false} onAsOfChange={() => undefined} onChange={() => undefined} />
       </MemoryRouter>,
     );
 
     expect(screen.getByRole("link", { name: "Licenze software" })).toHaveAttribute("href", "/spese/42");
+  });
+
+  it("uses the shared expense DatePicker for the historical cutoff", () => {
+    render(
+      <MemoryRouter>
+        <BudgetView dataset={dataset} asOf="" tenantTimezone="Europe/Rome" canApprove={false} canClose={false} onAsOfChange={() => undefined} onChange={() => undefined} />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByLabelText("Vista temporale")).toHaveAttribute("placeholder", "Seleziona una data");
+    expect(screen.getByText("Storico disponibile dal 09/08/2026. Le date precedenti e future sono disattivate.")).toBeInTheDocument();
+    expect(document.querySelector('#budget-as-of')).toHaveAttribute("type", "hidden");
+    expect(document.querySelector('input[type="datetime-local"]')).not.toBeInTheDocument();
   });
 
   it("lets historical read-only mode override mutation permissions", () => {
@@ -82,7 +95,7 @@ describe("BudgetView", () => {
 
     render(
       <MemoryRouter>
-        <BudgetView dataset={historical} asOf="2026-08-09T10:00" canApprove canClose onAsOfChange={() => undefined} onChange={() => undefined} />
+        <BudgetView dataset={historical} asOf="2026-08-09T10:00" tenantTimezone="Europe/Rome" canApprove canClose onAsOfChange={() => undefined} onChange={() => undefined} />
       </MemoryRouter>,
     );
 

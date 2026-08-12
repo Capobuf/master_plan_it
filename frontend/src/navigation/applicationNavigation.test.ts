@@ -12,6 +12,23 @@ const settingsItems = applicationNavigation.find(
 )?.items ?? [];
 
 describe("application navigation", () => {
+  it("uses distinct icons for Overview, Settings, and Tenant", () => {
+    const overview = applicationNavigation.find(
+      (section) => section.id === "general",
+    )?.items[0];
+    const settings = applicationNavigation.find(
+      (section) => section.id === "settings",
+    )?.items[0];
+    const tenant = applicationNavigation.find(
+      (section) => section.id === "platform",
+    )?.items[0];
+
+    expect(new Set([overview?.icon, settings?.icon, tenant?.icon])).toHaveProperty(
+      "size",
+      3,
+    );
+  });
+
   it("exposes one composite Settings item instead of five destinations", () => {
     expect(settingsItems).toHaveLength(1);
     expect(settingsItems[0]).toMatchObject({

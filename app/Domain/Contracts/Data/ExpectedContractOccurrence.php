@@ -13,6 +13,7 @@ final readonly class ExpectedContractOccurrence
         public string $netAmount,
         public string $vatAmount,
         public string $grossAmount,
+        public ?string $vatRate,
         public bool $suppressed,
         public ?int $expenseId,
         public ?string $planningState,

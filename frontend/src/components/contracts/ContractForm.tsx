@@ -86,7 +86,7 @@ function contractValidationSuggestion(field: string): string {
   return "Controlla il valore inserito.";
 }
 
-export default function ContractForm({ contract = null, canSubmit, submitting = false, error = null, onSubmit }: { contract?: Contract | null; canSubmit: boolean; submitting?: boolean; error?: ApiError | null; onSubmit: (input: ContractWrite | ContractUpdate) => Promise<void> }) {
+export default function ContractForm({ contract = null, defaultVatRate = null, canSubmit, submitting = false, error = null, onSubmit }: { contract?: Contract | null; defaultVatRate?: string | null; canSubmit: boolean; submitting?: boolean; error?: ApiError | null; onSubmit: (input: ContractWrite | ContractUpdate) => Promise<void> }) {
   const [vendorId, setVendorId] = useState(String(contract?.vendor_id ?? ""));
   const [costCenterId, setCostCenterId] = useState(String(contract?.cost_center_id ?? ""));
   const [projectId, setProjectId] = useState(String(contract?.project_id ?? ""));
@@ -207,7 +207,7 @@ export default function ContractForm({ contract = null, canSubmit, submitting = 
       <div className="md:col-span-2"><Label htmlFor="contract-description">Descrizione</Label><TextArea id="contract-description" value={description} onChange={(value) => { setDescription(value); clearValidationFields(["description"]); }} disabled={disabled} placeholder="Descrizione opzionale" error={Boolean(fieldError("description"))} hint={fieldError("description")} /></div>
     </div></ComponentCard>
     <ComponentCard title="Rinnovo"><div className="grid grid-cols-1 gap-4 md:grid-cols-2"><DatePicker id="contract-renewal-date" label="Data di rinnovo" placeholder="Seleziona la data" defaultDate={renewalDate || undefined} onChange={handleRenewalDate} disabled={disabled} error={Boolean(fieldError("renewal_date"))} hint={fieldError("renewal_date")} /><div><Label htmlFor="contract-renewal-notice">Giorni di preavviso</Label><InputField id="contract-renewal-notice" type="number" min="0" value={renewalNoticeDays} onChange={(event) => { setRenewalNoticeDays(event.target.value); clearValidationFields(["renewal_notice_days"]); }} disabled={disabled} error={Boolean(fieldError("renewal_notice_days"))} hint={fieldError("renewal_notice_days")} /></div><div className="md:col-span-2"><Label htmlFor="contract-renewal-notes">Note sul rinnovo</Label><InputField id="contract-renewal-notes" value={renewalNotes} onChange={(event) => { setRenewalNotes(event.target.value); clearValidationFields(["renewal_notes"]); }} disabled={disabled} placeholder="Note opzionali" error={Boolean(fieldError("renewal_notes"))} hint={fieldError("renewal_notes")} /></div><div className="md:col-span-2"><Checkbox id="contract-active" label="Contratto attivo" checked={active} onChange={(value) => { setActive(value); clearValidationFields(["active"]); }} disabled={disabled} error={Boolean(fieldError("active"))} hint={fieldError("active")} /></div></div></ComponentCard>
-    <ContractTermsEditor terms={terms} onChange={setTerms} disabled={disabled} existingTerms={contract?.terms} validationErrors={validationErrors} onFieldChange={clearValidationFields} />
+    <ContractTermsEditor terms={terms} onChange={setTerms} defaultVatRate={defaultVatRate} disabled={disabled} existingTerms={contract?.terms} validationErrors={validationErrors} onFieldChange={clearValidationFields} />
     <div className="flex justify-end"><Button disabled={disabled}>{submitting ? "Salvataggio…" : contract ? "Salva Modifiche" : "Crea Contratto"}</Button></div>
   </form>;
 }

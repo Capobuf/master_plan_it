@@ -83,7 +83,8 @@ describe("BudgetApprovalModal", () => {
 
     fireEvent.click(screen.getByRole("checkbox", { name: /Expense A/ }));
     fireEvent.change(screen.getByLabelText("Nuovo approvato Expense A"), { target: { value: "0.00" } });
-    fireEvent.change(screen.getByLabelText("Data di efficacia"), { target: { value: "2026-08-09" } });
+    fireEvent.click(screen.getByRole("button", { name: "Apri calendario: Data di efficacia" }));
+    fireEvent.click(screen.getByLabelText(/Agosto 9, 2026/i));
     fireEvent.click(screen.getByRole("button", { name: "Registra decisione" }));
 
     await waitFor(() => {

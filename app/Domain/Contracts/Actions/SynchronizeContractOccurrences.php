@@ -69,7 +69,7 @@ final class SynchronizeContractOccurrences
 
                     continue;
                 }
-                $vatRate = (new VatCalculator)->rateFromAmounts(
+                $vatRate = $expected->vatRate ?? (new VatCalculator)->rateFromAmounts(
                     Money::fromDecimal($expected->netAmount, $context->currencyCode),
                     Money::fromDecimal($expected->vatAmount, $context->currencyCode),
                 );

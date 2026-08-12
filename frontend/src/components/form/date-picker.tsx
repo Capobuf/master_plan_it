@@ -12,6 +12,8 @@ type PropsType = {
   mode?: "single" | "multiple" | "range" | "time";
   onChange?: Hook | Hook[];
   defaultDate?: DateOption;
+  minDate?: DateOption;
+  maxDate?: DateOption;
   label?: string;
   hideLabel?: boolean;
   staticPosition?: boolean;
@@ -29,6 +31,8 @@ export default function DatePicker({
   hideLabel = false,
   staticPosition = true,
   defaultDate,
+  minDate,
+  maxDate,
   placeholder,
   disabled = false,
   error = false,
@@ -52,6 +56,8 @@ export default function DatePicker({
       dateFormat: "Y-m-d",
       altInput: true,
       altFormat: "d/m/Y",
+      minDate,
+      maxDate,
       locale: Italian,
       disableMobile: true,
       onChange: (dates, currentDateString, instance, data) => {
@@ -71,7 +77,7 @@ export default function DatePicker({
       }
       pickerRef.current = null;
     };
-  }, [mode, staticPosition]);
+  }, [maxDate, minDate, mode, staticPosition]);
 
   useEffect(() => {
     if (!pickerRef.current) return;

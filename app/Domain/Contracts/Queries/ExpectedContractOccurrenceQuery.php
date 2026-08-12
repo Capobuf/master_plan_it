@@ -28,7 +28,7 @@ final class ExpectedContractOccurrenceQuery
             ->get()
             ->flatMap(fn ($expense) => $expense->rows)
             ->keyBy('source_key');
-        /** @var array<int, array{term_id:int, date:CarbonImmutable, net:string, vat:string, gross:string}> $annual */
+        /** @var array<int, array{term_id:int, date:CarbonImmutable, net:string, vat:string, gross:string, vat_rate:?string}> $annual */
         $annual = [];
         foreach ($terms as $term) {
             foreach ($this->dates($term) as $date) {
@@ -41,7 +41,11 @@ final class ExpectedContractOccurrenceQuery
                     'net' => '0.00',
                     'vat' => '0.00',
                     'gross' => '0.00',
+                    'vat_rate' => (string) $term->vat_rate,
                 ];
+                if ($bucket['vat_rate'] !== null && bccomp($bucket['vat_rate'], (string) $term->vat_rate, 2) !== 0) {
+                    $bucket['vat_rate'] = null;
+                }
                 $bucket['net'] = bcadd($bucket['net'], (string) $term->net_amount, 2);
                 $bucket['vat'] = bcadd($bucket['vat'], (string) $term->vat_amount, 2);
                 $bucket['gross'] = bcadd($bucket['gross'], (string) $term->gross_amount, 2);
@@ -63,6 +67,7 @@ final class ExpectedContractOccurrenceQuery
                 $bucket['net'],
                 $bucket['vat'],
                 $bucket['gross'],
+                $bucket['vat_rate'],
                 $exceptions->has($key),
                 $row instanceof ExpenseRow ? (int) $row->expense_id : null,
                 $row instanceof ExpenseRow ? ($row->manual_override_at === null ? 'managed' : 'manual') : null,

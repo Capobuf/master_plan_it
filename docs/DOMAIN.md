@@ -171,6 +171,9 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
   omettono l'aliquota. Un valore esplicito, incluso zero, prevale sempre; dati e revisioni esistenti
   non vengono riscritti. Se un update omette l'IVA di un figlio esistente, resta valida l'aliquota
   persistita.
+- Gli editor mostrano l'IVA Tenant sui nuovi elementi come valore ereditato, senza trasformarla in
+  override nel payload. Il backend risolve quindi il valore corrente al salvataggio; elementi
+  esistenti e override espliciti continuano a mostrare e conservare la propria aliquota.
 - Generazione e sincronizzazione da un Contract usano i valori IVA persistiti nel termine sorgente,
   non un default Tenant modificato successivamente.
 - Il Plafond non deve produrre doppio conteggio della parte già coperta dall'allocazione.

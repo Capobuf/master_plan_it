@@ -30,7 +30,7 @@ Un utente autorizzato apre la pagina Generali del Tenant corrente, consulta le i
 
 ### User Story 2 - Usare l'IVA Tenant come default forward-only (Priority: P1)
 
-Quando una nuova riga di Spesa o un nuovo termine di Contratto non specifica un'aliquota IVA, il sistema usa l'IVA predefinita corrente del Tenant. Un'aliquota esplicita prevale sempre. La modifica del default non riscrive dati economici già salvati.
+Quando una nuova riga di Spesa o un nuovo termine di Contratto non specifica un'aliquota IVA, il form mostra come valore ereditato l'IVA predefinita corrente del Tenant e il backend la applica al salvataggio. Un'aliquota esplicita prevale sempre. La modifica del default non riscrive dati economici già salvati.
 
 **Why this priority**: Un default non propagato produce importi Netto, IVA e Lordo errati e quindi altera Budget e Report.
 
@@ -127,7 +127,7 @@ Un amministratore di piattaforma crea e governa il ciclo di vita dei Tenant dal 
 - **FR-012**: L'aliquota effettiva e gli importi Netto/IVA/Lordo MUST essere calcolati e persistiti con aritmetica decimale esatta.
 - **FR-013**: Modificare l'IVA predefinita MUST NOT aggiornare Expense row, Contract term, revisioni o altri dati economici già salvati.
 - **FR-014**: Generazione e sincronizzazione da Contratto MUST conservare l'aliquota persistita nel termine sorgente, anche se il default Tenant è cambiato.
-- **FR-015**: I form di nuova Spesa e nuovo Contratto MUST consentire l'omissione reale dell'aliquota; nessun valore dimostrativo o zero implicito MUST neutralizzare il default autorevole.
+- **FR-015**: I form di nuova Spesa e nuovo Contratto MUST mostrare l'aliquota Tenant corrente come valore ereditato sulla prima riga/termine e su quelli aggiunti, mantenendone l'omissione reale dal payload finché l'utente non inserisce un override; nessun valore dimostrativo o zero implicito MUST neutralizzare il default autorevole.
 - **FR-016**: Letture e mutazioni MUST negare permesso mancante, altro Tenant, contesto incoerente e actor/Tenant inattivo secondo le regole correnti, senza data leakage o side effect.
 - **FR-017**: L'interfaccia MUST mostrare stati loading, error e sola lettura, azioni Annulla/Salva e copy italiano che spiega l'effetto forward-only dell'IVA.
 - **FR-018**: Il contratto applicativo, i test e la documentazione permanente MUST descrivere soltanto il comportamento effettivamente implementato e verificato.

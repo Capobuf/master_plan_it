@@ -3,19 +3,31 @@ import { Link } from "react-router";
 import { closeBudget, type AnnualBudget } from "../../api/budget";
 import { ApiError } from "../../api/client";
 import { routes } from "../../navigation/routes";
-import { formatMoney } from "../../presentation/formatters";
+import { formatDate, formatMoney } from "../../presentation/formatters";
 import ComponentCard from "../common/ComponentCard";
 import BudgetApprovalModal from "./BudgetApprovalModal";
+import DatePicker from "../form/date-picker";
 import Alert from "../ui/alert/Alert";
 import Badge from "../ui/badge/Badge";
 import Button from "../ui/button/Button";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 
-export default function BudgetView({ dataset, asOf, canApprove, canClose, onAsOfChange, onChange }: { dataset: AnnualBudget; asOf: string; canApprove: boolean; canClose: boolean; onAsOfChange: (value: string) => void; onChange: (value: AnnualBudget) => void }) {
+function dateInTimezone(value: string | null, timezone: string): string | undefined {
+  if (!value) return undefined;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return undefined;
+  const parts = new Intl.DateTimeFormat("en", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
+  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value;
+  const year = part("year"); const month = part("month"); const day = part("day");
+  return year && month && day ? `${year}-${month}-${day}` : undefined;
+}
+
+export default function BudgetView({ dataset, asOf, tenantTimezone, canApprove, canClose, onAsOfChange, onChange }: { dataset: AnnualBudget; asOf: string; tenantTimezone: string; canApprove: boolean; canClose: boolean; onAsOfChange: (value: string) => void; onChange: (value: AnnualBudget) => void }) {
   const [approvalOpen, setApprovalOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
   const { summary, budget } = dataset;
+  const historyAvailableFrom = dateInTimezone(budget.history_activated_at, tenantTimezone);
 
   async function close() {
     setBusy(true);
@@ -42,7 +54,7 @@ export default function BudgetView({ dataset, asOf, canApprove, canClose, onAsOf
 
   return <div className="space-y-6">
     <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-      <div><label htmlFor="budget-as-of" className="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Vista temporale</label><input id="budget-as-of" type="datetime-local" value={asOf} onChange={(event) => onAsOfChange(event.target.value)} className="rounded-lg border border-gray-300 bg-transparent px-3 py-2 text-sm dark:border-gray-700 dark:text-white" /></div>
+      <div className="w-full sm:w-80"><DatePicker id="budget-as-of" label="Vista temporale" placeholder="Seleziona una data" defaultDate={asOf || undefined} minDate={historyAvailableFrom} maxDate="today" staticPosition={false} onChange={(_, value) => onAsOfChange(value)} disabled={!historyAvailableFrom} hint={historyAvailableFrom ? `Storico disponibile dal ${formatDate(historyAvailableFrom)}. Le date precedenti e future sono disattivate.` : "Storico non ancora disponibile."} /></div>
       <div className="flex items-center gap-2"><Badge color={budget.state === "closed" ? "light" : budget.state === "approved" ? "success" : "warning"}>{budget.state}</Badge>{asOf ? <Button variant="outline" size="sm" onClick={() => onAsOfChange("")}>Torna al corrente</Button> : null}</div>
     </div>
     {dataset.read_only ? <Alert variant="info" title="Vista storica in sola lettura" message={`Valori ricostruiti al cutoff ${dataset.cutoff_utc ?? dataset.requested_as_of ?? "richiesto"}.`} /> : null}

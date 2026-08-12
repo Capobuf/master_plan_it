@@ -4,6 +4,7 @@ import {
   type AnnualBudget,
 } from "../../api/budget";
 import { ApiError } from "../../api/client";
+import DatePicker from "../form/date-picker";
 import Button from "../ui/button/Button";
 import { Modal } from "../ui/modal";
 
@@ -97,19 +98,7 @@ export default function BudgetApprovalModal({
         a zero resta distinto da una Spesa non selezionata e non approvata.
       </p>
       <div className="mt-5 grid gap-4 md:grid-cols-2">
-        <div>
-          <label htmlFor="approval-effective-date" className="mb-1 block text-sm font-medium">
-            Data di efficacia
-          </label>
-          <input
-            id="approval-effective-date"
-            type="date"
-            value={effectiveDate}
-            onChange={(event) => setEffectiveDate(event.target.value)}
-            disabled={busy}
-            className="w-full rounded-lg border border-gray-300 bg-transparent px-3 py-2 dark:border-gray-700"
-          />
-        </div>
+        <DatePicker id="approval-effective-date" label="Data di efficacia" placeholder="Seleziona una data" defaultDate={effectiveDate || undefined} staticPosition={false} onChange={(_, value) => setEffectiveDate(value)} disabled={busy} />
         <div>
           <label htmlFor="approval-reason" className="mb-1 block text-sm font-medium">
             Motivazione

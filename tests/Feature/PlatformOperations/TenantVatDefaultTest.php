@@ -228,7 +228,7 @@ final class TenantVatDefaultTest extends TestCase
             $actor,
             $context,
             $this->contractData($vendor, $center, 'Generated contract', null, [
-                $this->contractTerm(null, '2027-01-01', '2027-12-31', ''),
+                $this->contractTerm(null, '2027-01-01', '2027-12-31', '10.50', '13.19'),
             ]),
             (string) Str::uuid(),
         );
@@ -242,14 +242,14 @@ final class TenantVatDefaultTest extends TestCase
             2027,
             (string) Str::uuid(),
         );
-        $this->assertSame('22.00', $generated->rows->sole()->vat_rate);
+        $this->assertSame('10.50', $generated->rows->sole()->vat_rate);
 
         $contract = app(UpdateContract::class)->execute(
             $actor,
             $context,
             $contract,
             $this->contractData($vendor, $center, 'Generated contract', (int) $contract->lock_version, [
-                $this->contractTerm($term, '2027-01-01', '2027-12-31', '10.50'),
+                $this->contractTerm($term, '2027-01-01', '2027-12-31', '22.00', '13.19'),
             ]),
             (string) Str::uuid(),
         );
@@ -261,7 +261,7 @@ final class TenantVatDefaultTest extends TestCase
         );
 
         $this->assertSame(1, $result['updated']);
-        $this->assertSame('10.50', $generated->rows()->sole()->vat_rate);
+        $this->assertSame('22.00', $generated->rows()->sole()->vat_rate);
     }
 
     /** @return array{User,TenantContext,PlanningYear,CostCenter,Vendor} */
@@ -348,6 +348,7 @@ final class TenantVatDefaultTest extends TestCase
         string $start,
         string $end,
         string $vatRate,
+        string $enteredAmount = '100.00',
     ): SaveContractTermData {
         return new SaveContractTermData(
             $term === null ? null : (int) $term->getKey(),
@@ -357,7 +358,7 @@ final class TenantVatDefaultTest extends TestCase
             BillingCycle::Annual,
             null,
             null,
-            '100.00',
+            $enteredAmount,
             false,
             $vatRate,
             false,

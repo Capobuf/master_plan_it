@@ -9,12 +9,11 @@ const monthLabels = ["GEN", "FEB", "MAR", "APR", "MAG", "GIU", "LUG", "AGO", "SE
 
 function dateParts(value?: string) {
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value ?? "");
-  if (!match) return { day: "—", month: "", year: "" };
+  if (!match) return { day: "—", month: "" };
 
   return {
     day: match[3],
     month: monthLabels[Number(match[2]) - 1] ?? "",
-    year: match[1],
   };
 }
 
@@ -33,13 +32,10 @@ export default function RenewalTimeline({ items }: { items: DashboardListItem[] 
             const renewal = item.event_type === "renewal";
             const date = dateParts(item.date);
             return (
-              <li key={`${item.id}-${item.event_type}-${index}`} className="grid min-h-[62px] grid-cols-[62px_14px_minmax(0,1fr)] gap-2 sm:min-h-[68px] sm:grid-cols-[72px_18px_minmax(0,1fr)]">
-                <time dateTime={item.date} className="flex h-[62px] flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-50 px-2 text-center dark:border-gray-800 dark:bg-gray-900 sm:h-[68px]">
-                  <span className="flex items-baseline gap-1">
-                    <span className="text-xl font-semibold leading-none text-gray-800 dark:text-white/90 sm:text-2xl">{date.day}</span>
-                    <span className="text-xs font-semibold text-gray-500 dark:text-gray-400">{date.month}</span>
-                  </span>
-                  <span className="mt-1 text-xs text-gray-500 dark:text-gray-400">{date.year}</span>
+              <li key={`${item.id}-${item.event_type}-${index}`} className="grid min-h-16 grid-cols-[64px_14px_minmax(0,1fr)] gap-2 sm:grid-cols-[64px_18px_minmax(0,1fr)]">
+                <time dateTime={item.date} className="flex h-16 w-16 flex-col items-center justify-center rounded-xl border border-gray-200 bg-gray-50 text-center dark:border-gray-800 dark:bg-gray-900">
+                  <span className="text-2xl font-semibold leading-none text-gray-800 dark:text-white/90">{date.day}</span>
+                  <span className="mt-1.5 text-xs font-semibold tracking-wide text-gray-500 dark:text-gray-400">{date.month}</span>
                 </time>
 
                 <div className="relative flex justify-center pt-5">

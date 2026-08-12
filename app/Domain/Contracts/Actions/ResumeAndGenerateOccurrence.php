@@ -25,7 +25,7 @@ final class ResumeAndGenerateOccurrence
             if (! $expected instanceof ExpectedContractOccurrence || $expected->expenseId !== null) {
                 throw new DomainException('GENERATION_SOURCE_DUPLICATE');
             }
-            $resumed = new ExpectedContractOccurrence($expected->contractId, $expected->termId, $expected->planningYear, $expected->occurrenceDate, $expected->sourceKey, $expected->netAmount, $expected->vatAmount, $expected->grossAmount, false, null, null, null);
+            $resumed = new ExpectedContractOccurrence($expected->contractId, $expected->termId, $expected->planningYear, $expected->occurrenceDate, $expected->sourceKey, $expected->netAmount, $expected->vatAmount, $expected->grossAmount, $expected->vatRate, false, null, null, null);
 
             return app(GenerateContractOccurrenceForYear::class)->generateExpected($actor, $context, $contract, $resumed, $correlationId);
         });

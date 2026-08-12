@@ -42,6 +42,32 @@ const props = {
 };
 
 describe("ExpenseEditorRows", () => {
+  it("shows the Tenant default only for new rows without an explicit VAT", () => {
+    const { rerender } = render(
+      <ExpenseEditorRows {...props} defaultVatRate="22.00" rows={[estimate]} />,
+    );
+
+    expect(screen.getByRole("textbox", { name: "IVA riga 1", hidden: true })).toHaveValue("22,00");
+
+    rerender(
+      <ExpenseEditorRows
+        {...props}
+        defaultVatRate="22.00"
+        rows={[{ ...estimate, id: 7, vat_rate: "10.00" }]}
+      />,
+    );
+    expect(screen.getByRole("textbox", { name: "IVA riga 1", hidden: true })).toHaveValue("10,00");
+
+    rerender(
+      <ExpenseEditorRows
+        {...props}
+        defaultVatRate="22.00"
+        rows={[{ ...estimate, vat_rate: "0.00" }]}
+      />,
+    );
+    expect(screen.getByRole("textbox", { name: "IVA riga 1", hidden: true })).toHaveValue("0,00");
+  });
+
   it("shows current planning only for non-actual rows", () => {
     const { rerender } = render(<ExpenseEditorRows {...props} rows={[estimate]} />);
 
