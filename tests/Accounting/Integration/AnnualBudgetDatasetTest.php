@@ -55,7 +55,8 @@ final class AnnualBudgetDatasetTest extends TestCase
         $this->assertSame('230.00', $budget['summary']['proposed']);
         $this->assertSame('230.00', $budget['summary']['approved_current']);
         $this->assertSame('140.00', $budget['summary']['actual']);
-        $this->assertSame('0.00', $budget['summary']['plafond_overrun']);
+        $this->assertArrayNotHasKey('plafond_overrun', $budget['summary']);
+        $this->assertArrayHasKey('plafonds', $budget);
 
         foreach (['cost_center', 'project', 'contract', 'vendor', 'expense'] as $groupBy) {
             $report = app(AnnualEconomicReportQuery::class)->execute(
@@ -71,7 +72,9 @@ final class AnnualBudgetDatasetTest extends TestCase
             $this->assertSame($budget['summary']['proposed'], $report['summary']['proposed']);
             $this->assertSame($budget['summary']['approved_current'], $report['summary']['approved_current']);
             $this->assertSame($budget['summary']['actual'], $report['summary']['actual']);
-            $this->assertSame($budget['summary']['plafond_overrun'], $report['global_plafond_overrun']);
+            $this->assertArrayNotHasKey('global_plafond_overrun', $report);
+            $this->assertArrayNotHasKey('plafond_overrun', $report['summary']);
+            $this->assertArrayHasKey('plafonds', $report);
             $this->assertSame('230.00', $this->sum($report['data'], 'proposed'), "Proposed mismatch for {$groupBy}.");
             $this->assertSame('230.00', $this->sum($report['data'], 'approved'), "Approved mismatch for {$groupBy}.");
             $this->assertSame('140.00', $this->sum($report['data'], 'actual'), "Actual mismatch for {$groupBy}.");
