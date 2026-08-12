@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-12
 
-**Status**: Draft
+**Status**: `PROPOSED TARGET — Program specification approved; not implemented`
 
 **Input**: Definire l'architettura UX/UI trasversale dell'applicazione: Barra Superiore, contesto globale del Tenant e dell'Anno, Dashboard, registri, navigazione Budget e Report, dettaglio Spesa, Guida Contestuale, date valide, Revisioni, gestione Tenant e operatività self-hosted.
 
@@ -16,12 +16,45 @@ Il risultato atteso è un Workspace Annuale ampio, leggibile e prevedibile, nel 
 
 ## Baseline e Delta
 
+- `VERIFIED CURRENT` identifica il comportamento dimostrato dalla baseline
+  `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94`; `PROPOSED TARGET` identifica
+  il risultato approvato che le Slice devono ancora implementare.
+- `specs/BUDGET-DOMAIN-REFINEMENT.md` è la fonte di prodotto per formule, lifecycle e semantica
+  economica. Questa specifica ne definisce i percorsi e le acceptance comuni senza duplicarla.
+- Le regole incompatibili degli Spec Kit 010, 017, 018, 019 e 020 restano descrizione della
+  baseline implementata, ma sono `DEPRECATED` come target secondo la matrice di `research.md`.
+
 - La Dashboard, il registro Spese e il dettaglio Spesa esistenti sono la baseline funzionale da affinare, non da rispecificare integralmente.
 - La navigazione laterale esistente viene sostituita come direzione di prodotto da una Barra Superiore, per destinare la maggiore larghezza possibile al Workspace.
 - La terminologia visibile deve rispettare il dominio corrente: `Effettivo` al posto di `Actual`; non devono comparire stati `Spesa Aperta` o `Spesa Chiusa` non appartenenti al dominio.
 - Il cambio dell'Anno Globale su una risorsa non appartenente all'anno selezionato non termina su una pagina di errore: porta al registro corrispondente già filtrato sul nuovo Anno.
 - I comportamenti già presenti nel registro Spese — ricerca, filtri, colonne, selezione e dettaglio espandibile — diventano uno standard di esperienza per tutti i registri compatibili.
 - Il presente Spec Kit descrive un risultato utente end-to-end. Non richiede la creazione di un framework generico di tabelle, form o documenti.
+
+## Clarifications
+
+### Session 2026-08-12
+
+- Q: Qual è l'autorità monetaria del prodotto? → A: Soltanto la Spesa e le sue `ExpenseRow`;
+  Progetto e Contratto forniscono contesto o generazione, mentre anche le variazioni di Plafond
+  devono essere Righe della Spesa Plafond e non una sorgente parallela.
+- Q: Come convivono Stima, Preventivo ed Effettivo? → A: Una sola pianificazione corrente tra
+  Stima/Preventivo alimenta il Budget Proposto; gli Effettivi multipli, positivi o negativi, si
+  sommano e non vengono sostituiti da Forecast.
+- Q: Quali lifecycle prevalgono? → A: Un solo Budget annuale passa da Preparazione ad Approvato e
+  Chiuso; la Spesa non possiede stati Aperta/Chiusa; Rettifiche, Riapertura e Annullamento seguono
+  le regole e le Note obbligatorie del raffinamento di dominio.
+- Q: Come funzionano Progetti, Contratti e Plafond? → A: Sono applicate le decisioni approvate nel
+  brief e consolidate in `BUDGET-DOMAIN-REFINEMENT.md`, inclusi Anno del Progetto, Continuazione,
+  Effettivi contrattuali, Source Key soppressa, Plafond unico, copertura integrale e blocco atomico.
+- Q: Cosa riduce il Disponibile del Plafond? → A: Soltanto gli Effettivi coperti; Stime e
+  Preventivi coperti alimentano Copertura Prevista ma non prenotano capienza.
+- Q: Una Continuazione di Progetto può ramificare? → A: No; ogni Progetto ha al massimo un
+  predecessore e un solo successore, formando una catena lineare senza cicli.
+- Q: È confermato che il prodotto sia Greenfield e privo di dati reali da preservare? → A: Sì,
+  confermato esplicitamente dal proprietario il 2026-08-12. Schema e dati demo/test possono essere
+  ricostruiti; questa conferma non introduce una politica automatica di purge delle Spese nel
+  Cestino.
 
 ## Architettura dell'Informazione
 
@@ -106,6 +139,11 @@ L'utente parte dal riepilogo Spese, usa i launcher frequenti, espande una riga p
 3. **Given** una modifica con conseguenze economiche, di copertura, di annualità o di autorizzazione, **When** l'utente prova a effettuarla inline, **Then** viene accompagnato nel flusso completo con validazioni e spiegazione dell'impatto.
 4. **Given** il dettaglio di una Spesa, **When** l'utente lo apre, **Then** vede intestazione e classificazione, Righe di Spesa, Totali e Allegati in una composizione assimilabile a un documento amministrativo ma non sovraccarica.
 5. **Given** un Allegato riferito all'intero documento o a una singola Riga di Spesa, **When** viene aggiunto, **Then** la UI ne mostra chiaramente il livello di appartenenza.
+6. **Given** una Riga coperta integralmente dal Plafond compatibile, **When** viene salvata, **Then**
+   la UI mostra Allocazione, Copertura Prevista, Consumato e Residuo senza doppio conteggio.
+7. **Given** una capienza inferiore all'importo della Riga, **When** l'utente salva, **Then** nessun
+   dato viene persistito, gli input restano disponibili e la sezione Plafond mostra Disponibile,
+   Importo richiesto e Importo Mancante.
 
 ---
 
@@ -139,6 +177,13 @@ L'utente accede con chiarezza alla Panoramica del Budget, prepara la Chiusura, c
 2. **Given** un Budget con Rettifiche, **When** l'utente apre **Rettifiche**, **Then** vede le righe che hanno modificato il Budget dopo la chiusura e le relative Note obbligatorie.
 3. **Given** il Workspace Report, **When** l'utente sceglie due Budget o due anni confrontabili, **Then** grafici e dettaglio tabellare rappresentano la selezione esplicita e non soltanto Anno corrente contro precedente.
 4. **Given** un elemento di un grafico, **When** l'utente lo seleziona, **Then** la pagina porta alla vista di dettaglio sottostante con filtri coerenti e modificabili.
+5. **Given** un Budget Chiuso senza Rettifiche successive, **When** un utente autorizzato conferma
+   la Riapertura con Nota, **Then** la Chiusura precedente resta in Cronologia e il Budget torna
+   Approvato creando una Revisione.
+6. **Given** un Budget Chiuso con almeno una Rettifica successiva, **When** si richiede la
+   Riapertura, **Then** l'operazione è bloccata e la Vista di Impatto elenca le dipendenze.
+7. **Given** un'Approvazione senza eventi dipendenti, **When** viene annullata con Nota, **Then** il
+   Budget torna in Preparazione e conserva Approvazione, Approvatore e contenuto storico.
 
 ---
 
@@ -170,7 +215,8 @@ L'utente apre le Revisioni di un documento supportato, torna indietro nel tempo,
 **Acceptance Scenarios**:
 
 1. **Given** un documento con Revisioni, **When** l'utente apre la vista Revisioni, **Then** vede la schermata completa in sola lettura, un selettore temporale e l'elenco degli Snapshot disponibili.
-2. **Given** due Snapshot consecutivi, **When** l'utente seleziona quello precedente, **Then** i valori cambiati sono evidenziati nel loro contesto e non soltanto in un log tecnico.
+2. **Given** uno Snapshot storico, **When** l'utente lo seleziona, **Then** i valori cambiati rispetto
+   allo stato corrente sono evidenziati nel loro contesto e non soltanto in un log tecnico.
 3. **Given** uno Snapshot storico selezionato, **When** l'utente chiede il ripristino, **Then** vede chiaramente che verrà ripristinato l'intero documento e deve confermare l'operazione.
 4. **Given** un ripristino riuscito, **When** l'utente torna alla versione corrente, **Then** il ripristino stesso è tracciato come nuova Revisione e non cancella la storia precedente.
 
@@ -197,7 +243,17 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
 - Un record appartiene economicamente a un Anno diverso dalla sua data di registrazione, ad esempio una Spesa 2026 afferente a un Progetto 2025: la UI mostra separatamente **Anno di Competenza** e **Data** e usa l'Anno di Competenza per il Workspace.
 - Un filtro salvato o una colonna personale non è più disponibile dopo un cambiamento del prodotto: la vista ignora soltanto l'opzione non valida e mantiene le altre preferenze.
 - Una selezione massiva contiene elementi diventati non modificabili o non più visibili: prima della mutazione il sistema ricalcola l'ambito e non applica effetti silenziosi a elementi non idonei.
-- Una modifica inline richiede una Nota, supera un Plafond o cambia l'appartenenza al Budget: il salvataggio inline non aggira le regole della vista completa.
+- Una modifica inline richiede una Nota, incontra un Plafond insufficiente o cambia l'appartenenza
+  al Budget: il salvataggio inline non aggira le regole della vista completa e non persiste dati
+  parziali.
+- Una riduzione del Plafond invaliderebbe coperture esistenti: la Vista di Impatto blocca il
+  salvataggio e non scollega Righe silenziosamente.
+- Una Spesa comprende una parte coperta e una scoperta: l'utente usa due Righe distinte; la singola
+  Riga non accetta copertura parziale.
+- Una Continuazione viene creata per l'anno successivo: il Progetto originario resta aperto finché
+  l'utente non esegue separatamente la Chiusura.
+- Una cessazione contrattuale incontra un Effettivo già generato o una Riga futura modificata
+  manualmente: la Vista di Impatto conserva l'Effettivo e richiede una scelta esplicita sulla Riga.
 - Il documento non ha ancora Snapshot oppure l'utente non ha il permesso di ripristinare: la consultazione e l'azione di ripristino sono presentate secondo le autorizzazioni effettive.
 - Uno Snapshot fa riferimento ad Allegati successivamente rimossi: la vista storica ne mostra i riferimenti disponibili, ma il ripristino del documento non ricrea i file.
 - Il comando Cron dipende dal percorso dell'installazione: la UI distingue chiaramente le parti già risolte dai segnaposto che l'amministratore deve adattare.
@@ -250,7 +306,9 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
 - **FR-029**: Ogni elemento esplorabile della Dashboard MUST portare a una vista contestuale con filtri preimpostati e modificabili.
 - **FR-030**: La sezione **Budget** MUST rendere direttamente raggiungibili almeno **Panoramica**, **Chiusura** e **Rettifiche**; **Panoramica** MUST rappresentare il Budget pertinente all'Anno e alla fase del ciclo, compreso il Budget Proposto per un Anno futuro, senza richiedere sezioni parallele per ogni stato.
 - **FR-031**: La pagina **Chiusura** MUST riunire controlli, segnalazioni, scelte residue e conseguenze richieste dal dominio prima della conferma finale.
-- **FR-032**: La pagina **Rettifiche** MUST mostrare le Rettifiche come righe appartenenti allo stesso Budget Finale, con importi e Note, senza creare un'entità `Budget Finale Rettificato`.
+- **FR-032**: La pagina **Rettifiche** MUST mostrare le Rettifiche come righe appartenenti allo
+  stesso Budget annuale Approvato o Chiuso, con importi e Note, senza creare un'entità `Budget
+  Finale Rettificato` o un secondo contenitore.
 - **FR-033**: Il Workspace **Report** MUST permettere all'utente di scegliere il tipo di Report e i due Budget, anni o insiemi compatibili da confrontare.
 - **FR-034**: Grafici e vista di dettaglio MUST condividere lo stesso contesto; la selezione di un elemento grafico MUST portare al dettaglio e applicare i filtri corrispondenti.
 - **FR-035**: Il Report MUST distinguere chiaramente `Effettivo` da `Preventivato/Stimato` e MUST mantenere disponibili le viste previste dal dominio senza usare `Forecast` o `Actual`.
@@ -267,7 +325,9 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
 
 - **FR-041**: Ogni tipo di documento per cui il dominio abilita il versionamento MUST offrire un accesso coerente alla vista **Revisioni**.
 - **FR-042**: La vista Revisioni MUST riutilizzare la struttura completa del documento in sola lettura e MUST offrire sia una sequenza temporale sia una selezione esplicita degli Snapshot.
-- **FR-043**: La vista Revisioni MUST evidenziare nel contesto i campi cambiati rispetto allo Snapshot adiacente selezionato e MUST rendere disponibili autore, data e azione che ha generato la Revisione quando noti.
+- **FR-043**: La vista Revisioni MUST evidenziare nel contesto i campi cambiati tra lo Snapshot
+  selezionato e lo stato corrente e MUST rendere disponibili autore, data e azione che ha generato
+  la Revisione quando noti.
 - **FR-044**: Il ripristino MUST riguardare l'intero Snapshot del documento, MUST richiedere conferma e MUST essere autorizzato come una modifica del documento corrente.
 - **FR-045**: Un ripristino riuscito MUST creare una nuova Revisione e MUST NOT cancellare o riscrivere le Revisioni precedenti.
 - **FR-046**: Il ripristino di una Revisione MUST NOT ripristinare i file Allegati eliminati; questa limitazione MUST essere comunicata prima della conferma quando rilevante.
@@ -280,6 +340,48 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
 - **FR-050**: La UI self-hosted MUST mostrare il comando Cron necessario alle attività schedulate in una forma copiabile, accompagnato dai segnaposto e dalle istruzioni indispensabili.
 - **FR-051**: Se esiste un segnale affidabile di esecuzione, la UI SHOULD mostrare ultima esecuzione e stato dello Scheduler; altrimenti MUST mostrare soltanto le istruzioni e `Stato non verificabile`.
 - **FR-052**: Il sistema MUST NOT dichiarare che lo Scheduler è attivo basandosi sulla sola visualizzazione o copia del comando Cron.
+
+#### Confini di Dominio del Programma
+
+- **FR-053**: Ogni superficie MUST distinguere Anno Economico, Data della Spesa e Data di
+  Registrazione e MUST NOT cambiare automaticamente il Budget per il solo anno civile della Data.
+- **FR-054**: Le viste MUST rappresentare un solo Budget annuale negli stati Preparazione,
+  Approvato e Chiuso; Approvazione, Chiusura e Rettifiche MUST NOT creare contenitori alternativi.
+- **FR-055**: Riapertura e Annullamento dell'Approvazione MUST richiedere una Nota, creare una
+  Revisione e conservare gli snapshot precedenti; la Riapertura MUST essere bloccata dopo una
+  Rettifica successiva alla Chiusura.
+- **FR-056**: La UI del Progetto MUST distinguere `Solo Questo Progetto` e `Intero Percorso`; creare
+  una Continuazione MUST NOT chiudere automaticamente il Progetto originario.
+- **FR-057**: La UI Contratti MUST presentare l'Effettivo automatico come costo certo ai fini del
+  Budget e MUST NOT implicare fattura, pagamento o stato fiscale.
+- **FR-058**: La Cessazione MUST usare una Vista di Impatto, interrompere le occorrenze future e
+  MUST NOT cancellare silenziosamente Effettivi già generati o Righe future modificate manualmente.
+- **FR-059**: Per ogni Tenant, Anno Economico e Centro di Costo MUST esistere al massimo un Plafond
+  corrente, modificato mediante Righe additive dell'allocazione.
+- **FR-060**: Una Riga di Spesa MUST avere zero o un solo riferimento Plafond compatibile e MUST
+  essere coperta integralmente; il sistema MUST NOT ripartire la stessa Riga tra più Plafond.
+- **FR-061**: Se il Plafond è insufficiente, il salvataggio MUST fallire atomicamente, restituire i
+  quattro importi di impatto e consentire al client di mantenere gli input; nessuno Sforamento è
+  ammesso.
+- **FR-062**: Il Previsto Ricostruito MUST essere disponibile solo per anni storici privi di Budget
+  originario, MUST usare gli Effettivi non Extra e MUST essere etichettato `Previsto Ricostruito
+  dagli Effettivi`.
+- **FR-063**: Il sistema MUST NOT introdurre Forecast, stati di pagamento, ratei/risconti,
+  classificazioni fiscali obbligatorie o funzioni di Project Management operativo.
+- **FR-064**: Il limite operativo delle Revisioni MUST NOT eliminare `snapshot_contents`, batch,
+  item o altri dati necessari alla proiezione annuale a cutoff.
+- **FR-065**: La cancellazione di una Spesa generata da Contratto MUST sopprimere la relativa Source
+  Key o conservare un controllo equivalente e MUST NOT consentire al job successivo di ricrearla.
+- **FR-066**: Spesa e relative Righe MUST essere l'unica sorgente monetaria; Progetto, Contratto,
+  Budget, Rettifica e Plafond MUST NOT duplicare importi in sorgenti monetarie parallele.
+- **FR-067**: Ogni variazione positiva o negativa dell'Allocazione Plafond MUST essere una Riga
+  della medesima Spesa Plafond con semantica dedicata; MUST NOT introdurre una nuova entità
+  monetaria autonoma e MUST richiedere Nota soltanto nei casi motivati definiti dal dominio.
+- **FR-068**: Il Disponibile Plafond MUST essere `Allocazione corrente - Effettivi coperti correnti`;
+  Stime e Preventivi coperti MUST alimentare soltanto Copertura Prevista e MUST NOT prenotare
+  capienza.
+- **FR-069**: Ogni Progetto MUST avere al massimo un predecessore e un successore di Continuazione;
+  la relazione MUST formare una catena lineare senza cicli.
 
 ### UX Guardrails
 
@@ -312,6 +414,12 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
 - **SC-008**: Un utente autorizzato identifica una modifica storica e ripristina lo Snapshot desiderato senza consultare un log tecnico; la storia precedente rimane disponibile.
 - **SC-009**: Il 100% delle installazioni self-hosted può copiare dalla UI un comando Cron utilizzabile dopo la sostituzione degli eventuali segnaposto dichiarati, senza che la UI attribuisca uno stato non verificato.
 - **SC-010**: Le pagine operative principali dedicano almeno l'85% della larghezza disponibile al Workspace a partire dalle dimensioni desktop supportate.
+- **SC-011**: Il 100% dei tentativi di copertura con capienza insufficiente termina senza
+  persistenza parziale e presenta Allocazione, Disponibile, Richiesto e Mancante.
+- **SC-012**: In un dataset canonico con Plafond, la somma del Budget e del Drill-Down coincide al
+  centesimo senza contare nuovamente le pianificazioni coperte.
+- **SC-013**: Una storia con più revisioni del limite operativo conserva corretta la proiezione
+  annuale a un cutoff precedente e mantiene ripristinabili tutte le revisioni ancora visibili.
 
 ## Assumptions
 
@@ -322,12 +430,20 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
 - Lo stato dello Scheduler è opzionale solo come osservabilità. Il comando Cron e le istruzioni self-hosted sono obbligatori.
 - Le autorizzazioni, l'isolamento Tenant, i calcoli economici e il contenuto degli Snapshot seguono il dominio e i vincoli già specificati; questa feature ne definisce la presentazione, non una seconda implementazione.
 - Le preferenze di colonna e Guida sono personali. Le impostazioni economiche e di conservazione Revisioni appartengono al Tenant.
+- Le Slice Verticali sono responsabili dell'implementazione delle regole economiche; 022 resta una
+  specifica di programma e UX comune e non genera un proprio `tasks.md`.
 
 ## Out of Scope
 
 - Implementazione di email, notifiche push o approvazioni esterne.
 - Nuovi stati economici o nuove formule per Budget, Plafond, Progetti o Contratti.
+- Entità o misura Forecast; ratei, risconti, pagamenti, fatturazione o classificazioni fiscali.
+- Task, milestone, percentuali di avanzamento o una nuova entità `ProjectFamily`.
+- Più Plafond per lo stesso Tenant/Anno/Centro, Quote multiple, copertura parziale o Sforamento.
+- Implementazione congiunta di 022 come mega-feature e creazione di `tasks.md` per questo programma.
 - Ripristino binario degli Allegati attraverso una Revisione.
 - Creazione di un visual builder per Dashboard o Report.
 - Layout personalizzati per singolo utente oltre alle preferenze di tabella e Guida definite qui.
 - Verifica del demone Cron attraverso accesso diretto al sistema operativo quando non esiste un heartbeat applicativo affidabile.
+- Purge automatico o eliminazione definitiva irreversibile delle Spese nel Cestino senza una
+  decisione di prodotto dedicata; il purge terminale degli Allegati già esistente resta separato.

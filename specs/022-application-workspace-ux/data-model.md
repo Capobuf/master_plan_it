@@ -1,7 +1,7 @@
 # Modello Dati Target: Dominio Budget e Workspace Annuale
 
-**Stato**: Design di Programma per Slice Verticali  
-**Data**: 2026-08-12  
+**Stato**: `PROPOSED TARGET — Logical design; not implemented`
+**Data**: 2026-08-12
 **Fonte di Verità di Prodotto**: `../BUDGET-DOMAIN-REFINEMENT.md`
 
 ## Scopo
@@ -25,9 +25,12 @@ proprio risultato utente, mantenendo il database ricostruibile da zero.
    altro Anno attraverso la sola Data.
 8. Per una Spesa di Progetto, l'Anno Economico deriva dall'Anno del Progetto; la Data della Riga può
    appartenere a un anno civile differente.
-9. Extra Budget, Rettifica e Copertura Plafond sono dimensioni indipendenti quando il Dominio lo
-   consente; non devono essere compressi in un singolo Stato.
+9. Extra Budget, Rettifica e Copertura Plafond non devono essere compressi in un singolo Stato. La
+   compatibilità tra Extra Budget e Copertura resta `OPEN QUESTION` e conserva la regola corrente
+   finché il proprietario non decide.
 10. Delete e Restore sono mutazioni dell'intero aggregato, atomiche e versionate.
+11. Il modello non rappresenta pagamenti, fatture, ratei/risconti, classificazioni fiscali o
+    avanzamento operativo dei Progetti.
 
 ## Entità e Aggregati
 
@@ -59,7 +62,7 @@ Rappresenta il contenitore annuale del Budget per un Tenant.
 | Campo logico | Regola |
 |---|---|
 | Anno | Univoco nel Tenant |
-| Stato Budget | `Preparazione`, `Approvato`, `Finale` |
+| Stato Budget | `Preparazione`, `Approvato`, `Chiuso` |
 | Storico Attivato Dal | Consente di caricare Anni passati ancora modificabili |
 | Attivo | Controlla disponibilità operativa, non sostituisce lo Stato Budget |
 | Versione Concorrente | Incrementata dalle mutazioni protette |
@@ -70,11 +73,11 @@ Stati persistenti. `Budget Proposto` è la composizione presentabile calcolata n
 **Transizioni**:
 
 ```text
-Preparazione ──Approva──> Approvato ──Chiudi──> Finale
+Preparazione ──Approva──> Approvato ──Chiudi──> Chiuso
      ^                         |
      └──Annulla Approvazione───┘  solo senza eventi dipendenti
 
-Approvato <──Riapri── Finale       solo senza Rettifiche successive
+Approvato <──Riapri── Chiuso       solo senza Rettifiche successive e con Nota
 ```
 
 ### Spesa
@@ -90,10 +93,10 @@ Aggregato economico principale e documento mostrato all'Utente.
 | Progetto | Opzionale; se presente governa l'Anno Economico |
 | Contratto | Opzionale; identifica una Spesa Contrattuale Annuale |
 | Spesa Precedente | Opzionale; collega riproposte ordinarie tra Anni |
-| Data di Registrazione | Data di Dominio distinta dai timestamp tecnici |
+| Data di Registrazione | Data distinta dai timestamp tecnici e dalla Data della Spesa |
 | Riga Previsionale Corrente | Zero o una Stima/Preventivo selezionata |
 | Lock Version | Obbligatoria per update concorrenti |
-| Metadati Cestino | Eliminata Da, Eliminata Il, Motivazione, Eliminazione Definitiva Dal |
+| Metadati Cestino | Eliminata Da, Eliminata Il e Motivazione; nessuna scadenza di purge implicita |
 
 Una Spesa può appartenere a un Progetto e derivare da un Contratto collegato al medesimo Progetto;
 non deve esistere un vincolo XOR che renda impossibile questa provenienza.
@@ -102,7 +105,7 @@ non deve esistere un vincolo XOR che renda impossibile questa provenienza.
 
 | Campo logico | Regola |
 |---|---|
-| Tipo | `Stima`, `Preventivo`, `Effettivo` |
+| Tipo | `Stima`, `Preventivo`, `Effettivo` oppure `Variazione Allocazione`; quest'ultimo è ammesso soltanto nella Spesa Plafond |
 | Posizione e Descrizione | Obbligatorie |
 | Note di Riga | Obbligatorie per Extra Budget; disponibili negli altri casi |
 | Fornitore | Opzionale secondo il tipo di inserimento |
@@ -110,11 +113,13 @@ non deve esistere un vincolo XOR che renda impossibile questa provenienza.
 | IVA Inclusa e Aliquota | Producono Netto, IVA e Lordo riconciliati |
 | Data della Spesa | Obbligatoria quando il tipo o l'origine richiedono granularità temporale |
 | Periodo | Facoltativo e informativo; non ripartisce automaticamente un Rinnovo Annuale |
-| Extra Budget | Booleano indipendente dalla Copertura |
+| Extra Budget | Booleano; compatibilità con Copertura Plafond ancora `OPEN QUESTION` |
+| Intento Post-Approvazione | `Voce Dimenticata` oppure `Nuova Esigenza` per una nuova decisione economica dopo l'Approvazione |
 | Origine | Manuale, Contratto, Continuazione, Riproposta o altra origine esplicita |
 | Source Key | Identificatore idempotente per generazioni automatiche |
 | Metadati Override | Indicano che una Riga automatica è stata raffinata manualmente |
 | Lock Version e Soft Delete | Obbligatori |
+| Plafond di Copertura | Zero o un riferimento singolo compatibile; copertura sempre integrale |
 
 **Regole di selezione**:
 
@@ -123,30 +128,48 @@ non deve esistere un vincolo XOR che renda impossibile questa provenienza.
 - più Effettivi si sommano;
 - dopo l'Approvazione, Stime e Preventivi rimangono Valutazioni informative e non riscrivono il
   Previsto;
-- soltanto Effettivi consumano realmente un Plafond.
+- soltanto Effettivi consumano realmente un Plafond;
+- una parte coperta e una scoperta della stessa decisione sono modellate come due Righe.
+- l'Intento Post-Approvazione è una scelta esplicita del mutatore, non viene inferito da titolo,
+  Data o importo; `Voce Dimenticata` produce una Rettifica, `Nuova Esigenza` imposta Extra Budget,
+  mentre un Effettivo relativo a una voce già prevista resta un Effettivo ordinario;
+- dopo la Chiusura qualunque mutazione economica resta una Rettifica con Nota, anche quando conserva
+  la classificazione Extra Budget della Riga.
 
-### Quota di Copertura Plafond
+### Plafond e Righe di Allocazione
 
-Relazione esplicita tra una Riga Ordinaria e una Spesa Plafond.
+Il Plafond è una Spesa di Natura Plafond, ma non è un costo Effettivo. Per la combinazione
+`Tenant + Anno Economico + Centro di Costo` esiste al massimo un Plafond corrente.
 
 | Campo logico | Regola |
 |---|---|
-| Riga Coperta | Stima, Preventivo o Effettivo non eliminato |
-| Plafond | Spesa di Natura Plafond dello stesso Tenant, Anno e Centro di Costo |
-| Posizione | Mantiene l'ordine scelto dall'Utente |
-| Quota Netta, IVA e Lorda | Valori esatti riconciliati; consentono un cambio Base prima del blocco |
-| Creata/Modificata Da | Audit dell'allocazione |
+| Plafond | Spesa dello stesso Tenant e Anno; compatibilità tra Centri di Costo `OPEN QUESTION` |
+| Righe di Allocazione | `ExpenseRow` additive della Spesa Plafond con semantica logica `AllocationAdjustment` |
+| Importo | Positivo per aumento, negativo per riduzione |
+| Data e Autore | Obbligatori per ogni variazione dell'allocazione |
+| Nota | Obbligatoria per Rettifica e negli altri casi motivati dal dominio; facoltativa in Preparazione |
+| Netto, IVA e Lordo | Valori esatti coerenti con la Base ufficiale |
+| Fase | Ordinaria, Rettifica dopo Approvazione o Rettifica dopo Chiusura |
 
 **Vincoli**:
 
-- una Riga può avere zero o più Quote;
-- se almeno una Quota è presente, la loro somma nella Base ufficiale deve coincidere con l'intero
-  Importo della Riga; in caso contrario il salvataggio è bloccato e l'input resta in Modifica;
-- `Extra Budget` non impedisce la Copertura;
-- lo Sforamento della Capienza non blocca, ma richiede conferma e aggiunge la motivazione alle Note
-  Generali con il prefisso `Note Sforamento Plafond:`;
-- il cambio Stima → Preventivo → Effettivo produce una proposta di riallocazione, mai una modifica
-  silenziosa.
+- una Riga Ordinaria possiede zero o un riferimento singolo al Plafond compatibile;
+- se il riferimento è presente, l'intero Importo della Riga è coperto;
+- il Disponibile deve essere sufficiente prima della persistenza;
+- capienza insufficiente blocca atomicamente e non salva dati parziali;
+- una riduzione che invaliderebbe coperture esistenti è bloccata da una Vista di Impatto;
+- create, Restore, collegamento di copertura e variazione di Allocazione serializzano la
+  combinazione stabile `Tenant + Anno + Centro di Costo` nella stessa transazione, bloccano il
+  Plafond e le Righe coperte pertinenti e ricalcolano la capienza dopo il lock; il solo
+  `lock_version` della Spesa non impedisce due coperture concorrenti;
+- l'unicità del Plafond corrente è garantita anche dal database; Soft Delete libera lo slot e
+  Restore lo riacquisisce soltanto dopo la stessa verifica atomica di unicità e capienza;
+- `Copertura Prevista` somma Stime/Preventivi correnti coperti ma non prenota capienza;
+  `Consumato` somma soltanto gli Effettivi coperti e `Disponibile = Allocazione - Consumato`;
+- soltanto create/update/Restore di un Effettivo coperto e riduzioni dell'Allocazione applicano il
+  blocco per Disponibile insufficiente; una previsione coperta può superare il Disponibile e viene
+  mostrata come rischio futuro, non come Sforamento reale;
+- non esistono `CoverageAllocation`, Quote multiple, ordinamento tra Plafond o Sforamento.
 
 ### Progetto
 
@@ -161,10 +184,18 @@ Relazione esplicita tra una Riga Ordinaria e una Spesa Plafond.
 
 **Azioni di Dominio**:
 
+- `Progetto Precedente` è Tenant-bound e univoco tra i successori: ogni Progetto può avere al
+  massimo una sola Continuazione successiva;
+- il predecessore appartiene a un Anno anteriore e la creazione verifica l'intera ascendenza;
+  self-link e cicli sono vietati;
+
 - senza Effettivi: Spostamento atomico del Progetto e delle Spese nel nuovo Anno;
-- con Effettivi: chiusura dell'origine e creazione di una Continuazione nel nuovo Anno;
-- l'Importo da Riproporre è `max(Valutazione Corrente − Totale Effettivo, 0)`, suggerito e sempre
-  confermabile/modificabile dall'Utente;
+- con Effettivi: creazione di una Continuazione nel nuovo Anno; la chiusura dell'origine resta
+  un'azione manuale separata;
+- per ogni Spesa candidata la preview può suggerire una nuova Riga Stima nella Spesa della
+  Continuazione pari a `max(Pianificazione Corrente della Spesa − suoi Effettivi, 0)`; il valore è
+  derivato esclusivamente da `ExpenseRow`, resta confermabile/modificabile e il Progetto non
+  possiede importi propri;
 - la Fase non attiva mai automaticamente queste azioni.
 
 ### Contratto, Termine e Scadenza
@@ -174,6 +205,10 @@ Relazione esplicita tra una Riga Ordinaria e una Spesa Plafond.
 Conserva Fornitore, Centro di Costo, eventuale Progetto, Titolo, Descrizione, Data di Inizio,
 Rinnovo Automatico, termine di preavviso, Data di Cessazione e metadati di Cestino/Lock.
 
+Quando un'Occorrenza è collegata a un Progetto, l'Anno del Progetto deve coincidere con l'Anno della
+Data dell'Occorrenza. Un mismatch è rifiutato: il collegamento deve usare la Continuazione
+pertinente o restare nullo, senza cambiare silenziosamente l'attribuzione annuale.
+
 #### Termine Contrattuale
 
 Definisce un intervallo di validità, Periodicità `Annuale` o `Mensile`, Importo per occorrenza,
@@ -182,9 +217,12 @@ Importi per la stessa Scadenza sono invalidi.
 
 #### Scadenza Contrattuale
 
-È una proiezione deterministica dei Termini, identificata da una Source Key stabile. Presenta Data,
-Importo, termine di preavviso, stato di generazione e collegamento alla Riga di Spesa. Persistono
-soltanto la Riga generata e le eccezioni esplicite necessarie a escludere una Scadenza.
+È una proiezione deterministica dei Termini, identificata da una chiave base di Occorrenza stabile.
+Ogni Riga generata usa inoltre un ruolo `Preventivo` o `Effettivo`; la Source Key persistita è unica
+per `Occorrenza + Ruolo`, così l'ingresso nell'Anno aggiunge l'Effettivo senza sovrascrivere il
+Preventivo e ogni sincronizzazione resta idempotente. Presenta Data, Importo, termine di preavviso,
+stato di generazione e collegamento alla Riga di Spesa. Persistono soltanto la Riga generata e le
+eccezioni esplicite necessarie a escludere una Scadenza.
 
 **Generazione**:
 
@@ -196,7 +234,10 @@ soltanto la Riga generata e le eccezioni esplicite necessarie a escludere una Sc
 - ingresso nell'Anno: aggiunta idempotente degli Effettivi corrispondenti, senza eliminare i
   Preventivi storici;
 - Cessazione o Rinnovo Automatico disattivato impediscono soltanto generazioni future;
-- generazione in Anno Finale produce Rettifiche con Nota obbligatoria.
+- gli Effettivi già generati restano; una modifica è esplicita sulla Riga;
+- la Cessazione mensile conserva le scadenze precedenti e non genera quelle successive;
+- una Riga futura modificata manualmente richiede una scelta esplicita nella Vista di Impatto;
+- generazione o modifica in Anno Chiuso produce Rettifiche con Nota obbligatoria.
 
 ### Approvazione del Budget
 
@@ -207,7 +248,7 @@ Aggregato immutabile composto da intestazione e Voci di Snapshot.
 | Tenant, Anno, Data, Approvatore | Obbligatori |
 | Base Economica | Copiata dal Tenant e immutabile |
 | Totali | Netto, IVA, Lordo e Totale nella Base ufficiale |
-| Stato | Attiva o Annullata, con autore/data dell'annullamento |
+| Stato | Attiva o Annullata, con autore/data/Nota dell'annullamento |
 | Correlation ID | Unico per idempotenza |
 
 Ogni Voce conserva almeno Spesa/Riga di origine, Natura, Centro di Costo, Progetto, Contratto,
@@ -228,28 +269,32 @@ Registro canonico dell'effetto economico successivo all'Approvazione o alla Chiu
 | Importo precedente, nuovo e delta | Netto, IVA, Lordo e valore nella Base ufficiale |
 | Fase di origine | Dopo Approvazione o dopo Chiusura |
 
-La Rettifica modifica il valore rappresentato del medesimo Budget Approvato/Finale; non crea un
+La Rettifica modifica il valore rappresentato del medesimo Budget Approvato/Chiuso; non crea un
 `Budget Finale Rettificato`. Extra Budget rimane una classificazione distinta.
 
 ### Chiusura del Budget
 
 Snapshot immutabile del Budget Finale con Tenant, Anno, Data, Utente, Base, Totali e Riepilogo delle
 situazioni lasciate irrisolte. Una Chiusura può essere resa non corrente dalla Riapertura, ma non
-viene cancellata. Una nuova Chiusura crea un nuovo Snapshot.
+viene cancellata. La Riapertura richiede Nota, crea una Revisione ed è vietata dopo Rettifiche
+successive. Una nuova Chiusura crea un nuovo Snapshot.
 
 ### Cestino
 
-Il Cestino è una proiezione unificata dei metadati Soft Delete presenti sugli aggregati, non una
-copia polimorfica dei documenti. Ogni aggregato recuperabile conserva `deleted_at`, `deleted_by`,
-motivazione e `purge_after = deleted_at + 12 mesi`.
+Il Cestino è una proiezione Tenant-bound dei metadati Soft Delete della Spesa, non una copia
+polimorfica dei documenti. Ogni Spesa recuperabile conserva almeno `deleted_at`, `deleted_by` e
+motivazione. Non esiste `purge_after` senza una futura decisione di prodotto.
 
 Il Ripristino:
 
 - mantiene la stessa identità;
 - coinvolge l'intero aggregato;
 - è bloccato se una dipendenza obbligatoria è ancora nel Cestino;
-- ricalcola il Budget corrente oppure produce una Rettifica se l'Anno è Finale;
+- ricalcola il Budget corrente oppure produce una Rettifica se l'Anno è Chiuso;
 - crea una Revisione.
+
+Per una Spesa generata da Contratto, il Cestino conserva anche la soppressione della Source Key o
+un controllo equivalente; la generazione idempotente non può ricreare l'aggregato cancellato.
 
 ### Cronologia delle Versioni
 
@@ -257,8 +302,14 @@ Riusa il sistema di Revisioni corrente. Uno Snapshot logico raggruppa tutte le m
 aggregato e conserva autore, momento, operazione, Correlation ID e rappresentazione necessaria al
 rendering del documento. Il Restore applica lo Snapshot come nuova mutazione e nuova Revisione.
 
-Gli Allegati non vengono duplicati negli Snapshot; rimangono recuperabili con l'aggregato nel
-Cestino, ma una Revisione non ricrea file eliminati.
+Gli Allegati non vengono duplicati negli Snapshot. La cancellazione della Spesa mantiene il purge
+terminale binario `VERIFIED CURRENT`; il Cestino può mostrare metadati storici minimizzati, ma il
+Restore della Spesa e una Revisione non ricreano file eliminati.
+
+`VERIFIED CURRENT`: ogni `RevisionBatchItem` conserva `snapshot_contents`; il limite operativo
+costante controlla history/compare/restore, mentre la manutenzione può eliminare le sole `Version`
+tecniche ridondanti. Batch, item, audit e storia annuale restano. `PROPOSED TARGET`: il limite
+diventa configurabile per Tenant senza cambiare questa indipendenza.
 
 ### Preferenza di Vista
 
@@ -280,7 +331,7 @@ Il Motore riceve:
 - Tenant e Base Economica;
 - Anno Economico;
 - Righe correnti con Importi e classificazioni;
-- Quote di Copertura;
+- riferimenti singoli di Copertura e Righe additive dell'Allocazione;
 - Snapshot di Approvazione/Chiusura e Rettifiche quando la vista lo richiede.
 
 Produce almeno:
@@ -290,7 +341,8 @@ Produce almeno:
 - Effettivo;
 - Extra Budget;
 - Rettifiche;
-- per ogni Plafond: Impegnato, Copertura Prevista, Consumato, Residuo e Sforamento;
+- per ogni Plafond: Allocazione, Copertura Prevista, Consumato, Residuo e Disponibile per nuove
+  coperture;
 - raggruppamenti per Centro di Costo, Progetto, Contratto, Fornitore e Spesa;
 - progressione mensile soltanto per Righe con Data realmente attribuibile a un Mese.
 
@@ -299,10 +351,12 @@ ridefiniscono formule o riconciliazioni.
 
 ## Ricostruzione Greenfield
 
-- È consentito sostituire o consolidare le Migrazioni correnti.
+- Il proprietario ha confermato esplicitamente il 2026-08-12 che non esistono dati da preservare;
+  è consentito sostituire o consolidare le Migrazioni correnti.
 - Non sono richiesti backup, import dei record legacy o mapping semantici da `open/closed`,
-  `variation` e singolo Plafond.
-- `migrate:fresh --seed` deve produrre uno schema valido e dati demo coerenti.
+  `variation` e Plafond legacy.
+- `migrate:fresh --seed` deve produrre uno schema valido e dati demo coerenti negli ambienti di
+  sviluppo/test protetti; il comando deve essere rifiutato negli altri ambienti.
 - I vincoli importanti devono essere provati su MySQL reale, non soltanto in memoria.
 - Gli identificatori tecnici legacy possono rimanere temporaneamente soltanto all'interno della
   singola Slice e devono essere rimossi prima che la Slice sia dichiarata completata.

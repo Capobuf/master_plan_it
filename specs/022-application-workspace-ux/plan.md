@@ -2,7 +2,7 @@
 
 **Branch**: `022-application-workspace-ux` | **Date**: 2026-08-12 | **Spec**: [spec.md](spec.md)
 
-**Planning Status**: Phase 1 Complete — Ready for Vertical Spec Kits
+**Planning Status**: `PROPOSED TARGET — Phase 1 aligned; no tasks.md; not implemented`
 
 **Input**: Confrontare il codice corrente con la UX definita in questa feature e con il dominio consolidato in `specs/BUDGET-DOMAIN-REFINEMENT.md`; individuare differenze, lavoro residuo, rischi e strategia di test con copertura completa delle regole economiche.
 
@@ -10,7 +10,14 @@
 
 Il codice corrente è una base sostanziale, non un prototipo vuoto: possiede isolamento Tenant, aritmetica decimale, Actions transazionali, revisioni aggregate, Allegati, registri e test dedicati. Il modello implementato riflette però una versione precedente del dominio e contraddice alcune decisioni economiche ormai centrali.
 
-Non è sicuro adattare l'applicazione partendo dal solo layout. Tutte le decisioni bloccanti emerse dall'audit sono risolte: il prodotto è Greenfield, il Motore Economico è unico, la Base Economica è configurabile per Tenant e bloccata dalla prima Approvazione, gli Stati del Progetto sono descrittivi, i Rinnovi Annuali non vengono ripartiti e i Contratti Mensili usano una Spesa annuale con Righe mensili. Il lavoro viene distribuito in Slice Verticali utente end-to-end; questa feature resta il contratto di programma e UX comune e non viene implementata come un unico progetto orizzontale.
+Non è sicuro adattare l'applicazione partendo dal solo layout. Le decisioni economiche di prodotto
+sono risolte nel documento di dominio: natura gestionale, Budget unico, Motore Economico
+unico, Progetti annuali, Effettivi contrattuali, Plafond singolo, copertura integrale, capienza
+bloccante, Riapertura, Note obbligatorie e retention a snapshot completi. Il lavoro viene distribuito
+in Slice Verticali utente end-to-end; questa feature resta il contratto di programma e UX comune e
+non viene implementata come un unico progetto orizzontale. Il proprietario ha confermato
+esplicitamente il 2026-08-12 che non esistono dati da preservare; questa autorizzazione copre la
+ricostruzione dello schema Greenfield in sviluppo/test, non introduce purge automatici di dominio.
 
 Macro-ordine delle aree, dettagliato successivamente nelle Slice Verticali:
 
@@ -38,7 +45,7 @@ Macro-ordine delle aree, dettagliato successivamente nelle Slice Verticali:
 
 **Performance Goals**: Query economiche annuali senza crescita N+1; registri paginati; grafici e drill-down basati sul medesimo dataset; mutazioni economiche atomiche
 
-**Constraints**: Isolamento Tenant fail-closed; aritmetica esatta; una sola Base Economica ufficiale per Tenant; nessun doppio conteggio; una sola implementazione del Motore Economico; nessun fallback silenzioso; prodotto Greenfield ricostruibile da database vuoto; preservare le modifiche correnti non correlate nel worktree
+**Constraints**: Isolamento Tenant fail-closed; aritmetica esatta; una sola Base Economica ufficiale per Tenant; nessun doppio conteggio; una sola implementazione del Motore Economico; nessun fallback silenzioso; prodotto Greenfield senza dati da preservare, confermato dal proprietario il 2026-08-12; ricostruzioni distruttive limitate agli ambienti di sviluppo/test esplicitamente previsti; preservare le modifiche correnti non correlate nel worktree
 
 **Scale/Scope**: Dominio annuale multi-Tenant con Spese e Righe, Contratti, Progetti, Plafond, Snapshot di Budget, Rettifiche, Revisioni e Report comparativi
 
@@ -51,19 +58,22 @@ Macro-ordine delle aree, dettagliato successivamente nelle Slice Verticali:
 | Documentazione permanente minima | PASS | L'audit e il piano restano nello Spec Kit; `docs/DOMAIN.md` non viene aggiornato prima dell'implementazione verificata. |
 | Spec Kit verticali | PASS BY DESIGN | La sezione **Slice Verticali di Implementazione** definisce risultati autonomi che attraversano Persistenza, Dominio, API, React e Test. |
 | Autorità sul corrente | PASS | Il baseline implementato è stato letto da modelli, Actions, Query, UI e test; il delta è descritto in `research.md`. |
-| Decisioni di Prodotto | PASS | D01–D05 sono risolte in `research.md`; non restano `NEEDS CLARIFICATION` che cambiano il risultato economico. |
+| Decisioni di Prodotto | PASS | D01–D08 e la modalità Greenfield sono risolte; il purge automatico delle Spese non è stato introdotto. |
 | Laravel unico business owner | AT RISK | La UI calcola importi solo come supporto, ma il backend contiene più percorsi di riconciliazione economica da unificare. |
 | Un solo Motore Economico | FAIL IN BASELINE / TARGET APPROVATO | `EconomicEngine`, `AnnualBudgetQuery`, `HistoricalAnnualBudgetQuery` e `AnnualEconomicReportQuery` duplicano regole e riconciliazioni. La prima verticale deve correggere il problema; Budget, Report e Dashboard consumeranno la stessa proiezione autorevole. |
 | Denaro decimale esatto | PASS IN BASELINE | `Money`, BCMath e colonne `DECIMAL` sono presenti; la copertura delle regole rimane insufficiente rispetto al nuovo dominio. |
 | Tenant isolation e autorizzazione server | PASS IN BASELINE | Query Tenant-bound, Policy, middleware e test di autorizzazione sono già diffusi. Ogni nuova mutazione deve mantenere allow/deny/rollback. |
 | Minima complessità | CONDITIONAL PASS | Riutilizzare Actions, Snapshot e preferenze esistenti; non introdurre CQRS, event bus o un framework universale di tabelle. |
-| Test proporzionati | PASS IN BASELINE / TOOLING GAP | Nel container applicativo collegato a MySQL passano 34 test Accounting con 235 asserzioni. Il runtime host privo del driver MySQL non è un ambiente di test supportato. L'immagine non installa ancora Xdebug, necessario per rendere eseguibile il Gate di line, branch e path coverage. |
+| Test proporzionati | TARGET PASS / NON ESEGUITI IN QUESTO INTERVENTO | Le future Slice devono usare il container applicativo collegato a MySQL. Questo riallineamento documentale non ha eseguito suite o coverage e non ne dichiara l'esito. |
 
 ## Planning Gate — Superato
 
 Le decisioni restano registrate per evitare che vengano riaperte implicitamente:
 
-1. **RISOLTO — Greenfield**: non esistono dati reali da preservare; schema e dati demo/test possono essere eliminati e ricostruiti, senza backup o migrazione semantica legacy.
+1. **RISOLTO — Greenfield**: il proprietario ha confermato esplicitamente il 2026-08-12 che non
+   esistono dati da preservare. Schema e dati demo/test possono essere ricostruiti e le Migrazioni
+   consolidate; `migrate:fresh` resta limitato agli ambienti di sviluppo/test previsti e non
+   autorizza il purge automatico delle Spese nel Cestino.
 2. **RISOLTO — Stati del Progetto**: `Idea`, `Proposto`, `Approvato`, `Rinviato` e `Rifiutato` possono restare come **Fase del Progetto** descrittiva e manuale. Non determinano Anno, inclusione nel Budget, Previsto, Effettivo, Chiusura o spostamenti automatici.
 3. **RISOLTO — Contratti Mensili**: per ogni Contratto e Anno esiste una Spesa Contrattuale Annuale con una Riga per ogni Scadenza Mensile; Date e collegamenti restano nello Scadenziario.
 4. **RISOLTO — Base Economica**: configurabile tra Netto e Lordo per Tenant, Netto predefinito, bloccata definitivamente dalla prima Approvazione e applicata da un solo Motore Economico.
@@ -134,13 +144,18 @@ frontend/src/**/*.test.tsx
 La dicitura “piena copertura economica” viene tradotta in quattro obblighi complementari:
 
 1. **Copertura strutturale**: 100% line e branch sulle classi pure del nucleo economico e sulle formule introdotte dalla verticale.
-2. **Tabelle decisionali**: ogni combinazione valida e invalida descritta dal dominio deve avere almeno un caso esplicito, inclusi zero, negativi ammessi, arrotondamenti, più Effettivi e più Plafond.
+2. **Tabelle decisionali**: ogni combinazione valida e invalida descritta dal dominio deve avere
+   almeno un caso esplicito, inclusi zero, negativi ammessi, arrotondamenti, più Effettivi, Righe
+   additive del Plafond e capienza insufficiente.
 3. **Invarianti di riconciliazione**: Budget, Report, raggruppamenti e Drill-Down devono riconciliare al centesimo con lo stesso dataset e non possono produrre doppio conteggio.
 4. **Integrazione MySQL e rollback**: vincoli, concorrenza ottimistica, isolamento Tenant e fallimento di audit/revisione devono essere provati sul database reale di test.
 
 La percentuale di coverage da sola non è sufficiente: una formula errata può essere coperta al 100%. Il Gate richiede contemporaneamente esempi numerici canonici e invarianti di riconciliazione.
 
-La suite Accounting MUST essere eseguita nel container applicativo collegato al servizio MySQL del progetto. Il comando baseline verificato è `docker compose exec -T laravel.test php artisan test --testsuite=Accounting`. Per il Gate di coverage l'immagine di test deve prima installare Xdebug e avviarlo in modalità `coverage`; la sola variabile `XDEBUG_MODE` già presente in Compose non basta perché l'estensione non è attualmente installata. L'assenza del driver MySQL nel runtime host non costituisce un errore del progetto.
+La suite Accounting MUST essere eseguita nel container applicativo collegato al servizio MySQL del
+progetto. Il comando previsto è `docker compose exec -T laravel.test php artisan test
+--testsuite=Accounting`. Per il Gate di coverage la relativa Slice deve prima verificare che
+l'immagine di test disponga di un driver di coverage e documentare il comando realmente eseguito.
 
 ## Phase 0 Output
 
@@ -159,18 +174,18 @@ Ogni Slice deve essere specificata e consegnata come risultato utente completo. 
 
 | Ordine | Slice e risultato dimostrabile | Contenuto end-to-end | Dipendenze |
 |---:|---|---|---|
-| 1 | **Workspace Annuale e Spesa Autorevole** — configurare il Tenant, entrare in un Anno, creare una Spesa con Stima/Preventivo/Effettivi e vedere totali corretti | Barra Superiore minima con Tenant/Anno; Base Netto/Lordo e blocco; schema Greenfield; rimozione Aperta/Chiusa; Date e Note di Riga; un solo Motore Economico; Registro e Documento Spesa; Xdebug e Gate economico | Nessuna |
-| 2 | **Plafond e Copertura Ripartita** — creare Plafond, coprire una Riga con uno o più Plafond e comprendere Previsto, Consumato e Residuo | Quote multiple; stessa annualità e Centro di Costo; Copertura Integrale bloccante; Sforamento motivato; anteprima; dettaglio e Report Plafond; riconciliazione | 1 |
+| 1 | **Workspace Annuale e Spesa Autorevole** — configurare il Tenant, entrare in un Anno, creare una Spesa con Stima/Preventivo/Effettivi e vedere totali corretti | Barra Superiore minima con Tenant/Anno; Base Netto/Lordo e blocco; schema Greenfield ricostruibile; rimozione Aperta/Chiusa; Date e Note di Riga; un solo Motore Economico; Registro e Documento Spesa; Xdebug e Gate economico | Nessuna |
+| 2 | **Plafond Singolo e Copertura Integrale** — allocare un solo Plafond per Centro/Anno, coprire una Riga integralmente e comprendere Disponibile, Consumato e Residuo | unicità Tenant/Anno/Centro; Righe additive di allocazione; riferimento singolo; capienza bloccante; preview delle riduzioni; nessuno Sforamento; dettaglio e Report Plafond; riconciliazione | 1 |
 | 3 | **Budget Proposto e Approvazione** — comporre il Budget generato e approvarne una fotografia immutabile | Budget in Lavorazione/Proposto; inclusioni ed esclusioni; Snapshot completo; Previsto immutabile; annullamento condizionato; Base bloccata; Panoramica e Vista di Impatto | 1–2 |
 | 4 | **Budget Durante l'Anno e Chiusura** — registrare Extra Budget e Rettifiche, confrontare con il Previsto e chiudere/riaprire correttamente | Extra con Nota; Rettifiche; Effettivo corrente; pagina Chiusura non bloccante; Budget Finale; Rettifiche tardive; Riapertura condizionata | 3 |
-| 5 | **Progetti Pluriennali** — attribuire le Spese all'Anno del Progetto e scegliere Spostamento o Continuazione | Anno del Progetto; Fase descrittiva; `closed_at`; Data reale fuori Anno; anteprima Spostamento; Continuazione collegata; Importo da Riproporre; vista percorso | 1, 3 |
-| 6 | **Contratti e Scadenziario** — gestire Rinnovi Annuali/Mensili e ottenere Spese corrette negli Anni esistenti | Termini; Spesa Contrattuale Annuale; Righe mensili; Preventivo futuro/Effettivo corrente; Rinnovo Automatico; Cessazione; Scadenziario e Dashboard launcher; Rettifica retrodatata | 1, 3, 5 per collegamento opzionale |
+| 5 | **Progetti Pluriennali** — attribuire le Spese all'Anno del Progetto e creare una Continuazione senza chiusure implicite | Anno del Progetto; Fase descrittiva; Data reale fuori Anno; anteprima Spostamento; Continuazione collegata; Chiusura separata; suggerimenti per-Spesa derivati dalle Righe; vista percorso | 1, 3–4 |
+| 6 | **Contratti e Scadenziario** — gestire Rinnovi Annuali/Mensili, Effettivi automatici e cessazione esplicita | Termini; Spesa Contrattuale Annuale; Righe mensili; Preventivo futuro/Effettivo corrente; Rinnovo Automatico; cessation preview; conservazione Effettivi; Scadenziario; Rettifica retrodatata | 1, 3–5 |
 | 7 | **Composizione Annuale e Avvio Storico** — preparare un nuovo Anno e ricostruire anni precedenti senza automatismi opachi | lista Spese senza Effettivi; riproposta; override di Spese/Contratti/Progetti; Previsto Ricostruito; Extra storico; Residuo Plafond riproposto | 2–6 |
-| 8 | **Cestino e Recupero** — eliminare, consultare e ripristinare aggregati senza alterare silenziosamente i conti | Cestino unico Multi-Entità/Multi-Anno; dipendenze; restore atomico; effetto su Anno aperto/chiuso; purge dopo 12 mesi; Allegati | 1–7 |
-| 9 | **Cronologia delle Versioni** — vedere un documento nel tempo e ripristinare uno Snapshot completo | limite Tenant default 10; pannello temporale; vista documento read-only; evidenza differenze; ripristino come nuova Revisione; indipendenza Allegati | 1–8 |
-| 10 | **Report Comparativi e Dashboard** — confrontare liberamente Budget/Anni e raggiungere il dettaglio riconciliato | due selettori liberi; KPI; grafici predefiniti; Progressione Mensile; Switch Valutazioni; click→filtri→dettaglio; Extra/Rettifiche; Dashboard Hero e launcher | 1–7, 9 per link storico |
+| 8 | **Cestino e Recupero Spese** — eliminare, consultare e ripristinare Spese senza alterare silenziosamente i conti | Cestino Spese Multi-Anno; restore atomico dell'aggregato Spesa/Righe; effetto su Budget in Preparazione/Approvato/Chiuso; Source Key soppressa; nessun purge automatico; gli Allegati binari restano soggetti al purge terminale corrente | 1–7 |
+| 9 | **Cronologia delle Versioni** — vedere un documento nel tempo e ripristinare uno Snapshot completo senza perdere la storia annuale | limite Tenant default 10; pannello temporale; vista documento read-only; evidenza differenze; ripristino come nuova Revisione; indipendenza Allegati e `Version`; cutoff storico intatto | 1–8 |
+| 10 | **Report Comparativi e Dashboard** — confrontare liberamente Budget/Anni e raggiungere il dettaglio riconciliato | due selettori liberi; KPI; grafici predefiniti; Progressione Mensile; Switch Valutazioni; click→filtri→dettaglio; Extra/Rettifiche; Dashboard Hero e launcher | 1–9 |
 | 11 | **Registri, Guida e Anagrafiche** — usare comportamenti coerenti nelle aree operative senza un framework universale | ricerca/filtri; colonne riordinabili; selezione massiva; inline sicuro; Guida Contestuale; Preferenze personali; Date Picker; Fornitori e Centri di Costo | Componenti validati nelle Slice precedenti |
-| 12 | **Amministrazione Tenant e Self-Hosting** — creare Tenant e configurare manutenzione verificabile | Gestione Piattaforma; Impostazioni Tenant; comando Cron copiabile; heartbeat quando disponibile; stato non verificabile; retention e purge schedulati | 8–9 |
+| 12 | **Amministrazione Tenant e Self-Hosting** — creare Tenant e configurare manutenzione verificabile | Gestione Piattaforma; Impostazioni Tenant; comando Cron copiabile; heartbeat quando disponibile; stato non verificabile; retention Revisioni e manutenzioni già autorizzate; nessun nuovo purge di dominio implicito | 8–9, 11 |
 
 ### Regola di Completamento di Ogni Slice
 
@@ -185,12 +200,54 @@ Una Slice è completata soltanto quando:
 7. `speckit-analyze` non rileva conflitti bloccanti;
 8. OpenAPI e documentazione permanente vengono aggiornati soltanto per il comportamento realmente implementato.
 
+## DAG di Consegna e Pacchetti di Ownership
+
+Gli ID successivi disponibili sono assegnati stabilmente alle Slice. `READY` significa che il
+relativo Spec Kit può essere completato e analizzato; non autorizza a ignorare le dipendenze di
+implementazione.
+
+| ID | Slice | Stato iniziale | `BLOCKED_BY` | `CONFLICTS_WITH` / `SHARED_OWNER` |
+|---|---|---|---|---|
+| 023 | Annual Expense Workspace | `READY` | — | possiede inizialmente schema Expense/ExpenseRow, Motore Economico, shell Tenant/Anno e contratto errori condiviso |
+| 024 | Single Plafond Coverage | `BLOCKED_BY` | 023 | `SHARED_OWNER`: ExpenseRow, Motore Economico e dataset Report; integrazione dal primario |
+| 025 | Budget Proposal Approval | `BLOCKED_BY` | 023, 024 e definizione eventi che bloccano Annullamento | `SHARED_OWNER`: Motore Economico, PlanningYear, RevisionBatch |
+| 026 | Budget Rectification Closure | `BLOCKED_BY` | 025 | `CONFLICTS_WITH` 027 sul lifecycle delle Spese di Progetto; esecuzione seriale |
+| 027 | Annual Project Continuation | `BLOCKED_BY` | 023, 025, 026 | `SHARED_OWNER`: attribuzione annuale Expense, Rettifiche e raggruppamento economico |
+| 028 | Contract Schedule Actuals | `BLOCKED_BY` | 023, 025, 026, 027 | `SHARED_OWNER`: origine/Source Key ExpenseRow e mutazioni su Anno Chiuso |
+| 029 | Annual Composition History | `BLOCKED_BY` | 024–028 | `SHARED_OWNER`: proiezione e snapshot storici |
+| 030 | Expense Trash Recovery | `BLOCKED_BY` | 023–029 | `SHARED_OWNER`: delete aggregato, Source Key e Rettifica; Allegati terminali |
+| 031 | Revision History Retention | `BLOCKED_BY` | 023, 030 | `SHARED_OWNER`: RevisionBatch/Item e proiezione a cutoff |
+| 032 | Comparative Reporting Dashboard | `BLOCKED_BY` | 023–031 | consuma il Motore Economico; non ridefinisce formule |
+| 033 | Consistent Registers Guidance | `BLOCKED_BY` | 023, 027, 028, 032 | `SHARED_OWNER`: shell, registri, preferenze e UI Anagrafiche |
+| 034 | Tenant Admin Self Hosting | `BLOCKED_BY` | 030, 031, 033 | `SHARED_OWNER`: settings Tenant, permessi ed evidenza Scheduler |
+
+### Onde e concorrenza
+
+Le dipendenze e il nucleo economico condiviso rendono seriali le implementazioni 023→024→025.
+Dopo 025, 026 precede 027 perché Progetti e Contratti devono riusare la pipeline di Rettifica su
+Anno Chiuso. Test design, audit read-only e frontend su un contratto API stabilizzato possono
+procedere in parallelo. Seguono 028, 029, 030, 031, 032, 033 e 034. Non si
+aprono più di quattro writer totali, due backend o due frontend; il runtime corrente osservato
+consente comunque soltanto tre subagenti oltre al primario.
+
+### Shared owners e integrazione
+
+- Il primario su `agent/022-integration` possiede consolidamento Migrazioni, enum e modelli
+  condivisi, Motore/proiezione economica, catalogo errori, permission catalogue, route aggregate e
+  documentazione di programma.
+- Ogni Slice usa un worktree isolato e un branch `agent/<slice-id>-<slug>` creato dalla testa
+  verificata dell'integrazione. Un worker non modifica file fuori dal pacchetto assegnato.
+- Una Slice che necessita un file shared-owner prepara una patch o un commit dichiarato; il primario
+  lo integra e risolve il confine prima di avviare un altro writer sullo stesso file.
+- Nessun subagente esegue merge, push o PR. L'integrazione locale avviene solo dopo test Slice,
+  review sicurezza/Tenancy e audit di parità pertinenti.
+
 ## Constitution Check Post-Design
 
 | Principle | Result | Design Evidence |
 |---|---|---|
 | Spec Kit verticali | PASS | Dodici risultati utente ordinati; nessuna fase separata per Database, Backend o Frontend. |
-| Decisioni di Prodotto | PASS | D01–D05 risolte e incorporate nel Modello Dati e nei Contratti. |
+| Decisioni di Prodotto | CONDITIONAL | D01–D11 incorporate; restano tre chiarimenti espliciti che bloccano 024/025 ma non 023. |
 | Laravel unico business owner | PASS BY TARGET | Preview e mutazioni economiche passano da Actions/servizi Laravel; React presenta e mantiene input. |
 | Un solo Motore Economico | PASS BY TARGET | Tutti i read model consumano una sola proiezione; le Query non implementano formule. |
 | Denaro esatto | PASS | Importi canonici `DECIMAL`/stringhe; nessun float autorevole. |

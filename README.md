@@ -1,7 +1,7 @@
 # Master Plan IT
 
 Baseline documentale verificata sul branch `laravel-replatform` al commit
-`8f0f5660b409b562d354589d9e00012f31df8ef2` del 2026-08-09.
+`b226a6a292e663aabf1167709aef8603c7b0ee94` del 2026-08-12.
 
 ## Struttura
 

@@ -1,6 +1,6 @@
 # Stato funzionale
 
-Stato verificato dopo l'implementazione delle Feature 009, 011 e 021.
+Stato della baseline verificata su `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94`.
 
 Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cronologia.
 
@@ -42,9 +42,15 @@ le route e i Resource testati. Non va dichiarato aggiornato un OpenAPI globale i
 | 4 | Export CSV/XLSX e stampa | `specs/014-exports-and-print` |
 | 5 | Migrazione legacy e portabilità Tenant | `specs/015-migration-and-portability` |
 | 6 | Backup/restore, scheduler generale, release e deployment | `specs/016-backup-and-operations` |
+| — | Programma comune di riallineamento economico e UX; da scomporre in Slice Verticali specifiche | `specs/022-application-workspace-ux` (`PROPOSED TARGET`, non implementato) |
 
 L'ordine è una dipendenza tecnica iniziale, non una promessa di priorità prodotto. Il Product Owner
 può cambiare l'ordine purché le dipendenze della slice scelta siano soddisfatte.
+
+Il programma 022 non è una mega-feature da implementare e non possiede `tasks.md`. Le successive
+Slice Verticali devono specificare separatamente Plafond, Budget/Rettifiche, Progetti, Contratti,
+Storico/Retention e infine le superfici UX condivise. Fino alla consegna di ciascuna Slice, la tabella
+**Disponibile alla baseline** e il codice corrente restano autorità sul comportamento implementato.
 
 ## Gap verificati ma non ancora specificati
 
