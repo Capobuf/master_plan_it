@@ -5,6 +5,7 @@ namespace Database\Factories;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
+use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Database\Eloquent\Factories\Factory;
 
@@ -55,5 +56,28 @@ class ExpenseRowFactory extends Factory
             'external_reference' => null,
             'lock_version' => 1,
         ];
+    }
+
+    public function allocationAdjustment(User $creator): static
+    {
+        return $this->state(fn (): array => [
+            'vendor_id' => null,
+            'type' => ExpenseType::AllocationAdjustment,
+            'created_by_user_id' => $creator->getKey(),
+            'confirmation_state' => null,
+            'confirmed_by_user_id' => null,
+            'confirmed_at' => null,
+            'is_system_managed' => false,
+            'manual_override_at' => null,
+            'contract_term_id' => null,
+            'source_key' => null,
+            'is_extra' => false,
+            'funded_plafond_expense_id' => null,
+            'spend_date' => '2026-01-01',
+            'period_start' => null,
+            'period_end' => null,
+            'distribution' => null,
+            'external_reference' => null,
+        ]);
     }
 }

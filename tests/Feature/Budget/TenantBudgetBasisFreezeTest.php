@@ -6,6 +6,7 @@ use App\Domain\Budget\Actions\ApplyBudgetApproval;
 use App\Domain\Budget\Data\ApplyApprovalData;
 use App\Domain\Budget\Data\ApprovalChangeData;
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Domain\Expenses\Exceptions\PlafondInsufficientException;
 use App\Domain\Tenancy\Actions\UpdateTenantSettings;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Expense;
@@ -137,5 +138,85 @@ final class TenantBudgetBasisFreezeTest extends TestCase
         $this->assertSame('gross', $operation->budget_basis);
         $this->assertSame('gross', $expense->fresh()->approved_basis);
         $this->assertSame('gross', $tenant->fresh()->budget_basis->value);
+    }
+
+    public function test_basis_change_revalidates_every_plafond_without_rewriting_components(): void
+    {
+        $tenant = Tenant::factory()->create(['budget_basis' => 'net']);
+        $actor = User::factory()->create(['tenant_id' => null, 'is_active' => true]);
+        app(PlatformAdministrator::class)->assign($actor);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $plafond = Expense::factory()->for($tenant)->plafond()->create([
+            'planning_year_id' => $year->getKey(),
+        ]);
+        $allocation = ExpenseRow::factory()->for($plafond)->allocationAdjustment($actor)->create([
+            'tenant_id' => $tenant->getKey(),
+            'entered_amount' => '100.00',
+            'net_amount' => '100.00',
+            'vat_amount' => '0.00',
+            'gross_amount' => '100.00',
+        ]);
+        $expense = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(),
+        ]);
+        ExpenseRow::factory()->for($expense)->create([
+            'tenant_id' => $tenant->getKey(),
+            'type' => ExpenseType::Actual,
+            'confirmation_state' => 'to_confirm',
+            'spend_date' => '2026-05-01',
+            'entered_amount' => '110.00',
+            'amount_includes_vat' => true,
+            'net_amount' => '90.00',
+            'vat_amount' => '20.00',
+            'gross_amount' => '110.00',
+            'funded_plafond_expense_id' => $plafond->getKey(),
+        ]);
+
+        try {
+            $this->changeBasis($tenant, $actor, 'gross', 1);
+            $this->fail('A Gross-insufficient Plafond allowed the basis change.');
+        } catch (PlafondInsufficientException $exception) {
+            $this->assertSame($plafond->getKey(), $exception->insufficiency->plafondExpenseId);
+            $this->assertSame('10.00', $exception->insufficiency->shortage);
+        }
+
+        $this->assertSame('net', $tenant->fresh()->budget_basis->value);
+        $this->assertSame(1, $tenant->fresh()->lock_version);
+        $this->assertSame('100.00', $allocation->fresh()->gross_amount);
+        $this->assertDatabaseMissing('audit_events', [
+            'tenant_id' => $tenant->getKey(),
+            'event_type' => 'tenant.settings.updated',
+        ]);
+
+        ExpenseRow::factory()->for($plafond)->allocationAdjustment($actor)->create([
+            'tenant_id' => $tenant->getKey(),
+            'position' => 2,
+            'entered_amount' => '20.00',
+            'net_amount' => '20.00',
+            'vat_amount' => '0.00',
+            'gross_amount' => '20.00',
+        ]);
+        $updated = $this->changeBasis($tenant->fresh(), $actor, 'gross', 1);
+
+        $this->assertSame('gross', $updated->budget_basis->value);
+        $this->assertSame('100.00', $allocation->fresh()->net_amount);
+        $this->assertSame('100.00', $allocation->fresh()->gross_amount);
+    }
+
+    private function changeBasis(Tenant $tenant, User $actor, string $basis, int $version): Tenant
+    {
+        return app(UpdateTenantSettings::class)->execute(
+            $actor,
+            new TenantContext($tenant, $actor),
+            [
+                'name' => $tenant->name,
+                'timezone' => $tenant->timezone,
+                'default_vat_rate' => $tenant->default_vat_rate,
+                'economic_basis' => $basis,
+                'deletion_reason_required' => $tenant->deletion_reason_required,
+            ],
+            $version,
+            (string) str()->uuid(),
+        );
     }
 }

@@ -29,4 +29,16 @@ final readonly class EconomicMeasure
 
         return self::fromAmounts($money->add($this->net, $other->net), $money->add($this->vat, $other->vat), $money->add($this->gross, $other->gross), $basis);
     }
+
+    public function minus(self $other, string $basis): self
+    {
+        $money = new MoneyCalculator;
+
+        return self::fromAmounts(
+            $money->subtract($this->net, $other->net),
+            $money->subtract($this->vat, $other->vat),
+            $money->subtract($this->gross, $other->gross),
+            $basis,
+        );
+    }
 }

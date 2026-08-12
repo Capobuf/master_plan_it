@@ -20,6 +20,9 @@ return new class extends Migration
             $table->unsignedBigInteger('contract_id')->nullable();
             $table->unsignedBigInteger('lock_version')->default(1);
             $table->softDeletes();
+            $table->unsignedBigInteger('active_plafond_cost_center_id')
+                ->nullable()
+                ->storedAs("CASE WHEN `kind` = 'plafond' AND `deleted_at` IS NULL THEN `cost_center_id` ELSE NULL END");
             $table->timestamps();
 
             $table->unique(['tenant_id', 'id']);
@@ -27,6 +30,10 @@ return new class extends Migration
             $table->index(['tenant_id', 'cost_center_id', 'deleted_at'], 'expenses_tenant_cc_del_idx');
             $table->index(['tenant_id', 'project_id', 'deleted_at'], 'expenses_tenant_project_del_idx');
             $table->index(['tenant_id', 'contract_id', 'deleted_at'], 'expenses_tenant_contract_del_idx');
+            $table->unique(
+                ['tenant_id', 'planning_year_id', 'active_plafond_cost_center_id'],
+                'expenses_live_plafond_slot_unique',
+            );
 
             $table->foreign(['tenant_id', 'planning_year_id'])
                 ->references(['tenant_id', 'id'])

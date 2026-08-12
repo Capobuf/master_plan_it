@@ -63,6 +63,7 @@ class Expense extends Model implements HasMedia
             'kind' => ExpenseKind::class,
             'approved_amount' => 'decimal:2',
             'lock_version' => 'integer',
+            'active_plafond_cost_center_id' => 'integer',
         ];
     }
 
@@ -96,6 +97,14 @@ class Expense extends Model implements HasMedia
     public function rows(): HasMany
     {
         return $this->hasMany(ExpenseRow::class);
+    }
+
+    /**
+     * @return HasMany<ExpenseRow, $this>
+     */
+    public function fundedRows(): HasMany
+    {
+        return $this->hasMany(ExpenseRow::class, 'funded_plafond_expense_id');
     }
 
     /**

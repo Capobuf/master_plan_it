@@ -2,6 +2,7 @@
 
 namespace App\Support\Api;
 
+use App\Domain\Expenses\Exceptions\PlafondInsufficientException;
 use App\Support\Diagnostics\CorrelationId;
 use DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -51,32 +52,46 @@ final class ApiErrorResponse
 
     public static function from(Throwable $exception, Request $request): JsonResponse
     {
-        [$status, $code, $message, $fields] = self::details($exception);
+        [$status, $code, $message, $fields, $details] = self::details($exception);
         $correlationId = CorrelationId::resolveFor($request)->value();
 
-        $response = response()->json([
-            'error' => [
-                'code' => $code,
-                'message' => $message,
-                'fields' => $fields,
-                'correlation_id' => $correlationId,
-            ],
-        ], $status);
+        $error = [
+            'code' => $code,
+            'message' => $message,
+            'fields' => $fields,
+            'correlation_id' => $correlationId,
+        ];
+        if ($details !== null) {
+            $error['details'] = $details;
+        }
+        $response = response()->json(['error' => $error], $status);
 
         $response->headers->set(CorrelationId::HEADER, $correlationId);
 
         return $response;
     }
 
-    /** @return array{int, string, string, array<string, mixed>} */
+    /** @return array{int, string, string, array<string, mixed>, ?array<string, mixed>} */
     private static function details(Throwable $exception): array
     {
+        if ($exception instanceof PlafondInsufficientException) {
+            return [
+                422,
+                'PLAFOND_INSUFFICIENT',
+                'La capienza del Plafond non è sufficiente.',
+                [$exception->insufficiency->field => [
+                    'Riduci l\'importo, aumenta l\'Allocazione, dividi la Spesa o rimuovi la copertura.',
+                ]],
+                $exception->insufficiency->details(),
+            ];
+        }
+
         if ($exception instanceof ValidationException) {
-            return [422, 'VALIDATION_FAILED', 'The submitted data is invalid.', $exception->errors()];
+            return [422, 'VALIDATION_FAILED', 'The submitted data is invalid.', $exception->errors(), null];
         }
 
         if ($exception instanceof AuthenticationException || $exception instanceof UnauthorizedHttpException) {
-            return [401, 'AUTHENTICATION_REQUIRED', 'Authentication is required.', []];
+            return [401, 'AUTHENTICATION_REQUIRED', 'Authentication is required.', [], null];
         }
 
         if ($exception instanceof AuthorizationException || $exception instanceof AccessDeniedHttpException) {
@@ -84,7 +99,7 @@ final class ApiErrorResponse
         }
 
         if ($exception instanceof ModelNotFoundException || $exception instanceof NotFoundHttpException) {
-            return [404, 'RESOURCE_NOT_FOUND', 'The requested resource was not found.', []];
+            return [404, 'RESOURCE_NOT_FOUND', 'The requested resource was not found.', [], null];
         }
 
         if ($exception instanceof DomainException) {
@@ -92,35 +107,35 @@ final class ApiErrorResponse
         }
 
         if ($exception instanceof TokenMismatchException) {
-            return [419, 'CSRF_TOKEN_MISMATCH', 'The security token is invalid or expired.', []];
+            return [419, 'CSRF_TOKEN_MISMATCH', 'The security token is invalid or expired.', [], null];
         }
 
         if ($exception instanceof HttpExceptionInterface) {
             $status = $exception->getStatusCode();
 
             return match ($status) {
-                404 => [404, 'RESOURCE_NOT_FOUND', 'The requested resource was not found.', []],
-                405 => [405, 'METHOD_NOT_ALLOWED', 'The requested method is not allowed.', []],
-                419 => [419, 'CSRF_TOKEN_MISMATCH', 'The security token is invalid or expired.', []],
-                422 => [422, 'VALIDATION_FAILED', 'The submitted data is invalid.', []],
-                429 => [429, 'RATE_LIMITED', 'Too many requests. Try again later.', []],
-                default => [$status >= 400 && $status < 600 ? $status : 500, self::statusCode($status), 'The request could not be completed.', []],
+                404 => [404, 'RESOURCE_NOT_FOUND', 'The requested resource was not found.', [], null],
+                405 => [405, 'METHOD_NOT_ALLOWED', 'The requested method is not allowed.', [], null],
+                419 => [419, 'CSRF_TOKEN_MISMATCH', 'The security token is invalid or expired.', [], null],
+                422 => [422, 'VALIDATION_FAILED', 'The submitted data is invalid.', [], null],
+                429 => [429, 'RATE_LIMITED', 'Too many requests. Try again later.', [], null],
+                default => [$status >= 400 && $status < 600 ? $status : 500, self::statusCode($status), 'The request could not be completed.', [], null],
             };
         }
 
-        return [500, 'INTERNAL_ERROR', 'An unexpected error occurred.', []];
+        return [500, 'INTERNAL_ERROR', 'An unexpected error occurred.', [], null];
     }
 
-    /** @return array{int, string, string, array<string, mixed>} */
+    /** @return array{int, string, string, array<string, mixed>, null} */
     private static function domain(string $rawCode, int $fallbackStatus, string $fallbackCode, string $fallbackMessage): array
     {
         if (isset(self::DOMAIN_ERRORS[$rawCode])) {
             [$status, $message] = self::DOMAIN_ERRORS[$rawCode];
 
-            return [$status, $rawCode, $message, []];
+            return [$status, $rawCode, $message, [], null];
         }
 
-        return [$fallbackStatus, $fallbackCode, $fallbackMessage, []];
+        return [$fallbackStatus, $fallbackCode, $fallbackMessage, [], null];
     }
 
     private static function statusCode(int $status): string
