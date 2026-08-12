@@ -11,12 +11,12 @@ use App\Domain\Plafonds\Queries\PlafondListQuery;
 use App\Domain\Plafonds\Queries\PlafondQuery;
 use App\Domain\Plafonds\Queries\PlafondReportQuery;
 use App\Domain\Plafonds\Queries\PreviewAllocationAdjustment;
-use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
+use App\Domain\Plafonds\Services\PlafondMutationAuthorizer;
+use App\Domain\Plafonds\Services\PlafondReadAuthorizer;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\Api\V1\PlafondDetailResource;
 use App\Http\Resources\Api\V1\PlafondImpactResource;
 use App\Http\Resources\Api\V1\PlafondSummaryResource;
-use App\Models\CostCenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
@@ -36,9 +36,6 @@ final class PlafondController extends Controller
         $costCenterId = isset($validated['cost_center_id'])
             ? (int) $validated['cost_center_id']
             : null;
-        if ($costCenterId !== null) {
-            TenantOwnedRecordQuery::findOrFail($context, CostCenter::class, $costCenterId);
-        }
         $paginator = $query->paginate(
             $this->actor($request),
             $context,
@@ -108,18 +105,26 @@ final class PlafondController extends Controller
         int $plafond,
         PlafondQuery $plafondQuery,
         PreviewAllocationAdjustment $query,
+        PlafondMutationAuthorizer $authorizer,
+        PlafondReadAuthorizer $readAuthorizer,
     ): PlafondImpactResource {
         [$expectedLockVersion, $adjustment] = $this->validateAdjustmentRequest($request);
         $context = $this->tenantContext($request);
+        $actor = $this->actor($request);
+        $authorizer->authorize($actor, $context);
         $target = $plafondQuery->find($context, $plafond);
-
-        return PlafondImpactResource::make($query->execute(
-            $this->actor($request),
+        $impact = $query->execute(
+            $actor,
             $context,
             $target,
             $expectedLockVersion,
             $adjustment,
-        ));
+        );
+
+        return PlafondImpactResource::make([
+            'impact' => $impact,
+            'include_blocking_rows' => $readAuthorizer->canViewExpense($actor, $context, $target),
+        ]);
     }
 
     public function addAdjustment(
@@ -128,12 +133,15 @@ final class PlafondController extends Controller
         PlafondQuery $plafondQuery,
         AddAllocationAdjustment $action,
         PlafondDetailQuery $detailQuery,
+        PlafondMutationAuthorizer $authorizer,
     ): JsonResponse {
         [$expectedLockVersion, $adjustment] = $this->validateAdjustmentRequest($request);
         $context = $this->tenantContext($request);
+        $actor = $this->actor($request);
+        $authorizer->authorize($actor, $context);
         $target = $plafondQuery->find($context, $plafond);
         $updated = $action->execute(
-            $this->actor($request),
+            $actor,
             $context,
             $target,
             $expectedLockVersion,
@@ -142,7 +150,7 @@ final class PlafondController extends Controller
         );
 
         return PlafondDetailResource::make($detailQuery->findAfterMutation(
-            $this->actor($request),
+            $actor,
             $context,
             (int) $updated->getKey(),
             (int) $updated->planning_year_id,
@@ -159,9 +167,6 @@ final class PlafondController extends Controller
         $costCenterId = isset($validated['cost_center_id'])
             ? (int) $validated['cost_center_id']
             : null;
-        if ($costCenterId !== null) {
-            TenantOwnedRecordQuery::findOrFail($context, CostCenter::class, $costCenterId);
-        }
 
         return response()->json($query->execute(
             $this->actor($request),

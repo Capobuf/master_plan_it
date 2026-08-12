@@ -9,6 +9,7 @@ use App\Domain\Plafonds\Services\PlafondReadAuthorizer;
 use App\Domain\Reporting\Queries\EconomicDatasetQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
+use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\PlanningYear;
 use App\Models\User;
@@ -30,6 +31,9 @@ final class PlafondListQuery
         $year = TenantOwnedRecordQuery::forTenant($context, PlanningYear::class)
             ->whereKey($planningYearId)
             ->firstOrFail();
+        if ($costCenterId !== null) {
+            TenantOwnedRecordQuery::findOrFail($context, CostCenter::class, $costCenterId);
+        }
         $annual = app(EconomicEngine::class)->project(
             app(EconomicDatasetQuery::class)->execute($actor, $context, $planningYearId),
         );

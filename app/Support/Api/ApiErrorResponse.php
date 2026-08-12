@@ -3,6 +3,9 @@
 namespace App\Support\Api;
 
 use App\Domain\Expenses\Exceptions\PlafondInsufficientException;
+use App\Domain\Plafonds\Services\PlafondReadAuthorizer;
+use App\Domain\Tenancy\Data\TenantContext;
+use App\Models\User;
 use App\Support\Diagnostics\CorrelationId;
 use DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
@@ -52,7 +55,7 @@ final class ApiErrorResponse
 
     public static function from(Throwable $exception, Request $request): JsonResponse
     {
-        [$status, $code, $message, $fields, $details] = self::details($exception);
+        [$status, $code, $message, $fields, $details] = self::details($exception, $request);
         $correlationId = CorrelationId::resolveFor($request)->value();
 
         $error = [
@@ -72,7 +75,7 @@ final class ApiErrorResponse
     }
 
     /** @return array{int, string, string, array<string, mixed>, ?array<string, mixed>} */
-    private static function details(Throwable $exception): array
+    private static function details(Throwable $exception, Request $request): array
     {
         if ($exception instanceof PlafondInsufficientException) {
             return [
@@ -82,7 +85,7 @@ final class ApiErrorResponse
                 [$exception->insufficiency->field => [
                     'Riduci l\'importo, aumenta l\'Allocazione, dividi la Spesa o rimuovi la copertura.',
                 ]],
-                $exception->insufficiency->details(),
+                $exception->insufficiency->details(self::canExposeExpenseDetails($request)),
             ];
         }
 
@@ -124,6 +127,16 @@ final class ApiErrorResponse
         }
 
         return [500, 'INTERNAL_ERROR', 'An unexpected error occurred.', [], null];
+    }
+
+    private static function canExposeExpenseDetails(Request $request): bool
+    {
+        $actor = $request->user();
+        $context = $request->attributes->get(TenantContext::class);
+
+        return $actor instanceof User
+            && $context instanceof TenantContext
+            && app(PlafondReadAuthorizer::class)->canViewAny($actor, $context);
     }
 
     /** @return array{int, string, string, array<string, mixed>, null} */

@@ -22,7 +22,7 @@ final readonly class PlafondInsufficiency
     ) {}
 
     /** @return array<string, mixed> */
-    public function details(): array
+    public function details(bool $includeBlockingRows = true): array
     {
         $details = [
             'plafond_expense_id' => $this->plafondExpenseId,
@@ -36,24 +36,26 @@ final readonly class PlafondInsufficiency
                 'requested' => $this->impact->requested,
                 'current' => $this->measures($this->impact->current),
                 'proposed' => $this->measures($this->impact->proposed),
-                'blocking_rows' => array_map(
-                    fn (ProjectedEconomicLine $line): array => [
-                        'expense_id' => $line->expenseId,
-                        'expense_title' => $line->expenseTitle,
-                        'row_id' => $line->rowId,
-                        'description' => $line->description,
-                        'expense_cost_center' => [
-                            'id' => $line->costCenterId,
-                            'name' => $line->costCenterName,
+                'blocking_rows' => $includeBlockingRows
+                    ? array_map(
+                        fn (ProjectedEconomicLine $line): array => [
+                            'expense_id' => $line->expenseId,
+                            'expense_title' => $line->expenseTitle,
+                            'row_id' => $line->rowId,
+                            'description' => $line->description,
+                            'expense_cost_center' => [
+                                'id' => $line->costCenterId,
+                                'name' => $line->costCenterName,
+                            ],
+                            'plafond_cost_center' => [
+                                'id' => $line->plafondCostCenterId,
+                                'name' => $line->plafondCostCenterName,
+                            ],
+                            'amount' => $this->measure($line->amount),
                         ],
-                        'plafond_cost_center' => [
-                            'id' => $line->plafondCostCenterId,
-                            'name' => $line->plafondCostCenterName,
-                        ],
-                        'amount' => $this->measure($line->amount),
-                    ],
-                    $this->impact->blockingRows,
-                ),
+                        $this->impact->blockingRows,
+                    )
+                    : [],
             ],
         ];
 

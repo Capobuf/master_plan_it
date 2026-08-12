@@ -49,11 +49,14 @@ final class PlafondDetailQuery
         int $planningYearId,
         bool $authorizeExpenseRead,
     ): array {
+        if ($authorizeExpenseRead) {
+            app(PlafondReadAuthorizer::class)->authorize($actor, $context);
+        } else {
+            app(PlafondRelationshipAuthorizer::class)->authorize($actor, $context);
+        }
         $expense = app(PlafondQuery::class)->find($context, $plafondId, $planningYearId);
         if ($authorizeExpenseRead) {
             app(PlafondReadAuthorizer::class)->authorize($actor, $context, $expense);
-        } else {
-            app(PlafondRelationshipAuthorizer::class)->authorize($actor, $context);
         }
         $expense->load(['planningYear:id,tenant_id,year_label,budget_state', 'costCenter:id,tenant_id,name']);
         $annual = app(EconomicEngine::class)->project(
@@ -101,10 +104,12 @@ final class PlafondDetailQuery
             'basis' => $annual->basis,
             'measures' => PlafondProjectionSerializer::measures($projection),
             'allocation_adjustments' => $allocation,
-            'covered_rows' => array_map(
-                static fn (ProjectedEconomicLine $line): array => PlafondProjectionSerializer::coveredLine($line),
-                $projection->coveredLines,
-            ),
+            'covered_rows' => $authorizeExpenseRead
+                ? array_map(
+                    static fn (ProjectedEconomicLine $line): array => PlafondProjectionSerializer::coveredLine($line),
+                    $projection->coveredLines,
+                )
+                : [],
         ];
     }
 }

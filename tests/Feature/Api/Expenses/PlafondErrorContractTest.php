@@ -3,6 +3,8 @@
 namespace Tests\Feature\Api\Expenses;
 
 use App\Models\CostCenter;
+use App\Models\Expense;
+use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Tenant;
 use App\Models\Vendor;
@@ -44,8 +46,8 @@ final class PlafondErrorContractTest extends TestCase
             ->assertJsonStructure(['error' => ['correlation_id', 'fields' => ['rows.0.funded_plafond_expense_id'], 'details' => ['impact' => ['current', 'proposed', 'blocking_rows']]]])
             ->assertJsonMissingPath('error.details.plafond_title')
             ->assertJsonMissingPath('error.details.plafond_cost_center');
-        $this->assertDatabaseCount('expenses', 2);
-        $this->assertDatabaseCount('expense_rows', 2);
+        $this->assertSame(2, Expense::query()->where('tenant_id', $tenant->getKey())->count());
+        $this->assertSame(2, ExpenseRow::query()->where('tenant_id', $tenant->getKey())->count());
     }
 
     /** @return array<string, mixed> */

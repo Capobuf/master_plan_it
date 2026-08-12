@@ -3,6 +3,7 @@
 namespace Tests\Feature\Expenses;
 
 use App\Models\CostCenter;
+use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Tenant;
 use App\Models\User;
@@ -37,7 +38,7 @@ final class PlafondAggregateTest extends TestCase
 
     public function test_reduction_preview_and_confirmation_use_the_final_consumed_state_and_preserve_covered_rows(): void
     {
-        [, $user, $year, $center, $vendor] = $this->workspace();
+        [$tenant, $user, $year, $center, $vendor] = $this->workspace();
         $this->actingAs($user, 'web');
         $plafondId = $this->createPlafond($year, $center, '3500.00');
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $this->coveredActualPayload($year, $center, $vendor, $plafondId, '2500.00'))
@@ -53,7 +54,9 @@ final class PlafondAggregateTest extends TestCase
             ->assertJsonStructure(['data' => ['blocking_rows' => [['expense_id', 'row_id', 'expense_cost_center', 'amount']]]]);
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/plafonds/'.$plafondId.'/allocation-adjustments', $request)
             ->assertUnprocessable()->assertJsonPath('error.code', 'PLAFOND_INSUFFICIENT');
-        $this->assertDatabaseCount('expense_rows', 2);
+        $this->assertSame(2, ExpenseRow::query()
+            ->where('tenant_id', $tenant->getKey())
+            ->count());
     }
 
     /** @return array{Tenant, User, PlanningYear, CostCenter, Vendor} */

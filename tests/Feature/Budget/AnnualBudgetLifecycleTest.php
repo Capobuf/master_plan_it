@@ -160,10 +160,20 @@ final class AnnualBudgetLifecycleTest extends TestCase
         $this->assertDatabaseMissing('expense_rows', ['expense_id' => $expense->getKey(), 'type' => 'actual']);
     }
 
-    public function test_plafond_remains_distinguishable_without_slice_024_capacity_semantics(): void
+    public function test_plafond_allocation_is_the_single_planning_contribution_for_covered_plans(): void
     {
         [$actor, $context, $year, $center, $vendor] = $this->context();
-        [$plafond] = $this->expense($context->tenant, $year, $center, $vendor, '1000.00', ExpenseKind::Plafond);
+        $plafond = Expense::factory()->for($context->tenant)->plafond()->create([
+            'planning_year_id' => $year->getKey(),
+            'cost_center_id' => $center->getKey(),
+        ]);
+        ExpenseRow::factory()->for($plafond)->allocationAdjustment($actor)->create([
+            'tenant_id' => $context->tenantId,
+            'entered_amount' => '1000.00',
+            'net_amount' => '1000.00',
+            'vat_amount' => '220.00',
+            'gross_amount' => '1220.00',
+        ]);
         [$consumer] = $this->expense($context->tenant, $year, $center, $vendor, '1200.00');
         $consumer->currentPlanningRow->forceFill(['funded_plafond_expense_id' => $plafond->getKey()])->save();
         ExpenseRow::factory()->for($consumer)->create(['tenant_id' => $context->tenantId, 'type' => ExpenseType::Actual, 'spend_date' => '2026-06-01',
@@ -172,7 +182,11 @@ final class AnnualBudgetLifecycleTest extends TestCase
         $result = app(AnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey());
         $this->assertSame(['ordinary', 'plafond'], collect($result['expenses'])->pluck('kind')->sort()->values()->all());
         $this->assertSame($result['totals']['current_planning']['official'], $result['summary']['proposed']);
-        $this->assertSame('0.00', $result['summary']['plafond_overrun']);
+        $this->assertSame('1000.00', $result['summary']['proposed']);
+        $this->assertArrayNotHasKey('plafond_overrun', $result['summary']);
+        $expenses = collect($result['expenses'])->keyBy('kind');
+        $this->assertSame('1000.00', $expenses['plafond']['planned']);
+        $this->assertSame('0.00', $expenses['ordinary']['planned']);
     }
 
     public function test_apply_budget_approval_audit_failure_rolls_back_the_whole_operation(): void
