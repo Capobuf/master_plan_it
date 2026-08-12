@@ -35,6 +35,7 @@ final class AnnualBudgetDatasetTest extends TestCase
         $context = new TenantContext($tenant, $actor);
         $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
         $center = CostCenter::factory()->for($tenant)->create();
+        $plafondCenter = CostCenter::factory()->for($tenant)->create();
         $vendor = Vendor::factory()->for($tenant)->create();
 
         $this->expense($tenant, $year, $center, $vendor, ExpenseKind::Ordinary, 'Hosting', '100.00', '100.00');
@@ -50,9 +51,24 @@ final class AnnualBudgetDatasetTest extends TestCase
             'vat_amount' => '30.80',
             'gross_amount' => '170.80',
         ]);
+        $plafond = Expense::factory()->for($tenant)->plafond()->create([
+            'planning_year_id' => $year->getKey(),
+            'cost_center_id' => $plafondCenter->getKey(),
+            'title' => 'Plafond licenze',
+        ]);
+        ExpenseRow::factory()->for($plafond)->allocationAdjustment($actor)->create([
+            'tenant_id' => $tenant->getKey(),
+            'entered_amount' => '3500.00',
+            'net_amount' => '3500.00',
+            'vat_amount' => '770.00',
+            'gross_amount' => '4270.00',
+        ]);
+        ExpenseRow::query()->whereKey($consumer->current_planning_row_id)->update([
+            'funded_plafond_expense_id' => $plafond->getKey(),
+        ]);
 
         $budget = app(AnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey());
-        $this->assertSame('230.00', $budget['summary']['proposed']);
+        $this->assertSame('3600.00', $budget['summary']['proposed']);
         $this->assertSame('230.00', $budget['summary']['approved_current']);
         $this->assertSame('140.00', $budget['summary']['actual']);
         $this->assertArrayNotHasKey('plafond_overrun', $budget['summary']);
@@ -75,7 +91,7 @@ final class AnnualBudgetDatasetTest extends TestCase
             $this->assertArrayNotHasKey('global_plafond_overrun', $report);
             $this->assertArrayNotHasKey('plafond_overrun', $report['summary']);
             $this->assertArrayHasKey('plafonds', $report);
-            $this->assertSame('230.00', $this->sum($report['data'], 'proposed'), "Proposed mismatch for {$groupBy}.");
+            $this->assertSame('3600.00', $this->sum($report['data'], 'proposed'), "Proposed mismatch for {$groupBy}.");
             $this->assertSame('230.00', $this->sum($report['data'], 'approved'), "Approved mismatch for {$groupBy}.");
             $this->assertSame('140.00', $this->sum($report['data'], 'actual'), "Actual mismatch for {$groupBy}.");
         }
