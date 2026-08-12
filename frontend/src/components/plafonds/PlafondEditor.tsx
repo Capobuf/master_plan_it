@@ -16,6 +16,7 @@ import InputField from "../form/input/InputField";
 import TextArea from "../form/input/TextArea";
 import Label from "../form/Label";
 import Select from "../form/Select";
+import { normalizeDecimal } from "../expenses/expenseEditorTypes";
 import PlafondImpactPanel from "./PlafondImpactPanel";
 
 const today = new Date().toISOString().slice(0, 10);
@@ -57,7 +58,7 @@ export default function PlafondEditor({ plafond, onSaved }: { plafond?: PlafondD
   async function preview() {
     if (!plafond || !valid) return;
     setBusy(true); setError(null);
-    try { setImpact(await previewAllocationAdjustment(plafond.id, { lock_version: plafond.lock_version, adjustment })); }
+    try { setImpact(await previewAllocationAdjustment(plafond.id, { lock_version: plafond.lock_version, adjustment: requestAdjustment() })); }
     catch (cause: unknown) { setError(ApiError.from(cause)); }
     finally { setBusy(false); }
   }
@@ -66,12 +67,28 @@ export default function PlafondEditor({ plafond, onSaved }: { plafond?: PlafondD
     setBusy(true); setError(null);
     try {
       const saved = creating
-        ? await createPlafond({ planning_year_id: selectedPlanningYearId as number, cost_center_id: costCenterId as number, title: title.trim(), ...(notes.trim() ? { notes: notes.trim() } : {}), initial_allocation: adjustment })
-        : await addAllocationAdjustment(plafond.id, { lock_version: plafond.lock_version, adjustment });
+        ? await createPlafond({ planning_year_id: selectedPlanningYearId as number, cost_center_id: costCenterId as number, title: title.trim(), ...(notes.trim() ? { notes: notes.trim() } : {}), initial_allocation: requestAdjustment() })
+        : await addAllocationAdjustment(plafond.id, { lock_version: plafond.lock_version, adjustment: requestAdjustment() });
       setDirty(false); onSaved?.(saved);
       if (creating) navigate(routes.plafond(saved.id)); else { setAdjustment(emptyAdjustment()); setImpact(null); }
     } catch (cause: unknown) { setError(ApiError.from(cause)); }
     finally { setBusy(false); }
+  }
+  function requestAdjustment(): AllocationAdjustmentInput {
+    const enteredAmount = normalizeDecimal(adjustment.entered_amount);
+    const quantity = normalizeDecimal(adjustment.quantity);
+    const unitPrice = normalizeDecimal(adjustment.unit_price);
+    const vatRate = normalizeDecimal(adjustment.vat_rate);
+    return {
+      description: adjustment.description.trim(),
+      ...(adjustment.notes?.trim() ? { notes: adjustment.notes.trim() } : {}),
+      ...(enteredAmount ? { entered_amount: enteredAmount } : {}),
+      ...(quantity ? { quantity } : {}),
+      ...(unitPrice ? { unit_price: unitPrice } : {}),
+      amount_includes_vat: adjustment.amount_includes_vat,
+      ...(vatRate ? { vat_rate: vatRate } : {}),
+      date: adjustment.date,
+    };
   }
   if (!canSubmit) return <Alert variant="warning" title="Operazione non disponibile" message="Non disponi dell’autorizzazione necessaria." />;
   if (readOnly) return <Alert variant="info" title="Plafond in sola lettura" message="L’anno economico non è in preparazione; l’Allocazione non può essere modificata." />;
