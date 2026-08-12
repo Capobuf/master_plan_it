@@ -69,10 +69,9 @@ final readonly class AnnualEconomicReportQuery
                 'residual' => bcsub($approved, $totals['actual']['official'], 2),
                 'variance' => bcsub($totals['actual']['official'], $approved, 2),
                 'utilization_percentage' => $this->utilization($totals['actual']['official'], $approved),
-                'plafond_overrun' => '0.00',
                 'unapproved_actual_expenses' => $unapproved,
             ],
-            'global_plafond_overrun' => '0.00',
+            'plafonds' => $budget['plafonds'] ?? [],
             'filters' => [
                 'planning_year_id' => $filter->planningYearId,
                 'cost_center_id' => $filter->costCenterId,

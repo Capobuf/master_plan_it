@@ -5,9 +5,9 @@ namespace App\Domain\Budget\Queries;
 use App\Domain\Budget\Enums\BudgetState;
 use App\Domain\Economics\Data\AnnualEconomicProjection;
 use App\Domain\Economics\Data\EconomicMeasure;
+use App\Domain\Economics\Data\PlafondEconomicProjection;
 use App\Domain\Economics\Data\ProjectedEconomicLine;
 use App\Domain\Economics\Services\EconomicEngine;
-use App\Domain\Reporting\Data\EconomicReportFilterData;
 use App\Domain\Reporting\Queries\EconomicDatasetQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
@@ -36,12 +36,7 @@ final class AnnualBudgetQuery
             throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYearId]);
         }
 
-        $dataset = app(EconomicDatasetQuery::class)->execute(
-            $actor,
-            $context,
-            $planningYearId,
-            new EconomicReportFilterData($planningYearId, costCenterId: $costCenterId),
-        );
+        $dataset = app(EconomicDatasetQuery::class)->execute($actor, $context, $planningYearId);
         /** @var AnnualEconomicProjection $projection */
         $projection = app(EconomicEngine::class)->project($dataset);
 
@@ -67,6 +62,8 @@ final class AnnualBudgetQuery
         $rows = [];
         $approvedCurrent = '0.00';
         $unapprovedActual = 0;
+        $selectedPlanning = EconomicMeasure::zero($projection->basis);
+        $selectedActual = EconomicMeasure::zero($projection->basis);
         foreach ($metadata as $record) {
             $expenseProjection = $projection->expenses[(int) $record->id] ?? null;
             if ($expenseProjection === null) {
@@ -74,6 +71,12 @@ final class AnnualBudgetQuery
             }
             $approved = $record->approved_amount === null ? null : $this->decimal($record->approved_amount);
             $actual = $expenseProjection->actual->official;
+            foreach ($expenseProjection->lines as $line) {
+                if ($line->contributesToCurrentPlanning) {
+                    $selectedPlanning = $selectedPlanning->plus($line->amount, $projection->basis);
+                }
+            }
+            $selectedActual = $selectedActual->plus($expenseProjection->actual, $projection->basis);
             if ($approved !== null) {
                 $approvedCurrent = bcadd($approvedCurrent, $approved, 2);
             } elseif (bccomp($actual, '0.00', 2) !== 0) {
@@ -101,6 +104,9 @@ final class AnnualBudgetQuery
                     'current_planning' => $this->measure($expenseProjection->currentPlanning),
                     'actual' => $this->measure($expenseProjection->actual),
                 ],
+                'plafond_measures' => isset($projection->plafonds[(int) $record->id])
+                    ? $this->plafondMeasures($projection->plafonds[(int) $record->id])
+                    : null,
                 'planned' => $expenseProjection->currentPlanningRowId === null ? null : $expenseProjection->currentPlanning->official,
                 'approved' => $approved,
                 'approved_basis' => $record->approved_basis === null ? null : (string) $record->approved_basis,
@@ -142,25 +148,36 @@ final class AnnualBudgetQuery
             'currency' => $projection->currency,
             'basis' => $projection->basis,
             'totals' => [
-                'current_planning' => $this->measure($projection->currentPlanning),
-                'actual' => $this->measure($projection->actual),
+                'current_planning' => $this->measure($selectedPlanning),
+                'actual' => $this->measure($selectedActual),
             ],
             'summary' => [
                 'currency' => $projection->currency,
                 'official_basis' => $projection->basis,
-                'proposed' => $projection->currentPlanning->official,
+                'proposed' => $selectedPlanning->official,
                 'initial_approved' => $initialApproved,
                 'approved_variations' => $variations,
                 'approved_current' => $approvedCurrent,
-                'actual' => $projection->actual->official,
-                'residual' => bcsub($approvedCurrent, $projection->actual->official, 2),
-                'variance' => bcsub($projection->actual->official, $approvedCurrent, 2),
+                'actual' => $selectedActual->official,
+                'residual' => bcsub($approvedCurrent, $selectedActual->official, 2),
+                'variance' => bcsub($selectedActual->official, $approvedCurrent, 2),
                 'utilization_percentage' => bccomp($approvedCurrent, '0', 2) === 1
-                    ? bcdiv(bcmul($projection->actual->official, '100', 4), $approvedCurrent, 2)
+                    ? bcdiv(bcmul($selectedActual->official, '100', 4), $approvedCurrent, 2)
                     : null,
-                'plafond_overrun' => '0.00',
                 'unapproved_actual_expenses' => $unapprovedActual,
             ],
+            'plafonds' => array_values(array_map(fn ($plafond): array => [
+                'id' => $plafond->plafondExpenseId,
+                'planning_year_id' => $plafond->planningYearId,
+                'title' => $plafond->title,
+                'cost_center' => ['id' => $plafond->costCenterId, 'name' => $plafond->costCenterName],
+                'currency' => $plafond->currency,
+                'basis' => $plafond->basis,
+                'measures' => $this->plafondMeasures($plafond),
+            ], array_filter(
+                $projection->plafonds,
+                static fn ($plafond): bool => $costCenterId === null || $plafond->costCenterId === $costCenterId,
+            ))),
             'expenses' => $rows,
         ];
     }
@@ -169,6 +186,17 @@ final class AnnualBudgetQuery
     private function measure(EconomicMeasure $measure): array
     {
         return ['net' => $measure->net, 'vat' => $measure->vat, 'gross' => $measure->gross, 'official' => $measure->official];
+    }
+
+    /** @return array<string, array{net: string, vat: string, gross: string, official: string}> */
+    private function plafondMeasures(PlafondEconomicProjection $plafond): array
+    {
+        return [
+            'allocation' => $this->measure($plafond->allocation),
+            'coverage_planned' => $this->measure($plafond->coveragePlanned),
+            'consumed' => $this->measure($plafond->consumed),
+            'available' => $this->measure($plafond->available),
+        ];
     }
 
     /** @return array<string, mixed> */

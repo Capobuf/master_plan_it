@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams } from "react-router";
 import { getPlafond, type PlafondDetail as PlafondDetailData } from "../../api/plafonds";
 import { ApiError } from "../../api/client";
@@ -13,8 +13,16 @@ import { usePlanningYear } from "../../context/PlanningYearContext";
 export default function PlafondPage() {
   const { plafondId } = useParams<{ plafondId: string }>(); const id = plafondId && /^\d+$/.test(plafondId) ? Number(plafondId) : null;
   const { hasAbility } = useApplicationContext(); const { selectedPlanningYearId } = usePlanningYear(); const [detail, setDetail] = useState<PlafondDetailData | null>(null); const [error, setError] = useState<ApiError | null>(null);
-  const load = useCallback(() => { if (id === null || selectedPlanningYearId === null || !hasAbility("expense.view")) return; setDetail(null); setError(null); void getPlafond(id, selectedPlanningYearId).then(setDetail).catch((cause: unknown) => setError(ApiError.from(cause))); }, [hasAbility, id, selectedPlanningYearId]);
-  useEffect(load, [load]);
+  useEffect(() => {
+    if (id === null || selectedPlanningYearId === null || !hasAbility("expense.view")) return;
+    let active = true;
+    setDetail(null); setError(null);
+    void getPlafond(id, selectedPlanningYearId)
+      .then((result) => { if (active) setDetail(result); })
+      .catch((cause: unknown) => { if (active) setError(ApiError.from(cause)); });
+
+    return () => { active = false; };
+  }, [hasAbility, id, selectedPlanningYearId]);
   let body: React.ReactNode;
   if (!hasAbility("expense.view")) body = <Alert variant="warning" title="Dettaglio non disponibile" message="Non disponi dell’autorizzazione necessaria." />;
   else if (id === null) body = <Alert variant="error" title="Identificativo non valido" message="L’identificativo del Plafond non è valido." />;

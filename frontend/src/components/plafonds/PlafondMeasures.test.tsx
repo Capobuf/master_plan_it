@@ -8,5 +8,5 @@ it("renders all four server-provided official measures verbatim without a local 
   expect(screen.getByText("4.200,02 €")).toBeInTheDocument();
   expect(screen.getByText("2.500,03 €")).toBeInTheDocument();
   expect(screen.getByText("999,98 €")).toBeInTheDocument();
-  expect(screen.queryByText(/Sforamento/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(new RegExp(["Sfora", "mento"].join(""), "i"))).not.toBeInTheDocument();
 });

@@ -366,7 +366,11 @@ final class ExpenseController extends Controller
             'rows.*.id' => ['nullable', 'integer', 'min:1'],
             'rows.*.position' => ['required', 'integer', 'min:1'],
             'rows.*.vendor_id' => ['nullable', 'integer', 'min:1'],
-            'rows.*.type' => ['required', Rule::enum(ExpenseType::class)],
+            'rows.*.type' => ['required', Rule::in([
+                ExpenseType::Estimate->value,
+                ExpenseType::Quote->value,
+                ExpenseType::Actual->value,
+            ])],
             'rows.*.description' => ['required', 'string', 'max:255'],
             'rows.*.notes' => ['nullable', 'string'],
             'rows.*.quantity' => ['nullable', 'string', 'regex:/^-?(?:0|[1-9]\d*)(?:\.\d{1,2})?$/D'],
@@ -375,6 +379,7 @@ final class ExpenseController extends Controller
             'rows.*.amount_includes_vat' => ['required', 'boolean'],
             'rows.*.vat_rate' => ['nullable', 'string', 'regex:/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/D'],
             'rows.*.spend_date' => ['nullable', 'date_format:Y-m-d'],
+            'rows.*.funded_plafond_expense_id' => ['nullable', 'integer', 'min:1'],
             'rows.*.external_reference' => ['nullable', 'string', 'max:255'],
             'rows.*.lock_version' => ['nullable', 'integer', 'min:1'],
             'rows.*.is_current_planning' => ['sometimes', 'boolean'],
@@ -427,7 +432,7 @@ final class ExpenseController extends Controller
             (bool) $row['amount_includes_vat'],
             $row['vat_rate'] ?? '',
             false,
-            null,
+            isset($row['funded_plafond_expense_id']) ? (int) $row['funded_plafond_expense_id'] : null,
             $row['spend_date'] ?? null,
             null,
             null,
@@ -467,7 +472,7 @@ final class ExpenseController extends Controller
         $allowed = [
             'id', 'position', 'vendor_id', 'type', 'description', 'notes', 'quantity', 'unit_price', 'entered_amount',
             'amount_includes_vat', 'vat_rate', 'spend_date',
-            'external_reference', 'lock_version', 'is_current_planning',
+            'funded_plafond_expense_id', 'external_reference', 'lock_version', 'is_current_planning',
         ];
         $unexpected = array_diff(array_keys($row), $allowed);
 
