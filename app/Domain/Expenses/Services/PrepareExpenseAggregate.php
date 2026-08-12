@@ -3,13 +3,21 @@
 namespace App\Domain\Expenses\Services;
 
 use App\Domain\Economics\Data\EconomicMeasure;
+use App\Domain\Economics\Data\PlafondEconomicProjection;
+use App\Domain\Economics\Data\PlafondImpact;
+use App\Domain\Economics\Data\ProjectedEconomicLine;
+use App\Domain\Economics\Services\EconomicEngine;
+use App\Domain\Economics\Services\MoneyCalculator;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Domain\Reporting\Queries\EconomicDatasetQuery;
+use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Models\Vendor;
 use DomainException;
 use Illuminate\Validation\ValidationException;
@@ -27,6 +35,8 @@ final class PrepareExpenseAggregate
         array $rows,
         ?Expense $currentExpense = null,
         array $deletedRows = [],
+        ?User $actor = null,
+        ?TenantContext $context = null,
     ): array {
         $validated = app(ExpenseAggregateValidator::class)->validate($tenant, $data, $rows, $currentExpense);
         $this->validateVersionsAndMembership($currentExpense, $data->expectedLockVersion, $rows, $deletedRows);
@@ -68,6 +78,56 @@ final class PrepareExpenseAggregate
             ];
         }
 
+        $plafondImpacts = [];
+        if ($actor instanceof User && $context instanceof TenantContext) {
+            $currentAnnual = app(EconomicEngine::class)->project(
+                app(EconomicDatasetQuery::class)->execute($actor, $context, $data->planningYearId),
+            );
+            $proposedAnnual = app(ProposedExpenseProjection::class)->project(
+                $actor,
+                $context,
+                $tenant,
+                $data,
+                $validated,
+                $currentExpense,
+            );
+            $affectedIds = collect($this->currentFundingIds($currentExpense))
+                ->merge(collect($validated['rows'])->pluck('funded_plafond_expense_id')->filter())
+                ->map(static fn ($id): int => (int) $id)
+                ->unique()
+                ->sort()
+                ->values();
+            $proposalExpenseId = $currentExpense instanceof Expense
+                ? (int) $currentExpense->getKey()
+                : -1;
+            foreach ($affectedIds as $plafondId) {
+                $currentPlafond = $currentAnnual->plafonds[$plafondId] ?? null;
+                $proposedPlafond = $proposedAnnual->plafonds[$plafondId] ?? null;
+                if ($currentPlafond === null || $proposedPlafond === null) {
+                    throw new DomainException('ECONOMIC_RECONCILIATION_FAILED');
+                }
+                $requested = '0.00';
+                foreach ($proposedPlafond->coveredLines as $line) {
+                    if ($line->expenseId === $proposalExpenseId) {
+                        $requested = (new MoneyCalculator)->add($requested, $line->amount->official);
+                    }
+                }
+                $computed = app(PlafondCapacityService::class)->impact(
+                    $currentPlafond,
+                    $proposedPlafond,
+                    $requested,
+                );
+                $plafondImpacts[] = $this->impact(new PlafondImpact(
+                    $computed->current,
+                    $computed->proposed,
+                    $computed->requested,
+                    $computed->shortage,
+                    $computed->canConfirm,
+                    [],
+                ));
+            }
+        }
+
         return [
             'planning_year_id' => $data->planningYearId,
             'economic_year_label' => (int) $year->year_label,
@@ -79,6 +139,7 @@ final class PrepareExpenseAggregate
                 'actual' => $this->measure($actual),
             ],
             'rows' => $preparedRows,
+            'plafond_impacts' => $plafondImpacts,
         ];
     }
 
@@ -133,6 +194,75 @@ final class PrepareExpenseAggregate
             'vat' => $measure->vat,
             'gross' => $measure->gross,
             'official' => $measure->official,
+        ];
+    }
+
+    /** @return list<int> */
+    private function currentFundingIds(?Expense $expense): array
+    {
+        if (! $expense instanceof Expense) {
+            return [];
+        }
+
+        return $expense->rows()
+            ->whereNotNull('funded_plafond_expense_id')
+            ->pluck('funded_plafond_expense_id')
+            ->map(static fn ($id): int => (int) $id)
+            ->unique()
+            ->all();
+    }
+
+    /** @return array<string, mixed> */
+    private function impact(PlafondImpact $impact): array
+    {
+        return [
+            'plafond' => [
+                'id' => $impact->current->plafondExpenseId,
+                'title' => $impact->current->title,
+            ],
+            'currency' => $impact->current->currency,
+            'basis' => $impact->current->basis,
+            'current' => $this->plafondMeasures($impact->current),
+            'proposed' => $this->plafondMeasures($impact->proposed),
+            'requested' => $impact->requested,
+            'shortage' => $impact->shortage,
+            'can_confirm' => $impact->canConfirm,
+            'blocking_rows' => array_map(
+                fn (ProjectedEconomicLine $line): array => $this->coveredLine($line),
+                $impact->blockingRows,
+            ),
+        ];
+    }
+
+    /** @return array<string, array{net: string, vat: string, gross: string, official: string}> */
+    private function plafondMeasures(PlafondEconomicProjection $projection): array
+    {
+        return [
+            'allocation' => $this->measure($projection->allocation),
+            'coverage_planned' => $this->measure($projection->coveragePlanned),
+            'consumed' => $this->measure($projection->consumed),
+            'available' => $this->measure($projection->available),
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function coveredLine(ProjectedEconomicLine $line): array
+    {
+        return [
+            'expense_id' => $line->expenseId,
+            'expense_title' => $line->expenseTitle,
+            'row_id' => $line->rowId,
+            'description' => $line->description,
+            'type' => $line->type,
+            'date' => $line->spendDate,
+            'contributes_to_coverage_planned' => $line->contributesToCoveragePlanned,
+            'contributes_to_consumed' => $line->contributesToConsumed,
+            'expense_cost_center' => ['id' => $line->costCenterId, 'name' => $line->costCenterName],
+            'plafond_cost_center' => [
+                'id' => $line->plafondCostCenterId,
+                'name' => $line->plafondCostCenterName,
+            ],
+            'amount' => $this->measure($line->amount),
         ];
     }
 }

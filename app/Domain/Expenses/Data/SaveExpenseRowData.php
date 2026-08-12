@@ -28,5 +28,6 @@ final readonly class SaveExpenseRowData
         public ?int $expectedLockVersion,
         public bool $isCurrentPlanning = false,
         public ?string $notes = null,
+        public ?int $createdByUserId = null,
     ) {}
 }

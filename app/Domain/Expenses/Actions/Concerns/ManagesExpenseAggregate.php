@@ -5,10 +5,16 @@ namespace App\Domain\Expenses\Actions\Concerns;
 use App\Domain\Attachments\Actions\PurgeAttachments;
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
+use App\Domain\Economics\Data\AnnualEconomicProjection;
+use App\Domain\Economics\Data\PlafondImpact;
+use App\Domain\Economics\Services\EconomicEngine;
+use App\Domain\Economics\Services\MoneyCalculator;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Expenses\Services\ExpenseAggregateValidator;
+use App\Domain\Expenses\Services\PlafondCapacityService;
+use App\Domain\Reporting\Queries\EconomicDatasetQuery;
 use App\Domain\Revisions\Actions\BeginRevisionBatch;
 use App\Domain\Revisions\Actions\LinkVersionToRevisionBatch;
 use App\Domain\Revisions\Data\RevisionOperation;
@@ -115,6 +121,8 @@ trait ManagesExpenseAggregate
             unset($attributes['expected_lock_version']);
             $isCurrentPlanning = (bool) $attributes['is_current_planning'];
             unset($attributes['is_current_planning']);
+            $submittedCreatorId = $attributes['created_by_user_id'] ?? null;
+            unset($attributes['created_by_user_id']);
             $authoritativeAmounts = [
                 'net_amount' => $attributes['net_amount'],
                 'vat_amount' => $attributes['vat_amount'],
@@ -152,6 +160,9 @@ trait ManagesExpenseAggregate
                 $serverAttributes['is_system_managed'] = false;
                 $row->tenant_id = $tenant->getKey();
                 $row->expense_id = $expense->getKey();
+                $serverAttributes['created_by_user_id'] = $attributes['type'] === ExpenseType::AllocationAdjustment
+                    ? ($submittedCreatorId ?? (int) $actor->getKey())
+                    : null;
             } else {
                 if ($oldType !== $attributes['type']) {
                     $serverAttributes['confirmation_state'] = null;
@@ -294,5 +305,120 @@ trait ManagesExpenseAggregate
     private function audit(string $event, string $correlationId, User $actor, Tenant $tenant, Expense $expense, array $properties = []): void
     {
         app(AuditRecorder::class)->record($event, $correlationId, new AuditProperties($properties), $actor, (int) $tenant->getKey(), $expense);
+    }
+
+    private function annualProjection(User $actor, TenantContext $context, int $planningYearId): AnnualEconomicProjection
+    {
+        return app(EconomicEngine::class)->project(
+            app(EconomicDatasetQuery::class)->execute($actor, $context, $planningYearId),
+        );
+    }
+
+    /**
+     * @param  list<SaveExpenseRowData>  $proposedRows
+     * @param  list<int>  $previousPlafondIds
+     */
+    private function assertCoveredRowsHaveCapacity(
+        AnnualEconomicProjection $current,
+        AnnualEconomicProjection $proposed,
+        Expense $expense,
+        array $proposedRows,
+        array $previousPlafondIds = [],
+    ): void {
+        $affected = collect($previousPlafondIds)
+            ->merge(collect($proposedRows)->pluck('fundedPlafondExpenseId')->filter())
+            ->map(static fn ($id): int => (int) $id)
+            ->unique()
+            ->sort()
+            ->values();
+        $money = new MoneyCalculator;
+
+        foreach ($affected as $plafondId) {
+            $currentPlafond = $current->plafonds[$plafondId] ?? null;
+            $proposedPlafond = $proposed->plafonds[$plafondId] ?? null;
+            if ($currentPlafond === null || $proposedPlafond === null) {
+                throw new DomainException('ECONOMIC_RECONCILIATION_FAILED');
+            }
+
+            $requested = '0.00';
+            foreach ($proposedPlafond->coveredLines as $line) {
+                if ($line->expenseId === (int) $expense->getKey() && $line->contributesToConsumed) {
+                    $requested = $money->add($requested, $line->amount->official);
+                }
+            }
+            $fieldIndex = collect($proposedRows)->search(
+                static fn (SaveExpenseRowData $row): bool => $row->fundedPlafondExpenseId === $plafondId
+                    && $row->type === ExpenseType::Actual,
+            );
+            $field = 'rows.'.($fieldIndex === false ? 0 : $fieldIndex).'.funded_plafond_expense_id';
+            $computed = app(PlafondCapacityService::class)->impact(
+                $currentPlafond,
+                $proposedPlafond,
+                $requested,
+            );
+            $impact = new PlafondImpact(
+                $computed->current,
+                $computed->proposed,
+                $computed->requested,
+                $computed->shortage,
+                $computed->canConfirm,
+                [],
+            );
+            app(PlafondCapacityService::class)->assertSufficient($impact, $field);
+        }
+    }
+
+    private function assertPlafondAggregateHasCapacity(
+        AnnualEconomicProjection $current,
+        AnnualEconomicProjection $proposed,
+        int $plafondId,
+        string $field = 'rows',
+    ): void {
+        $currentPlafond = $current->plafonds[$plafondId] ?? null;
+        $proposedPlafond = $proposed->plafonds[$plafondId] ?? null;
+        if ($currentPlafond === null || $proposedPlafond === null) {
+            throw new DomainException('ECONOMIC_RECONCILIATION_FAILED');
+        }
+        $requested = (new MoneyCalculator)->subtract(
+            $proposedPlafond->allocation->official,
+            $currentPlafond->allocation->official,
+        );
+        $impact = app(PlafondCapacityService::class)->impact(
+            $currentPlafond,
+            $proposedPlafond,
+            $requested,
+        );
+        app(PlafondCapacityService::class)->assertSufficient(
+            $impact,
+            $field,
+            $proposedPlafond->allocation->official,
+            $currentPlafond->available->official,
+            $proposedPlafond->consumed->official,
+        );
+    }
+
+    /** @return list<int> */
+    private function currentFundingPlafondIds(?Expense $expense): array
+    {
+        if (! $expense instanceof Expense || ! $expense->exists) {
+            return [];
+        }
+
+        return $expense->rows()
+            ->whereNotNull('funded_plafond_expense_id')
+            ->pluck('funded_plafond_expense_id')
+            ->map(static fn ($id): int => (int) $id)
+            ->unique()
+            ->sort()
+            ->values()
+            ->all();
+    }
+
+    /** @param list<SaveExpenseRowData> $rows */
+    private function proposedUsesPlafond(array $rows): bool
+    {
+        return collect($rows)->contains(
+            static fn (SaveExpenseRowData $row): bool => $row->fundedPlafondExpenseId !== null,
+        );
     }
 }

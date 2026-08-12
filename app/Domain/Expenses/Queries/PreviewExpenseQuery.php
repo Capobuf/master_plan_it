@@ -6,6 +6,7 @@ use App\Domain\Expenses\Actions\Concerns\ManagesExpenseAggregate;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Services\ExpenseRelationshipAuthorizer;
+use App\Domain\Expenses\Services\PlafondLifecycleGuard;
 use App\Domain\Expenses\Services\PrepareExpenseAggregate;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
@@ -43,18 +44,25 @@ final class PreviewExpenseQuery
             $data->projectId !== null,
             $data->contractId !== null,
         );
+        if ($this->proposedUsesPlafond($rows) || $this->currentFundingPlafondIds($target) !== []) {
+            $this->expensePolicy($context)->viewAny($actor)->authorize();
+        }
         [, $tenant] = $this->persistedContext($actor, $context);
 
         if ($target instanceof Expense && (int) $target->planning_year_id !== $data->planningYearId) {
             throw new DomainException('TENANT_RELATION_MISMATCH');
         }
-        if (! TenantOwnedRecordQuery::forTenant($context, PlanningYear::class)
+        $planningYear = TenantOwnedRecordQuery::forTenant($context, PlanningYear::class)
             ->whereKey($data->planningYearId)
             ->where('active', true)
-            ->exists()) {
+            ->first();
+        if (! $planningYear instanceof PlanningYear) {
             throw ValidationException::withMessages([
                 'planning_year_id' => 'The selected planning year is invalid.',
             ]);
+        }
+        if ($this->proposedUsesPlafond($rows) || $this->currentFundingPlafondIds($target) !== []) {
+            app(PlafondLifecycleGuard::class)->assertPreparation($planningYear->budget_state);
         }
 
         return app(PrepareExpenseAggregate::class)->prepare(
@@ -63,6 +71,8 @@ final class PreviewExpenseQuery
             $rows,
             $target,
             $deletedRows,
+            $actor,
+            $context,
         );
     }
 }
