@@ -75,7 +75,7 @@ final class PlafondProjectionSerializer
     }
 
     /** @return array<string, mixed> */
-    public static function impact(PlafondImpact $impact): array
+    public static function impact(PlafondImpact $impact, bool $includeBlockingRows = true): array
     {
         return [
             'plafond' => [
@@ -89,10 +89,12 @@ final class PlafondProjectionSerializer
             'requested' => $impact->requested,
             'shortage' => $impact->shortage,
             'can_confirm' => $impact->canConfirm,
-            'blocking_rows' => array_map(
-                static fn (ProjectedEconomicLine $line): array => self::coveredLine($line),
-                $impact->blockingRows,
-            ),
+            'blocking_rows' => $includeBlockingRows
+                ? array_map(
+                    static fn (ProjectedEconomicLine $line): array => self::coveredLine($line),
+                    $impact->blockingRows,
+                )
+                : [],
         ];
     }
 }

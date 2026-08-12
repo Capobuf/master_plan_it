@@ -41,6 +41,9 @@ No `plafond.*` permission is introduced.
 - A same-Tenant Plafond from another PlanningYear is an invalid body relationship; its response does
   not disclose the Plafond's actual year.
 - Cost Center equality between a covered row and its Plafond is deliberately not required.
+- Preview/add remains available to a write-only actor, but `blocking_rows` and mutation-response
+  `covered_rows` are empty unless that actor also has `expense.view`; aggregate Plafond measures
+  remain visible because they are required to validate the authorized write.
 
 ## Common Economic Shapes
 

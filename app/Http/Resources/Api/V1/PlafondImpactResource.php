@@ -7,12 +7,15 @@ use App\Domain\Plafonds\Data\PlafondProjectionSerializer;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** @property-read PlafondImpact $resource */
+/** @property-read array{impact: PlafondImpact, include_blocking_rows: bool} $resource */
 final class PlafondImpactResource extends JsonResource
 {
     /** @return array<string, mixed> */
     public function toArray(Request $request): array
     {
-        return PlafondProjectionSerializer::impact($this->resource);
+        return PlafondProjectionSerializer::impact(
+            $this->resource['impact'],
+            $this->resource['include_blocking_rows'],
+        );
     }
 }

@@ -9,6 +9,8 @@ use App\Models\PlanningYear;
 use App\Models\Tenant;
 use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use PHPUnit\Framework\Attributes\DataProvider;
+use Spatie\Permission\Models\Role;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
@@ -111,7 +113,10 @@ final class PlafondApiHttpTest extends TestCase
         foreach ([$foreignId, 999999999] as $id) {
             $response = $this->getJson('/api/v1/plafonds/'.$id.'?planning_year_id='.$year->getKey())
                 ->assertNotFound()->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
-            $pathErrors[] = collect($response->json('error'))->except('correlation_id')->all();
+            $error = $response->json('error');
+            $this->assertIsArray($error);
+            unset($error['correlation_id']);
+            $pathErrors[] = $error;
         }
         $this->assertSame($pathErrors[0], $pathErrors[1]);
     }
@@ -139,19 +144,92 @@ final class PlafondApiHttpTest extends TestCase
     {
         [, $user, $year, $center] = $this->workspace();
         $this->actingAs($user, 'web');
-        $registrar = app(PermissionRegistrar::class);
-        $previous = $registrar->getPermissionsTeamId();
-        $registrar->setPermissionsTeamId($user->tenant_id);
-        try {
-            $user->roles()->firstOrFail()->revokePermissionTo('expense.view');
-        } finally {
-            $registrar->setPermissionsTeamId($previous);
-        }
+        $this->revokeAbility($user, 'expense.view');
 
         $this->getJson('/api/v1/plafonds?planning_year_id='.$year->getKey())
             ->assertForbidden()->assertJsonPath('error.code', 'PERMISSION_DENIED');
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/plafonds', $this->creationPayload($year, $center))
             ->assertCreated();
+    }
+
+    public function test_write_only_adjustment_responses_redact_covered_expense_details(): void
+    {
+        [$tenant, $user, $year, $center] = $this->workspace();
+        $this->actingAs($user, 'web');
+        $plafondId = $this->createPlafond($year, $center);
+        $covered = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(),
+            'cost_center_id' => $center->getKey(),
+            'title' => 'Secret covered expense',
+        ]);
+        ExpenseRow::factory()->for($covered)->create([
+            'tenant_id' => $tenant->getKey(),
+            'type' => 'actual',
+            'description' => 'Secret covered actual',
+            'entered_amount' => '2500.00',
+            'net_amount' => '2500.00',
+            'vat_amount' => '550.00',
+            'gross_amount' => '3050.00',
+            'spend_date' => '2026-08-12',
+            'funded_plafond_expense_id' => $plafondId,
+        ]);
+        $this->revokeAbility($user, 'expense.view');
+
+        $this->withHeaders($this->csrfHeaders())
+            ->postJson('/api/v1/plafonds/'.$plafondId.'/allocation-adjustments/preview', $this->adjustmentRequest('-1000.00', 1))
+            ->assertOk()
+            ->assertJsonPath('data.can_confirm', false)
+            ->assertJsonPath('data.blocking_rows', [])
+            ->assertJsonMissing(['Secret covered expense', 'Secret covered actual']);
+
+        $this->withHeaders($this->csrfHeaders())
+            ->postJson('/api/v1/plafonds/'.$plafondId.'/allocation-adjustments', $this->adjustmentRequest('-1000.00', 1))
+            ->assertUnprocessable()
+            ->assertJsonPath('error.code', 'PLAFOND_INSUFFICIENT')
+            ->assertJsonPath('error.details.impact.blocking_rows', [])
+            ->assertJsonMissing(['Secret covered expense', 'Secret covered actual']);
+
+        $this->withHeaders($this->csrfHeaders())
+            ->postJson('/api/v1/plafonds/'.$plafondId.'/allocation-adjustments', $this->adjustmentRequest('-100.00', 1))
+            ->assertCreated()
+            ->assertJsonPath('data.covered_rows', [])
+            ->assertJsonMissing(['Secret covered expense', 'Secret covered actual']);
+    }
+
+    /** @return iterable<string, array{string}> */
+    public static function relationReadAbilities(): iterable
+    {
+        yield 'planning year' => ['planning-year.view'];
+        yield 'cost center' => ['cost-center.view'];
+    }
+
+    #[DataProvider('relationReadAbilities')]
+    public function test_relation_ability_denial_precedes_existing_and_missing_lookups(string $ability): void
+    {
+        [, $user, $year, $center] = $this->workspace();
+        $this->actingAs($user, 'web');
+        $plafondId = $this->createPlafond($year, $center);
+        $this->revokeAbility($user, $ability);
+        $missingId = 999999999;
+
+        foreach ([$plafondId, $missingId] as $id) {
+            $this->getJson('/api/v1/plafonds/'.$id.'?planning_year_id='.$year->getKey())
+                ->assertForbidden()->assertJsonPath('error.code', 'PERMISSION_DENIED');
+            $this->withHeaders($this->csrfHeaders())
+                ->postJson('/api/v1/plafonds/'.$id.'/allocation-adjustments/preview', $this->adjustmentRequest('-100.00', 1))
+                ->assertForbidden()->assertJsonPath('error.code', 'PERMISSION_DENIED');
+            $this->withHeaders($this->csrfHeaders())
+                ->postJson('/api/v1/plafonds/'.$id.'/allocation-adjustments', $this->adjustmentRequest('-100.00', 1))
+                ->assertForbidden()->assertJsonPath('error.code', 'PERMISSION_DENIED');
+        }
+
+        foreach ([$center->getKey(), $missingId] as $costCenterId) {
+            $query = '?planning_year_id='.$year->getKey().'&cost_center_id='.$costCenterId;
+            $this->getJson('/api/v1/plafonds'.$query)
+                ->assertForbidden()->assertJsonPath('error.code', 'PERMISSION_DENIED');
+            $this->getJson('/api/v1/plafonds/report'.$query)
+                ->assertForbidden()->assertJsonPath('error.code', 'PERMISSION_DENIED');
+        }
     }
 
     /** @return array{Tenant, User, PlanningYear, CostCenter} */
@@ -199,5 +277,19 @@ final class PlafondApiHttpTest extends TestCase
             ->postJson('/api/v1/plafonds', $this->creationPayload($year, $center))
             ->assertCreated()
             ->json('data.id');
+    }
+
+    private function revokeAbility(User $user, string $ability): void
+    {
+        $registrar = app(PermissionRegistrar::class);
+        $previous = $registrar->getPermissionsTeamId();
+        $registrar->setPermissionsTeamId($user->tenant_id);
+        try {
+            $role = $user->roles()->firstOrFail();
+            $this->assertInstanceOf(Role::class, $role);
+            $role->revokePermissionTo($ability);
+        } finally {
+            $registrar->setPermissionsTeamId($previous);
+        }
     }
 }
