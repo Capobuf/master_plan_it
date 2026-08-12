@@ -36,6 +36,7 @@ final class ExpenseRowResource extends JsonResource
                 'generated' => (bool) $row['generated'],
                 'contract_term_id' => $row['contract_term_id'],
                 'amount' => $row['amount'],
+                'funded_plafond' => $row['funded_plafond'] ?? null,
             ];
         }
 
@@ -60,6 +61,7 @@ final class ExpenseRowResource extends JsonResource
             'generated' => $row->source_key !== null,
             'contract_term_id' => $row->contract_term_id === null ? null : (int) $row->contract_term_id,
             'amount' => null,
+            'funded_plafond' => null,
         ];
     }
 

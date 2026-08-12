@@ -20,6 +20,10 @@ final class ExpenseDetailResource extends JsonResource
             'economic_year_label' => $expense->economicYearLabel,
             'cost_center_id' => $expense->costCenterId,
             'cost_center_name' => $expense->costCenterName,
+            'cost_center' => [
+                'id' => $expense->costCenterId,
+                'name' => $expense->costCenterName,
+            ],
             'kind' => $expense->kind,
             'title' => $expense->title,
             'notes' => $expense->notes,

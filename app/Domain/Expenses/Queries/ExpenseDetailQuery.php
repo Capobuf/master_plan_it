@@ -7,6 +7,7 @@ use App\Domain\Economics\Data\EconomicMeasure;
 use App\Domain\Economics\Services\EconomicEngine;
 use App\Domain\Expenses\Data\ExpenseDetail;
 use App\Domain\Expenses\Services\ExpenseRelationshipAuthorizer;
+use App\Domain\Plafonds\Data\PlafondProjectionSerializer;
 use App\Domain\Reporting\Queries\EconomicDatasetQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
@@ -143,12 +144,33 @@ final class ExpenseDetailQuery
             throw new \DomainException('ECONOMIC_RECONCILIATION_FAILED');
         }
         $projectedLines = collect($expenseProjection->lines)->keyBy('rowId');
-        $rows = array_map(function (array $row) use ($projectedLines): array {
+        $rows = array_map(function (array $row) use ($annual, $projectedLines): array {
             $line = $projectedLines->get($row['id']);
             if ($line === null) {
                 throw new \DomainException('ECONOMIC_RECONCILIATION_FAILED');
             }
             $row['amount'] = $this->measure($line->amount);
+            $plafondId = $row['funded_plafond_expense_id'];
+            if ($plafondId === null) {
+                $row['funded_plafond'] = null;
+
+                return $row;
+            }
+            $plafond = $annual->plafonds[$plafondId] ?? null;
+            if ($plafond === null) {
+                throw new \DomainException('ECONOMIC_RECONCILIATION_FAILED');
+            }
+            $row['funded_plafond'] = [
+                'id' => $plafond->plafondExpenseId,
+                'title' => $plafond->title,
+                'cost_center' => [
+                    'id' => $plafond->costCenterId,
+                    'name' => $plafond->costCenterName,
+                ],
+                'currency' => $plafond->currency,
+                'basis' => $plafond->basis,
+                'measures' => PlafondProjectionSerializer::measures($plafond),
+            ];
 
             return $row;
         }, $rows);

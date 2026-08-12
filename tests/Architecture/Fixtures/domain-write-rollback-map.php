@@ -2,8 +2,28 @@
 
 return [
     'schema' => 3,
-    'expectedDomainWriteCount' => 62,
+    'expectedDomainWriteCount' => 64,
     'writes' => [
+        'app/Domain/Plafonds/Actions/CreatePlafond.php' => [
+            'actionClass' => 'App\\Domain\\Plafonds\\Actions\\CreatePlafond',
+            'actionReference' => 'CreatePlafond::class',
+            'actionInvocation' => ['mode' => 'assigned-container', 'variable' => '$action', 'method' => 'execute'],
+            'testFile' => 'tests/Feature/Expenses/PlafondActionRollbackTest.php',
+            'testMethod' => 'test_create_plafond_audit_failure_rolls_back_root_row_revision_and_audit',
+            'failureTrigger' => 'throw new ',
+            'failureExpectation' => 'expectException(',
+            'rollbackAssertions' => ['assertDatabaseMissing(', 'assertDatabaseCount('],
+        ],
+        'app/Domain/Plafonds/Actions/AddAllocationAdjustment.php' => [
+            'actionClass' => 'App\\Domain\\Plafonds\\Actions\\AddAllocationAdjustment',
+            'actionReference' => 'AddAllocationAdjustment::class',
+            'actionInvocation' => ['mode' => 'assigned-container', 'variable' => '$action', 'method' => 'execute'],
+            'testFile' => 'tests/Feature/Expenses/PlafondActionRollbackTest.php',
+            'testMethod' => 'test_add_allocation_adjustment_audit_failure_rolls_back_row_version_revision_and_audit',
+            'failureTrigger' => 'throw new ',
+            'failureExpectation' => 'expectException(',
+            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseCount('],
+        ],
         'app/Domain/Attachments/Actions/UploadAttachment.php' => [
             'actionClass' => 'App\\Domain\\Attachments\\Actions\\UploadAttachment',
             'actionReference' => 'UploadAttachment::class',
