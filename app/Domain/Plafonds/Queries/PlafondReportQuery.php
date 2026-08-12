@@ -38,8 +38,7 @@ final class PlafondReportQuery
             ->orderBy('id')
             ->get();
         $rootIds = $roots->modelKeys();
-        $rowMetadata = ExpenseRow::query()
-            ->where('tenant_id', $context->tenantId)
+        $rowMetadata = TenantOwnedRecordQuery::forTenant($context, ExpenseRow::class)
             ->whereIn('expense_id', $rootIds)
             ->get(['id', 'position', 'lock_version'])
             ->keyBy('id');

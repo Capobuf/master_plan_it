@@ -77,7 +77,12 @@ final class PlafondSchemaTest extends TestCase
             ]);
             $this->fail('A duplicate live Plafond occupied the same slot.');
         } catch (QueryException) {
-            $this->assertSame(1, Expense::query()->where('kind', ExpenseKind::Plafond)->count());
+            $this->assertSame(1, Expense::query()
+                ->where('tenant_id', $tenant->getKey())
+                ->where('planning_year_id', $year->getKey())
+                ->where('cost_center_id', $center->getKey())
+                ->where('kind', ExpenseKind::Plafond)
+                ->count());
         }
 
         Expense::factory()->for($tenant)->create([
@@ -92,7 +97,12 @@ final class PlafondSchemaTest extends TestCase
             'kind' => ExpenseKind::Plafond,
         ]);
 
-        $this->assertSame(2, Expense::withTrashed()->where('kind', ExpenseKind::Plafond)->count());
+        $this->assertSame(2, Expense::withTrashed()
+            ->where('tenant_id', $tenant->getKey())
+            ->where('planning_year_id', $year->getKey())
+            ->where('cost_center_id', $center->getKey())
+            ->where('kind', ExpenseKind::Plafond)
+            ->count());
     }
 
     public function test_allocation_adjustment_requires_non_zero_amount_date_and_server_actor(): void
@@ -116,7 +126,11 @@ final class PlafondSchemaTest extends TestCase
                 ExpenseRow::factory()->for($plafond)->allocationAdjustment($actor)->create($invalid);
                 $this->fail('An invalid AllocationAdjustment database shape was accepted.');
             } catch (QueryException) {
-                $this->assertTrue(true);
+                $this->assertSame(
+                    1,
+                    ExpenseRow::query()->where('expense_id', $plafond->getKey())->count(),
+                    'The rejected AllocationAdjustment must not leave a persisted row.',
+                );
             }
         }
     }
