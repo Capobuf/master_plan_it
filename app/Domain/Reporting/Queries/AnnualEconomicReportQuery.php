@@ -118,7 +118,11 @@ final readonly class AnnualEconomicReportQuery
                 'plafond_expenses' => 0,
                 'lines' => [],
             ];
-            $groups[$key]['totals'] = $this->addProjectionTotals($groups[$key]['totals'], $expense['totals'], $basis);
+            $groups[$key]['totals'] = $this->addProjectionTotals(
+                $groups[$key]['totals'],
+                $this->contributiveExpenseTotals($expense, $basis),
+                $basis,
+            );
             $groups[$key]['approved'] = bcadd($groups[$key]['approved'], (string) ($expense['approved'] ?? '0.00'), 2);
             if (($expense['approved'] ?? null) === null && ($expense['has_actual'] ?? false)) {
                 $groups[$key]['unapproved_actual_expenses']++;
@@ -138,6 +142,35 @@ final readonly class AnnualEconomicReportQuery
 
             return $group;
         }, $groups));
+    }
+
+    /**
+     * Expense totals intentionally retain a covered planning row for its own detail.
+     * Annual reports must instead aggregate only lines that contribute to the annual
+     * planning total, otherwise the Plafond allocation and its coverage are counted twice.
+     *
+     * @param  array<string, mixed>  $expense
+     * @return array<string, array<string, string>>
+     */
+    private function contributiveExpenseTotals(array $expense, string $basis): array
+    {
+        $totals = $this->zeroProjectionTotals();
+        foreach ($expense['lines'] ?? [] as $line) {
+            if (! ($line['contributes_to_current_planning'] ?? false)) {
+                continue;
+            }
+            foreach (['net', 'vat', 'gross'] as $component) {
+                $totals['current_planning'][$component] = bcadd(
+                    $totals['current_planning'][$component],
+                    (string) $line['amount'][$component],
+                    2,
+                );
+            }
+        }
+        $totals['current_planning']['official'] = $totals['current_planning'][$basis];
+        $totals['actual'] = $expense['totals']['actual'];
+
+        return $totals;
     }
 
     /**
