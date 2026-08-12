@@ -40,6 +40,7 @@ final class PlafondErrorContractTest extends TestCase
             ->assertJsonPath('error.details.available', '2500.00')
             ->assertJsonPath('error.details.required', '2700.00')
             ->assertJsonPath('error.details.shortage', '200.00')
+            ->assertJsonPath('error.details.impact.requested', '2700.00')
             ->assertJsonStructure(['error' => ['correlation_id', 'fields' => ['rows.0.funded_plafond_expense_id'], 'details' => ['impact' => ['current', 'proposed', 'blocking_rows']]]])
             ->assertJsonMissingPath('error.details.plafond_title')
             ->assertJsonMissingPath('error.details.plafond_cost_center');

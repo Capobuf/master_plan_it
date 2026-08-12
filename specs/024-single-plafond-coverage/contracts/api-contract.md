@@ -421,6 +421,7 @@ All errors retain the Slice 023 envelope and correlation ID. Capacity failure is
       "required": "2700.00",
       "shortage": "200.00",
       "impact": {
+        "requested": "2700.00",
         "current": { "allocation": { "net": "3000.00", "vat": "660.00", "gross": "3660.00", "official": "3000.00" }, "coverage_planned": { "net": "0.00", "vat": "0.00", "gross": "0.00", "official": "0.00" }, "consumed": { "net": "500.00", "vat": "110.00", "gross": "610.00", "official": "500.00" }, "available": { "net": "2500.00", "vat": "550.00", "gross": "3050.00", "official": "2500.00" } },
         "proposed": { "allocation": { "net": "3000.00", "vat": "660.00", "gross": "3660.00", "official": "3000.00" }, "coverage_planned": { "net": "0.00", "vat": "0.00", "gross": "0.00", "official": "0.00" }, "consumed": { "net": "3200.00", "vat": "704.00", "gross": "3904.00", "official": "3200.00" }, "available": { "net": "-200.00", "vat": "-44.00", "gross": "-244.00", "official": "-200.00" } },
         "blocking_rows": []
@@ -435,8 +436,8 @@ All errors retain the Slice 023 envelope and correlation ID. Capacity failure is
   available before the proposal, `required` is the proposed full row official amount, and
   `shortage=max(proposed consumed - allocation, 0)`.
 - For an Allocation reduction, `allocated` is proposed Allocation, `available` is current Available,
-  `required` is current Consumed, and shortage has the same formula. `impact` contains the submitted
-  signed adjustment and all deterministic contributing rows.
+  `required` is current Consumed, and shortage has the same formula. `impact.requested` contains the
+  submitted signed adjustment and `impact.blocking_rows` contains all deterministic contributors.
 - `currency` and `basis` are mandatory; all four scalar values are official two-decimal strings.
 - `fields` targets the covered row field or `adjustment.entered_amount` as applicable.
 
