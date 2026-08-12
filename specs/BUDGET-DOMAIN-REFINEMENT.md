@@ -1,6 +1,6 @@
 # Raffinamento del Dominio Budget
 
-**Stato**: `PROPOSED TARGET — Product decisions approved; not implemented`
+**Stato**: `PROPOSED TARGET — Product decisions approved except two Plafond compatibility questions; not implemented`
 **Data di consolidamento**: 2026-08-12
 **Baseline verificata**: `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94`
 
@@ -90,6 +90,15 @@ Approvazione, Chiusura e Rettifiche non creano Budget alternativi. `Budget in La
 `Budget Proposto` sono viste della Preparazione; `Budget Finale` è il medesimo Budget annuale nello
 stato Chiuso.
 
+`INFERRED` come conseguenza tecnica dell'atomicità approvata: ogni mutazione che può cambiare il
+dataset economico di un Tenant/Anno acquisisce lo stesso guard di serializzazione stabile
+`Tenant + Anno Economico` (lock della riga `PlanningYear` o meccanismo database equivalente).
+Approvazione, Chiusura, Riapertura e Annullamento acquisiscono il medesimo guard e ricostruiscono o
+rivalidano il dataset soltanto dopo il lock. Lo usano anche le mutazioni di Spese/Righe, Plafond,
+Extra Budget, Rettifiche, generazioni di Contratti/Progetti e Cancellazioni/Ripristini capaci di
+produrre Effettivi o uno degli altri gruppi bloccanti. Il solo `lock_version` client o hash della
+preview non impedisce write skew. Le operazioni su più Anni acquisiscono i guard in ordine stabile.
+
 ### Budget Approvato
 
 Il valore corrente è:
@@ -138,9 +147,34 @@ esistono Rettifiche successive alla Chiusura, non elimina dati economici, rende 
 snapshot di Chiusura, conserva Data, Utente, riepilogo e Cronologia, crea una Revisione e richiede
 una Nota. Una nuova Chiusura produce un nuovo evento/snapshot.
 
-L'Annullamento dell'Approvazione è ammesso quando non esistono eventi dipendenti definiti dal
-dominio. Non elimina l'Approvazione precedente, conserva Data, Approvatore e contenuto storico,
-riporta il Budget in Preparazione, crea una Revisione e richiede una Nota.
+L'Annullamento dell'Approvazione è un'operazione eccezionale ammessa soltanto per l'Approvazione
+attiva e finché il Budget approvato non è entrato nel ciclo operativo. La Nota è sempre
+obbligatoria. Nello stesso Tenant e Anno Economico, ciascuna delle condizioni seguenti blocca
+l'operazione:
+
+1. esiste almeno un Effettivo positivo o negativo, manuale o generato da Contratto, anche quando la
+   relativa Spesa o Riga è nel Cestino;
+2. esiste almeno una Spesa o Riga Extra Budget, anche quando è stata eliminata logicamente;
+3. esiste almeno una Rettifica successiva all'Approvazione o alla Chiusura;
+4. è già stata eseguita almeno una Chiusura, anche se il Budget è stato poi riaperto.
+
+Non esiste una quinta categoria generica di eventi dipendenti. Spostamenti o riproposte,
+Continuazioni di Progetto, variazioni di Plafond, esclusioni annuali, cessazioni e
+Cancellazioni/Ripristini con effetto economico bloccano solo quando producono uno dei quattro
+elementi precedenti. Non bloccano da soli Stime o Preventivi informativi; modifiche a Centro di
+Costo, Fornitore, Descrizione o Note prive di effetto su importi o appartenenza economica;
+Allegati; Revisioni o Audit; Report, Export e Scenari; `BudgetVersion` e snapshot read-only;
+preferenze utente; mutazioni di altri anni non derivate dal Budget interessato.
+
+Quando l'Annullamento è consentito, il Budget torna in Preparazione e l'Approvazione viene marcata
+Annullata senza essere eliminata. Data, Approvatore, contenuto e Nota restano nella Cronologia;
+sono creati una nuova Revisione e un evento Audit; una successiva Approvazione produce una nuova
+fotografia. La Base Economica del Tenant resta bloccata dalla prima Approvazione storica.
+
+La preview raggruppa i blocchi in `actuals`, `extra_budget`, `rectifications` e `closures`. La
+mutazione finale li rivalida nella stessa transazione, applica optimistic locking e fallisce senza
+side effect parziali con `BUDGET_APPROVAL_ANNULMENT_BLOCKED`. La UI collega ogni blocco alla Spesa o
+operazione relativa e non presenta l'Annullamento come eseguibile quando `can_annul` è falso.
 
 ### Note obbligatorie
 
@@ -169,7 +203,8 @@ Effettivo, Chiusura o Continuazione.
 
 ### Continuazione
 
-Una Continuazione è la nuova porzione economica finanziata dal Budget dell'anno successivo:
+Una Continuazione è la nuova porzione economica finanziata dal Budget dell'anno immediatamente
+successivo (`anno destinazione = anno origine + 1`):
 
 ```text
 Progetto 2025
@@ -266,12 +301,17 @@ allocazione non riutilizza in modo ambiguo Stima, Preventivo o Effettivo.
 Una Riga di Spesa è interamente coperta dal Plafond oppure non coperta. Non esiste copertura
 parziale. Se una Spesa contiene una parte coperta e una non coperta, usa due Righe distinte.
 
-La Riga coperta contiene un solo riferimento esplicito al Plafond dello stesso Tenant, Anno
-Economico e Centro di Costo. Non esiste una tabella di Quote multiple.
+La Riga coperta contiene un solo riferimento esplicito al Plafond dello stesso Tenant e Anno
+Economico. `OPEN QUESTION`: la Slice 024 deve stabilire se debba appartenere anche allo stesso
+Centro di Costo; la baseline corrente consente Centri differenti e non può essere cambiata
+silenziosamente. Non esiste una tabella di Quote multiple. Resta inoltre `OPEN QUESTION` se la
+stessa Riga possa essere contemporaneamente Extra Budget e coperta da Plafond oppure debba
+conservare l'esclusione reciproca corrente.
 
 ### Capienza insufficiente
 
-Se il Plafond non dispone della capienza necessaria:
+Quando la create, update o Restore di un Effettivo coperto richiede più del Disponibile, oppure una
+riduzione dell'Allocazione la porterebbe sotto il Consumato corrente:
 
 - il salvataggio è bloccato e non persiste alcuna mutazione parziale;
 - nessuna copertura parziale o Sforamento è consentito;
@@ -288,13 +328,13 @@ non rimuove né modifica silenziosamente le coperture.
 ### Valori e doppio conteggio
 
 Il Motore Economico conserva separatamente `Allocazione`, `Copertura Prevista`, `Consumato` e
-`Residuo`:
+`Disponibile`:
 
 - l'Allocazione entra una sola volta nel Budget previsto/approvato;
 - la pianificazione delle Spese coperte descrive l'uso previsto ma non aumenta il totale;
 - gli Effettivi delle Spese coperte alimentano il Consumato;
 - pianificazione ed Effettivo non vengono sommati tra loro;
-- il calcolo del Disponibile per nuove coperture appartiene allo stesso Motore Economico.
+- il calcolo del Disponibile appartiene allo stesso Motore Economico.
 
 Decisione confermata il 2026-08-12: il Disponibile diminuisce soltanto con gli Effettivi coperti.
 Stime e Preventivi coperti alimentano la Copertura Prevista ma non prenotano capienza. Quindi:
@@ -355,9 +395,11 @@ ripristinabili e i Report storici a cutoff continuino a essere ricostruibili.
 
 ## Regole di supersessione
 
-- `specs/010-projects`: baseline implementata per stage e classificazione; qualunque regola che
-  attribuisce alla Fase effetti economici o chiude automaticamente l'origine è `DEPRECATED` come
-  target.
+- `specs/010-projects`: `VERIFIED CURRENT` per stage persistiti e promozione automatica
+  `Rinviato`→`Proposto` guidata dall'anno target; `EconomicEngine::classify()` tratta però ogni Riga
+  come `primary` e i test provano che lo stage non riclassifica. L'intento storico 010 che attribuiva
+  effetti economici alla Fase e l'automazione di promozione sono `DEPRECATED` come target; fino alla
+  Slice 027 la promozione resta comportamento corrente, non target approvato.
 - `specs/017-budget-annual-approval-and-expense-lifecycle`: baseline implementata corrente;
   Sforamento valido, Effettivo vincolato allo stesso anno civile, Variazioni su `approved_amount` e
   assenza di Riapertura sono `CONFLICT` con il target.
@@ -371,6 +413,7 @@ ripristinabili e i Report storici a cutoff continuino a essere ricostruibili.
 
 ## Questioni aperte
 
-Nessuna `OPEN QUESTION` di prodotto blocca la creazione delle Slice Verticali. I nomi SQL, la forma
-interna degli snapshot e altri dettagli reversibili restano decisioni tecniche delle rispettive
-Slice, non decisioni di prodotto da inventare qui.
+La Slice 023 può partire senza chiarimenti. Restano `OPEN QUESTION` per la Slice 024: se Extra
+Budget e Copertura Plafond siano compatibili e se la copertura richieda lo stesso Centro di Costo
+del Plafond. I nomi SQL, la forma interna degli snapshot e altri dettagli reversibili restano
+decisioni tecniche delle rispettive Slice, non decisioni di prodotto da inventare qui.

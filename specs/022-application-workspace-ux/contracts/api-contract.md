@@ -18,6 +18,11 @@ baseline finché la relativa Slice non li modifica.
   già inseriti nel client.
 - Preview e Impact View non persistono e applicano le stesse regole della mutazione finale.
 - Le Risorse economiche espongono sempre `basis: net|gross` accanto ai Totali sintetici.
+- Ogni mutazione economica acquisisce il guard database stabile `tenant + planning_year`; Approva,
+  Chiudi, Riapri e Annulla condividono lo stesso guard con Spese/Righe, Plafond, Extra, Rettifiche,
+  generazioni e Cancellazioni/Ripristini. Dopo il lock il server ricostruisce/rivalida il dataset;
+  preview hash e `lock_version` non sostituiscono questa serializzazione. Guard multi-Anno sono
+  acquisiti in ordine stabile.
 
 ## Errori di Dominio Stabili
 
@@ -27,7 +32,8 @@ baseline finché la relativa Slice non li modifica.
 | `STALE_VERSION` | 409 | Il documento è cambiato; ricaricare o confrontare |
 | `PLAFOND_INSUFFICIENT` | 422 | Capienza insufficiente; mantenere input e mostrare impatto |
 | `BUDGET_STATE_CONFLICT` | 409 | Operazione incompatibile con Preparazione/Approvato/Chiuso |
-| `BUDGET_DEPENDENCIES_EXIST` | 409 | Annullamento o Riapertura bloccati dagli eventi elencati |
+| `BUDGET_DEPENDENCIES_EXIST` | 409 | Riapertura bloccata dalle Rettifiche successive elencate |
+| `BUDGET_APPROVAL_ANNULMENT_BLOCKED` | 409 | Annullamento bloccato da Effettivi, Extra Budget, Rettifiche o Chiusure elencati |
 | `YEAR_MISMATCH` | 422 | Data incompatibile con l'Anno; proporre il flusso assistito previsto |
 | `RESTORE_DEPENDENCY_MISSING` | 409 | Prima ripristinare o sostituire le dipendenze indicate |
 | `RESOURCE_NOT_FOUND` | 404 | Stesso codice e stessa envelope per ID inesistente o appartenente a un altro Tenant |
@@ -48,13 +54,14 @@ Il payload espone almeno:
 {
   "economic_basis": "net",
   "economic_basis_locked_at": null,
-  "revision_limit": 10,
   "default_vat_rate": "22.00"
 }
 ```
 
 Un cambio Base dopo il blocco restituisce `BUDGET_STATE_CONFLICT`. Il client non deduce il blocco
 dalla sola presenza di Budget: usa il campo esplicito e gestisce comunque l'errore server.
+Il campo e la UI `revision_limit` appartengono alla Slice 031 insieme all'enforcement della
+retention; la Slice 023 non espone un'impostazione priva del comportamento corrispondente.
 
 ### Spese
 
@@ -63,9 +70,12 @@ GET    /api/v1/expenses?year=2026&search=&filters[...]&sort=&page=
 POST   /api/v1/expenses
 GET    /api/v1/expenses/{expense}
 PUT    /api/v1/expenses/{expense}
-DELETE /api/v1/expenses/{expense}
 POST   /api/v1/expenses/preview
 ```
+
+`DELETE /api/v1/expenses/{expense}` resta `VERIFIED CURRENT`/`MIGRATION-ONLY` e non viene modificato
+dalla Slice 023. Il contratto target di eliminazione, Cestino e Ripristino appartiene esclusivamente
+alla Slice 030; la prima Slice non anticipa né dichiara quelle semantiche.
 
 Il documento contiene intestazione, Righe, Riga Previsionale Corrente, Totali nelle tre componenti,
 Base ufficiale, origine, Anno di Competenza, Date reali, Allegati e azioni consentite. I campi
@@ -84,11 +94,12 @@ Le Righe accettano:
 }
 ```
 
-Il riferimento identifica l'unico Plafond dello stesso Tenant e Anno; la compatibilità tra Centri
-di Costo resta `OPEN QUESTION` e la Slice 024 non può cambiare la regola corrente senza risposta.
-La Riga è
-interamente coperta oppure non coperta. Il server ricalcola i valori nella Base ufficiale e valida
-la capienza prima di qualsiasi persistenza.
+Il riferimento identifica l'unico Plafond dello stesso Tenant e Anno. Restano `OPEN QUESTION` sia
+la compatibilità tra Centri di Costo sia la possibilità che una Riga sia insieme Extra Budget e
+coperta da Plafond; la Slice 024 non può cambiare le regole correnti — Centri differenti consentiti
+ed Extra/Copertura mutuamente esclusivi — senza risposta. La Riga è interamente coperta oppure non
+coperta. Il server ricalcola i valori nella Base ufficiale e valida gli invarianti di capienza
+applicabili prima di qualsiasi persistenza.
 
 ```text
 POST /api/v1/expenses/{expense}/rows/{row}/coverage-preview
@@ -98,8 +109,9 @@ POST /api/v1/plafonds/{plafond}/allocation-adjustments/preview
 GET  /api/v1/plafonds/report?year=&cost_center_id=
 ```
 
-La preview restituisce Allocazione, Disponibile, Importo richiesto, Copertura Prevista, Consumato e
-Residuo. Una riduzione dell'allocazione restituisce anche le Righe che diverrebbero invalide.
+La preview restituisce Allocazione, Disponibile, Importo richiesto, Copertura Prevista e Consumato;
+non espone un `Residuo` duplicato. Una riduzione dell'allocazione restituisce anche le Righe che
+diverrebbero invalide.
 `Disponibile = Allocazione - Consumato`, dove Consumato comprende soltanto Effettivi coperti;
 Stime/Preventivi coperti compongono Copertura Prevista e non prenotano Disponibile. Il blocco di
 capienza si applica quando nasce o cambia un Effettivo coperto e quando l'Allocazione scende sotto
@@ -133,6 +145,7 @@ transazione. Una preview è informativa e non riserva capienza.
 GET  /api/v1/budget?year=
 GET  /api/v1/budget/{planningYear}/approval-preview
 POST /api/v1/budget/{planningYear}/approve
+GET  /api/v1/budget/{planningYear}/approval/{approval}/annulment-preview
 POST /api/v1/budget/{planningYear}/approval/{approval}/annul
 GET  /api/v1/budget/{planningYear}/approvals
 ```
@@ -140,10 +153,36 @@ GET  /api/v1/budget/{planningYear}/approvals
 `approve` non riceve un elenco parziale di Importi da sovrascrivere. Riceve Data, eventuale Nota,
 Lock Version e Correlation ID; il server ricostruisce e fotografa l'intero Budget Proposto mostrato
 dalla preview. Per impedire approvazioni su dati cambiati, preview e conferma condividono un token o
-hash di composizione verificato server-side.
+hash di composizione verificato server-side. La conferma acquisisce prima il guard annuale
+condiviso e ricostruisce il dataset sotto lock, così una mutazione di Riga concorrente è ordinata
+prima o dopo la fotografia e non può produrre uno snapshot misto.
 
-`annul` richiede sempre `note`, conserva lo snapshot precedente e crea una Revisione. La risposta
-Budget separa:
+`annulment-preview` è read-only, riguarda solo l'Approvazione attiva e restituisce collegamenti alle
+Spese o operazioni nei quattro gruppi canonici:
+
+```json
+{
+  "can_annul": false,
+  "blockers": {
+    "actuals": [],
+    "extra_budget": [],
+    "rectifications": [],
+    "closures": []
+  }
+}
+```
+
+Effettivi e Extra Budget continuano a bloccare se la Spesa/Riga è nel Cestino; una Chiusura
+continua a bloccare dopo una Riapertura. Non esiste un gruppo generico aggiuntivo. `annul` richiede
+sempre `note` e `lock_version`, rivalida i quattro gruppi nella stessa transazione e non considera
+la preview un'autorizzazione. Con blocchi restituisce `BUDGET_APPROVAL_ANNULMENT_BLOCKED`; con lock
+stale restituisce `STALE_VERSION`. Ogni errore lascia invariati Budget, Approvazione, Revisioni e
+Audit.
+
+Quando consentito, `annul` marca l'Approvazione `annulled` senza eliminarla, conserva Data,
+Approvatore, contenuto e Nota, riporta il Budget in Preparazione e crea una nuova Revisione e un
+evento Audit. La successiva Approvazione crea una nuova fotografia e la Base Economica rimane
+bloccata dalla prima Approvazione storica. La risposta Budget separa:
 
 - `proposed` durante la Preparazione;
 - `approved_snapshot` e `planned` dopo l'Approvazione;
@@ -168,6 +207,8 @@ GET  /api/v1/budget/{planningYear}/rectifications/{rectification}
 La preview elenca Spese senza Effettivi, Progetti Aperti, Contratti, Plafond e azioni contestuali,
 ma usa `can_close: true` anche quando rimangono segnalazioni non bloccanti. Dopo la Chiusura, ogni
 mutazione economica restituisce la Rettifica prodotta e richiede la Nota quando previsto.
+`close` acquisisce il guard annuale condiviso e ricostruisce la situazione da fotografare sotto lo
+stesso lock usato dalle mutazioni economiche.
 
 `reopening-preview` è read-only e restituisce `can_reopen`, la Chiusura corrente e le eventuali
 Rettifiche bloccanti. `reopen` richiede sempre `note`, non elimina dati economici, rende non corrente
@@ -191,8 +232,9 @@ Progetto rimane un normale campo descrittivo e non sostituisce queste azioni. `c
 nuovo Progetto e il riferimento al precedente, ma non chiude l'origine; `close` resta separato.
 
 `continue` fallisce con conflitto se l'origine possiede già un successore. Il nuovo Progetto ha un
-solo predecessore, appartiene a un Anno successivo e l'intera relazione è Tenant-bound; il server
-rifiuta self-link, ramificazioni e cicli prima di persistere.
+solo predecessore, appartiene all'Anno immediatamente successivo
+(`destination_year = origin_year + 1`) e l'intera relazione è Tenant-bound; il server rifiuta
+self-link, salti di Anno, ramificazioni e cicli prima di persistere.
 
 Se una Spesa contrattuale è collegata a un Progetto, l'Anno del Progetto deve coincidere con l'Anno
 della Data di Rinnovo/Scadenza. In caso contrario la generazione fallisce con preview esplicita e

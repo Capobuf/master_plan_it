@@ -15,13 +15,16 @@ implementazione.
 
 ```bash
 docker compose up -d laravel.test mysql frontend
-docker compose exec -T -u sail laravel.test composer test:prepare
-docker compose exec -T laravel.test php artisan test --testsuite=Accounting
-docker compose exec -T frontend npm test -- --run
+docker compose exec -T -u sail laravel.test composer verify
+docker compose exec -T frontend npm run verify
 ```
 
-Questi comandi appartengono alla validazione delle future Slice e non sono stati eseguiti durante
-questo intervento esclusivamente documentale. Non usare conteggi storici come risultato atteso fisso.
+Il 2026-08-12 questi due gate sono stati eseguiti sulla baseline: backend verde incluse suite
+Architecture `204/5334`, Accounting `34/235`, Application `524/5659`, Pint, PHPStan, audit
+Composer e migrazioni forward-only; frontend verde con Vitest `33 file/103 test`, controllo token
+scuri, lint senza errori e build di produzione. I warning baseline di lint/CSS/chunk non hanno
+bloccato il gate. Ogni Slice deve rieseguire i gate e non deve trattare questi conteggi come un
+risultato futuro fisso.
 
 Prima di applicare una nuova Slice Greenfield nell'ambiente di test:
 
@@ -68,14 +71,15 @@ Per ogni Slice economica verificare contemporaneamente:
 3. Verificare che l'Allocazione entri una volta nel Budget, la pianificazione coperta alimenti la
    Copertura Prevista senza aumentare il totale e l'Effettivo alimenti il Consumato.
 4. Tentare una seconda Spesa Plafond corrente sullo stesso Centro/Anno: la mutazione deve fallire.
-5. Creare una Riga da €2.700 quando il Disponibile è €2.500: il salvataggio deve restituire
-   `PLAFOND_INSUFFICIENT` con Allocazione, Disponibile, Richiesto e Mancante, non persistere nulla e
-   mantenere tutti gli input.
+5. Creare una Riga Effettivo coperta da €2.700 quando il Disponibile è €2.500: il salvataggio deve
+   restituire `PLAFOND_INSUFFICIENT` con Allocazione, Disponibile, Richiesto e Mancante, non
+   persistere nulla e mantenere tutti gli input.
 6. Aggiungere una Riga di Allocazione `+500` allo stesso Plafond e ripetere il salvataggio con esito
    positivo.
 7. Collegare Stime/Preventivi coperti per un totale superiore al Disponibile e verificare che
-   aumenti Copertura Prevista senza ridurre Disponibile; trasformare poi una parte in Effettivo e
-   verificare che Disponibile diminuisca e che un Effettivo eccedente sia bloccato atomicamente.
+   aumenti Copertura Prevista senza ridurre Disponibile; aggiungere poi un Effettivo coperto
+   corrispondente, conservando la pianificazione, e verificare che Disponibile diminuisca e che un
+   Effettivo eccedente sia bloccato atomicamente.
 8. Tentare una riduzione `-2.900` che invaliderebbe coperture esistenti: la preview deve elencarle e
    il salvataggio deve essere bloccato senza scollegarle.
 9. Modellare una Spesa da €800, di cui €500 coperti e €300 non coperti, usando due Righe distinte;
@@ -95,8 +99,24 @@ Per ogni Slice economica verificare contemporaneamente:
 8. Verificare che la Riapertura sia bloccata dopo la prima Rettifica successiva.
 9. Su un secondo Budget Chiuso senza Rettifiche successive, eseguire la Riapertura con Nota e
    verificare snapshot precedente non corrente, nuova Revisione e ritorno ad Approvato.
-10. Su un Budget Approvato privo di eventi dipendenti, annullare l'Approvazione con Nota e verificare
-    ritorno in Preparazione e conservazione di Data, Approvatore e contenuto storico.
+10. Su un Budget Approvato privo di Effettivi, Extra Budget, Rettifiche e Chiusure, aprire la preview
+    e verificare `can_annul: true` con i quattro gruppi vuoti; annullare l'Approvazione con Nota e
+    Lock Version e verificare ritorno in Preparazione, stato Annullata, conservazione di Data,
+    Approvatore, contenuto e Nota, nuova Revisione/Audit e Base Economica ancora bloccata.
+11. Preparare quattro Budget separati con, rispettivamente, un Effettivo, un Extra Budget, una
+    Rettifica e una Chiusura; per Effettivo ed Extra collocare poi Spesa/Riga nel Cestino e per la
+    Chiusura eseguire anche la Riapertura. Verificare che ogni preview restituisca il gruppo canonico
+    e un link alla relativa Spesa/operazione, senza offrire la conferma come eseguibile.
+12. Avviare simultaneamente l'Annullamento e una mutazione che crea uno dei quattro blocchi sullo
+    stesso Tenant/Anno: il guard annuale deve serializzare i commit; l'Annullamento riesce soltanto
+    se è linearizzato prima, altrimenti restituisce `BUDGET_APPROVAL_ANNULMENT_BLOCKED`, senza
+    transizioni, Revisioni o Audit parziali.
+13. Verificare che Valutazioni informative, modifiche descrittive prive di effetto economico,
+    Allegati, sola consultazione/reportistica, snapshot read-only e mutazioni indipendenti di altri
+    anni non blocchino l'Annullamento.
+14. Eseguire in concorrenza Approva/Riga economica e Chiudi/Riga economica sullo stesso Tenant/Anno:
+    ogni esito deve essere linearizzabile, lo snapshot deve coincidere interamente con il dataset
+    prima o dopo la mutazione e non deve mai contenere una composizione mista.
 
 ## Scenario 4 — Progetto Pluriennale
 
@@ -109,8 +129,9 @@ Per ogni Slice economica verificare contemporaneamente:
 5. Verificare Progetto 2025 ancora aperto, Progetto 2026 collegato e viste **Solo Questo Progetto** /
    **Intero Percorso** riconciliate; chiudere poi l'origine con un'azione manuale separata.
 6. Ripetere con un Progetto senza Effettivi e verificare lo Spostamento atomico.
-7. Tentare una seconda Continuazione dallo stesso Progetto, un self-link e un ciclo: ogni operazione
-   deve fallire senza persistenza parziale e senza esporre dati di un altro Tenant.
+7. Tentare una seconda Continuazione dallo stesso Progetto, una Continuazione 2025→2027, un
+   self-link e un ciclo: ogni operazione deve fallire senza persistenza parziale e senza esporre
+   dati di un altro Tenant.
 
 ## Scenario 5 — Contratti e Scadenziario
 

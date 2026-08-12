@@ -70,12 +70,20 @@ Rappresenta il contenitore annuale del Budget per un Tenant.
 `Budget in Lavorazione` e `Budget Proposto` sono viste della fase `Preparazione`, non due ulteriori
 Stati persistenti. `Budget Proposto` è la composizione presentabile calcolata nel momento corrente.
 
+La riga `PlanningYear` è il guard di serializzazione stabile del dataset economico
+`Tenant + Anno`. Ogni mutazione che può cambiare una Spesa/Riga corrente o creare Effettivi, Extra
+Budget, Rettifiche o Chiusure acquisisce il lock del medesimo guard prima di leggere gli invarianti
+e persistere. Approva, Chiudi, Riapri e Annulla usano lo stesso ordine; dopo il lock ricostruiscono
+il dataset o rivalidano i quattro gruppi. Per una mutazione multi-Anno i guard sono acquisiti in
+ordine crescente di chiave, evitando deadlock. `Versione Concorrente`, hash di preview e guard
+database sono complementari, non alternativi.
+
 **Transizioni**:
 
 ```text
 Preparazione ──Approva──> Approvato ──Chiudi──> Chiuso
      ^                         |
-     └──Annulla Approvazione───┘  solo senza eventi dipendenti
+     └──Annulla Approvazione───┘  solo senza Effettivi, Extra, Rettifiche o Chiusure storiche
 
 Approvato <──Riapri── Chiuso       solo senza Rettifiche successive e con Nota
 ```
@@ -155,8 +163,10 @@ Il Plafond è una Spesa di Natura Plafond, ma non è un costo Effettivo. Per la 
 
 - una Riga Ordinaria possiede zero o un riferimento singolo al Plafond compatibile;
 - se il riferimento è presente, l'intero Importo della Riga è coperto;
-- il Disponibile deve essere sufficiente prima della persistenza;
-- capienza insufficiente blocca atomicamente e non salva dati parziali;
+- il Disponibile deve essere sufficiente prima di persistere un Effettivo coperto o una riduzione
+  dell'Allocazione, non prima di salvare Stime/Preventivi coperti;
+- capienza insufficiente nei due casi bloccanti precedenti ferma atomicamente e non salva dati
+  parziali;
 - una riduzione che invaliderebbe coperture esistenti è bloccata da una Vista di Impatto;
 - create, Restore, collegamento di copertura e variazione di Allocazione serializzano la
   combinazione stabile `Tenant + Anno + Centro di Costo` nella stessa transazione, bloccano il
@@ -186,8 +196,9 @@ Il Plafond è una Spesa di Natura Plafond, ma non è un costo Effettivo. Per la 
 
 - `Progetto Precedente` è Tenant-bound e univoco tra i successori: ogni Progetto può avere al
   massimo una sola Continuazione successiva;
-- il predecessore appartiene a un Anno anteriore e la creazione verifica l'intera ascendenza;
-  self-link e cicli sono vietati;
+- il predecessore appartiene all'Anno immediatamente precedente
+  (`anno continuazione = anno predecessore + 1`) e la creazione verifica l'intera ascendenza;
+  self-link, salti di Anno e cicli sono vietati;
 
 - senza Effettivi: Spostamento atomico del Progetto e delle Spese nel nuovo Anno;
 - con Effettivi: creazione di una Continuazione nel nuovo Anno; la chiusura dell'origine resta
@@ -256,6 +267,22 @@ Importi e classificazioni necessari a ricostruire il Previsto senza leggere dati
 
 L'Approvazione comprende l'intero Budget Proposto in una transazione. Non aggiorna un campo
 `approved_amount` mutabile sulla Spesa.
+
+L'Approvazione `Attiva` è l'unica annullabile. La proiezione di blocco è sempre limitata allo stesso
+Tenant/Anno e comprende quattro insiemi, senza una tabella o un tipo evento residuale:
+
+| Gruppo | Presenza bloccante |
+|---|---|
+| Effettivi | Ogni Riga Effettivo positiva/negativa, manuale/contrattuale, inclusa la Riga o Spesa nel Cestino |
+| Extra Budget | Ogni Spesa o Riga Extra Budget, inclusa quella eliminata logicamente |
+| Rettifiche | Ogni Rettifica dopo Approvazione o dopo Chiusura |
+| Chiusure | Ogni evento/snapshot di Chiusura già eseguito, anche se non più corrente dopo Riapertura |
+
+Un Annullamento consentito marca l'Approvazione `Annullata` con autore, data e Nota, riporta il
+Budget in Preparazione e crea Revisione e Audit. Non elimina snapshot o contenuto, non riusa la
+fotografia per una successiva Approvazione e non modifica `Base Bloccata Dal`. La preview è una
+proiezione read-only: la mutazione acquisisce il Lock Version e ricalcola i quattro gruppi nella
+stessa transazione della transizione di stato.
 
 ### Rettifica
 
@@ -341,8 +368,7 @@ Produce almeno:
 - Effettivo;
 - Extra Budget;
 - Rettifiche;
-- per ogni Plafond: Allocazione, Copertura Prevista, Consumato, Residuo e Disponibile per nuove
-  coperture;
+- per ogni Plafond: Allocazione, Copertura Prevista, Consumato e Disponibile;
 - raggruppamenti per Centro di Costo, Progetto, Contratto, Fornitore e Spesa;
 - progressione mensile soltanto per Righe con Data realmente attribuibile a un Mese.
 

@@ -21,6 +21,9 @@
 - [x] CHK-007 Esiste un solo Budget annuale con Preparazione, Approvato e Chiuso.
 - [x] CHK-008 Approvato e Finale includono Rettifiche senza creare contenitori alternativi.
 - [x] CHK-009 Riapertura e Annullamento richiedono Nota, Revisione e conservazione dello storico.
+- [x] CHK-009A L'Annullamento usa soltanto i quattro gruppi Effettivi, Extra Budget, Rettifiche e
+  Chiusure; include Cestino e Chiusure riaperte, rivalida con lock nella transazione e non sblocca
+  la Base Economica.
 - [x] CHK-010 La matrice Rettifica/Extra/Modifica ordinaria è completa e non fiscale.
 - [x] CHK-011 Il Forecast è escluso dal dominio e il Previsto Ricostruito è limitato agli anni
   storici privi di Budget originario.
@@ -42,10 +45,12 @@
 - [x] CHK-018 L'allocazione usa `ExpenseRow` additive dedicate con importi positivi o negativi e
   non introduce una sorgente monetaria parallela.
 - [x] CHK-019 La Riga coperta usa un riferimento singolo ed è coperta integralmente.
-- [x] CHK-020 Capienza insufficiente blocca atomicamente e restituisce Allocazione, Disponibile,
-  Richiesto e Mancante mantenendo gli input.
+- [x] CHK-020 Capienza insufficiente blocca atomicamente Effettivi coperti e riduzioni invalidanti,
+  restituendo Allocazione, Disponibile, Richiesto e Mancante e mantenendo gli input; non blocca
+  Stime/Preventivi coperti che alimentano la sola Copertura Prevista.
 - [x] CHK-021 Una riduzione invalidante è bloccata da una Vista di Impatto.
-- [x] CHK-022 Allocazione, Copertura Prevista, Consumato e Residuo non producono doppio conteggio.
+- [x] CHK-022 Allocazione, Copertura Prevista, Consumato e Disponibile non producono doppio
+  conteggio né espongono misure duplicate.
 - [x] CHK-023 Quote multiple, copertura parziale e Sforamento consentito non compaiono come target.
 - [ ] CHK-023A Compatibilità Extra Budget/Plafond e compatibilità tra Centri di Costo confermate dal
   proprietario prima di chiudere la Slice 024.
@@ -62,12 +67,12 @@
 
 ## Prontezza
 
-- [x] CHK-030 Spec, research, plan, data model, API e quickstart usano la stessa semantica.
+- [x] CHK-030 Spec, research, plan, data model, API e quickstart usano la stessa semantica per le
+  decisioni risolte e classificano coerentemente come aperte le due compatibilità della Slice 024.
 - [x] CHK-031 Il piano contiene Slice verticali end-to-end e nessun modello many-to-many Plafond.
 - [x] CHK-032 Non esiste `tasks.md` per 022 e nessun artefatto avvia l'implementazione.
 - [ ] CHK-033 La verifica read-only equivalente a `/speckit.analyze` non rileva conflitti
-  bloccanti: da rivalidare dopo la correzione delle affermazioni Greenfield/purge e la definizione
-  della formula del Disponibile nella Slice Plafond.
+  bloccanti: da rivalidare dopo le due risposte ancora richieste per compatibilità Plafond.
 
 ## Note
 

@@ -1,13 +1,14 @@
 # Research: Gap tra Baseline Corrente e Target Approvato
 
 **Data**: 2026-08-12
-**Stato**: decisioni di prodotto e modalità Greenfield risolte; programma non implementato
+**Stato**: decisioni risolte e modalità Greenfield consolidate; due compatibilità Plafond restano `OPEN QUESTION`; programma non implementato
 **Baseline verificata**: `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94`
 
 ## Metodo e autorità
 
-Le etichette `VERIFIED CURRENT`, `PROPOSED TARGET`, `CONFLICT`, `DEPRECATED`, `OPEN QUESTION` e
-`MIGRATION-ONLY` hanno il significato definito in `../BUDGET-DOMAIN-REFINEMENT.md`. Il codice,
+Le etichette `VERIFIED CURRENT`, `PROPOSED TARGET`, `INFERRED`, `CONFLICT`, `DEPRECATED`,
+`OPEN QUESTION` e `MIGRATION-ONLY` hanno il significato definito in
+`../BUDGET-DOMAIN-REFINEMENT.md`. Il codice,
 le migration, i test e i contract correnti descrivono il comportamento implementato; questo Spec
 Kit descrive il programma futuro e non li riscrive retroattivamente.
 
@@ -67,7 +68,11 @@ e non cancella Effettivi già generati.
 
 **Decisione**: esiste un solo Budget annuale. Approvato e Finale sono valori correnti composti dallo
 snapshot applicabile più le Rettifiche. Riapertura e Annullamento richiedono Nota e conservano la
-storia.
+storia. L'Annullamento dell'Approvazione attiva è consentito solo prima del ciclo operativo: nello
+stesso Tenant/Anno lo bloccano esattamente Effettivi anche nel Cestino, Extra Budget anche eliminati
+logicamente, Rettifiche e Chiusure già eseguite anche dopo Riapertura. Preview e conferma non
+introducono una categoria residuale; la conferma rivalida i blocchi atomicamente e non sblocca la
+Base Economica.
 
 ### D05 — Plafond singolo e copertura integrale
 
@@ -76,8 +81,10 @@ additive. Ogni Riga di Spesa è coperta integralmente da quel singolo Plafond o 
 
 ### D06 — Capienza bloccante
 
-**Decisione**: il Plafond insufficiente restituisce errore, non salva nulla e mantiene gli input.
-Non sono ammessi Sforamento, copertura parziale o ripartizione tra più Plafond.
+**Decisione**: soltanto una create/update/Restore di Effettivo coperto sopra il Disponibile o una
+riduzione di Allocazione sotto il Consumato restituisce errore, non salva nulla e mantiene gli
+input. Stime/Preventivi coperti possono superare il Disponibile e alimentano Copertura Prevista.
+Non sono ammessi Sforamento reale, copertura parziale o ripartizione tra più Plafond.
 
 ### D07 — Previsto Ricostruito e assenza di Forecast
 
@@ -110,8 +117,8 @@ provate con concorrenza, idempotenza, rollback e isolamento Tenant.
 
 **Decisioni confermate il 2026-08-12**: soltanto gli Effettivi coperti diminuiscono il Disponibile;
 Stime/Preventivi alimentano Copertura Prevista senza prenotare capienza. Ogni Progetto ha al massimo
-una sola Continuazione successiva e la relazione precedente/successivo forma una catena lineare,
-Tenant-bound e senza cicli.
+una sola Continuazione successiva nell'Anno immediatamente seguente; la relazione
+precedente/successivo forma una catena lineare, Tenant-bound e senza cicli.
 
 ## Alternative scartate
 
@@ -132,7 +139,7 @@ Tenant-bound e senza cicli.
 
 | Spec Kit precedente | Autorità corrente | Regola incompatibile | Trattamento da 022 |
 |---|---|---|---|
-| 010 Projects | `VERIFIED CURRENT`: stage persistiti ma `EconomicEngine::classify()` tratta ogni Riga come `primary` e i test provano che lo stage non riclassifica | regole storiche 010 che attribuivano effetti economici allo stage; overrun Plafond | intento storico `DEPRECATED`, non comportamento corrente |
+| 010 Projects | `VERIFIED CURRENT`: stage persistiti, promozione automatica `Rinviato`→`Proposto`, ma `EconomicEngine::classify()` tratta ogni Riga come `primary` e i test provano che lo stage non riclassifica | regole storiche 010 che attribuivano effetti economici allo stage; promozione data-driven; overrun Plafond | intento storico e automazione `DEPRECATED` come target; promozione resta corrente fino a 027 |
 | 017 Budget lifecycle | codice implementato | Variazioni mutabili, Effettivo same-year, overrun valido, no Riapertura | `CONFLICT`, sostituito nelle future Slice |
 | 018 Dashboard UX | UI implementata | copy `Actual`, stati Spesa, overrun | `VERIFIED CURRENT`, target `DEPRECATED` |
 | 019 Reporting analytics | Report implementato | `Actual`, metriche overrun e stati Spesa | `VERIFIED CURRENT`, target `DEPRECATED` |
@@ -149,12 +156,15 @@ Ogni Slice economica deve coprire:
 - allow stesso Tenant, deny permission mancante e deny altro Tenant senza leakage;
 - transazione e assenza di side effect su errore;
 - stesso risultato in Budget, Dashboard, Report e Drill-Down;
-- Plafond contato una sola volta e capienza verificata prima della persistenza;
+- Plafond contato una sola volta e capienza degli Effettivi/riduzioni verificata prima della
+  persistenza, senza bloccare Stime/Preventivi coperti;
 - Note obbligatorie, optimistic locking e Source Key idempotenti;
 - casi di Approvazione, Chiusura, Rettifica, Riapertura e Annullamento applicabili.
 
-I test dichiarati in documenti precedenti restano evidenza della baseline solo se realmente
-eseguiti nella relativa sessione. Questo intervento documentale non dichiara nuove suite verdi.
+I test dichiarati in documenti precedenti restano evidenza soltanto se realmente eseguiti. In
+questa sessione, il 2026-08-12, `composer verify` nel container backend e `npm run verify` nel
+container frontend sono risultati verdi sulla baseline; questa evidenza non sostituisce i test e
+il coverage che ogni futura Slice deve aggiungere ed eseguire.
 
 ## Sequenza raccomandata
 
@@ -171,4 +181,4 @@ eseguiti nella relativa sessione. Questo intervento documentale non dichiara nuo
 
 Nessuna `OPEN QUESTION` resta sulla formula del Disponibile o sulla cardinalità delle Continuazioni.
 Restano aperte soltanto la compatibilità Extra Budget/Plafond, la compatibilità tra Centri di Costo
-per la copertura e l'insieme degli eventi che blocca l'Annullamento dell'Approvazione.
+per la copertura.

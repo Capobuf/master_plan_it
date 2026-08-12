@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-12
 
-**Status**: `PROPOSED TARGET — Program specification approved; not implemented`
+**Status**: `PROPOSED TARGET — Program approved except two Slice 024 Plafond compatibility questions; not implemented`
 
 **Input**: Definire l'architettura UX/UI trasversale dell'applicazione: Barra Superiore, contesto globale del Tenant e dell'Anno, Dashboard, registri, navigazione Budget e Report, dettaglio Spesa, Guida Contestuale, date valide, Revisioni, gestione Tenant e operatività self-hosted.
 
@@ -51,6 +51,10 @@ Il risultato atteso è un Workspace Annuale ampio, leggibile e prevedibile, nel 
   Preventivi coperti alimentano Copertura Prevista ma non prenotano capienza.
 - Q: Una Continuazione di Progetto può ramificare? → A: No; ogni Progetto ha al massimo un
   predecessore e un solo successore, formando una catena lineare senza cicli.
+- Q: Cosa blocca l'Annullamento dell'Approvazione? → A: Esattamente quattro categorie nello stesso
+  Tenant/Anno: Effettivi anche nel Cestino, Extra Budget anche eliminati logicamente, Rettifiche e
+  qualunque Chiusura già eseguita anche dopo Riapertura. Non esiste una categoria residuale; la
+  preview le raggruppa e la conferma rivalida tutto atomicamente con optimistic locking.
 - Q: È confermato che il prodotto sia Greenfield e privo di dati reali da preservare? → A: Sì,
   confermato esplicitamente dal proprietario il 2026-08-12. Schema e dati demo/test possono essere
   ricostruiti; questa conferma non introduce una politica automatica di purge delle Spese nel
@@ -140,10 +144,12 @@ L'utente parte dal riepilogo Spese, usa i launcher frequenti, espande una riga p
 4. **Given** il dettaglio di una Spesa, **When** l'utente lo apre, **Then** vede intestazione e classificazione, Righe di Spesa, Totali e Allegati in una composizione assimilabile a un documento amministrativo ma non sovraccarica.
 5. **Given** un Allegato riferito all'intero documento o a una singola Riga di Spesa, **When** viene aggiunto, **Then** la UI ne mostra chiaramente il livello di appartenenza.
 6. **Given** una Riga coperta integralmente dal Plafond compatibile, **When** viene salvata, **Then**
-   la UI mostra Allocazione, Copertura Prevista, Consumato e Residuo senza doppio conteggio.
-7. **Given** una capienza inferiore all'importo della Riga, **When** l'utente salva, **Then** nessun
-   dato viene persistito, gli input restano disponibili e la sezione Plafond mostra Disponibile,
-   Importo richiesto e Importo Mancante.
+   la UI mostra Allocazione, Copertura Prevista, Consumato e Disponibile senza doppio conteggio.
+7. **Given** un Effettivo coperto superiore al Disponibile oppure una riduzione dell'Allocazione
+   inferiore al Consumato, **When** l'utente salva, **Then** nessun dato viene persistito, gli input
+   restano disponibili e la sezione Plafond mostra Allocazione, Disponibile, Importo richiesto e
+   Importo Mancante; una Stima o Preventivo coperto può invece superare il Disponibile e alimenta
+   soltanto Copertura Prevista.
 
 ---
 
@@ -182,8 +188,14 @@ L'utente accede con chiarezza alla Panoramica del Budget, prepara la Chiusura, c
    Approvato creando una Revisione.
 6. **Given** un Budget Chiuso con almeno una Rettifica successiva, **When** si richiede la
    Riapertura, **Then** l'operazione è bloccata e la Vista di Impatto elenca le dipendenze.
-7. **Given** un'Approvazione senza eventi dipendenti, **When** viene annullata con Nota, **Then** il
-   Budget torna in Preparazione e conserva Approvazione, Approvatore e contenuto storico.
+7. **Given** un'Approvazione attiva senza Effettivi, Extra Budget, Rettifiche o Chiusure nello stesso
+   Tenant/Anno, **When** viene annullata con Nota e Lock Version corrente, **Then** il Budget torna
+   in Preparazione, l'Approvazione è marcata Annullata, Data, Approvatore, contenuto e Nota restano
+   storici, sono creati Revisione e Audit e la Base Economica resta bloccata.
+8. **Given** un'Approvazione con almeno un Effettivo o Extra Budget poi collocato nel Cestino, una
+   Rettifica oppure una Chiusura già eseguita anche dopo Riapertura, **When** si apre la preview o si
+   tenta l'Annullamento, **Then** i blocchi sono raggruppati nelle quattro categorie canoniche e la
+   conferma fallisce atomicamente senza affidarsi alla sola preview.
 
 ---
 
@@ -250,7 +262,7 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
   salvataggio e non scollega Righe silenziosamente.
 - Una Spesa comprende una parte coperta e una scoperta: l'utente usa due Righe distinte; la singola
   Riga non accetta copertura parziale.
-- Una Continuazione viene creata per l'anno successivo: il Progetto originario resta aperto finché
+- Una Continuazione viene creata per l'anno immediatamente successivo: il Progetto originario resta aperto finché
   l'utente non esegue separatamente la Chiusura.
 - Una cessazione contrattuale incontra un Effettivo già generato o una Riga futura modificata
   manualmente: la Vista di Impatto conserva l'Effettivo e richiede una scelta esplicita sulla Riga.
@@ -350,6 +362,16 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
 - **FR-055**: Riapertura e Annullamento dell'Approvazione MUST richiedere una Nota, creare una
   Revisione e conservare gli snapshot precedenti; la Riapertura MUST essere bloccata dopo una
   Rettifica successiva alla Chiusura.
+- **FR-055A**: L'Annullamento MUST essere consentito solo sull'Approvazione attiva e MUST essere
+  bloccato, nello stesso Tenant/Anno, dalla presenza di Effettivi anche nel Cestino, Extra Budget
+  anche eliminati logicamente, Rettifiche o qualunque Chiusura già eseguita; nessun'altra categoria
+  generica di evento bloccante MUST essere introdotta.
+- **FR-055B**: La preview dell'Annullamento MUST raggruppare collegamenti ai blocchi in `actuals`,
+  `extra_budget`, `rectifications` e `closures`; la mutazione MUST rivalidare i quattro gruppi nella
+  stessa transazione, usare optimistic locking e fallire senza side effect parziali.
+- **FR-055C**: Un Annullamento consentito MUST marcare l'Approvazione come Annullata senza
+  eliminarla, riportare il Budget in Preparazione, conservare Data, Approvatore, contenuto e Nota,
+  creare Revisione e Audit e MUST NOT sbloccare la Base Economica del Tenant.
 - **FR-056**: La UI del Progetto MUST distinguere `Solo Questo Progetto` e `Intero Percorso`; creare
   una Continuazione MUST NOT chiudere automaticamente il Progetto originario.
 - **FR-057**: La UI Contratti MUST presentare l'Effettivo automatico come costo certo ai fini del
@@ -360,9 +382,10 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
   corrente, modificato mediante Righe additive dell'allocazione.
 - **FR-060**: Una Riga di Spesa MUST avere zero o un solo riferimento Plafond compatibile e MUST
   essere coperta integralmente; il sistema MUST NOT ripartire la stessa Riga tra più Plafond.
-- **FR-061**: Se il Plafond è insufficiente, il salvataggio MUST fallire atomicamente, restituire i
-  quattro importi di impatto e consentire al client di mantenere gli input; nessuno Sforamento è
-  ammesso.
+- **FR-061**: Se una create/update/Restore di Effettivo coperto supera il Disponibile o una riduzione
+  di Allocazione scende sotto il Consumato, il salvataggio MUST fallire atomicamente, restituire i
+  quattro importi di impatto e consentire al client di mantenere gli input; Stime/Preventivi coperti
+  MUST poter superare il Disponibile senza diventare Sforamento reale.
 - **FR-062**: Il Previsto Ricostruito MUST essere disponibile solo per anni storici privi di Budget
   originario, MUST usare gli Effettivi non Extra e MUST essere etichettato `Previsto Ricostruito
   dagli Effettivi`.
@@ -381,7 +404,12 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
   Stime e Preventivi coperti MUST alimentare soltanto Copertura Prevista e MUST NOT prenotare
   capienza.
 - **FR-069**: Ogni Progetto MUST avere al massimo un predecessore e un successore di Continuazione;
-  la relazione MUST formare una catena lineare senza cicli.
+  la relazione MUST formare una catena lineare senza cicli e ogni Continuazione MUST appartenere
+  all'Anno immediatamente successivo (`destinazione = origine + 1`).
+- **FR-070**: Ogni mutazione capace di cambiare il dataset economico MUST condividere un guard di
+  serializzazione `Tenant + Anno` con Approvazione, Chiusura, Riapertura e Annullamento; sotto lock
+  il server MUST ricostruire o rivalidare il dataset e MUST NOT affidarsi soltanto a preview hash o
+  optimistic locking client.
 
 ### UX Guardrails
 
@@ -414,8 +442,10 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
 - **SC-008**: Un utente autorizzato identifica una modifica storica e ripristina lo Snapshot desiderato senza consultare un log tecnico; la storia precedente rimane disponibile.
 - **SC-009**: Il 100% delle installazioni self-hosted può copiare dalla UI un comando Cron utilizzabile dopo la sostituzione degli eventuali segnaposto dichiarati, senza che la UI attribuisca uno stato non verificato.
 - **SC-010**: Le pagine operative principali dedicano almeno l'85% della larghezza disponibile al Workspace a partire dalle dimensioni desktop supportate.
-- **SC-011**: Il 100% dei tentativi di copertura con capienza insufficiente termina senza
-  persistenza parziale e presenta Allocazione, Disponibile, Richiesto e Mancante.
+- **SC-011**: Il 100% delle create/update/Restore di Effettivi coperti e delle riduzioni di
+  Allocazione con Disponibile insufficiente termina senza persistenza parziale e presenta
+  Allocazione, Disponibile, Richiesto e Mancante; il 100% delle Stime/Preventivi coperti sopra il
+  Disponibile resta salvabile come Copertura Prevista.
 - **SC-012**: In un dataset canonico con Plafond, la somma del Budget e del Drill-Down coincide al
   centesimo senza contare nuovamente le pianificazioni coperte.
 - **SC-013**: Una storia con più revisioni del limite operativo conserva corretta la proiezione
