@@ -14,6 +14,7 @@ use App\Domain\Plafonds\Data\AllocationAdjustmentData;
 use App\Domain\Plafonds\Data\PlafondAggregateMapper;
 use App\Domain\Plafonds\Services\PlafondRelationshipAuthorizer;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
@@ -34,8 +35,7 @@ final class PreviewAllocationAdjustment
         $this->expensePolicy($context)->update($actor, $target)->authorize();
         app(PlafondRelationshipAuthorizer::class)->authorize($actor, $context);
         [$actor, $tenant] = $this->persistedContext($actor, $context);
-        $expense = Expense::query()
-            ->where('tenant_id', $tenant->getKey())
+        $expense = TenantOwnedRecordQuery::forTenant($context, Expense::class)
             ->whereKey($target->getKey())
             ->first();
         if (! $expense instanceof Expense || $expense->lock_version !== $expectedLockVersion) {
@@ -44,8 +44,7 @@ final class PreviewAllocationAdjustment
         if ($expense->kind !== ExpenseKind::Plafond) {
             throw new DomainException('TENANT_RELATION_MISMATCH');
         }
-        $year = PlanningYear::query()
-            ->where('tenant_id', $tenant->getKey())
+        $year = TenantOwnedRecordQuery::forTenant($context, PlanningYear::class)
             ->whereKey($expense->planning_year_id)
             ->first();
         if (! $year instanceof PlanningYear) {
