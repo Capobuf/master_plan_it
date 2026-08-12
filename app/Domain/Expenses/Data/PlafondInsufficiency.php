@@ -33,6 +33,7 @@ final readonly class PlafondInsufficiency
             'required' => $this->required,
             'shortage' => $this->shortage,
             'impact' => [
+                'requested' => $this->impact->requested,
                 'current' => $this->measures($this->impact->current),
                 'proposed' => $this->measures($this->impact->proposed),
                 'blocking_rows' => array_map(

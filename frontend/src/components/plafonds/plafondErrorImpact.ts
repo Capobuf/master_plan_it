@@ -14,6 +14,7 @@ export function plafondImpactFromError(error: ApiError | null, fallbackTitle = "
     || (details.basis !== "net" && details.basis !== "gross")
     || typeof details.required !== "string"
     || typeof details.shortage !== "string"
+    || typeof impact.requested !== "string"
     || !record(impact.current)
     || !record(impact.proposed)) return null;
 
@@ -39,7 +40,7 @@ export function plafondImpactFromError(error: ApiError | null, fallbackTitle = "
     basis: details.basis,
     current: impact.current as unknown as PlafondMeasures,
     proposed: impact.proposed as unknown as PlafondMeasures,
-    requested: details.required,
+    requested: impact.requested,
     shortage: details.shortage,
     can_confirm: false,
     blocking_rows: blockingRows,

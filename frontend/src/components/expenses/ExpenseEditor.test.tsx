@@ -188,6 +188,49 @@ describe("ExpenseEditor", () => {
     expect(screen.queryByText(/rows\.1\.vendor_id/)).not.toBeInTheDocument();
   });
 
+  it("shows the signed requested amount from a final Plafond capacity error", async () => {
+    const zero = { net: "0.00", vat: "0.00", gross: "0.00", official: "0.00" };
+    const measures = { allocation: zero, coverage_planned: zero, consumed: zero, available: zero };
+    vi.mocked(expenseApi.listEligiblePlafondExpenses).mockResolvedValue([{
+      id: 41,
+      title: "Plafond Infrastruttura",
+      cost_center: { id: 9, name: "Infrastruttura" },
+      currency: "EUR",
+      basis: "net",
+      measures: {} as never,
+    }]);
+    vi.mocked(expenseApi.createExpense).mockRejectedValue(new ApiError({
+      message: "La capienza del Plafond non è sufficiente.",
+      status: 422,
+      code: "PLAFOND_INSUFFICIENT",
+      details: {
+        plafond_expense_id: 41,
+        currency: "EUR",
+        basis: "net",
+        allocated: "2300.00",
+        available: "1000.00",
+        required: "2500.00",
+        shortage: "200.00",
+        impact: {
+          requested: "-1200.00",
+          current: measures,
+          proposed: measures,
+          blocking_rows: [],
+        },
+      },
+    }));
+    render(<MemoryRouter><ExpenseEditor /></MemoryRouter>);
+
+    await screen.findByRole("option", { name: "Operations" });
+    fireEvent.change(screen.getByRole("combobox", { name: "Centro di Costo" }), { target: { value: "3" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Titolo" }), { target: { value: "Spesa coperta" } });
+    fireEvent.change(screen.getByRole("textbox", { name: "Descrizione riga 1" }), { target: { value: "Effettivo coperto" } });
+    fireEvent.click(screen.getByRole("button", { name: "Crea spesa" }));
+
+    expect(await screen.findByText("−1.200,00 €")).toBeInTheDocument();
+    expect(screen.getByText("Plafond Infrastruttura")).toBeInTheDocument();
+  });
+
   it("preserves the persisted VAT when editing an existing row", async () => {
     vi.mocked(expenseApi.listExpenseVendors).mockResolvedValue([{ id: 5, name: "Fornitore corrente" }]);
     vi.mocked(expenseApi.getExpense).mockResolvedValue({

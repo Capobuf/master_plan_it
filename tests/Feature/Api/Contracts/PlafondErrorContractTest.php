@@ -47,6 +47,7 @@ final class PlafondErrorContractTest extends TestCase
         $this->assertSame('2500.00', $payload['details']['available']);
         $this->assertSame('2700.00', $payload['details']['required']);
         $this->assertSame('200.00', $payload['details']['shortage']);
+        $this->assertSame('2700.00', $payload['details']['impact']['requested']);
         $this->assertSame('-200.00', $payload['details']['impact']['proposed']['available']['official']);
         $this->assertArrayNotHasKey('covered_lines', $payload['details']);
     }
