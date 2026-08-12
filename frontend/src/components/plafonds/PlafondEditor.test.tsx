@@ -49,7 +49,21 @@ describe("PlafondEditor", () => {
   });
 
   it("uses calculated allocation XOR and preserves values after a structured server error", async () => {
-    vi.mocked(plafondApi.addAllocationAdjustment).mockRejectedValue(new ApiError({ message: "Capienza insufficiente", status: 422, code: "PLAFOND_INSUFFICIENT" }));
+    vi.mocked(plafondApi.addAllocationAdjustment).mockRejectedValue(new ApiError({
+      message: "I dati inseriti non sono validi.",
+      status: 422,
+      code: "PLAFOND_INSUFFICIENT",
+      details: {
+        plafond_expense_id: 41,
+        currency: "EUR",
+        basis: "net",
+        allocated: "3500.00",
+        available: "1000.00",
+        required: "1200.00",
+        shortage: "200.00",
+        impact: { current: measures, proposed: { ...measures, available: { net: "-200.00", vat: "-44.00", gross: "-244.00", official: "-200.00" } }, blocking_rows: [] },
+      },
+    }));
     render(<MemoryRouter><PlafondEditor plafond={plafond} /></MemoryRouter>);
     fireEvent.change(screen.getByLabelText("Descrizione"), { target: { value: "Riduzione" } });
     fireEvent.change(screen.getByLabelText("Quantità (alternativa)"), { target: { value: "2" } });
@@ -59,6 +73,7 @@ describe("PlafondEditor", () => {
     expect(plafondApi.addAllocationAdjustment).toHaveBeenCalledWith(41, expect.objectContaining({ lock_version: 3, adjustment: expect.objectContaining({ quantity: "2", unit_price: "-600" }) }));
     expect(vi.mocked(plafondApi.addAllocationAdjustment).mock.calls[0][1].adjustment).not.toHaveProperty("entered_amount");
     expect(await screen.findByText("Capienza insufficiente")).toBeInTheDocument();
+    expect(screen.getByText(/Riduci l.importo, aumenta l.Allocazione, dividi la Spesa o rimuovi la copertura/)).toBeInTheDocument();
     expect(screen.getByLabelText("Descrizione")).toHaveValue("Riduzione");
     expect(screen.getByLabelText("Quantità (alternativa)")).toHaveValue("2");
   });

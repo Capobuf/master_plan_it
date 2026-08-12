@@ -18,8 +18,16 @@ import Label from "../form/Label";
 import Select from "../form/Select";
 import { normalizeDecimal } from "../expenses/expenseEditorTypes";
 import PlafondImpactPanel from "./PlafondImpactPanel";
+import { plafondImpactFromError } from "./plafondErrorImpact";
 
-const emptyAdjustment = (): AllocationAdjustmentInput => ({ description: "", notes: null, entered_amount: "", amount_includes_vat: false, date: new Date().toISOString().slice(0, 10) });
+const localDate = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+const emptyAdjustment = (): AllocationAdjustmentInput => ({ description: "", notes: null, entered_amount: "", amount_includes_vat: false, date: localDate() });
 
 export default function PlafondEditor({ plafond, onSaved }: { plafond?: PlafondDetail; onSaved?: (detail: PlafondDetail) => void }) {
   const navigate = useNavigate();
@@ -52,6 +60,7 @@ export default function PlafondEditor({ plafond, onSaved }: { plafond?: PlafondD
   }, [creating, hasAbility]);
 
   const disabled = busy || readOnly;
+  const displayedImpact = impact ?? plafondImpactFromError(error, plafond?.title);
   const updateAdjustment = (patch: Partial<AllocationAdjustmentInput>) => {
     setDirty(true); setAdjustment((current) => ({ ...current, ...patch })); setImpact(null); setError(null);
   };
@@ -116,7 +125,7 @@ export default function PlafondEditor({ plafond, onSaved }: { plafond?: PlafondD
       </div>
     </ComponentCard>
     {!valid && adjustment.description ? <Alert variant="warning" title="Importo richiesto" message="Inserisci l’importo diretto oppure la coppia completa quantità e prezzo unitario." /> : null}
-    {impact ? <PlafondImpactPanel impact={impact} canOpenRows={hasAbility("expense.view")} /> : null}
+    {displayedImpact ? <PlafondImpactPanel impact={displayedImpact} canOpenRows={hasAbility("expense.view")} /> : null}
     <div className="flex flex-wrap justify-end gap-2">
       {!creating ? <Button type="button" variant="outline" disabled={disabled || !valid} onClick={() => void preview()}>{busy ? "Verifica…" : "Verifica impatto"}</Button> : null}
       <Button disabled={disabled || !valid}>{busy ? "Salvataggio…" : creating ? "Crea Plafond" : "Aggiungi variazione"}</Button>
