@@ -268,6 +268,37 @@ final class AnnualExpenseApiTest extends TestCase
             ->assertJsonPath('data.contract_id', $contract->getKey());
     }
 
+    public function test_ordinary_expense_transport_accepts_only_one_nullable_plafond_reference_and_rejects_deprecated_coverage_shapes(): void
+    {
+        [, $user, $year, $center, $vendor] = $this->workspace();
+        $this->actingAs($user, 'web');
+        $plafondId = (int) $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/plafonds', [
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(), 'title' => 'API funding', 'notes' => null,
+            'initial_allocation' => ['description' => 'Initial allocation', 'notes' => null, 'entered_amount' => '3000.00', 'amount_includes_vat' => false, 'vat_rate' => '22.00', 'date' => '2026-08-12'],
+        ])->assertCreated()->json('data.id');
+
+        $payload = $this->payload($year, $center, $vendor);
+        $payload['rows'][0]['funded_plafond_expense_id'] = $plafondId;
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.rows.0.funded_plafond.id', $plafondId);
+
+        foreach (['coverage_percentage' => '50.00', 'coverage_amount' => '50.00', 'coverage_allocations' => [$plafondId]] as $field => $value) {
+            $invalid = $this->payload($year, $center, $vendor);
+            $invalid['rows'][0][$field] = $value;
+            $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $invalid)
+                ->assertUnprocessable()
+                ->assertJsonPath('error.code', 'VALIDATION_FAILED')
+                ->assertJsonStructure(['error' => ['fields' => ["rows.0.{$field}"]]]);
+        }
+
+        $plafondPayload = $this->payload($year, $center, $vendor);
+        $plafondPayload['kind'] = 'plafond';
+        $plafondPayload['rows'][0]['type'] = 'allocation_adjustment';
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $plafondPayload)
+            ->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
+    }
+
     /** @return array{Tenant, User, PlanningYear, CostCenter, Vendor} */
     private function workspace(bool $activeYear = true): array
     {
