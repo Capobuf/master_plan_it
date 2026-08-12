@@ -84,7 +84,7 @@ final class PlafondApiHttpTest extends TestCase
         foreach ([$foreignId, 999999999] as $id) {
             $response = $this->getJson('/api/v1/plafonds/'.$id.'?planning_year_id='.$year->getKey())
                 ->assertNotFound()->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
-            $pathErrors[] = $response->json('error');
+            $pathErrors[] = collect($response->json('error'))->except('correlation_id')->all();
         }
         $this->assertSame($pathErrors[0], $pathErrors[1]);
     }

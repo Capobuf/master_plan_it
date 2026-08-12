@@ -52,7 +52,7 @@ final class PlafondCoverageTest extends TestCase
             $response = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $this->payload($year, $center, $vendor, $id))
                 ->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED')
                 ->assertJsonStructure(['error' => ['fields' => ['rows.0.funded_plafond_expense_id']]]);
-            $errors[] = $response->json('error');
+            $errors[] = collect($response->json('error'))->except('correlation_id')->all();
         }
         $this->assertSame($errors[0], $errors[1]);
     }
