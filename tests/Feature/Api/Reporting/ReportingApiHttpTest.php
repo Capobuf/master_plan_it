@@ -140,6 +140,33 @@ final class ReportingApiHttpTest extends TestCase
             ->assertNotFound()->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
     }
 
+    public function test_budget_and_report_expose_canonical_plafond_measures_without_overrun_aliases(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $center = CostCenter::factory()->for($tenant)->create();
+        $this->actingAs($user, 'web');
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/plafonds', [
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(), 'title' => 'Reporting plafond', 'notes' => null,
+            'initial_allocation' => ['description' => 'Initial allocation', 'notes' => null, 'entered_amount' => '3000.00', 'amount_includes_vat' => false, 'vat_rate' => '22.00', 'date' => '2026-08-12'],
+        ])->assertCreated();
+
+        $budget = $this->getJson('/api/v1/budget?planning_year_id='.$year->getKey())
+            ->assertOk()
+            ->assertJsonStructure(['data' => ['plafonds' => [['measures' => ['allocation', 'coverage_planned', 'consumed', 'available']]]]])
+            ->assertJsonMissingPath('data.summary.plafond_overrun')
+            ->json('data.plafonds.0.measures');
+        $report = $this->getJson('/api/v1/reports?planning_year_id='.$year->getKey().'&group_by=expense')
+            ->assertOk()
+            ->assertJsonStructure(['plafonds' => [['measures' => ['allocation', 'coverage_planned', 'consumed', 'available']]]])
+            ->assertJsonMissingPath('global_plafond_overrun')
+            ->assertJsonMissingPath('summary.plafond_overrun')
+            ->json('plafonds.0.measures');
+
+        $this->assertSame($budget, $report);
+    }
+
     private function expenseWithProjection(
         Tenant $tenant,
         PlanningYear $year,
