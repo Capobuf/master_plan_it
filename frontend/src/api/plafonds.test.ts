@@ -30,7 +30,7 @@ describe("plafonds adapter", () => {
     const result = await listAllPlafonds({ planning_year_id: 25 });
 
     expect(result).toHaveLength(101);
-    expect(result.at(-1)?.id).toBe(101);
+    expect(result[result.length - 1]?.id).toBe(101);
     expect(get).toHaveBeenNthCalledWith(1, "/api/v1/plafonds", { params: { planning_year_id: 25, page: 1, per_page: 100 } });
     expect(get).toHaveBeenNthCalledWith(2, "/api/v1/plafonds", { params: { planning_year_id: 25, page: 2, per_page: 100 } });
   });
