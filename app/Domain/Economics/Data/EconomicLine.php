@@ -19,5 +19,11 @@ final readonly class EconomicLine
         public ?int $vendorId = null,
         public ?string $vendorName = null,
         public ?int $contractId = null,
+        public string $expenseTitle = '',
+        public ?int $createdByUserId = null,
+        public ?string $createdByUserName = null,
+        public ?string $fundedPlafondTitle = null,
+        public ?int $fundedPlafondCostCenterId = null,
+        public ?string $fundedPlafondCostCenterName = null,
     ) {}
 }

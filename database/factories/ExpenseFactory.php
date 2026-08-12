@@ -51,4 +51,14 @@ class ExpenseFactory extends Factory
             'lock_version' => 1,
         ];
     }
+
+    public function plafond(): static
+    {
+        return $this->state(fn (): array => [
+            'kind' => ExpenseKind::Plafond,
+            'project_id' => null,
+            'contract_id' => null,
+            'current_planning_row_id' => null,
+        ]);
+    }
 }
