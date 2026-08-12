@@ -64,7 +64,6 @@ const dataset: AnnualBudget = {
     residual: "0.00",
     variance: "0.00",
     utilization_percentage: null,
-    plafond_overrun: "0.00",
     unapproved_actual_expenses: 0,
   },
   currency: "EUR",

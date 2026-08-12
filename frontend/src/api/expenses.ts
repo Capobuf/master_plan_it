@@ -4,7 +4,8 @@ import {
   type PaginatedData,
 } from "./client";
 import type { OperationalRevision, RevisionComparison } from "./revisions";
-import type { EconomicMeasure, ProjectionTotals } from "./projection";
+import type { EconomicMeasure, ProjectionTotals, PlafondMeasures } from "./projection";
+import { listPlafonds } from "./plafonds";
 
 export type ExpenseMoney = EconomicMeasure;
 
@@ -93,6 +94,16 @@ export interface ExpenseRow {
   generated: boolean;
   contract_term_id: number | null;
   amount: EconomicMeasure;
+  funded_plafond: FundedPlafondReference | null;
+}
+
+export interface FundedPlafondReference {
+  id: number;
+  title: string;
+  cost_center: { id: number; name: string };
+  currency: string;
+  basis: "net" | "gross";
+  measures: PlafondMeasures;
 }
 
 export interface ExpenseDetail {
@@ -138,6 +149,7 @@ export interface ExpenseRowInput {
   spend_date?: string;
   external_reference?: string;
   lock_version?: number;
+  funded_plafond_expense_id?: number | null;
 }
 
 export interface ExpenseWrite {
@@ -171,7 +183,10 @@ export interface ExpenseContractOption {
 export interface PlafondExpenseOption {
   id: number;
   title: string;
-  cost_center_name: string | null;
+  cost_center: { id: number; name: string };
+  currency: string;
+  basis: "net" | "gross";
+  measures: PlafondMeasures;
 }
 
 export interface DeleteExpenseRequest {
@@ -297,16 +312,15 @@ export async function listExpenseContracts(): Promise<ExpenseContractOption[]> {
 export async function listEligiblePlafondExpenses(
   planningYearId: number,
 ): Promise<PlafondExpenseOption[]> {
-  const items: PlafondExpenseOption[] = [];
-  let page = 1;
-  let lastPage = 1;
-  do {
-    const response = await listExpenses({ planning_year_id: planningYearId, kind: "plafond", page, per_page: 100 });
-    items.push(...response.data.map((expense) => ({ id: expense.id, title: expense.title, cost_center_name: expense.cost_center_name })));
-    lastPage = response.meta.last_page;
-    page = response.meta.current_page + 1;
-  } while (page <= lastPage);
-  return items;
+  const response = await listPlafonds({ planning_year_id: planningYearId, per_page: 100 });
+  return response.data.map((plafond) => ({
+    id: plafond.id,
+    title: plafond.title,
+    cost_center: plafond.cost_center,
+    currency: plafond.currency,
+    basis: plafond.basis,
+    measures: plafond.measures,
+  }));
 }
 
 export async function createExpense(input: ExpenseWrite): Promise<ExpenseDetail> {

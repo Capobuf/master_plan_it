@@ -129,7 +129,7 @@ describe("ExpenseEditorRows", () => {
     expect(document.querySelector(".flatpickr-calendar")).toHaveClass("open");
 
     const headings = Array.from(document.querySelectorAll("[data-erp-column-heading]")).map((heading) => heading.textContent);
-    expect(headings.slice(4, 8)).toEqual(["Q.tà", "Prezzo Unitario", "Importo", "IVA inclusa"]);
+    expect(headings.slice(4, 9)).toEqual(["Copertura Plafond", "Q.tà", "Prezzo Unitario", "Importo", "IVA inclusa"]);
     expect(screen.getByRole("checkbox", { name: "IVA inclusa" })).toBeInTheDocument();
     const vatInput = screen.getByRole("textbox", { name: "IVA riga 1", hidden: true });
     expect(vatInput.closest("section")).toHaveClass("hidden");

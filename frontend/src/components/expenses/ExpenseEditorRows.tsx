@@ -1,6 +1,6 @@
 import { useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import type { ExpenseLookupOption } from "../../api/expenses";
+import type { ExpenseLookupOption, PlafondExpenseOption } from "../../api/expenses";
 import { ChevronDownIcon, HorizontaLDots, TrashBinIcon } from "../../icons";
 import IconButton from "../common/IconButton";
 import Select from "../form/Select";
@@ -16,13 +16,14 @@ const rowTypeOptions = [
   { value: "actual", label: "Actual" },
 ];
 
-const rowGridClass = "grid grid-cols-[64px_105px_120px_minmax(190px,1fr)_70px_95px_95px_90px_125px_95px_84px] items-start gap-2";
+const rowGridClass = "grid grid-cols-[64px_105px_120px_minmax(190px,1fr)_170px_70px_95px_95px_90px_125px_95px_84px] items-start gap-2";
 const columnHeadingClass = "px-1 text-left text-[11px] font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400";
 const columnHeadings = [
   "Riga",
   "Tipo",
   "Fornitore",
   "Descrizione",
+  "Copertura Plafond",
   "Q.tà",
   "Prezzo Unitario",
   "Importo",
@@ -36,6 +37,7 @@ interface ExpenseEditorRowsProps {
   rows: ExpenseEditorRow[];
   defaultVatRate?: string | null;
   vendors: ExpenseLookupOption[];
+  plafonds?: PlafondExpenseOption[];
   onChange: (index: number, patch: Partial<ExpenseEditorRow>) => void;
   onMove: (from: number, to: number) => void;
   onRemove: (index: number) => void;
@@ -53,6 +55,7 @@ function DraggableExpenseRow({
   index,
   count,
   vendors,
+  plafonds = [],
   onChange,
   onMove,
   onRemove,
@@ -64,6 +67,7 @@ function DraggableExpenseRow({
   index: number;
   count: number;
   vendors: ExpenseLookupOption[];
+  plafonds: PlafondExpenseOption[];
   onChange: (patch: Partial<ExpenseEditorRow>) => void;
   onMove: (from: number, to: number) => void;
   onRemove: () => void;
@@ -91,6 +95,10 @@ function DraggableExpenseRow({
   const vendorOptions = vendors
     .filter((vendor) => vendor.active !== false || vendor.id === row.vendor_id)
     .map((vendor) => ({ value: String(vendor.id), label: vendor.name }));
+  const plafondOptions = plafonds.map((plafond) => ({
+    value: String(plafond.id),
+    label: `${plafond.title} · Centro: ${plafond.cost_center.name}`,
+  }));
   const calculatedMode = Boolean(row.quantity || row.unit_price);
   const errorFor = (field: string) => validationErrors[`rows.${index}.${field}`];
   const rowError = validationErrors[`rows.${index}`];
@@ -169,6 +177,21 @@ function DraggableExpenseRow({
             disabled={disabled}
             error={Boolean(errorFor("description"))}
             hint={errorFor("description")}
+          />
+        </div>
+
+        <div>
+          <Select
+            id={`${row.editorKey}-funded-plafond`}
+            ariaLabel={`Copertura Plafond riga ${index + 1}`}
+            options={plafondOptions}
+            value={row.funded_plafond_expense_id ? String(row.funded_plafond_expense_id) : ""}
+            placeholder="Nessuna copertura"
+            allowEmpty
+            onChange={(value) => onChange({ funded_plafond_expense_id: value ? Number(value) : null })}
+            disabled={disabled}
+            error={Boolean(errorFor("funded_plafond_expense_id"))}
+            hint={errorFor("funded_plafond_expense_id") ?? "Copre integralmente questa riga; il Centro di Costo può essere differente."}
           />
         </div>
 
@@ -384,6 +407,7 @@ export default function ExpenseEditorRows({
   rows,
   defaultVatRate = null,
   vendors,
+  plafonds = [],
   onChange,
   onMove,
   onRemove,
@@ -392,7 +416,7 @@ export default function ExpenseEditorRows({
 }: ExpenseEditorRowsProps) {
   return (
     <div className="max-w-full overflow-x-auto rounded-xl border border-gray-200 dark:border-gray-800">
-      <div className="min-w-[1260px]">
+      <div className="min-w-[1430px]">
         <div
           className={`${rowGridClass} border-b border-gray-200 bg-gray-50 px-3 py-2.5 dark:border-gray-800 dark:bg-gray-900`}
         >
@@ -411,6 +435,7 @@ export default function ExpenseEditorRows({
             index={index}
             count={rows.length}
             vendors={vendors}
+            plafonds={plafonds}
             onChange={(patch) => onChange(index, patch)}
             onMove={onMove}
             onRemove={() => onRemove(index)}

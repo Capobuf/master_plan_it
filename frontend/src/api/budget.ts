@@ -1,5 +1,5 @@
 import { apiClient, type DataEnvelope } from "./client";
-import type { ProjectionTotals } from "./projection";
+import type { PlafondMeasures, ProjectionTotals } from "./projection";
 
 export interface AnnualBudgetExpense {
   id: number;
@@ -18,6 +18,7 @@ export interface AnnualBudgetExpense {
   currency: string;
   basis: "net" | "gross";
   totals: ProjectionTotals;
+  plafond_measures?: PlafondMeasures;
   planned?: string | null;
   approved?: string | null;
   approved_basis?: "net" | "gross" | null;
@@ -41,7 +42,6 @@ export interface AnnualBudgetSummary {
   utilization_percentage?: string | null;
   currency?: string;
   official_basis?: "net" | "gross";
-  plafond_overrun?: string;
   unapproved_actual_expenses?: number;
 }
 

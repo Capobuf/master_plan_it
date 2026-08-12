@@ -34,7 +34,6 @@ export interface ReportSummary {
   residual: string;
   variance: string;
   utilization_percentage: string | null;
-  plafond_overrun: string;
   unapproved_actual_expenses: number;
 }
 
@@ -99,7 +98,6 @@ export interface ReportsResponse {
   basis: "net" | "gross";
   totals: ProjectionTotals;
   summary: ReportSummary;
-  global_plafond_overrun: string;
   filters: ReportFilters;
 }
 

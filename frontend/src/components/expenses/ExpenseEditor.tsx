@@ -8,11 +8,13 @@ import {
   getExpense,
   listExpenseContracts,
   listExpenseCostCenters,
+  listEligiblePlafondExpenses,
   listExpenseVendors,
   updateExpense,
   type ExpenseContractOption,
   type ExpenseDetail,
   type ExpenseLookupOption,
+  type PlafondExpenseOption,
   type ExpenseUpdate,
   type ExpenseWrite,
 } from "../../api/expenses";
@@ -76,6 +78,7 @@ const expenseRowFieldIdSuffixes: Record<string, string> = {
   vat_rate: "vat-rate",
   spend_date: "spend-date-display",
   external_reference: "external",
+  funded_plafond_expense_id: "funded-plafond",
   is_current_planning: "current",
 };
 
@@ -100,6 +103,7 @@ function validationSuggestion(field: string): string {
     spend_date: "Inserisci una data reale valida.",
     amount_includes_vat: "Controlla questa opzione.",
     external_reference: "Controlla il riferimento inserito.",
+    funded_plafond_expense_id: "Seleziona un Plafond valido oppure rimuovi la copertura.",
     is_current_planning: "Seleziona come corrente soltanto una Stima o un Preventivo.",
   };
   if (suggestions[name]) return suggestions[name];
@@ -165,6 +169,7 @@ function toEditorRows(detail: ExpenseDetail): ExpenseEditorRow[] {
     spend_date: row.spend_date ?? undefined,
     is_current_planning: row.is_current_planning,
     external_reference: row.external_reference ?? undefined,
+    funded_plafond_expense_id: row.funded_plafond?.id ?? null,
     lock_version: row.lock_version,
   }));
 }
@@ -232,6 +237,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
   const [costCenters, setCostCenters] = useState<ExpenseLookupOption[]>([]);
   const [contracts, setContracts] = useState<ExpenseContractOption[]>([]);
   const [projects, setProjects] = useState<ProjectLookupOption[]>([]);
+  const [plafonds, setPlafonds] = useState<PlafondExpenseOption[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
@@ -306,6 +312,10 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
       .finally(() => {
         if (active) setLoading(false);
       });
+
+    void listEligiblePlafondExpenses(selectedPlanningYearId)
+      .then((plafondOptions) => { if (active) setPlafonds(plafondOptions); })
+      .catch(() => { if (active) setPlafonds([]); });
 
     return () => {
       active = false;
@@ -476,6 +486,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
         ...(vatRate ? { vat_rate: vatRate } : {}),
         ...(row.spend_date ? { spend_date: row.spend_date } : {}),
         ...(row.is_current_planning ? { is_current_planning: true } : {}),
+        ...(row.funded_plafond_expense_id !== undefined ? { funded_plafond_expense_id: row.funded_plafond_expense_id } : {}),
         ...(row.external_reference?.trim() ? { external_reference: row.external_reference.trim() } : {}),
         ...(row.lock_version !== undefined ? { lock_version: row.lock_version } : {}),
       })),
@@ -551,11 +562,11 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
                 <EditorSelect
                   id="expense-editor-kind"
                   value={header.kind}
-                  options={[{ value: "ordinary", label: "Ordinaria" }, { value: "plafond", label: "Plafond" }]}
-                  onChange={(kind) => updateHeader({ kind })}
-                  disabled={disabled}
+                  options={[{ value: "ordinary", label: "Ordinaria" }]}
+                  onChange={() => undefined}
+                  disabled
                   error={Boolean(fieldError("kind"))}
-                  hint={fieldError("kind")}
+                  hint="I Plafond sono creati dal Registro Plafond dedicato."
                 />
               </div>
               <div>
@@ -590,7 +601,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
         <div id="expense-editor-rows" tabIndex={-1} className="focus:outline-hidden focus:ring-3 focus:ring-error-500/10">
           {fieldError("rows") ? <p className="mb-3 text-xs text-error-500">{fieldError("rows")}</p> : null}
           <DndProvider backend={HTML5Backend}>
-            <ExpenseEditorRows rows={rows} defaultVatRate={tenantDefaultVatRate} vendors={vendors} onChange={updateRow} onMove={moveRow} onRemove={removeRow} disabled={disabled} validationErrors={validationErrors} />
+            <ExpenseEditorRows rows={rows} defaultVatRate={tenantDefaultVatRate} vendors={vendors} plafonds={plafonds} onChange={updateRow} onMove={moveRow} onRemove={removeRow} disabled={disabled} validationErrors={validationErrors} />
           </DndProvider>
         </div>
         <div className="flex justify-end">

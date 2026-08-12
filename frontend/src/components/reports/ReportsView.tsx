@@ -19,6 +19,7 @@ import Badge from "../ui/badge/Badge";
 import Button from "../ui/button/Button";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 import ReportEconomicChart from "./ReportEconomicChart";
+import PlafondReport from "../plafonds/PlafondReport";
 
 const groupings: Array<{ value: ReportGrouping; label: string }> = [
   { value: "cost_center", label: "Centro di Costo" },
@@ -210,6 +211,7 @@ export default function ReportsView({
       {!response && loading ? <Alert variant="info" title="Caricamento del Report" message="Recupero dei dati annuali." /> : null}
 
       {response ? <EcommerceMetrics metrics={metrics} columns={6} /> : null}
+      {response && filters.view === "current" ? <PlafondReport planningYearId={planningYearId} {...(filters.costCenter ? { costCenterId: Number.parseInt(filters.costCenter, 10) } : {})} /> : null}
       {response && response.data.length === 0 ? <Alert variant="info" title="Nessun risultato" message="Nessun gruppo corrisponde ai filtri applicati." /> : null}
 
       {response ? (

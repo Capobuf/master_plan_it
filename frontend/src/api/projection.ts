@@ -12,6 +12,14 @@ export interface ProjectionTotals {
   actual: EconomicMeasure;
 }
 
+/** Exact server projection for a Plafond. Never derive one measure from another in the client. */
+export interface PlafondMeasures {
+  allocation: EconomicMeasure;
+  coverage_planned: EconomicMeasure;
+  consumed: EconomicMeasure;
+  available: EconomicMeasure;
+}
+
 export interface ProjectionContext {
   currency: string;
   basis: "net" | "gross";
