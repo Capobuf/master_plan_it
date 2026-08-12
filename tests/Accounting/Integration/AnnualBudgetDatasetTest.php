@@ -73,6 +73,10 @@ final class AnnualBudgetDatasetTest extends TestCase
         $this->assertSame('140.00', $budget['summary']['actual']);
         $this->assertArrayNotHasKey('plafond_overrun', $budget['summary']);
         $this->assertArrayHasKey('plafonds', $budget);
+        $budgetExpenses = collect($budget['expenses'])->keyBy('title');
+        $this->assertSame('3500.00', $budgetExpenses['Plafond licenze']['planned']);
+        $this->assertSame('0.00', $budgetExpenses['Licenze']['planned']);
+        $this->assertSame('100.00', $budgetExpenses['Hosting']['planned']);
 
         foreach (['cost_center', 'project', 'contract', 'vendor', 'expense'] as $groupBy) {
             $report = app(AnnualEconomicReportQuery::class)->execute(

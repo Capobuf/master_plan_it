@@ -181,4 +181,27 @@ describe("ReportsView", () => {
     expect(screen.getByText(/Effettivo · Data Effettiva 2027-01-15/)).toBeInTheDocument();
     expect(screen.getByText("Fattura verificata")).toBeInTheDocument();
   });
+
+  it("labels allocation adjustments and links them to the Plafond document", async () => {
+    vi.mocked(getReports).mockResolvedValue({
+      ...response,
+      data: [{
+        ...response.data[0],
+        lines: [{
+          ...response.data[0].lines[0],
+          expense_id: 41,
+          row_id: 501,
+          type: "allocation_adjustment",
+          description: "Allocazione iniziale",
+          spend_date: "2026-01-10",
+        }],
+      }],
+    });
+    render(<MemoryRouter><ReportsView tenantId={1} planningYearId={1} canView canLoadCostCenters canLoadProjects canLoadVendors /></MemoryRouter>);
+
+    fireEvent.click(await screen.findByRole("button", { name: /Migrazione ERP/ }));
+
+    expect(screen.getByRole("link", { name: "Allocazione iniziale" })).toHaveAttribute("href", "/plafonds/41");
+    expect(screen.getByText(/Variazione Allocazione/)).toBeInTheDocument();
+  });
 });

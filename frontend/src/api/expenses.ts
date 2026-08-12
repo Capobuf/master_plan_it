@@ -5,7 +5,7 @@ import {
 } from "./client";
 import type { OperationalRevision, RevisionComparison } from "./revisions";
 import type { EconomicMeasure, ProjectionTotals, PlafondMeasures } from "./projection";
-import { listPlafonds } from "./plafonds";
+import { listAllPlafonds } from "./plafonds";
 
 export type ExpenseMoney = EconomicMeasure;
 
@@ -312,8 +312,8 @@ export async function listExpenseContracts(): Promise<ExpenseContractOption[]> {
 export async function listEligiblePlafondExpenses(
   planningYearId: number,
 ): Promise<PlafondExpenseOption[]> {
-  const response = await listPlafonds({ planning_year_id: planningYearId, per_page: 100 });
-  return response.data.map((plafond) => ({
+  const plafonds = await listAllPlafonds({ planning_year_id: planningYearId });
+  return plafonds.map((plafond) => ({
     id: plafond.id,
     title: plafond.title,
     cost_center: plafond.cost_center,

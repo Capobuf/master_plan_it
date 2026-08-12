@@ -117,6 +117,23 @@ export async function listPlafonds(params: PlafondListParams): Promise<PlafondLi
   return response.data;
 }
 
+export async function listAllPlafonds(
+  params: Omit<PlafondListParams, "page" | "per_page">,
+): Promise<PlafondSummary[]> {
+  const plafonds: PlafondSummary[] = [];
+  let page = 1;
+  let lastPage = 1;
+
+  do {
+    const response = await listPlafonds({ ...params, page, per_page: 100 });
+    plafonds.push(...response.data);
+    lastPage = response.meta.last_page;
+    page += 1;
+  } while (page <= lastPage);
+
+  return plafonds;
+}
+
 export async function getPlafond(id: number, planningYearId: number): Promise<PlafondDetail> {
   const response = await apiClient.get<DataEnvelope<PlafondDetail>>(`/api/v1/plafonds/${id}`, { params: { planning_year_id: planningYearId } });
   return response.data.data;

@@ -141,7 +141,9 @@ final class HistoricalAnnualBudgetQuery
             }
             $currentPlanning = $expenseProjection->currentPlanning;
             $actualMeasure = $expenseProjection->actual;
-            $planned = $selectedId === null ? null : $currentPlanning->official;
+            $planned = ($contents['kind'] ?? 'ordinary') === 'plafond' || $selectedId !== null
+                ? $this->contributivePlanning($expenseProjection->lines, $projection->basis)->official
+                : null;
             $actual = $actualMeasure->official;
             $approved = array_key_exists('approved_amount', $contents) && $contents['approved_amount'] !== null ? $this->decimal($contents['approved_amount']) : null;
             $rows[] = [
@@ -438,6 +440,19 @@ final class HistoricalAnnualBudgetQuery
             'consumed' => $this->measure($plafond->consumed),
             'available' => $this->measure($plafond->available),
         ];
+    }
+
+    /** @param list<ProjectedEconomicLine> $lines */
+    private function contributivePlanning(array $lines, string $basis): EconomicMeasure
+    {
+        $planning = EconomicMeasure::zero($basis);
+        foreach ($lines as $line) {
+            if ($line->contributesToCurrentPlanning) {
+                $planning = $planning->plus($line->amount, $basis);
+            }
+        }
+
+        return $planning;
     }
 
     /** @return array{net:string,vat:string,gross:string,official:string} */

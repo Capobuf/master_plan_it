@@ -11,6 +11,7 @@ import {
 } from "../../api/reports";
 import { AlertHexaIcon, BoxIconLine, CheckCircleIcon, DollarLineIcon, ListIcon, PieChartIcon } from "../../icons";
 import { formatMoney, formatPercentage, toChartNumber } from "../../presentation/formatters";
+import { routes } from "../../navigation/routes";
 import EcommerceMetrics, { type EcommerceMetric } from "../ecommerce/EcommerceMetrics";
 import Label from "../form/Label";
 import Select from "../form/Select";
@@ -289,13 +290,16 @@ export default function ReportsView({
                               {group.lines.map((line) => (
                                 <li key={`${line.expense_id}:${line.row_id}`} className="rounded-lg border border-gray-200 bg-white p-3 text-sm dark:border-gray-700 dark:bg-gray-900">
                                   <div className="flex flex-wrap items-center justify-between gap-2">
-                                    <Link className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400" to={`/spese/${line.expense_id}`}>
+                                    <Link
+                                      className="font-medium text-brand-600 hover:text-brand-700 dark:text-brand-400"
+                                      to={line.type === "allocation_adjustment" ? routes.plafond(line.expense_id) : `/spese/${line.expense_id}`}
+                                    >
                                       {line.description}
                                     </Link>
                                     <span className="font-medium text-gray-800 dark:text-white/90">{formatMoney(line.amount.official, currency)}</span>
                                   </div>
                                   <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                                    {line.type === "actual" ? "Effettivo" : line.type === "quote" ? "Preventivo" : "Stima"}
+                                    {line.type === "allocation_adjustment" ? "Variazione Allocazione" : line.type === "actual" ? "Effettivo" : line.type === "quote" ? "Preventivo" : "Stima"}
                                     {line.is_current_planning ? " · Pianificazione corrente" : ""}
                                     {line.spend_date ? ` · Data Effettiva ${line.spend_date}` : ""}
                                   </p>
