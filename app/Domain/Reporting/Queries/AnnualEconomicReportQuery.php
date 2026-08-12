@@ -71,7 +71,11 @@ final readonly class AnnualEconomicReportQuery
                 'utilization_percentage' => $this->utilization($totals['actual']['official'], $approved),
                 'unapproved_actual_expenses' => $unapproved,
             ],
-            'plafonds' => $budget['plafonds'] ?? [],
+            'plafonds' => array_values(array_filter(
+                $budget['plafonds'] ?? [],
+                static fn (array $plafond): bool => $filter->costCenterId === null
+                    || (int) ($plafond['cost_center']['id'] ?? 0) === $filter->costCenterId,
+            )),
             'filters' => [
                 'planning_year_id' => $filter->planningYearId,
                 'cost_center_id' => $filter->costCenterId,

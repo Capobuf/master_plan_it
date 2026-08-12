@@ -29,6 +29,8 @@ import Select from "../form/Select";
 import TextArea from "../form/input/TextArea";
 import ComponentCard from "../common/ComponentCard";
 import ExpenseEditorRows from "./ExpenseEditorRows";
+import PlafondImpactPanel from "../plafonds/PlafondImpactPanel";
+import { plafondImpactFromError } from "../plafonds/plafondErrorImpact";
 import {
   isDecimalText,
   newExpenseEditorRow,
@@ -323,6 +325,11 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
   }, [canSubmit, canUseLookups, canView, canViewContracts, canViewProjects, canViewVendors, contextLoading, editing, expenseId, selectedPlanningYearId, tenantId]);
 
   const disabled = loading || submitting || !canSubmit;
+  const insufficientPlafondId = typeof error?.details.plafond_expense_id === "number" ? error.details.plafond_expense_id : null;
+  const insufficientImpact = plafondImpactFromError(
+    error,
+    plafonds.find((plafond) => plafond.id === insufficientPlafondId)?.title,
+  );
   const costCenterOptions = useMemo(
     () => byIdOption(costCenters, header.cost_center_id, "Centro di Costo corrente").map((option) => ({ value: String(option.id), label: option.name })),
     [costCenters, header.cost_center_id],
@@ -526,6 +533,7 @@ export default function ExpenseEditor({ expenseId }: ExpenseEditorProps) {
   return (
     <form id="expense-editor-form" tabIndex={-1} className="space-y-6 focus:outline-hidden" onSubmit={(event) => void submit(event)}>
       {error && <Alert variant="error" title={error.handledStatus === 422 ? "Controlla i dati" : "Salvataggio non riuscito"} message={expenseErrorMessage(error)} />}
+      {insufficientImpact ? <PlafondImpactPanel impact={insufficientImpact} canOpenRows={canView} title="Capienza del Plafond" /> : null}
       {validationMessage && <Alert variant="warning" title="Controlla i campi" message={validationMessage} />}
       <ComponentCard title="Dati generali" compact>
         <div className="grid gap-6 xl:grid-cols-12 xl:items-start">
