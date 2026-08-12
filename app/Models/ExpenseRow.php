@@ -70,6 +70,7 @@ class ExpenseRow extends Model implements HasMedia
         'confirmation_state',
         'confirmed_by_user_id',
         'confirmed_at',
+        'created_by_user_id',
         'is_system_managed',
         'manual_override_at',
         'contract_term_id',
@@ -158,6 +159,14 @@ class ExpenseRow extends Model implements HasMedia
     public function confirmedBy(): BelongsTo
     {
         return $this->belongsTo(User::class, 'confirmed_by_user_id');
+    }
+
+    /**
+     * @return BelongsTo<User, $this>
+     */
+    public function createdBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'created_by_user_id');
     }
 
     /**

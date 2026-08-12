@@ -12,6 +12,8 @@
     <source>
         <include>
             <directory>app/Domain/Economics</directory>
+            <file>app/Domain/Expenses/Services/PlafondCapacityService.php</file>
+            <file>app/Domain/Expenses/Services/PlafondLifecycleGuard.php</file>
         </include>
     </source>
     <coverage pathCoverage="true">
