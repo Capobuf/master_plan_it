@@ -1,5 +1,6 @@
 import { apiClient, type PaginationMeta } from "./client";
 import type { EconomicMeasure, ProjectionTotals } from "./projection";
+import type { PlafondMeasures } from "./projection";
 
 export type ReportGrouping = "cost_center" | "project" | "contract" | "vendor" | "expense";
 
@@ -98,6 +99,15 @@ export interface ReportsResponse {
   basis: "net" | "gross";
   totals: ProjectionTotals;
   summary: ReportSummary;
+  plafonds?: Array<{
+    id: number;
+    planning_year_id: number;
+    title: string;
+    cost_center: { id: number; name: string };
+    currency: string;
+    basis: "net" | "gross";
+    measures: PlafondMeasures;
+  }>;
   filters: ReportFilters;
 }
 

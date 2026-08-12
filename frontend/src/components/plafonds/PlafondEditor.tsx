@@ -19,8 +19,7 @@ import Select from "../form/Select";
 import { normalizeDecimal } from "../expenses/expenseEditorTypes";
 import PlafondImpactPanel from "./PlafondImpactPanel";
 
-const today = new Date().toISOString().slice(0, 10);
-const emptyAdjustment = (): AllocationAdjustmentInput => ({ description: "", notes: null, entered_amount: "", amount_includes_vat: false, date: today });
+const emptyAdjustment = (): AllocationAdjustmentInput => ({ description: "", notes: null, entered_amount: "", amount_includes_vat: false, date: new Date().toISOString().slice(0, 10) });
 
 export default function PlafondEditor({ plafond, onSaved }: { plafond?: PlafondDetail; onSaved?: (detail: PlafondDetail) => void }) {
   const navigate = useNavigate();
@@ -41,9 +40,15 @@ export default function PlafondEditor({ plafond, onSaved }: { plafond?: PlafondD
   useWorkspaceContextGuard(creating ? "plafond-create" : `plafond-adjustment-${plafond.id}`, dirty);
 
   useEffect(() => {
-    if (creating && hasAbility("cost-center.view")) {
-      void listExpenseCostCenters().then(setCenters).catch((cause: unknown) => setError(ApiError.from(cause)));
+    if (!creating || !hasAbility("cost-center.view")) {
+      return;
     }
+    let active = true;
+    void listExpenseCostCenters()
+      .then((options) => { if (active) setCenters(options); })
+      .catch((cause: unknown) => { if (active) setError(ApiError.from(cause)); });
+
+    return () => { active = false; };
   }, [creating, hasAbility]);
 
   const disabled = busy || readOnly;

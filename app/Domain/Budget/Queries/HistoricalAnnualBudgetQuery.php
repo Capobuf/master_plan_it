@@ -8,6 +8,7 @@ use App\Domain\Economics\Data\EconomicLine;
 use App\Domain\Economics\Data\EconomicMeasure;
 use App\Domain\Economics\Data\EconomicScope;
 use App\Domain\Economics\Data\ExpenseEconomicProjection;
+use App\Domain\Economics\Data\PlafondEconomicProjection;
 use App\Domain\Economics\Data\ProjectedEconomicLine;
 use App\Domain\Economics\Services\EconomicEngine;
 use App\Domain\Tenancy\Data\TenantContext;
@@ -64,19 +65,24 @@ final class HistoricalAnnualBudgetQuery
             throw new DomainException('HISTORY_BEFORE_ACTIVATION');
         }
 
-        $expenseSnapshots = collect($latest)->filter(fn (array $item): bool => $item['type'] === $expenseType && $item['mutation'] !== 'delete')
-            ->filter(fn (array $item): bool => $costCenterId === null || (int) ($item['contents']['cost_center_id'] ?? 0) === $costCenterId)->values();
-        $expenseIds = $expenseSnapshots->pluck('id')->all();
+        $annualExpenseSnapshots = collect($latest)
+            ->filter(fn (array $item): bool => $item['type'] === $expenseType && $item['mutation'] !== 'delete')
+            ->values();
+        $annualExpenseSnapshotsById = $annualExpenseSnapshots->keyBy('id');
+        $expenseIds = $annualExpenseSnapshots->pluck('id')->all();
         $rowSnapshots = collect($latest)->filter(fn (array $item): bool => $item['type'] === $rowType && $item['mutation'] !== 'delete')
             ->filter(fn (array $item): bool => in_array((int) ($item['contents']['expense_id'] ?? 0), $expenseIds, true))->values();
-        $labels = $this->labels($context->tenantId, $cutoff, $expenseSnapshots->all(), $rowSnapshots->all());
+        $labels = $this->labels($context->tenantId, $cutoff, $annualExpenseSnapshots->all(), $rowSnapshots->all());
         $basis = $context->budgetBasis->value;
         $economicLines = [];
-        foreach ($expenseSnapshots as $snapshot) {
+        foreach ($annualExpenseSnapshots as $snapshot) {
             $contents = $snapshot['contents'];
             foreach ($rowSnapshots->filter(fn (array $row): bool => (int) ($row['contents']['expense_id'] ?? 0) === $snapshot['id']) as $row) {
                 $rowContents = $row['contents'];
                 $vendorId = isset($rowContents['vendor_id']) ? (int) $rowContents['vendor_id'] : null;
+                $fundedPlafondId = isset($rowContents['funded_plafond_expense_id']) ? (int) $rowContents['funded_plafond_expense_id'] : null;
+                $fundedSnapshot = $fundedPlafondId === null ? null : $annualExpenseSnapshotsById->get($fundedPlafondId);
+                $fundedCostCenterId = is_array($fundedSnapshot) ? (int) ($fundedSnapshot['contents']['cost_center_id'] ?? 0) : null;
                 $economicLines[] = new EconomicLine(
                     $snapshot['id'],
                     $row['id'],
@@ -103,6 +109,12 @@ final class HistoricalAnnualBudgetQuery
                     $vendorId,
                     $vendorId === null ? null : ($labels['vendor'][$vendorId] ?? null),
                     isset($contents['contract_id']) ? (int) $contents['contract_id'] : null,
+                    (string) ($contents['title'] ?? ''),
+                    isset($rowContents['created_by_user_id']) ? (int) $rowContents['created_by_user_id'] : null,
+                    null,
+                    is_array($fundedSnapshot) ? (string) ($fundedSnapshot['contents']['title'] ?? '') : null,
+                    $fundedCostCenterId,
+                    $fundedCostCenterId === null ? null : ($labels['cost_center'][$fundedCostCenterId] ?? '—'),
                 );
             }
         }
@@ -110,6 +122,13 @@ final class HistoricalAnnualBudgetQuery
             new EconomicScope($context->tenantId, $planningYearId, (int) ($yearSnapshot['contents']['year_label'] ?? $year->year_label), $context->currencyCode, $context->budgetBasis),
             $economicLines,
         ));
+        $expenseSnapshots = $annualExpenseSnapshots
+            ->filter(fn (array $item): bool => $costCenterId === null || (int) ($item['contents']['cost_center_id'] ?? 0) === $costCenterId)
+            ->values();
+        $selectedExpenseIds = $expenseSnapshots->pluck('id')->all();
+        $selectedRowSnapshots = $rowSnapshots
+            ->filter(fn (array $item): bool => in_array((int) ($item['contents']['expense_id'] ?? 0), $selectedExpenseIds, true))
+            ->values();
         $rows = [];
         foreach ($expenseSnapshots as $snapshot) {
             $contents = $snapshot['contents'];
@@ -140,6 +159,9 @@ final class HistoricalAnnualBudgetQuery
                 'currency' => $projection->currency,
                 'basis' => $projection->basis,
                 'totals' => ['current_planning' => $this->measure($currentPlanning), 'actual' => $this->measure($actualMeasure)],
+                'plafond_measures' => isset($projection->plafonds[$snapshot['id']])
+                    ? $this->plafondMeasures($projection->plafonds[$snapshot['id']])
+                    : null,
                 'planned' => $planned, 'approved' => $approved, 'approved_basis' => $contents['approved_basis'] ?? null, 'actual' => $actual,
                 'residual' => $approved === null ? null : bcsub($approved, $actual, 2), 'variance' => $approved === null ? null : bcsub($actual, $approved, 2),
                 'has_actual' => $expenseRows->contains(fn (array $row): bool => ($row['contents']['type'] ?? null) === 'actual'),
@@ -148,13 +170,14 @@ final class HistoricalAnnualBudgetQuery
             ];
         }
 
-        $summary = $this->summary($rows, $projection, $context->tenantId, $planningYearId, $cutoff);
+        [$selectedPlanning, $selectedActual] = $this->selectedTotals($rows, $projection);
+        $summary = $this->summary($rows, $selectedPlanning, $selectedActual, $context->tenantId, $planningYearId, $cutoff);
         $historicalContext = $this->historicalContext(
             $context->tenantId,
             $planningYearId,
             $cutoff,
             $expenseSnapshots->all(),
-            $rowSnapshots->all(),
+            $selectedRowSnapshots->all(),
         );
         $yearContents = $yearSnapshot['contents'];
         $state = (string) ($yearContents['budget_state'] ?? 'preparation');
@@ -166,8 +189,20 @@ final class HistoricalAnnualBudgetQuery
                 'history_activated_at' => $activatedAt->toISOString()],
             'currency' => $projection->currency,
             'basis' => $projection->basis,
-            'totals' => ['current_planning' => $this->measure($projection->currentPlanning), 'actual' => $this->measure($projection->actual)],
+            'totals' => ['current_planning' => $this->measure($selectedPlanning), 'actual' => $this->measure($selectedActual)],
             'summary' => ['currency' => $context->currencyCode, 'official_basis' => $basis, ...$summary], 'expenses' => $rows,
+            'plafonds' => array_values(array_map(fn ($plafond): array => [
+                'id' => $plafond->plafondExpenseId,
+                'planning_year_id' => $plafond->planningYearId,
+                'title' => $plafond->title,
+                'cost_center' => ['id' => $plafond->costCenterId, 'name' => $plafond->costCenterName],
+                'currency' => $plafond->currency,
+                'basis' => $plafond->basis,
+                'measures' => $this->plafondMeasures($plafond),
+            ], array_filter(
+                $projection->plafonds,
+                static fn ($plafond): bool => $costCenterId === null || $plafond->costCenterId === $costCenterId,
+            ))),
             'historical_context' => $historicalContext,
         ];
     }
@@ -349,7 +384,7 @@ final class HistoricalAnnualBudgetQuery
      * @param  list<array<string, mixed>>  $rows
      * @return array<string, mixed>
      */
-    private function summary(array $rows, AnnualEconomicProjection $projection, int $tenantId, int $planningYearId, CarbonImmutable $cutoff): array
+    private function summary(array $rows, EconomicMeasure $planning, EconomicMeasure $actualMeasure, int $tenantId, int $planningYearId, CarbonImmutable $cutoff): array
     {
         $approved = '0.00';
         $unapproved = 0;
@@ -368,12 +403,41 @@ final class HistoricalAnnualBudgetQuery
             ->where('approval_operations.tenant_id', $tenantId)->where('approval_operations.planning_year_id', $planningYearId)
             ->where('approval_operations.recorded_at', '<=', $cutoff)->where('approval_operations.kind', 'variation')->sum('approval_items.delta_amount'));
 
-        $actual = $projection->actual->official;
+        $actual = $actualMeasure->official;
 
-        return ['proposed' => $projection->currentPlanning->official, 'initial_approved' => $initial, 'approved_variations' => $variations, 'approved_current' => $approved,
+        return ['proposed' => $planning->official, 'initial_approved' => $initial, 'approved_variations' => $variations, 'approved_current' => $approved,
             'actual' => $actual, 'residual' => bcsub($approved, $actual, 2), 'variance' => bcsub($actual, $approved, 2),
             'utilization_percentage' => bccomp($approved, '0', 2) === 1 ? bcdiv(bcmul($actual, '100', 4), $approved, 2) : null,
-            'plafond_overrun' => '0.00', 'unapproved_actual_expenses' => $unapproved];
+            'unapproved_actual_expenses' => $unapproved];
+    }
+
+    /** @param list<array<string, mixed>> $rows @return array{EconomicMeasure, EconomicMeasure} */
+    private function selectedTotals(array $rows, AnnualEconomicProjection $projection): array
+    {
+        $planning = EconomicMeasure::zero($projection->basis);
+        $actual = EconomicMeasure::zero($projection->basis);
+        foreach ($rows as $row) {
+            $expense = $projection->expenses[(int) $row['id']];
+            foreach ($expense->lines as $line) {
+                if ($line->contributesToCurrentPlanning) {
+                    $planning = $planning->plus($line->amount, $projection->basis);
+                }
+            }
+            $actual = $actual->plus($expense->actual, $projection->basis);
+        }
+
+        return [$planning, $actual];
+    }
+
+    /** @return array<string, array{net: string, vat: string, gross: string, official: string}> */
+    private function plafondMeasures(PlafondEconomicProjection $plafond): array
+    {
+        return [
+            'allocation' => $this->measure($plafond->allocation),
+            'coverage_planned' => $this->measure($plafond->coveragePlanned),
+            'consumed' => $this->measure($plafond->consumed),
+            'available' => $this->measure($plafond->available),
+        ];
     }
 
     /** @return array{net:string,vat:string,gross:string,official:string} */

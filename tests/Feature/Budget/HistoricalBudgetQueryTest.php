@@ -163,10 +163,25 @@ final class HistoricalBudgetQueryTest extends TestCase
         $this->assertSame($expected['summary'], $actual['summary']);
     }
 
-    public function test_historical_summary_uses_the_canonical_projection_without_slice_024_capacity_semantics(): void
+    public function test_historical_summary_uses_the_canonical_plafond_projection_without_legacy_overrun_aliases(): void
     {
         [$actor, $context, $year, $plafond] = $this->fixture();
-        $plafond->forceFill(['kind' => ExpenseKind::Plafond, 'approved_amount' => '100.00', 'approved_basis' => 'net'])->saveQuietly();
+        $plafond->forceFill([
+            'kind' => ExpenseKind::Plafond,
+            'approved_amount' => '300.00',
+            'approved_basis' => 'net',
+            'current_planning_row_id' => null,
+        ])->saveQuietly();
+        $plafond->rows()->firstOrFail()->forceFill([
+            'vendor_id' => null,
+            'type' => ExpenseType::AllocationAdjustment,
+            'created_by_user_id' => $actor->getKey(),
+            'entered_amount' => '300.00',
+            'net_amount' => '300.00',
+            'vat_amount' => '66.00',
+            'gross_amount' => '366.00',
+            'spend_date' => '2026-01-01',
+        ])->saveQuietly();
         $consumer = Expense::factory()->for($context->tenant)->create([
             'planning_year_id' => $year->getKey(),
             'cost_center_id' => $plafond->cost_center_id,
@@ -190,6 +205,7 @@ final class HistoricalBudgetQueryTest extends TestCase
             'net_amount' => '140.00',
             'vat_amount' => '30.80',
             'gross_amount' => '170.80',
+            'funded_plafond_expense_id' => $plafond->getKey(),
         ]);
         $consumer->forceFill(['current_planning_row_id' => $planned->getKey()])->saveQuietly();
         $this->travelTo(CarbonImmutable::parse('2026-03-01 10:00:00', 'UTC'));
@@ -199,7 +215,9 @@ final class HistoricalBudgetQueryTest extends TestCase
 
         $this->assertSame($result['totals']['current_planning']['official'], $result['summary']['proposed']);
         $this->assertSame($result['totals']['actual']['official'], $result['summary']['actual']);
-        $this->assertSame('0.00', $result['summary']['plafond_overrun']);
+        $this->assertArrayNotHasKey('plafond_overrun', $result['summary']);
+        $this->assertSame('300.00', $result['plafonds'][0]['measures']['allocation']['official']);
+        $this->assertSame('140.00', $result['plafonds'][0]['measures']['consumed']['official']);
     }
 
     public function test_historical_projection_includes_rows_and_linked_contract_term_context(): void

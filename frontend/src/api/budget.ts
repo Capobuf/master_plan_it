@@ -62,6 +62,15 @@ export interface AnnualBudget {
     history_activated_at: string | null;
   };
   summary: AnnualBudgetSummary;
+  plafonds?: Array<{
+    id: number;
+    planning_year_id: number;
+    title: string;
+    cost_center: { id: number; name: string };
+    currency: string;
+    basis: "net" | "gross";
+    measures: PlafondMeasures;
+  }>;
   expenses: AnnualBudgetExpense[];
   historical_context?: {
     approval_operations: Array<Record<string, unknown>>;
