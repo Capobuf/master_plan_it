@@ -15,7 +15,7 @@ export default function ExpenseRowsTable({ rows, compact = false }: { rows: Expe
       {rows.map((row) => <TableRow key={row.id}>
         <TableCell className={`${cell} whitespace-nowrap font-medium`}>{domainLabel(row.type)}{row.generated ? <span className="block text-xs font-normal text-gray-500">Generata</span> : null}</TableCell>
         <TableCell className={`${cell} min-w-32`}>{row.vendor_name ?? "—"}</TableCell>
-        <TableCell className={`${cell} min-w-52`}>{row.description}{row.notes ? <span className="block text-xs text-gray-500">{row.notes}</span> : null}</TableCell>
+        <TableCell className={`${cell} min-w-52`}>{row.description}{row.notes ? <span className="block text-xs text-gray-500">{row.notes}</span> : null}{row.funded_plafond ? <span className="mt-1 block text-xs text-brand-600 dark:text-brand-300">Copertura integrale: {row.funded_plafond.title}<br />Centro Plafond: {row.funded_plafond.cost_center.name}</span> : null}</TableCell>
         <TableCell className={`${cell} hidden whitespace-nowrap lg:table-cell`}>{formatDecimal(row.quantity)}</TableCell>
         <TableCell className={`${cell} hidden whitespace-nowrap lg:table-cell`}>{formatMoney(row.unit_price, "EUR")}</TableCell>
         <TableCell className={`${cell} whitespace-nowrap`}>{formatMoney(row.entered_amount, "EUR")}</TableCell>
