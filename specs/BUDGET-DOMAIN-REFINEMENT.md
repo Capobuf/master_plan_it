@@ -1,6 +1,6 @@
 # Raffinamento del Dominio Budget
 
-**Stato**: `VERIFIED CURRENT — Slice 023`; `PROPOSED TARGET — Slice 024–034`; two Slice 024 Plafond compatibility questions remain `OPEN QUESTION`
+**Stato**: `VERIFIED CURRENT — Slice 023`; `PROPOSED TARGET — Slice 024–034`; decisioni di prodotto necessarie alla Slice 024 risolte
 **Data di consolidamento**: 2026-08-12
 **Baseline verificata**: `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94`
 **Corrente verificato**: `agent/022-integration@0d6c347289d886359923e582d6805f0accf489b8` per la Slice 023
@@ -304,11 +304,9 @@ Una Riga di Spesa è interamente coperta dal Plafond oppure non coperta. Non esi
 parziale. Se una Spesa contiene una parte coperta e una non coperta, usa due Righe distinte.
 
 La Riga coperta contiene un solo riferimento esplicito al Plafond dello stesso Tenant e Anno
-Economico. `OPEN QUESTION`: la Slice 024 deve stabilire se debba appartenere anche allo stesso
-Centro di Costo; la baseline corrente consente Centri differenti e non può essere cambiata
-silenziosamente. Non esiste una tabella di Quote multiple. Resta inoltre `OPEN QUESTION` se la
-stessa Riga possa essere contemporaneamente Extra Budget e coperta da Plafond oppure debba
-conservare l'esclusione reciproca corrente.
+Economico. Il Centro di Costo può essere differente da quello del Plafond. Non esiste una tabella
+di Quote multiple. La stessa Riga non può essere contemporaneamente Extra Budget e coperta da
+Plafond: le due classificazioni restano mutuamente esclusive.
 
 ### Capienza insufficiente
 
@@ -415,7 +413,7 @@ ripristinabili e i Report storici a cutoff continuino a essere ricostruibili.
 
 ## Questioni aperte
 
-La Slice 023 è stata consegnata e verificata. Restano `OPEN QUESTION` per la Slice 024: se Extra
-Budget e Copertura Plafond siano compatibili e se la copertura richieda lo stesso Centro di Costo
-del Plafond. I nomi SQL, la forma interna degli snapshot e altri dettagli reversibili restano
-decisioni tecniche delle rispettive Slice, non decisioni di prodotto da inventare qui.
+La Slice 023 è stata consegnata e verificata. Per la Slice 024 non restano `OPEN QUESTION`: il
+Product Owner ha confermato il 2026-08-12 l'esclusione reciproca Extra Budget/Copertura Plafond e
+ha ammesso Centri di Costo differenti tra Riga coperta e Plafond. I nomi SQL, la forma interna
+degli snapshot e altri dettagli reversibili restano decisioni tecniche delle rispettive Slice.

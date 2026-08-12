@@ -25,9 +25,8 @@ proprio risultato utente, mantenendo il database ricostruibile da zero.
    altro Anno attraverso la sola Data.
 8. Per una Spesa di Progetto, l'Anno Economico deriva dall'Anno del Progetto; la Data della Riga può
    appartenere a un anno civile differente.
-9. Extra Budget, Rettifica e Copertura Plafond non devono essere compressi in un singolo Stato. La
-   compatibilità tra Extra Budget e Copertura resta `OPEN QUESTION` e conserva la regola corrente
-   finché il proprietario non decide.
+9. Extra Budget, Rettifica e Copertura Plafond non devono essere compressi in un singolo Stato.
+   Extra Budget e Copertura Plafond sono mutuamente esclusivi sulla stessa Riga.
 10. Delete e Restore sono mutazioni dell'intero aggregato, atomiche e versionate.
 11. Il modello non rappresenta pagamenti, fatture, ratei/risconti, classificazioni fiscali o
     avanzamento operativo dei Progetti.
@@ -121,7 +120,7 @@ non deve esistere un vincolo XOR che renda impossibile questa provenienza.
 | IVA Inclusa e Aliquota | Producono Netto, IVA e Lordo riconciliati |
 | Data della Spesa | Obbligatoria quando il tipo o l'origine richiedono granularità temporale |
 | Periodo | Facoltativo e informativo; non ripartisce automaticamente un Rinnovo Annuale |
-| Extra Budget | Booleano; compatibilità con Copertura Plafond ancora `OPEN QUESTION` |
+| Extra Budget | Booleano; mutuamente esclusivo con Copertura Plafond sulla stessa Riga |
 | Intento Post-Approvazione | `Voce Dimenticata` oppure `Nuova Esigenza` per una nuova decisione economica dopo l'Approvazione |
 | Origine | Manuale, Contratto, Continuazione, Riproposta o altra origine esplicita |
 | Source Key | Identificatore idempotente per generazioni automatiche |
@@ -151,7 +150,7 @@ Il Plafond è una Spesa di Natura Plafond, ma non è un costo Effettivo. Per la 
 
 | Campo logico | Regola |
 |---|---|
-| Plafond | Spesa dello stesso Tenant e Anno; compatibilità tra Centri di Costo `OPEN QUESTION` |
+| Plafond | Spesa dello stesso Tenant e Anno; può appartenere a un Centro di Costo differente |
 | Righe di Allocazione | `ExpenseRow` additive della Spesa Plafond con semantica logica `AllocationAdjustment` |
 | Importo | Positivo per aumento, negativo per riduzione |
 | Data e Autore | Obbligatori per ogni variazione dell'allocazione |

@@ -71,16 +71,20 @@ Per ogni Slice economica verificare contemporaneamente:
 3. Verificare che l'Allocazione entri una volta nel Budget, la pianificazione coperta alimenti la
    Copertura Prevista senza aumentare il totale e l'Effettivo alimenti il Consumato.
 4. Tentare una seconda Spesa Plafond corrente sullo stesso Centro/Anno: la mutazione deve fallire.
-5. Creare una Riga Effettivo coperta da €2.700 quando il Disponibile è €2.500: il salvataggio deve
+5. Collegare integralmente una Riga ordinaria del Centro di Costo B al Plafond del Centro A: la
+   copertura deve riuscire e mantenere distinti i due Centri.
+6. Tentare di rendere Extra Budget la stessa Riga coperta, e di coprire una Riga già Extra Budget:
+   entrambe le mutazioni devono fallire atomicamente conservando gli input.
+7. Creare una Riga Effettivo coperta da €2.700 quando il Disponibile è €2.500: il salvataggio deve
    restituire `PLAFOND_INSUFFICIENT` con Allocazione, Disponibile, Richiesto e Mancante, non
    persistere nulla e mantenere tutti gli input.
-6. Aggiungere una Riga di Allocazione `+500` allo stesso Plafond e ripetere il salvataggio con esito
+8. Aggiungere una Riga di Allocazione `+500` allo stesso Plafond e ripetere il salvataggio con esito
    positivo.
-7. Collegare Stime/Preventivi coperti per un totale superiore al Disponibile e verificare che
+9. Collegare Stime/Preventivi coperti per un totale superiore al Disponibile e verificare che
    aumenti Copertura Prevista senza ridurre Disponibile; aggiungere poi un Effettivo coperto
    corrispondente, conservando la pianificazione, e verificare che Disponibile diminuisca e che un
    Effettivo eccedente sia bloccato atomicamente.
-8. Tentare una riduzione `-2.900` che invaliderebbe coperture esistenti: la preview deve elencarle e
+10. Tentare una riduzione `-2.900` che invaliderebbe coperture esistenti: la preview deve elencarle e
    il salvataggio deve essere bloccato senza scollegarle.
 9. Modellare una Spesa da €800, di cui €500 coperti e €300 non coperti, usando due Righe distinte;
    verificare che una singola Riga non accetti copertura parziale.

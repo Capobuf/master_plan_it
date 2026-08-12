@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-12
 
-**Status**: `VERIFIED CURRENT — Slice 023`; `PROPOSED TARGET — Slice 024–034`; two Slice 024 Plafond compatibility questions remain `OPEN QUESTION`
+**Status**: `VERIFIED CURRENT — Slice 023`; `PROPOSED TARGET — Slice 024–034`; Slice 024 product decisions resolved
 
 **Input**: Definire l'architettura UX/UI trasversale dell'applicazione: Barra Superiore, contesto globale del Tenant e dell'Anno, Dashboard, registri, navigazione Budget e Report, dettaglio Spesa, Guida Contestuale, date valide, Revisioni, gestione Tenant e operatività self-hosted.
 
@@ -150,6 +150,12 @@ L'utente parte dal riepilogo Spese, usa i launcher frequenti, espande una riga p
    restano disponibili e la sezione Plafond mostra Allocazione, Disponibile, Importo richiesto e
    Importo Mancante; una Stima o Preventivo coperto può invece superare il Disponibile e alimenta
    soltanto Copertura Prevista.
+8. **Given** una Riga e un Plafond dello stesso Tenant e Anno ma con Centri di Costo differenti,
+   **When** l'utente applica la copertura integrale, **Then** il collegamento è valido e la UI rende
+   visibili entrambi i Centri senza riclassificare la Riga.
+9. **Given** una Riga Extra Budget, **When** l'utente tenta di collegarla a un Plafond, **Then** il
+   salvataggio fallisce atomicamente con errore sul campo e mantiene gli input; lo stesso vale se
+   una Riga già coperta viene trasformata in Extra Budget.
 
 ---
 
@@ -380,8 +386,10 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
   MUST NOT cancellare silenziosamente Effettivi già generati o Righe future modificate manualmente.
 - **FR-059**: Per ogni Tenant, Anno Economico e Centro di Costo MUST esistere al massimo un Plafond
   corrente, modificato mediante Righe additive dell'allocazione.
-- **FR-060**: Una Riga di Spesa MUST avere zero o un solo riferimento Plafond compatibile e MUST
-  essere coperta integralmente; il sistema MUST NOT ripartire la stessa Riga tra più Plafond.
+- **FR-060**: Una Riga di Spesa MUST avere zero o un solo riferimento Plafond dello stesso Tenant e
+  Anno, MAY appartenere a un Centro di Costo differente e MUST essere coperta integralmente; il
+  sistema MUST NOT ripartire la stessa Riga tra più Plafond. Extra Budget e Copertura Plafond MUST
+  restare mutuamente esclusivi sulla stessa Riga.
 - **FR-061**: Se una create/update/Restore di Effettivo coperto supera il Disponibile o una riduzione
   di Allocazione scende sotto il Consumato, il salvataggio MUST fallire atomicamente, restituire i
   quattro importi di impatto e consentire al client di mantenere gli input; Stime/Preventivi coperti

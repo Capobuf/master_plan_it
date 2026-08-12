@@ -1,7 +1,7 @@
 # Research: Gap tra Baseline Corrente e Target Approvato
 
 **Data**: 2026-08-12
-**Stato**: Slice 023 implementata e verificata; due compatibilità Plafond restano `OPEN QUESTION`; programma parzialmente implementato
+**Stato**: Slice 023 implementata e verificata; decisioni Plafond della Slice 024 risolte; programma parzialmente implementato
 **Baseline verificata**: `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94`
 
 ## Metodo e autorità
@@ -77,7 +77,9 @@ Base Economica.
 ### D05 — Plafond singolo e copertura integrale
 
 **Decisione**: esiste al massimo un Plafond per Tenant/Anno/Centro di Costo. L'allocazione usa Righe
-additive. Ogni Riga di Spesa è coperta integralmente da quel singolo Plafond o non è coperta.
+additive. Ogni Riga di Spesa è coperta integralmente da quel singolo Plafond o non è coperta. Riga
+e Plafond possono avere Centri di Costo differenti; sulla stessa Riga Extra Budget e Copertura
+Plafond sono mutuamente esclusivi.
 
 ### D06 — Capienza bloccante
 
@@ -179,6 +181,6 @@ il coverage che ogni futura Slice deve aggiungere ed eseguire.
 
 ## Questioni aperte
 
-Nessuna `OPEN QUESTION` resta sulla formula del Disponibile o sulla cardinalità delle Continuazioni.
-Restano aperte soltanto la compatibilità Extra Budget/Plafond, la compatibilità tra Centri di Costo
-per la copertura.
+Nessuna `OPEN QUESTION` resta per la Slice 024: il Disponibile diminuisce soltanto con Effettivi
+coperti, Extra Budget e Copertura Plafond sono mutuamente esclusivi e Riga/Plafond possono avere
+Centri di Costo differenti. Non restano domande sulla cardinalità delle Continuazioni.

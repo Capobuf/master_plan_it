@@ -176,12 +176,11 @@ Le Righe accettano:
 }
 ```
 
-Il riferimento identifica l'unico Plafond dello stesso Tenant e Anno. Restano `OPEN QUESTION` sia
-la compatibilità tra Centri di Costo sia la possibilità che una Riga sia insieme Extra Budget e
-coperta da Plafond; la Slice 024 non può cambiare le regole correnti — Centri differenti consentiti
-ed Extra/Copertura mutuamente esclusivi — senza risposta. La Riga è interamente coperta oppure non
-coperta. Il server ricalcola i valori nella Base ufficiale e valida gli invarianti di capienza
-applicabili prima di qualsiasi persistenza.
+Il riferimento identifica l'unico Plafond dello stesso Tenant e Anno; Riga e Plafond possono avere
+Centri di Costo differenti. Extra Budget e Copertura Plafond sono mutuamente esclusivi sulla stessa
+Riga. La Riga è interamente coperta oppure non coperta. Il server ricalcola i valori nella Base
+ufficiale e valida XOR, appartenenza e invarianti di capienza applicabili prima di qualsiasi
+persistenza.
 
 ```text
 POST /api/v1/expenses/{expense}/rows/{row}/coverage-preview

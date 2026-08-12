@@ -52,8 +52,8 @@
 - [x] CHK-022 Allocazione, Copertura Prevista, Consumato e Disponibile non producono doppio
   conteggio né espongono misure duplicate.
 - [x] CHK-023 Quote multiple, copertura parziale e Sforamento consentito non compaiono come target.
-- [ ] CHK-023A Compatibilità Extra Budget/Plafond e compatibilità tra Centri di Costo confermate dal
-  proprietario prima di chiudere la Slice 024.
+- [x] CHK-023A Il proprietario ha confermato Extra Budget/Copertura Plafond mutuamente esclusivi e
+  Centri di Costo differenti consentiti per la copertura.
 
 ## Cancellazione, retention e UX
 
@@ -67,12 +67,12 @@
 
 ## Prontezza
 
-- [x] CHK-030 Spec, research, plan, data model, API e quickstart usano la stessa semantica per le
-  decisioni risolte e classificano coerentemente come aperte le due compatibilità della Slice 024.
+- [x] CHK-030 Spec, research, plan, data model, API e quickstart usano la stessa semantica per tutte
+  le decisioni risolte della Slice 024.
 - [x] CHK-031 Il piano contiene Slice verticali end-to-end e nessun modello many-to-many Plafond.
 - [x] CHK-032 Non esiste `tasks.md` per 022 e nessun artefatto avvia l'implementazione.
-- [ ] CHK-033 La verifica read-only equivalente a `/speckit.analyze` non rileva conflitti
-  bloccanti: da rivalidare dopo le due risposte ancora richieste per compatibilità Plafond.
+- [x] CHK-033 La verifica read-only equivalente a `/speckit.analyze` non rileva conflitti bloccanti
+  dopo le decisioni finali sulla compatibilità Plafond.
 
 ## Note
 
