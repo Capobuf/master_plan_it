@@ -30,25 +30,34 @@ final class ProjectEconomicDatasetTest extends TestCase
         app(PlatformAdministrator::class)->assign($actor);
         $project = Project::factory()->for($tenant)->create(['stage' => ProjectStage::Idea]);
         $estimate = Expense::factory()->for($tenant)->create(['planning_year_id' => $year->getKey(), 'project_id' => $project->getKey()]);
-        $planning = ExpenseRow::factory()->for($estimate)->create(['type' => 'estimate', 'net_amount' => '100.00']);
+        $planning = ExpenseRow::factory()->for($estimate)->create([
+            'type' => 'estimate',
+            'net_amount' => '100.00',
+            'vat_amount' => '22.00',
+            'gross_amount' => '122.00',
+        ]);
         $estimate->forceFill(['current_planning_row_id' => $planning->getKey()])->saveQuietly();
         $actual = Expense::factory()->for($tenant)->create(['planning_year_id' => $year->getKey(), 'project_id' => $project->getKey()]);
-        ExpenseRow::factory()->for($actual)->create(['type' => 'actual', 'confirmation_state' => 'to_confirm', 'net_amount' => '50.00']);
+        ExpenseRow::factory()->for($actual)->create([
+            'type' => 'actual',
+            'confirmation_state' => 'to_confirm',
+            'spend_date' => '2027-01-15',
+            'net_amount' => '50.00',
+            'vat_amount' => '11.00',
+            'gross_amount' => '61.00',
+        ]);
         $context = new TenantContext($tenant, $actor);
 
-        $calculate = fn () => app(EconomicEngine::class)->calculate(app(EconomicDatasetQuery::class)->execute($actor, $context, (int) $year->getKey()))['summary']->amounts;
-        $before = $calculate();
-        $this->assertSame('150.00', $before['primary']);
-        $this->assertSame('100.00', $before['planned']);
-        $this->assertSame('50.00', $before['actual']);
-        $this->assertSame('0.00', $before['idea']);
-        $this->assertSame('150.00', $before['potential']);
+        $projectYear = fn () => app(EconomicEngine::class)->project(app(EconomicDatasetQuery::class)->execute($actor, $context, (int) $year->getKey()));
+        $before = $projectYear();
+        $this->assertSame('100.00', $before->currentPlanning->official);
+        $this->assertSame('50.00', $before->actual->official);
+        $this->assertCount(2, $before->expenses);
 
         $project->forceFill(['stage' => ProjectStage::Rejected, 'lock_version' => 2])->save();
-        $after = $calculate();
-        $this->assertSame('150.00', $after['primary']);
-        $this->assertSame('0.00', $after['excluded']);
-        $this->assertSame('150.00', $after['potential']);
+        $after = $projectYear();
+        $this->assertSame('100.00', $after->currentPlanning->official);
+        $this->assertSame('50.00', $after->actual->official);
         $this->assertSame(1, $estimate->refresh()->lock_version);
         $this->assertSame(1, $actual->refresh()->lock_version);
     }

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('timezone');
             $table->decimal('default_vat_rate', 12, 2);
             $table->enum('budget_basis', ['net', 'gross'])->default('net');
+            $table->timestamp('economic_basis_locked_at')->nullable()->index();
             $table->unsignedBigInteger('attachment_quota_bytes')->default(2147483648);
             $table->boolean('deletion_reason_required')->default(false);
             $table->string('company_name')->nullable();

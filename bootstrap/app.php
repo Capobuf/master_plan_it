@@ -2,6 +2,7 @@
 
 use App\Console\Commands\ApplyOperationalRevisionRetentionCommand;
 use App\Console\Commands\PromoteDeferredProjectsCommand;
+use App\Console\Commands\TestResetGreenfield;
 use App\Http\Middleware\AssignCorrelationId;
 use App\Http\Middleware\AuthorizeApplicationAbility;
 use App\Http\Middleware\EnsureActiveUser;
@@ -23,6 +24,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands([
         ApplyOperationalRevisionRetentionCommand::class,
         PromoteDeferredProjectsCommand::class,
+        TestResetGreenfield::class,
     ])
     ->withRouting(
         api: __DIR__.'/../routes/api.php',

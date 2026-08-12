@@ -22,7 +22,9 @@ return new class extends Migration
             $table->timestamp('occurred_at');
             $table->timestamps();
 
-            $table->unique('correlation_id');
+            // A correlation id is diagnostic, not an idempotency key.
+            $table->unique(['tenant_id', 'id'], 'revision_batches_tenant_id_unique');
+            $table->index('correlation_id');
             $table->index(['tenant_id', 'root_subject_type', 'root_subject_id', 'occurred_at'], 'revision_batches_history_index');
 
             $table->foreign('restored_from_batch_id')

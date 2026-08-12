@@ -15,15 +15,15 @@ export default function ExpenseRowsTable({ rows, compact = false }: { rows: Expe
       {rows.map((row) => <TableRow key={row.id}>
         <TableCell className={`${cell} whitespace-nowrap font-medium`}>{domainLabel(row.type)}{row.generated ? <span className="block text-xs font-normal text-gray-500">Generata</span> : null}</TableCell>
         <TableCell className={`${cell} min-w-32`}>{row.vendor_name ?? "—"}</TableCell>
-        <TableCell className={`${cell} min-w-52`}>{row.description}{row.is_extra ? <span className="block text-xs text-gray-500">Extra</span> : null}</TableCell>
+        <TableCell className={`${cell} min-w-52`}>{row.description}{row.notes ? <span className="block text-xs text-gray-500">{row.notes}</span> : null}</TableCell>
         <TableCell className={`${cell} hidden whitespace-nowrap lg:table-cell`}>{formatDecimal(row.quantity)}</TableCell>
-        <TableCell className={`${cell} hidden whitespace-nowrap lg:table-cell`}>{formatMoney(row.unit_price, row.totals.currency)}</TableCell>
-        <TableCell className={`${cell} whitespace-nowrap`}>{formatMoney(row.entered_amount, row.totals.currency)}</TableCell>
+        <TableCell className={`${cell} hidden whitespace-nowrap lg:table-cell`}>{formatMoney(row.unit_price, "EUR")}</TableCell>
+        <TableCell className={`${cell} whitespace-nowrap`}>{formatMoney(row.entered_amount, "EUR")}</TableCell>
         <TableCell className={`${cell} whitespace-nowrap`}>{formatPercentage(row.vat_rate ?? "0.00")}{row.amount_includes_vat ? <span className="block text-xs text-gray-500">inclusa</span> : null}</TableCell>
         <TableCell className={`${cell} whitespace-nowrap`}>{row.spend_date ? formatDate(row.spend_date) : "—"}</TableCell>
         <TableCell className={cell}>{row.is_current_planning ? <Badge color="success">Corrente</Badge> : row.type === "actual" ? <Badge color="info">Actual</Badge> : <span className="text-gray-500">Alternativa</span>}</TableCell>
-        <TableCell className={`${cell} hidden whitespace-nowrap lg:table-cell`}><ExpenseMoney money={row.totals} component="net" /></TableCell>
-        <TableCell className={`${cell} hidden whitespace-nowrap font-medium lg:table-cell`}><ExpenseMoney money={row.totals} component="gross" /></TableCell>
+        <TableCell className={`${cell} hidden whitespace-nowrap lg:table-cell`}><ExpenseMoney money={row.amount} component="net" /></TableCell>
+        <TableCell className={`${cell} hidden whitespace-nowrap font-medium lg:table-cell`}><ExpenseMoney money={row.amount} component="gross" /></TableCell>
       </TableRow>)}
     </TableBody></Table>
   </div>;

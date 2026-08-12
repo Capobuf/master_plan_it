@@ -30,12 +30,10 @@ const estimate: ExpenseEditorRow = {
   description: "Stima",
   entered_amount: "100.00",
   amount_includes_vat: false,
-  is_extra: false,
 };
 
 const props = {
   vendors: [],
-  plafonds: [],
   onChange: vi.fn(),
   onMove: vi.fn(),
   onRemove: vi.fn(),

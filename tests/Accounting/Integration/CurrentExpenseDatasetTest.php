@@ -3,6 +3,7 @@
 namespace Tests\Accounting\Integration;
 
 use App\Domain\Expenses\Data\ExpenseRegisterFilterData;
+use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Expenses\Queries\ExpenseRegisterQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\BudgetBasis;
@@ -52,12 +53,16 @@ class CurrentExpenseDatasetTest extends TestCase
         ]);
         $row = ExpenseRow::factory()->for($expense)->create([
             'position' => 1,
+            'type' => ExpenseType::Quote,
+            'spend_date' => null,
             'net_amount' => '100.10',
             'vat_amount' => '22.02',
             'gross_amount' => '122.12',
         ]);
         ExpenseRow::factory()->for($expense)->create([
             'position' => 2,
+            'type' => ExpenseType::Actual,
+            'spend_date' => '2027-01-05',
             'net_amount' => '-0.10',
             'vat_amount' => '-0.02',
             'gross_amount' => '-0.12',
@@ -74,6 +79,7 @@ class CurrentExpenseDatasetTest extends TestCase
             'vat_amount' => '22.22',
             'gross_amount' => '123.32',
         ])->save();
+        $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
 
         $deletedExpense = Expense::factory()->for($tenant)->create([
             'planning_year_id' => $year->getKey(),
@@ -116,13 +122,31 @@ class CurrentExpenseDatasetTest extends TestCase
         $this->assertSame(1, $page->total());
         $this->assertSame('Current exact expense', $page->items()[0]->title);
         $this->assertSame(2, $page->items()[0]->rowCount);
-        $this->assertSame('101.00', $page->items()[0]->netTotal);
-        $this->assertSame('22.20', $page->items()[0]->vatTotal);
-        $this->assertSame('123.20', $page->items()[0]->grossTotal);
         $this->assertSame([
-            'net' => '101.00',
-            'vat' => '22.20',
-            'gross' => '123.20',
+            'net' => '101.10',
+            'vat' => '22.22',
+            'gross' => '123.32',
+            'official' => '123.32',
+        ], $page->items()[0]->totals['current_planning']);
+        $this->assertSame([
+            'net' => '-0.10',
+            'vat' => '-0.02',
+            'gross' => '-0.12',
+            'official' => '-0.12',
+        ], $page->items()[0]->totals['actual']);
+        $this->assertSame([
+            'current_planning' => [
+                'net' => '101.10',
+                'vat' => '22.22',
+                'gross' => '123.32',
+                'official' => '123.32',
+            ],
+            'actual' => [
+                'net' => '-0.10',
+                'vat' => '-0.02',
+                'gross' => '-0.12',
+                'official' => '-0.12',
+            ],
         ], $totals);
         $this->assertStringNotContainsString('versions', $sql);
         $this->assertStringNotContainsString('audit_events', $sql);
@@ -139,7 +163,12 @@ class CurrentExpenseDatasetTest extends TestCase
             'name' => 'Current expense dataset '.str()->uuid(),
             'guard_name' => 'web',
         ]);
-        $role->syncPermissions(['expense.view']);
+        $role->syncPermissions([
+            'expense.view',
+            'planning-year.view',
+            'cost-center.view',
+            'vendor.view',
+        ]);
         $actor->assignRole($role);
         $actor->unsetRelation('roles');
         $actor->unsetRelation('permissions');

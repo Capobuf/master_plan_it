@@ -3,7 +3,6 @@
 namespace Tests\Feature\Budget;
 
 use App\Domain\Budget\Enums\BudgetState;
-use App\Domain\Expenses\Enums\ExpenseState;
 use App\Models\Expense;
 use App\Models\PlanningYear;
 use App\Models\Tenant;
@@ -19,9 +18,10 @@ final class AnnualBudgetSchemaTest extends TestCase
     {
         $this->assertTrue(Schema::hasColumns('planning_years', ['budget_state', 'history_activated_at', 'lock_version']));
         $this->assertTrue(Schema::hasColumns('expenses', [
-            'approved_amount', 'approved_basis', 'state', 'closure_outcome', 'current_planning_row_id',
+            'approved_amount', 'approved_basis', 'current_planning_row_id',
             'moved_from_expense_id', 'credit_for_expense_id', 'lock_version',
         ]));
+        $this->assertFalse(Schema::hasColumns('expenses', ['state', 'closure_outcome']));
         $this->assertTrue(Schema::hasColumns('revision_batch_items', ['tenant_id', 'planning_year_id', 'mutation']));
         $this->assertTrue(Schema::hasTable('approval_operations'));
         $this->assertTrue(Schema::hasTable('approval_items'));
@@ -31,7 +31,6 @@ final class AnnualBudgetSchemaTest extends TestCase
         $expense = Expense::factory()->for($tenant)->create(['planning_year_id' => $year->getKey()]);
 
         $this->assertSame(BudgetState::Preparation, $year->budget_state);
-        $this->assertSame(ExpenseState::Open, $expense->state);
         $this->assertNull($expense->approved_amount);
         $this->assertSame(1, $year->lock_version);
         $this->assertSame(1, $expense->lock_version);

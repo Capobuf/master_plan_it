@@ -23,6 +23,7 @@ target: il codice corrente resta autorevole fino alla consegna delle relative Sl
 | 020 | Expense workspace UX | Implementata e verificata; in attesa di review Product Owner |
 | 021 | Workspace Impostazioni e IVA predefinita del Tenant | Implementata e verificata; in attesa di review Product Owner |
 | 022 | Application workspace UX e programma di riallineamento economico | `PROPOSED TARGET`; design di programma, non implementato; nessun `tasks.md` |
+| 023 | Workspace annuale e Spesa autorevole | Implementata e verificata; fondazione del programma 022 |
 
 ## Regola
 
@@ -34,6 +35,6 @@ Una directory resta qui solo finché rappresenta lavoro ancora aperto. A feature
 - `docs/STATUS.md` viene aggiornato;
 - gli artefatti della feature vengono rimossi.
 
-Le directory 009, 010, 011, 017, 018, 019, 020 e 021 costituiscono baseline corrente o eccezioni
+Le directory 009, 010, 011, 017, 018, 019, 020, 021 e 023 costituiscono baseline corrente o eccezioni
 temporanee. Il programma 022 non le riscrive retroattivamente: una futura Slice trasferisce nel
 codice soltanto il proprio delta approvato e aggiorna lo stato dopo verifica.

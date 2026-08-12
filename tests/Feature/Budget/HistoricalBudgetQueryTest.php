@@ -128,8 +128,8 @@ final class HistoricalBudgetQueryTest extends TestCase
                     $row->vendor_id,
                     $row->type,
                     (string) $row->description,
-                    $row->quantity,
-                    $amount,
+                    null,
+                    null,
                     $amount,
                     (bool) $row->amount_includes_vat,
                     (string) $row->vat_rate,
@@ -163,7 +163,7 @@ final class HistoricalBudgetQueryTest extends TestCase
         $this->assertSame($expected['summary'], $actual['summary']);
     }
 
-    public function test_historical_summary_reconciles_plafond_exactly_like_the_current_budget(): void
+    public function test_historical_summary_uses_the_canonical_projection_without_slice_024_capacity_semantics(): void
     {
         [$actor, $context, $year, $plafond] = $this->fixture();
         $plafond->forceFill(['kind' => ExpenseKind::Plafond, 'approved_amount' => '100.00', 'approved_basis' => 'net'])->saveQuietly();
@@ -197,10 +197,9 @@ final class HistoricalBudgetQueryTest extends TestCase
 
         $result = app(HistoricalAnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey(), '2026-03-01T10:30:00Z');
 
-        $this->assertSame('130.00', $result['summary']['proposed']);
-        $this->assertSame('130.00', $result['summary']['approved_current']);
-        $this->assertSame('140.00', $result['summary']['actual']);
-        $this->assertSame('40.00', $result['summary']['plafond_overrun']);
+        $this->assertSame($result['totals']['current_planning']['official'], $result['summary']['proposed']);
+        $this->assertSame($result['totals']['actual']['official'], $result['summary']['actual']);
+        $this->assertSame('0.00', $result['summary']['plafond_overrun']);
     }
 
     public function test_historical_projection_includes_rows_and_linked_contract_term_context(): void

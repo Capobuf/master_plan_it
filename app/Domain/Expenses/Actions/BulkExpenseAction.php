@@ -3,8 +3,6 @@
 namespace App\Domain\Expenses\Actions;
 
 use App\Domain\Contracts\Actions\DeleteGeneratedExpense;
-use App\Domain\Expenses\Enums\ExpenseClosureOutcome;
-use App\Domain\Expenses\Enums\ExpenseState;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Expense;
 use App\Models\User;
@@ -16,15 +14,13 @@ use Ramsey\Uuid\Uuid;
 final class BulkExpenseAction
 {
     public function __construct(
-        private readonly CloseExpense $closeExpense,
-        private readonly MoveExpense $moveExpense,
         private readonly DeleteExpense $deleteExpense,
         private readonly DeleteGeneratedExpense $deleteGeneratedExpense,
     ) {}
 
     /**
      * @param  list<array{id: int, lock_version: int}>  $items
-     * @return array{action: string, affected_count: int, destinations: list<array{origin_expense_id: int, destination_expense_id: int, planning_year_id: int}>}
+     * @return array{action: string, affected_count: int, destinations: list<never>}
      */
     public function execute(
         User $actor,
@@ -33,10 +29,12 @@ final class BulkExpenseAction
         int $planningYearId,
         array $items,
         string $correlationId,
-        ?ExpenseClosureOutcome $outcome = null,
-        ?int $targetPlanningYearId = null,
         ?bool $allowRegeneration = null,
     ): array {
+        if ($action !== 'delete' || $allowRegeneration === null) {
+            throw new DomainException('EXPENSE_BULK_ITEM_NOT_APPLICABLE');
+        }
+
         $versions = collect($items)->mapWithKeys(static fn (array $item): array => [
             $item['id'] => $item['lock_version'],
         ]);
@@ -52,71 +50,38 @@ final class BulkExpenseAction
         }
 
         return DB::transaction(function () use (
-            $action, $actor, $allowRegeneration, $context, $correlationId,
-            $expenses, $items, $outcome, $targetPlanningYearId, $versions,
+            $actor, $allowRegeneration, $context, $correlationId, $expenses, $items, $versions,
         ): array {
-            $destinations = [];
-
             foreach ($expenses as $expense) {
                 $expectedVersion = (int) $versions->get((int) $expense->getKey());
-                $itemCorrelationId = $this->itemCorrelationId($correlationId, $action, (int) $expense->getKey());
+                $itemCorrelationId = Uuid::uuid5(
+                    Uuid::NAMESPACE_URL,
+                    $correlationId.':delete:'.$expense->getKey(),
+                )->toString();
+                $generated = $expense->rows()->whereNotNull('source_key')->exists();
 
-                if ($action === 'close') {
-                    if ($expense->state !== ExpenseState::Open) {
-                        throw new DomainException('EXPENSE_BULK_ITEM_NOT_APPLICABLE');
-                    }
-                    $this->closeExpense->execute($actor, $context, $expense, $expectedVersion, $outcome, $itemCorrelationId);
-
-                    continue;
-                }
-
-                if ($action === 'move') {
-                    if ($targetPlanningYearId === null) {
-                        throw new DomainException('EXPENSE_BULK_ITEM_NOT_APPLICABLE');
-                    }
-                    [, $destination] = $this->moveExpense->execute(
-                        $actor, $context, $expense, $expectedVersion, $targetPlanningYearId, $itemCorrelationId,
+                if ($generated) {
+                    $this->deleteGeneratedExpense->execute(
+                        $actor,
+                        $context,
+                        $expense,
+                        $expectedVersion,
+                        $allowRegeneration,
+                        $itemCorrelationId,
                     );
-                    $destinations[] = [
-                        'origin_expense_id' => (int) $expense->getKey(),
-                        'destination_expense_id' => (int) $destination->getKey(),
-                        'planning_year_id' => $targetPlanningYearId,
-                    ];
-
-                    continue;
+                } else {
+                    $this->deleteExpense->execute(
+                        $actor,
+                        $context,
+                        $expense,
+                        $expectedVersion,
+                        false,
+                        $itemCorrelationId,
+                    );
                 }
-
-                if ($action === 'delete') {
-                    if ($allowRegeneration === null) {
-                        throw new DomainException('EXPENSE_BULK_ITEM_NOT_APPLICABLE');
-                    }
-                    $generated = $expense->rows()->whereNotNull('source_key')->exists();
-                    if ($generated) {
-                        $this->deleteGeneratedExpense->execute(
-                            $actor, $context, $expense, $expectedVersion, $allowRegeneration, $itemCorrelationId,
-                        );
-                    } else {
-                        $this->deleteExpense->execute(
-                            $actor, $context, $expense, $expectedVersion, false, $itemCorrelationId,
-                        );
-                    }
-
-                    continue;
-                }
-
-                throw new DomainException('EXPENSE_BULK_ITEM_NOT_APPLICABLE');
             }
 
-            return [
-                'action' => $action,
-                'affected_count' => count($items),
-                'destinations' => $destinations,
-            ];
+            return ['action' => 'delete', 'affected_count' => count($items), 'destinations' => []];
         });
-    }
-
-    private function itemCorrelationId(string $requestCorrelationId, string $action, int $expenseId): string
-    {
-        return Uuid::uuid5(Uuid::NAMESPACE_URL, $requestCorrelationId.':'.$action.':'.$expenseId)->toString();
     }
 }

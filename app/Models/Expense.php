@@ -2,9 +2,7 @@
 
 namespace App\Models;
 
-use App\Domain\Expenses\Enums\ExpenseClosureOutcome;
 use App\Domain\Expenses\Enums\ExpenseKind;
-use App\Domain\Expenses\Enums\ExpenseState;
 use Database\Factories\ExpenseFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -25,8 +23,6 @@ use Spatie\MediaLibrary\InteractsWithMedia;
     'notes',
     'project_id',
     'contract_id',
-    'state',
-    'closure_outcome',
     'current_planning_row_id',
     'moved_from_expense_id',
     'credit_for_expense_id',
@@ -51,10 +47,6 @@ class Expense extends Model implements HasMedia
         'contract_id',
         'approved_amount',
         'approved_basis',
-        'state',
-        'closure_outcome',
-        'closed_at',
-        'closed_by_user_id',
         'current_planning_row_id',
         'moved_from_expense_id',
         'credit_for_expense_id',
@@ -69,10 +61,7 @@ class Expense extends Model implements HasMedia
     {
         return [
             'kind' => ExpenseKind::class,
-            'state' => ExpenseState::class,
-            'closure_outcome' => ExpenseClosureOutcome::class,
             'approved_amount' => 'decimal:2',
-            'closed_at' => 'datetime',
             'lock_version' => 'integer',
         ];
     }

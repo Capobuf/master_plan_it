@@ -10,6 +10,7 @@ import { usePlanningYear } from "../../context/PlanningYearContext";
 
 interface DashboardState {
   tenantId: number;
+  planningYearId: number;
   data: ReportingDataset | null;
   error: ApiError | null;
 }
@@ -35,13 +36,14 @@ export default function Home() {
     void getDashboard({ planning_year_id: selectedPlanningYearId })
       .then((dashboard) => {
         if (active) {
-          setDashboardState({ tenantId, data: dashboard, error: null });
+          setDashboardState({ tenantId, planningYearId: selectedPlanningYearId, data: dashboard, error: null });
         }
       })
       .catch((error: unknown) => {
         if (active) {
           setDashboardState({
             tenantId,
+            planningYearId: selectedPlanningYearId,
             data: null,
             error: ApiError.from(error),
           });
@@ -54,7 +56,10 @@ export default function Home() {
   }, [canViewDashboard, contextLoading, planningYearLoading, selectedPlanningYearId, tenantId]);
 
   const currentDashboardState =
-    dashboardState?.tenantId === tenantId ? dashboardState : null;
+    dashboardState?.tenantId === tenantId
+      && dashboardState.planningYearId === selectedPlanningYearId
+      ? dashboardState
+      : null;
 
   let content;
 

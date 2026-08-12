@@ -14,7 +14,6 @@ export function newExpenseEditorRow(position: number): ExpenseEditorRow {
     description: "",
     entered_amount: "0.00",
     amount_includes_vat: false,
-    is_extra: false,
   };
 }
 

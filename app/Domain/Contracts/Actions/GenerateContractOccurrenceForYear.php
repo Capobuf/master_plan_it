@@ -31,13 +31,14 @@ final class GenerateContractOccurrenceForYear
         [$actor, $tenant] = $this->persistedContractContext($actor, $context);
 
         return DB::transaction(function () use ($actor, $context, $contract, $correlationId, $tenant, $year): Expense {
-            $contract = Contract::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($contract->getKey());
-            if (! $contract instanceof Contract) {
-                throw new DomainException('GENERATION_NOT_APPLICABLE');
-            }
             $planningYear = PlanningYear::query()->where('tenant_id', $tenant->getKey())->where('year_label', $year)->first();
             if (! $planningYear instanceof PlanningYear) {
                 throw new DomainException('INVALID_GENERATION_YEAR');
+            }
+            $this->lockContractEconomicYears((int) $tenant->getKey(), (int) $contract->getKey(), [(int) $planningYear->getKey()]);
+            $contract = Contract::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($contract->getKey());
+            if (! $contract instanceof Contract) {
+                throw new DomainException('GENERATION_NOT_APPLICABLE');
             }
             $expected = app(ExpectedContractOccurrenceQuery::class)->forContract($contract, $year);
             if ($expected === []) {
@@ -94,6 +95,7 @@ final class GenerateContractOccurrenceForYear
             'distribution' => null, 'external_reference' => null,
         ]);
         $row->save();
+        $expense->forceFill(['current_planning_row_id' => $row->getKey()])->save();
         $this->revisions($actor, $context, RevisionOperation::Create, $correlationId, $expense, [$expense, $row]);
         $this->audit('contract.occurrence-generated', $correlationId, $actor, $context->tenant, $expense, ['contract_id' => $contract->getKey(), 'source_key' => $expected->sourceKey]);
 

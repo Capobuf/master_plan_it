@@ -35,7 +35,10 @@ final class CurrentBudgetController extends Controller
 
     private function planningYearId(Request $request): int
     {
-        $value = $request->query('planning_year_id', $request->query('year'));
+        if ($request->query('year') !== null) {
+            abort(422);
+        }
+        $value = $request->query('planning_year_id');
 
         if (! is_numeric($value) || (int) $value < 1) {
             abort(404);
@@ -46,7 +49,10 @@ final class CurrentBudgetController extends Controller
 
     private function costCenterId(Request $request, TenantContext $context): ?int
     {
-        $value = $request->query('cost_center', $request->query('cost_center_id'));
+        if ($request->query('cost_center') !== null) {
+            abort(422);
+        }
+        $value = $request->query('cost_center_id');
 
         if ($value === null || $value === '') {
             return null;

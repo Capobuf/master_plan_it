@@ -158,6 +158,7 @@ final class PlanningYearPolicy
         }
 
         return $persistedTenant->state === TenantState::Active
+            || $this->platformAdministrator->hasProtectedRole($this->tenantContext->actor)
             ? Response::allow()
             : Response::deny('TENANT_INACTIVE');
     }

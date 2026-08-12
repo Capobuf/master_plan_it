@@ -7,7 +7,6 @@ use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
-use App\Domain\Expenses\Enums\ExpenseState;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Expenses\Services\ExpenseAggregateValidator;
 use App\Domain\Revisions\Actions\BeginRevisionBatch;
@@ -26,6 +25,7 @@ use App\Support\Authorization\PlatformAdministrator;
 use Carbon\CarbonImmutable;
 use DomainException;
 use Illuminate\Auth\Access\AuthorizationException;
+use Illuminate\Validation\ValidationException;
 use Spatie\Permission\PermissionRegistrar;
 
 trait ManagesExpenseAggregate
@@ -52,7 +52,9 @@ trait ManagesExpenseAggregate
         if (! $persistedActor instanceof User || ! $tenant instanceof Tenant || (int) $context->tenant->getKey() !== $context->tenantId) {
             throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
         }
-        if ($tenant->state !== TenantState::Active) {
+        $platformAdministrator = app(PlatformAdministrator::class);
+        if ($tenant->state !== TenantState::Active
+            && ! ($persistedActor->tenant_id === null && $platformAdministrator->hasProtectedRole($persistedActor))) {
             throw new AuthorizationException('TENANT_INACTIVE');
         }
         if ($persistedActor->tenant_id !== null && (int) $persistedActor->tenant_id !== (int) $tenant->getKey()) {
@@ -69,19 +71,27 @@ trait ManagesExpenseAggregate
      */
     private function saveAggregate(Expense $expense, Tenant $tenant, SaveExpenseData $data, array $rows, User $actor, array $deletedRows = []): array
     {
-        $validated = app(ExpenseAggregateValidator::class)->validate($tenant, $data, $rows, $expense->exists ? $expense : null);
         $wasExisting = $expense->exists;
-        $wasClosed = $wasExisting && $expense->state === ExpenseState::Closed;
-        $originalEconomic = $wasExisting ? $expense->only(['planning_year_id', 'cost_center_id', 'kind', 'project_id', 'contract_id']) : [];
+        $existing = $wasExisting
+            ? $expense->rows()->lockForUpdate()->orderBy('id')->get()->keyBy(fn (ExpenseRow $row): int => (int) $row->getKey())
+            : collect();
+        $validated = app(ExpenseAggregateValidator::class)->validate($tenant, $data, $rows, $wasExisting ? $expense : null);
+        $submittedIds = array_values(array_filter(array_column($validated['rows'], 'id'), static fn ($id): bool => $id !== null));
+        $deletedIds = array_column($deletedRows, 'id');
+        if (array_intersect($submittedIds, $deletedIds) !== []
+            || collect([...$submittedIds, ...$deletedIds])->unique()->count() !== count($submittedIds) + count($deletedIds)
+            || ($wasExisting && collect([...$submittedIds, ...$deletedIds])->sort()->values()->all() !== $existing->keys()->sort()->values()->all())
+            || (! $wasExisting && ($submittedIds !== [] || $deletedIds !== []))) {
+            throw ValidationException::withMessages([
+                'rows' => 'The submitted expense rows are invalid.',
+            ]);
+        }
         $expense->fill($validated['header']);
         $expense->tenant_id = $tenant->getKey();
         if (! $wasExisting) {
             $expense->save();
         }
 
-        $existing = $expense->rows()->lockForUpdate()->get()->keyBy(fn (ExpenseRow $row): int => (int) $row->getKey());
-        $submittedIds = array_filter(array_column($validated['rows'], 'id'));
-        $deletedIds = array_column($deletedRows, 'id');
         $positions = [];
         foreach ($existing as $existingRow) {
             if (! in_array((int) $existingRow->getKey(), $submittedIds, true)
@@ -98,7 +108,6 @@ trait ManagesExpenseAggregate
         $submitted = [];
         $changed = $wasExisting ? [] : [$expense];
         $selectedPlanningRowId = null;
-        $rowEconomicChanged = false;
         foreach ($validated['rows'] as $attributes) {
             $id = $attributes['id'];
             unset($attributes['id']);
@@ -163,10 +172,6 @@ trait ManagesExpenseAggregate
                 $changed[] = $row;
             }
             if (! $rowWasCreated && $beforeEconomic !== $row->only(array_keys($beforeEconomic))) {
-                $rowEconomicChanged = true;
-            }
-            if ($rowWasCreated) {
-                $rowEconomicChanged = true;
             }
             if ($isCurrentPlanning) {
                 $selectedPlanningRowId = (int) $row->getKey();
@@ -174,7 +179,6 @@ trait ManagesExpenseAggregate
             if ((int) $expense->current_planning_row_id === (int) $row->getKey()
                 && ! in_array($row->type, [ExpenseType::Estimate, ExpenseType::Quote], true)) {
                 $expense->current_planning_row_id = null;
-                $rowEconomicChanged = true;
             }
             $submitted[(int) $row->getKey()] = true;
         }
@@ -201,21 +205,10 @@ trait ManagesExpenseAggregate
             }
             $row->delete();
             $changed[] = $row;
-            $rowEconomicChanged = true;
         }
 
         if ($selectedPlanningRowId !== null && (int) $expense->current_planning_row_id !== $selectedPlanningRowId) {
             $expense->current_planning_row_id = $selectedPlanningRowId;
-            $rowEconomicChanged = true;
-        }
-        $headerEconomicChanged = $expense->only(array_keys($originalEconomic)) !== $originalEconomic;
-        if ($wasClosed && ($headerEconomicChanged || $rowEconomicChanged)) {
-            $expense->forceFill([
-                'state' => ExpenseState::Open,
-                'closure_outcome' => null,
-                'closed_at' => null,
-                'closed_by_user_id' => null,
-            ]);
         }
         $rootBusinessChanged = $expense->isDirty();
         if ($wasExisting && ($rootBusinessChanged || $changed !== [])) {

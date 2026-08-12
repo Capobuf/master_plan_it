@@ -1,6 +1,6 @@
 # Regole di dominio implementate
 
-Stato: `VERIFIED CURRENT` dopo l'implementazione delle Feature 009, 011 e 021.
+Stato: `VERIFIED CURRENT` dopo l'implementazione della Slice 023.
 
 Questo documento descrive soltanto regole che devono restare dopo la rimozione degli Spec Kit
 storici. Le funzionalità non implementate sono descritte esclusivamente negli Spec Kit attivi.
@@ -26,7 +26,9 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 - Lettura e modifica delle impostazioni generali usano abilities tenant-scoped distinte. Il Tenant
   non è selezionabile dal payload e l'update è transazionale, versionato e auditato con i soli nomi
   dei campi modificati.
-- La Base Budget non può cambiare dopo la prima approvazione.
+- La Base Economica ufficiale è `Net` o `Gross`. Può cambiare prima della prima approvazione senza
+  riscrivere i valori Net, IVA e Gross già persistiti; la prima approvazione la blocca in modo
+  atomico e ne conserva il timestamp.
 
 ## Anni di pianificazione
 
@@ -63,26 +65,29 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 
 - Expense kind: `Ordinary` o `Plafond`.
 - Estimate, Quote e Actual sono tipi indipendenti: non esiste progressione obbligatoria.
-- Una sola Estimate o Quote può essere selezionata come pianificazione corrente; le alternative
-  restano visibili ma non contribuiscono al Budget proposto.
-- Actual è effettivo immediatamente, richiede una data nello stesso anno della Spesa e può essere
-  positivo o negativo. Non esiste un passaggio di conferma.
+- Se esiste almeno una Estimate o Quote, esattamente una deve essere selezionata come
+  Pianificazione Corrente; le alternative restano visibili ma non contribuiscono ai totali
+  correnti. Una Spesa con soli Actual è valida senza selezione.
+- Actual è effettivo immediatamente, richiede una Data Effettiva indipendente dall'Anno Economico
+  della Spesa e può essere positivo, negativo o zero. Non esiste un passaggio di conferma.
 - Estimate e Quote non possono avere importo netto negativo; Actual può essere negativo.
-- La pianificazione può omettere la data. Le nuove scritture non supportano periodi o distribuzioni.
+- Ogni riga usa alternativamente un importo diretto oppure quantità e prezzo unitario; il backend
+  valida decimali esatti, calcola Net/IVA/Gross e arrotonda alla scala monetaria. La pianificazione
+  può omettere la data. Le nuove scritture non supportano periodi o distribuzioni.
 - Extra e finanziamento tramite Plafond sono mutuamente esclusivi.
 - Un Plafond referenziato deve appartenere allo stesso Tenant e anno; il cost center può differire.
-- Solo Expense row correnti e non eliminate entrano nei totali correnti.
-- I valori economici autorevoli sono calcolati dal backend e mantengono Net, VAT e Gross.
-- Gli update concorrenti usano optimistic locking.
-- Una Expense può riferirsi a Project, Contract o entrambi; quando coesistono il Project deve
-  coincidere con quello del Contract.
+- Solo Expense row correnti e non eliminate entrano nella proiezione corrente: una Pianificazione
+  Corrente per Spesa e la somma di tutti gli Actual.
+- I valori economici autorevoli sono calcolati dal backend e mantengono Net, IVA, Gross e valore
+  ufficiale secondo la Base Economica del Tenant.
+- Gli update concorrenti usano optimistic locking e ogni mutazione economica serializza lo stesso
+  Tenant/Anno prima di modificare aggregate e righe.
+- Una Expense può riferirsi a Project, Contract o entrambi come relazioni tenant-scoped
+  indipendenti; il Project proprio del Contract non forza quello della Spesa.
 - L'Importo approvato è nullable: `null` significa non approvato, `0.00` approvato a zero. Solo
   l'Action di approvazione può modificarlo.
-- Una Spesa può essere aperta o chiusa con esito opzionale `not_incurred`, `cancelled` o `moved`.
-  Una modifica economica riapre automaticamente una Spesa chiusa; titolo, note, fornitore e
-  riferimenti testuali non la riaprono.
-- Lo spostamento tra anni chiude l'origine come `moved`, crea una destinazione collegata e copia
-  solo la pianificazione, mai Actual o approvato.
+- La Spesa non possiede un lifecycle `open|closed`: non esistono stato, esito di chiusura,
+  Close/Reopen o Move. Il lifecycle annuale appartiene esclusivamente al Budget.
 - Una nota di credito in un anno successivo è una nuova Spesa collegata all'origine e contiene
   soltanto Actual negativi.
 
@@ -177,8 +182,9 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 - Generazione e sincronizzazione da un Contract usano i valori IVA persistiti nel termine sorgente,
   non un default Tenant modificato successivamente.
 - Il Plafond non deve produrre doppio conteggio della parte già coperta dall'allocazione.
-- Budget e Report condividono lo stesso dataset annuale: proposto, approvazione iniziale,
-  variazioni, approvato corrente, Actual, residuo, scostamento, utilizzo e conteggi lifecycle.
+- Documento Spesa, Registro, Budget, Report e Dashboard consumano la stessa proiezione annuale
+  canonica. Ogni superficie espone separatamente Pianificazione Corrente e Actual, con componenti
+  Net/IVA/Gross e valore ufficiale nella Base Economica del Tenant.
 - Stati e chiusure di Project o Contract non riclassificano automaticamente pianificazione,
   approvato o Actual.
 - Le approvazioni sono batch atomici multi-Spesa con data effettiva e timestamp di registrazione;
@@ -204,4 +210,5 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 ## Lingua dell'interfaccia
 
 Il launch corrente usa copy e route utente in italiano, con le sole eccezioni indicate in
-`docs/ARCHITECTURE.md`.
+`docs/ARCHITECTURE.md`. Il contesto Tenant/Anno è visibile nella shell superiore; non esiste una
+sidebar permanente e il cambio di contesto protegge le modifiche non salvate.

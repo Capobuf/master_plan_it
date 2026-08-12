@@ -2,9 +2,7 @@
 
 namespace Tests\Feature\Api\Reporting;
 
-use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
-use App\Models\Contract;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
@@ -22,365 +20,165 @@ final class ReportingApiHttpTest extends TestCase
     use DatabaseTransactions;
     use InteractsWithApiFoundation;
 
-    public function test_dashboard_returns_server_calculated_exact_dataset_without_chart_props(): void
+    public function test_dashboard_is_an_exact_canonical_projection_consumer(): void
     {
         $tenant = Tenant::factory()->create();
         $user = $this->tenantUser($tenant);
         $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
-        $this->expenseWithRow($tenant, $year, '100.00', '22.00', '122.00');
+        $expense = $this->expenseWithProjection($tenant, $year);
         $this->actingAs($user, 'web');
 
         $this->getJson('/api/v1/dashboard?planning_year_id='.$year->getKey())
             ->assertOk()
-            ->assertJsonStructure([
-                'data' => [
-                    'scope' => ['planning_year_id', 'year', 'currency', 'official_basis'],
-                    'summary' => ['official_basis', 'currency', 'amounts'],
-                    'monthly', 'by_type', 'by_cost_center', 'by_project', 'has_economic_data',
-                    'year_options', 'selected_year_id',
-                    'ancillary' => ['recentExpenses', 'expenseCounts', 'generatedContractPlanning', 'activeContracts', 'upcomingContractEvents'],
-                ],
-            ])
-            ->assertJsonPath('data.summary.amounts.net', '100.00')
-            ->assertJsonPath('data.summary.amounts.vat', '22.00')
-            ->assertJsonPath('data.summary.amounts.gross', '122.00')
-            ->assertJsonPath('data.summary.currency', 'EUR')
-            ->assertJsonMissingPath('data.charts')
-            ->assertJsonMissingPath('data.summary.netFormatted');
+            ->assertJsonPath('data.planning_year_id', $year->getKey())
+            ->assertJsonPath('data.economic_year_label', 2026)
+            ->assertJsonPath('data.currency', 'EUR')
+            ->assertJsonPath('data.basis', 'net')
+            ->assertJsonPath('data.totals.current_planning.official', '100.00')
+            ->assertJsonPath('data.totals.actual.official', '25.00')
+            ->assertJsonPath('data.expense_count', 1)
+            ->assertJsonPath('data.recent_expenses.0.expense_id', $expense->getKey())
+            ->assertJsonMissingPath('data.scope')
+            ->assertJsonMissingPath('data.summary')
+            ->assertJsonMissingPath('data.expense_counts')
+            ->assertJsonMissingPath('data.recent_expenses.0.state');
     }
 
-    public function test_dashboard_defaults_year_and_returns_safe_ancillary_domain_data(): void
+    public function test_annual_read_endpoints_require_the_canonical_year_parameter_and_reject_aliases(): void
     {
         $tenant = Tenant::factory()->create();
         $user = $this->tenantUser($tenant);
-        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => (int) now()->year, 'active' => true]);
-        $expense = $this->expenseWithRow($tenant, $year, '100.00', '22.00', '122.00');
-        $vendor = Vendor::factory()->for($tenant)->create();
-        $project = Project::factory()->for($tenant)->create(['title' => 'Migrazione Microsoft 365']);
-        $expense->forceFill(['title' => 'Rinnovo Microsoft 365', 'project_id' => $project->getKey()])->save();
-        $expense->currentPlanningRow()->update(['vendor_id' => $vendor->getKey()]);
-        ExpenseRow::factory()->for($expense)->create([
-            'tenant_id' => $tenant->getKey(),
-            'type' => 'actual',
-            'net_amount' => '25.00',
-            'vat_amount' => '5.50',
-            'gross_amount' => '30.50',
-            'spend_date' => '2026-02-15',
-        ]);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $this->actingAs($user, 'web');
+
+        foreach (['/api/v1/dashboard', '/api/v1/budget', '/api/v1/reports'] as $path) {
+            $this->getJson($path)->assertNotFound()->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
+            $this->getJson($path.'?year='.$year->getKey())->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
+        }
+    }
+
+    public function test_budget_uses_cost_center_id_and_foreign_filters_fail_closed(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
         $center = CostCenter::factory()->for($tenant)->create();
-        Contract::query()->create([
-            'tenant_id' => $tenant->getKey(),
-            'vendor_id' => $vendor->getKey(),
-            'cost_center_id' => $center->getKey(),
-            'title' => 'Active contract',
-            'active' => true,
-            'renewal_date' => now()->addMonth()->toDateString(),
-            'lock_version' => 1,
-        ]);
+        $foreignCenter = CostCenter::factory()->for(Tenant::factory()->create())->create();
+        $this->expenseWithProjection($tenant, $year, $center);
         $this->actingAs($user, 'web');
 
-        $response = $this->getJson('/api/v1/dashboard')->assertOk();
-        $response->assertJsonPath('data.selected_year_id', $year->getKey())
-            ->assertJsonPath('data.ancillary.recentExpenses.0.id', $expense->getKey())
-            ->assertJsonPath('data.ancillary.recentExpenses.0.cost_center', $expense->costCenter->name)
-            ->assertJsonPath('data.ancillary.recentExpenses.0.project', 'Migrazione Microsoft 365')
-            ->assertJsonPath('data.ancillary.recentExpenses.0.vendor', $vendor->name)
-            ->assertJsonPath('data.ancillary.recentExpenses.0.planned', '100.00')
-            ->assertJsonPath('data.ancillary.recentExpenses.0.actual', '25.00')
-            ->assertJsonPath('data.ancillary.recentExpenses.0.state', 'open')
-            ->assertJsonPath('data.ancillary.expenseCounts.total', 1)
-            ->assertJsonPath('data.ancillary.expenseCounts.open', 1)
-            ->assertJsonPath('data.ancillary.expenseCounts.closed', 0)
-            ->assertJsonPath('data.by_project.Migrazione Microsoft 365', '125.00')
-            ->assertJsonMissingPath('data.ancillary.recentExpenses.0.href')
-            ->assertJsonPath('data.ancillary.activeContracts.0.label', 'Active contract')
-            ->assertJsonMissingPath('data.ancillary.activeContracts.0.href')
-            ->assertJsonPath('data.ancillary.upcomingContractEvents.0.event_type', 'renewal');
+        $base = '/api/v1/budget?planning_year_id='.$year->getKey();
+        $this->getJson($base.'&cost_center_id='.$center->getKey())
+            ->assertOk()
+            ->assertJsonPath('data.budget.planning_year_id', $year->getKey())
+            ->assertJsonPath('data.expenses.0.cost_center_id', $center->getKey())
+            ->assertJsonPath('data.totals.current_planning.official', '100.00')
+            ->assertJsonPath('data.totals.actual.official', '25.00');
+        $this->getJson($base.'&cost_center='.$center->getKey())
+            ->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
+        $this->getJson($base.'&cost_center_id='.$foreignCenter->getKey())
+            ->assertNotFound()->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
     }
 
-    public function test_dashboard_without_planning_years_returns_empty_dataset(): void
+    public function test_report_paginates_canonical_groups_and_filters_project_and_vendor(): void
     {
         $tenant = Tenant::factory()->create();
         $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $projectA = Project::factory()->for($tenant)->create(['title' => 'Project A']);
+        $projectB = Project::factory()->for($tenant)->create(['title' => 'Project B']);
+        $vendorA = Vendor::factory()->for($tenant)->create(['name' => 'Vendor A']);
+        $vendorB = Vendor::factory()->for($tenant)->create(['name' => 'Vendor B']);
+        $this->expenseWithProjection($tenant, $year, null, $projectA, $vendorA, '100.00', '25.00');
+        $this->expenseWithProjection($tenant, $year, null, $projectB, $vendorB, '200.00', '10.00');
         $this->actingAs($user, 'web');
 
-        $this->getJson('/api/v1/dashboard')
+        $base = '/api/v1/reports?planning_year_id='.$year->getKey().'&group_by=expense';
+        $this->getJson($base.'&page=2&per_page=1')
             ->assertOk()
-            ->assertJsonPath('data.scope', null)
-            ->assertJsonPath('data.selected_year_id', null)
-            ->assertJsonPath('data.has_economic_data', false)
-            ->assertJsonPath('data.by_project', [])
-            ->assertJsonPath('data.ancillary.expenseCounts.total', 0)
-            ->assertJsonCount(0, 'data.year_options');
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('meta.current_page', 2)
+            ->assertJsonPath('meta.total', 2)
+            ->assertJsonPath('totals.current_planning.official', '300.00')
+            ->assertJsonPath('totals.actual.official', '35.00')
+            ->assertJsonMissingPath('visualization')
+            ->assertJsonMissingPath('filters.state');
+        $this->getJson($base.'&project_id='.$projectA->getKey())
+            ->assertOk()
+            ->assertJsonPath('totals.current_planning.official', '100.00')
+            ->assertJsonPath('totals.actual.official', '25.00');
+        $this->getJson($base.'&vendor_id='.$vendorB->getKey())
+            ->assertOk()
+            ->assertJsonPath('totals.current_planning.official', '200.00')
+            ->assertJsonPath('filters.vendor_id', $vendorB->getKey());
+        $this->getJson($base.'&state=closed')
+            ->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
     }
 
-    public function test_dashboard_ability_denial_is_uniform(): void
+    public function test_reporting_auth_ability_and_tenant_boundaries_fail_closed(): void
     {
         $tenant = Tenant::factory()->create();
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $this->getJson('/api/v1/dashboard?planning_year_id='.$year->getKey())
+            ->assertUnauthorized()->assertJsonPath('error.code', 'AUTHENTICATION_REQUIRED');
+
         $user = $this->tenantUser($tenant);
         $registrar = app(PermissionRegistrar::class);
-        $previousTeamId = $registrar->getPermissionsTeamId();
+        $previous = $registrar->getPermissionsTeamId();
         $registrar->setPermissionsTeamId($tenant->getKey());
         try {
             $user->roles()->firstOrFail()->revokePermissionTo('dashboard.view');
         } finally {
-            $registrar->setPermissionsTeamId($previousTeamId);
+            $registrar->setPermissionsTeamId($previous);
         }
         $this->actingAs($user, 'web');
-
-        $this->getJson('/api/v1/dashboard')
-            ->assertForbidden()
-            ->assertJsonPath('error.code', 'PERMISSION_DENIED');
-    }
-
-    public function test_budget_applies_same_tenant_cost_center_filter(): void
-    {
-        $tenant = Tenant::factory()->create();
-        $foreignTenant = Tenant::factory()->create();
-        $user = $this->tenantUser($tenant);
-        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
-        $center = CostCenter::factory()->for($tenant)->create();
-        $foreignCenter = CostCenter::factory()->for($foreignTenant)->create();
-        $this->expenseWithRow($tenant, $year, '100.00', '22.00', '122.00', $center);
-        $this->actingAs($user, 'web');
-
-        $this->getJson('/api/v1/budget?planning_year_id='.$year->getKey().'&cost_center='.$center->getKey())
-            ->assertOk()
-            ->assertJsonPath('data.budget.planning_year_id', $year->getKey())
-            ->assertJsonPath('data.expenses.0.cost_center_id', $center->getKey())
-            ->assertJsonPath('data.summary.proposed', '100.00');
-
-        $this->getJson('/api/v1/budget?planning_year_id='.$year->getKey().'&cost_center='.$foreignCenter->getKey())
-            ->assertNotFound()
-            ->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
-    }
-
-    public function test_report_uses_standard_pagination_and_filter_scope(): void
-    {
-        $tenant = Tenant::factory()->create();
-        $user = $this->tenantUser($tenant);
-        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
-        $this->expenseWithRow($tenant, $year, '100.00', '22.00', '122.00');
-        $this->expenseWithRow($tenant, $year, '200.00', '44.00', '244.00');
-        $this->actingAs($user, 'web');
-
-        $this->getJson('/api/v1/reports?year='.$year->getKey().'&page=2&per_page=1')
-            ->assertOk()
-            ->assertJsonStructure([
-                'data' => [[
-                    'key', 'label', 'group_by', 'proposed', 'approved', 'actual',
-                    'residual', 'variance', 'utilization_percentage', 'open_expenses',
-                    'closed_expenses', 'unapproved_actual_expenses', 'plafond_expenses',
-                ]],
-                'meta' => ['current_page', 'last_page', 'per_page', 'total'],
-                'mode', 'requested_as_of', 'cutoff_utc', 'read_only',
-                'budget' => ['planning_year_id', 'year', 'state', 'lock_version'],
-                'summary' => ['proposed', 'approved_current', 'actual', 'residual', 'variance'],
-                'global_plafond_overrun',
-                'visualization' => [
-                    'groups',
-                    'proposed_breakdown',
-                    'expense_states' => ['open', 'closed', 'total'],
-                ],
-                'filters' => ['planning_year_id', 'cost_center_id', 'project_id', 'vendor_id', 'state', 'group_by'],
-            ])
-            ->assertJsonPath('meta.current_page', 2)
-            ->assertJsonPath('meta.per_page', 1)
-            ->assertJsonPath('meta.total', 2)
-            ->assertJsonPath('filters.group_by', 'cost_center');
-    }
-
-    public function test_report_project_vendor_and_state_filters_restrict_the_filtered_summary(): void
-    {
-        $tenant = Tenant::factory()->create();
-        $user = $this->tenantUser($tenant);
-        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
-        $center = CostCenter::factory()->for($tenant)->create();
-        $projectA = Project::factory()->for($tenant)->create(['cost_center_id' => $center->getKey(), 'title' => 'Project A']);
-        $projectB = Project::factory()->for($tenant)->create(['cost_center_id' => $center->getKey(), 'title' => 'Project B']);
-        $vendorA = Vendor::factory()->for($tenant)->create(['name' => 'Vendor A']);
-        $vendorB = Vendor::factory()->for($tenant)->create(['name' => 'Vendor B']);
-        $this->reportExpense($tenant, $year, $center, $projectA, $vendorA, '100.00', '80.00', '30.00', 'open');
-        $this->reportExpense($tenant, $year, $center, $projectB, $vendorA, '200.00', '150.00', '20.00', 'open');
-        $this->reportExpense($tenant, $year, $center, $projectA, $vendorB, '300.00', '250.00', '10.00', 'closed');
-        $this->actingAs($user, 'web');
-
-        $base = '/api/v1/reports?planning_year_id='.$year->getKey().'&group_by=expense';
-        $this->getJson($base.'&project_id='.$projectA->getKey())
-            ->assertOk()
-            ->assertJsonPath('summary.proposed', '400.00')
-            ->assertJsonPath('summary.approved_current', '330.00')
-            ->assertJsonPath('summary.actual', '40.00')
-            ->assertJsonPath('summary.open_expenses', 1)
-            ->assertJsonPath('summary.closed_expenses', 1);
-        $this->getJson($base.'&vendor_id='.$vendorA->getKey())
-            ->assertOk()
-            ->assertJsonPath('summary.proposed', '300.00')
-            ->assertJsonPath('filters.vendor_id', $vendorA->getKey());
-        $this->getJson($base.'&state=closed')
-            ->assertOk()
-            ->assertJsonPath('summary.proposed', '300.00')
-            ->assertJsonPath('visualization.expense_states.open', 0)
-            ->assertJsonPath('visualization.expense_states.closed', 1)
-            ->assertJsonPath('visualization.expense_states.total', 1);
-    }
-
-    public function test_report_filter_ids_from_another_tenant_fail_closed(): void
-    {
-        $tenant = Tenant::factory()->create();
-        $foreignTenant = Tenant::factory()->create();
-        $user = $this->tenantUser($tenant);
-        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
-        $foreignCenter = CostCenter::factory()->for($foreignTenant)->create();
-        $foreignProject = Project::factory()->for($foreignTenant)->create();
-        $foreignVendor = Vendor::factory()->for($foreignTenant)->create();
-        $this->actingAs($user, 'web');
-
-        foreach ([
-            'cost_center_id' => $foreignCenter->getKey(),
-            'project_id' => $foreignProject->getKey(),
-            'vendor_id' => $foreignVendor->getKey(),
-        ] as $filter => $id) {
-            $this->getJson('/api/v1/reports?planning_year_id='.$year->getKey().'&'.$filter.'='.$id)
-                ->assertNotFound()
-                ->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
-        }
-    }
-
-    public function test_report_visualization_uses_all_filtered_groups_before_pagination_and_limits_payload(): void
-    {
-        $tenant = Tenant::factory()->create();
-        $user = $this->tenantUser($tenant);
-        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
-        for ($index = 1; $index <= 12; $index++) {
-            $center = CostCenter::factory()->for($tenant)->create(['name' => sprintf('Centro %02d', $index)]);
-            $this->reportExpense($tenant, $year, $center, null, null, sprintf('%d.00', $index * 10), null, '0.00', 'open');
-        }
-        $this->actingAs($user, 'web');
-
-        $this->getJson('/api/v1/reports?planning_year_id='.$year->getKey().'&page=2&per_page=1')
-            ->assertOk()
-            ->assertJsonCount(1, 'data')
-            ->assertJsonCount(10, 'visualization.groups')
-            ->assertJsonPath('visualization.groups.0.label', 'Centro 12')
-            ->assertJsonPath('summary.proposed', '780.00')
-            ->assertJsonPath('visualization.proposed_breakdown.5.key', 'other')
-            ->assertJsonPath('visualization.proposed_breakdown.5.proposed', '280.00');
-    }
-
-    public function test_report_reconciles_plafond_once_before_filtering(): void
-    {
-        $tenant = Tenant::factory()->create();
-        $user = $this->tenantUser($tenant);
-        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
-        $plafondCenter = CostCenter::factory()->for($tenant)->create(['name' => 'Plafond']);
-        $consumerCenter = CostCenter::factory()->for($tenant)->create(['name' => 'Consumer']);
-        $project = Project::factory()->for($tenant)->create(['cost_center_id' => $consumerCenter->getKey()]);
-        $vendor = Vendor::factory()->for($tenant)->create();
-        $plafond = $this->reportExpense($tenant, $year, $plafondCenter, null, $vendor, '100.00', '100.00', '0.00', 'open', ExpenseKind::Plafond);
-        $this->reportExpense($tenant, $year, $consumerCenter, $project, $vendor, '80.00', '80.00', '0.00', 'open', ExpenseKind::Ordinary, (int) $plafond->getKey());
-        $this->actingAs($user, 'web');
-
-        $base = '/api/v1/reports?planning_year_id='.$year->getKey();
-        $this->getJson($base)
-            ->assertOk()
-            ->assertJsonPath('summary.proposed', '100.00')
-            ->assertJsonPath('summary.approved_current', '100.00');
-        $this->getJson($base.'&project_id='.$project->getKey())
-            ->assertOk()
-            ->assertJsonPath('summary.proposed', '80.00')
-            ->assertJsonPath('summary.approved_current', '80.00')
-            ->assertJsonPath('global_plafond_overrun', '0.00');
-    }
-
-    public function test_reporting_requires_authentication_and_tenant_year_scope(): void
-    {
-        $tenant = Tenant::factory()->create();
-        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
-
         $this->getJson('/api/v1/dashboard?planning_year_id='.$year->getKey())
-            ->assertUnauthorized()
-            ->assertJsonPath('error.code', 'AUTHENTICATION_REQUIRED');
+            ->assertForbidden()->assertJsonPath('error.code', 'PERMISSION_DENIED');
 
-        $user = $this->tenantUser($tenant);
         $foreignYear = PlanningYear::factory()->for(Tenant::factory()->create())->create(['year_label' => 2026]);
-        $this->actingAs($user, 'web');
-
         $this->getJson('/api/v1/reports?planning_year_id='.$foreignYear->getKey())
-            ->assertNotFound()
-            ->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
+            ->assertNotFound()->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
     }
 
-    private function expenseWithRow(
+    private function expenseWithProjection(
         Tenant $tenant,
         PlanningYear $year,
-        string $net,
-        string $vat,
-        string $gross,
-        ?CostCenter $costCenter = null,
+        ?CostCenter $center = null,
+        ?Project $project = null,
+        ?Vendor $vendor = null,
+        string $planned = '100.00',
+        string $actual = '25.00',
     ): Expense {
+        $center ??= CostCenter::factory()->for($tenant)->create();
+        $vendor ??= Vendor::factory()->for($tenant)->create();
         $expense = Expense::factory()->for($tenant)->create([
             'planning_year_id' => $year->getKey(),
-            'cost_center_id' => ($costCenter ?? CostCenter::factory()->for($tenant)->create())->getKey(),
-        ]);
-        $row = ExpenseRow::factory()->for($expense)->create([
-            'tenant_id' => $tenant->getKey(),
-            'net_amount' => $net,
-            'vat_amount' => $vat,
-            'gross_amount' => $gross,
-            'spend_date' => '2026-01-15',
-        ]);
-        $expense->forceFill(['current_planning_row_id' => $row->getKey()])->save();
-
-        return $expense;
-    }
-
-    private function reportExpense(
-        Tenant $tenant,
-        PlanningYear $year,
-        CostCenter $costCenter,
-        ?Project $project,
-        ?Vendor $vendor,
-        string $planned,
-        ?string $approved,
-        string $actual,
-        string $state,
-        ExpenseKind $kind = ExpenseKind::Ordinary,
-        ?int $fundedPlafondId = null,
-    ): Expense {
-        $expense = Expense::factory()->for($tenant)->create([
-            'planning_year_id' => $year->getKey(),
-            'cost_center_id' => $costCenter->getKey(),
+            'cost_center_id' => $center->getKey(),
             'project_id' => $project?->getKey(),
-            'kind' => $kind,
-            'approved_amount' => $approved,
-            'approved_basis' => $approved === null ? null : 'net',
-            'state' => $state,
         ]);
-        $row = ExpenseRow::factory()->for($expense)->create([
+        $planning = ExpenseRow::factory()->for($expense)->create([
             'tenant_id' => $tenant->getKey(),
-            'vendor_id' => $vendor?->getKey(),
+            'position' => 1,
+            'vendor_id' => $vendor->getKey(),
             'type' => ExpenseType::Quote,
-            'spend_date' => null,
             'entered_amount' => $planned,
             'net_amount' => $planned,
             'vat_amount' => '0.00',
             'gross_amount' => $planned,
-            'funded_plafond_expense_id' => $fundedPlafondId,
+            'spend_date' => null,
         ]);
-        $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
-        if (bccomp($actual, '0.00', 2) !== 0) {
-            ExpenseRow::factory()->for($expense)->create([
-                'tenant_id' => $tenant->getKey(),
-                'vendor_id' => $vendor?->getKey(),
-                'type' => ExpenseType::Actual,
-                'spend_date' => '2026-06-01',
-                'entered_amount' => $actual,
-                'net_amount' => $actual,
-                'vat_amount' => '0.00',
-                'gross_amount' => $actual,
-            ]);
-        }
+        ExpenseRow::factory()->for($expense)->create([
+            'tenant_id' => $tenant->getKey(),
+            'position' => 2,
+            'vendor_id' => $vendor->getKey(),
+            'type' => ExpenseType::Actual,
+            'entered_amount' => $actual,
+            'net_amount' => $actual,
+            'vat_amount' => '0.00',
+            'gross_amount' => $actual,
+            'spend_date' => '2027-02-15',
+        ]);
+        $expense->forceFill(['current_planning_row_id' => $planning->getKey()])->saveQuietly();
 
         return $expense;
     }

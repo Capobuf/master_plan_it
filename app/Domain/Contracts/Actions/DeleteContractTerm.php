@@ -20,6 +20,7 @@ final class DeleteContractTerm
         $this->contractPolicy($context)->update($actor, $target)->authorize();
         [$actor, $tenant] = $this->persistedContractContext($actor, $context);
         DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $reason, $target, $targetTerm, $tenant): void {
+            $this->lockContractEconomicYears((int) $tenant->getKey(), (int) $target->getKey());
             $contract = Contract::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($target->getKey());
             $term = ContractTerm::query()->where('tenant_id', $tenant->getKey())->where('contract_id', $contract?->getKey())->lockForUpdate()->find($targetTerm->getKey());
             if (! $contract instanceof Contract || ! $term instanceof ContractTerm || $term->lock_version !== $expectedLockVersion) {

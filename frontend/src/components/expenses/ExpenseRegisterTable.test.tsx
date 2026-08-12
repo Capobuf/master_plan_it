@@ -26,17 +26,15 @@ const columns: ExpenseColumnPreference[] = [
   { key: "net", visible: true },
   { key: "vat", visible: true },
   { key: "gross", visible: true },
-  { key: "state", visible: true },
 ];
 
 const expense: ExpenseRegisterItem = {
   id: 41,
   planning_year_id: 7,
-  planning_year_label: 2026,
+  economic_year_label: 2026,
   cost_center_id: 3,
   cost_center_name: "Operations",
   kind: "ordinary",
-  state: "open",
   title: "Licenze operative",
   project_id: null,
   project_title: null,
@@ -48,7 +46,12 @@ const expense: ExpenseRegisterItem = {
   vendor_summary: "Acme",
   row_count: 1,
   lock_version: 2,
-  totals: { net: "100.00", vat: "22.00", gross: "122.00", currency: "EUR", official_basis: "net" },
+  currency: "EUR",
+  basis: "net",
+  totals: {
+    current_planning: { net: "100.00", vat: "22.00", gross: "122.00", official: "100.00" },
+    actual: { net: "0.00", vat: "0.00", gross: "0.00", official: "0.00" },
+  },
 };
 
 describe("ExpenseRegisterTable", () => {
@@ -67,25 +70,21 @@ describe("ExpenseRegisterTable", () => {
         entered_amount: "100.00",
         amount_includes_vat: false,
         vat_rate: "22.00",
-        is_extra: false,
-        funded_plafond_expense_id: null,
         spend_date: "2026-01-15",
         external_reference: null,
         lock_version: 1,
         is_system_managed: false,
         generated: false,
         contract_term_id: null,
-        totals: expense.totals,
+        amount: expense.totals.current_planning,
       }],
-    } as ExpenseDetail);
+    } as unknown as ExpenseDetail);
 
-    render(<MemoryRouter><ExpenseRegisterTable expenses={[expense]} planningYearId={7} planningYears={[]} columnPreferences={columns} canEdit canCreate canDelete canViewProjects onChanged={vi.fn()} onPlanningYearChange={vi.fn()} /></MemoryRouter>);
+    render(<MemoryRouter><ExpenseRegisterTable expenses={[expense]} planningYearId={7} columnPreferences={columns} canEdit canDelete canViewProjects onChanged={vi.fn()} /></MemoryRouter>);
 
     expect(screen.queryByText(/Spese selezionate/)).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("checkbox", { name: "Seleziona Licenze operative" }));
     expect(screen.getByText("1 Spese selezionate")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Chiudi" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Sposta" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Elimina" })).toBeInTheDocument();
 
     const expander = screen.getByRole("button", { name: "Espandi righe di Licenze operative" });
@@ -99,12 +98,12 @@ describe("ExpenseRegisterTable", () => {
   });
 
   it("renders column visibility as a controlled preference", () => {
-    const { rerender } = render(<MemoryRouter><ExpenseRegisterTable expenses={[expense]} planningYearId={7} planningYears={[]} columnPreferences={columns} canEdit={false} canCreate={false} canDelete={false} canViewProjects={false} onChanged={vi.fn()} onPlanningYearChange={vi.fn()} /></MemoryRouter>);
+    const { rerender } = render(<MemoryRouter><ExpenseRegisterTable expenses={[expense]} planningYearId={7} columnPreferences={columns} canEdit={false} canDelete={false} canViewProjects={false} onChanged={vi.fn()} /></MemoryRouter>);
 
     expect(screen.getByRole("columnheader", { name: "Contratto" })).toBeInTheDocument();
 
     const nextColumns = columns.map((column) => column.key === "contract" ? { ...column, visible: false } : column);
-    rerender(<MemoryRouter><ExpenseRegisterTable expenses={[expense]} planningYearId={7} planningYears={[]} columnPreferences={nextColumns} canEdit={false} canCreate={false} canDelete={false} canViewProjects={false} onChanged={vi.fn()} onPlanningYearChange={vi.fn()} /></MemoryRouter>);
+    rerender(<MemoryRouter><ExpenseRegisterTable expenses={[expense]} planningYearId={7} columnPreferences={nextColumns} canEdit={false} canDelete={false} canViewProjects={false} onChanged={vi.fn()} /></MemoryRouter>);
 
     expect(screen.queryByRole("columnheader", { name: "Contratto" })).not.toBeInTheDocument();
   });

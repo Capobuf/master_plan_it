@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { listExpenseCostCenters, listExpenseVendors } from "../../api/expenses";
 import { listProjectOptions } from "../../api/projects";
@@ -27,16 +28,43 @@ const response: ReportsResponse = {
     key: "project:20",
     label: "Migrazione ERP",
     group_by: "project",
+    expense_id: null,
+    cost_center_id: null,
+    project_id: 20,
+    contract_id: null,
+    vendor_id: null,
+    currency: "EUR",
+    basis: "net",
+    totals: {
+      current_planning: { net: "1200.00", vat: "264.00", gross: "1464.00", official: "1200.00" },
+      actual: { net: "850.00", vat: "187.00", gross: "1037.00", official: "850.00" },
+    },
     proposed: "1200.00",
     approved: "1000.00",
     actual: "850.00",
     residual: "150.00",
     variance: "-150.00",
     utilization_percentage: "85.00",
-    open_expenses: 2,
-    closed_expenses: 1,
     unapproved_actual_expenses: 1,
     plafond_expenses: 0,
+    lines: [{
+      expense_id: 81,
+      row_id: 91,
+      planning_year_id: 1,
+      economic_year_label: 2026,
+      type: "actual",
+      is_current_planning: false,
+      contributes_to_current_planning: false,
+      description: "Consuntivo migrazione",
+      notes: "Fattura verificata",
+      spend_date: "2027-01-15",
+      cost_center_id: 10,
+      vendor_id: 30,
+      vendor_name: "Vendor Italia",
+      project_id: 20,
+      contract_id: null,
+      amount: { net: "850.00", vat: "187.00", gross: "1037.00", official: "850.00" },
+    }],
   }],
   meta: { current_page: 1, last_page: 1, per_page: 15, total: 1 },
   mode: "current",
@@ -53,17 +81,17 @@ const response: ReportsResponse = {
     residual: "150.00",
     variance: "-150.00",
     utilization_percentage: "85.00",
-    open_expenses: 2,
-    closed_expenses: 1,
+    plafond_overrun: "0.00",
     unapproved_actual_expenses: 1,
   },
-  global_plafond_overrun: "50.00",
-  visualization: {
-    groups: [{ key: "project:20", label: "Migrazione ERP", proposed: "1200.00", approved: "1000.00", actual: "850.00", residual: "150.00", variance: "-150.00", utilization_percentage: "85.00" }],
-    proposed_breakdown: [{ key: "project:20", label: "Migrazione ERP", proposed: "1200.00" }],
-    expense_states: { open: 2, closed: 1, total: 3 },
+  currency: "EUR",
+  basis: "net",
+  totals: {
+    current_planning: { net: "1200.00", vat: "264.00", gross: "1464.00", official: "1200.00" },
+    actual: { net: "850.00", vat: "187.00", gross: "1037.00", official: "850.00" },
   },
-  filters: { planning_year_id: 1, cost_center_id: null, project_id: 20, vendor_id: null, state: null, group_by: "project" },
+  global_plafond_overrun: "50.00",
+  filters: { planning_year_id: 1, cost_center_id: null, project_id: 20, contract_id: null, vendor_id: null, group_by: "project", as_of: null },
 };
 
 describe("ReportsView", () => {
@@ -75,7 +103,7 @@ describe("ReportsView", () => {
   });
 
   it("applies discrete filters automatically and omits the Attenzioni panel", async () => {
-    render(<ReportsView tenantId={1} planningYearId={1} canView canLoadCostCenters canLoadProjects canLoadVendors />);
+    render(<MemoryRouter><ReportsView tenantId={1} planningYearId={1} canView canLoadCostCenters canLoadProjects canLoadVendors /></MemoryRouter>);
 
     await waitFor(() => expect(getReports).toHaveBeenCalledTimes(1));
     fireEvent.change(screen.getByLabelText("Raggruppa per"), { target: { value: "project" } });
@@ -102,17 +130,16 @@ describe("ReportsView", () => {
     expect(screen.queryByRole("button", { name: "Applica filtri" })).not.toBeInTheDocument();
     expect(screen.queryByRole("heading", { name: "Attenzioni" })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Azzera filtri" })).toBeInTheDocument();
-    expect(screen.getAllByText("Proposto").length).toBeGreaterThan(0);
-    expect(screen.getByRole("heading", { name: "Proposto vs Approvato vs Actual per Progetto" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Ripartizione del Proposto per Progetto" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Scostamento per Progetto" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Stato Spese" })).toBeInTheDocument();
+    expect(screen.getAllByText("Pianificazione corrente").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Effettivi").length).toBeGreaterThan(0);
+    expect(screen.getByRole("heading", { name: "Pianificazione, approvato ed Effettivi per Progetto" })).toBeInTheDocument();
+    expect(screen.queryByRole("heading", { name: "Stato Spese" })).not.toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "Dettaglio per Progetto" })).toBeInTheDocument();
     expect(screen.getAllByText((content) => content.includes("−150,00")).length).toBeGreaterThan(0);
   });
 
   it("waits for a historical cutoff and returns automatically to the current view", async () => {
-    render(<ReportsView tenantId={1} planningYearId={1} canView canLoadCostCenters canLoadProjects canLoadVendors />);
+    render(<MemoryRouter><ReportsView tenantId={1} planningYearId={1} canView canLoadCostCenters canLoadProjects canLoadVendors /></MemoryRouter>);
 
     await waitFor(() => expect(getReports).toHaveBeenCalledTimes(1));
     fireEvent.change(screen.getByLabelText("Vista"), { target: { value: "historical" } });
@@ -141,5 +168,19 @@ describe("ReportsView", () => {
       group_by: "cost_center",
     }));
     expect(getReports).toHaveBeenCalledTimes(3);
+  });
+
+  it("expands a group into authoritative expense lines with an accessible drill-down", async () => {
+    render(<MemoryRouter><ReportsView tenantId={1} planningYearId={1} canView canLoadCostCenters canLoadProjects canLoadVendors /></MemoryRouter>);
+
+    const group = await screen.findByRole("button", { name: /Migrazione ERP/ });
+    expect(group).toHaveAttribute("aria-expanded", "false");
+    fireEvent.click(group);
+
+    expect(group).toHaveAttribute("aria-expanded", "true");
+    expect(screen.getByRole("list", { name: "Righe economiche di Migrazione ERP" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Consuntivo migrazione" })).toHaveAttribute("href", "/spese/81");
+    expect(screen.getByText(/Effettivo · Data Effettiva 2027-01-15/)).toBeInTheDocument();
+    expect(screen.getByText("Fattura verificata")).toBeInTheDocument();
   });
 });

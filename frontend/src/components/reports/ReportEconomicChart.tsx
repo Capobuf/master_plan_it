@@ -48,9 +48,9 @@ export default function ReportEconomicChart({ title, categories, proposed, appro
     }],
   }), [categories, currency]);
   const series = useMemo(() => [
-    { name: "Proposto", data: proposed },
+    { name: "Pianificazione corrente", data: proposed },
     { name: "Approvato", data: approved },
-    { name: "Actual", data: actual },
+    { name: "Effettivi", data: actual },
   ], [actual, approved, proposed]);
 
   return (
@@ -59,7 +59,7 @@ export default function ReportEconomicChart({ title, categories, proposed, appro
       {categories.length === 0 ? (
         <p className="mt-4 rounded-xl border border-dashed border-gray-300 px-4 py-8 text-sm text-gray-500 dark:border-gray-700 dark:text-gray-400">Nessun gruppo da rappresentare.</p>
       ) : (
-        <div className="mt-3 h-[330px] w-full sm:mt-4 sm:h-[340px]" aria-label={title}>
+        <div className="mt-3 h-[330px] w-full sm:mt-4 sm:h-[340px]" role="img" aria-label={title}>
           <Chart options={options} series={series} type="bar" height="100%" width="100%" />
         </div>
       )}

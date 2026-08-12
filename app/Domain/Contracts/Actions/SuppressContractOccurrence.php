@@ -32,6 +32,7 @@ final class SuppressContractOccurrence
         }
 
         return DB::transaction(function () use ($actor, $tenant, $contract, $sourceKey, $reason, $correlationId): ContractGenerationException {
+            $this->lockContractEconomicYears((int) $tenant->getKey(), (int) $contract->getKey());
             Contract::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->findOrFail($contract->getKey());
             $existing = ContractGenerationException::query()->where('tenant_id', $tenant->getKey())->where('source_key', $sourceKey)->lockForUpdate()->first();
             if ($existing instanceof ContractGenerationException) {

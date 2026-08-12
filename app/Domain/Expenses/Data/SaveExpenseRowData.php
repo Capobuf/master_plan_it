@@ -15,7 +15,7 @@ final readonly class SaveExpenseRowData
         public string $description,
         public ?string $quantity,
         public ?string $unitPrice,
-        public string $enteredAmount,
+        public ?string $enteredAmount,
         public bool $amountIncludesVat,
         public string $vatRate,
         public bool $isExtra,
@@ -27,5 +27,6 @@ final readonly class SaveExpenseRowData
         public ?string $externalReference,
         public ?int $expectedLockVersion,
         public bool $isCurrentPlanning = false,
+        public ?string $notes = null,
     ) {}
 }

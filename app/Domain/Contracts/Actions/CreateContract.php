@@ -20,6 +20,7 @@ final class CreateContract
         [$actor, $tenant] = $this->persistedContractContext($actor, $context);
 
         return DB::transaction(function () use ($actor, $context, $correlationId, $data, $tenant): Contract {
+            $this->lockContractEconomicYears((int) $tenant->getKey(), null);
             $contract = new Contract;
             $changed = $this->saveContract($contract, $tenant, $data);
             $this->contractRevisions($actor, $context, RevisionOperation::Create, $correlationId, $contract, $changed);

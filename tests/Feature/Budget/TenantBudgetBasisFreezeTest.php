@@ -43,7 +43,7 @@ final class TenantBudgetBasisFreezeTest extends TestCase
                 'name' => $tenant->name,
                 'timezone' => $tenant->timezone,
                 'default_vat_rate' => $tenant->default_vat_rate,
-                'budget_basis' => 'gross',
+                'economic_basis' => 'gross',
                 'deletion_reason_required' => $tenant->deletion_reason_required,
             ],
             1,
@@ -77,7 +77,7 @@ final class TenantBudgetBasisFreezeTest extends TestCase
                     'name' => $tenant->name,
                     'timezone' => $tenant->timezone,
                     'default_vat_rate' => $tenant->default_vat_rate,
-                    'budget_basis' => 'net',
+                    'economic_basis' => 'net',
                     'deletion_reason_required' => $tenant->deletion_reason_required,
                 ],
                 2,
@@ -85,7 +85,7 @@ final class TenantBudgetBasisFreezeTest extends TestCase
             );
             $this->fail('The approved basis must be frozen.');
         } catch (DomainException $exception) {
-            $this->assertSame('TENANT_BUDGET_BASIS_LOCKED', $exception->getMessage());
+            $this->assertSame('BUDGET_STATE_CONFLICT', $exception->getMessage());
         }
 
         $this->assertDatabaseHas('tenants', [
@@ -93,5 +93,49 @@ final class TenantBudgetBasisFreezeTest extends TestCase
             'budget_basis' => 'gross',
             'lock_version' => 2,
         ]);
+    }
+
+    public function test_approval_uses_the_locked_persisted_basis_instead_of_a_stale_context_snapshot(): void
+    {
+        $tenant = Tenant::factory()->create(['budget_basis' => 'net']);
+        $actor = User::factory()->create(['tenant_id' => null, 'is_active' => true]);
+        app(PlatformAdministrator::class)->assign($actor);
+        $staleContext = new TenantContext($tenant, $actor);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2027]);
+        $expense = Expense::factory()->for($tenant)->create(['planning_year_id' => $year->getKey()]);
+        ExpenseRow::factory()->for($expense)->create([
+            'tenant_id' => $tenant->getKey(),
+            'type' => ExpenseType::Estimate,
+            'spend_date' => null,
+        ]);
+
+        app(UpdateTenantSettings::class)->execute(
+            $actor,
+            new TenantContext($tenant->fresh(), $actor),
+            [
+                'name' => $tenant->name,
+                'timezone' => $tenant->timezone,
+                'default_vat_rate' => $tenant->default_vat_rate,
+                'economic_basis' => 'gross',
+                'deletion_reason_required' => $tenant->deletion_reason_required,
+            ],
+            1,
+            (string) str()->uuid(),
+        );
+
+        $operation = app(ApplyBudgetApproval::class)->execute(
+            $actor,
+            $staleContext,
+            $year,
+            new ApplyApprovalData(1, '2027-02-01', null, [
+                new ApprovalChangeData((int) $expense->getKey(), 1, '122.00'),
+            ]),
+            (string) str()->uuid(),
+        );
+
+        $this->assertSame('net', $staleContext->budgetBasis->value);
+        $this->assertSame('gross', $operation->budget_basis);
+        $this->assertSame('gross', $expense->fresh()->approved_basis);
+        $this->assertSame('gross', $tenant->fresh()->budget_basis->value);
     }
 }

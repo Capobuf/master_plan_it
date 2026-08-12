@@ -117,7 +117,12 @@ final class ContractPolicy
     {
         $tenant = Tenant::query()->whereKey($this->context->tenantId)->first();
 
-        return $tenant?->state === TenantState::Active ? Response::allow() : Response::deny($tenant === null ? 'TENANT_CONTEXT_REQUIRED' : 'TENANT_INACTIVE');
+        if ($tenant?->state === TenantState::Active
+            || ($tenant instanceof Tenant && $this->administrator->hasProtectedRole($this->context->actor))) {
+            return Response::allow();
+        }
+
+        return Response::deny($tenant === null ? 'TENANT_CONTEXT_REQUIRED' : 'TENANT_INACTIVE');
     }
 
     private function hasAbility(User $user, string $ability): bool

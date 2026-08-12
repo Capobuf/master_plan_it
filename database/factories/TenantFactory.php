@@ -33,4 +33,19 @@ class TenantFactory extends Factory
             'lock_version' => 1,
         ];
     }
+
+    public function net(): static
+    {
+        return $this->state(['budget_basis' => BudgetBasis::Net]);
+    }
+
+    public function gross(): static
+    {
+        return $this->state(['budget_basis' => BudgetBasis::Gross]);
+    }
+
+    public function basisLocked(): static
+    {
+        return $this->state(['economic_basis_locked_at' => now('UTC')]);
+    }
 }

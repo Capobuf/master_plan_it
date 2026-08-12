@@ -22,6 +22,14 @@ final class PromoteDeferredProjects
         $currentYear = (int) now((string) $tenant->timezone)->year;
 
         return DB::transaction(function () use ($actor, $context, $currentYear, $tenant): int {
+            $candidateIds = Project::query()
+                ->where('tenant_id', $tenant->getKey())
+                ->where('stage', ProjectStage::Deferred->value)
+                ->whereHas('deferredTargetPlanningYear', fn ($query) => $query
+                    ->where('tenant_id', $tenant->getKey())
+                    ->where('year_label', '<=', $currentYear))
+                ->pluck('id')->map(static fn ($id): int => (int) $id)->all();
+            $this->lockProjectEconomicYears((int) $tenant->getKey(), $candidateIds);
             $projects = Project::query()
                 ->where('tenant_id', $tenant->getKey())
                 ->where('stage', ProjectStage::Deferred->value)

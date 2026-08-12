@@ -153,9 +153,8 @@ final class TenantSettingsTest extends TestCase
                 'currency_code' => 'EUR',
                 'timezone' => 'Europe/Rome',
                 'default_vat_rate' => '22.00',
-                'budget_basis' => 'net',
-                'budget_basis_locked' => false,
-                'budget_basis_lock_reason' => null,
+                'economic_basis' => 'net',
+                'economic_basis_locked_at' => null,
                 'deletion_reason_required' => false,
                 'lock_version' => 1,
             ],
@@ -175,7 +174,7 @@ final class TenantSettingsTest extends TestCase
         $this->assertArrayNotHasKey('default_vat_rate', $event->properties);
     }
 
-    public function test_budget_basis_projection_locks_after_approval_and_mutation_is_atomic(): void
+    public function test_economic_basis_projection_locks_after_approval_and_mutation_is_atomic(): void
     {
         $tenant = Tenant::factory()->create([
             'name' => 'Approved tenant',
@@ -208,9 +207,8 @@ final class TenantSettingsTest extends TestCase
         $this->actingAs($manager, 'web');
         $this->getJson('/api/v1/tenant-settings')
             ->assertOk()
-            ->assertJsonPath('data.budget_basis', 'net')
-            ->assertJsonPath('data.budget_basis_locked', true)
-            ->assertJsonPath('data.budget_basis_lock_reason', 'TENANT_BUDGET_BASIS_LOCKED');
+            ->assertJsonPath('data.economic_basis', 'net');
+        $this->assertNotNull($this->getJson('/api/v1/tenant-settings')->json('data.economic_basis_locked_at'));
         $settingsAuditCount = AuditEvent::query()
             ->where('tenant_id', $tenant->getKey())
             ->where('event_type', 'tenant.settings.updated')
@@ -218,8 +216,8 @@ final class TenantSettingsTest extends TestCase
 
         $this->withHeaders($this->csrfHeaders())->putJson('/api/v1/tenant-settings', [
             ...$this->settingsPayload($tenant),
-            'budget_basis' => 'gross',
-        ])->assertConflict()->assertJsonPath('error.code', 'TENANT_BUDGET_BASIS_LOCKED');
+            'economic_basis' => 'gross',
+        ])->assertConflict()->assertJsonPath('error.code', 'BUDGET_STATE_CONFLICT');
 
         $this->assertDatabaseHas('tenants', [
             'id' => $tenant->getKey(),
@@ -324,7 +322,7 @@ final class TenantSettingsTest extends TestCase
                     'name' => 'Unsafe update',
                     'timezone' => 'Europe/Rome',
                     'default_vat_rate' => '20.00',
-                    'budget_basis' => 'net',
+                    'economic_basis' => 'net',
                     'deletion_reason_required' => true,
                 ],
                 5,
@@ -378,7 +376,7 @@ final class TenantSettingsTest extends TestCase
             'name' => (string) $tenant->name,
             'timezone' => (string) $tenant->timezone,
             'default_vat_rate' => (string) $tenant->default_vat_rate,
-            'budget_basis' => (string) $tenant->getRawOriginal('budget_basis'),
+            'economic_basis' => (string) $tenant->getRawOriginal('budget_basis'),
             'deletion_reason_required' => (bool) $tenant->deletion_reason_required,
             'lock_version' => (int) $tenant->lock_version,
         ], ...$overrides];

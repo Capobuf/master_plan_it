@@ -2,6 +2,7 @@
 
 namespace App\Domain\Expenses\Actions;
 
+use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
 use App\Domain\Expenses\Actions\Concerns\ManagesExpenseAggregate;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
@@ -34,6 +35,10 @@ final class RestoreExpenseRevision
         [$actor, $tenant] = $this->persistedContext($actor, $context);
 
         return DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $source, $target, $tenant): Expense {
+            app(AnnualEconomicMutationGuard::class)->acquire(
+                (int) $tenant->getKey(),
+                [(int) $target->planning_year_id],
+            );
             $expense = Expense::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($target->getKey());
             if (! $expense instanceof Expense || $expense->lock_version !== $expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');
@@ -84,6 +89,7 @@ final class RestoreExpenseRevision
                     externalReference: $this->nullableString($contents['external_reference'] ?? null),
                     expectedLockVersion: $current?->lock_version,
                     isCurrentPlanning: (int) ($snapshot['current_planning_row_id'] ?? 0) === (int) $historicalId,
+                    notes: $this->nullableString($contents['notes'] ?? null),
                 );
             }
             $historicalIds = array_map('intval', array_keys($historicalRows));
@@ -103,6 +109,9 @@ final class RestoreExpenseRevision
                 expectedLockVersion: $expectedLockVersion,
                 creditForExpenseId: isset($snapshot['credit_for_expense_id']) ? (int) $snapshot['credit_for_expense_id'] : null,
             );
+            if ($data->planningYearId !== (int) $expense->planning_year_id) {
+                throw new DomainException('REVISION_RESTORE_INVALID');
+            }
             $changed = $this->saveAggregate($expense, $tenant, $data, $rows, $actor, $deletedRows);
             if ($changed === []) {
                 throw new DomainException('REVISION_RESTORE_INVALID');

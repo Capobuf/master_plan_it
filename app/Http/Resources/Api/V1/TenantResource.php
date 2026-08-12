@@ -18,7 +18,7 @@ final class TenantResource extends JsonResource
             'language_code' => (string) $this->resource->language_code,
             'timezone' => (string) $this->resource->timezone,
             'default_vat_rate' => (string) $this->resource->default_vat_rate,
-            'budget_basis' => (string) $this->resource->getRawOriginal('budget_basis'),
+            'economic_basis' => (string) $this->resource->getRawOriginal('budget_basis'),
             'state' => (string) $this->resource->getRawOriginal('state'),
             'lock_version' => (int) $this->resource->lock_version,
         ];

@@ -29,9 +29,13 @@ const dataset: AnnualBudget = {
     variance: "0.00",
     utilization_percentage: null,
     plafond_overrun: "0.00",
-    open_expenses: 1,
-    closed_expenses: 0,
     unapproved_actual_expenses: 0,
+  },
+  currency: "EUR",
+  basis: "net",
+  totals: {
+    current_planning: { net: "100.00", vat: "22.00", gross: "122.00", official: "100.00" },
+    actual: { net: "0.00", vat: "0.00", gross: "0.00", official: "0.00" },
   },
   expenses: [{
     id: 42,
@@ -45,8 +49,12 @@ const dataset: AnnualBudget = {
     contract_title: null,
     vendor_id: null,
     vendor_name: null,
-    state: "open",
-    closure_outcome: null,
+    currency: "EUR",
+    basis: "net",
+    totals: {
+      current_planning: { net: "100.00", vat: "22.00", gross: "122.00", official: "100.00" },
+      actual: { net: "0.00", vat: "0.00", gross: "0.00", official: "0.00" },
+    },
     current_planning_row_id: 1,
     funded_plafond_expense_id: null,
     planned: "100.00",
@@ -55,7 +63,6 @@ const dataset: AnnualBudget = {
     actual: "0.00",
     residual: null,
     variance: null,
-    variance_final: false,
     has_actual: false,
   }],
 };

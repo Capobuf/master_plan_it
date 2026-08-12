@@ -21,6 +21,7 @@ final class ResumeContractOccurrence
         $this->contractPolicy($context)->resumeGeneration($actor, $contract)->authorize();
         [$actor, $tenant] = $this->persistedContractContext($actor, $context);
         DB::transaction(function () use ($actor, $tenant, $contract, $sourceKey, $correlationId): void {
+            $this->lockContractEconomicYears((int) $tenant->getKey(), (int) $contract->getKey());
             Contract::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->findOrFail($contract->getKey());
             $exception = ContractGenerationException::query()->where('tenant_id', $tenant->getKey())->where('contract_id', $contract->getKey())->where('source_key', $sourceKey)->lockForUpdate()->first();
             if (! $exception instanceof ContractGenerationException) {

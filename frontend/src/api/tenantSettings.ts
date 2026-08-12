@@ -6,9 +6,8 @@ export interface TenantSettings {
   currency_code: string;
   timezone: string;
   default_vat_rate: string;
-  budget_basis: "net" | "gross";
-  budget_basis_locked: boolean;
-  budget_basis_lock_reason: string | null;
+  economic_basis: "net" | "gross";
+  economic_basis_locked_at: string | null;
   deletion_reason_required: boolean;
   lock_version: number;
 }
@@ -17,7 +16,7 @@ export interface TenantSettingsUpdate {
   name: string;
   timezone: string;
   default_vat_rate: string;
-  budget_basis: "net" | "gross";
+  economic_basis: "net" | "gross";
   deletion_reason_required: boolean;
   lock_version: number;
 }

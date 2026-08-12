@@ -1,4 +1,5 @@
 import { apiClient, type DataEnvelope } from "./client";
+import type { ProjectionTotals } from "./projection";
 
 export interface AnnualBudgetExpense {
   id: number;
@@ -12,37 +13,36 @@ export interface AnnualBudgetExpense {
   contract_title: string | null;
   vendor_id: number | null;
   vendor_name: string | null;
-  state: "open" | "closed";
-  closure_outcome: "not_incurred" | "cancelled" | "moved" | null;
   current_planning_row_id: number | null;
   funded_plafond_expense_id: number | null;
-  planned: string | null;
-  approved: string | null;
-  approved_basis: "net" | "gross" | null;
-  actual: string;
-  residual: string | null;
-  variance: string | null;
-  variance_final: boolean;
-  has_actual: boolean;
+  currency: string;
+  basis: "net" | "gross";
+  totals: ProjectionTotals;
+  planned?: string | null;
+  approved?: string | null;
+  approved_basis?: "net" | "gross" | null;
+  actual?: string;
+  residual?: string | null;
+  variance?: string | null;
+  has_actual?: boolean;
   lock_version?: number;
   rows?: Array<Record<string, unknown>>;
 }
 
 export interface AnnualBudgetSummary {
-  currency: string;
-  official_basis: "net" | "gross";
-  proposed: string;
+  /** Approval fields remain migration-only until Slice 025. */
   initial_approved: string;
   approved_variations: string;
   approved_current: string;
-  actual: string;
-  residual: string;
-  variance: string;
-  utilization_percentage: string | null;
-  plafond_overrun: string;
-  open_expenses: number;
-  closed_expenses: number;
-  unapproved_actual_expenses: number;
+  proposed?: string;
+  actual?: string;
+  residual?: string;
+  variance?: string;
+  utilization_percentage?: string | null;
+  currency?: string;
+  official_basis?: "net" | "gross";
+  plafond_overrun?: string;
+  unapproved_actual_expenses?: number;
 }
 
 export interface AnnualBudget {
@@ -50,6 +50,9 @@ export interface AnnualBudget {
   requested_as_of: string | null;
   cutoff_utc: string | null;
   read_only: boolean;
+  currency?: string;
+  basis?: "net" | "gross";
+  totals?: ProjectionTotals;
   budget: {
     planning_year_id: number;
     year: number;
@@ -72,7 +75,6 @@ export interface AnnualBudget {
 
 export interface BudgetQuery {
   planning_year_id?: number;
-  year?: number;
   cost_center_id?: number;
   as_of?: string;
 }

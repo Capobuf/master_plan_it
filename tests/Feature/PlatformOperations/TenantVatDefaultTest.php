@@ -107,9 +107,9 @@ final class TenantVatDefaultTest extends TestCase
             ->postJson('/api/v1/expenses', $this->httpExpensePayload($year, $center, $vendor, 'Old HTTP expense'))
             ->assertCreated()
             ->assertJsonPath('data.rows.0.vat_rate', '22.00')
-            ->assertJsonPath('data.rows.0.totals.net', '100.00')
-            ->assertJsonPath('data.rows.0.totals.vat', '22.00')
-            ->assertJsonPath('data.rows.0.totals.gross', '122.00');
+            ->assertJsonPath('data.rows.0.amount.net', '100.00')
+            ->assertJsonPath('data.rows.0.amount.vat', '22.00')
+            ->assertJsonPath('data.rows.0.amount.gross', '122.00');
         $oldContractResponse = $this->withHeaders($headers)
             ->postJson('/api/v1/contracts', $this->httpContractPayload($center, $vendor, 'Old HTTP contract'))
             ->assertOk()
@@ -134,7 +134,7 @@ final class TenantVatDefaultTest extends TestCase
             'name' => $settings->json('data.name'),
             'timezone' => $settings->json('data.timezone'),
             'default_vat_rate' => '20.00',
-            'budget_basis' => $settings->json('data.budget_basis'),
+            'economic_basis' => $settings->json('data.economic_basis'),
             'deletion_reason_required' => $settings->json('data.deletion_reason_required'),
             'lock_version' => $settings->json('data.lock_version'),
         ])->assertOk()->assertJsonPath('data.default_vat_rate', '20.00');
@@ -143,9 +143,9 @@ final class TenantVatDefaultTest extends TestCase
             ->postJson('/api/v1/expenses', $this->httpExpensePayload($year, $center, $vendor, 'New HTTP expense'))
             ->assertCreated()
             ->assertJsonPath('data.rows.0.vat_rate', '20.00')
-            ->assertJsonPath('data.rows.0.totals.net', '100.00')
-            ->assertJsonPath('data.rows.0.totals.vat', '20.00')
-            ->assertJsonPath('data.rows.0.totals.gross', '120.00');
+            ->assertJsonPath('data.rows.0.amount.net', '100.00')
+            ->assertJsonPath('data.rows.0.amount.vat', '20.00')
+            ->assertJsonPath('data.rows.0.amount.gross', '120.00');
         $this->withHeaders($headers)
             ->postJson('/api/v1/contracts', $this->httpContractPayload($center, $vendor, 'New HTTP contract'))
             ->assertOk()
@@ -318,6 +318,7 @@ final class TenantVatDefaultTest extends TestCase
             null,
             null,
             $lockVersion,
+            $position === 1,
         );
     }
 
@@ -385,9 +386,7 @@ final class TenantVatDefaultTest extends TestCase
                 'unit_price' => null,
                 'entered_amount' => '100.00',
                 'amount_includes_vat' => false,
-                'is_extra' => false,
-                'funded_plafond_expense_id' => null,
-                'spend_date' => '2026-01-15',
+                'spend_date' => null,
                 'external_reference' => null,
                 'is_current_planning' => true,
             ]],

@@ -30,11 +30,13 @@ final class ExpensePlanningLifecycleTest extends TestCase
         app(PlatformAdministrator::class)->assign($actor);
         $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
         $expense = Expense::factory()->for($tenant)->create(['planning_year_id' => $year->getKey()]);
-        ExpenseRow::factory()->for($expense)->create([
+        $estimate = ExpenseRow::factory()->for($expense)->create([
             'position' => 1,
             'type' => ExpenseType::Estimate,
             'spend_date' => null,
             'net_amount' => '90.00',
+            'vat_amount' => '19.80',
+            'gross_amount' => '109.80',
         ]);
         $quote = ExpenseRow::factory()->for($expense)->create([
             'position' => 2,
@@ -47,16 +49,16 @@ final class ExpensePlanningLifecycleTest extends TestCase
             'type' => ExpenseType::Actual,
             'spend_date' => '2026-04-01',
             'net_amount' => '-20.00',
+            'vat_amount' => '-4.40',
+            'gross_amount' => '-24.40',
         ]);
         $expense->forceFill(['current_planning_row_id' => $quote->getKey()])->saveQuietly();
 
         $dataset = app(EconomicDatasetQuery::class)->execute($actor, new TenantContext($tenant, $actor), (int) $year->getKey());
-        $this->assertSame([$quote->getKey(), $actual->getKey()], collect($dataset->lines)->pluck('rowId')->all());
+        $this->assertSame([$estimate->getKey(), $quote->getKey(), $actual->getKey()], collect($dataset->lines)->pluck('rowId')->all());
 
-        $summary = app(EconomicEngine::class)->calculate($dataset)['summary'];
-        $this->assertSame('100.00', $summary->amounts['planned']);
-        $this->assertSame('-20.00', $summary->amounts['actual']);
-        $this->assertSame('0.00', $summary->amounts['actualToConfirm']);
-        $this->assertSame('0.00', $summary->amounts['actualConfirmed']);
+        $projection = app(EconomicEngine::class)->project($dataset);
+        $this->assertSame('100.00', $projection->currentPlanning->official);
+        $this->assertSame('-20.00', $projection->actual->official);
     }
 }

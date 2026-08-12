@@ -37,15 +37,15 @@ final class ExpenseProjectApiHttpTest extends TestCase
             ->assertJsonPath('data.project_title', 'Progetto API');
 
         $expenseId = (int) $created->json('data.id');
-        $this->getJson('/api/v1/expenses/'.$expenseId.'?year='.$year->getKey())
+        $this->getJson('/api/v1/expenses/'.$expenseId.'?planning_year_id='.$year->getKey())
             ->assertOk()->assertJsonPath('data.project_id', $project->getKey());
-        $this->getJson('/api/v1/expenses?year='.$year->getKey())
+        $this->getJson('/api/v1/expenses?planning_year_id='.$year->getKey())
             ->assertOk()
             ->assertJsonPath('data.0.project_id', $project->getKey())
             ->assertJsonPath('data.0.project_title', 'Progetto API');
     }
 
-    public function test_expense_api_accepts_matching_project_and_contract_and_rejects_a_mismatch(): void
+    public function test_expense_api_accepts_project_and_contract_as_independent_same_tenant_relations(): void
     {
         $tenant = Tenant::factory()->create();
         $user = $this->tenantUser($tenant);
@@ -75,8 +75,9 @@ final class ExpenseProjectApiHttpTest extends TestCase
         $payload['project_id'] = $otherProject->getKey();
         $payload['title'] = 'Spesa progetto incoerente';
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $payload)
-            ->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
-        $this->assertDatabaseMissing('expenses', ['tenant_id' => $tenant->getKey(), 'title' => 'Spesa progetto incoerente']);
+            ->assertCreated()
+            ->assertJsonPath('data.project_id', $otherProject->getKey())
+            ->assertJsonPath('data.contract_id', $contract->getKey());
     }
 
     /** @return array<string, mixed> */
@@ -100,9 +101,7 @@ final class ExpenseProjectApiHttpTest extends TestCase
                 'entered_amount' => '100.00',
                 'amount_includes_vat' => false,
                 'vat_rate' => '22.00',
-                'is_extra' => false,
-                'funded_plafond_expense_id' => null,
-                'spend_date' => '2026-01-15',
+                'spend_date' => null,
                 'external_reference' => null,
                 'is_current_planning' => true,
             ]],

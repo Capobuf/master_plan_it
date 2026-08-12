@@ -4,9 +4,10 @@ namespace App\Domain\Tenancy\Actions;
 
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
+use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\BudgetBasis;
-use App\Models\ApprovalOperation;
+use App\Models\PlanningYear;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\TenantAbilityAuthorizer;
@@ -24,7 +25,7 @@ final class UpdateTenantSettings
         'name',
         'timezone',
         'default_vat_rate',
-        'budget_basis',
+        'economic_basis',
         'deletion_reason_required',
     ];
 
@@ -54,7 +55,7 @@ final class UpdateTenantSettings
             'name' => ['required', 'string', 'max:255', 'not_regex:/^\s*$/u'],
             'timezone' => ['required', 'string', 'timezone'],
             'default_vat_rate' => ['required', 'string', 'regex:/^[0-9]{1,10}(?:\.[0-9]{1,2})?$/D'],
-            'budget_basis' => ['required', Rule::enum(BudgetBasis::class)],
+            'economic_basis' => ['required', Rule::enum(BudgetBasis::class)],
             'deletion_reason_required' => ['required', 'boolean'],
         ])->validate();
 
@@ -68,25 +69,44 @@ final class UpdateTenantSettings
                 throw new DomainException('STALE_VERSION');
             }
 
-            if ($values['budget_basis'] !== $tenant->getRawOriginal('budget_basis')
-                && ApprovalOperation::query()->where('tenant_id', $tenant->getKey())->exists()) {
-                throw new DomainException('TENANT_BUDGET_BASIS_LOCKED');
+            if ($values['economic_basis'] !== $tenant->getRawOriginal('budget_basis')
+                && $tenant->economic_basis_locked_at !== null) {
+                throw new DomainException('BUDGET_STATE_CONFLICT');
+            }
+
+            $economicBasisChanged = $values['economic_basis'] !== $tenant->getRawOriginal('budget_basis');
+            if ($economicBasisChanged) {
+                $planningYearIds = PlanningYear::query()
+                    ->where('tenant_id', $tenant->getKey())
+                    ->orderBy('id')
+                    ->pluck('id')
+                    ->map(static fn (mixed $id): int => (int) $id)
+                    ->all();
+
+                app(AnnualEconomicMutationGuard::class)->acquire(
+                    (int) $tenant->getKey(),
+                    $planningYearIds,
+                );
             }
 
             $changedFields = array_values(array_filter(
                 self::FIELDS,
                 static fn (string $field): bool => match ($field) {
-                    'budget_basis' => $values[$field] !== $tenant->getRawOriginal($field),
+                    'economic_basis' => $values[$field] !== $tenant->getRawOriginal('budget_basis'),
                     'deletion_reason_required' => (bool) $values[$field] !== (bool) $tenant->{$field},
                     default => (string) $values[$field] !== (string) $tenant->{$field},
                 },
             ));
+            if ($changedFields === []) {
+                return $tenant;
+            }
             $occurredAt = CarbonImmutable::now('UTC');
             $updated = Tenant::query()
                 ->whereKey($tenant->getKey())
                 ->where('lock_version', $expectedLockVersion)
                 ->update([
-                    ...$values,
+                    ...collect($values)->except('economic_basis')->all(),
+                    'budget_basis' => $values['economic_basis'],
                     'lock_version' => $expectedLockVersion + 1,
                     'updated_at' => $occurredAt,
                 ]);

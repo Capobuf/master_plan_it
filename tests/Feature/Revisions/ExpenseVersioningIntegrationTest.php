@@ -2,14 +2,12 @@
 
 namespace Tests\Feature\Revisions;
 
-use App\Domain\Expenses\Actions\CloseExpense;
 use App\Domain\Expenses\Actions\CreateExpense;
 use App\Domain\Expenses\Actions\UpdateExpense;
 use App\Domain\Expenses\Data\ExpenseRevisionSnapshot;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Enums\ExpenseKind;
-use App\Domain\Expenses\Enums\ExpenseState;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Revisions\Actions\BeginRevisionBatch;
 use App\Domain\Revisions\Actions\LinkVersionToRevisionBatch;
@@ -68,10 +66,6 @@ class ExpenseVersioningIntegrationTest extends TestCase
             'contract_id',
             'approved_amount',
             'approved_basis',
-            'state',
-            'closure_outcome',
-            'closed_at',
-            'closed_by_user_id',
             'current_planning_row_id',
             'moved_from_expense_id',
             'credit_for_expense_id',
@@ -83,6 +77,7 @@ class ExpenseVersioningIntegrationTest extends TestCase
             'vendor_id',
             'type',
             'description',
+            'notes',
             'quantity',
             'unit_price',
             'entered_amount',
@@ -165,25 +160,6 @@ class ExpenseVersioningIntegrationTest extends TestCase
             'version_id' => $rowVersion->getKey(),
             'sequence' => 2,
         ]);
-    }
-
-    public function test_close_expense_snapshots_the_lifecycle_state_change(): void
-    {
-        $tenant = Tenant::factory()->create();
-        $actor = User::factory()->create(['tenant_id' => null, 'is_active' => true]);
-        app(PlatformAdministrator::class)->assign($actor);
-        $expense = Expense::factory()->for($tenant)->create();
-        app(CloseExpense::class)->execute(
-            $actor,
-            new TenantContext($tenant, $actor),
-            $expense,
-            $expense->lock_version,
-            null,
-            (string) Str::uuid(),
-        );
-
-        $version = $expense->fresh()->latestVersion()->firstOrFail();
-        $this->assertSame(ExpenseState::Closed->value, $version->contents['state']);
     }
 
     public function test_revision_snapshot_is_a_readonly_typed_dto_excluding_technical_flags(): void
@@ -323,7 +299,7 @@ class ExpenseVersioningIntegrationTest extends TestCase
             $actor,
             $context,
             $this->saveData($year, $center, 'Spesa versionata', null, null),
-            [new SaveExpenseRowData(null, 1, $vendor->getKey(), ExpenseType::Estimate, 'Riga versionata', null, null, '100.00', false, '22.00', false, null, '2026-02-01', null, null, null, null, null, true)],
+            [new SaveExpenseRowData(null, 1, $vendor->getKey(), ExpenseType::Estimate, 'Riga versionata', null, null, '100.00', false, '22.00', false, null, null, null, null, null, null, null, true)],
             (string) Str::uuid(),
         );
 
@@ -337,7 +313,7 @@ class ExpenseVersioningIntegrationTest extends TestCase
 
     private function saveRow(ExpenseRow $row, Vendor $vendor, int $lock): SaveExpenseRowData
     {
-        return new SaveExpenseRowData((int) $row->getKey(), 1, $vendor->getKey(), ExpenseType::Estimate, 'Riga versionata', null, null, '100.00', false, '22.00', false, null, '2026-02-01', null, null, null, null, $lock, true);
+        return new SaveExpenseRowData((int) $row->getKey(), 1, $vendor->getKey(), ExpenseType::Estimate, 'Riga versionata', null, null, '100.00', false, '22.00', false, null, null, null, null, null, null, $lock, true);
     }
 
     private function actorContext(): array

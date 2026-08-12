@@ -24,6 +24,7 @@ return new class extends Migration
             $table->unsignedBigInteger('contract_term_id')->nullable();
             $table->string('source_key')->nullable();
             $table->string('description');
+            $table->text('notes')->nullable();
             $table->decimal('quantity', 19, 2)->nullable();
             $table->decimal('unit_price', 19, 2)->nullable();
             $table->decimal('entered_amount', 19, 2);

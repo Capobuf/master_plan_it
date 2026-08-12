@@ -20,6 +20,7 @@ final class CreateProject
         [$actor, $tenant] = $this->persistedProjectContext($actor, $context);
 
         return DB::transaction(function () use ($actor, $context, $correlationId, $data, $tenant): Project {
+            $this->lockProjectEconomicYears((int) $tenant->getKey(), []);
             $project = new Project;
             $project->fill($this->validatedProjectAttributes($tenant, $data));
             $project->tenant_id = $tenant->getKey();

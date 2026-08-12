@@ -2,7 +2,7 @@
 
 return [
     'schema' => 3,
-    'expectedDomainWriteCount' => 64,
+    'expectedDomainWriteCount' => 62,
     'writes' => [
         'app/Domain/Attachments/Actions/UploadAttachment.php' => [
             'actionClass' => 'App\\Domain\\Attachments\\Actions\\UploadAttachment',
@@ -719,26 +719,6 @@ return [
             'failureTrigger' => 'throw new ',
             'failureExpectation' => 'expectException(',
             'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseCount('],
-        ],
-        'app/Domain/Expenses/Actions/CloseExpense.php' => [
-            'actionClass' => 'App\\Domain\\Expenses\\Actions\\CloseExpense',
-            'actionReference' => 'CloseExpense::class',
-            'actionInvocation' => ['mode' => 'assigned-container', 'variable' => '$action', 'method' => 'execute'],
-            'testFile' => 'tests/Feature/Expenses/ExpenseActionRollbackTest.php',
-            'testMethod' => 'test_close_expense_audit_failure_rolls_back_lifecycle_and_audit',
-            'failureTrigger' => 'throw new ',
-            'failureExpectation' => 'expectException(',
-            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseCount('],
-        ],
-        'app/Domain/Expenses/Actions/MoveExpense.php' => [
-            'actionClass' => 'App\\Domain\\Expenses\\Actions\\MoveExpense',
-            'actionReference' => 'MoveExpense::class',
-            'actionInvocation' => ['mode' => 'assigned-container', 'variable' => '$action', 'method' => 'execute'],
-            'testFile' => 'tests/Feature/Budget/BudgetCloseAndExpenseMoveTest.php',
-            'testMethod' => 'test_move_expense_audit_failure_rolls_back_both_years_and_the_revision_batch',
-            'failureTrigger' => 'throw new ',
-            'failureExpectation' => 'expectException(',
-            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseMissing(', 'assertDatabaseCount('],
         ],
         'app/Domain/Expenses/Actions/BulkExpenseAction.php' => [
             'actionClass' => 'App\\Domain\\Expenses\\Actions\\BulkExpenseAction',

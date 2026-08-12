@@ -1,31 +1,24 @@
 import { apiClient, type DataEnvelope } from "./client";
+import type { ProjectionTotals } from "./projection";
 
-export interface ReportingScope {
-  tenant_id?: number;
-  planning_year_id?: number;
-  year?: number;
-  currency?: string;
-  official_basis?: string;
+export interface DashboardProjectionBucket {
+  key: string;
+  label: string;
+  currency: string;
+  basis: "net" | "gross";
+  totals: ProjectionTotals;
 }
 
-export interface ReportingSummary {
-  official_basis?: string;
-  currency?: string;
-  amounts?: Record<string, string>;
-}
-
-export interface ReportingDataset {
-  scope?: ReportingScope | null;
-  summary?: ReportingSummary | null;
-  monthly?: Record<string, string>;
-  by_type?: Record<string, string>;
-  by_cost_center?: Record<string, string>;
-  by_project?: Record<string, string>;
-  cost_center_id?: number | null;
-  has_economic_data?: boolean;
-  year_options?: Record<string, unknown>[];
-  selected_year_id?: number | null;
-  ancillary?: DashboardAncillary;
+export interface DashboardRecentExpense {
+  expense_id: number;
+  title: string;
+  updated_at: string;
+  cost_center_name: string;
+  project_title: string | null;
+  vendor_summary: string | null;
+  currency: string;
+  basis: "net" | "gross";
+  totals: ProjectionTotals;
 }
 
 export interface DashboardListItem {
@@ -36,44 +29,29 @@ export interface DashboardListItem {
   event_type?: string;
 }
 
-export interface DashboardRecentExpense {
-  id: number;
-  label: string;
-  date: string;
-  cost_center: string;
-  project: string | null;
-  vendor: string | null;
-  planned: string;
-  actual: string;
-  state: "open" | "closed";
-}
-
-export interface DashboardExpenseCounts {
-  total: number;
-  open: number;
-  closed: number;
-}
-
-export interface DashboardAncillary {
-  recentExpenses?: DashboardRecentExpense[];
-  expenseCounts?: DashboardExpenseCounts;
-  generatedContractPlanning?: DashboardListItem[];
-  activeContracts?: DashboardListItem[];
-  upcomingContractEvents?: DashboardListItem[];
+export interface ReportingDataset {
+  planning_year_id: number;
+  economic_year_label: number;
+  currency: string;
+  basis: "net" | "gross";
+  totals: ProjectionTotals;
+  has_economic_data: boolean;
+  expense_count: number;
+  recent_expenses: DashboardRecentExpense[];
+  monthly: DashboardProjectionBucket[];
+  by_type: DashboardProjectionBucket[];
+  by_cost_center: DashboardProjectionBucket[];
+  by_project: DashboardProjectionBucket[];
+  generated_contract_planning: DashboardListItem[];
+  active_contracts: DashboardListItem[];
+  upcoming_contract_events: DashboardListItem[];
 }
 
 export interface DashboardQuery {
-  planning_year_id?: number;
-  year?: number;
+  planning_year_id: number;
 }
 
-export async function getDashboard(
-  params: DashboardQuery = {},
-): Promise<ReportingDataset> {
-  const response = await apiClient.get<DataEnvelope<ReportingDataset>>(
-    "/api/v1/dashboard",
-    { params },
-  );
-
+export async function getDashboard(params: DashboardQuery): Promise<ReportingDataset> {
+  const response = await apiClient.get<DataEnvelope<ReportingDataset>>("/api/v1/dashboard", { params });
   return response.data.data;
 }

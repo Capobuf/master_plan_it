@@ -7,7 +7,7 @@ import { Dropdown } from "../ui/dropdown/Dropdown";
 
 const labels: Record<ExpenseColumnPreference["key"], string> = {
   kind: "Natura", contract: "Contratto", project: "Progetto", cost_center: "Centro di Costo",
-  vendor: "Fornitore", net: "Netto", vat: "IVA", gross: "Lordo", state: "Stato",
+  vendor: "Fornitore", net: "Netto", vat: "IVA", gross: "Lordo",
 };
 
 const defaultColumns: ExpenseColumnPreference[] = [
@@ -19,7 +19,6 @@ const defaultColumns: ExpenseColumnPreference[] = [
   { key: "net", visible: true },
   { key: "vat", visible: true },
   { key: "gross", visible: true },
-  { key: "state", visible: true },
 ];
 
 interface Props {

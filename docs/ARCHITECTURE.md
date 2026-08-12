@@ -3,7 +3,7 @@
 Stato: `VERIFIED CURRENT` per il runtime implementato; i vincoli di progetto elencati derivano
 dalle decisioni approvate e dal codice corrente.
 
-Baseline funzionale: Feature 009 e 011 verificate nel worktree corrente.
+Baseline funzionale: Slice 023 verificata nel worktree corrente.
 
 ## Runtime
 
@@ -68,18 +68,26 @@ Gli errori devono essere osservabili e diagnosticabili.
   Money layer basato su BCMath. Il frontend localizza i valori senza esporre scale tecniche come
   `1.000000`.
 - Net, VAT e Gross restano componenti separate.
-- Solo le Expense row correnti e non eliminate contribuiscono ai totali correnti.
+- L'input monetario è alternativo: importo diretto oppure quantità per prezzo unitario. Il livello
+  Money basato su BCMath normalizza e arrotonda; il livello IVA ricava sempre tutte e tre le
+  componenti senza float.
+- Solo le Expense row correnti e non eliminate contribuiscono ai totali correnti: una Estimate o
+  Quote selezionata per Spesa e tutti gli Actual, anche con Data Effettiva fuori dall'Anno
+  Economico della Spesa.
 - Project e Contract sono contesto o generatori, non sorgenti monetarie aggiuntive.
 - Revisioni, audit, tombstone, generation exception, Scenario e BudgetVersion non entrano
   implicitamente nei totali correnti.
-- Dashboard considera una sola pianificazione selezionata per Spesa e tutti gli Actual correnti.
-- Budget e Report annuali condividono `AnnualBudgetQuery`; il Report raggruppa le stesse linee e
-  riconcilia il Plafond prima dell'aggregazione.
+- `EconomicDatasetQuery` carica il dataset annuale una volta e `EconomicEngine` produce una
+  `AnnualEconomicProjection` immutabile. Documento, Registro, Budget, Report e Dashboard ne
+  consumano slice e aggregazioni senza introdurre formule concorrenti.
 - Le somme usano soltanto stringhe decimali e BCMath; il frontend non ricalcola denaro autorevole.
+- Le mutazioni economiche acquisiscono `AnnualEconomicMutationGuard`: opzionalmente Tenant per
+  primo, poi tutti i PlanningYear per ID crescente e infine aggregate/righe. Scritture sullo stesso
+  anno sono serializzate; anni distinti restano indipendenti se non è richiesto il lock Tenant.
 
 ## Approvazioni e storia annuale
 
-- Approvazione, variazione, spostamento e chiusura sono Actions transazionali con lock ottimistico,
+- Approvazione, variazione e chiusura sono Actions transazionali con lock ottimistico,
   audit e un unico revision batch per mutazione logica.
 - `revision_batch_items` denormalizza Tenant, Planning Year e mutation (`upsert`/`delete`).
 - Ogni item conserva anche uno `snapshot_contents` immutabile. Le batch Expense/Contract nuove
@@ -159,6 +167,9 @@ Non unificare in un generico sistema di "storia":
 - Riutilizzare i componenti e i pattern nativi di TailAdmin React Free quando esistono.
 - Non costruire un design system parallelo. Un componente applicativo nuovo è giustificato solo da
   comportamento di dominio o riuso concreto non già coperto da TailAdmin.
+- La shell applicativa usa navigazione superiore responsive senza una sidebar permanente e mostra
+  sempre il contesto Tenant/Anno. Il cambio Tenant, anno o destinazione passa attraverso un dirty
+  guard condiviso; le risposte tardive di un contesto precedente sono ignorate.
 - I dettagli Expense, Contract e Project usano le tab `Dettagli | Allegati | Storico`; i contenuti
   Allegati sono caricati soltanto all'apertura della tab e riusano lista, uploader e conferme comuni.
 

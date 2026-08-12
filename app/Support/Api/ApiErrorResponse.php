@@ -26,6 +26,8 @@ final class ApiErrorResponse
     /** @var array<string, array{int, string}> */
     private const DOMAIN_ERRORS = [
         'STALE_VERSION' => [409, 'The resource changed. Refresh and try again.'],
+        'BUDGET_STATE_CONFLICT' => [409, 'The economic basis is permanently locked.'],
+        'ECONOMIC_RECONCILIATION_FAILED' => [500, 'The economic projection could not be reconciled.'],
         'REFERENCED_RECORD_DELETE_DENIED' => [409, 'The resource cannot be deleted while referenced.'],
         'PROJECT_HAS_LINKED_EXPENSES' => [409, 'The project cannot be deleted while current expenses are linked.'],
         'TENANT_ROLE_IN_USE' => [409, 'The role cannot be changed while it is assigned.'],
@@ -42,7 +44,6 @@ final class ApiErrorResponse
         'INVALID_REPORT_GROUPING' => [422, 'The requested report grouping is invalid.'],
         'APPROVED_DIMENSION_REALLOCATION_REQUIRED' => [422, 'Approved dimensions require an explicit reallocation decision.'],
         'EXPENSE_BULK_ITEM_NOT_APPLICABLE' => [422, 'At least one selected expense cannot use this bulk action.'],
-        'TENANT_BUDGET_BASIS_LOCKED' => [409, 'The Tenant budget basis cannot change while approvals exist.'],
         'ATTACHMENT_QUOTA_EXCEEDED' => [422, 'The attachment would exceed the Tenant storage quota.'],
         'ATTACHMENT_FILE_MISSING' => [500, 'The attachment metadata exists but its private file is unavailable.'],
         'ATTACHMENT_STORAGE_FAILURE' => [500, 'The private attachment storage operation failed.'],

@@ -21,7 +21,7 @@ final class TenantSettingsController extends Controller
             'name',
             'timezone',
             'default_vat_rate',
-            'budget_basis',
+            'economic_basis',
             'deletion_reason_required',
             'lock_version',
         ];
@@ -37,7 +37,7 @@ final class TenantSettingsController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'timezone' => ['required', 'string', 'timezone'],
             'default_vat_rate' => ['required', 'string'],
-            'budget_basis' => ['required', 'string'],
+            'economic_basis' => ['required', 'string'],
             'deletion_reason_required' => ['required', 'boolean'],
             'lock_version' => ['required', 'integer', 'min:1'],
         ]);

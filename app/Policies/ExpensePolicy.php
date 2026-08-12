@@ -215,7 +215,11 @@ final class ExpensePolicy
             return Response::deny('TENANT_CONTEXT_REQUIRED');
         }
 
-        return $persistedTenant->state === TenantState::Active
+        if ($persistedTenant->state === TenantState::Active) {
+            return Response::allow();
+        }
+
+        return $this->platformAdministrator->hasProtectedRole($this->tenantContext->actor)
             ? Response::allow()
             : Response::deny('TENANT_INACTIVE');
     }

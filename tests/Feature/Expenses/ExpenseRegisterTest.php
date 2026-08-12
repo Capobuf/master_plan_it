@@ -79,14 +79,14 @@ class ExpenseRegisterTest extends TestCase
     {
         [$tenant, $actor, $context] = $this->contextWithView();
         $expense = Expense::factory()->for($tenant)->create(['title' => 'Visible detail']);
-        ExpenseRow::factory()->for($expense)->create([
+        $second = ExpenseRow::factory()->for($expense)->create([
             'position' => 2,
             'description' => 'Second row',
             'net_amount' => '20.00',
             'vat_amount' => '4.40',
             'gross_amount' => '24.40',
         ]);
-        ExpenseRow::factory()->for($expense)->create([
+        $first = ExpenseRow::factory()->for($expense)->create([
             'position' => 1,
             'description' => 'First row',
             'net_amount' => '10.00',
@@ -94,6 +94,7 @@ class ExpenseRegisterTest extends TestCase
             'gross_amount' => '12.20',
         ]);
         ExpenseRow::factory()->for($expense)->create(['position' => 3])->delete();
+        $expense->forceFill(['current_planning_row_id' => $first->getKey()])->saveQuietly();
 
         DB::flushQueryLog();
         DB::enableQueryLog();
@@ -104,9 +105,10 @@ class ExpenseRegisterTest extends TestCase
         $this->assertInstanceOf(ExpenseDetail::class, $detail);
         $this->assertSame('Visible detail', $detail->title);
         $this->assertSame(['First row', 'Second row'], array_column($detail->rows, 'description'));
-        $this->assertSame('30.00', $detail->netTotal);
-        $this->assertSame('6.60', $detail->vatTotal);
-        $this->assertSame('36.60', $detail->grossTotal);
+        $this->assertSame('10.00', $detail->totals['current_planning']['net']);
+        $this->assertSame('2.20', $detail->totals['current_planning']['vat']);
+        $this->assertSame('12.20', $detail->totals['current_planning']['gross']);
+        $this->assertSame('0.00', $detail->totals['actual']['official']);
         foreach (['versions', 'revision_batches', 'revision_batch_items', 'attachment'] as $futureTable) {
             $this->assertStringNotContainsString($futureTable, $sql);
         }
@@ -185,7 +187,12 @@ class ExpenseRegisterTest extends TestCase
             'name' => 'Expense register '.str()->uuid(),
             'guard_name' => 'web',
         ]);
-        $role->syncPermissions(['expense.view']);
+        $role->syncPermissions([
+            'expense.view',
+            'planning-year.view',
+            'cost-center.view',
+            'vendor.view',
+        ]);
         $actor->assignRole($role);
         $actor->unsetRelation('roles');
         $actor->unsetRelation('permissions');

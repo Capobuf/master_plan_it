@@ -30,6 +30,10 @@ final class SynchronizeContractOccurrences
         [$actor] = $this->persistedContractContext($actor, $context);
 
         return DB::transaction(function () use ($actor, $context, $contract, $correlationId): array {
+            $expectedYears = collect(app(ExpectedContractOccurrenceQuery::class)->forContract($contract))->pluck('planningYear')->unique()->all();
+            $planningYearIds = PlanningYear::query()->where('tenant_id', $context->tenantId)->whereIn('year_label', $expectedYears)
+                ->pluck('id')->map(static fn ($id): int => (int) $id)->all();
+            $this->lockContractEconomicYears($context->tenantId, (int) $contract->getKey(), $planningYearIds);
             $contract = Contract::query()->where('tenant_id', $context->tenantId)->lockForUpdate()->find($contract->getKey());
             if (! $contract instanceof Contract || ! $contract->active) {
                 throw new \DomainException('GENERATION_NOT_APPLICABLE');
@@ -58,7 +62,7 @@ final class SynchronizeContractOccurrences
                     ? Expense::query()->where('tenant_id', $context->tenantId)->lockForUpdate()->find($row->expense_id)
                     : null;
                 if (! $row instanceof ExpenseRow || ! $expense instanceof Expense || $row->type !== ExpenseType::Quote || ! $row->is_system_managed
-                    || $row->manual_override_at !== null || (int) $expense->current_planning_row_id === (int) $row->getKey()) {
+                    || $row->manual_override_at !== null) {
                     $counts['skipped']++;
 
                     continue;

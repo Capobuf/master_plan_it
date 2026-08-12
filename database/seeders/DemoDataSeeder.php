@@ -23,7 +23,6 @@ use App\Domain\Projects\Actions\UpdateProject;
 use App\Domain\Projects\Data\SaveProjectData;
 use App\Domain\Projects\Enums\ProjectStage;
 use App\Domain\Tenancy\Data\TenantContext;
-use App\Domain\Tenancy\Enums\BudgetBasis;
 use App\Domain\Tenancy\Enums\TenantState;
 use App\Models\Contract;
 use App\Models\CostCenter;
@@ -56,7 +55,8 @@ final class DemoDataSeeder extends Seeder
         }
 
         Model::unguarded(fn () => DB::transaction(function () use ($administrator): void {
-            $tenant = Tenant::query()->updateOrCreate(['code' => 'demo'], ['name' => 'Azienda Demo S.r.l.', 'state' => TenantState::Active, 'currency_code' => 'EUR', 'language_code' => 'it', 'timezone' => 'Europe/Rome', 'default_vat_rate' => '22.00', 'budget_basis' => BudgetBasis::Net, 'attachment_quota_bytes' => '2147483648', 'created_by_user_id' => $administrator->getKey()]);
+            $tenant = Tenant::query()->updateOrCreate(['code' => 'demo'], ['name' => 'Azienda Demo S.r.l.', 'state' => TenantState::Active, 'currency_code' => 'EUR', 'language_code' => 'it', 'timezone' => 'Europe/Rome', 'default_vat_rate' => '22.00', 'budget_basis' => 'net', 'attachment_quota_bytes' => '2147483648', 'created_by_user_id' => $administrator->getKey()]);
+            Tenant::query()->updateOrCreate(['code' => 'demo-gross'], ['name' => 'Azienda Demo Lordo S.r.l.', 'state' => TenantState::Active, 'currency_code' => 'EUR', 'language_code' => 'it', 'timezone' => 'Europe/Rome', 'default_vat_rate' => '22.00', 'budget_basis' => 'gross', 'attachment_quota_bytes' => '2147483648', 'created_by_user_id' => $administrator->getKey()]);
             $year = (int) now('Europe/Rome')->year;
             foreach ([$year - 1, $year, $year + 1] as $label) {
                 PlanningYear::query()->updateOrCreate(['tenant_id' => $tenant->id, 'year_label' => $label], ['active' => $label >= $year]);
@@ -74,8 +74,6 @@ final class DemoDataSeeder extends Seeder
             $years = PlanningYear::query()->where('tenant_id', $tenant->id)->pluck('id', 'year_label');
             $context = new TenantContext($tenant, $administrator);
             $projects = $this->projects($tenant, $administrator, $context, $costs, $years->all(), $year);
-            $plafond = Expense::query()->updateOrCreate(['tenant_id' => $tenant->id, 'title' => 'DEMO — Security annual Plafond'], ['planning_year_id' => $years[$year], 'cost_center_id' => $costs[3]->id, 'kind' => ExpenseKind::Plafond, 'notes' => 'Deterministic demo Plafond', 'project_id' => null, 'contract_id' => null]);
-            $this->row($tenant, $plafond, $administrator, 1, null, ExpenseType::Estimate, 'Security allocation', '50000.00', "{$year}-01-15", null, false);
             for ($i = 1; $i <= 24; $i++) {
                 $label = $i <= 6 ? $year - 1 : $year;
                 $type = match ($i % 4) {
@@ -92,12 +90,16 @@ final class DemoDataSeeder extends Seeder
                     'contract_id' => null,
                 ])->save();
                 $amount = $i === 23 ? '-125.00' : number_format(500 + $i * 73, 2, '.', '');
-                $period = $i === 12 ? null : $this->demoPeriod($label, $i);
-                $this->row($tenant, $expense, $administrator, 1, $vendors[$i % count($vendors)]->id, $type, 'Demo expense row', $amount, $period ? null : sprintf('%04d-%02d-15', $label, ($i % 12) + 1), $period, false, $label === $year && $i % 5 === 0 ? $plafond->id : null, $i % 7 === 0);
+                $spendDate = $type === ExpenseType::Actual
+                    ? sprintf('%04d-%02d-15', $label, ($i % 12) + 1)
+                    : null;
+                $this->row($tenant, $expense, $administrator, 1, $vendors[$i % count($vendors)]->id, $type, 'Demo expense row', $amount, $spendDate, null, false);
                 if ($i % 6 === 0) {
-                    $this->row($tenant, $expense, $administrator, 2, $vendors[($i + 1) % count($vendors)]->id, ExpenseType::Quote, $i === 12 && ! $expenseIsNew ? 'Riga aggiuntiva aggiornata' : 'Additional demo row', '250.00', sprintf('%04d-%02d-20', $label, ($i % 12) + 1), null, false);
+                    $this->row($tenant, $expense, $administrator, 2, $vendors[($i + 1) % count($vendors)]->id, ExpenseType::Quote, $i === 12 && ! $expenseIsNew ? 'Riga aggiuntiva aggiornata' : 'Additional demo row', '250.00', null, null, false);
                 }
             }
+            $outOfYearActual = Expense::query()->updateOrCreate(['tenant_id' => $tenant->id, 'title' => 'DEMO — Actual fuori anno'], ['planning_year_id' => $years[$year], 'cost_center_id' => $costs[0]->id, 'kind' => ExpenseKind::Ordinary, 'notes' => 'Actual negativo con Data reale indipendente']);
+            $this->row($tenant, $outOfYearActual, $administrator, 1, $vendors[0]->id, ExpenseType::Actual, 'Rimborso fuori anno', '-5.00', '2026-02-10', null, false);
             $this->expenseHistory($tenant, $administrator, $context);
             for ($i = 0; $i < 6; $i++) {
                 $title = sprintf('DEMO — Contract %02d', $i + 1);
@@ -301,27 +303,17 @@ final class DemoDataSeeder extends Seeder
         return app(UpdateContract::class)->execute($actor, $context, $contract, $data, $this->correlation());
     }
 
-    /** @return array{start: string, end: string, distribution: string}|null */
-    private function demoPeriod(int $label, int $index): ?array
-    {
-        if ($index % 3 !== 0) {
-            return null;
-        }
-
-        return [
-            'start' => sprintf('%04d-%02d-01', $label, ($index % 10) + 1),
-            'end' => sprintf('%04d-%02d-28', $label, min(12, ($index % 10) + 3)),
-            'distribution' => ['all', 'start', 'end'][intdiv($index, 3) % 3],
-        ];
-    }
-
     /** @param array{start: string, end: string, distribution: string}|null $period */
-    private function row(Tenant $tenant, Expense $expense, User $actor, int $position, ?int $vendorId, ExpenseType $type, string $description, string $entered, ?string $spend, ?array $period, bool $system, ?int $funded = null, bool $extra = false): void
+    private function row(Tenant $tenant, Expense $expense, User $actor, int $position, ?int $vendorId, ExpenseType $type, string $description, string $entered, ?string $spend, ?array $period, bool $system): void
     {
         $net = bcdiv($entered, '1', 2);
         $vat = bcdiv(bcmul($entered, '0.22', 6), '1', 2);
         $gross = bcadd($net, $vat, 2);
-        ExpenseRow::query()->updateOrCreate(['tenant_id' => $tenant->id, 'expense_id' => $expense->id, 'position' => $position], ['vendor_id' => $vendorId, 'type' => $type, 'confirmation_state' => null, 'confirmed_by_user_id' => null, 'confirmed_at' => null, 'is_system_managed' => $system, 'description' => $description, 'quantity' => null, 'unit_price' => null, 'entered_amount' => $entered, 'amount_includes_vat' => false, 'vat_rate' => '22.00', 'net_amount' => $net, 'vat_amount' => $vat, 'gross_amount' => $gross, 'is_extra' => $extra, 'funded_plafond_expense_id' => $funded, 'spend_date' => $spend, 'period_start' => $period['start'] ?? null, 'period_end' => $period['end'] ?? null, 'distribution' => $period['distribution'] ?? null, 'external_reference' => 'DEMO']);
+        $row = ExpenseRow::query()->updateOrCreate(['tenant_id' => $tenant->id, 'expense_id' => $expense->id, 'position' => $position], ['vendor_id' => $vendorId, 'type' => $type, 'confirmation_state' => null, 'confirmed_by_user_id' => null, 'confirmed_at' => null, 'is_system_managed' => $system, 'description' => $description, 'notes' => 'Deterministic demo row', 'quantity' => null, 'unit_price' => null, 'entered_amount' => $entered, 'amount_includes_vat' => false, 'vat_rate' => '22.00', 'net_amount' => $net, 'vat_amount' => $vat, 'gross_amount' => $gross, 'is_extra' => false, 'funded_plafond_expense_id' => null, 'spend_date' => $spend, 'period_start' => $period['start'] ?? null, 'period_end' => $period['end'] ?? null, 'distribution' => $period['distribution'] ?? null, 'external_reference' => 'DEMO']);
+
+        if ($type !== ExpenseType::Actual && $expense->current_planning_row_id === null) {
+            $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
+        }
     }
 
     private function demoAttachment(Tenant $tenant, User $actor, Expense|ExpenseRow|Contract|Project $parent, string $name): void

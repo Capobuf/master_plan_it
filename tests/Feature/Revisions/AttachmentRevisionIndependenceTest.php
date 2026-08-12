@@ -179,7 +179,7 @@ class AttachmentRevisionIndependenceTest extends TestCase
 
     private function expenseRowData(int $vendorId, ?int $id = null, ?int $lockVersion = null): SaveExpenseRowData
     {
-        return new SaveExpenseRowData($id, 1, $vendorId, ExpenseType::Estimate, 'Riga invariata', '1.00', '100.00', '100.00', false, '22.00', false, null, '2028-03-15', null, null, null, null, $lockVersion);
+        return new SaveExpenseRowData($id, 1, $vendorId, ExpenseType::Estimate, 'Riga invariata', null, null, '100.00', false, '22.00', false, null, null, null, null, null, null, $lockVersion, true);
     }
 
     private function contractData(int $vendorId, int $centerId, string $title, ?int $lockVersion = null, ?int $termId = null, ?int $termLockVersion = null): SaveContractData

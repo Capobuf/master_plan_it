@@ -194,6 +194,7 @@ class AttachmentTerminalPurgeTest extends TestCase
             distribution: $row->distribution,
             externalReference: $row->external_reference,
             expectedLockVersion: (int) $row->lock_version,
+            isCurrentPlanning: true,
         );
     }
 }

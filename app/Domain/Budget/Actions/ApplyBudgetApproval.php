@@ -8,6 +8,7 @@ use App\Domain\Budget\Data\ApplyApprovalData;
 use App\Domain\Budget\Data\ApprovalChangeData;
 use App\Domain\Budget\Enums\ApprovalKind;
 use App\Domain\Budget\Enums\BudgetState;
+use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
 use App\Domain\Money\Money;
 use App\Domain\Revisions\Actions\BeginRevisionBatch;
 use App\Domain\Revisions\Actions\LinkVersionToRevisionBatch;
@@ -17,6 +18,7 @@ use App\Models\ApprovalItem;
 use App\Models\ApprovalOperation;
 use App\Models\Expense;
 use App\Models\PlanningYear;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Version;
 use App\Policies\ExpensePolicy;
@@ -49,13 +51,13 @@ final class ApplyBudgetApproval
         }
 
         return DB::transaction(function () use ($actor, $context, $correlationId, $data, $target): ApprovalOperation {
-            $year = PlanningYear::query()
-                ->where('tenant_id', $context->tenantId)
-                ->lockForUpdate()
-                ->find($target->getKey());
+            $year = app(AnnualEconomicMutationGuard::class)
+                ->acquire($context->tenantId, [(int) $target->getKey()], lockTenant: true)
+                ->get((int) $target->getKey());
+            $tenant = Tenant::query()->whereKey($context->tenantId)->first();
             $persistedActor = User::query()->whereKey($actor->getRawOriginal($actor->getKeyName()))->where('is_active', true)->first();
 
-            if (! $year instanceof PlanningYear || ! $persistedActor instanceof User || (int) $year->lock_version !== $data->budgetLockVersion) {
+            if (! $tenant instanceof Tenant || ! $year instanceof PlanningYear || ! $persistedActor instanceof User || (int) $year->lock_version !== $data->budgetLockVersion) {
                 throw new DomainException('STALE_VERSION');
             }
 
@@ -77,7 +79,7 @@ final class ApplyBudgetApproval
                 throw (new ModelNotFoundException)->setModel(Expense::class, $ids);
             }
 
-            $basis = $context->budgetBasis->value;
+            $basis = (string) $tenant->getRawOriginal('budget_basis');
             $normalized = [];
             $previousAmounts = [];
             foreach ($changes as $change) {
@@ -86,7 +88,7 @@ final class ApplyBudgetApproval
                     throw new DomainException('STALE_VERSION');
                 }
                 try {
-                    $amount = Money::fromDecimal($change->approvedAmount, $context->currencyCode)->amount();
+                    $amount = Money::fromDecimal($change->approvedAmount, (string) $tenant->currency_code)->amount();
                 } catch (\Throwable) {
                     throw ValidationException::withMessages(['items' => 'Approved amounts must be exact decimals.']);
                 }
@@ -105,6 +107,10 @@ final class ApplyBudgetApproval
                 'budget_state' => $year->budget_state === BudgetState::Preparation ? BudgetState::Approved : $year->budget_state,
                 'lock_version' => $year->lock_version + 1,
             ])->save();
+
+            if ($tenant->economic_basis_locked_at === null) {
+                $tenant->forceFill(['economic_basis_locked_at' => CarbonImmutable::now('UTC')])->save();
+            }
 
             foreach ($expenses as $expense) {
                 $expense->forceFill([

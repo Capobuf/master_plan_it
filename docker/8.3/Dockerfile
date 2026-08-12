@@ -23,6 +23,8 @@ RUN apt-get update \
         supervisor \
         unzip \
         zip \
+    && pecl install xdebug \
+    && docker-php-ext-enable xdebug \
     && docker-php-ext-install -j"$(nproc)" bcmath intl opcache pcntl pdo_mysql zip \
     && groupadd --force -g "${WWWGROUP}" sail \
     && useradd -ms /bin/bash --no-user-group -g "${WWWGROUP}" -u 1337 sail \

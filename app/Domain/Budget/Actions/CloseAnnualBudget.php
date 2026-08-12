@@ -5,6 +5,7 @@ namespace App\Domain\Budget\Actions;
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Budget\Enums\BudgetState;
+use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
 use App\Domain\Revisions\Actions\BeginRevisionBatch;
 use App\Domain\Revisions\Actions\LinkVersionToRevisionBatch;
 use App\Domain\Revisions\Data\RevisionOperation;
@@ -28,7 +29,9 @@ final class CloseAnnualBudget
             ->update($actor, $target)->authorize();
 
         return DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $target): PlanningYear {
-            $year = PlanningYear::query()->where('tenant_id', $context->tenantId)->lockForUpdate()->find($target->getKey());
+            $year = app(AnnualEconomicMutationGuard::class)
+                ->acquire($context->tenantId, [(int) $target->getKey()])
+                ->get((int) $target->getKey());
             if (! $year instanceof PlanningYear || (int) $year->lock_version !== $expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');
             }

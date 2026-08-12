@@ -4,6 +4,7 @@ namespace App\Domain\MasterData\Actions;
 
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
+use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\TenantState;
 use App\Models\PlanningYear;
@@ -32,7 +33,13 @@ final class ReactivatePlanningYear
         $persistedActor = $this->persistedActiveActor($actor);
 
         return DB::transaction(function () use ($context, $correlationId, $expectedLockVersion, $persistedActor, $target, $tenant): PlanningYear {
-            $planningYear = $this->lockedPlanningYear($target, (int) $tenant->getKey());
+            $this->validateTargetIdentity($target);
+            $planningYear = app(AnnualEconomicMutationGuard::class)
+                ->acquire((int) $tenant->getKey(), [(int) $target->getKey()])
+                ->get((int) $target->getKey());
+            if (! $planningYear instanceof PlanningYear) {
+                throw new DomainException('STALE_VERSION');
+            }
 
             if ($planningYear->active || $planningYear->lock_version !== $expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');
@@ -71,7 +78,7 @@ final class ReactivatePlanningYear
         });
     }
 
-    private function lockedPlanningYear(PlanningYear $target, int $tenantId): PlanningYear
+    private function validateTargetIdentity(PlanningYear $target): void
     {
         $keyName = $target->getKeyName();
         $key = $target->getKey();
@@ -81,17 +88,6 @@ final class ReactivatePlanningYear
             throw new DomainException('STALE_VERSION');
         }
 
-        $planningYear = PlanningYear::query()
-            ->where('tenant_id', $tenantId)
-            ->whereKey($originalKey)
-            ->lockForUpdate()
-            ->first();
-
-        if ($planningYear === null) {
-            throw new DomainException('STALE_VERSION');
-        }
-
-        return $planningYear;
     }
 
     private function activeContextTenant(TenantContext $context): Tenant

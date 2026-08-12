@@ -1,4 +1,4 @@
-import type { ExpenseMoney as ExpenseMoneyValue } from "../../api/expenses";
+import type { ProjectionTotals } from "../../api/projection";
 import { DollarLineIcon } from "../../icons";
 import ExpenseMoney from "./ExpenseMoney";
 
@@ -7,7 +7,7 @@ export default function ExpenseTotals({
   title = "Totali",
   description,
 }: {
-  totals: ExpenseMoneyValue;
+  totals: ProjectionTotals;
   title?: string;
   description?: string;
 }) {
@@ -28,14 +28,14 @@ export default function ExpenseTotals({
           ) : null}
         </div>
       </div>
-      <div className="mt-5 grid overflow-hidden rounded-xl border border-gray-200 bg-gray-50/70 divide-y divide-gray-200 dark:border-gray-800 dark:bg-gray-900/50 dark:divide-gray-800 sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-        {(["net", "vat", "gross"] as const).map((component) => (
-          <div key={component} className={`min-w-0 p-4 sm:px-5 ${component === "gross" ? "bg-brand-50/50 dark:bg-brand-500/[0.07]" : ""}`}>
+      <div className="mt-5 grid overflow-hidden rounded-xl border border-gray-200 bg-gray-50/70 divide-y divide-gray-200 dark:border-gray-800 dark:bg-gray-900/50 dark:divide-gray-800 sm:grid-cols-2 sm:divide-x sm:divide-y-0">
+        {(["current_planning", "actual"] as const).map((measure) => (
+          <div key={measure} className="min-w-0 p-4 sm:px-5">
             <p className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
-              {component === "net" ? "Netto" : component === "vat" ? "IVA" : "Lordo"}
+              {measure === "current_planning" ? "Pianificazione corrente" : "Effettivi"}
             </p>
-            <p className={`mt-1.5 break-words text-xl font-semibold ${component === "gross" ? "text-brand-700 dark:text-brand-300" : "text-gray-800 dark:text-white/90"}`}>
-              <ExpenseMoney money={totals} component={component} />
+            <p className="mt-1.5 break-words text-xl font-semibold text-gray-800 dark:text-white/90">
+              <ExpenseMoney money={totals[measure]!} component="official" />
             </p>
           </div>
         ))}

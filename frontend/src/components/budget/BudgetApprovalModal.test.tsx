@@ -21,8 +21,12 @@ function expense(id: number, title: string, lockVersion: number): AnnualBudgetEx
     contract_title: null,
     vendor_id: null,
     vendor_name: null,
-    state: "open",
-    closure_outcome: null,
+    currency: "EUR",
+    basis: "net",
+    totals: {
+      current_planning: { net: "100.00", vat: "22.00", gross: "122.00", official: "100.00" },
+      actual: { net: "0.00", vat: "0.00", gross: "0.00", official: "0.00" },
+    },
     current_planning_row_id: null,
     funded_plafond_expense_id: null,
     planned: "100.00",
@@ -31,7 +35,6 @@ function expense(id: number, title: string, lockVersion: number): AnnualBudgetEx
     actual: "0.00",
     residual: null,
     variance: null,
-    variance_final: false,
     has_actual: false,
     lock_version: lockVersion,
   };
@@ -62,9 +65,13 @@ const dataset: AnnualBudget = {
     variance: "0.00",
     utilization_percentage: null,
     plafond_overrun: "0.00",
-    open_expenses: 2,
-    closed_expenses: 0,
     unapproved_actual_expenses: 0,
+  },
+  currency: "EUR",
+  basis: "net",
+  totals: {
+    current_planning: { net: "200.00", vat: "44.00", gross: "244.00", official: "200.00" },
+    actual: { net: "0.00", vat: "0.00", gross: "0.00", official: "0.00" },
   },
   expenses: [expense(101, "Expense A", 3), expense(102, "Expense B", 4)],
 };

@@ -1,8 +1,7 @@
 import { useRef, useState } from "react";
 import { useDrag, useDrop } from "react-dnd";
-import type { ExpenseLookupOption, PlafondExpenseOption } from "../../api/expenses";
+import type { ExpenseLookupOption } from "../../api/expenses";
 import { ChevronDownIcon, HorizontaLDots, TrashBinIcon } from "../../icons";
-import { applyCalculatedAmount, calculateEnteredAmount } from "../../presentation/formatters";
 import IconButton from "../common/IconButton";
 import Select from "../form/Select";
 import DatePicker from "../form/date-picker";
@@ -37,8 +36,6 @@ interface ExpenseEditorRowsProps {
   rows: ExpenseEditorRow[];
   defaultVatRate?: string | null;
   vendors: ExpenseLookupOption[];
-  plafonds: PlafondExpenseOption[];
-  plafondsLoading?: boolean;
   onChange: (index: number, patch: Partial<ExpenseEditorRow>) => void;
   onMove: (from: number, to: number) => void;
   onRemove: (index: number) => void;
@@ -56,8 +53,6 @@ function DraggableExpenseRow({
   index,
   count,
   vendors,
-  plafonds,
-  plafondsLoading,
   onChange,
   onMove,
   onRemove,
@@ -69,8 +64,6 @@ function DraggableExpenseRow({
   index: number;
   count: number;
   vendors: ExpenseLookupOption[];
-  plafonds: PlafondExpenseOption[];
-  plafondsLoading: boolean;
   onChange: (patch: Partial<ExpenseEditorRow>) => void;
   onMove: (from: number, to: number) => void;
   onRemove: () => void;
@@ -98,14 +91,7 @@ function DraggableExpenseRow({
   const vendorOptions = vendors
     .filter((vendor) => vendor.active !== false || vendor.id === row.vendor_id)
     .map((vendor) => ({ value: String(vendor.id), label: vendor.name }));
-  const plafondOptions = plafonds.map((plafond) => ({
-    value: String(plafond.id),
-    label: `${plafond.title}${plafond.cost_center_name ? ` · ${plafond.cost_center_name}` : ""}`,
-  }));
-  const calculatedAmount = calculateEnteredAmount(row.quantity, row.unit_price);
-  const economic = (
-    patch: Partial<Pick<ExpenseEditorRow, "quantity" | "unit_price" | "entered_amount">>,
-  ) => onChange(applyCalculatedAmount(row, patch));
+  const calculatedMode = Boolean(row.quantity || row.unit_price);
   const errorFor = (field: string) => validationErrors[`rows.${index}.${field}`];
   const rowError = validationErrors[`rows.${index}`];
   const structuralError = rowError ?? errorFor("id") ?? errorFor("position") ?? errorFor("lock_version");
@@ -113,8 +99,6 @@ function DraggableExpenseRow({
     || Object.keys(validationErrors).some((field) => field.startsWith(`rows.${index}.`));
   const hasAdvancedError = [
     "vat_rate",
-    "is_extra",
-    "funded_plafond_expense_id",
     "external_reference",
   ].some((field) => validationErrors[`rows.${index}.${field}`] !== undefined);
   const detailsVisible = detailsOpen || hasAdvancedError;
@@ -193,7 +177,7 @@ function DraggableExpenseRow({
             id={`${row.editorKey}-quantity`}
             ariaLabel={`Quantità riga ${index + 1}`}
             value={row.quantity ?? ""}
-            onChange={(quantity) => economic({ quantity })}
+            onChange={(quantity) => onChange({ quantity: quantity || undefined, entered_amount: quantity ? undefined : row.entered_amount })}
             maxScale={2}
             trimTrailingZeros
             suffix="pz"
@@ -208,7 +192,7 @@ function DraggableExpenseRow({
             id={`${row.editorKey}-unit-price`}
             ariaLabel={`Prezzo Unitario riga ${index + 1}`}
             value={row.unit_price ?? ""}
-            onChange={(unit_price) => economic({ unit_price })}
+            onChange={(unit_price) => onChange({ unit_price: unit_price || undefined, entered_amount: unit_price ? undefined : row.entered_amount })}
             maxScale={2}
             trimTrailingZeros
             suffix="€"
@@ -222,11 +206,11 @@ function DraggableExpenseRow({
           <DecimalInput
             id={`${row.editorKey}-entered-amount`}
             ariaLabel={`Importo riga ${index + 1}`}
-            value={row.entered_amount}
-            onChange={(entered_amount) => onChange({ entered_amount })}
+            value={row.entered_amount ?? ""}
+            onChange={(entered_amount) => onChange({ entered_amount: entered_amount || undefined, quantity: undefined, unit_price: undefined })}
             fixedScale={2}
             maxScale={2}
-            readOnly={calculatedAmount !== null}
+            readOnly={calculatedMode}
             suffix="€"
             disabled={disabled}
             error={Boolean(errorFor("entered_amount"))}
@@ -341,6 +325,10 @@ function DraggableExpenseRow({
             Trattamento
           </p>
           <div>
+            <label htmlFor={`${row.editorKey}-notes`} className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">Note riga</label>
+            <InputField id={`${row.editorKey}-notes`} value={row.notes ?? ""} onChange={(event) => onChange({ notes: event.target.value || undefined })} disabled={disabled} />
+          </div>
+          <div>
             <label
               htmlFor={`${row.editorKey}-vat-rate`}
               className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400"
@@ -364,51 +352,12 @@ function DraggableExpenseRow({
                 : undefined)}
             />
           </div>
-          <div className="rounded-lg border border-gray-200 bg-white p-3 dark:border-gray-700 dark:bg-gray-900">
-            <Checkbox
-              id={`${row.editorKey}-extra`}
-              label="Spesa Extra"
-              checked={row.is_extra}
-              onChange={(is_extra) => onChange({
-                is_extra,
-                ...(is_extra ? { funded_plafond_expense_id: undefined } : {}),
-              })}
-              disabled={disabled}
-              error={Boolean(errorFor("is_extra"))}
-              hint={errorFor("is_extra")}
-            />
-            <p className="mt-1.5 pl-8 text-xs leading-5 text-gray-500 dark:text-gray-400">
-              Mantiene la riga separata da un eventuale Plafond.
-            </p>
-          </div>
         </div>
 
         <div className="space-y-3 md:col-span-1 lg:col-span-7">
           <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
             Riferimenti
           </p>
-          <div>
-            <label
-              htmlFor={`${row.editorKey}-funded`}
-              className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400"
-            >
-              Plafond di riferimento
-            </label>
-            <Select
-              id={`${row.editorKey}-funded`}
-              options={plafondOptions}
-              value={row.funded_plafond_expense_id ? String(row.funded_plafond_expense_id) : ""}
-              placeholder={plafondsLoading ? "Caricamento Plafond…" : "Nessun Plafond"}
-              allowEmpty
-              onChange={(value) => onChange({
-                funded_plafond_expense_id: value ? Number(value) : undefined,
-                ...(value ? { is_extra: false } : {}),
-              })}
-              disabled={disabled || plafondsLoading}
-              error={Boolean(errorFor("funded_plafond_expense_id"))}
-              hint={errorFor("funded_plafond_expense_id")}
-            />
-          </div>
           <div>
             <label
               htmlFor={`${row.editorKey}-external`}
@@ -435,8 +384,6 @@ export default function ExpenseEditorRows({
   rows,
   defaultVatRate = null,
   vendors,
-  plafonds,
-  plafondsLoading = false,
   onChange,
   onMove,
   onRemove,
@@ -464,8 +411,6 @@ export default function ExpenseEditorRows({
             index={index}
             count={rows.length}
             vendors={vendors}
-            plafonds={plafonds}
-            plafondsLoading={plafondsLoading}
             onChange={(patch) => onChange(index, patch)}
             onMove={onMove}
             onRemove={() => onRemove(index)}

@@ -3,7 +3,6 @@
 namespace Tests\Feature\Expenses;
 
 use App\Domain\Expenses\Actions\BulkExpenseAction;
-use App\Domain\Expenses\Actions\CloseExpense;
 use App\Domain\Expenses\Actions\CreateExpense;
 use App\Domain\Expenses\Actions\DeleteExpense;
 use App\Domain\Expenses\Actions\RestoreExpenseRevision;
@@ -11,7 +10,6 @@ use App\Domain\Expenses\Actions\UpdateExpense;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Enums\ExpenseKind;
-use App\Domain\Expenses\Enums\ExpenseState;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\AuditEvent;
@@ -105,26 +103,6 @@ final class ExpenseActionRollbackTest extends TestCase
         }
     }
 
-    public function test_close_expense_audit_failure_rolls_back_lifecycle_and_audit(): void
-    {
-        [$actor, $context, $year, $center, $vendor] = $this->administratorContext();
-        $expense = $this->existingExpense($actor, $context, $year, $center, $vendor, ExpenseType::Actual);
-        $correlationId = (string) str()->uuid();
-        $auditCount = AuditEvent::query()->count();
-        [$dispatcher, $eventName, $listeners] = $this->auditCreatingListeners($correlationId, static fn (): never => throw new RuntimeException('forced audit failure'));
-
-        try {
-            $this->expectException(RuntimeException::class);
-            self::assertTrue(class_exists(CloseExpense::class));
-            $action = app(CloseExpense::class);
-            $action->execute($actor, $context, $expense, $expense->lock_version, null, $correlationId);
-        } finally {
-            $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
-            $this->assertDatabaseHas('expenses', ['id' => $expense->getKey(), 'state' => ExpenseState::Open->value, 'lock_version' => 1]);
-            $this->assertDatabaseCount('audit_events', $auditCount);
-        }
-    }
-
     public function test_restore_expense_revision_audit_failure_rolls_back_the_whole_aggregate(): void
     {
         [$actor, $context, $year, $center, $vendor] = $this->administratorContext();
@@ -182,18 +160,19 @@ final class ExpenseActionRollbackTest extends TestCase
             $action->execute(
                 $actor,
                 $context,
-                'close',
+                'delete',
                 (int) $year->getKey(),
                 [
                     ['id' => (int) $first->getKey(), 'lock_version' => 1],
                     ['id' => (int) $second->getKey(), 'lock_version' => 1],
                 ],
                 (string) str()->uuid(),
+                false,
             );
         } finally {
             $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
-            $this->assertDatabaseHas('expenses', ['id' => $first->getKey(), 'state' => 'open', 'lock_version' => 1]);
-            $this->assertDatabaseHas('expenses', ['id' => $second->getKey(), 'state' => 'open', 'lock_version' => 1]);
+            $this->assertDatabaseHas('expenses', ['id' => $first->getKey(), 'deleted_at' => null, 'lock_version' => 1]);
+            $this->assertDatabaseHas('expenses', ['id' => $second->getKey(), 'deleted_at' => null, 'lock_version' => 1]);
             $this->assertDatabaseCount('audit_events', $auditCount);
         }
     }
@@ -229,7 +208,27 @@ final class ExpenseActionRollbackTest extends TestCase
 
     private function rowData(Vendor $vendor, ExpenseType $type, ?int $id = null, ?int $expectedLockVersion = null): SaveExpenseRowData
     {
-        return new SaveExpenseRowData($id, 1, $vendor->getKey(), $type, 'Rollback row', null, null, '100.00', false, '22.00', false, null, '2026-01-15', null, null, null, null, $expectedLockVersion);
+        return new SaveExpenseRowData(
+            $id,
+            1,
+            $vendor->getKey(),
+            $type,
+            'Rollback row',
+            null,
+            null,
+            '100.00',
+            false,
+            '22.00',
+            false,
+            null,
+            $type === ExpenseType::Actual ? '2026-01-15' : null,
+            null,
+            null,
+            null,
+            null,
+            $expectedLockVersion,
+            $type !== ExpenseType::Actual,
+        );
     }
 
     /** @return array{Dispatcher,string,array<int,mixed>} */

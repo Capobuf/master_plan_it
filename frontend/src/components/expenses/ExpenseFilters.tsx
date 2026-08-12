@@ -82,7 +82,6 @@ export default function ExpenseFilters({
       {showVendors ? <Select id="expense-vendor" options={vendors.map((item) => ({ value: String(item.id), label: item.name }))} value={value.vendor_id ? String(value.vendor_id) : ""} placeholder="Tutti i fornitori" ariaLabel="Fornitore" allowEmpty disabled={disabled} onChange={(id) => select({ vendor_id: id ? Number(id) : undefined })} /> : null}
       {showProjects ? <Select id="expense-project" options={projects.map((item) => ({ value: String(item.id), label: item.title }))} value={value.project_id ? String(value.project_id) : ""} placeholder="Tutti i progetti" ariaLabel="Progetto" allowEmpty disabled={disabled} onChange={(id) => select({ project_id: id ? Number(id) : undefined })} /> : null}
       {showContracts ? <Select id="expense-contract" options={contracts.map((item) => ({ value: String(item.id), label: item.title }))} value={value.contract_id ? String(value.contract_id) : ""} placeholder="Tutti i contratti" ariaLabel="Contratto" allowEmpty disabled={disabled} onChange={(id) => select({ contract_id: id ? Number(id) : undefined })} /> : null}
-      <Select id="expense-state" options={[{ value: "open", label: "Aperte" }, { value: "closed", label: "Chiuse" }]} value={value.state ?? ""} placeholder="Tutti gli stati" ariaLabel="Stato" allowEmpty disabled={disabled} onChange={(state) => select({ state: state ? state as "open" | "closed" : undefined })} />
       {actions ? <div className="flex justify-end">{actions}</div> : null}
     </div>
   );

@@ -22,6 +22,7 @@ final class DeleteProject
         [$actor, $tenant] = $this->persistedProjectContext($actor, $context);
 
         DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $reason, $target, $tenant): void {
+            $this->lockProjectEconomicYears((int) $tenant->getKey(), [(int) $target->getKey()]);
             $project = Project::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($target->getKey());
             if (! $project instanceof Project || $project->lock_version !== $expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');

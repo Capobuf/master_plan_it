@@ -22,7 +22,6 @@ return new class extends Migration
                 ->references(['tenant_id', 'id'])->on('projects')->restrictOnDelete();
         });
 
-        DB::statement('ALTER TABLE `expenses` DROP CHECK `expenses_project_contract_xor`');
         DB::statement('ALTER TABLE `expense_rows` DROP CHECK `expense_rows_date_shape_spend`');
         DB::statement('ALTER TABLE `expense_rows` DROP CHECK `expense_rows_date_shape_period`');
         DB::statement('ALTER TABLE `expense_rows` DROP CHECK `expense_rows_date_shape_complete`');
@@ -31,14 +30,9 @@ return new class extends Migration
         Schema::table('expenses', function (Blueprint $table): void {
             $table->decimal('approved_amount', 19, 2)->nullable()->after('contract_id');
             $table->enum('approved_basis', ['net', 'gross'])->nullable()->after('approved_amount');
-            $table->enum('state', ['open', 'closed'])->default('open')->after('approved_basis');
-            $table->enum('closure_outcome', ['not_incurred', 'cancelled', 'moved'])->nullable()->after('state');
-            $table->timestamp('closed_at')->nullable()->after('closure_outcome');
-            $table->foreignId('closed_by_user_id')->nullable()->after('closed_at')->constrained('users')->restrictOnDelete();
-            $table->unsignedBigInteger('current_planning_row_id')->nullable()->after('closed_by_user_id');
+            $table->unsignedBigInteger('current_planning_row_id')->nullable()->after('approved_basis');
             $table->unsignedBigInteger('moved_from_expense_id')->nullable()->after('current_planning_row_id');
             $table->unsignedBigInteger('credit_for_expense_id')->nullable()->after('moved_from_expense_id');
-            $table->index(['tenant_id', 'state', 'planning_year_id', 'deleted_at'], 'expenses_tenant_state_year_idx');
             $table->index(['tenant_id', 'current_planning_row_id'], 'expenses_tenant_plan_row_idx');
             $table->foreign(['tenant_id', 'current_planning_row_id'], 'expenses_tenant_plan_row_fk')
                 ->references(['tenant_id', 'id'])->on('expense_rows')->restrictOnDelete();
@@ -98,7 +92,6 @@ return new class extends Migration
         });
 
         Schema::table('revision_batch_items', function (Blueprint $table): void {
-            $table->foreignId('tenant_id')->nullable()->after('revision_batch_id')->constrained()->restrictOnDelete();
             $table->unsignedBigInteger('planning_year_id')->nullable()->after('tenant_id');
             $table->enum('mutation', ['upsert', 'delete'])->default('upsert')->after('planning_year_id');
             $table->index(['tenant_id', 'planning_year_id', 'versionable_type', 'versionable_id'], 'revision_items_annual_subject_idx');
@@ -112,7 +105,7 @@ return new class extends Migration
         Schema::table('revision_batch_items', function (Blueprint $table): void {
             $table->dropForeign('revision_items_tenant_year_fk');
             $table->dropIndex('revision_items_annual_subject_idx');
-            $table->dropColumn(['tenant_id', 'planning_year_id', 'mutation']);
+            $table->dropColumn(['planning_year_id', 'mutation']);
         });
         Schema::dropIfExists('approval_items');
         Schema::dropIfExists('approval_operations');
@@ -121,12 +114,9 @@ return new class extends Migration
             $table->dropForeign('expenses_tenant_plan_row_fk');
             $table->dropForeign('expenses_tenant_moved_from_fk');
             $table->dropForeign('expenses_tenant_credit_for_fk');
-            $table->dropForeign(['closed_by_user_id']);
-            $table->dropIndex('expenses_tenant_state_year_idx');
             $table->dropIndex('expenses_tenant_plan_row_idx');
-            $table->dropColumn(['approved_amount', 'approved_basis', 'state', 'closure_outcome', 'closed_at', 'closed_by_user_id', 'current_planning_row_id', 'moved_from_expense_id', 'credit_for_expense_id']);
+            $table->dropColumn(['approved_amount', 'approved_basis', 'current_planning_row_id', 'moved_from_expense_id', 'credit_for_expense_id']);
         });
-        DB::statement('ALTER TABLE `expenses` ADD CONSTRAINT `expenses_project_contract_xor` CHECK (NOT (project_id IS NOT NULL AND contract_id IS NOT NULL))');
 
         Schema::table('contracts', function (Blueprint $table): void {
             $table->dropForeign('contracts_tenant_project_fk');

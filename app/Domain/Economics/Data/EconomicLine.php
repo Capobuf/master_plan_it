@@ -13,5 +13,11 @@ final readonly class EconomicLine
         public ?int $projectId = null,
         public ?string $projectStage = null,
         public ?string $projectTitle = null,
+        public bool $isCurrentPlanning = false,
+        public string $description = '',
+        public ?string $notes = null,
+        public ?int $vendorId = null,
+        public ?string $vendorName = null,
+        public ?int $contractId = null,
     ) {}
 }

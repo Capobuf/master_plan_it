@@ -1,7 +1,9 @@
 import { useState } from "react";
+import { useLocation, useNavigate } from "react-router";
 
 import { usePlanningYear } from "../../context/PlanningYearContext";
 import { CalenderIcon, CheckCircleIcon, ChevronDownIcon } from "../../icons";
+import { routes } from "../../navigation/routes";
 import Alert from "../ui/alert/Alert";
 import { Dropdown } from "../ui/dropdown/Dropdown";
 import { DropdownItem } from "../ui/dropdown/DropdownItem";
@@ -15,10 +17,25 @@ export default function PlanningYearDropdown() {
     error,
   } = usePlanningYear();
   const [isOpen, setIsOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const handleSelect = (planningYearId: number) => {
-    selectPlanningYear(planningYearId);
+    const changed = planningYearId !== selectedPlanningYear?.id;
+    const returnsToRegister = changed && /^\/spese\/\d+(?:\/modifica)?$/.test(location.pathname);
+    if (!selectPlanningYear(planningYearId, returnsToRegister)) return;
     setIsOpen(false);
+
+    if (returnsToRegister) {
+      const nextYear = activePlanningYears.find(({ id }) => id === planningYearId);
+      navigate(routes.spese, {
+        state: {
+          workspaceNotice: nextYear
+            ? `Ora stai consultando il Registro Spese ${nextYear.year_label}.`
+            : "Ora stai consultando il Registro Spese dell'anno selezionato.",
+        },
+      });
+    }
   };
 
   const buttonLabel = loading

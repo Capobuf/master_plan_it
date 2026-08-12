@@ -179,7 +179,7 @@ class RevisionBatchSchemaTest extends TestCase
     {
         $this->assertRevisionBatchTablesExist();
 
-        $this->assertIndex('revision_batches', ['correlation_id'], unique: true);
+        $this->assertIndex('revision_batches', ['correlation_id']);
         $this->assertIndex('revision_batches', ['tenant_id', 'root_subject_type', 'root_subject_id', 'occurred_at']);
         $this->assertIndex('revision_batch_items', ['revision_batch_id', 'version_id'], unique: true);
         $this->assertIndex('revision_batch_items', ['revision_batch_id', 'sequence'], unique: true);
@@ -196,9 +196,9 @@ class RevisionBatchSchemaTest extends TestCase
         $this->assertRestrictiveForeignKey('revision_batches', ['restored_from_version_id'], 'versions', ['id']);
         $this->assertRestrictiveForeignKey(
             'revision_batch_items',
-            ['revision_batch_id'],
+            ['tenant_id', 'revision_batch_id'],
             'revision_batches',
-            ['id'],
+            ['tenant_id', 'id'],
         );
         $this->assertRestrictiveForeignKey('revision_batch_items', ['version_id'], 'versions', ['id']);
     }

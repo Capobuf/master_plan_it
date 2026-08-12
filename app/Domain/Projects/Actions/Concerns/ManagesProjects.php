@@ -4,6 +4,7 @@ namespace App\Domain\Projects\Actions\Concerns;
 
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
+use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
 use App\Domain\Projects\Data\SaveProjectData;
 use App\Domain\Projects\Enums\ProjectStage;
 use App\Domain\Revisions\Actions\BeginRevisionBatch;
@@ -13,6 +14,7 @@ use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\TenantState;
 use App\Models\CostCenter;
+use App\Models\Expense;
 use App\Models\PlanningYear;
 use App\Models\Project;
 use App\Models\Tenant;
@@ -26,6 +28,20 @@ use Spatie\Permission\PermissionRegistrar;
 
 trait ManagesProjects
 {
+    /** @param list<int> $projectIds */
+    private function lockProjectEconomicYears(int $tenantId, array $projectIds): void
+    {
+        $ids = $projectIds === [] ? [] : Expense::query()
+            ->where('tenant_id', $tenantId)
+            ->whereIn('project_id', $projectIds)
+            ->pluck('planning_year_id')
+            ->map(static fn ($id): int => (int) $id)
+            ->unique()
+            ->values()
+            ->all();
+        app(AnnualEconomicMutationGuard::class)->acquire($tenantId, $ids);
+    }
+
     private function projectPolicy(TenantContext $context): ProjectPolicy
     {
         return new ProjectPolicy($context, app(PermissionRegistrar::class), app(PlatformAdministrator::class));
@@ -50,7 +66,8 @@ trait ManagesProjects
         if (! $persistedActor instanceof User || ! $tenant instanceof Tenant) {
             throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
         }
-        if ($tenant->state !== TenantState::Active) {
+        if ($tenant->state !== TenantState::Active
+            && ! ($persistedActor->tenant_id === null && app(PlatformAdministrator::class)->hasProtectedRole($persistedActor))) {
             throw new AuthorizationException('TENANT_INACTIVE');
         }
         if ($persistedActor->tenant_id !== null && (int) $persistedActor->tenant_id !== (int) $tenant->getKey()) {

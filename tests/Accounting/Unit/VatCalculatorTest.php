@@ -2,6 +2,7 @@
 
 namespace Tests\Accounting\Unit;
 
+use App\Domain\Economics\Services\MoneyCalculator;
 use App\Domain\Money\Money;
 use App\Domain\Money\Services\VatCalculator;
 use App\Domain\Money\VatBreakdown;
@@ -101,6 +102,41 @@ class VatCalculatorTest extends TestCase
         );
 
         $this->assertSame('10.46', $rate);
+    }
+
+    public function test_slice_023_target_vat_calculator_keeps_negative_included_amounts_reconciled(): void
+    {
+        $calculator = new \App\Domain\Economics\Services\VatCalculator(
+            new MoneyCalculator,
+        );
+
+        $measure = $calculator->fromIncluded('-122.00', '22.00', 'gross');
+
+        $this->assertSame('-100.00', $measure->net);
+        $this->assertSame('-22.00', $measure->vat);
+        $this->assertSame('-122.00', $measure->gross);
+        $this->assertSame('-122.00', $measure->official);
+    }
+
+    public function test_slice_023_target_vat_calculator_covers_excluded_basis_and_rate_validation(): void
+    {
+        $calculator = new \App\Domain\Economics\Services\VatCalculator(
+            new MoneyCalculator,
+        );
+
+        $measure = $calculator->fromExcluded('100.00', '22.00', 'net');
+
+        $this->assertSame('100.00', $measure->net);
+        $this->assertSame('22.00', $measure->vat);
+        $this->assertSame('122.00', $measure->gross);
+        $this->assertSame('100.00', $measure->official);
+
+        try {
+            $calculator->fromIncluded('122.00', '22.001', 'gross');
+            $this->fail('An invalid VAT rate was accepted.');
+        } catch (DomainException $exception) {
+            $this->assertSame('INVALID_VAT_RATE', $exception->getMessage());
+        }
     }
 
     private function assertBreakdown(

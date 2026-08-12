@@ -4,6 +4,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -26,8 +27,15 @@ interface PlanningYearContextValue {
   selectedPlanningYearId: number | null;
   loading: boolean;
   error: ApiError | null;
+  hasDirtySources: boolean;
   refreshPlanningYears: () => Promise<readonly PlanningYear[]>;
-  selectPlanningYear: (planningYearId: number) => void;
+  selectPlanningYear: (
+    planningYearId: number,
+    authorizeFollowingNavigation?: boolean,
+  ) => boolean;
+  registerDirtySource: (source: string, dirty: boolean) => void;
+  confirmDiscardChanges: () => boolean;
+  consumeAuthorizedNavigation: () => boolean;
 }
 
 const PlanningYearContext = createContext<
@@ -72,8 +80,30 @@ export function PlanningYearProvider({
   >(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<ApiError | null>(null);
+  const [dirtySources, setDirtySources] = useState<Set<string>>(new Set());
+  const requestGeneration = useRef(0);
+  const authorizedNavigation = useRef(false);
+
+  const confirmDiscardChanges = useCallback(
+    () =>
+      dirtySources.size === 0 ||
+      window.confirm("Ci sono modifiche non salvate. Vuoi abbandonarle?"),
+    [dirtySources.size],
+  );
+
+  useEffect(() => {
+    if (dirtySources.size === 0) return;
+
+    const warnBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+    };
+    window.addEventListener("beforeunload", warnBeforeUnload);
+
+    return () => window.removeEventListener("beforeunload", warnBeforeUnload);
+  }, [dirtySources.size]);
 
   const refreshPlanningYears = useCallback(async () => {
+    const generation = ++requestGeneration.current;
     if (tenantId === null || !canRead) {
       setPlanningYears([]);
       setSelectedPlanningYearId(null);
@@ -87,6 +117,7 @@ export function PlanningYearProvider({
 
     try {
       const years = await getAllPlanningYears();
+      if (generation !== requestGeneration.current) return [];
       setPlanningYears(years);
       return years;
     } catch (requestError) {
@@ -95,11 +126,12 @@ export function PlanningYearProvider({
       setError(apiError);
       throw apiError;
     } finally {
-      setLoading(false);
+      if (generation === requestGeneration.current) setLoading(false);
     }
   }, [canRead, tenantId]);
 
   useEffect(() => {
+    const generation = ++requestGeneration.current;
     let active = true;
 
     if (tenantId === null || !canRead) {
@@ -117,18 +149,18 @@ export function PlanningYearProvider({
 
     void getAllPlanningYears()
       .then((years) => {
-        if (active) {
+        if (active && generation === requestGeneration.current) {
           setPlanningYears(years);
         }
       })
       .catch((requestError: unknown) => {
-        if (active) {
+        if (active && generation === requestGeneration.current) {
           setPlanningYears([]);
           setError(ApiError.from(requestError));
         }
       })
       .finally(() => {
-        if (active) {
+        if (active && generation === requestGeneration.current) {
           setLoading(false);
         }
       });
@@ -162,17 +194,31 @@ export function PlanningYearProvider({
   );
 
   const selectPlanningYear = useCallback(
-    (planningYearId: number) => {
-      if (
-        activePlanningYears.some(
-          (planningYear) => planningYear.id === planningYearId,
-        )
-      ) {
-        setSelectedPlanningYearId(planningYearId);
-      }
+    (planningYearId: number, authorizeFollowingNavigation = false) => {
+      if (!activePlanningYears.some((planningYear) => planningYear.id === planningYearId)) return false;
+      if (planningYearId === selectedPlanningYearId) return true;
+      if (!confirmDiscardChanges()) return false;
+
+      authorizedNavigation.current = authorizeFollowingNavigation;
+      setSelectedPlanningYearId(planningYearId);
+      return true;
     },
-    [activePlanningYears],
+    [activePlanningYears, confirmDiscardChanges, selectedPlanningYearId],
   );
+
+  const registerDirtySource = useCallback((source: string, dirty: boolean) => {
+    setDirtySources((current) => {
+      const next = new Set(current);
+      if (dirty) next.add(source); else next.delete(source);
+      return next;
+    });
+  }, []);
+
+  const consumeAuthorizedNavigation = useCallback(() => {
+    if (!authorizedNavigation.current) return false;
+    authorizedNavigation.current = false;
+    return true;
+  }, []);
 
   const value = useMemo<PlanningYearContextValue>(
     () => ({
@@ -182,15 +228,23 @@ export function PlanningYearProvider({
       selectedPlanningYearId,
       loading,
       error,
+      hasDirtySources: dirtySources.size > 0,
       refreshPlanningYears,
       selectPlanningYear,
+      registerDirtySource,
+      confirmDiscardChanges,
+      consumeAuthorizedNavigation,
     }),
     [
       activePlanningYears,
       error,
+      confirmDiscardChanges,
+      consumeAuthorizedNavigation,
+      dirtySources.size,
       loading,
       planningYears,
       refreshPlanningYears,
+      registerDirtySource,
       selectPlanningYear,
       selectedPlanningYear,
       selectedPlanningYearId,

@@ -1,4 +1,13 @@
-import { BrowserRouter as Router, Navigate, Routes, Route, useParams } from "react-router";
+import {
+  createBrowserRouter,
+  createRoutesFromElements,
+  Navigate,
+  Outlet,
+  Route,
+  RouterProvider,
+  useParams,
+} from "react-router";
+import { useState } from "react";
 import SignIn from "./pages/AuthPages/SignIn";
 import NotFound from "./pages/OtherPage/NotFound";
 import AppLayout from "./layout/AppLayout";
@@ -32,13 +41,9 @@ import { AuthProvider } from "./context/AuthContext";
 import { ApplicationProvider } from "./context/ApplicationContext";
 import { legacyRoutePatterns, legacyRoutes, routePatterns, routes } from "./navigation/routes";
 
-export default function App() {
-  return (
-    <Router>
-      <ScrollToTop />
-      <AuthProvider>
-        <ApplicationProvider>
-          <Routes>
+function createApplicationRouter() {
+  return createBrowserRouter(createRoutesFromElements(
+    <Route element={<ApplicationRoot />}>
             <Route path={routes.accesso} element={<SignIn />} />
             <Route path={legacyRoutes.accesso} element={<Navigate to={routes.accesso} replace />} />
 
@@ -92,11 +97,25 @@ export default function App() {
               </Route>
             </Route>
 
-            <Route path="*" element={<NotFound />} />
-          </Routes>
-        </ApplicationProvider>
-      </AuthProvider>
-    </Router>
+      <Route path="*" element={<NotFound />} />
+    </Route>,
+  ));
+}
+
+export default function App() {
+  const [router] = useState(createApplicationRouter);
+
+  return <RouterProvider router={router} />;
+}
+
+function ApplicationRoot() {
+  return (
+    <AuthProvider>
+      <ApplicationProvider>
+        <ScrollToTop />
+        <Outlet />
+      </ApplicationProvider>
+    </AuthProvider>
   );
 }
 

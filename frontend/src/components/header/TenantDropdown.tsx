@@ -6,6 +6,7 @@ import {
 } from "../../api/context";
 import { ApiError, type Tenant } from "../../api/client";
 import { useApplicationContext } from "../../context/ApplicationContext";
+import { usePlanningYear } from "../../context/PlanningYearContext";
 import { CheckCircleIcon, ChevronDownIcon } from "../../icons";
 import { domainLabel } from "../../presentation/labels";
 import Alert from "../ui/alert/Alert";
@@ -41,6 +42,7 @@ async function getAllTenants(): Promise<Tenant[]> {
 export default function TenantDropdown() {
   const { data, loading: contextLoading, refreshContext } =
     useApplicationContext();
+  const { confirmDiscardChanges } = usePlanningYear();
   const [isOpen, setIsOpen] = useState(false);
   const [tenants, setTenants] = useState<Tenant[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -93,7 +95,7 @@ export default function TenantDropdown() {
   };
 
   const handleEnterTenant = async (tenantId: number) => {
-    if (pendingTenantId !== null || isLeaving) {
+    if (pendingTenantId !== null || isLeaving || !confirmDiscardChanges()) {
       return;
     }
 
@@ -112,7 +114,7 @@ export default function TenantDropdown() {
   };
 
   const handleLeaveTenant = async () => {
-    if (pendingTenantId !== null || isLeaving) {
+    if (pendingTenantId !== null || isLeaving || !confirmDiscardChanges()) {
       return;
     }
 

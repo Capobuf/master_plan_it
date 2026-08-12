@@ -10,7 +10,6 @@ use App\Domain\Budget\Queries\AnnualBudgetQuery;
 use App\Domain\Budget\Queries\HistoricalAnnualBudgetQuery;
 use App\Domain\Contracts\Actions\GenerateContractOccurrenceForYear;
 use App\Domain\Contracts\Enums\BillingCycle;
-use App\Domain\Expenses\Actions\CloseExpense;
 use App\Domain\Expenses\Actions\UpdateExpense;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
@@ -49,7 +48,7 @@ final class AnnualBudgetLifecycleTest extends TestCase
         app(PermissionRegistrar::class)->setPermissionsTeamId(null);
     }
 
-    public function test_approval_budget_and_expense_closure_are_independent_and_economic_changes_reopen_expense(): void
+    public function test_budget_closure_does_not_introduce_an_expense_lifecycle(): void
     {
         [$actor, $context, $year, $center, $vendor] = $this->context();
         [$expense, $row] = $this->expense($context->tenant, $year, $center, $vendor, '100.00');
@@ -66,20 +65,16 @@ final class AnnualBudgetLifecycleTest extends TestCase
         $this->assertSame('90.00', $expense->fresh()->approved_amount);
 
         app(CloseAnnualBudget::class)->execute($actor, $context, $year->fresh(), 2, (string) str()->uuid());
-        $closed = app(CloseExpense::class)->execute($actor, $context, $expense->fresh(), 2, null, (string) str()->uuid());
-        $this->assertSame('closed', $closed->state->value);
 
         app(UpdateExpense::class)->execute(
             $actor,
             $context,
-            $closed,
-            new SaveExpenseData((int) $year->getKey(), (int) $center->getKey(), ExpenseKind::Ordinary, $expense->title, null, null, null, 3),
+            $expense->fresh(),
+            new SaveExpenseData((int) $year->getKey(), (int) $center->getKey(), ExpenseKind::Ordinary, $expense->title, null, null, null, 2),
             [$this->rowData($vendor, '120.00', (int) $row->getKey(), 1, true)],
             (string) str()->uuid(),
         );
 
-        $reopened = $expense->fresh();
-        $this->assertSame('open', $reopened->state->value);
         $this->assertSame('closed', $year->fresh()->budget_state->value);
         $this->assertSame('BUDGET_CLOSED', app(AnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey())['budget']['warning']);
     }
@@ -145,7 +140,7 @@ final class AnnualBudgetLifecycleTest extends TestCase
         app(HistoricalAnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey(), '2026-03-01T09:59:59Z');
     }
 
-    public function test_contract_generates_one_unselected_annual_planning_expense_with_project(): void
+    public function test_contract_generates_one_selected_annual_planning_expense_with_project(): void
     {
         [$actor, $context, $year, $center, $vendor] = $this->context();
         $project = Project::factory()->for($context->tenant)->create();
@@ -161,11 +156,11 @@ final class AnnualBudgetLifecycleTest extends TestCase
         $this->assertCount(1, $expense->rows);
         $this->assertSame('quote', $expense->rows->first()->type->value);
         $this->assertSame('1200.00', $expense->rows->first()->net_amount);
-        $this->assertNull($expense->current_planning_row_id);
+        $this->assertSame($expense->rows->first()->getKey(), $expense->current_planning_row_id);
         $this->assertDatabaseMissing('expense_rows', ['expense_id' => $expense->getKey(), 'type' => 'actual']);
     }
 
-    public function test_plafond_remains_distinguishable_and_consumption_overrun_is_reported(): void
+    public function test_plafond_remains_distinguishable_without_slice_024_capacity_semantics(): void
     {
         [$actor, $context, $year, $center, $vendor] = $this->context();
         [$plafond] = $this->expense($context->tenant, $year, $center, $vendor, '1000.00', ExpenseKind::Plafond);
@@ -176,8 +171,8 @@ final class AnnualBudgetLifecycleTest extends TestCase
 
         $result = app(AnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey());
         $this->assertSame(['ordinary', 'plafond'], collect($result['expenses'])->pluck('kind')->sort()->values()->all());
-        $this->assertSame('1200.00', $result['summary']['proposed']);
-        $this->assertSame('200.00', $result['summary']['plafond_overrun']);
+        $this->assertSame($result['totals']['current_planning']['official'], $result['summary']['proposed']);
+        $this->assertSame('0.00', $result['summary']['plafond_overrun']);
     }
 
     public function test_apply_budget_approval_audit_failure_rolls_back_the_whole_operation(): void

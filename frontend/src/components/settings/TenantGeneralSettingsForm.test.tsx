@@ -26,9 +26,8 @@ const settings: TenantSettings = {
   currency_code: "EUR",
   timezone: "Europe/Rome",
   default_vat_rate: "22.00",
-  budget_basis: "net",
-  budget_basis_locked: true,
-  budget_basis_lock_reason: "TENANT_BUDGET_BASIS_LOCKED",
+  economic_basis: "net",
+  economic_basis_locked_at: "2026-08-12T10:00:00Z",
   deletion_reason_required: false,
   lock_version: 3,
 };
@@ -47,7 +46,7 @@ describe("TenantGeneralSettingsForm", () => {
     expect(screen.getByText("Caricamento delle impostazioni")).toBeInTheDocument();
     expect(await screen.findByDisplayValue("Acme")).toBeDisabled();
     expect(screen.getByDisplayValue("EUR")).toBeDisabled();
-    expect(screen.getByRole("combobox", { name: "Base Budget ufficiale" })).toBeDisabled();
+    expect(screen.getByRole("combobox", { name: "Base Economica ufficiale" })).toBeDisabled();
     expect(screen.getByText(/solo ai nuovi elementi senza aliquota esplicita/i)).toBeInTheDocument();
     expect(screen.getByText(/bloccata dopo la prima approvazione/i)).toBeInTheDocument();
     expect(screen.queryByText(/quota allegati/i)).not.toBeInTheDocument();
@@ -57,8 +56,7 @@ describe("TenantGeneralSettingsForm", () => {
   it("normalizes the VAT, saves the closed payload and refreshes application context", async () => {
     vi.mocked(getTenantSettings).mockResolvedValue({
       ...settings,
-      budget_basis_locked: false,
-      budget_basis_lock_reason: null,
+      economic_basis_locked_at: null,
     });
     vi.mocked(updateTenantSettings).mockResolvedValue({
       ...settings,
@@ -77,7 +75,7 @@ describe("TenantGeneralSettingsForm", () => {
         name: "Acme",
         timezone: "Europe/Rome",
         default_vat_rate: "20.00",
-        budget_basis: "net",
+        economic_basis: "net",
         deletion_reason_required: false,
         lock_version: 3,
       });

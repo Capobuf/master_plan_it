@@ -30,7 +30,7 @@ final class ContractAnnualPlanningTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_unselected_annual_quote_synchronizes_until_selected_and_then_exposes_the_expected_difference(): void
+    public function test_selected_annual_quote_synchronizes_until_manually_overridden(): void
     {
         app(PermissionCatalogueSeeder::class)->run();
         app(PermissionRegistrar::class)->setPermissionsTeamId(null);
@@ -72,7 +72,7 @@ final class ContractAnnualPlanningTest extends TestCase
         $row = $expense->rows->sole();
         $this->assertSame('quote', $row->type->value);
         $this->assertSame('1200.00', $row->net_amount);
-        $this->assertNull($expense->current_planning_row_id);
+        $this->assertSame($row->getKey(), $expense->current_planning_row_id);
         $this->assertSame($project->getKey(), $expense->project_id);
         $this->assertDatabaseMissing('expense_rows', ['expense_id' => $expense->getKey(), 'type' => 'actual']);
 
@@ -109,6 +109,7 @@ final class ContractAnnualPlanningTest extends TestCase
                 $row->distribution,
                 $row->external_reference,
                 (int) $row->lock_version,
+                true,
             )],
             (string) str()->uuid(),
         );
@@ -124,7 +125,7 @@ final class ContractAnnualPlanningTest extends TestCase
         app(SynchronizeContractOccurrences::class)->execute($actor, $context, $contract, (string) str()->uuid());
         $this->assertSame('1320.00', $row->fresh()->net_amount);
 
-        $expense->forceFill(['current_planning_row_id' => $row->getKey()])->save();
+        $row->refresh()->forceFill(['is_system_managed' => false, 'manual_override_at' => now('UTC')])->save();
         $term->forceFill([
             'entered_amount' => '120.00',
             'net_amount' => '120.00',
@@ -135,7 +136,7 @@ final class ContractAnnualPlanningTest extends TestCase
         $occurrence = app(ExpectedContractOccurrenceQuery::class)->forContract($contract, 2026)[0];
 
         $this->assertSame('1320.00', $row->fresh()->net_amount);
-        $this->assertSame('managed', $occurrence->planningState);
+        $this->assertSame('manual', $occurrence->planningState);
         $this->assertSame([
             'net' => '120.00',
             'vat' => '26.40',

@@ -2,15 +2,18 @@
 
 namespace App\Domain\Expenses\Actions;
 
+use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
 use App\Domain\Expenses\Actions\Concerns\ManagesExpenseAggregate;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
+use App\Domain\Expenses\Services\ExpenseRelationshipAuthorizer;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Expense;
 use App\Models\User;
 use DomainException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 final class UpdateExpense
 {
@@ -23,12 +26,25 @@ final class UpdateExpense
     public function execute(User $actor, TenantContext $context, Expense $target, SaveExpenseData $data, array $rows, string $correlationId, array $deletedRows = []): Expense
     {
         $this->expensePolicy($context)->update($actor, $target)->authorize();
+        app(ExpenseRelationshipAuthorizer::class)->authorize(
+            $actor,
+            $context,
+            $data->projectId !== null,
+            $data->contractId !== null,
+        );
         [$actor, $tenant] = $this->persistedContext($actor, $context);
 
         return DB::transaction(function () use ($actor, $context, $correlationId, $data, $rows, $target, $tenant, $deletedRows): Expense {
+            app(AnnualEconomicMutationGuard::class)->acquire(
+                (int) $tenant->getKey(),
+                [$data->planningYearId],
+            );
             $expense = Expense::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($target->getKey());
             if (! $expense instanceof Expense || $data->expectedLockVersion === null || $expense->lock_version !== $data->expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');
+            }
+            if ((int) $expense->planning_year_id !== $data->planningYearId) {
+                throw new DomainException('TENANT_RELATION_MISMATCH');
             }
             if ($expense->approved_amount !== null && (
                 (int) $expense->planning_year_id !== $data->planningYearId
@@ -44,9 +60,13 @@ final class UpdateExpense
                 $submittedIds = array_values(array_filter(array_map(fn ($row) => $row->id, $rows), fn ($id) => $id !== null));
                 if ((int) $expense->planning_year_id !== $data->planningYearId
                     || (int) $expense->contract_id !== (int) $data->contractId
-                    || $this->nullableId($expense->project_id) !== $data->projectId
-                    || array_diff($sourceRowIds, $submittedIds) !== []) {
+                    || $this->nullableId($expense->project_id) !== $data->projectId) {
                     throw new DomainException('TENANT_RELATION_MISMATCH');
+                }
+                if (array_diff($sourceRowIds, $submittedIds) !== []) {
+                    throw ValidationException::withMessages([
+                        'rows' => 'The submitted expense rows are invalid.',
+                    ]);
                 }
             }
             $changed = $this->saveAggregate($expense, $tenant, $data, $rows, $actor, $deletedRows);

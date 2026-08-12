@@ -21,6 +21,7 @@ final class UpdateContract
         [$actor, $tenant] = $this->persistedContractContext($actor, $context);
 
         return DB::transaction(function () use ($actor, $context, $correlationId, $data, $target, $tenant): Contract {
+            $this->lockContractEconomicYears((int) $tenant->getKey(), (int) $target->getKey());
             $contract = Contract::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($target->getKey());
             if (! $contract instanceof Contract || $data->expectedLockVersion === null || $contract->lock_version !== $data->expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');

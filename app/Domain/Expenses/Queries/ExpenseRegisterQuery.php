@@ -2,8 +2,13 @@
 
 namespace App\Domain\Expenses\Queries;
 
+use App\Domain\Economics\Data\AnnualEconomicProjection;
+use App\Domain\Economics\Data\EconomicMeasure;
+use App\Domain\Economics\Services\EconomicEngine;
 use App\Domain\Expenses\Data\ExpenseRegisterFilterData;
 use App\Domain\Expenses\Data\ExpenseRegisterRow;
+use App\Domain\Expenses\Services\ExpenseRelationshipAuthorizer;
+use App\Domain\Reporting\Queries\EconomicDatasetQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\User;
 use App\Policies\ExpensePolicy;
@@ -24,63 +29,81 @@ final class ExpenseRegisterQuery
         int $perPage,
     ): LengthAwarePaginator {
         $this->policy($context)->viewAny($actor)->authorize();
+        $this->authorizeRelationships($actor, $context, $filters);
+
+        /** @var AnnualEconomicProjection $projection */
+        $projection = app(EconomicEngine::class)->project(
+            app(EconomicDatasetQuery::class)->execute($actor, $context, $filters->planningYearId),
+        );
 
         $paginator = $this->registerBuilder($context, $filters)
             ->orderByRaw('LOWER(expenses.title)')
             ->orderBy('expenses.id')
             ->paginate(max(1, min($perPage, 100)), ['*'], 'page', max(1, $page));
 
-        return $paginator->through(fn (object $row): ExpenseRegisterRow => new ExpenseRegisterRow(
-            id: (int) $row->id,
-            planningYearId: (int) $row->planning_year_id,
-            planningYearLabel: (int) $row->planning_year_label,
-            costCenterId: (int) $row->cost_center_id,
-            costCenterName: (string) $row->cost_center_name,
-            kind: (string) $row->kind,
-            state: (string) $row->state,
-            title: (string) $row->title,
-            projectId: $row->project_id === null ? null : (int) $row->project_id,
-            projectTitle: $row->project_title === null ? null : (string) $row->project_title,
-            projectCurrent: $row->project_id !== null && $row->project_deleted_at === null,
-            contractId: $row->contract_id === null ? null : (int) $row->contract_id,
-            contractTitle: $row->contract_title === null ? null : (string) $row->contract_title,
-            contractCurrent: $row->contract_id !== null && $row->contract_deleted_at === null,
-            vendorCount: (int) $row->vendor_count,
-            vendorSummary: match (true) {
-                (int) $row->vendor_count === 0 => '—',
-                (int) $row->vendor_count === 1 => (string) ($row->single_vendor_name ?? '—'),
-                default => (int) $row->vendor_count.' fornitori',
-            },
-            rowCount: (int) $row->row_count,
-            lockVersion: (int) $row->lock_version,
-            netTotal: $this->decimal($row->net_total),
-            vatTotal: $this->decimal($row->vat_total),
-            grossTotal: $this->decimal($row->gross_total),
-        ));
+        return $paginator->through(function (object $row) use ($projection): ExpenseRegisterRow {
+            $expenseProjection = $projection->expenses[(int) $row->id] ?? null;
+            if ($expenseProjection === null) {
+                throw new \DomainException('ECONOMIC_RECONCILIATION_FAILED');
+            }
+
+            return new ExpenseRegisterRow(
+                id: (int) $row->id,
+                planningYearId: (int) $row->planning_year_id,
+                economicYearLabel: (int) $row->planning_year_label,
+                costCenterId: (int) $row->cost_center_id,
+                costCenterName: (string) $row->cost_center_name,
+                kind: (string) $row->kind,
+                title: (string) $row->title,
+                projectId: $row->project_id === null ? null : (int) $row->project_id,
+                projectTitle: $row->project_title === null ? null : (string) $row->project_title,
+                projectCurrent: $row->project_id !== null && $row->project_deleted_at === null,
+                contractId: $row->contract_id === null ? null : (int) $row->contract_id,
+                contractTitle: $row->contract_title === null ? null : (string) $row->contract_title,
+                contractCurrent: $row->contract_id !== null && $row->contract_deleted_at === null,
+                currentPlanningRowId: $row->current_planning_row_id === null ? null : (int) $row->current_planning_row_id,
+                vendorCount: (int) $row->vendor_count,
+                vendorSummary: match (true) {
+                    (int) $row->vendor_count === 0 => '—',
+                    (int) $row->vendor_count === 1 => (string) ($row->single_vendor_name ?? '—'),
+                    default => (int) $row->vendor_count.' fornitori',
+                },
+                rowCount: (int) $row->row_count,
+                lockVersion: (int) $row->lock_version,
+                currency: $projection->currency,
+                basis: $projection->basis,
+                totals: [
+                    'current_planning' => $this->measure($expenseProjection->currentPlanning),
+                    'actual' => $this->measure($expenseProjection->actual),
+                ],
+            );
+        });
     }
 
-    /** @return array{net: string, vat: string, gross: string} */
+    /** @return array{current_planning: array<string, string>, actual: array<string, string>} */
     public function totals(User $actor, TenantContext $context, ExpenseRegisterFilterData $filters): array
     {
         $this->policy($context)->viewAny($actor)->authorize();
+        $this->authorizeRelationships($actor, $context, $filters);
 
-        $totals = DB::table('expense_rows')
-            ->join('expenses', function ($join): void {
-                $join->on('expenses.id', '=', 'expense_rows.expense_id')
-                    ->on('expenses.tenant_id', '=', 'expense_rows.tenant_id');
-            })
-            ->where('expense_rows.tenant_id', $context->tenantId)
-            ->whereNull('expense_rows.deleted_at')
-            ->whereIn('expenses.id', $this->filteredExpenseIds($context, $filters))
-            ->selectRaw('COALESCE(SUM(expense_rows.net_amount), 0) AS net_total')
-            ->selectRaw('COALESCE(SUM(expense_rows.vat_amount), 0) AS vat_total')
-            ->selectRaw('COALESCE(SUM(expense_rows.gross_amount), 0) AS gross_total')
-            ->first();
+        /** @var AnnualEconomicProjection $projection */
+        $projection = app(EconomicEngine::class)->project(
+            app(EconomicDatasetQuery::class)->execute($actor, $context, $filters->planningYearId),
+        );
+        $ids = $this->filteredExpenseIds($context, $filters)->pluck('expenses.id')->map(fn ($id): int => (int) $id);
+        $currentPlanning = EconomicMeasure::zero($projection->basis);
+        $actual = EconomicMeasure::zero($projection->basis);
+        foreach ($ids as $id) {
+            $expenseProjection = $projection->expenses[$id] ?? null;
+            if ($expenseProjection !== null) {
+                $currentPlanning = $currentPlanning->plus($expenseProjection->currentPlanning, $projection->basis);
+                $actual = $actual->plus($expenseProjection->actual, $projection->basis);
+            }
+        }
 
         return [
-            'net' => $this->decimal($totals?->net_total),
-            'vat' => $this->decimal($totals?->vat_total),
-            'gross' => $this->decimal($totals?->gross_total),
+            'current_planning' => $this->measure($currentPlanning),
+            'actual' => $this->measure($actual),
         ];
     }
 
@@ -133,26 +156,40 @@ final class ExpenseRegisterQuery
             ->whereIn('expenses.id', $this->filteredExpenseIds($context, $filters))
             ->groupBy([
                 'expenses.id', 'expenses.planning_year_id', 'planning_years.year_label',
-                'expenses.cost_center_id', 'cost_centers.name', 'expenses.kind', 'expenses.state',
+                'expenses.cost_center_id', 'cost_centers.name', 'expenses.kind',
                 'expenses.title', 'expenses.project_id', 'projects.title', 'projects.deleted_at',
                 'expenses.contract_id', 'contracts.title', 'contracts.deleted_at',
-                'expenses.lock_version',
+                'expenses.current_planning_row_id', 'expenses.lock_version',
             ])
             ->select([
                 'expenses.id', 'expenses.planning_year_id',
                 'planning_years.year_label as planning_year_label', 'expenses.cost_center_id',
-                'cost_centers.name as cost_center_name', 'expenses.kind', 'expenses.state',
+                'cost_centers.name as cost_center_name', 'expenses.kind',
                 'expenses.title', 'expenses.project_id', 'projects.title as project_title',
                 'projects.deleted_at as project_deleted_at', 'expenses.contract_id',
                 'contracts.title as contract_title', 'contracts.deleted_at as contract_deleted_at',
-                'expenses.lock_version',
+                'expenses.current_planning_row_id', 'expenses.lock_version',
             ])
             ->selectRaw('COUNT(expense_rows.id) AS row_count')
             ->selectRaw('COUNT(DISTINCT expense_rows.vendor_id) AS vendor_count')
-            ->selectRaw('MIN(vendors.name) AS single_vendor_name')
-            ->selectRaw('COALESCE(SUM(expense_rows.net_amount), 0) AS net_total')
-            ->selectRaw('COALESCE(SUM(expense_rows.vat_amount), 0) AS vat_total')
-            ->selectRaw('COALESCE(SUM(expense_rows.gross_amount), 0) AS gross_total');
+            ->selectRaw('MIN(vendors.name) AS single_vendor_name');
+    }
+
+    private function authorizeRelationships(User $actor, TenantContext $context, ExpenseRegisterFilterData $filters): void
+    {
+        $relationships = DB::table('expenses')
+            ->where('tenant_id', $context->tenantId)
+            ->where('planning_year_id', $filters->planningYearId)
+            ->whereNull('deleted_at')
+            ->selectRaw('MAX(project_id IS NOT NULL) AS has_project, MAX(contract_id IS NOT NULL) AS has_contract')
+            ->first();
+
+        app(ExpenseRelationshipAuthorizer::class)->authorize(
+            $actor,
+            $context,
+            $filters->projectId !== null || (bool) $relationships->has_project,
+            $filters->contractId !== null || (bool) $relationships->has_contract,
+        );
     }
 
     private function filteredExpenseIds(TenantContext $context, ExpenseRegisterFilterData $filters): Builder
@@ -162,7 +199,6 @@ final class ExpenseRegisterQuery
             ->where('expenses.planning_year_id', $filters->planningYearId)
             ->whereNull('expenses.deleted_at')
             ->when($filters->kind !== null, fn (Builder $builder) => $builder->where('expenses.kind', $filters->kind->value))
-            ->when($filters->state !== null, fn (Builder $builder) => $builder->where('expenses.state', $filters->state->value))
             ->when($filters->costCenterId !== null, fn (Builder $builder) => $builder->where('expenses.cost_center_id', $filters->costCenterId))
             ->when($filters->projectId !== null, fn (Builder $builder) => $builder->where('expenses.project_id', $filters->projectId))
             ->when($filters->contractId !== null, fn (Builder $builder) => $builder->where('expenses.contract_id', $filters->contractId));
@@ -191,12 +227,9 @@ final class ExpenseRegisterQuery
         return new ExpensePolicy($context, app(PermissionRegistrar::class), app(PlatformAdministrator::class));
     }
 
-    private function decimal(mixed $value): string
+    /** @return array{net: string, vat: string, gross: string, official: string} */
+    private function measure(EconomicMeasure $measure): array
     {
-        $normalized = (string) ($value ?? '0');
-        [$integer, $fraction] = array_pad(explode('.', $normalized, 2), 2, '');
-        $fraction = substr(str_pad($fraction, 2, '0'), 0, 2);
-
-        return ($integer === '-0' ? '0' : $integer).'.'.$fraction;
+        return ['net' => $measure->net, 'vat' => $measure->vat, 'gross' => $measure->gross, 'official' => $measure->official];
     }
 }

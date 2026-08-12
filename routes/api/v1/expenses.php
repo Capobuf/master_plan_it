@@ -16,6 +16,8 @@ Route::middleware(RejectBearerTokens::class)
         Route::post('/', [ExpenseController::class, 'store'])
             ->middleware('application-ability:expense.create')
             ->name('store');
+        Route::post('/preview', [ExpenseController::class, 'preview'])
+            ->name('preview');
         Route::put('/register-preferences', [ExpenseController::class, 'updateRegisterPreferences'])
             ->middleware('application-ability:expense.view')
             ->name('register-preferences.update');
@@ -61,12 +63,4 @@ Route::middleware(RejectBearerTokens::class)
             ->whereNumber('expense')
             ->middleware('application-ability:expense.delete')
             ->name('destroy');
-        Route::post('/{expense}/close', [ExpenseController::class, 'close'])
-            ->whereNumber('expense')
-            ->middleware('application-ability:expense.update')
-            ->name('close');
-        Route::post('/{expense}/move', [ExpenseController::class, 'move'])
-            ->whereNumber('expense')
-            ->middleware(['application-ability:expense.update', 'application-ability:expense.create'])
-            ->name('move');
     });

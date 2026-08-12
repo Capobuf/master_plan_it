@@ -1,7 +1,7 @@
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { ApiError } from "../../api/client";
-import { getExpense, type ExpenseColumnKey, type ExpenseColumnPreference, type ExpenseDetail, type ExpenseRegisterItem, type ExpenseYearOption } from "../../api/expenses";
+import { getExpense, type ExpenseColumnKey, type ExpenseColumnPreference, type ExpenseDetail, type ExpenseRegisterItem } from "../../api/expenses";
 import { AngleDownIcon, AngleRightIcon, MoreDotIcon } from "../../icons";
 import { routes } from "../../navigation/routes";
 import ExpenseActionModal from "./ExpenseActionModal";
@@ -15,20 +15,17 @@ import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table"
 
 const headings: Record<ExpenseColumnKey, string> = {
   kind: "Natura", contract: "Contratto", project: "Progetto", cost_center: "Centro di Costo",
-  vendor: "Fornitore", net: "Netto", vat: "IVA", gross: "Lordo", state: "Stato",
+  vendor: "Fornitore", net: "Netto", vat: "IVA", gross: "Lordo",
 };
 
 interface Props {
   expenses: ExpenseRegisterItem[];
   planningYearId: number;
-  planningYears: ExpenseYearOption[];
   columnPreferences: ExpenseColumnPreference[];
   canEdit: boolean;
-  canCreate: boolean;
   canDelete: boolean;
   canViewProjects: boolean;
   onChanged: () => void;
-  onPlanningYearChange: (planningYearId: number) => void;
   disabled?: boolean;
 }
 
@@ -55,7 +52,7 @@ function RowActions({ expense, planningYearId, canEdit, canDelete, disabled, onD
   </div>;
 }
 
-export default function ExpenseRegisterTable({ expenses, planningYearId, planningYears, columnPreferences, canEdit, canCreate, canDelete, canViewProjects, onChanged, onPlanningYearChange, disabled = false }: Props) {
+export default function ExpenseRegisterTable({ expenses, planningYearId, columnPreferences, canEdit, canDelete, canViewProjects, onChanged, disabled = false }: Props) {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [expanded, setExpanded] = useState<Set<number>>(new Set());
   const [details, setDetails] = useState<Record<number, ExpenseDetail>>({});
@@ -92,14 +89,13 @@ export default function ExpenseRegisterTable({ expenses, planningYearId, plannin
     if (key === "project") return expense.project_id && expense.project_title ? canViewProjects ? <Link to={routes.progetto(expense.project_id)} className="font-medium hover:text-brand-500">{expense.project_title}</Link> : expense.project_title : "—";
     if (key === "cost_center") return expense.cost_center_name ?? "—";
     if (key === "vendor") return expense.vendor_summary;
-    if (key === "state") return <span className={`rounded-full px-2 py-1 text-xs font-medium ${expense.state === "open" ? "bg-success-50 text-success-700 dark:bg-success-500/15 dark:text-success-400" : "bg-gray-100 text-gray-600 dark:bg-white/[0.06] dark:text-gray-300"}`}>{expense.state === "open" ? "Aperta" : "Chiusa"}</span>;
-    return <ExpenseMoney money={expense.totals} component={key} />;
+    return <ExpenseMoney money={expense.totals.current_planning} component={key} />;
   }
 
   return <>
     {selected.length > 0 ? (
       <div className="flex flex-wrap items-center gap-2 border-b border-gray-100 px-3 py-2 dark:border-white/[0.05]">
-        <ExpenseBulkActions selected={selected} planningYearId={planningYearId} planningYears={planningYears} canEdit={canEdit} canCreate={canCreate} canDelete={canDelete} onChanged={onChanged} onPlanningYearChange={onPlanningYearChange} />
+        <ExpenseBulkActions selected={selected} planningYearId={planningYearId} canDelete={canDelete} onChanged={onChanged} />
       </div>
     ) : null}
     <div className="max-w-full overflow-x-auto">

@@ -3,7 +3,6 @@
 namespace App\Domain\Expenses\Data;
 
 use App\Domain\Expenses\Enums\ExpenseKind;
-use App\Domain\Expenses\Enums\ExpenseState;
 
 final readonly class ExpenseRegisterFilterData
 {
@@ -15,6 +14,5 @@ final readonly class ExpenseRegisterFilterData
         public ?int $projectId = null,
         public ?int $contractId = null,
         public ?int $vendorId = null,
-        public ?ExpenseState $state = null,
     ) {}
 }

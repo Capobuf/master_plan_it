@@ -61,7 +61,7 @@ export default function TenantGeneralSettingsForm({
         name: settings.name,
         timezone: settings.timezone,
         default_vat_rate: normalizeDecimalInput(settings.default_vat_rate, 2),
-        budget_basis: settings.budget_basis,
+        economic_basis: settings.economic_basis,
         deletion_reason_required: settings.deletion_reason_required,
         lock_version: settings.lock_version,
       });
@@ -151,26 +151,26 @@ export default function TenantGeneralSettingsForm({
           </div>
 
           <div>
-            <Label htmlFor="tenant-settings-budget-basis">Base Budget ufficiale</Label>
+            <Label htmlFor="tenant-settings-economic-basis">Base Economica ufficiale</Label>
             <select
-              id="tenant-settings-budget-basis"
-              value={settings.budget_basis}
+              id="tenant-settings-economic-basis"
+              value={settings.economic_basis}
               onChange={(event) =>
                 setSettings((current) =>
                   current
-                    ? { ...current, budget_basis: event.target.value as "net" | "gross" }
+                    ? { ...current, economic_basis: event.target.value as "net" | "gross" }
                     : current,
                 )
               }
-              disabled={disabled || settings.budget_basis_locked}
+              disabled={disabled || settings.economic_basis_locked_at != null}
               className="h-11 w-full rounded-lg border border-gray-300 bg-transparent px-4 text-sm text-gray-800 shadow-theme-xs disabled:cursor-not-allowed disabled:bg-gray-100 disabled:opacity-60 dark:border-gray-700 dark:bg-gray-900 dark:text-white/90 dark:disabled:bg-gray-800"
             >
               <option value="net">Netto</option>
               <option value="gross">Lordo</option>
             </select>
-            {settings.budget_basis_locked ? (
+            {settings.economic_basis_locked_at != null ? (
               <p className="mt-1.5 text-xs leading-5 text-warning-600 dark:text-warning-400">
-                La Base Budget è bloccata dopo la prima approvazione e non può più essere modificata.
+                La Base Economica è bloccata dopo la prima approvazione e non può più essere modificata.
               </p>
             ) : null}
           </div>

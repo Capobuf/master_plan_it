@@ -4,6 +4,7 @@ namespace App\Domain\Contracts\Actions\Concerns;
 
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
+use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
 use App\Domain\Contracts\Data\SaveContractData;
 use App\Domain\Contracts\Data\SaveContractTermData;
 use App\Domain\Money\Money;
@@ -17,6 +18,7 @@ use App\Domain\Tenancy\Enums\TenantState;
 use App\Models\Contract;
 use App\Models\ContractTerm;
 use App\Models\CostCenter;
+use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\Project;
 use App\Models\Tenant;
@@ -34,6 +36,24 @@ use Spatie\Permission\PermissionRegistrar;
 
 trait ManagesContracts
 {
+    /** @param list<int> $additionalPlanningYearIds */
+    private function lockContractEconomicYears(int $tenantId, ?int $contractId, array $additionalPlanningYearIds = []): void
+    {
+        $ids = $additionalPlanningYearIds;
+        if ($contractId !== null) {
+            $ids = [
+                ...$ids,
+                ...Expense::query()
+                    ->where('tenant_id', $tenantId)
+                    ->where('contract_id', $contractId)
+                    ->pluck('planning_year_id')
+                    ->map(static fn ($id): int => (int) $id)
+                    ->all(),
+            ];
+        }
+        app(AnnualEconomicMutationGuard::class)->acquire($tenantId, array_values(array_unique($ids)));
+    }
+
     private function contractPolicy(TenantContext $context): ContractPolicy
     {
         return new ContractPolicy($context, app(PermissionRegistrar::class), app(PlatformAdministrator::class));
@@ -56,7 +76,8 @@ trait ManagesContracts
         if (! $user instanceof User || ! $tenant instanceof Tenant) {
             throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
         }
-        if ($tenant->state !== TenantState::Active) {
+        if ($tenant->state !== TenantState::Active
+            && ! ($user->tenant_id === null && app(PlatformAdministrator::class)->hasProtectedRole($user))) {
             throw new AuthorizationException('TENANT_INACTIVE');
         }
         if ($user->tenant_id !== null && (int) $user->tenant_id !== (int) $tenant->getKey()) {

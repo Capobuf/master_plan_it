@@ -21,6 +21,7 @@ final class UpdateProject
         [$actor, $tenant] = $this->persistedProjectContext($actor, $context);
 
         return DB::transaction(function () use ($actor, $context, $correlationId, $data, $target, $tenant): Project {
+            $this->lockProjectEconomicYears((int) $tenant->getKey(), [(int) $target->getKey()]);
             $project = Project::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($target->getKey());
             if (! $project instanceof Project || $data->expectedLockVersion === null || $project->lock_version !== $data->expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');

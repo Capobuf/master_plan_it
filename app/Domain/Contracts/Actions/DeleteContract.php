@@ -21,6 +21,7 @@ final class DeleteContract
         $this->contractPolicy($context)->delete($actor, $target)->authorize();
         [$actor, $tenant] = $this->persistedContractContext($actor, $context);
         DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $reason, $target, $tenant): void {
+            $this->lockContractEconomicYears((int) $tenant->getKey(), (int) $target->getKey());
             $contract = Contract::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($target->getKey());
             if (! $contract instanceof Contract || $contract->lock_version !== $expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');

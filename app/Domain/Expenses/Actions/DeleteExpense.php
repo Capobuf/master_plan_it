@@ -3,6 +3,7 @@
 namespace App\Domain\Expenses\Actions;
 
 use App\Domain\Attachments\Actions\PurgeAttachments;
+use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
 use App\Domain\Contracts\Actions\SuppressContractOccurrence;
 use App\Domain\Expenses\Actions\Concerns\ManagesExpenseAggregate;
 use App\Domain\Revisions\Data\RevisionOperation;
@@ -21,6 +22,10 @@ final class DeleteExpense
         $this->expensePolicy($context)->delete($actor, $target)->authorize();
         [$actor, $tenant] = $this->persistedContext($actor, $context);
         DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $suppressOccurrence, $target, $tenant): void {
+            app(AnnualEconomicMutationGuard::class)->acquire(
+                (int) $tenant->getKey(),
+                [(int) $target->planning_year_id],
+            );
             $expense = Expense::query()->where('tenant_id', $tenant->getKey())->lockForUpdate()->find($target->getKey());
             if (! $expense instanceof Expense || $expense->lock_version !== $expectedLockVersion) {
                 throw new DomainException('STALE_VERSION');

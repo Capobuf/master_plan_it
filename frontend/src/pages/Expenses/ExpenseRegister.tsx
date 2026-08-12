@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router";
+import { useLocation, useNavigate, useSearchParams } from "react-router";
 import { ApiError, type PaginationMeta } from "../../api/client";
 import {
   listExpenseContracts,
@@ -35,7 +35,6 @@ function positive(searchParams: URLSearchParams, name: string): number | undefin
 }
 
 function readParams(searchParams: URLSearchParams): ExpenseListParams {
-  const state = searchParams.get("state");
   return {
     kind: searchParams.get("kind") || undefined,
     q: searchParams.get("q") || undefined,
@@ -43,7 +42,6 @@ function readParams(searchParams: URLSearchParams): ExpenseListParams {
     project_id: positive(searchParams, "project_id"),
     contract_id: positive(searchParams, "contract_id"),
     vendor_id: positive(searchParams, "vendor_id"),
-    state: state === "open" || state === "closed" ? state : undefined,
     page: positive(searchParams, "page") ?? 1,
     per_page: [25, 50, 100].includes(positive(searchParams, "per_page") ?? 0)
       ? positive(searchParams, "per_page")
@@ -58,17 +56,16 @@ function toSearchParams(params: ExpenseListParams): URLSearchParams {
   for (const key of ["cost_center_id", "project_id", "contract_id", "vendor_id"] as const) {
     if (params[key]) next.set(key, String(params[key]));
   }
-  if (params.state) next.set("state", params.state);
   if (params.page && params.page > 1) next.set("page", String(params.page));
   if (params.per_page && params.per_page !== defaultPerPage) next.set("per_page", String(params.per_page));
   return next;
 }
 
-interface RegisterState { tenantId: number; response: ExpenseRegisterResponse | null; error: ApiError | null; }
+interface RegisterState { tenantId: number; planningYearId: number; response: ExpenseRegisterResponse | null; error: ApiError | null; }
 
 export default function ExpenseRegister() {
   const { data: applicationContext, loading: contextLoading, hasAbility } = useApplicationContext();
-  const { activePlanningYears, selectedPlanningYearId, loading: planningYearLoading, selectPlanningYear } = usePlanningYear();
+  const { selectedPlanningYearId, loading: planningYearLoading } = usePlanningYear();
   const [searchParams, setSearchParams] = useSearchParams();
   const [registerState, setRegisterState] = useState<RegisterState | null>(null);
   const [costCenters, setCostCenters] = useState<ExpenseLookupOption[]>([]);
@@ -83,6 +80,8 @@ export default function ExpenseRegister() {
     columns: ExpenseColumnPreference[];
   } | null>(null);
   const navigate = useNavigate();
+  const location = useLocation();
+  const workspaceNotice = (location.state as { workspaceNotice?: unknown } | null)?.workspaceNotice;
   const tenantId = applicationContext?.tenant?.id ?? null;
   const canView = hasAbility("expense.view");
   const params = useMemo(() => readParams(searchParams), [searchParams]);
@@ -114,13 +113,16 @@ export default function ExpenseRegister() {
     let active = true;
     setLoading(true);
     void listExpenses(requestParams)
-      .then((response) => { if (active) setRegisterState({ tenantId, response, error: null }); })
-      .catch((error: unknown) => { if (active) setRegisterState({ tenantId, response: null, error: ApiError.from(error) }); })
+      .then((response) => { if (active) setRegisterState({ tenantId, planningYearId: selectedPlanningYearId, response, error: null }); })
+      .catch((error: unknown) => { if (active) setRegisterState({ tenantId, planningYearId: selectedPlanningYearId, response: null, error: ApiError.from(error) }); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [canView, contextLoading, planningYearLoading, requestKey, requestParams, selectedPlanningYearId, tenantId]);
 
-  const currentState = registerState?.tenantId === tenantId ? registerState : null;
+  const currentState = registerState?.tenantId === tenantId
+    && registerState.planningYearId === selectedPlanningYearId
+    ? registerState
+    : null;
   const response = currentState?.response;
   const columns = response
     ? columnState?.tenantId === tenantId
@@ -140,14 +142,11 @@ export default function ExpenseRegister() {
       key={requestKey}
       expenses={response.data}
       planningYearId={selectedPlanningYearId}
-      planningYears={activePlanningYears.map((year) => ({ id: year.id, label: year.year_label, active: year.active }))}
       columnPreferences={columns}
       canEdit={hasAbility("expense.update")}
-      canCreate={hasAbility("expense.create")}
       canDelete={hasAbility("expense.delete")}
       canViewProjects={hasAbility("project.view")}
       disabled={loading}
-      onPlanningYearChange={selectPlanningYear}
       onChanged={() => setRefreshVersion((version) => version + 1)}
     />
     <ExpensePagination
@@ -162,6 +161,9 @@ export default function ExpenseRegister() {
     <PageMeta title="Spese | Master Plan IT" description="Registro delle spese correnti del Tenant" />
     <PageBreadcrumb pageTitle="Spese" subtitle="Registro delle spese dell'anno selezionato." actions={hasAbility("expense.create") ? <Button size="sm" onClick={() => navigate(routes.nuovaSpesa)}>Nuova Spesa</Button> : null} />
     <div className="space-y-4">
+      {typeof workspaceNotice === "string" ? (
+        <Alert variant="info" title="Contesto annuale aggiornato" message={workspaceNotice} />
+      ) : null}
       <ComponentCard title="Registro Spese" compact>
         <ExpenseFilters
           value={params}

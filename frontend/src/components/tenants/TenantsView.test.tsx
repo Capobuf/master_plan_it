@@ -42,7 +42,7 @@ const tenant: Tenant = {
   language_code: "it",
   timezone: "Europe/Rome",
   default_vat_rate: "22.00",
-  budget_basis: "net",
+  economic_basis: "net",
   state: "active",
   lock_version: 4,
 };

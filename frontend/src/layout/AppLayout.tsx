@@ -1,37 +1,46 @@
-import { SidebarProvider, useSidebar } from "../context/SidebarContext";
-import { Outlet } from "react-router";
+import { useCallback, useEffect } from "react";
+import { Outlet, useBlocker, type BlockerFunction } from "react-router";
+
+import { usePlanningYear } from "../context/PlanningYearContext";
 import AppHeader from "./AppHeader";
-import Backdrop from "./Backdrop";
-import AppSidebar from "./AppSidebar";
-
-const LayoutContent: React.FC = () => {
-  const { isExpanded, isHovered, isMobileOpen } = useSidebar();
-
-  return (
-    <div className="min-h-screen overflow-x-hidden xl:flex">
-      <div>
-        <AppSidebar />
-        <Backdrop />
-      </div>
-      <div
-        className={`min-w-0 w-full transition-all duration-300 ease-in-out lg:flex-none ${
-          isExpanded || isHovered ? "lg:ml-[290px] lg:w-[calc(100%-290px)]" : "lg:ml-[90px] lg:w-[calc(100%-90px)]"
-        } ${isMobileOpen ? "ml-0" : ""}`}
-      >
-        <AppHeader />
-        <div className="w-full p-3 sm:p-4 md:p-6">
-          <Outlet />
-        </div>
-      </div>
-    </div>
-  );
-};
 
 const AppLayout: React.FC = () => {
+  const {
+    hasDirtySources,
+    confirmDiscardChanges,
+    consumeAuthorizedNavigation,
+  } = usePlanningYear();
+  const blocker = useBlocker(
+    useCallback<BlockerFunction>(
+      ({ currentLocation, nextLocation }) => {
+        const destinationChanged =
+          currentLocation.pathname !== nextLocation.pathname ||
+          currentLocation.search !== nextLocation.search ||
+          currentLocation.hash !== nextLocation.hash;
+
+        if (destinationChanged && consumeAuthorizedNavigation()) return false;
+
+        return (
+          hasDirtySources &&
+          destinationChanged &&
+          !confirmDiscardChanges()
+        );
+      },
+      [confirmDiscardChanges, consumeAuthorizedNavigation, hasDirtySources],
+    ),
+  );
+
+  useEffect(() => {
+    if (blocker.state === "blocked") blocker.reset();
+  }, [blocker]);
+
   return (
-    <SidebarProvider>
-      <LayoutContent />
-    </SidebarProvider>
+    <div className="min-h-screen overflow-x-hidden">
+      <AppHeader />
+      <main className="w-full p-3 sm:p-4 md:p-6">
+        <Outlet />
+      </main>
+    </div>
   );
 };
 

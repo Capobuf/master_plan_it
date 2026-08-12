@@ -25,7 +25,7 @@ final class AnnualBudgetDatasetTest extends TestCase
 {
     use DatabaseTransactions;
 
-    public function test_budget_and_all_five_report_groupings_share_exact_plafond_reconciled_totals(): void
+    public function test_budget_and_all_five_report_groupings_share_the_canonical_projection_totals(): void
     {
         app(PermissionCatalogueSeeder::class)->run();
         app(PermissionRegistrar::class)->setPermissionsTeamId(null);
@@ -37,8 +37,8 @@ final class AnnualBudgetDatasetTest extends TestCase
         $center = CostCenter::factory()->for($tenant)->create();
         $vendor = Vendor::factory()->for($tenant)->create();
 
-        $plafond = $this->expense($tenant, $year, $center, $vendor, ExpenseKind::Plafond, 'Plafond', '100.00', '100.00');
-        $consumer = $this->expense($tenant, $year, $center, $vendor, ExpenseKind::Ordinary, 'Consumer', '130.00', '130.00', (int) $plafond->getKey());
+        $this->expense($tenant, $year, $center, $vendor, ExpenseKind::Ordinary, 'Hosting', '100.00', '100.00');
+        $consumer = $this->expense($tenant, $year, $center, $vendor, ExpenseKind::Ordinary, 'Licenze', '130.00', '130.00');
         ExpenseRow::factory()->for($consumer)->create([
             'tenant_id' => $tenant->getKey(),
             'vendor_id' => $vendor->getKey(),
@@ -52,10 +52,10 @@ final class AnnualBudgetDatasetTest extends TestCase
         ]);
 
         $budget = app(AnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey());
-        $this->assertSame('130.00', $budget['summary']['proposed']);
-        $this->assertSame('130.00', $budget['summary']['approved_current']);
+        $this->assertSame('230.00', $budget['summary']['proposed']);
+        $this->assertSame('230.00', $budget['summary']['approved_current']);
         $this->assertSame('140.00', $budget['summary']['actual']);
-        $this->assertSame('40.00', $budget['summary']['plafond_overrun']);
+        $this->assertSame('0.00', $budget['summary']['plafond_overrun']);
 
         foreach (['cost_center', 'project', 'contract', 'vendor', 'expense'] as $groupBy) {
             $report = app(AnnualEconomicReportQuery::class)->execute(
@@ -72,8 +72,8 @@ final class AnnualBudgetDatasetTest extends TestCase
             $this->assertSame($budget['summary']['approved_current'], $report['summary']['approved_current']);
             $this->assertSame($budget['summary']['actual'], $report['summary']['actual']);
             $this->assertSame($budget['summary']['plafond_overrun'], $report['global_plafond_overrun']);
-            $this->assertSame('130.00', $this->sum($report['data'], 'proposed'), "Proposed mismatch for {$groupBy}.");
-            $this->assertSame('130.00', $this->sum($report['data'], 'approved'), "Approved mismatch for {$groupBy}.");
+            $this->assertSame('230.00', $this->sum($report['data'], 'proposed'), "Proposed mismatch for {$groupBy}.");
+            $this->assertSame('230.00', $this->sum($report['data'], 'approved'), "Approved mismatch for {$groupBy}.");
             $this->assertSame('140.00', $this->sum($report['data'], 'actual'), "Actual mismatch for {$groupBy}.");
         }
     }
@@ -87,7 +87,6 @@ final class AnnualBudgetDatasetTest extends TestCase
         string $title,
         string $planned,
         string $approved,
-        ?int $fundedPlafondId = null,
     ): Expense {
         $expense = Expense::factory()->for($tenant)->create([
             'planning_year_id' => $year->getKey(),
@@ -106,7 +105,6 @@ final class AnnualBudgetDatasetTest extends TestCase
             'net_amount' => $planned,
             'vat_amount' => bcmul($planned, '0.22', 2),
             'gross_amount' => bcmul($planned, '1.22', 2),
-            'funded_plafond_expense_id' => $fundedPlafondId,
         ]);
         $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
 

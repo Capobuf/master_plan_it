@@ -6,7 +6,7 @@ final class ExpenseRegisterColumns
 {
     /** @var list<string> */
     public const KEYS = [
-        'kind', 'contract', 'project', 'cost_center', 'vendor', 'net', 'vat', 'gross', 'state',
+        'kind', 'contract', 'project', 'cost_center', 'vendor', 'net', 'vat', 'gross',
     ];
 
     /** @return list<array{key: string, visible: bool}> */

@@ -4,23 +4,17 @@ import {
   type PaginatedData,
 } from "./client";
 import type { OperationalRevision, RevisionComparison } from "./revisions";
+import type { EconomicMeasure, ProjectionTotals } from "./projection";
 
-export interface ExpenseMoney {
-  net: string;
-  vat: string;
-  gross: string;
-  currency: string;
-  official_basis: string;
-}
+export type ExpenseMoney = EconomicMeasure;
 
 export interface ExpenseRegisterItem {
   id: number;
   planning_year_id: number;
-  planning_year_label: number;
+  economic_year_label: number;
   cost_center_id: number;
   cost_center_name: string | null;
   kind: string;
-  state: "open" | "closed";
   title: string;
   project_id: number | null;
   project_title: string | null;
@@ -32,7 +26,9 @@ export interface ExpenseRegisterItem {
   vendor_summary: string;
   row_count: number;
   lock_version: number;
-  totals: ExpenseMoney;
+  currency: string;
+  basis: "net" | "gross";
+  totals: ProjectionTotals;
 }
 
 export interface ExpenseYearOption {
@@ -42,7 +38,9 @@ export interface ExpenseYearOption {
 }
 
 export interface ExpenseRegisterResponse extends PaginatedData<ExpenseRegisterItem> {
-  totals: ExpenseMoney;
+  currency?: string;
+  basis?: "net" | "gross";
+  totals: ProjectionTotals;
   year_options?: ExpenseYearOption[];
   column_preferences: ExpenseColumnPreference[];
 }
@@ -55,7 +53,6 @@ export interface ExpenseListParams {
   project_id?: number;
   contract_id?: number;
   vendor_id?: number;
-  state?: "open" | "closed";
   page?: number;
   per_page?: number;
 }
@@ -68,8 +65,7 @@ export type ExpenseColumnKey =
   | "vendor"
   | "net"
   | "vat"
-  | "gross"
-  | "state";
+  | "gross";
 
 export interface ExpenseColumnPreference {
   key: ExpenseColumnKey;
@@ -84,26 +80,25 @@ export interface ExpenseRow {
   type: string;
   is_current_planning: boolean;
   description: string;
+  notes?: string | null;
   quantity: string | null;
   unit_price: string | null;
-  entered_amount: string;
+  entered_amount: string | null;
   amount_includes_vat: boolean;
   vat_rate: string | null;
-  is_extra: boolean;
-  funded_plafond_expense_id: number | null;
   spend_date: string | null;
   external_reference: string | null;
   lock_version: number;
   is_system_managed: boolean;
   generated: boolean;
   contract_term_id: number | null;
-  totals: ExpenseMoney;
+  amount: EconomicMeasure;
 }
 
 export interface ExpenseDetail {
   id: number;
   planning_year_id: number;
-  planning_year_label: number;
+  economic_year_label: number;
   cost_center_id: number;
   cost_center_name: string | null;
   kind: string;
@@ -113,24 +108,15 @@ export interface ExpenseDetail {
   project_title: string | null;
   contract_id: number | null;
   contract_title: string | null;
-  budget_state: "preparation" | "approved" | "closed";
-  state: "open" | "closed";
-  closure_outcome: "not_incurred" | "cancelled" | "moved" | null;
-  approved_amount: string | null;
-  approved_basis: "net" | "gross" | null;
   current_planning_row_id: number | null;
-  moved_from_expense_id: number | null;
-  credit_for_expense_id: number | null;
-  planned: string | null;
-  actual: string;
-  residual: string | null;
-  variance: string | null;
-  variance_final: boolean;
   warnings: string[];
   lock_version: number;
   rows: ExpenseRow[];
   revision_activity: ExpenseRevision[];
-  totals: ExpenseMoney;
+  currency: string;
+  basis: "net" | "gross";
+  totals: ProjectionTotals;
+  budget_context: { state: "preparation" | "approved" | "closed"; read_only: boolean };
 }
 
 export type ExpenseRevision = OperationalRevision;
@@ -142,13 +128,13 @@ export interface ExpenseRowInput {
   type: string;
   is_current_planning?: boolean;
   description: string;
+  notes?: string;
   quantity?: string;
   unit_price?: string;
-  entered_amount: string;
+  /** Direct entry is XOR with the complete quantity/unit_price pair. */
+  entered_amount?: string;
   amount_includes_vat: boolean;
   vat_rate?: string;
-  is_extra: boolean;
-  funded_plafond_expense_id?: number;
   spend_date?: string;
   external_reference?: string;
   lock_version?: number;
@@ -162,7 +148,6 @@ export interface ExpenseWrite {
   notes?: string;
   project_id?: number;
   contract_id?: number;
-  credit_for_expense_id?: number;
   rows: ExpenseRowInput[];
 }
 
@@ -198,28 +183,13 @@ export interface DeleteGeneratedExpenseRequest {
   allow_regeneration: boolean;
 }
 
-export interface CloseExpenseRequest {
-  lock_version: number;
-  outcome?: "not_incurred" | "cancelled" | "moved";
-}
-
-export interface MoveExpenseRequest {
-  lock_version: number;
-  target_planning_year_id: number;
-}
-
-export interface MoveExpenseResponse {
-  origin: ExpenseDetail;
-  destination: ExpenseDetail;
-}
-
 export async function listExpenses(
   params: ExpenseListParams = {},
 ): Promise<ExpenseRegisterResponse> {
   const { planning_year_id, ...rest } = params;
   const response = await apiClient.get<ExpenseRegisterResponse>(
     "/api/v1/expenses",
-    { params: { ...rest, ...(planning_year_id ? { year: planning_year_id } : {}) } },
+    { params: { ...rest, ...(planning_year_id ? { planning_year_id } : {}) } },
   );
 
   return response.data;
@@ -228,7 +198,7 @@ export async function listExpenses(
 export async function getExpense(expenseId: number, planningYearId: number): Promise<ExpenseDetail> {
   const response = await apiClient.get<DataEnvelope<ExpenseDetail>>(
     `/api/v1/expenses/${expenseId}`,
-    { params: { year: planningYearId } },
+    { params: { planning_year_id: planningYearId } },
   );
 
   return response.data.data;
@@ -250,9 +220,7 @@ interface ExpenseBulkBase {
 }
 
 export type ExpenseBulkRequest =
-  | (ExpenseBulkBase & { action: "close"; outcome: "not_incurred" | "cancelled" | null })
-  | (ExpenseBulkBase & { action: "move"; target_planning_year_id: number })
-  | (ExpenseBulkBase & { action: "delete"; allow_regeneration: boolean });
+  ExpenseBulkBase & { action: "delete"; allow_regeneration: boolean };
 
 export interface ExpenseBulkResponse {
   action: ExpenseBulkRequest["action"];
@@ -380,23 +348,13 @@ export async function deleteGeneratedExpense(
   );
 }
 
-export async function closeExpense(expenseId: number, request: CloseExpenseRequest): Promise<ExpenseDetail> {
-  const response = await apiClient.post<DataEnvelope<ExpenseDetail>>(`/api/v1/expenses/${expenseId}/close`, request);
-  return response.data.data;
-}
-
-export async function moveExpense(expenseId: number, request: MoveExpenseRequest): Promise<MoveExpenseResponse> {
-  const response = await apiClient.post<DataEnvelope<MoveExpenseResponse>>(`/api/v1/expenses/${expenseId}/move`, request);
-  return response.data.data;
-}
-
 export async function getExpenseHistory(expenseId: number, planningYearId: number): Promise<PaginatedData<ExpenseRevision>> {
-  const response = await apiClient.get<PaginatedData<ExpenseRevision>>(`/api/v1/expenses/${expenseId}/history`, { params: { year: planningYearId, per_page: 10 } });
+  const response = await apiClient.get<PaginatedData<ExpenseRevision>>(`/api/v1/expenses/${expenseId}/history`, { params: { planning_year_id: planningYearId, per_page: 10 } });
   return response.data;
 }
 
 export async function getExpenseRevision(expenseId: number, revisionId: number, planningYearId: number): Promise<RevisionComparison> {
-  const response = await apiClient.get<DataEnvelope<RevisionComparison>>(`/api/v1/expenses/${expenseId}/history/${revisionId}`, { params: { year: planningYearId } });
+  const response = await apiClient.get<DataEnvelope<RevisionComparison>>(`/api/v1/expenses/${expenseId}/history/${revisionId}`, { params: { planning_year_id: planningYearId } });
   return response.data.data;
 }
 

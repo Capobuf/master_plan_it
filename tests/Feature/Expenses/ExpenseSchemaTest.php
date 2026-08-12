@@ -5,9 +5,7 @@ namespace Tests\Feature\Expenses;
 use App\Domain\Budget\Enums\BudgetState;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
-use App\Domain\Expenses\Enums\ExpenseClosureOutcome;
 use App\Domain\Expenses\Enums\ExpenseKind;
-use App\Domain\Expenses\Enums\ExpenseState;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Expenses\Services\ExpenseAggregateValidator;
 use App\Models\Contract;
@@ -36,10 +34,10 @@ final class ExpenseSchemaTest extends TestCase
         ]));
         $this->assertTrue(Schema::hasColumn('contracts', 'project_id'));
         $this->assertTrue(Schema::hasColumns('expenses', [
-            'approved_amount', 'approved_basis', 'state', 'closure_outcome', 'closed_at',
-            'closed_by_user_id', 'current_planning_row_id', 'moved_from_expense_id',
+            'approved_amount', 'approved_basis', 'current_planning_row_id', 'moved_from_expense_id',
             'credit_for_expense_id',
         ]));
+        $this->assertFalse(Schema::hasColumns('expenses', ['state', 'closure_outcome', 'closed_at', 'closed_by_user_id']));
         $this->assertTrue(Schema::hasColumns('approval_operations', [
             'tenant_id', 'planning_year_id', 'kind', 'effective_date', 'recorded_at',
             'actor_user_id', 'budget_basis', 'revision_batch_id', 'correlation_id',
@@ -57,8 +55,6 @@ final class ExpenseSchemaTest extends TestCase
     public function test_business_enums_expose_the_closed_017_vocabulary(): void
     {
         $this->assertSame(['preparation', 'approved', 'closed'], array_column(BudgetState::cases(), 'value'));
-        $this->assertSame(['open', 'closed'], array_column(ExpenseState::cases(), 'value'));
-        $this->assertSame(['not_incurred', 'cancelled', 'moved'], array_column(ExpenseClosureOutcome::cases(), 'value'));
         $this->assertSame(['ordinary', 'plafond'], array_column(ExpenseKind::cases(), 'value'));
         $this->assertSame(['estimate', 'quote', 'actual'], array_column(ExpenseType::cases(), 'value'));
     }
@@ -129,7 +125,7 @@ final class ExpenseSchemaTest extends TestCase
         $this->assertTrue($validated['rows'][0]['is_current_planning']);
         $this->assertNull($validated['rows'][0]['spend_date']);
 
-        foreach ([null, '2025-12-31'] as $date) {
+        foreach ([null] as $date) {
             try {
                 $validator->validate($tenant, $header, [$this->row($vendor, ExpenseType::Actual, $date)]);
                 $this->fail('An Actual without an economic date in the planning year was accepted.');
@@ -138,8 +134,8 @@ final class ExpenseSchemaTest extends TestCase
             }
         }
 
-        $actual = $validator->validate($tenant, $header, [$this->row($vendor, ExpenseType::Actual, '2026-12-31')]);
-        $this->assertSame('2026-12-31', $actual['rows'][0]['spend_date']);
+        $actual = $validator->validate($tenant, $header, [$this->row($vendor, ExpenseType::Actual, '2025-12-31')]);
+        $this->assertSame('2025-12-31', $actual['rows'][0]['spend_date']);
     }
 
     public function test_validator_rejects_multiple_or_actual_current_planning_rows(): void
@@ -188,11 +184,11 @@ final class ExpenseSchemaTest extends TestCase
         ), [$row]);
         $this->assertSame($project->getKey(), $valid['header']['project_id']);
 
-        $this->expectException(ValidationException::class);
-        $validator->validate($tenant, new SaveExpenseData(
+        $withoutProject = $validator->validate($tenant, new SaveExpenseData(
             $year->getKey(), $center->getKey(), ExpenseKind::Ordinary, 'Contract expense', null,
             null, $contract->getKey(), null,
         ), [$row]);
+        $this->assertNull($withoutProject['header']['project_id']);
     }
 
     public function test_models_keep_decimal_strings_and_expose_lifecycle_relations(): void
@@ -202,8 +198,6 @@ final class ExpenseSchemaTest extends TestCase
         $expense = Expense::factory()->for($tenant)->create([
             'planning_year_id' => $year->getKey(),
             'approved_amount' => '0.00',
-            'state' => ExpenseState::Closed,
-            'closure_outcome' => ExpenseClosureOutcome::Cancelled,
         ]);
         $row = ExpenseRow::factory()->for($expense)->create(['tenant_id' => $tenant->getKey(), 'net_amount' => '100.00']);
         $expense->current_planning_row_id = $row->getKey();
@@ -211,8 +205,6 @@ final class ExpenseSchemaTest extends TestCase
 
         $fresh = $expense->fresh();
         $this->assertSame(BudgetState::Closed, $year->fresh()->budget_state);
-        $this->assertSame(ExpenseState::Closed, $fresh->state);
-        $this->assertSame(ExpenseClosureOutcome::Cancelled, $fresh->closure_outcome);
         $this->assertSame('0.00', $fresh->approved_amount);
         $this->assertSame('100.00', $row->fresh()->net_amount);
         $this->assertTrue($fresh->currentPlanningRow()->is($row));

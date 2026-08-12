@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router";
+import { MemoryRouter, Route, Routes } from "react-router";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ApiError } from "../../api/client";
 import * as expenseApi from "../../api/expenses";
@@ -15,11 +15,15 @@ vi.mock("../../context/ApplicationContext", () => ({
 }));
 
 const selectPlanningYear = vi.fn();
+const registerDirtySource = vi.fn();
+const confirmDiscardChanges = vi.fn(() => true);
 vi.mock("../../context/PlanningYearContext", () => ({
   usePlanningYear: () => ({
     selectedPlanningYear: { id: 7, year_label: 2026, active: true },
     selectedPlanningYearId: 7,
     selectPlanningYear,
+    registerDirtySource,
+    confirmDiscardChanges,
   }),
 }));
 
@@ -46,6 +50,7 @@ vi.mock("../../api/projects", () => ({ listProjectOptions: vi.fn().mockResolvedV
 describe("ExpenseEditor", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    confirmDiscardChanges.mockReturnValue(true);
     vi.mocked(expenseApi.listExpenseVendors).mockResolvedValue([]);
     vi.mocked(expenseApi.listExpenseCostCenters).mockResolvedValue([{ id: 3, name: "Operations" }]);
     vi.mocked(expenseApi.listExpensePlanningYears).mockResolvedValue([
@@ -123,41 +128,18 @@ describe("ExpenseEditor", () => {
     expect(input.rows[1]).not.toHaveProperty("vat_rate");
   });
 
-  it("keeps an explicit future destination year only for credit flow", async () => {
-    vi.mocked(expenseApi.getExpense).mockResolvedValue({
-      id: 11,
-      planning_year_id: 7,
-      planning_year_label: 2026,
-      cost_center_id: 3,
-      kind: "ordinary",
-      title: "Spesa originaria",
-      project_id: null,
-      contract_id: null,
-    } as never);
-    render(<MemoryRouter initialEntries={["/?credit_for_expense_id=11"]}><ExpenseEditor /></MemoryRouter>);
-
-    const year = await screen.findByRole("combobox", { name: "Anno destinazione" });
-    await waitFor(() => expect(year).toHaveValue("8"));
-    expect(document.querySelector<HTMLInputElement>('input[aria-label="IVA riga 1"]')).toHaveValue("22,00");
-    expect(screen.queryByRole("option", { name: "2026" })).not.toBeInTheDocument();
-    expect(screen.getByRole("option", { name: "2027" })).toBeInTheDocument();
-    expect(expenseApi.getExpense).toHaveBeenCalledWith(11, 7);
-  });
-
   it("highlights and focuses the indexed row field returned by the API", async () => {
     vi.mocked(expenseApi.listExpenseVendors).mockResolvedValue([{ id: 5, name: "Fornitore corrente" }]);
     vi.mocked(expenseApi.getExpense).mockResolvedValue({
       id: 8,
       planning_year_id: 7,
-      planning_year_label: 2026,
+      economic_year_label: 2026,
       cost_center_id: 3,
       kind: "ordinary",
       title: "Spesa da modificare",
       notes: "Nota corrente",
       project_id: null,
       contract_id: null,
-      credit_for_expense_id: null,
-      state: "open",
       lock_version: 1,
       rows: [{
         id: 9,
@@ -170,14 +152,12 @@ describe("ExpenseEditor", () => {
         entered_amount: "100.00",
         amount_includes_vat: false,
         vat_rate: "22.00",
-        is_extra: false,
-        funded_plafond_expense_id: null,
         spend_date: "2026-01-15",
         external_reference: null,
         lock_version: 1,
         is_current_planning: false,
       }],
-    } as ExpenseDetail);
+    } as unknown as ExpenseDetail);
     vi.mocked(expenseApi.updateExpense).mockRejectedValue(new ApiError({
       message: "I dati inseriti non sono validi.",
       status: 422,
@@ -213,15 +193,13 @@ describe("ExpenseEditor", () => {
     vi.mocked(expenseApi.getExpense).mockResolvedValue({
       id: 8,
       planning_year_id: 7,
-      planning_year_label: 2026,
+      economic_year_label: 2026,
       cost_center_id: 3,
       kind: "ordinary",
       title: "Spesa esistente",
       notes: null,
       project_id: null,
       contract_id: null,
-      credit_for_expense_id: null,
-      state: "open",
       lock_version: 2,
       rows: [{
         id: 9,
@@ -234,14 +212,12 @@ describe("ExpenseEditor", () => {
         entered_amount: "100.00",
         amount_includes_vat: false,
         vat_rate: "22.00",
-        is_extra: false,
-        funded_plafond_expense_id: null,
         spend_date: "2026-01-15",
         external_reference: null,
         lock_version: 4,
         is_current_planning: false,
       }],
-    } as ExpenseDetail);
+    } as unknown as ExpenseDetail);
     vi.mocked(expenseApi.updateExpense).mockResolvedValue({ id: 8 } as never);
 
     render(<MemoryRouter><ExpenseEditor expenseId={8} /></MemoryRouter>);
@@ -264,5 +240,24 @@ describe("ExpenseEditor", () => {
     expect(costCenter).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByText("Seleziona un Centro di Costo.")).toBeInTheDocument();
     await waitFor(() => expect(document.activeElement).toBe(costCenter));
+  });
+
+  it("routes Cancel through the workspace-level navigation guard", async () => {
+    render(
+      <MemoryRouter initialEntries={["/spese/nuova"]}>
+        <Routes>
+          <Route path="/spese/nuova" element={<ExpenseEditor />} />
+          <Route path="/spese" element={<p>Registro raggiunto</p>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    await screen.findByRole("button", { name: "Crea spesa" });
+    fireEvent.change(screen.getByRole("textbox", { name: "Titolo" }), {
+      target: { value: "Bozza da non perdere" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Annulla" }));
+
+    expect(await screen.findByText("Registro raggiunto")).toBeInTheDocument();
   });
 });

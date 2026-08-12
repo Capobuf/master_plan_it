@@ -2,13 +2,12 @@
 
 namespace App\Domain\Expenses\Services;
 
+use App\Domain\Economics\Services\MoneyCalculator;
+use App\Domain\Economics\Services\VatCalculator;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
-use App\Domain\Money\Money;
-use App\Domain\Money\Services\MoneyCalculator;
-use App\Domain\Money\Services\VatCalculator;
 use App\Models\Contract;
 use App\Models\CostCenter;
 use App\Models\Expense;
@@ -69,9 +68,6 @@ final class ExpenseAggregateValidator
             ->exists()) {
             $this->fail('project_id', 'The selected project is invalid.');
         }
-        if ($contract instanceof Contract && $contract->project_id !== null && (int) $contract->project_id !== $data->projectId) {
-            $this->fail('project_id', 'The expense project must match the contract project.');
-        }
         if ($currentExpense instanceof Expense
             && $this->nullableId($currentExpense->credit_for_expense_id) !== $data->creditForExpenseId) {
             $this->fail('credit_for_expense_id', 'The credit origin cannot be changed after creation.');
@@ -94,6 +90,7 @@ final class ExpenseAggregateValidator
         $ids = [];
         $positions = [];
         $selectedPlanningCount = 0;
+        $planningCount = 0;
         foreach ($rows as $index => $row) {
             if (! $row instanceof SaveExpenseRowData) {
                 $this->fail("rows.{$index}", 'The expense row is invalid.');
@@ -112,17 +109,22 @@ final class ExpenseAggregateValidator
                     $this->fail("rows.{$index}.is_current_planning", 'Only an Estimate or Quote may be the current planning row.');
                 }
             }
+            if (in_array($row->type, [ExpenseType::Estimate, ExpenseType::Quote], true)) {
+                $planningCount++;
+            }
             $normalized[] = $this->row($tenant, $year, $data->kind, $row, $index, $currentExpense);
         }
         if ($creditFor instanceof Expense) {
             foreach ($rows as $index => $row) {
-                if ($row->type !== ExpenseType::Actual || bccomp(Money::fromDecimal($row->enteredAmount, 'EUR')->amount(), '0', Money::SCALE) >= 0) {
+                $normalizedAmount = $normalized[$index]['entered_amount'] ?? '0.00';
+                if ($row->type !== ExpenseType::Actual || bccomp((string) $normalizedAmount, '0', MoneyCalculator::SCALE) >= 0) {
                     $this->fail("rows.{$index}.entered_amount", 'A linked next-year credit accepts only negative Actual rows.');
                 }
             }
         }
-        if ($selectedPlanningCount > 1) {
-            $this->fail('rows', 'Only one current planning row may be selected.');
+        if (($planningCount === 0 && $selectedPlanningCount !== 0)
+            || ($planningCount > 0 && $selectedPlanningCount !== 1)) {
+            $this->fail('rows', 'Exactly one current planning row is required when planning rows exist.');
         }
 
         return [
@@ -173,19 +175,25 @@ final class ExpenseAggregateValidator
         }
 
         $this->dateShape($row, $prefix, $year);
-        $quantity = $this->nullablePlainDecimal($row->quantity, "{$prefix}.quantity");
-        $unitPrice = $this->nullableMoney($row->unitPrice, "{$prefix}.unit_price", (string) $tenant->currency_code);
-        $entered = $this->money($row->enteredAmount, "{$prefix}.entered_amount", (string) $tenant->currency_code);
-        if ($unitPrice !== null && bccomp($unitPrice, '0', Money::SCALE) !== 0) {
-            if ($quantity === null) {
-                $this->fail("{$prefix}.quantity", 'Quantity is required with a unit price.');
-            }
-            $entered = (new MoneyCalculator)->multiply(
-                Money::fromDecimal($unitPrice, (string) $tenant->currency_code),
-                $quantity,
-            )->amount();
+        $hasEntered = $row->enteredAmount !== null;
+        $hasQuantity = $row->quantity !== null;
+        $hasUnitPrice = $row->unitPrice !== null;
+        if (! (($hasEntered && ! $hasQuantity && ! $hasUnitPrice)
+            || (! $hasEntered && $hasQuantity && $hasUnitPrice))) {
+            $this->fail("{$prefix}.entered_amount", 'Use either entered amount or quantity and unit price.');
         }
-        if ($row->type !== ExpenseType::Actual && bccomp($entered, '0', Money::SCALE) < 0) {
+
+        $quantity = $this->nullablePlainDecimal($row->quantity, "{$prefix}.quantity");
+        $unitPrice = $this->nullableMoney($row->unitPrice, "{$prefix}.unit_price");
+        if ($hasEntered) {
+            $entered = $this->money((string) $row->enteredAmount, "{$prefix}.entered_amount");
+        } else {
+            $entered = (new MoneyCalculator)->multiply(
+                (string) $unitPrice,
+                (string) $quantity,
+            );
+        }
+        if ($row->type !== ExpenseType::Actual && bccomp($entered, '0', MoneyCalculator::SCALE) < 0) {
             $this->fail("{$prefix}.entered_amount", 'Estimate and Quote amounts cannot be negative.');
         }
         $persistedVatRate = $row->id === null || ! $currentExpense instanceof Expense
@@ -199,10 +207,11 @@ final class ExpenseAggregateValidator
             false,
             10,
         );
-        $amount = Money::fromDecimal($entered, (string) $tenant->currency_code);
+        $vatCalculator = new VatCalculator(new MoneyCalculator);
+        $basis = (string) $tenant->getRawOriginal('budget_basis');
         $breakdown = $row->amountIncludesVat
-            ? (new VatCalculator)->fromIncludedAmount($amount, $vatRate)
-            : (new VatCalculator)->fromExcludedAmount($amount, $vatRate);
+            ? $vatCalculator->fromIncluded($entered, $vatRate, $basis)
+            : $vatCalculator->fromExcluded($entered, $vatRate, $basis);
 
         return [
             'id' => $row->id,
@@ -210,14 +219,15 @@ final class ExpenseAggregateValidator
             'vendor_id' => $row->vendorId,
             'type' => $row->type,
             'description' => trim($row->description),
+            'notes' => $this->nullableText($row->notes),
             'quantity' => $quantity,
             'unit_price' => $unitPrice,
             'entered_amount' => $entered,
             'amount_includes_vat' => $row->amountIncludesVat,
             'vat_rate' => $vatRate,
-            'net_amount' => $breakdown->net()->amount(),
-            'vat_amount' => $breakdown->vat()->amount(),
-            'gross_amount' => $breakdown->gross()->amount(),
+            'net_amount' => $breakdown->net,
+            'vat_amount' => $breakdown->vat,
+            'gross_amount' => $breakdown->gross,
             'is_extra' => $row->isExtra,
             'funded_plafond_expense_id' => $row->fundedPlafondExpenseId,
             'spend_date' => $row->spendDate,
@@ -240,11 +250,17 @@ final class ExpenseAggregateValidator
         if ($row->type === ExpenseType::Actual && ! $spend) {
             $this->fail("{$prefix}.spend_date", 'An Actual row requires its economic date.');
         }
+        if ($row->type !== ExpenseType::Actual && $spend) {
+            $this->fail("{$prefix}.spend_date", 'Only an Actual row may have a spend date.');
+        }
         try {
             if ($spend) {
-                $date = new DateTimeImmutable((string) $row->spendDate);
-                if ((int) $date->format('Y') !== (int) $year->year_label) {
-                    $this->fail("{$prefix}.spend_date", 'The row date must belong to the expense planning year.');
+                $date = DateTimeImmutable::createFromFormat('!Y-m-d', (string) $row->spendDate);
+                $errors = DateTimeImmutable::getLastErrors();
+                if (! $date instanceof DateTimeImmutable
+                    || ($errors !== false && ($errors['warning_count'] > 0 || $errors['error_count'] > 0))
+                    || $date->format('Y-m-d') !== $row->spendDate) {
+                    $this->fail("{$prefix}.spend_date", 'The row date is invalid.');
                 }
             }
         } catch (\Throwable) {
@@ -252,18 +268,18 @@ final class ExpenseAggregateValidator
         }
     }
 
-    private function money(string $value, string $field, string $currency): string
+    private function money(string $value, string $field): string
     {
         try {
-            return Money::fromDecimal($value, $currency)->amount();
+            return (new MoneyCalculator)->normalize($value);
         } catch (\Throwable) {
             $this->fail($field, 'The amount must be a decimal with at most 2 places.');
         }
     }
 
-    private function nullableMoney(?string $value, string $field, string $currency): ?string
+    private function nullableMoney(?string $value, string $field): ?string
     {
-        return $value === null || trim($value) === '' ? null : $this->money($value, $field, $currency);
+        return $value === null || trim($value) === '' ? null : $this->money($value, $field);
     }
 
     private function plainDecimal(
@@ -272,7 +288,9 @@ final class ExpenseAggregateValidator
         bool $allowNegative = true,
         int $maxIntegerDigits = 17,
     ): string {
-        $pattern = $allowNegative ? '/^-?\d+(?:\.\d{1,2})?$/' : '/^\d+(?:\.\d{1,2})?$/';
+        $pattern = $allowNegative
+            ? '/^-?(?:0|[1-9]\d*)(?:\.\d{1,2})?$/'
+            : '/^(?:0|[1-9]\d*)(?:\.\d{1,2})?$/';
         if (! preg_match($pattern, $value)) {
             $this->fail($field, 'The value must be a decimal with at most 2 places.');
         }
@@ -284,9 +302,9 @@ final class ExpenseAggregateValidator
             $this->fail($field, 'The decimal value is too large.');
         }
 
-        $normalized = $integer.'.'.str_pad($fraction, Money::SCALE, '0');
+        $normalized = $integer.'.'.str_pad($fraction, MoneyCalculator::SCALE, '0');
 
-        return str_starts_with($value, '-') && bccomp($normalized, '0', Money::SCALE) !== 0
+        return str_starts_with($value, '-') && bccomp($normalized, '0', MoneyCalculator::SCALE) !== 0
             ? '-'.$normalized
             : $normalized;
     }
