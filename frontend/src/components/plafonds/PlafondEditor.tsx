@@ -121,6 +121,16 @@ export default function PlafondEditor({ plafond, onSaved }: { plafond?: PlafondD
         <div><Label htmlFor="plafond-adjustment-unit-price">Prezzo unitario (alternativa)</Label><DecimalInput id="plafond-adjustment-unit-price" value={adjustment.unit_price ?? ""} onChange={(unit_price) => updateAdjustment({ unit_price: unit_price || undefined, entered_amount: undefined })} maxScale={2} suffix="€" disabled={disabled} /></div>
         <div><Label htmlFor="plafond-adjustment-date">Data</Label><DatePicker id="plafond-adjustment-date" label="Data variazione" hideLabel defaultDate={adjustment.date} onChange={(_, date) => updateAdjustment({ date })} disabled={disabled} /></div>
         <div><Label htmlFor="plafond-adjustment-vat">IVA</Label><DecimalInput id="plafond-adjustment-vat" value={adjustment.vat_rate ?? context?.tenant?.default_vat_rate ?? ""} onChange={(vat_rate) => updateAdjustment({ vat_rate: vat_rate || undefined })} fixedScale={2} maxScale={2} suffix="%" disabled={disabled} hint="Predefinito del Tenant; modificalo per applicare un override." /></div>
+        <label className="flex items-center gap-2 text-sm font-medium text-gray-700 dark:text-gray-300">
+          <input
+            type="checkbox"
+            checked={adjustment.amount_includes_vat}
+            onChange={(event) => updateAdjustment({ amount_includes_vat: event.target.checked })}
+            disabled={disabled}
+            className="h-4 w-4 rounded border-gray-300"
+          />
+          IVA inclusa
+        </label>
         <div className="md:col-span-2"><Label htmlFor="plafond-adjustment-notes">Note</Label><TextArea id="plafond-adjustment-notes" value={adjustment.notes ?? ""} onChange={(value) => updateAdjustment({ notes: value || null })} disabled={disabled} /></div>
       </div>
     </ComponentCard>

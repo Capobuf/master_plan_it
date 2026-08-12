@@ -107,7 +107,9 @@ final class AnnualBudgetQuery
                 'plafond_measures' => isset($projection->plafonds[(int) $record->id])
                     ? $this->plafondMeasures($projection->plafonds[(int) $record->id])
                     : null,
-                'planned' => $expenseProjection->currentPlanningRowId === null ? null : $expenseProjection->currentPlanning->official,
+                'planned' => $record->kind === 'plafond' || $expenseProjection->currentPlanningRowId !== null
+                    ? $this->contributivePlanning($expenseProjection->lines, $projection->basis)->official
+                    : null,
                 'approved' => $approved,
                 'approved_basis' => $record->approved_basis === null ? null : (string) $record->approved_basis,
                 'actual' => $actual,
@@ -220,6 +222,19 @@ final class AnnualBudgetQuery
             'contract_id' => $line->contractId,
             'amount' => $this->measure($line->amount),
         ];
+    }
+
+    /** @param list<ProjectedEconomicLine> $lines */
+    private function contributivePlanning(array $lines, string $basis): EconomicMeasure
+    {
+        $planning = EconomicMeasure::zero($basis);
+        foreach ($lines as $line) {
+            if ($line->contributesToCurrentPlanning) {
+                $planning = $planning->plus($line->amount, $basis);
+            }
+        }
+
+        return $planning;
     }
 
     private function decimal(mixed $value): string

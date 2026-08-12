@@ -43,7 +43,7 @@ export interface ReportLine {
   row_id: number;
   planning_year_id: number;
   economic_year_label: number;
-  type: "estimate" | "quote" | "actual";
+  type: "estimate" | "quote" | "actual" | "allocation_adjustment";
   is_current_planning: boolean;
   contributes_to_current_planning: boolean;
   description: string;

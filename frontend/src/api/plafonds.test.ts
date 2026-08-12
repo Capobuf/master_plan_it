@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { apiClient } from "./client";
-import { addAllocationAdjustment, createPlafond, getPlafond, getPlafondReport, listPlafonds, previewAllocationAdjustment } from "./plafonds";
+import { addAllocationAdjustment, createPlafond, getPlafond, getPlafondReport, listAllPlafonds, listPlafonds, previewAllocationAdjustment } from "./plafonds";
 
 describe("plafonds adapter", () => {
   it("uses only dedicated Plafond routes and preserves exact decimal request strings", async () => {
@@ -19,5 +19,19 @@ describe("plafonds adapter", () => {
     expect(post.mock.calls[0][1]).toMatchObject({ initial_allocation: { entered_amount: "3000.00" } });
     expect(post.mock.calls[1][0]).toBe("/api/v1/plafonds/41/allocation-adjustments/preview");
     expect(post.mock.calls[2][0]).toBe("/api/v1/plafonds/41/allocation-adjustments");
+  });
+
+  it("loads every Plafond page without assuming a maximum row count", async () => {
+    const first = Array.from({ length: 100 }, (_, index) => ({ id: index + 1 }));
+    const get = vi.spyOn(apiClient, "get")
+      .mockResolvedValueOnce({ data: { data: first, meta: { current_page: 1, last_page: 2, per_page: 100, total: 101 }, links: {}, currency: "EUR", basis: "net" } } as never)
+      .mockResolvedValueOnce({ data: { data: [{ id: 101 }], meta: { current_page: 2, last_page: 2, per_page: 100, total: 101 }, links: {}, currency: "EUR", basis: "net" } } as never);
+
+    const result = await listAllPlafonds({ planning_year_id: 25 });
+
+    expect(result).toHaveLength(101);
+    expect(result.at(-1)?.id).toBe(101);
+    expect(get).toHaveBeenNthCalledWith(1, "/api/v1/plafonds", { params: { planning_year_id: 25, page: 1, per_page: 100 } });
+    expect(get).toHaveBeenNthCalledWith(2, "/api/v1/plafonds", { params: { planning_year_id: 25, page: 2, per_page: 100 } });
   });
 });

@@ -42,9 +42,10 @@ describe("PlafondEditor", () => {
     fireEvent.change(screen.getByLabelText("Centro di Costo"), { target: { value: "9" } });
     fireEvent.change(screen.getByLabelText("Descrizione"), { target: { value: "Allocazione iniziale" } });
     fireEvent.change(screen.getByLabelText("Variazione Allocazione"), { target: { value: "3000,00" } });
+    fireEvent.click(screen.getByRole("checkbox", { name: "IVA inclusa" }));
     fireEvent.click(screen.getByRole("button", { name: "Crea Plafond" }));
     await waitFor(() => expect(plafondApi.createPlafond).toHaveBeenCalledOnce());
-    expect(plafondApi.createPlafond).toHaveBeenCalledWith(expect.objectContaining({ planning_year_id: 25, cost_center_id: 9, initial_allocation: expect.objectContaining({ description: "Allocazione iniziale", entered_amount: "3000" }) }));
+    expect(plafondApi.createPlafond).toHaveBeenCalledWith(expect.objectContaining({ planning_year_id: 25, cost_center_id: 9, initial_allocation: expect.objectContaining({ description: "Allocazione iniziale", entered_amount: "3000", amount_includes_vat: true }) }));
     expect(registerDirtySource).toHaveBeenCalledWith("plafond-create", true);
   });
 
