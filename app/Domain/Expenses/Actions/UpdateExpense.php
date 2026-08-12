@@ -7,6 +7,7 @@ use App\Domain\Expenses\Actions\Concerns\ManagesExpenseAggregate;
 use App\Domain\Expenses\Data\SaveExpenseData;
 use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Services\ExpenseRelationshipAuthorizer;
+use App\Domain\Expenses\Services\PlafondLifecycleGuard;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Expense;
@@ -32,10 +33,13 @@ final class UpdateExpense
             $data->projectId !== null,
             $data->contractId !== null,
         );
+        if ($this->proposedUsesPlafond($rows) || $this->currentFundingPlafondIds($target) !== []) {
+            $this->expensePolicy($context)->viewAny($actor)->authorize();
+        }
         [$actor, $tenant] = $this->persistedContext($actor, $context);
 
         return DB::transaction(function () use ($actor, $context, $correlationId, $data, $rows, $target, $tenant, $deletedRows): Expense {
-            app(AnnualEconomicMutationGuard::class)->acquire(
+            $years = app(AnnualEconomicMutationGuard::class)->acquire(
                 (int) $tenant->getKey(),
                 [$data->planningYearId],
             );
@@ -46,6 +50,16 @@ final class UpdateExpense
             if ((int) $expense->planning_year_id !== $data->planningYearId) {
                 throw new DomainException('TENANT_RELATION_MISMATCH');
             }
+            $previousPlafondIds = $this->currentFundingPlafondIds($expense);
+            $usesPlafond = $previousPlafondIds !== [] || $this->proposedUsesPlafond($rows);
+            if ($usesPlafond) {
+                app(PlafondLifecycleGuard::class)->assertPreparation(
+                    $years->get($data->planningYearId)->budget_state,
+                );
+            }
+            $currentProjection = $usesPlafond
+                ? $this->annualProjection($actor, $context, $data->planningYearId)
+                : null;
             if ($expense->approved_amount !== null && (
                 (int) $expense->planning_year_id !== $data->planningYearId
                 || (int) $expense->cost_center_id !== $data->costCenterId
@@ -70,6 +84,15 @@ final class UpdateExpense
                 }
             }
             $changed = $this->saveAggregate($expense, $tenant, $data, $rows, $actor, $deletedRows);
+            if ($currentProjection !== null) {
+                $this->assertCoveredRowsHaveCapacity(
+                    $currentProjection,
+                    $this->annualProjection($actor, $context, $data->planningYearId),
+                    $expense,
+                    $rows,
+                    $previousPlafondIds,
+                );
+            }
             if ($changed === []) {
                 return $expense->fresh(['rows']);
             }

@@ -9,6 +9,7 @@ use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Enums\Distribution;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Domain\Expenses\Services\PlafondLifecycleGuard;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Revisions\Queries\OperationalRevisionQuery;
 use App\Domain\Tenancy\Data\TenantContext;
@@ -35,7 +36,7 @@ final class RestoreExpenseRevision
         [$actor, $tenant] = $this->persistedContext($actor, $context);
 
         return DB::transaction(function () use ($actor, $context, $correlationId, $expectedLockVersion, $source, $target, $tenant): Expense {
-            app(AnnualEconomicMutationGuard::class)->acquire(
+            $years = app(AnnualEconomicMutationGuard::class)->acquire(
                 (int) $tenant->getKey(),
                 [(int) $target->planning_year_id],
             );
@@ -90,6 +91,7 @@ final class RestoreExpenseRevision
                     expectedLockVersion: $current?->lock_version,
                     isCurrentPlanning: (int) ($snapshot['current_planning_row_id'] ?? 0) === (int) $historicalId,
                     notes: $this->nullableString($contents['notes'] ?? null),
+                    createdByUserId: isset($contents['created_by_user_id']) ? (int) $contents['created_by_user_id'] : null,
                 );
             }
             $historicalIds = array_map('intval', array_keys($historicalRows));
@@ -112,9 +114,40 @@ final class RestoreExpenseRevision
             if ($data->planningYearId !== (int) $expense->planning_year_id) {
                 throw new DomainException('REVISION_RESTORE_INVALID');
             }
+            $previousPlafondIds = $this->currentFundingPlafondIds($expense);
+            $plafondSensitive = $expense->kind === ExpenseKind::Plafond
+                || $kind === ExpenseKind::Plafond
+                || $previousPlafondIds !== []
+                || $this->proposedUsesPlafond($rows);
+            if ($plafondSensitive) {
+                app(PlafondLifecycleGuard::class)->assertPreparation(
+                    $years->get($data->planningYearId)->budget_state,
+                );
+            }
+            $currentProjection = $plafondSensitive
+                ? $this->annualProjection($actor, $context, $data->planningYearId)
+                : null;
             $changed = $this->saveAggregate($expense, $tenant, $data, $rows, $actor, $deletedRows);
             if ($changed === []) {
                 throw new DomainException('REVISION_RESTORE_INVALID');
+            }
+            if ($currentProjection !== null) {
+                $proposedProjection = $this->annualProjection($actor, $context, $data->planningYearId);
+                if ($kind === ExpenseKind::Plafond) {
+                    $this->assertPlafondAggregateHasCapacity(
+                        $currentProjection,
+                        $proposedProjection,
+                        (int) $expense->getKey(),
+                    );
+                } else {
+                    $this->assertCoveredRowsHaveCapacity(
+                        $currentProjection,
+                        $proposedProjection,
+                        $expense,
+                        $rows,
+                        $previousPlafondIds,
+                    );
+                }
             }
             $this->revisions($actor, $context, RevisionOperation::Restore, $correlationId, $expense, $changed, (int) $batch->getKey());
             $this->audit('expense.restored', $correlationId, $actor, $tenant, $expense, ['restored_from_batch_id' => (int) $batch->getKey()]);

@@ -32,6 +32,14 @@ final class ExpenseAggregateValidator
         if ($rows === []) {
             $this->fail('rows', 'At least one expense row is required.');
         }
+        if ($currentExpense instanceof Expense
+            && $currentExpense->kind !== $data->kind) {
+            $this->fail('kind', 'The expense kind cannot be changed.');
+        }
+        if ($data->kind === ExpenseKind::Plafond
+            && ($data->projectId !== null || $data->contractId !== null || $data->creditForExpenseId !== null)) {
+            $this->fail('kind', 'A Plafond cannot use Ordinary expense relationships.');
+        }
 
         $year = PlanningYear::query()->where('tenant_id', $tenant->getKey())->whereKey($data->planningYearId)->first();
         if (! $year instanceof PlanningYear) {
@@ -109,6 +117,12 @@ final class ExpenseAggregateValidator
                     $this->fail("rows.{$index}.is_current_planning", 'Only an Estimate or Quote may be the current planning row.');
                 }
             }
+            if ($data->kind === ExpenseKind::Ordinary && $row->type === ExpenseType::AllocationAdjustment) {
+                $this->fail("rows.{$index}.type", 'An Ordinary expense cannot contain Allocation adjustments.');
+            }
+            if ($data->kind === ExpenseKind::Plafond && $row->type !== ExpenseType::AllocationAdjustment) {
+                $this->fail("rows.{$index}.type", 'A Plafond can contain only Allocation adjustments.');
+            }
             if (in_array($row->type, [ExpenseType::Estimate, ExpenseType::Quote], true)) {
                 $planningCount++;
             }
@@ -125,6 +139,16 @@ final class ExpenseAggregateValidator
         if (($planningCount === 0 && $selectedPlanningCount !== 0)
             || ($planningCount > 0 && $selectedPlanningCount !== 1)) {
             $this->fail('rows', 'Exactly one current planning row is required when planning rows exist.');
+        }
+        if ($data->kind === ExpenseKind::Plafond
+            && Expense::query()
+                ->where('tenant_id', $tenant->getKey())
+                ->where('planning_year_id', $data->planningYearId)
+                ->where('cost_center_id', $data->costCenterId)
+                ->where('kind', ExpenseKind::Plafond->value)
+                ->when($currentExpense instanceof Expense, fn ($query) => $query->whereKeyNot($currentExpense->getKey()))
+                ->exists()) {
+            $this->fail('cost_center_id', 'A current Plafond already exists for this planning year and cost center.');
         }
 
         return [
@@ -155,6 +179,9 @@ final class ExpenseAggregateValidator
         if ($kind === ExpenseKind::Ordinary && $row->vendorId === null) {
             $this->fail("{$prefix}.vendor_id", 'Ordinary expense rows require a vendor.');
         }
+        if ($kind === ExpenseKind::Plafond && $row->vendorId !== null) {
+            $this->fail("{$prefix}.vendor_id", 'Allocation adjustments cannot have a vendor.');
+        }
         $vendor = $row->vendorId === null ? null : Vendor::query()->where('tenant_id', $tenant->getKey())->whereKey($row->vendorId)->first();
         if ($row->vendorId !== null && ! $vendor instanceof Vendor) {
             $this->fail("{$prefix}.vendor_id", 'The selected vendor is invalid.');
@@ -164,6 +191,10 @@ final class ExpenseAggregateValidator
         }
         if ($row->isExtra && $row->fundedPlafondExpenseId !== null) {
             $this->fail("{$prefix}.funded_plafond_expense_id", 'Extra and funded Plafond are mutually exclusive.');
+        }
+        if ($kind === ExpenseKind::Plafond
+            && ($row->isExtra || $row->fundedPlafondExpenseId !== null)) {
+            $this->fail("{$prefix}.funded_plafond_expense_id", 'Allocation adjustments cannot be Extra or funded.');
         }
         if ($row->fundedPlafondExpenseId !== null && ! Expense::query()
             ->where('tenant_id', $tenant->getKey())
@@ -193,8 +224,13 @@ final class ExpenseAggregateValidator
                 (string) $quantity,
             );
         }
-        if ($row->type !== ExpenseType::Actual && bccomp($entered, '0', MoneyCalculator::SCALE) < 0) {
+        if (! in_array($row->type, [ExpenseType::Actual, ExpenseType::AllocationAdjustment], true)
+            && bccomp($entered, '0', MoneyCalculator::SCALE) < 0) {
             $this->fail("{$prefix}.entered_amount", 'Estimate and Quote amounts cannot be negative.');
+        }
+        if ($row->type === ExpenseType::AllocationAdjustment
+            && bccomp($entered, '0', MoneyCalculator::SCALE) === 0) {
+            $this->fail("{$prefix}.entered_amount", 'An Allocation adjustment must be non-zero.');
         }
         $persistedVatRate = $row->id === null || ! $currentExpense instanceof Expense
             ? null
@@ -237,6 +273,7 @@ final class ExpenseAggregateValidator
             'external_reference' => $this->nullableText($row->externalReference),
             'expected_lock_version' => $row->expectedLockVersion,
             'is_current_planning' => $row->isCurrentPlanning,
+            'created_by_user_id' => $row->createdByUserId,
         ];
     }
 
@@ -247,11 +284,11 @@ final class ExpenseAggregateValidator
         if ($periodAny) {
             $this->fail("{$prefix}.period_start", 'Automatic period distribution is not supported.');
         }
-        if ($row->type === ExpenseType::Actual && ! $spend) {
-            $this->fail("{$prefix}.spend_date", 'An Actual row requires its economic date.');
+        if (in_array($row->type, [ExpenseType::Actual, ExpenseType::AllocationAdjustment], true) && ! $spend) {
+            $this->fail("{$prefix}.spend_date", 'An Actual or Allocation adjustment requires its economic date.');
         }
-        if ($row->type !== ExpenseType::Actual && $spend) {
-            $this->fail("{$prefix}.spend_date", 'Only an Actual row may have a spend date.');
+        if (! in_array($row->type, [ExpenseType::Actual, ExpenseType::AllocationAdjustment], true) && $spend) {
+            $this->fail("{$prefix}.spend_date", 'Only an Actual or Allocation adjustment may have a spend date.');
         }
         try {
             if ($spend) {
