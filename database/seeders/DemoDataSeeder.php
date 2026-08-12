@@ -98,6 +98,7 @@ final class DemoDataSeeder extends Seeder
                     $this->row($tenant, $expense, $administrator, 2, $vendors[($i + 1) % count($vendors)]->id, ExpenseType::Quote, $i === 12 && ! $expenseIsNew ? 'Riga aggiuntiva aggiornata' : 'Additional demo row', '250.00', null, null, false);
                 }
             }
+            $this->canonicalPlafondDataset($tenant, $administrator, $costs, $vendors, $years->all(), $year);
             $outOfYearActual = Expense::query()->updateOrCreate(['tenant_id' => $tenant->id, 'title' => 'DEMO — Actual fuori anno'], ['planning_year_id' => $years[$year], 'cost_center_id' => $costs[0]->id, 'kind' => ExpenseKind::Ordinary, 'notes' => 'Actual negativo con Data reale indipendente']);
             $this->row($tenant, $outOfYearActual, $administrator, 1, $vendors[0]->id, ExpenseType::Actual, 'Rimborso fuori anno', '-5.00', '2026-02-10', null, false);
             $this->expenseHistory($tenant, $administrator, $context);
@@ -303,13 +304,109 @@ final class DemoDataSeeder extends Seeder
         return app(UpdateContract::class)->execute($actor, $context, $contract, $data, $this->correlation());
     }
 
+    /**
+     * @param  list<CostCenter>  $costs
+     * @param  list<Vendor>  $vendors
+     * @param  array<int, int>  $years
+     */
+    private function canonicalPlafondDataset(Tenant $tenant, User $actor, array $costs, array $vendors, array $years, int $year): void
+    {
+        $plafond = Expense::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'title' => 'DEMO — Plafond Infrastructure'],
+            [
+                'planning_year_id' => $years[$year],
+                'cost_center_id' => $costs[0]->id,
+                'kind' => ExpenseKind::Plafond,
+                'notes' => 'Dataset canonico Plafond 3000 + 1000 - 500',
+                'project_id' => null,
+                'contract_id' => null,
+                'current_planning_row_id' => null,
+            ],
+        );
+
+        foreach ([
+            [1, 'Allocazione iniziale', '3000.00', sprintf('%04d-01-10', $year)],
+            [2, 'Aumento allocazione', '1000.00', sprintf('%04d-02-10', $year)],
+            [3, 'Riduzione allocazione', '-500.00', sprintf('%04d-03-10', $year)],
+        ] as [$position, $description, $amount, $date]) {
+            $this->allocationAdjustment($tenant, $plafond, $actor, $position, $description, $amount, $date);
+        }
+
+        $planned = Expense::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'title' => 'DEMO — Pianificazione coperta Plafond'],
+            [
+                'planning_year_id' => $years[$year],
+                'cost_center_id' => $costs[2]->id,
+                'kind' => ExpenseKind::Ordinary,
+                'notes' => 'Pianificazione coperta cross-centro di costo',
+                'project_id' => null,
+                'contract_id' => null,
+            ],
+        );
+        $this->row($tenant, $planned, $actor, 1, $vendors[2]->id, ExpenseType::Quote, 'Pianificazione coperta 4200', '4200.00', null, null, false, $plafond->id);
+
+        $actual = Expense::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'title' => 'DEMO — Effettivo coperto Plafond'],
+            [
+                'planning_year_id' => $years[$year],
+                'cost_center_id' => $costs[3]->id,
+                'kind' => ExpenseKind::Ordinary,
+                'notes' => 'Effettivo coperto cross-centro di costo',
+                'project_id' => null,
+                'contract_id' => null,
+                'current_planning_row_id' => null,
+            ],
+        );
+        $this->row($tenant, $actual, $actor, 1, $vendors[3]->id, ExpenseType::Actual, 'Effettivo coperto 1500', '1500.00', sprintf('%04d-04-15', $year), null, false, $plafond->id);
+        $this->row($tenant, $actual, $actor, 2, $vendors[4]->id, ExpenseType::Actual, 'Effettivo coperto 1000', '1000.00', sprintf('%04d-05-15', $year), null, false, $plafond->id);
+    }
+
+    private function allocationAdjustment(Tenant $tenant, Expense $plafond, User $actor, int $position, string $description, string $amount, string $date): void
+    {
+        $net = bcdiv($amount, '1', 2);
+        $vat = bcdiv(bcmul($amount, '0.22', 6), '1', 2);
+
+        ExpenseRow::query()->updateOrCreate(
+            ['tenant_id' => $tenant->id, 'expense_id' => $plafond->id, 'position' => $position],
+            [
+                'vendor_id' => null,
+                'type' => ExpenseType::AllocationAdjustment,
+                'created_by_user_id' => $actor->id,
+                'confirmation_state' => null,
+                'confirmed_by_user_id' => null,
+                'confirmed_at' => null,
+                'is_system_managed' => false,
+                'manual_override_at' => null,
+                'contract_term_id' => null,
+                'source_key' => null,
+                'description' => $description,
+                'notes' => 'Variazione allocazione demo attribuibile',
+                'quantity' => null,
+                'unit_price' => null,
+                'entered_amount' => $amount,
+                'amount_includes_vat' => false,
+                'vat_rate' => '22.00',
+                'net_amount' => $net,
+                'vat_amount' => $vat,
+                'gross_amount' => bcadd($net, $vat, 2),
+                'is_extra' => false,
+                'funded_plafond_expense_id' => null,
+                'spend_date' => $date,
+                'period_start' => null,
+                'period_end' => null,
+                'distribution' => null,
+                'external_reference' => null,
+            ],
+        );
+    }
+
     /** @param array{start: string, end: string, distribution: string}|null $period */
-    private function row(Tenant $tenant, Expense $expense, User $actor, int $position, ?int $vendorId, ExpenseType $type, string $description, string $entered, ?string $spend, ?array $period, bool $system): void
+    private function row(Tenant $tenant, Expense $expense, User $actor, int $position, ?int $vendorId, ExpenseType $type, string $description, string $entered, ?string $spend, ?array $period, bool $system, ?int $fundedPlafondExpenseId = null): void
     {
         $net = bcdiv($entered, '1', 2);
         $vat = bcdiv(bcmul($entered, '0.22', 6), '1', 2);
         $gross = bcadd($net, $vat, 2);
-        $row = ExpenseRow::query()->updateOrCreate(['tenant_id' => $tenant->id, 'expense_id' => $expense->id, 'position' => $position], ['vendor_id' => $vendorId, 'type' => $type, 'confirmation_state' => null, 'confirmed_by_user_id' => null, 'confirmed_at' => null, 'is_system_managed' => $system, 'description' => $description, 'notes' => 'Deterministic demo row', 'quantity' => null, 'unit_price' => null, 'entered_amount' => $entered, 'amount_includes_vat' => false, 'vat_rate' => '22.00', 'net_amount' => $net, 'vat_amount' => $vat, 'gross_amount' => $gross, 'is_extra' => false, 'funded_plafond_expense_id' => null, 'spend_date' => $spend, 'period_start' => $period['start'] ?? null, 'period_end' => $period['end'] ?? null, 'distribution' => $period['distribution'] ?? null, 'external_reference' => 'DEMO']);
+        $row = ExpenseRow::query()->updateOrCreate(['tenant_id' => $tenant->id, 'expense_id' => $expense->id, 'position' => $position], ['vendor_id' => $vendorId, 'type' => $type, 'created_by_user_id' => null, 'confirmation_state' => null, 'confirmed_by_user_id' => null, 'confirmed_at' => null, 'is_system_managed' => $system, 'description' => $description, 'notes' => 'Deterministic demo row', 'quantity' => null, 'unit_price' => null, 'entered_amount' => $entered, 'amount_includes_vat' => false, 'vat_rate' => '22.00', 'net_amount' => $net, 'vat_amount' => $vat, 'gross_amount' => $gross, 'is_extra' => false, 'funded_plafond_expense_id' => $fundedPlafondExpenseId, 'spend_date' => $spend, 'period_start' => $period['start'] ?? null, 'period_end' => $period['end'] ?? null, 'distribution' => $period['distribution'] ?? null, 'external_reference' => 'DEMO']);
 
         if ($type !== ExpenseType::Actual && $expense->current_planning_row_id === null) {
             $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
