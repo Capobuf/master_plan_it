@@ -3,8 +3,11 @@
 namespace Tests\Feature\Api\Expenses;
 
 use App\Models\CostCenter;
+use App\Models\Expense;
+use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Tenant;
+use App\Models\User;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
@@ -42,6 +45,23 @@ final class PlafondApiHttpTest extends TestCase
         ]);
     }
 
+    public function test_gross_basis_keeps_an_iva_included_allocation_equal_to_the_entered_amount(): void
+    {
+        $tenant = Tenant::factory()->create(['budget_basis' => 'gross']);
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create();
+        $center = CostCenter::factory()->for($tenant)->create();
+        $this->actingAs($user, 'web');
+        $payload = $this->creationPayload($year, $center);
+        $payload['initial_allocation']['amount_includes_vat'] = true;
+
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/plafonds', $payload)
+            ->assertCreated()
+            ->assertJsonPath('data.basis', 'gross')
+            ->assertJsonPath('data.measures.allocation.gross', '3000.00')
+            ->assertJsonPath('data.measures.allocation.official', '3000.00');
+    }
+
     public function test_list_detail_preview_and_adjustment_have_no_generic_expense_alias(): void
     {
         [, $user, $year, $center] = $this->workspace();
@@ -76,8 +96,15 @@ final class PlafondApiHttpTest extends TestCase
         $foreignTenant = Tenant::factory()->create();
         $foreignYear = PlanningYear::factory()->for($foreignTenant)->create();
         $foreignCenter = CostCenter::factory()->for($foreignTenant)->create();
-        $this->actingAs($this->tenantUser($foreignTenant), 'web');
-        $foreignId = $this->createPlafond($foreignYear, $foreignCenter);
+        $foreignUser = $this->tenantUser($foreignTenant);
+        $foreign = Expense::factory()->for($foreignTenant)->plafond()->create([
+            'planning_year_id' => $foreignYear->getKey(),
+            'cost_center_id' => $foreignCenter->getKey(),
+        ]);
+        ExpenseRow::factory()->for($foreign)->allocationAdjustment($foreignUser)->create([
+            'tenant_id' => $foreignTenant->getKey(),
+        ]);
+        $foreignId = (int) $foreign->getKey();
         $this->actingAs($user, 'web');
 
         $pathErrors = [];
@@ -127,7 +154,7 @@ final class PlafondApiHttpTest extends TestCase
             ->assertCreated();
     }
 
-    /** @return array{Tenant, \App\Models\User, PlanningYear, CostCenter} */
+    /** @return array{Tenant, User, PlanningYear, CostCenter} */
     private function workspace(): array
     {
         $tenant = Tenant::factory()->create();

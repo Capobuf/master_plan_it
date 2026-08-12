@@ -27,8 +27,6 @@ final class PlafondRevisionTest extends TestCase
         $plafondId = $this->createPlafond($year, $center);
         $created = $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $this->actualPayload($year, $center, $vendor, $plafondId))
             ->assertCreated()->json('data');
-        $auditCount = AuditEvent::query()->count();
-
         $this->withHeaders($this->csrfHeaders())->putJson('/api/v1/expenses/'.$created['id'], [
             ...$this->actualPayload($year, $center, $vendor, null),
             'lock_version' => $created['lock_version'],
@@ -46,13 +44,14 @@ final class PlafondRevisionTest extends TestCase
             'adjustment' => ['description' => 'Sustainable after removing coverage', 'notes' => null, 'entered_amount' => '-700.00', 'amount_includes_vat' => false,
                 'vat_rate' => '22.00', 'date' => '2026-08-12'],
         ])->assertCreated();
+        $auditCount = AuditEvent::query()->count();
 
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses/'.$created['id'].'/history/'.$source.'/restore', ['lock_version' => 2])
             ->assertUnprocessable()->assertJsonPath('error.code', 'PLAFOND_INSUFFICIENT')
             ->assertJsonPath('error.details.shortage', '200.00')
             ->assertJsonStructure(['error' => ['details' => ['impact' => ['current', 'proposed', 'blocking_rows']]]]);
         $this->assertDatabaseHas('expenses', ['id' => $created['id'], 'lock_version' => 2]);
-        $this->assertDatabaseCount('audit_events', $auditCount + 2);
+        $this->assertDatabaseCount('audit_events', $auditCount);
     }
 
     private function createPlafond(PlanningYear $year, CostCenter $center): int

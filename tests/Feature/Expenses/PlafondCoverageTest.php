@@ -4,8 +4,10 @@ namespace Tests\Feature\Expenses;
 
 use App\Models\CostCenter;
 use App\Models\Expense;
+use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
@@ -35,8 +37,15 @@ final class PlafondCoverageTest extends TestCase
         $foreignTenant = Tenant::factory()->create();
         $foreignYear = PlanningYear::factory()->for($foreignTenant)->create();
         $foreignCenter = CostCenter::factory()->for($foreignTenant)->create();
-        $this->actingAs($this->tenantUser($foreignTenant), 'web');
-        $foreignId = $this->createPlafond($foreignYear, $foreignCenter);
+        $foreignUser = $this->tenantUser($foreignTenant);
+        $foreign = Expense::factory()->for($foreignTenant)->plafond()->create([
+            'planning_year_id' => $foreignYear->getKey(),
+            'cost_center_id' => $foreignCenter->getKey(),
+        ]);
+        ExpenseRow::factory()->for($foreign)->allocationAdjustment($foreignUser)->create([
+            'tenant_id' => $foreignTenant->getKey(),
+        ]);
+        $foreignId = (int) $foreign->getKey();
         $this->actingAs($user, 'web');
 
         foreach (['coverage_percentage' => '50.00', 'coverage_amount' => '50.00', 'coverage_allocations' => [1, 2]] as $field => $value) {
@@ -70,7 +79,7 @@ final class PlafondCoverageTest extends TestCase
             ->assertJsonStructure(['error' => ['fields' => ['rows.0.is_extra']]]);
     }
 
-    /** @return array{Tenant, \App\Models\User, PlanningYear, CostCenter, CostCenter, Vendor} */
+    /** @return array{Tenant, User, PlanningYear, CostCenter, CostCenter, Vendor} */
     private function workspace(): array
     {
         $tenant = Tenant::factory()->create();

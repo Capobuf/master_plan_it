@@ -5,6 +5,7 @@ namespace Tests\Feature\Expenses;
 use App\Models\CostCenter;
 use App\Models\PlanningYear;
 use App\Models\Tenant;
+use App\Models\User;
 use App\Models\Vendor;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
@@ -38,7 +39,7 @@ final class PlafondAggregateTest extends TestCase
     {
         [, $user, $year, $center, $vendor] = $this->workspace();
         $this->actingAs($user, 'web');
-        $plafondId = $this->createPlafond($year, $center);
+        $plafondId = $this->createPlafond($year, $center, '3500.00');
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', $this->coveredActualPayload($year, $center, $vendor, $plafondId, '2500.00'))
             ->assertCreated();
         $request = $this->adjustmentRequest('-1200.00', 1);
@@ -55,7 +56,7 @@ final class PlafondAggregateTest extends TestCase
         $this->assertDatabaseCount('expense_rows', 2);
     }
 
-    /** @return array{Tenant, \App\Models\User, PlanningYear, CostCenter, Vendor} */
+    /** @return array{Tenant, User, PlanningYear, CostCenter, Vendor} */
     private function workspace(): array
     {
         $tenant = Tenant::factory()->create();
@@ -75,11 +76,11 @@ final class PlafondAggregateTest extends TestCase
         return ['lock_version' => $lockVersion, 'adjustment' => $this->adjustment($amount)];
     }
 
-    private function createPlafond(PlanningYear $year, CostCenter $center): int
+    private function createPlafond(PlanningYear $year, CostCenter $center, string $initialAllocation = '3000.00'): int
     {
         return (int) $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/plafonds', [
             'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(), 'title' => 'Infrastructure allocation', 'notes' => null,
-            'initial_allocation' => $this->adjustment('3000.00'),
+            'initial_allocation' => $this->adjustment($initialAllocation),
         ])->assertCreated()->json('data.id');
     }
 

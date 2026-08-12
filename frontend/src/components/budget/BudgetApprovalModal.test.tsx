@@ -105,4 +105,27 @@ describe("BudgetApprovalModal", () => {
       });
     });
   });
+
+  it("prefills a Plafond once and keeps covered planning at zero", async () => {
+    vi.mocked(applyBudgetApproval).mockResolvedValue(dataset);
+    const plafondDataset: AnnualBudget = {
+      ...dataset,
+      expenses: [
+        { ...expense(201, "Plafond infrastruttura", 5), kind: "plafond", planned: "3500.00" },
+        { ...expense(202, "Licenze coperte", 6), planned: "0.00", funded_plafond_expense_id: 201 },
+      ],
+    };
+    render(<BudgetApprovalModal dataset={plafondDataset} isOpen onClose={vi.fn()} onApplied={vi.fn()} />);
+
+    fireEvent.click(screen.getByRole("checkbox", { name: /Plafond infrastruttura/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: /Licenze coperte/ }));
+    fireEvent.click(screen.getByRole("button", { name: "Registra decisione" }));
+
+    await waitFor(() => expect(applyBudgetApproval).toHaveBeenCalledWith(20, expect.objectContaining({
+      items: [
+        { expense_id: 201, expense_lock_version: 5, approved_amount: "3500.00" },
+        { expense_id: 202, expense_lock_version: 6, approved_amount: "0.00" },
+      ],
+    })));
+  });
 });
