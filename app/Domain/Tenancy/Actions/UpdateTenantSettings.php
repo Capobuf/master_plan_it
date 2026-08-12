@@ -5,6 +5,10 @@ namespace App\Domain\Tenancy\Actions;
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
+use App\Domain\Economics\Services\EconomicEngine;
+use App\Domain\Expenses\Exceptions\PlafondInsufficientException;
+use App\Domain\Expenses\Services\PlafondCapacityService;
+use App\Domain\Reporting\Queries\EconomicDatasetQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\BudgetBasis;
 use App\Models\PlanningYear;
@@ -87,6 +91,30 @@ final class UpdateTenantSettings
                     (int) $tenant->getKey(),
                     $planningYearIds,
                 );
+
+                $proposedTenant = clone $tenant;
+                $proposedTenant->setRawAttributes([
+                    ...$tenant->getAttributes(),
+                    'budget_basis' => $values['economic_basis'],
+                ], true);
+                $proposedContext = new TenantContext($proposedTenant, $persistedActor);
+                $insufficiencies = [];
+                foreach ($planningYearIds as $planningYearId) {
+                    $dataset = app(EconomicDatasetQuery::class)->execute(
+                        $persistedActor,
+                        $proposedContext,
+                        $planningYearId,
+                        basisOverride: BudgetBasis::from($values['economic_basis']),
+                    );
+                    $projection = app(EconomicEngine::class)->project($dataset);
+                    $insufficiencies = [
+                        ...$insufficiencies,
+                        ...app(PlafondCapacityService::class)->insufficiencies($projection),
+                    ];
+                }
+                if ($insufficiencies !== []) {
+                    throw new PlafondInsufficientException($insufficiencies[0]);
+                }
             }
 
             $changedFields = array_values(array_filter(

@@ -56,7 +56,10 @@ final class ExpenseSchemaTest extends TestCase
     {
         $this->assertSame(['preparation', 'approved', 'closed'], array_column(BudgetState::cases(), 'value'));
         $this->assertSame(['ordinary', 'plafond'], array_column(ExpenseKind::cases(), 'value'));
-        $this->assertSame(['estimate', 'quote', 'actual'], array_column(ExpenseType::cases(), 'value'));
+        $this->assertSame(
+            ['estimate', 'quote', 'actual', 'allocation_adjustment'],
+            array_column(ExpenseType::cases(), 'value'),
+        );
     }
 
     public function test_money_columns_remain_exact_decimals_and_approved_amount_is_nullable(): void

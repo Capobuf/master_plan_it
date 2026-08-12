@@ -7,4 +7,5 @@ enum ExpenseType: string
     case Estimate = 'estimate';
     case Quote = 'quote';
     case Actual = 'actual';
+    case AllocationAdjustment = 'allocation_adjustment';
 }

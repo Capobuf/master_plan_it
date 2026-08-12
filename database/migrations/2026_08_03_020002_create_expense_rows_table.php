@@ -15,7 +15,8 @@ return new class extends Migration
             $table->unsignedBigInteger('expense_id');
             $table->unsignedBigInteger('position');
             $table->unsignedBigInteger('vendor_id')->nullable();
-            $table->enum('type', ['estimate', 'quote', 'actual']);
+            $table->enum('type', ['estimate', 'quote', 'actual', 'allocation_adjustment']);
+            $table->unsignedBigInteger('created_by_user_id')->nullable();
             $table->enum('confirmation_state', ['to_confirm', 'confirmed'])->nullable();
             $table->unsignedBigInteger('confirmed_by_user_id')->nullable();
             $table->timestamp('confirmed_at')->nullable();
@@ -66,6 +67,10 @@ return new class extends Migration
                 ->references('id')
                 ->on('users')
                 ->restrictOnDelete();
+            $table->foreign('created_by_user_id')
+                ->references('id')
+                ->on('users')
+                ->restrictOnDelete();
         });
 
         DB::statement('ALTER TABLE `expense_rows` ADD CONSTRAINT `expense_rows_extra_funding_xor` CHECK (NOT (is_extra = 1 AND funded_plafond_expense_id IS NOT NULL))');
@@ -73,6 +78,31 @@ return new class extends Migration
         DB::statement('ALTER TABLE `expense_rows` ADD CONSTRAINT `expense_rows_date_shape_period` CHECK (NOT (spend_date IS NULL AND distribution IS NULL))');
         DB::statement('ALTER TABLE `expense_rows` ADD CONSTRAINT `expense_rows_date_shape_complete` CHECK (NOT (distribution IS NOT NULL AND (period_start IS NULL OR period_end IS NULL)))');
         DB::statement('ALTER TABLE `expense_rows` ADD CONSTRAINT `expense_rows_confirmation_matrix` CHECK ((type <> \'actual\' AND confirmation_state IS NULL AND confirmed_by_user_id IS NULL AND confirmed_at IS NULL) OR (type = \'actual\' AND confirmation_state <=> \'to_confirm\' AND confirmed_by_user_id IS NULL AND confirmed_at IS NULL) OR (type = \'actual\' AND confirmation_state <=> \'confirmed\' AND confirmed_by_user_id IS NOT NULL AND confirmed_at IS NOT NULL))');
+        DB::statement(<<<'SQL'
+            ALTER TABLE `expense_rows`
+            ADD CONSTRAINT `expense_rows_allocation_adjustment_matrix` CHECK (
+                (type <> 'allocation_adjustment' AND created_by_user_id IS NULL) OR (
+                    type = 'allocation_adjustment'
+                    AND created_by_user_id IS NOT NULL
+                    AND entered_amount <> 0
+                    AND spend_date IS NOT NULL
+                    AND period_start IS NULL
+                    AND period_end IS NULL
+                    AND distribution IS NULL
+                    AND vendor_id IS NULL
+                    AND is_extra = 0
+                    AND funded_plafond_expense_id IS NULL
+                    AND confirmation_state IS NULL
+                    AND confirmed_by_user_id IS NULL
+                    AND confirmed_at IS NULL
+                    AND is_system_managed = 0
+                    AND manual_override_at IS NULL
+                    AND contract_term_id IS NULL
+                    AND source_key IS NULL
+                    AND external_reference IS NULL
+                )
+            )
+            SQL);
     }
 
     public function down(): void
