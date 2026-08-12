@@ -1,7 +1,7 @@
 # Research: Gap tra Baseline Corrente e Target Approvato
 
 **Data**: 2026-08-12
-**Stato**: decisioni risolte e modalità Greenfield consolidate; due compatibilità Plafond restano `OPEN QUESTION`; programma non implementato
+**Stato**: Slice 023 implementata e verificata; due compatibilità Plafond restano `OPEN QUESTION`; programma parzialmente implementato
 **Baseline verificata**: `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94`
 
 ## Metodo e autorità

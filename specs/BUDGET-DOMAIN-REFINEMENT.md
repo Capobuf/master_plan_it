@@ -1,13 +1,15 @@
 # Raffinamento del Dominio Budget
 
-**Stato**: `PROPOSED TARGET — Product decisions approved except two Plafond compatibility questions; not implemented`
+**Stato**: `VERIFIED CURRENT — Slice 023`; `PROPOSED TARGET — Slice 024–034`; two Slice 024 Plafond compatibility questions remain `OPEN QUESTION`
 **Data di consolidamento**: 2026-08-12
 **Baseline verificata**: `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94`
+**Corrente verificato**: `agent/022-integration@0d6c347289d886359923e582d6805f0accf489b8` per la Slice 023
 
 ## Autorità e classificazione
 
-Questo documento è la fonte di prodotto del target economico fino alla creazione e consegna delle
-Slice Verticali. Non descrive il comportamento già disponibile come se fosse stato implementato.
+Questo documento è la fonte di prodotto del target economico fino alla consegna delle rispettive
+Slice Verticali. La Slice 023 è `VERIFIED CURRENT`; le regole delle Slice successive restano
+`PROPOSED TARGET` e non sono descritte come già disponibili.
 
 - `VERIFIED CURRENT`: comportamento verificato nel codice della baseline.
 - `PROPOSED TARGET`: decisione approvata ma non ancora implementata.
@@ -413,7 +415,7 @@ ripristinabili e i Report storici a cutoff continuino a essere ricostruibili.
 
 ## Questioni aperte
 
-La Slice 023 può partire senza chiarimenti. Restano `OPEN QUESTION` per la Slice 024: se Extra
+La Slice 023 è stata consegnata e verificata. Restano `OPEN QUESTION` per la Slice 024: se Extra
 Budget e Copertura Plafond siano compatibili e se la copertura richieda lo stesso Centro di Costo
 del Plafond. I nomi SQL, la forma interna degli snapshot e altri dettagli reversibili restano
 decisioni tecniche delle rispettive Slice, non decisioni di prodotto da inventare qui.

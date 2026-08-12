@@ -1,7 +1,7 @@
 # Research: Workspace Annuale e Spesa Autorevole
 
 **Date**: 2026-08-12
-**Status**: `PROPOSED TARGET — all Slice 023 decisions resolved; not implemented`
+**Status**: `VERIFIED CURRENT — research decisions implemented and verified in 0d6c347`
 **Verified code baseline**: `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94`
 
 **Slice design branch base**: `agent/023-annual-expense-workspace@6d4e89f1216081566149eaf8cf2e4317bb44b0d8`

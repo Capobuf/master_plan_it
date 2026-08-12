@@ -1,6 +1,6 @@
 # API Contract: Slice 023 — Annual Expense Workspace
 
-**Version**: `PROPOSED TARGET` for `/api/v1`; not implemented
+**Version**: `VERIFIED CURRENT` for `/api/v1` at integration commit `0d6c347`
 **Date**: 2026-08-12
 **Compatibility**: atomic Greenfield cutover for the Slice 023 delta; no Expense `open/closed` payload
 

@@ -1,6 +1,6 @@
 # Expense Lifecycle Cutover Inventory
 
-**Status**: `PROPOSED TARGET — exhaustive inventory for Slice 023`
+**Status**: `VERIFIED CURRENT — exhaustive inventory applied and verified in Slice 023`
 
 This versioned inventory is the single executable map for removing the Expense `open|closed`
 lifecycle. Paths are relative to the repository root. An implementation that discovers another

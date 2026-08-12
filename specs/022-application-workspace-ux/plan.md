@@ -2,7 +2,7 @@
 
 **Branch**: `022-application-workspace-ux` | **Date**: 2026-08-12 | **Spec**: [spec.md](spec.md)
 
-**Planning Status**: `PROPOSED TARGET — Phase 1 aligned for Slice 023; two Slice 024 Plafond questions open; no tasks.md; not implemented`
+**Planning Status**: `VERIFIED CURRENT — Slice 023 complete`; `PROPOSED TARGET — Slice 024–034`; two Slice 024 Plafond questions remain `OPEN QUESTION`; program has no `tasks.md`
 
 **Input**: Confrontare il codice corrente con la UX definita in questa feature e con il dominio consolidato in `specs/BUDGET-DOMAIN-REFINEMENT.md`; individuare differenze, lavoro residuo, rischi e strategia di test con copertura completa delle regole economiche.
 
@@ -55,18 +55,18 @@ Macro-ordine delle aree, dettagliato successivamente nelle Slice Verticali:
 
 | Principle | Result | Evidence / Consequence |
 |---|---|---|
-| Documentazione permanente minima | PASS | L'audit e il piano restano nello Spec Kit; `docs/DOMAIN.md` non viene aggiornato prima dell'implementazione verificata. |
+| Documentazione permanente minima | PASS | L'audit e il piano restano nello Spec Kit; le sole regole verificate della Slice 023 sono propagate in `docs/DOMAIN.md`, `docs/ARCHITECTURE.md` e `docs/STATUS.md`. |
 | Spec Kit verticali | PASS BY DESIGN | La sezione **Slice Verticali di Implementazione** definisce risultati autonomi che attraversano Persistenza, Dominio, API, React e Test. |
-| Autorità sul corrente | PASS | Il baseline implementato è stato letto da modelli, Actions, Query, UI e test; il delta è descritto in `research.md`. |
+| Autorità sul corrente | PASS | Il corrente è verificato dal codice e dai test integrati in `0d6c347`; `research.md` conserva il confronto con la baseline iniziale. |
 | Decisioni di Prodotto | CONDITIONAL | Le decisioni necessarie alla Slice 023 e la modalità Greenfield sono risolte; due compatibilità Plafond restano aperte e bloccano la Slice 024; il purge automatico delle Spese non è stato introdotto. |
-| Laravel unico business owner | AT RISK | La UI calcola importi solo come supporto, ma il backend contiene più percorsi di riconciliazione economica da unificare. |
-| Un solo Motore Economico | FAIL IN BASELINE / TARGET APPROVATO | `EconomicEngine`, `AnnualBudgetQuery`, `HistoricalAnnualBudgetQuery` e `AnnualEconomicReportQuery` duplicano regole e riconciliazioni. La prima verticale deve correggere il problema; Budget, Report e Dashboard consumeranno la stessa proiezione autorevole. |
-| Denaro decimale esatto | PASS IN BASELINE | `Money`, BCMath e colonne `DECIMAL` sono presenti; la copertura delle regole rimane insufficiente rispetto al nuovo dominio. |
+| Laravel unico business owner | PASS THROUGH 023 | Le cinque superfici consumano la proiezione Laravel; React presenta valori canonici senza formule autorevoli. |
+| Un solo Motore Economico | PASS THROUGH 023 | Documento, Registro, Budget, Report e Dashboard consumano `AnnualEconomicProjection`; le Slice successive devono estenderla senza duplicarla. |
+| Denaro decimale esatto | PASS THROUGH 023 | BCMath, stringhe decimali e colonne `DECIMAL` sono provati dal Gate economico line/branch al 100%. |
 | Tenant isolation e autorizzazione server | PASS IN BASELINE | Query Tenant-bound, Policy, middleware e test di autorizzazione sono già diffusi. Ogni nuova mutazione deve mantenere allow/deny/rollback. |
 | Minima complessità | CONDITIONAL PASS | Riutilizzare Actions, Snapshot e preferenze esistenti; non introdurre CQRS, event bus o un framework universale di tabelle. |
-| Test proporzionati | BASELINE PASS / TARGET DA ESEGUIRE PER SLICE | Il 2026-08-12 i gate backend Docker/MySQL e frontend sono stati eseguiti verdi sulla baseline; ogni Slice deve aggiungere ed eseguire i propri test e coverage target. |
+| Test proporzionati | SLICE 023 PASS / LATER SLICES PENDING | I Gate 023 Backend, MySQL, coverage, Frontend, browser e review sono verdi; ogni Slice successiva deve aggiungere ed eseguire i propri Gate. |
 
-## Planning Gate — Superato per la Slice 023; condizionato per la Slice 024
+## Planning Gate — Slice 023 completata; Slice 024 bloccata dalle decisioni indicate
 
 Le decisioni restano registrate per evitare che vengano riaperte implicitamente:
 
@@ -206,19 +206,19 @@ Gli ID successivi disponibili sono assegnati stabilmente alle Slice. `READY` sig
 relativo Spec Kit può essere completato e analizzato; non autorizza a ignorare le dipendenze di
 implementazione.
 
-| ID | Slice | Stato iniziale | `BLOCKED_BY` | `CONFLICTS_WITH` / `SHARED_OWNER` |
+| ID | Slice | Stato corrente | `BLOCKED_BY` | `CONFLICTS_WITH` / `SHARED_OWNER` |
 |---|---|---|---|---|
-| 023 | Annual Expense Workspace | `READY` | — | possiede inizialmente schema Expense/ExpenseRow, Motore Economico, shell Tenant/Anno e contratto errori condiviso |
-| 024 | Single Plafond Coverage | `BLOCKED_BY` | 023 e decisioni Extra/Plafond + compatibilità Centro di Costo | `SHARED_OWNER`: ExpenseRow, Motore Economico e dataset Report; integrazione dal primario |
-| 025 | Budget Proposal Approval | `BLOCKED_BY` | 023, 024 | `SHARED_OWNER`: Motore Economico, PlanningYear, RevisionBatch; Annullamento usa i quattro gruppi approvati Effettivi/Extra/Rettifiche/Chiusure |
+| 023 | Annual Expense Workspace | `COMPLETE` | — | possiede schema Expense/ExpenseRow, Motore Economico, shell Tenant/Anno e contratto errori condiviso |
+| 024 | Single Plafond Coverage | `BLOCKED_BY` | decisioni Extra/Plafond + compatibilità Centro di Costo | `SHARED_OWNER`: ExpenseRow, Motore Economico e dataset Report ereditati da 023; integrazione dal primario |
+| 025 | Budget Proposal Approval | `BLOCKED_BY` | 024 | `SHARED_OWNER`: Motore Economico, PlanningYear, RevisionBatch; Annullamento usa i quattro gruppi approvati Effettivi/Extra/Rettifiche/Chiusure |
 | 026 | Budget Rectification Closure | `BLOCKED_BY` | 025 | `CONFLICTS_WITH` 027 sul lifecycle delle Spese di Progetto; esecuzione seriale |
-| 027 | Annual Project Continuation | `BLOCKED_BY` | 023, 025, 026 | `SHARED_OWNER`: attribuzione annuale Expense, Rettifiche e raggruppamento economico |
-| 028 | Contract Schedule Actuals | `BLOCKED_BY` | 023, 025, 026, 027 | `SHARED_OWNER`: origine/Source Key ExpenseRow e mutazioni su Anno Chiuso |
+| 027 | Annual Project Continuation | `BLOCKED_BY` | 025, 026 | `SHARED_OWNER`: attribuzione annuale Expense, Rettifiche e raggruppamento economico |
+| 028 | Contract Schedule Actuals | `BLOCKED_BY` | 025, 026, 027 | `SHARED_OWNER`: origine/Source Key ExpenseRow e mutazioni su Anno Chiuso |
 | 029 | Annual Composition History | `BLOCKED_BY` | 024–028 | `SHARED_OWNER`: proiezione e snapshot storici |
-| 030 | Expense Trash Recovery | `BLOCKED_BY` | 023–029 | `SHARED_OWNER`: delete aggregato, Source Key e Rettifica; Allegati terminali |
-| 031 | Revision History Retention | `BLOCKED_BY` | 023, 030 | `SHARED_OWNER`: RevisionBatch/Item e proiezione a cutoff |
-| 032 | Comparative Reporting Dashboard | `BLOCKED_BY` | 023–031 | consuma il Motore Economico; non ridefinisce formule |
-| 033 | Consistent Registers Guidance | `BLOCKED_BY` | 023, 027, 028, 032 | `SHARED_OWNER`: shell, registri, preferenze e UI Anagrafiche |
+| 030 | Expense Trash Recovery | `BLOCKED_BY` | 024–029 | `SHARED_OWNER`: delete aggregato, Source Key e Rettifica; Allegati terminali |
+| 031 | Revision History Retention | `BLOCKED_BY` | 030 | `SHARED_OWNER`: RevisionBatch/Item e proiezione a cutoff |
+| 032 | Comparative Reporting Dashboard | `BLOCKED_BY` | 024–031 | consuma il Motore Economico; non ridefinisce formule |
+| 033 | Consistent Registers Guidance | `BLOCKED_BY` | 027, 028, 032 | `SHARED_OWNER`: shell, registri, preferenze e UI Anagrafiche |
 | 034 | Tenant Admin Self Hosting | `BLOCKED_BY` | 030, 031, 033 | `SHARED_OWNER`: settings Tenant, permessi ed evidenza Scheduler |
 
 ### Onde e concorrenza
@@ -247,7 +247,7 @@ consente comunque soltanto tre subagenti oltre al primario.
 | Principle | Result | Design Evidence |
 |---|---|---|
 | Spec Kit verticali | PASS | Dodici risultati utente ordinati; nessuna fase separata per Database, Backend o Frontend. |
-| Decisioni di Prodotto | CONDITIONAL | Le decisioni risolte sono incorporate; restano due chiarimenti espliciti che bloccano soltanto 024 e non 023. |
+| Decisioni di Prodotto | CONDITIONAL | Le decisioni risolte sono incorporate; restano due chiarimenti espliciti che bloccano soltanto 024, mentre 023 è completa. |
 | Laravel unico business owner | PASS BY TARGET | Preview e mutazioni economiche passano da Actions/servizi Laravel; React presenta e mantiene input. |
 | Un solo Motore Economico | PASS BY TARGET | Tutti i read model consumano una sola proiezione; le Query non implementano formule. |
 | Denaro esatto | PASS | Importi canonici `DECIMAL`/stringhe; nessun float autorevole. |

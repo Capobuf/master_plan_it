@@ -4,16 +4,15 @@
 
 **Created**: 2026-08-12
 
-**Status**: `PROPOSED TARGET — Slice design complete; not implemented`
+**Status**: `VERIFIED CURRENT — implemented and integrated in 0d6c347 on 2026-08-12`
 
 **Input**: Configurare la Base Economica ufficiale Netto/Lordo del Tenant, scegliere Tenant e Anno in una Barra Superiore minima, creare e aggiornare una Spesa autorevole con Stime, Preventivi ed Effettivi positivi o negativi, selezionare una sola pianificazione corrente, rimuovere il lifecycle Aperta/Chiusa, separare la Data reale dall'Anno Economico e riconciliare Documento, Registro, Budget corrente/storico, Drill-Down Report e Dashboard attraverso una sola proiezione economica Laravel.
 
 ## Contesto, Autorità e Delta
 
-- `VERIFIED CURRENT`: la baseline di codice verificata `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94` possiede già autenticazione Sanctum, Tenant context fail-closed, Base Budget del Tenant, Spese e Righe, selezione della pianificazione corrente, aritmetica decimale, revisioni aggregate, audit, Registro, Documento, Budget e Report. Il commit `6d4e89f1216081566149eaf8cf2e4317bb44b0d8` è soltanto la base documentale del branch di design della Slice, non una nuova baseline di codice verificata.
-- `PROPOSED TARGET`: questa Slice consegna soltanto il primo risultato verticale del programma 022. Non dichiara implementato alcun comportamento prima della verifica del codice e dei test.
-- `CONFLICT`: la baseline espone lifecycle Spesa `open/closed`, `closure_outcome`, azioni Close/Move, filtri e copy correlati; limita la Data dell'Effettivo allo stesso anno civile; produce totali attraverso percorsi economici non ancora unificati.
-- `DEPRECATED`: `Actual`, `Forecast`, `Spesa Aperta`, `Spesa Chiusa`, esiti di chiusura e riapertura implicita non sono termini o comportamenti del target.
+- `VERIFIED CURRENT`: il commit integrato `0d6c347289d886359923e582d6805f0accf489b8` consegna il primo risultato verticale del programma 022: Base Economica, shell Tenant/Anno, Spesa autorevole, proiezione economica unica e riconciliazione delle cinque superfici. Il comportamento è provato dai Gate registrati in `quickstart.md`.
+- `DEPRECATED`: la baseline iniziale `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94` esponeva lifecycle Spesa `open/closed`, `closure_outcome`, azioni Close/Move, Data dell'Effettivo limitata allo stesso anno civile e percorsi economici duplicati; questi comportamenti sono stati rimossi dalla Slice.
+- `DEPRECATED`: le etichette UI inglesi `Actual` e `Forecast`, `Spesa Aperta`, `Spesa Chiusa`, esiti di chiusura e riapertura implicita non appartengono al comportamento corrente. Il valore tecnico `actual` resta il tipo API persistito della Riga Effettivo.
 - La fonte di prodotto per le regole economiche è `specs/BUDGET-DOMAIN-REFINEMENT.md`; il programma e la UX comune sono in `specs/022-application-workspace-ux/`.
 - Il Product Owner ha confermato il 2026-08-12 che il prodotto è Greenfield e non contiene dati reali da preservare. Questa conferma consente il consolidamento dello schema e la ricostruzione dei soli ambienti protetti di sviluppo/test, ma non autorizza purge automatici di dominio.
 

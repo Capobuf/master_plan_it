@@ -1,6 +1,6 @@
 # Contratto API di Programma
 
-**Versione**: `PROPOSED TARGET` per `/api/v1`; endpoint non implementati
+**Versione**: `VERIFIED CURRENT — Slice 023` per `/api/v1`; endpoint delle Slice successive `PROPOSED TARGET`
 **Ambito**: Delta richiesto dalle Slice Verticali; gli endpoint correnti non menzionati restano
 baseline finché la relativa Slice non li modifica.
 

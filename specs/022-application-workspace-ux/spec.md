@@ -4,7 +4,7 @@
 
 **Created**: 2026-08-12
 
-**Status**: `PROPOSED TARGET — Program approved except two Slice 024 Plafond compatibility questions; not implemented`
+**Status**: `VERIFIED CURRENT — Slice 023`; `PROPOSED TARGET — Slice 024–034`; two Slice 024 Plafond compatibility questions remain `OPEN QUESTION`
 
 **Input**: Definire l'architettura UX/UI trasversale dell'applicazione: Barra Superiore, contesto globale del Tenant e dell'Anno, Dashboard, registri, navigazione Budget e Report, dettaglio Spesa, Guida Contestuale, date valide, Revisioni, gestione Tenant e operatività self-hosted.
 

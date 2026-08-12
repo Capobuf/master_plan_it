@@ -1,6 +1,6 @@
 # Modello Dati Target: Dominio Budget e Workspace Annuale
 
-**Stato**: `PROPOSED TARGET — Logical design; not implemented`
+**Stato**: `VERIFIED CURRENT — Slice 023 schema`; `PROPOSED TARGET — later-slice logical design`
 **Data**: 2026-08-12
 **Fonte di Verità di Prodotto**: `../BUDGET-DOMAIN-REFINEMENT.md`
 

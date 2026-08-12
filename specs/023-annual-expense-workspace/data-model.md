@@ -1,6 +1,6 @@
 # Data Model: Workspace Annuale e Spesa Autorevole
 
-**Status**: `PROPOSED TARGET — logical design; not implemented`
+**Status**: `VERIFIED CURRENT — schema and model delta implemented in 0d6c347`
 **Date**: 2026-08-12
 **Scope**: Slice 023 only; SQL consolidation belongs to the primary integration owner
 

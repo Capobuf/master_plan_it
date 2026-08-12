@@ -2,7 +2,7 @@
 
 **Branch**: `agent/023-annual-expense-workspace` | **Date**: 2026-08-12 | **Spec**: [spec.md](spec.md)
 
-**Planning Status**: `PROPOSED TARGET — Phase 0/1 complete; not implemented`
+**Planning Status**: `VERIFIED CURRENT — implementation and all delivery gates complete in 0d6c347`
 
 **Input**: Feature specification from `specs/023-annual-expense-workspace/spec.md`
 

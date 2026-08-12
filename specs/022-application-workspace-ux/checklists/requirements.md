@@ -6,7 +6,7 @@
 
 ## Autorità e stato
 
-- [x] CHK-001 Il target è marcato non implementato e distinto dalla baseline corrente.
+- [x] CHK-001 Il programma è marcato parzialmente implementato: Slice 023 distinta come corrente verificato e Slice successive distinte come target.
 - [x] CHK-002 Il documento di dominio è indicato come fonte di prodotto per formule e lifecycle.
 - [x] CHK-003 Gli Spec Kit implementati restano baseline e le regole sostituite sono marcate
   `CONFLICT` o `DEPRECATED`, non riscritte come corrente.

@@ -7,7 +7,7 @@
 ## Content Quality
 
 - [x] CHK-001 La specifica descrive risultato e valore utente senza imporre dettagli tecnici nelle storie e nei criteri di successo.
-- [x] CHK-002 Il target non implementato è distinto dalla baseline corrente e usa le classificazioni di autorità richieste.
+- [x] CHK-002 La baseline iniziale, il delta allora proposto e il comportamento ora `VERIFIED CURRENT` sono distinti con le classificazioni di autorità richieste.
 - [x] CHK-003 Tutte le sezioni obbligatorie sono complete e leggibili anche da stakeholder non tecnici.
 - [x] CHK-004 Lo scope è una Slice verticale end-to-end e non una feature orizzontale o la mega-feature 022.
 
@@ -34,7 +34,7 @@
 ## Read-only Analyze Outcome
 
 - [x] CHK-019 La re-review read-only è stata rieseguita dopo ogni remediation su sicurezza, test design e surface parity.
-- [x] CHK-020 Lo Spec Kit è pronto all'implementazione: zero CRITICAL/HIGH/MEDIUM residui nei tre audit finali; il comportamento resta `PROPOSED TARGET` finché il codice non è verificato.
+- [x] CHK-020 Lo Spec Kit è implementato e verificato: zero CRITICAL/HIGH residui nei tre audit finali e comportamento classificato `VERIFIED CURRENT` dopo i Gate completi.
 - [x] CHK-021 Task, inventory lifecycle e finding MEDIUM/LOW sono riconciliati; nessun report globale parallelo è stato creato.
 
 ## Notes
