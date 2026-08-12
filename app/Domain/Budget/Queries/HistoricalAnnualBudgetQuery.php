@@ -413,7 +413,10 @@ final class HistoricalAnnualBudgetQuery
             'unapproved_actual_expenses' => $unapproved];
     }
 
-    /** @param list<array<string, mixed>> $rows @return array{EconomicMeasure, EconomicMeasure} */
+    /**
+     * @param  list<array<string, mixed>>  $rows
+     * @return array{EconomicMeasure, EconomicMeasure}
+     */
     private function selectedTotals(array $rows, AnnualEconomicProjection $projection): array
     {
         $planning = EconomicMeasure::zero($projection->basis);
