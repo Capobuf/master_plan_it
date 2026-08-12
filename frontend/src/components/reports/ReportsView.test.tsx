@@ -81,7 +81,6 @@ const response: ReportsResponse = {
     residual: "150.00",
     variance: "-150.00",
     utilization_percentage: "85.00",
-    plafond_overrun: "0.00",
     unapproved_actual_expenses: 1,
   },
   currency: "EUR",
@@ -90,7 +89,6 @@ const response: ReportsResponse = {
     current_planning: { net: "1200.00", vat: "264.00", gross: "1464.00", official: "1200.00" },
     actual: { net: "850.00", vat: "187.00", gross: "1037.00", official: "850.00" },
   },
-  global_plafond_overrun: "50.00",
   filters: { planning_year_id: 1, cost_center_id: null, project_id: 20, contract_id: null, vendor_id: null, group_by: "project", as_of: null },
 };
 

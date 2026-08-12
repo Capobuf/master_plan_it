@@ -4,6 +4,9 @@ export const routes = {
   budget: "/budget",
   report: "/report",
   spese: "/spese",
+  plafonds: "/plafonds",
+  nuovoPlafond: "/plafonds/nuovo",
+  plafond: (plafondId: number | string) => `/plafonds/${plafondId}`,
   nuovaSpesa: "/spese/nuova",
   spesa: (expenseId: number | string) => `/spese/${expenseId}`,
   modificaSpesa: (expenseId: number | string) => `/spese/${expenseId}/modifica`,
@@ -31,6 +34,7 @@ export const routes = {
 
 export const routePatterns = {
   spesa: "/spese/:expenseId",
+  plafond: "/plafonds/:plafondId",
   modificaSpesa: "/spese/:expenseId/modifica",
   contratto: "/contratti/:contractId",
   modificaContratto: "/contratti/:contractId/modifica",

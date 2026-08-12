@@ -19,6 +19,9 @@ import ExpenseRegister from "./pages/Expenses/ExpenseRegister";
 import ExpenseDetail from "./pages/Expenses/ExpenseDetail";
 import ExpenseNew from "./pages/Expenses/ExpenseNew";
 import ExpenseEdit from "./pages/Expenses/ExpenseEdit";
+import PlafondsHome from "./pages/Plafonds/Home";
+import NewPlafond from "./pages/Plafonds/New";
+import PlafondPage from "./pages/Plafonds/Detail";
 import Contracts from "./pages/Contracts/Contracts";
 import ContractDetail from "./pages/Contracts/ContractDetail";
 import NewContract from "./pages/Contracts/NewContract";
@@ -53,6 +56,9 @@ function createApplicationRouter() {
                 <Route path={routes.budget} element={<Budget />} />
                 <Route path={routes.report} element={<Reports />} />
                 <Route path={routes.spese} element={<ExpenseRegister />} />
+                <Route path={routes.plafonds} element={<PlafondsHome />} />
+                <Route path={routes.nuovoPlafond} element={<NewPlafond />} />
+                <Route path={routePatterns.plafond} element={<PlafondPage />} />
                 <Route path={routes.nuovaSpesa} element={<ExpenseNew />} />
                 <Route path={routePatterns.spesa} element={<ExpenseDetail />} />
                 <Route path={routePatterns.modificaSpesa} element={<ExpenseEdit />} />

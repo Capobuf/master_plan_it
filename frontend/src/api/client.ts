@@ -56,6 +56,7 @@ interface ErrorPayload {
     code?: unknown;
     message?: unknown;
     fields?: unknown;
+    details?: unknown;
     correlation_id?: unknown;
   };
 }
@@ -113,6 +114,7 @@ export class ApiError extends Error {
   readonly handledStatus: HandledApiStatus | null;
   readonly code: string;
   readonly fields: Record<string, unknown>;
+  readonly details: Record<string, unknown>;
   readonly correlationId: string | null;
 
   constructor(options: {
@@ -120,6 +122,7 @@ export class ApiError extends Error {
     status?: number | null;
     code?: string;
     fields?: Record<string, unknown>;
+    details?: Record<string, unknown>;
     correlationId?: string | null;
     cause?: unknown;
   }) {
@@ -133,6 +136,7 @@ export class ApiError extends Error {
         : null;
     this.code = options.code ?? "REQUEST_FAILED";
     this.fields = options.fields ?? {};
+    this.details = options.details ?? {};
     this.correlationId = options.correlationId ?? null;
   }
 
@@ -163,6 +167,7 @@ export class ApiError extends Error {
       status: axiosError.response?.status ?? null,
       code: payloadCode ?? axiosError.code ?? "REQUEST_FAILED",
       fields: isRecord(payload?.fields) ? payload.fields : {},
+      details: isRecord(payload?.details) ? payload.details : {},
       correlationId: stringValue(payload?.correlation_id) ?? headerCorrelationId,
       cause: error,
     });

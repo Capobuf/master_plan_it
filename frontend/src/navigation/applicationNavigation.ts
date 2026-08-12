@@ -76,6 +76,12 @@ export const applicationNavigation = [
         requiredAbility: "expense.view",
       },
       {
+        route: routes.plafonds,
+        label: "Plafond",
+        icon: DollarLineIcon,
+        requiredAbility: "expense.view",
+      },
+      {
         route: routes.contratti,
         label: "Contratti",
         icon: DocsIcon,
