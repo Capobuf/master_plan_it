@@ -130,7 +130,7 @@ and roll back every side effect at each injected failure boundary.
 - [ ] T039 [US2] Update Approved overview to source planned totals solely from the active immutable snapshot while preserving current evaluations/Actuals in `app/Domain/Budget/Queries/AnnualBudgetQuery.php` and `app/Http/Resources/Api/V1/AnnualBudgetResource.php`
 - [ ] T040 [P] [US2] Implement strict approve API call and error preservation without legacy payload fallbacks in `frontend/src/api/budget.ts` and `frontend/src/api/budget.test.ts`
 - [ ] T041 [US2] Replace the selected-item editor with effective-date/note/composition confirmation and accessible stale re-review behavior in `frontend/src/components/budget/BudgetApprovalModal.tsx`
-- [ ] T042 [US2] Remove `ApplyBudgetApproval`, partial DTOs, variation enum, legacy route method and downstream mutable field use from `app/Domain/Budget/Actions/ApplyBudgetApproval.php`, `app/Http/Controllers/Api/V1/BudgetLifecycleController.php`, `app/Domain/Budget/Queries/AnnualBudgetQuery.php` and `routes/api/v1/reporting.php`
+- [ ] T042 [US2] Remove residual partial-approval DTO/controller/query assumptions after the legacy Action's Foundation removal from `app/Http/Controllers/Api/V1/BudgetLifecycleController.php`, `app/Domain/Budget/Queries/AnnualBudgetQuery.php` and `routes/api/v1/reporting.php`
 - [ ] T043 [US2] Register `ApproveBudgetProposal` and its failure checkpoints in `tests/Architecture/Fixtures/domain-write-rollback-map.php` and make `tests/Architecture/WriteRollbackCoverageTest.php` green
 
 **Checkpoint**: User Stories 1 and 2 work end to end; exactly one complete decision can become

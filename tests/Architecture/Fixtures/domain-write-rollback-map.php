@@ -2,7 +2,7 @@
 
 return [
     'schema' => 3,
-    'expectedDomainWriteCount' => 64,
+    'expectedDomainWriteCount' => 62,
     'writes' => [
         'app/Domain/Plafonds/Actions/CreatePlafond.php' => [
             'actionClass' => 'App\\Domain\\Plafonds\\Actions\\CreatePlafond',
@@ -749,26 +749,6 @@ return [
             'failureTrigger' => 'throw new ',
             'failureExpectation' => 'expectException(',
             'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseCount('],
-        ],
-        'app/Domain/Budget/Actions/ApplyBudgetApproval.php' => [
-            'actionClass' => 'App\\Domain\\Budget\\Actions\\ApplyBudgetApproval',
-            'actionReference' => 'ApplyBudgetApproval::class',
-            'actionInvocation' => ['mode' => 'assigned-container', 'variable' => '$action', 'method' => 'execute'],
-            'testFile' => 'tests/Feature/Budget/AnnualBudgetLifecycleTest.php',
-            'testMethod' => 'test_apply_budget_approval_audit_failure_rolls_back_the_whole_operation',
-            'failureTrigger' => 'throw new ',
-            'failureExpectation' => 'expectException(',
-            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseMissing(', 'assertDatabaseCount('],
-        ],
-        'app/Domain/Budget/Actions/CloseAnnualBudget.php' => [
-            'actionClass' => 'App\\Domain\\Budget\\Actions\\CloseAnnualBudget',
-            'actionReference' => 'CloseAnnualBudget::class',
-            'actionInvocation' => ['mode' => 'assigned-container', 'variable' => '$action', 'method' => 'execute'],
-            'testFile' => 'tests/Feature/Budget/AnnualBudgetLifecycleTest.php',
-            'testMethod' => 'test_close_annual_budget_audit_failure_rolls_back_state_and_revision',
-            'failureTrigger' => 'throw new ',
-            'failureExpectation' => 'expectException(',
-            'rollbackAssertions' => ['assertDatabaseHas(', 'assertDatabaseMissing(', 'assertDatabaseCount('],
         ],
         'app/Domain/Revisions/Actions/ActivateAnnualHistory.php' => [
             'actionClass' => 'App\\Domain\\Revisions\\Actions\\ActivateAnnualHistory',
