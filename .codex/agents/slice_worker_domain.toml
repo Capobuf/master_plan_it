@@ -9,4 +9,3 @@ changes and shared-owner boundaries. Implement the smallest complete vertical ou
 including tests and documentation required by the packet. Never push, open a pull
 request, or merge. Stop and report any semantic conflict or destructive migration.
 """
-

@@ -9,4 +9,3 @@ and shared-owner declarations, keep changes vertically complete, add proportiona
 tests, and avoid unrelated refactors. Never push, open a pull request, or merge. Stop
 and report blockers rather than weakening acceptance criteria.
 """
-

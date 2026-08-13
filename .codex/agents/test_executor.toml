@@ -9,4 +9,3 @@ or tests unless that exact ownership is explicitly delegated. Preserve raw failu
 evidence, distinguish product defects from environment failures, and never suppress,
 skip, or weaken a failing test to obtain green status.
 """
-

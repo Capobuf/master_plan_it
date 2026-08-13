@@ -9,4 +9,3 @@ integration gate, emphasizing tenant isolation, atomic failures, economic invari
 closed-year rectification, deletion semantics, and surface parity. Cite the owning
 requirement and target test location for each case.
 """
-

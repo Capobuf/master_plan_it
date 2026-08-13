@@ -9,4 +9,3 @@ surface. Check visibility, permissions, validation, errors, atomicity, and lifec
 semantics. Treat hidden alternate paths and mismatched rules as blockers when they can
 change economic data or bypass policy.
 """
-
