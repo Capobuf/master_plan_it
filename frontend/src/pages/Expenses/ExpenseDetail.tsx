@@ -24,6 +24,7 @@ import Alert from "../../components/ui/alert/Alert";
 import Button from "../../components/ui/button/Button";
 import { useApplicationContext } from "../../context/ApplicationContext";
 import { usePlanningYear } from "../../context/PlanningYearContext";
+import { useQueryPlanningYear } from "../../hooks/useQueryPlanningYear";
 import { PencilIcon, TrashBinIcon } from "../../icons";
 import { routes } from "../../navigation/routes";
 
@@ -44,6 +45,7 @@ export default function ExpenseDetail() {
   const tenantId = applicationContext?.tenant?.id ?? null;
   const expenseId = expenseIdParam && /^\d+$/.test(expenseIdParam) ? Number(expenseIdParam) : null;
   const canView = hasAbility("expense.view");
+  useQueryPlanningYear();
   const detail = detailState?.tenantId === tenantId && detailState.yearId === selectedPlanningYearId ? detailState.detail : null;
 
   const loadDetail = useCallback(async () => {

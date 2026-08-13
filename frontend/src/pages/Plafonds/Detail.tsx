@@ -9,10 +9,12 @@ import PlafondEditor from "../../components/plafonds/PlafondEditor";
 import Alert from "../../components/ui/alert/Alert";
 import { useApplicationContext } from "../../context/ApplicationContext";
 import { usePlanningYear } from "../../context/PlanningYearContext";
+import { useQueryPlanningYear } from "../../hooks/useQueryPlanningYear";
 
 export default function PlafondPage() {
   const { plafondId } = useParams<{ plafondId: string }>(); const id = plafondId && /^\d+$/.test(plafondId) ? Number(plafondId) : null;
   const { hasAbility } = useApplicationContext(); const { selectedPlanningYearId } = usePlanningYear(); const [detail, setDetail] = useState<PlafondDetailData | null>(null); const [error, setError] = useState<ApiError | null>(null);
+  useQueryPlanningYear();
   useEffect(() => {
     if (id === null || selectedPlanningYearId === null || !hasAbility("expense.view")) return;
     let active = true;
