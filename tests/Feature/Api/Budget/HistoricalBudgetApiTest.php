@@ -82,7 +82,7 @@ final class HistoricalBudgetApiTest extends TestCase
             ->assertJsonMissingPath('data.summary')
             ->assertJsonMissingPath('data.historical_context');
         $this->assertSame([
-            'planning_year', 'currency', 'basis', 'economic_base', 'proposal', 'approved_snapshot',
+            'planning_year', 'currency', 'basis', 'surface_fingerprint', 'economic_base', 'proposal', 'approved_snapshot',
             'informative_evaluations', 'actuals', 'actions',
         ], array_keys($response->json('data')));
         $this->assertSame($before, [

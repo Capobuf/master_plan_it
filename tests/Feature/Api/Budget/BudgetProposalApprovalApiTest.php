@@ -67,7 +67,7 @@ final class BudgetProposalApprovalApiTest extends TestCase
             ->assertJsonMissingPath('data.approved_amount')
             ->assertJsonMissingPath('data.approved_basis');
         $this->assertSame(
-            ['planning_year', 'currency', 'basis', 'composition', 'total', 'contributors', 'exclusions', 'can_approve', 'empty_composition'],
+            ['planning_year', 'currency', 'basis', 'surface_fingerprint', 'composition', 'total', 'contributors', 'exclusions', 'can_approve', 'empty_composition'],
             array_keys($response->json('data')),
         );
         $this->assertSame(
@@ -145,7 +145,7 @@ final class BudgetProposalApprovalApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonStructure(['data' => [
-                'planning_year', 'currency', 'basis', 'economic_base', 'proposal', 'approved_snapshot',
+                'planning_year', 'currency', 'basis', 'surface_fingerprint', 'economic_base', 'proposal', 'approved_snapshot',
                 'informative_evaluations', 'actuals', 'actions',
             ]])
             ->assertJsonPath('data.planning_year.id', $year->getKey())
@@ -159,7 +159,7 @@ final class BudgetProposalApprovalApiTest extends TestCase
             ->assertJsonMissingPath('data.plafonds');
 
         $this->assertSame([
-            'planning_year', 'currency', 'basis', 'economic_base', 'proposal', 'approved_snapshot',
+            'planning_year', 'currency', 'basis', 'surface_fingerprint', 'economic_base', 'proposal', 'approved_snapshot',
             'informative_evaluations', 'actuals', 'actions',
         ], array_keys($response->json('data')));
         $this->assertSame($before, $this->effects($year->fresh(), $tenant->fresh()));
@@ -240,13 +240,10 @@ final class BudgetProposalApprovalApiTest extends TestCase
         $this->assertTrue($contributors['plafond_allocation']['drill_down']['authorized']);
         $this->assertSame('/api/v1/plafonds/'.$plafond->getKey(), $contributors['plafond_allocation']['drill_down']['href']);
         $softDeleted = collect($response->json('data.exclusions'))->where('reason', 'soft_deleted');
-        $this->assertCount(2, $softDeleted);
-        foreach ($softDeleted as $item) {
-            $this->assertNull($item['expense']);
-            $this->assertNull($item['row']);
-            $this->assertFalse($item['drill_down']['authorized']);
-            $this->assertNull($item['drill_down']['href']);
-        }
+        $this->assertCount(0, $softDeleted);
+        $this->assertStringNotContainsString('Secret tombstone', $response->getContent());
+        $this->assertStringNotContainsString('Deleted root row', $response->getContent());
+        $this->assertStringNotContainsString('expense-row:'.$deleted->getKey(), $response->getContent());
     }
 
     public function test_platform_administrator_gets_per_source_navigation(): void

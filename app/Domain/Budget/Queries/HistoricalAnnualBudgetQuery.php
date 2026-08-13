@@ -6,12 +6,12 @@ use App\Domain\Budget\Data\ApprovalExclusion;
 use App\Domain\Budget\Services\BudgetProposalComposer;
 use App\Domain\Budget\Services\BudgetSourceAccessResolver;
 use App\Domain\Budget\Services\CoherentBudgetRead;
-use App\Domain\Economics\Data\AnnualEconomicProjection;
 use App\Domain\Economics\Data\EconomicDataset;
 use App\Domain\Economics\Data\EconomicLine;
 use App\Domain\Economics\Data\EconomicMeasure;
 use App\Domain\Economics\Data\EconomicScope;
 use App\Domain\Economics\Services\EconomicEngine;
+use App\Domain\Reporting\Data\AnnualReportEvidence;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\BudgetBasis;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
@@ -71,7 +71,12 @@ final readonly class HistoricalAnnualBudgetQuery
 
             $expenseSnapshots = $latest->where('type', $this->morphClass(Expense::class))->keyBy('id');
             $rowSnapshots = $latest->where('type', $this->morphClass(ExpenseRow::class));
-            $references = $this->references($latest);
+            $references = $this->referenceSnapshots(
+                $authorizedContext->tenantId,
+                $cutoff,
+                $expenseSnapshots,
+                $rowSnapshots,
+            );
             [$dataset, $metadata] = $this->datasetAndMetadata(
                 $authorizedContext->tenantId,
                 $planningYearId,
@@ -82,16 +87,19 @@ final readonly class HistoricalAnnualBudgetQuery
                 $tenant,
             );
             $projection = $this->engine->project($dataset);
+            $state = (string) ($yearSnapshot['contents']['budget_state'] ?? 'preparation');
+            $lockedAt = $tenant->economic_basis_locked_at;
+            $lockedAtString = $lockedAt instanceof CarbonInterface ? $lockedAt->toISOString() : null;
             $proposal = $this->composer->compose(
                 $projection,
                 (int) ($yearSnapshot['contents']['lock_version'] ?? 1),
                 $sourceAccess,
                 $metadata,
+                $state,
+                $lockedAtString,
             );
             $proposalArray = $proposal->toArray();
             unset($proposalArray['contributors'], $proposalArray['exclusions']);
-            $state = (string) ($yearSnapshot['contents']['budget_state'] ?? 'preparation');
-            $lockedAt = $tenant->economic_basis_locked_at;
 
             return [
                 'planning_year' => [
@@ -102,9 +110,10 @@ final readonly class HistoricalAnnualBudgetQuery
                 ],
                 'currency' => $projection->currency,
                 'basis' => $projection->basis,
+                'surface_fingerprint' => $proposal->surfaceFingerprint,
                 'economic_base' => [
                     'basis' => $projection->basis,
-                    'locked_at' => $lockedAt instanceof CarbonInterface ? $lockedAt->toISOString() : null,
+                    'locked_at' => $lockedAtString,
                 ],
                 'proposal' => $proposalArray,
                 'approved_snapshot' => $this->approvedSnapshot($authorizedContext->tenantId, $planningYearId, $cutoff),
@@ -119,39 +128,61 @@ final readonly class HistoricalAnnualBudgetQuery
         });
     }
 
-    public function projectionForReport(User $actor, TenantContext $context, int $planningYearId, string $asOf): AnnualEconomicProjection
-    {
-        [$persistedActor, $persistedTenant] = $this->authorizer->authorize($actor, $context, 'report.view');
-        $authorizedContext = new TenantContext($persistedTenant, $persistedActor);
-        $cutoff = $this->cutoff($asOf, $persistedTenant->timezone);
+    public function reportEvidenceForAuthorizedContext(
+        TenantContext $context,
+        int $planningYearId,
+        string $asOf,
+    ): AnnualReportEvidence {
+        if (DB::connection()->transactionLevel() < 1) {
+            throw new \LogicException('Historical report evidence requires a coherent read boundary.');
+        }
 
-        return $this->coherentRead->execute(function () use ($authorizedContext, $planningYearId, $cutoff): AnnualEconomicProjection {
-            $tenant = Tenant::query()->find($authorizedContext->tenantId);
-            $year = TenantOwnedRecordQuery::forTenant($authorizedContext, PlanningYear::class)->find($planningYearId);
-            if (! $tenant instanceof Tenant || ! $year instanceof PlanningYear) {
-                throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYearId]);
+        $cutoff = $this->cutoff($asOf, $context->timezone);
+        $tenant = Tenant::query()->find($context->tenantId);
+        $year = TenantOwnedRecordQuery::forTenant($context, PlanningYear::class)->find($planningYearId);
+        if (! $tenant instanceof Tenant || ! $year instanceof PlanningYear) {
+            throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYearId]);
+        }
+        if (! $year->history_activated_at instanceof CarbonInterface || $cutoff->lessThan($year->history_activated_at)) {
+            throw new DomainException('HISTORY_BEFORE_ACTIVATION');
+        }
+        $latest = collect($this->latestItems($context->tenantId, $cutoff, $planningYearId));
+        $yearSnapshot = $latest->first(fn (array $item): bool => $item['type'] === $this->morphClass(PlanningYear::class)
+            && $item['id'] === $planningYearId && $item['mutation'] !== 'delete');
+        if (! is_array($yearSnapshot)) {
+            throw new DomainException('HISTORY_BEFORE_ACTIVATION');
+        }
+        $expenseSnapshots = $latest->where('type', $this->morphClass(Expense::class))->keyBy('id');
+        $rowSnapshots = $latest->where('type', $this->morphClass(ExpenseRow::class));
+        $references = $this->referenceSnapshots($context->tenantId, $cutoff, $expenseSnapshots, $rowSnapshots);
+        [$dataset, $metadata] = $this->datasetAndMetadata(
+            $context->tenantId,
+            $planningYearId,
+            $yearSnapshot,
+            $expenseSnapshots,
+            $rowSnapshots,
+            $references,
+            $tenant,
+        );
+        $labels = ['project' => [], 'contract' => []];
+        foreach ($metadata['expenses'] as $expense) {
+            if ($expense['project_id'] !== null && $expense['project_title'] !== null) {
+                $labels['project'][(int) $expense['project_id']] = (string) $expense['project_title'];
             }
-            if (! $year->history_activated_at instanceof CarbonInterface || $cutoff->lessThan($year->history_activated_at)) {
-                throw new DomainException('HISTORY_BEFORE_ACTIVATION');
+            if ($expense['contract_id'] !== null && $expense['contract_title'] !== null) {
+                $labels['contract'][(int) $expense['contract_id']] = (string) $expense['contract_title'];
             }
-            $latest = collect($this->latestItems($authorizedContext->tenantId, $cutoff, $planningYearId));
-            $yearSnapshot = $latest->first(fn (array $item): bool => $item['type'] === $this->morphClass(PlanningYear::class)
-                && $item['id'] === $planningYearId && $item['mutation'] !== 'delete');
-            if (! is_array($yearSnapshot)) {
-                throw new DomainException('HISTORY_BEFORE_ACTIVATION');
-            }
-            [$dataset] = $this->datasetAndMetadata(
-                $authorizedContext->tenantId,
-                $planningYearId,
-                $yearSnapshot,
-                $latest->where('type', $this->morphClass(Expense::class))->keyBy('id'),
-                $latest->where('type', $this->morphClass(ExpenseRow::class)),
-                $this->references($latest),
-                $tenant,
-            );
+        }
 
-            return $this->engine->project($dataset);
-        });
+        return new AnnualReportEvidence(
+            projection: $this->engine->project($dataset),
+            planningYearId: $planningYearId,
+            yearLabel: (int) ($yearSnapshot['contents']['year_label'] ?? 0),
+            state: (string) ($yearSnapshot['contents']['budget_state'] ?? 'preparation'),
+            lockVersion: (int) ($yearSnapshot['contents']['lock_version'] ?? 1),
+            labels: $labels,
+            cutoff: $cutoff,
+        );
     }
 
     private function cutoff(string $value, string $timezone): CarbonImmutable
@@ -207,6 +238,73 @@ final readonly class HistoricalAnnualBudgetQuery
         }
 
         return $result;
+    }
+
+    /**
+     * Reference revision items are not annual subjects, so their planning_year_id is null.
+     * Resolve the exact IDs referenced by annual expense/row snapshots in one tenant-scoped query.
+     *
+     * @param  Collection<array-key, HistoricalSnapshot>  $expenseSnapshots
+     * @param  Collection<array-key, HistoricalSnapshot>  $rowSnapshots
+     * @return array<class-string, array<int, HistoricalSnapshot>>
+     */
+    private function referenceSnapshots(
+        int $tenantId,
+        CarbonImmutable $cutoff,
+        Collection $expenseSnapshots,
+        Collection $rowSnapshots,
+    ): array {
+        $ids = [CostCenter::class => [], Project::class => [], Contract::class => [], Vendor::class => []];
+        foreach ($expenseSnapshots as $snapshot) {
+            $contents = $snapshot['contents'];
+            foreach (['cost_center_id' => CostCenter::class, 'project_id' => Project::class, 'contract_id' => Contract::class] as $key => $model) {
+                if (isset($contents[$key])) {
+                    $ids[$model][(int) $contents[$key]] = true;
+                }
+            }
+        }
+        foreach ($rowSnapshots as $snapshot) {
+            if (isset($snapshot['contents']['vendor_id'])) {
+                $ids[Vendor::class][(int) $snapshot['contents']['vendor_id']] = true;
+            }
+        }
+        if (array_sum(array_map('count', $ids)) === 0) {
+            return $this->references(collect());
+        }
+
+        $ranked = DB::table('revision_batch_items as items')
+            ->join('revision_batches as batches', 'batches.id', '=', 'items.revision_batch_id')
+            ->where('items.tenant_id', $tenantId)
+            ->where('batches.occurred_at', '<=', $cutoff)
+            ->where(function ($query) use ($ids): void {
+                foreach ($ids as $model => $modelIds) {
+                    if ($modelIds === []) {
+                        continue;
+                    }
+                    $query->orWhere(function ($reference) use ($model, $modelIds): void {
+                        $reference->where('items.versionable_type', $this->morphClass($model))
+                            ->whereIn('items.versionable_id', array_keys($modelIds));
+                    });
+                }
+            })
+            ->select(['items.versionable_type', 'items.versionable_id', 'items.mutation', 'items.snapshot_contents as contents'])
+            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY items.versionable_type, items.versionable_id ORDER BY batches.occurred_at DESC, batches.id DESC, items.sequence DESC) AS revision_rank');
+        /** @var Collection<int, HistoricalSnapshot> $snapshots */
+        $snapshots = DB::query()->fromSub($ranked, 'ranked')->where('revision_rank', 1)->get()
+            ->map(static function (object $row): array {
+                $contents = is_string($row->contents)
+                    ? json_decode($row->contents, true, 512, JSON_THROW_ON_ERROR)
+                    : (array) $row->contents;
+
+                return [
+                    'type' => (string) $row->versionable_type,
+                    'id' => (int) $row->versionable_id,
+                    'mutation' => (string) $row->mutation,
+                    'contents' => $contents,
+                ];
+            });
+
+        return $this->references($snapshots);
     }
 
     /**

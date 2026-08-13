@@ -16,6 +16,7 @@ final readonly class BudgetProposal
         public int $yearLabel,
         public string $currency,
         public string $basis,
+        public string $surfaceFingerprint,
         public BudgetCompositionEvidence $composition,
         public EconomicMeasure $total,
         public array $contributors,

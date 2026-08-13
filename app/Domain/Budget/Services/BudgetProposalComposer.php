@@ -16,7 +16,10 @@ use Illuminate\Support\Facades\DB;
 
 final readonly class BudgetProposalComposer
 {
-    public function __construct(private BudgetProposalFingerprint $fingerprint) {}
+    public function __construct(
+        private BudgetProposalFingerprint $fingerprint,
+        private BudgetSurfaceFingerprint $surfaceFingerprint,
+    ) {}
 
     /**
      * @param  array{expenses: array<int, array<string, mixed>>, rows: array<int, array<string, mixed>>}|null  $sourceMetadata
@@ -26,6 +29,8 @@ final readonly class BudgetProposalComposer
         int $budgetLockVersion,
         BudgetSourceAccess $sourceAccess,
         ?array $sourceMetadata = null,
+        string $budgetState = 'preparation',
+        ?string $economicBaseLockedAt = null,
     ): BudgetProposal {
         $metadata = $sourceMetadata ?? $this->loadSourceMetadata($projection);
         $contributors = $this->contributors($projection, $metadata, $sourceAccess);
@@ -58,6 +63,13 @@ final readonly class BudgetProposalComposer
             yearLabel: $projection->economicYearLabel,
             currency: $projection->currency,
             basis: $projection->basis,
+            surfaceFingerprint: $this->surfaceFingerprint->fingerprint(
+                $projection,
+                $budgetLockVersion,
+                $budgetState,
+                $economicBaseLockedAt,
+                $metadata,
+            ),
             composition: new BudgetCompositionEvidence(
                 fingerprint: $fingerprint,
                 budgetLockVersion: $budgetLockVersion,
@@ -145,9 +157,7 @@ final readonly class BudgetProposalComposer
     private function exclusions(AnnualEconomicProjection $projection, array $metadata, BudgetSourceAccess $sourceAccess): array
     {
         $exclusions = [];
-        $projectedRowIds = [];
         foreach ($projection->lines as $line) {
-            $projectedRowIds[$line->rowId] = true;
             if ($line->expenseKind !== 'ordinary' || $line->contributesToCurrentPlanning) {
                 continue;
             }
@@ -169,36 +179,6 @@ final readonly class BudgetProposalComposer
                 $reason,
                 $line->amount,
                 $this->ordinaryNavigationAuthorized($expense, $row, $sourceAccess),
-            );
-        }
-
-        foreach ($metadata['rows'] as $row) {
-            if (isset($projectedRowIds[(int) $row['id']])
-                || ($row['deleted_at'] ?? null) === null && ($row['expense_deleted_at'] ?? null) === null) {
-                continue;
-            }
-            $expense = $metadata['expenses'][(int) $row['expense_id']] ?? null;
-            if (! is_array($expense)) {
-                throw new DomainException('ECONOMIC_RECONCILIATION_FAILED');
-            }
-            $measure = EconomicMeasure::fromAmounts(
-                (string) $row['net_amount'],
-                (string) $row['vat_amount'],
-                (string) $row['gross_amount'],
-                $projection->basis,
-            );
-            $exclusions[] = new ApprovalExclusion(
-                sourceIdentity: 'expense-row:'.$row['id'],
-                reason: 'soft_deleted',
-                expenseId: null,
-                expenseTitle: null,
-                rowId: null,
-                rowType: null,
-                rowDescription: null,
-                amount: $measure,
-                detail: $this->detail('soft_deleted'),
-                drillDownAuthorized: false,
-                drillDownHref: null,
             );
         }
 
@@ -275,7 +255,6 @@ final readonly class BudgetProposalComposer
             'alternative_planning' => 'Una sola pianificazione corrente per Spesa contribuisce alla proposta.',
             'actual_not_proposed' => 'Gli Effettivi non fanno parte del Budget Proposto.',
             'covered_by_plafond' => 'La pianificazione è informativa perché coperta dal Plafond.',
-            'soft_deleted' => 'La sorgente eliminata non contribuisce alla proposta corrente.',
             default => 'La pianificazione non corrente non contribuisce alla proposta.',
         };
     }

@@ -23,6 +23,7 @@ final class BudgetProposalResource extends JsonResource
             ],
             'currency' => $proposal->currency,
             'basis' => $proposal->basis,
+            'surface_fingerprint' => $this->resource->surfaceFingerprint,
             'composition' => $proposal->composition->toArray(),
             'total' => [
                 'net' => $proposal->total->net,

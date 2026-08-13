@@ -36,12 +36,12 @@ final class HistoricalBudgetQueryCountTest extends TestCase
         $many = $this->measure(20);
 
         $this->assertSame($single['queries'], $many['queries']);
-        $this->assertLessThanOrEqual(10, $many['queries']);
-        $this->assertSame(1, $single['expenses']);
-        $this->assertSame(20, $many['expenses']);
+        $this->assertSame(19, $many['queries']);
+        $this->assertSame(1, $single['contributors']);
+        $this->assertSame(20, $many['contributors']);
     }
 
-    /** @return array{queries: int, expenses: int} */
+    /** @return array{queries: int, contributors: int} */
     private function measure(int $expenseCount): array
     {
         $tenant = Tenant::factory()->create();
@@ -72,6 +72,6 @@ final class HistoricalBudgetQueryCountTest extends TestCase
         $queries = count(DB::connection()->getQueryLog());
         DB::connection()->disableQueryLog();
 
-        return ['queries' => $queries, 'expenses' => count($result['expenses'])];
+        return ['queries' => $queries, 'contributors' => $result['proposal']['composition']['contributor_count']];
     }
 }

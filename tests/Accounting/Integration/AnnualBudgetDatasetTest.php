@@ -8,6 +8,8 @@ use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Reporting\Data\EconomicReportFilterData;
 use App\Domain\Reporting\Queries\AnnualEconomicReportQuery;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Models\BudgetApproval;
+use App\Models\BudgetApprovalItem;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
@@ -38,8 +40,8 @@ final class AnnualBudgetDatasetTest extends TestCase
         $plafondCenter = CostCenter::factory()->for($tenant)->create();
         $vendor = Vendor::factory()->for($tenant)->create();
 
-        $this->expense($tenant, $year, $center, $vendor, ExpenseKind::Ordinary, 'Hosting', '100.00', '100.00');
-        $consumer = $this->expense($tenant, $year, $center, $vendor, ExpenseKind::Ordinary, 'Licenze', '130.00', '130.00');
+        $hosting = $this->expense($tenant, $year, $center, $vendor, ExpenseKind::Ordinary, 'Hosting', '100.00');
+        $consumer = $this->expense($tenant, $year, $center, $vendor, ExpenseKind::Ordinary, 'Licenze', '130.00');
         ExpenseRow::factory()->for($consumer)->create([
             'tenant_id' => $tenant->getKey(),
             'vendor_id' => $vendor->getKey(),
@@ -66,17 +68,29 @@ final class AnnualBudgetDatasetTest extends TestCase
         ExpenseRow::query()->whereKey($consumer->current_planning_row_id)->update([
             'funded_plafond_expense_id' => $plafond->getKey(),
         ]);
+        $approval = BudgetApproval::factory()->headerOnly()->for($tenant)->for($year, 'planningYear')->create([
+            'budget_basis' => 'net', 'total_net_amount' => '230.00', 'total_vat_amount' => '50.60',
+            'total_gross_amount' => '280.60', 'total_official_amount' => '230.00', 'contributor_count' => 2,
+        ]);
+        foreach ([[$hosting, '100.00'], [$consumer, '130.00']] as [$approvedExpense, $amount]) {
+            $approvedRow = $approvedExpense->rows()->whereKey($approvedExpense->current_planning_row_id)->firstOrFail();
+            BudgetApprovalItem::factory()->for($approval, 'approval')->create([
+                'tenant_id' => $tenant->getKey(), 'planning_year_id' => $year->getKey(), 'budget_basis' => 'net',
+                'source_identity' => 'expense-row:'.$approvedRow->getKey(), 'expense_id' => $approvedExpense->getKey(),
+                'expense_row_id' => $approvedRow->getKey(), 'expense_title' => $approvedExpense->title,
+                'cost_center_id' => $center->getKey(), 'cost_center_name' => $center->name,
+                'vendor_id' => $vendor->getKey(), 'vendor_name' => $vendor->name,
+                'net_amount' => $amount, 'vat_amount' => bcmul($amount, '0.22', 2),
+                'gross_amount' => bcmul($amount, '1.22', 2), 'official_amount' => $amount,
+            ]);
+        }
 
         $budget = app(AnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey());
-        $this->assertSame('3600.00', $budget['summary']['proposed']);
-        $this->assertSame('230.00', $budget['summary']['approved_current']);
-        $this->assertSame('140.00', $budget['summary']['actual']);
-        $this->assertArrayNotHasKey('plafond_overrun', $budget['summary']);
-        $this->assertArrayHasKey('plafonds', $budget);
-        $budgetExpenses = collect($budget['expenses'])->keyBy('title');
-        $this->assertSame('3500.00', $budgetExpenses['Plafond licenze']['planned']);
-        $this->assertSame('0.00', $budgetExpenses['Licenze']['planned']);
-        $this->assertSame('100.00', $budgetExpenses['Hosting']['planned']);
+        $this->assertSame('3600.00', $budget['proposal']['total']['official']);
+        $this->assertSame('140.00', $budget['actuals']['official']);
+        $this->assertArrayNotHasKey('summary', $budget);
+        $this->assertArrayNotHasKey('expenses', $budget);
+        $this->assertArrayNotHasKey('plafonds', $budget);
 
         foreach (['cost_center', 'project', 'contract', 'vendor', 'expense'] as $groupBy) {
             $report = app(AnnualEconomicReportQuery::class)->execute(
@@ -89,9 +103,9 @@ final class AnnualBudgetDatasetTest extends TestCase
                 ),
             );
 
-            $this->assertSame($budget['summary']['proposed'], $report['summary']['proposed']);
-            $this->assertSame($budget['summary']['approved_current'], $report['summary']['approved_current']);
-            $this->assertSame($budget['summary']['actual'], $report['summary']['actual']);
+            $this->assertSame($budget['proposal']['total']['official'], $report['summary']['proposed']);
+            $this->assertSame('230.00', $report['summary']['approved_current']);
+            $this->assertSame($budget['actuals']['official'], $report['summary']['actual']);
             $this->assertArrayNotHasKey('global_plafond_overrun', $report);
             $this->assertArrayNotHasKey('plafond_overrun', $report['summary']);
             $this->assertArrayHasKey('plafonds', $report);
@@ -109,15 +123,12 @@ final class AnnualBudgetDatasetTest extends TestCase
         ExpenseKind $kind,
         string $title,
         string $planned,
-        string $approved,
     ): Expense {
         $expense = Expense::factory()->for($tenant)->create([
             'planning_year_id' => $year->getKey(),
             'cost_center_id' => $center->getKey(),
             'kind' => $kind,
             'title' => $title,
-            'approved_amount' => $approved,
-            'approved_basis' => 'net',
         ]);
         $row = ExpenseRow::factory()->for($expense)->create([
             'tenant_id' => $tenant->getKey(),

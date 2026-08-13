@@ -60,7 +60,7 @@ final class ReportingApiHttpTest extends TestCase
         }
     }
 
-    public function test_budget_uses_cost_center_id_and_foreign_filters_fail_closed(): void
+    public function test_budget_is_unfiltered_and_rejects_every_presentation_filter(): void
     {
         $tenant = Tenant::factory()->create();
         $user = $this->tenantUser($tenant);
@@ -71,16 +71,17 @@ final class ReportingApiHttpTest extends TestCase
         $this->actingAs($user, 'web');
 
         $base = '/api/v1/budget?planning_year_id='.$year->getKey();
-        $this->getJson($base.'&cost_center_id='.$center->getKey())
+        $this->getJson($base)
             ->assertOk()
-            ->assertJsonPath('data.budget.planning_year_id', $year->getKey())
-            ->assertJsonPath('data.expenses.0.cost_center_id', $center->getKey())
-            ->assertJsonPath('data.totals.current_planning.official', '100.00')
-            ->assertJsonPath('data.totals.actual.official', '25.00');
+            ->assertJsonPath('data.planning_year.id', $year->getKey())
+            ->assertJsonPath('data.proposal.total.official', '100.00')
+            ->assertJsonPath('data.actuals.official', '25.00');
+        $this->getJson($base.'&cost_center_id='.$center->getKey())
+            ->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
         $this->getJson($base.'&cost_center='.$center->getKey())
             ->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
         $this->getJson($base.'&cost_center_id='.$foreignCenter->getKey())
-            ->assertNotFound()->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
+            ->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
     }
 
     public function test_report_paginates_canonical_groups_and_filters_project_and_vendor(): void
@@ -123,21 +124,39 @@ final class ReportingApiHttpTest extends TestCase
         $tenant = Tenant::factory()->create();
         $user = $this->tenantUser($tenant);
         $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
-        $expense = $this->expenseWithProjection($tenant, $year, planned: '100.00', actual: '0.00');
+        $project = Project::factory()->for($tenant)->create(['title' => 'Historical project']);
+        $expense = $this->expenseWithProjection($tenant, $year, project: $project, planned: '100.00', actual: '0.00');
+        $historicalExpenseTitle = (string) $expense->title;
+        $originalYearVersion = (int) $year->lock_version + 1;
         $this->travelTo(CarbonImmutable::parse('2026-03-01 10:00:00', 'UTC'));
         app(ActivateAnnualHistory::class)->execute($user, new TenantContext($tenant, $user), $year, (string) str()->uuid());
         $expense->rows()->where('type', ExpenseType::Quote)->firstOrFail()
             ->forceFill(['net_amount' => '200.00', 'gross_amount' => '200.00'])->saveQuietly();
+        $expense->forceFill(['title' => 'Current expense'])->saveQuietly();
+        $project->forceFill(['title' => 'Current project'])->saveQuietly();
+        $year->approveBudget();
+        $year->forceFill(['lock_version' => 42])->saveQuietly();
         $this->actingAs($user, 'web');
 
-        $base = '/api/v1/reports?planning_year_id='.$year->getKey().'&group_by=expense';
+        $base = '/api/v1/reports?planning_year_id='.$year->getKey();
+        $cutoff = '&as_of=2026-03-01T10:30:00Z';
+        $this->getJson($base.'&group_by=project')->assertOk()
+            ->assertJsonPath('mode', 'current')
+            ->assertJsonPath('budget.state', 'approved')
+            ->assertJsonPath('budget.lock_version', 42)
+            ->assertJsonPath('data.0.label', 'Current project');
         $this->getJson($base)->assertOk()
             ->assertJsonPath('mode', 'current')
             ->assertJsonPath('summary.proposed', '200.00');
-        $this->getJson($base.'&as_of=2026-03-01T10:30:00Z')->assertOk()
+        $this->getJson($base.'&group_by=project'.$cutoff)->assertOk()
             ->assertJsonPath('mode', 'historical')
             ->assertJsonPath('read_only', true)
+            ->assertJsonPath('budget.state', 'preparation')
+            ->assertJsonPath('budget.lock_version', $originalYearVersion)
+            ->assertJsonPath('data.0.label', 'Historical project')
             ->assertJsonPath('summary.proposed', '100.00');
+        $this->getJson($base.'&group_by=expense'.$cutoff)->assertOk()
+            ->assertJsonPath('data.0.label', $historicalExpenseTitle);
     }
 
     public function test_reporting_auth_ability_and_tenant_boundaries_fail_closed(): void
@@ -179,9 +198,9 @@ final class ReportingApiHttpTest extends TestCase
 
         $budget = $this->getJson('/api/v1/budget?planning_year_id='.$year->getKey())
             ->assertOk()
-            ->assertJsonStructure(['data' => ['plafonds' => [['measures' => ['allocation', 'coverage_planned', 'consumed', 'available']]]]])
-            ->assertJsonMissingPath('data.summary.plafond_overrun')
-            ->json('data.plafonds.0.measures');
+            ->assertJsonMissingPath('data.summary')
+            ->assertJsonMissingPath('data.plafonds')
+            ->json('data.proposal.total');
         $report = $this->getJson('/api/v1/reports?planning_year_id='.$year->getKey().'&group_by=expense')
             ->assertOk()
             ->assertJsonStructure(['plafonds' => [['measures' => ['allocation', 'coverage_planned', 'consumed', 'available']]]])
@@ -189,7 +208,7 @@ final class ReportingApiHttpTest extends TestCase
             ->assertJsonMissingPath('summary.plafond_overrun')
             ->json('plafonds.0.measures');
 
-        $this->assertSame($budget, $report);
+        $this->assertSame($budget, $report['allocation']);
     }
 
     private function expenseWithProjection(

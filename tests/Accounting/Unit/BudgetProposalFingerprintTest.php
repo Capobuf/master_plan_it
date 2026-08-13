@@ -28,7 +28,7 @@ final class BudgetProposalFingerprintTest extends TestCase
         $this->assertMatchesRegularExpression('/^sha256:[0-9a-f]{64}$/D', $left);
         $json = $fingerprint->canonicalJson(10, 20, 'EUR', 'net', [$first, $second]);
         $this->assertSame(
-            ['basis', 'contributors', 'currency', 'planning_year_id', 'projection_version', 'schema_version', 'tenant_id'],
+            ['basis', 'contributors', 'currency', 'planning_year_id', 'schema_version', 'tenant_id'],
             array_keys(json_decode($json, true, 512, JSON_THROW_ON_ERROR)),
         );
         $this->assertStringContainsString('"contract_title":null', $json);
@@ -43,7 +43,7 @@ final class BudgetProposalFingerprintTest extends TestCase
         $short = $this->contributorWithMeasure(new EconomicMeasure('10', '2.2', '12.2', '10.0'));
 
         $this->assertSame(
-            'sha256:0f0523e52b5c91b589ed7c01ac7ff4f6a3581c5c79ac42b850e7a7a7247ed381',
+            'sha256:2594cf51fc56a3aee9c4814677e2cf25537845ade96672b640c85ed8ec162b37',
             $fingerprint->fingerprint(10, 20, 'EUR', 'net', [$canonical]),
         );
         $this->assertSame(
