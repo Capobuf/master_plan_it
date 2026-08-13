@@ -57,6 +57,7 @@ final class BudgetApprovalModelImmutabilityTest extends TestCase
     public function test_only_guarded_terminal_transition_is_allowed_and_reactivation_is_rejected(): void
     {
         $approval = BudgetApproval::factory()->create();
+        $staleApproval = $approval->fresh();
         $annulmentBatch = RevisionBatch::query()->create([
             'tenant_id' => $approval->tenant_id,
             'actor_user_id' => $approval->approved_by_user_id,
@@ -78,6 +79,19 @@ final class BudgetApprovalModelImmutabilityTest extends TestCase
 
         $this->assertSame(BudgetApprovalStatus::Annulled, $approval->status);
         $this->assertSame('Correzione con  spazi interni', $approval->annulment_note);
+
+        try {
+            $staleApproval->annul(
+                now()->toImmutable(),
+                $approval->approver,
+                'Secondo tentativo',
+                $annulmentBatch,
+                (string) str()->uuid(),
+            );
+            $this->fail('A stale active instance must lose the status=active CAS.');
+        } catch (\DomainException $exception) {
+            $this->assertSame('BUDGET_STATE_CONFLICT', $exception->getMessage());
+        }
 
         $this->assertLogicException(
             fn () => $approval->forceFill(['status' => BudgetApprovalStatus::Active])->save(),

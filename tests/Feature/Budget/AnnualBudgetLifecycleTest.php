@@ -51,6 +51,15 @@ final class AnnualBudgetLifecycleTest extends TestCase
         $this->assertDatabaseHas('planning_years', [
             'id' => $year->getKey(), 'budget_state' => 'preparation', 'lock_version' => 1,
         ]);
+        try {
+            PlanningYear::query()->whereKey($year->getKey())->update(['budget_state' => BudgetState::Closed]);
+            $this->fail('Builder updates must not bypass the budget state lifecycle.');
+        } catch (\DomainException $exception) {
+            $this->assertSame('BUDGET_STATE_CONFLICT', $exception->getMessage());
+        }
+        $this->assertSame(1, PlanningYear::query()->whereKey($year->getKey())->update(['year_label' => 2027]));
+        $this->assertFalse(method_exists($year, 'closeBudget'));
+        $this->assertFalse(method_exists($year, 'reopenBudget'));
         $this->assertFalse(class_exists('App\\Domain\\Budget\\Actions\\CloseAnnualBudget', false));
         $this->assertFalse(class_exists('App\\Models\\ApprovalOperation', false));
     }
