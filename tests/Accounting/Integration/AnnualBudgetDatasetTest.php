@@ -19,6 +19,7 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Support\Authorization\PlatformAdministrator;
+use Carbon\CarbonImmutable;
 use Database\Seeders\PermissionCatalogueSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Spatie\Permission\PermissionRegistrar;
@@ -69,8 +70,11 @@ final class AnnualBudgetDatasetTest extends TestCase
         ExpenseRow::query()->whereKey($consumer->current_planning_row_id)->update([
             'funded_plafond_expense_id' => $plafond->getKey(),
         ]);
+        $basisLockedAt = CarbonImmutable::parse('2026-01-15 09:30:00', 'UTC');
+        $tenant->forceFill(['economic_basis_locked_at' => $basisLockedAt])->save();
         $year->approveBudget();
         $this->assertSame(BudgetState::Approved, $year->fresh()->budget_state);
+        $this->assertSame($basisLockedAt->toISOString(), $tenant->fresh()->economic_basis_locked_at?->toISOString());
         $approval = BudgetApproval::factory()->headerOnly()->for($tenant)->for($year, 'planningYear')->create([
             'budget_basis' => 'net', 'total_net_amount' => '230.00', 'total_vat_amount' => '50.60',
             'total_gross_amount' => '280.60', 'total_official_amount' => '230.00', 'contributor_count' => 2,
