@@ -263,17 +263,19 @@ snapshot fields and owns every business writer and operation UI.
    `expense.update` before economic reads; resolve Year inside the selected Tenant.
 2. Start one database transaction and acquire Tenant `FOR UPDATE`, then the selected PlanningYear
    through `AnnualEconomicMutationGuard`.
-3. Reload persisted actor/Tenant/Year; validate `effective_date <= today` in the locked Tenant
-   timezone, then require `preparation` and the expected Budget version; `recorded_at` is server UTC.
-4. With annual membership stable, lock every referenced contributing Expense, Row, Cost Center,
-   Vendor, Project and Contract in deterministic class/PK order. Rebuild the final full projection
-   only after those locks, reconcile measures, compare schema/projection versions and fingerprint,
-   then reject count zero; do not accept items or amounts from the client.
-5. Begin one Revision batch plus its inherited `revision.batch.begin` infrastructure Audit, then
+3. Reload/reauthorize the persisted actor and locked Tenant/Year; validate
+   `effective_date <= today` in the locked Tenant timezone, then require `preparation`, zero active
+   Approval and the expected Budget version; `recorded_at` is server UTC.
+4. Compare exact schema/projection versions, discover the contributing source/dimension identities,
+   and lock every referenced Expense, Row, Cost Center, Vendor, Project and Contract in deterministic
+   class then PK order.
+5. Rebuild the full projection/composition from the locked rows, reconcile measures, compare the
+   fingerprint and only then reject count zero; do not accept items or amounts from the client.
+6. Begin one Revision batch plus its inherited `revision.batch.begin` infrastructure Audit, then
    insert one active header referencing that batch and all immutable items.
-6. Transition Year to `approved`, increment its version once, set `economic_basis_locked_at` only
-   when null, link exactly the new Year Version to the batch, and create one operation-specific
-   `budget.approved` business Audit; commit once.
+7. Transition Year to `approved`, increment its version once, link that new Version to the batch,
+   set `economic_basis_locked_at` only when null, write one operation-specific `budget.approved`
+   business Audit and commit once.
 
 Any error rolls back header/items, Year, first Base lock, Revision links and both evidence events.
 Two approvals are ordered by the Year guard and backed by active-slot uniqueness.

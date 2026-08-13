@@ -9,6 +9,7 @@ final readonly class BudgetApprovalPreview
         public int $yearLabel,
         public string $state,
         public int $lockVersion,
+        public string $effectiveDateMax,
         public string $surfaceFingerprint,
         public BudgetProposal $proposal,
         public bool $canApprove,

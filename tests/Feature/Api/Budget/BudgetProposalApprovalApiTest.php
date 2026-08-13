@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api\Budget;
 
+use App\Domain\Budget\Data\BudgetApprovalPreview;
 use App\Domain\Budget\Queries\BudgetApprovalPreviewQuery;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Tenancy\Data\TenantContext;
@@ -13,6 +14,8 @@ use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\RevisionBatch;
 use App\Models\Tenant;
+use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Spatie\Permission\PermissionRegistrar;
@@ -26,6 +29,7 @@ final class BudgetProposalApprovalApiTest extends TestCase
 
     public function test_approval_preview_returns_the_complete_strict_read_only_contract(): void
     {
+        CarbonImmutable::setTestNow('2026-08-13 10:30:00 UTC');
         $tenant = Tenant::factory()->create();
         $user = $this->tenantUser($tenant);
         $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
@@ -52,6 +56,7 @@ final class BudgetProposalApprovalApiTest extends TestCase
             ->assertJsonPath('data.planning_year.state', 'preparation')
             ->assertJsonPath('data.currency', 'EUR')
             ->assertJsonPath('data.basis', 'net')
+            ->assertJsonPath('data.effective_date_max', '2026-08-13')
             ->assertJsonPath('data.composition.contributor_count', 1)
             ->assertJsonPath('data.total.net', '120.00')
             ->assertJsonPath('data.total.vat', '26.40')
@@ -67,7 +72,7 @@ final class BudgetProposalApprovalApiTest extends TestCase
             ->assertJsonMissingPath('data.approved_amount')
             ->assertJsonMissingPath('data.approved_basis');
         $this->assertSame(
-            ['planning_year', 'currency', 'basis', 'surface_fingerprint', 'composition', 'total', 'contributors', 'exclusions', 'can_approve', 'empty_composition'],
+            ['planning_year', 'currency', 'basis', 'effective_date_max', 'surface_fingerprint', 'composition', 'total', 'contributors', 'exclusions', 'can_approve', 'empty_composition'],
             array_keys($response->json('data')),
         );
         $this->assertSame(
@@ -286,6 +291,140 @@ final class BudgetProposalApprovalApiTest extends TestCase
             $foreignResponse->assertJsonMissingPath('error.'.$protectedKey);
             $missingResponse->assertJsonMissingPath('error.'.$protectedKey);
         }
+    }
+
+    public function test_approve_accepts_only_server_evidence_and_returns_the_exact_created_snapshot_summary(): void
+    {
+        CarbonImmutable::setTestNow('2026-08-13 10:30:00 UTC');
+        [$tenant, $user, $year, $preview] = $this->approvableFixture();
+        $this->actingAs($user, 'web');
+
+        $response = $this->withHeaders($this->csrfHeaders())->postJson(
+            '/api/v1/budget/'.$year->getKey().'/approve',
+            $this->approvePayload($preview, ['effective_date' => '2024-12-31', 'note' => '  Decisione  ']),
+        );
+
+        $response->assertCreated()
+            ->assertJsonPath('data.approval.status', 'active')
+            ->assertJsonPath('data.approval.planning_year_id', $year->getKey())
+            ->assertJsonPath('data.approval.total.official', '120.00')
+            ->assertJsonPath('data.approval.effective_date', '2024-12-31')
+            ->assertJsonPath('data.approval.note', 'Decisione')
+            ->assertJsonPath('data.budget.state', 'approved')
+            ->assertJsonPath('data.budget.lock_version', 2)
+            ->assertJsonPath('data.economic_base.basis', 'net');
+        $this->assertNotNull($response->json('data.economic_base.locked_at'));
+        $this->assertSame(['approval', 'budget', 'economic_base'], array_keys($response->json('data')));
+        $this->assertDatabaseCount('budget_approvals', 1);
+        $this->assertDatabaseCount('budget_approval_items', 1);
+        $this->assertSame(1, AuditEvent::query()->where('tenant_id', $tenant->getKey())->where('event_type', 'budget.approved')->count());
+        $this->assertSame(1, AuditEvent::query()->where('tenant_id', $tenant->getKey())->where('event_type', 'revision.batch.begin')->count());
+    }
+
+    public function test_approve_rejects_client_items_amounts_actor_and_recorded_time_without_effects(): void
+    {
+        [, $user, $year, $preview] = $this->approvableFixture();
+        $this->actingAs($user, 'web');
+
+        foreach (['items', 'approved_amount', 'approved_by_user_id', 'recorded_at', 'idempotency_key'] as $field) {
+            $before = $this->effects($year->fresh(), $year->tenant()->firstOrFail());
+            $this->withHeaders($this->csrfHeaders())->postJson(
+                '/api/v1/budget/'.$year->getKey().'/approve',
+                $this->approvePayload($preview, [$field => $field === 'items' ? [] : 'forbidden']),
+            )->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
+            $this->assertSame($before, $this->effects($year->fresh(), $year->tenant()->firstOrFail()));
+        }
+    }
+
+    public function test_future_date_stale_version_and_changed_fingerprint_have_exact_errors_and_zero_effects(): void
+    {
+        CarbonImmutable::setTestNow('2026-08-13 10:30:00 UTC');
+        [, $user, $year, $preview] = $this->approvableFixture('Pacific/Kiritimati');
+        $this->actingAs($user, 'web');
+
+        $this->withHeaders($this->csrfHeaders())->postJson(
+            '/api/v1/budget/'.$year->getKey().'/approve',
+            $this->approvePayload($preview, ['effective_date' => '2026-08-15']),
+        )->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
+
+        $stale = $this->approvePayload($preview);
+        $stale['composition']['versions']['budget_lock_version'] = 999;
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/budget/'.$year->getKey().'/approve', $stale)
+            ->assertConflict()->assertJsonPath('error.code', 'STALE_VERSION');
+
+        $changed = $this->approvePayload($preview);
+        $changed['composition']['fingerprint'] = 'sha256:'.str_repeat('0', 64);
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/budget/'.$year->getKey().'/approve', $changed)
+            ->assertConflict()->assertJsonPath('error.code', 'BUDGET_COMPOSITION_STALE');
+
+        $this->assertSame('preparation', $year->fresh()->budget_state->value);
+        $this->assertDatabaseCount('budget_approvals', 0);
+    }
+
+    public function test_reused_correlation_is_diagnostic_and_second_request_revalidates_state_instead_of_replaying(): void
+    {
+        [, $user, $year, $preview] = $this->approvableFixture();
+        $this->actingAs($user, 'web');
+        $correlationId = (string) str()->uuid();
+        $headers = $this->csrfHeaders() + ['X-Correlation-ID' => $correlationId];
+        $payload = $this->approvePayload($preview);
+
+        $this->withHeaders($headers)->postJson('/api/v1/budget/'.$year->getKey().'/approve', $payload)->assertCreated();
+        $this->withHeaders($headers)->postJson('/api/v1/budget/'.$year->getKey().'/approve', $payload)
+            ->assertConflict()->assertJsonPath('error.code', 'BUDGET_STATE_CONFLICT');
+
+        $this->assertSame(1, BudgetApproval::query()->where('correlation_id', $correlationId)->count());
+    }
+
+    public function test_foreign_year_resolution_precedes_invalid_body_validation(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $foreign = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $foreignYear = PlanningYear::factory()->for($foreign)->create();
+        $this->actingAs($user, 'web');
+
+        $this->withHeaders($this->csrfHeaders())->postJson(
+            '/api/v1/budget/'.$foreignYear->getKey().'/approve',
+            ['items' => [['approved_amount' => '999999.00']]],
+        )->assertNotFound()->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
+    }
+
+    /** @return array{Tenant, User, PlanningYear, BudgetApprovalPreview} */
+    private function approvableFixture(string $timezone = 'Europe/Rome'): array
+    {
+        $tenant = Tenant::factory()->create(['timezone' => $timezone]);
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $center = CostCenter::factory()->for($tenant)->create();
+        $expense = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(),
+        ]);
+        $row = ExpenseRow::factory()->for($expense)->create([
+            'tenant_id' => $tenant->getKey(), 'type' => ExpenseType::Quote,
+            'entered_amount' => '120.00', 'net_amount' => '120.00', 'vat_amount' => '26.40', 'gross_amount' => '146.40',
+        ]);
+        $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
+        $preview = app(BudgetApprovalPreviewQuery::class)->execute($user, new TenantContext($tenant, $user), (int) $year->getKey());
+
+        return [$tenant, $user, $year, $preview];
+    }
+
+    /** @return array<string, mixed> */
+    private function approvePayload(BudgetApprovalPreview $preview, array $overrides = []): array
+    {
+        return array_replace([
+            'effective_date' => '2026-08-13',
+            'note' => null,
+            'composition' => [
+                'schema_version' => $preview->proposal->composition->schemaVersion,
+                'fingerprint' => $preview->proposal->composition->fingerprint,
+                'versions' => [
+                    'budget_lock_version' => $preview->proposal->composition->budgetLockVersion,
+                    'projection_version' => $preview->proposal->composition->projectionVersion,
+                ],
+            ],
+        ], $overrides);
     }
 
     /** @return array<string, int|string|null> */

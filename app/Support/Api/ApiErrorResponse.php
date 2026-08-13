@@ -30,7 +30,7 @@ final class ApiErrorResponse
     /** @var array<string, array{int, string}> */
     private const DOMAIN_ERRORS = [
         'STALE_VERSION' => [409, 'The resource changed. Refresh and try again.'],
-        'BUDGET_STATE_CONFLICT' => [409, 'The economic basis is permanently locked.'],
+        'BUDGET_STATE_CONFLICT' => [409, 'The Budget state does not allow this operation.'],
         'BUDGET_PROPOSAL_EMPTY' => [409, 'La proposta di Budget non contiene componenti economici.'],
         'BUDGET_COMPOSITION_STALE' => [409, 'La composizione del Budget è cambiata. Riesamina la proposta.'],
         'BUDGET_APPROVAL_ANNULMENT_BLOCKED' => [409, 'L\'annullamento è bloccato da eventi operativi.'],

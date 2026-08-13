@@ -23,6 +23,7 @@ final class BudgetProposalResource extends JsonResource
             ],
             'currency' => $proposal->currency,
             'basis' => $proposal->basis,
+            'effective_date_max' => $this->resource->effectiveDateMax,
             'surface_fingerprint' => $this->resource->surfaceFingerprint,
             'composition' => $proposal->composition->toArray(),
             'total' => [

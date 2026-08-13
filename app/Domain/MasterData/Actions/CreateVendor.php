@@ -27,6 +27,7 @@ final class CreateVendor
         $details = $this->validatedDetails($name, $vatNumber, $email, $phone, $address);
 
         return DB::transaction(function () use ($actor, $context, $correlationId, $details, $persistedActor, $tenant): Vendor {
+            $this->lockTenantShared($tenant);
             try {
                 $vendor = Vendor::query()->create([
                     'tenant_id' => $tenant->getKey(),

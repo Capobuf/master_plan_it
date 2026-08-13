@@ -309,6 +309,9 @@ must echo, all contributors and exclusions, and is never paginated or presentati
 }
 ```
 
+`effective_date_max` is the server-owned current `YYYY-MM-DD` day in the Tenant timezone observed
+inside the same coherent read as the PlanningYear; clients use it as the confirmation date bound,
+while the mutation recomputes it authoritatively under lock.
 `contributors` contains complete `ApprovalContributor` items, and their official amounts reconcile
 exactly to `total`. `exclusions` contains `ExclusionItem` items. `empty_composition=true` implies
 `contributors=[]`, `contributor_count=0`, `can_approve=false` and a zero total. The converse is
@@ -339,9 +342,12 @@ current day in the Tenant timezone. It may be outside the PlanningYear. `note` i
 There is deliberately no `items`, contributor list, amount, base, approver, `recorded_at`, or
 idempotency field.
 
-Under the shared annual guard, the server verifies `preparation`, `budget_lock_version`, exact
-schema/projection versions, rebuilds the proposal and compares its exact fingerprint. It rejects an
-empty rebuilt composition even if total is zero; it accepts a nonempty rebuilt zero total. On success
+Under the shared annual guard, the server reloads/reauthorizes the actor and locked Tenant,
+validates the Tenant-local date, then verifies `preparation`, absence of an active Approval,
+`budget_lock_version` and exact schema/projection versions. It discovers contributing identities,
+locks every contributing source and referenced dimension in deterministic class/PK order, then
+rebuilds the proposal and compares its exact fingerprint. It rejects an empty rebuilt composition
+only after matching evidence even if total is zero; it accepts a nonempty rebuilt zero total. On success
 it atomically creates one immutable complete snapshot, marks it the sole active approval, transitions
 the same Budget to `approved`, locks the Tenant economic base if this is the first historical
 approval, creates exactly one Budget Revision and one operation-specific business Audit, in
@@ -503,8 +509,10 @@ foreign, non-blocker, stale-approval and arbitrary/unissued identities return
 Checks happen in this order, stopping at the first applicable outcome: (1) authentication/CSRF,
 (2) inactive account, (3) usable Tenant context/inactive-Tenant exception, (4) declared endpoint
 abilities, (5) Tenant-scoped route/read resolution (`404`), (6) request shape and field validation,
-then (7) under
-the mutation locks, state/version/composition/blocker business checks. This order is normative for
+then (7) under the approval mutation locks, Tenant-local future-date validation, state, active-slot,
+Budget version, exact schema/projection versions, authoritative rebuild/reconciliation,
+fingerprint, and finally empty-composition checks. Annulment retains its specified locked
+state/version/blocker order. This order is normative for
 non-disclosure; a foreign route ID is never replaced by a body-validation clue.
 
 For Approval, strict field/type/calendar syntax is part of step 6. Under the Tenant→PlanningYear
@@ -527,8 +535,10 @@ The inherited `AUTHENTICATION_REQUIRED` (401), `ACCOUNT_INACTIVE`, `TENANT_CONTE
 `TENANT_INACTIVE`, `PERMISSION_DENIED` (403), `RESOURCE_NOT_FOUND` (404),
 `METHOD_NOT_ALLOWED` (405), `CSRF_TOKEN_MISMATCH` (419), `RATE_LIMITED` (429), and
 `INTERNAL_ERROR` (500) retain their common envelopes and correlation IDs. A composition mismatch
-is `BUDGET_COMPOSITION_STALE` even when its total is unchanged; a stale lock is `STALE_VERSION` before
-composition comparison. A final economic blocker is `BUDGET_APPROVAL_ANNULMENT_BLOCKED` after a
+is `BUDGET_COMPOSITION_STALE` even when its total is unchanged. A future effective date precedes a
+wrong Budget state; a stale lock precedes a bad fingerprint; bad evidence precedes
+`BUDGET_PROPOSAL_EMPTY` for an empty rebuild. A final economic blocker is
+`BUDGET_APPROVAL_ANNULMENT_BLOCKED` after a
 currently valid lock/state check, even if an earlier preview was favorable.
 
 Blocked annulment error example:

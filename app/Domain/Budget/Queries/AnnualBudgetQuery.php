@@ -3,6 +3,7 @@
 namespace App\Domain\Budget\Queries;
 
 use App\Domain\Budget\Data\ApprovalExclusion;
+use App\Domain\Budget\Enums\BudgetApprovalStatus;
 use App\Domain\Budget\Enums\BudgetState;
 use App\Domain\Budget\Services\BudgetProposalComposer;
 use App\Domain\Budget\Services\BudgetSourceAccessResolver;
@@ -13,6 +14,7 @@ use App\Domain\Economics\Services\EconomicEngine;
 use App\Domain\Reporting\Queries\EconomicDatasetQuery;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
+use App\Models\BudgetApproval;
 use App\Models\PlanningYear;
 use App\Models\Tenant;
 use App\Models\User;
@@ -62,6 +64,23 @@ final readonly class AnnualBudgetQuery
             );
             $proposalArray = $proposal->toArray();
             unset($proposalArray['contributors'], $proposalArray['exclusions']);
+            $activeApprovals = BudgetApproval::query()
+                ->where('tenant_id', $authorizedContext->tenantId)
+                ->where('planning_year_id', $year->getKey())
+                ->where('status', 'active')
+                ->orderBy('id')
+                ->limit(2)
+                ->get();
+            if ($activeApprovals->count() > 1) {
+                throw new \DomainException('ECONOMIC_RECONCILIATION_FAILED');
+            }
+            $activeApproval = $activeApprovals->first();
+            if ($state === BudgetState::Approved->value && ! $activeApproval instanceof BudgetApproval) {
+                throw new \DomainException('ECONOMIC_RECONCILIATION_FAILED');
+            }
+            if ($state === BudgetState::Preparation->value && $activeApproval instanceof BudgetApproval) {
+                throw new \DomainException('ECONOMIC_RECONCILIATION_FAILED');
+            }
 
             return [
                 'planning_year' => [
@@ -78,16 +97,46 @@ final readonly class AnnualBudgetQuery
                     'locked_at' => $lockedAtString,
                 ],
                 'proposal' => $proposalArray,
-                'approved_snapshot' => null,
+                'approved_snapshot' => $activeApproval instanceof BudgetApproval
+                    ? $this->approvedSnapshot($activeApproval)
+                    : null,
                 'informative_evaluations' => $this->measure($this->informativeEvaluations($proposal->exclusions, $projection->basis)),
                 'actuals' => $this->measure($projection->actual),
                 'actions' => [
                     'can_view_approval_preview' => true,
                     'can_approve' => $canManage && $state === BudgetState::Preparation->value && ! $proposal->isEmpty(),
-                    'can_annul_active_approval' => false,
+                    'can_annul_active_approval' => $canManage
+                        && $state === BudgetState::Approved->value
+                        && $activeApproval instanceof BudgetApproval,
                 ],
             ];
         });
+    }
+
+    /** @return array<string, mixed> */
+    private function approvedSnapshot(BudgetApproval $approval): array
+    {
+        $status = $approval->getAttribute('status');
+        $effectiveDate = $approval->getAttribute('effective_date');
+        $recordedAt = $approval->getAttribute('recorded_at');
+        if (! $status instanceof BudgetApprovalStatus
+            || ! $effectiveDate instanceof CarbonInterface
+            || ! $recordedAt instanceof CarbonInterface) {
+            throw new \DomainException('ECONOMIC_RECONCILIATION_FAILED');
+        }
+
+        return [
+            'id' => (int) $approval->getKey(),
+            'status' => $status->value,
+            'effective_date' => $effectiveDate->toDateString(),
+            'recorded_at' => $recordedAt->utc()->toISOString(),
+            'total' => [
+                'net' => (string) $approval->total_net_amount,
+                'vat' => (string) $approval->total_vat_amount,
+                'gross' => (string) $approval->total_gross_amount,
+                'official' => (string) $approval->total_official_amount,
+            ],
+        ];
     }
 
     /** @param list<ApprovalExclusion> $exclusions */
