@@ -93,6 +93,8 @@ export interface BudgetApprovalPreview extends BudgetProposal {
   planning_year: PlanningYearBudget;
   currency: string;
   basis: BudgetBasis;
+  /** Server-authored digest of the complete evidence shared with the overview. */
+  surface_fingerprint: string;
   contributors: ApprovalContributor[];
   exclusions: ApprovalExclusion[];
   can_approve: boolean;
@@ -112,6 +114,8 @@ export interface AnnualBudget {
   planning_year: PlanningYearBudget;
   currency: string;
   basis: BudgetBasis;
+  /** Server-authored digest of the complete evidence shared with the preview. */
+  surface_fingerprint: string;
   economic_base: {
     basis: BudgetBasis;
     locked_at: string | null;

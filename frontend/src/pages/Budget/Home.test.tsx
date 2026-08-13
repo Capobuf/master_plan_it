@@ -67,4 +67,30 @@ describe("BudgetHome workspace responses", () => {
     expect(screen.getByText(/proposta è cambiata durante l’aggiornamento/i)).toBeInTheDocument();
     expect(screen.queryByText("Budget anno 7")).not.toBeInTheDocument();
   });
+
+  it("rejects a non-contributor evidence change even when composition and lock version match", async () => {
+    vi.mocked(getBudget).mockResolvedValue(overview(7));
+    vi.mocked(getBudgetApprovalPreview).mockResolvedValue({
+      ...preview(7),
+      surface_fingerprint: `sha256:${"d".repeat(64)}`,
+    });
+
+    render(<BudgetHome />);
+
+    expect(await screen.findByText("Caricamento non riuscito")).toBeInTheDocument();
+    expect(screen.getByText(/proposta è cambiata durante l’aggiornamento/i)).toBeInTheDocument();
+    expect(screen.queryByText("Budget anno 7")).not.toBeInTheDocument();
+  });
+
+  it("rejects an incomplete surface token rather than accepting a mixed response", async () => {
+    vi.mocked(getBudget).mockResolvedValue(overview(7));
+    const incompletePreview = { ...preview(7) } as Partial<BudgetApprovalPreview>;
+    delete incompletePreview.surface_fingerprint;
+    vi.mocked(getBudgetApprovalPreview).mockResolvedValue(incompletePreview as BudgetApprovalPreview);
+
+    render(<BudgetHome />);
+
+    expect(await screen.findByText("Caricamento non riuscito")).toBeInTheDocument();
+    expect(screen.queryByText("Budget anno 7")).not.toBeInTheDocument();
+  });
 });
