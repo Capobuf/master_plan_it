@@ -43,8 +43,6 @@ class ExpenseFactory extends Factory
             'notes' => null,
             'project_id' => null,
             'contract_id' => null,
-            'approved_amount' => null,
-            'approved_basis' => null,
             'current_planning_row_id' => null,
             'moved_from_expense_id' => null,
             'credit_for_expense_id' => null,

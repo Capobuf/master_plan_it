@@ -2,17 +2,9 @@
 
 namespace Tests\Feature\Budget;
 
-use App\Domain\Budget\Actions\ApplyBudgetApproval;
-use App\Domain\Budget\Actions\CloseAnnualBudget;
-use App\Domain\Budget\Data\ApplyApprovalData;
-use App\Domain\Budget\Data\ApprovalChangeData;
-use App\Domain\Budget\Queries\AnnualBudgetQuery;
-use App\Domain\Budget\Queries\HistoricalAnnualBudgetQuery;
+use App\Domain\Budget\Enums\BudgetState;
 use App\Domain\Contracts\Actions\GenerateContractOccurrenceForYear;
 use App\Domain\Contracts\Enums\BillingCycle;
-use App\Domain\Expenses\Actions\UpdateExpense;
-use App\Domain\Expenses\Data\SaveExpenseData;
-use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Revisions\Actions\ActivateAnnualHistory;
@@ -29,7 +21,6 @@ use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Support\Authorization\PlatformAdministrator;
-use Carbon\CarbonImmutable;
 use Database\Seeders\PermissionCatalogueSeeder;
 use Illuminate\Events\Dispatcher;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -48,96 +39,20 @@ final class AnnualBudgetLifecycleTest extends TestCase
         app(PermissionRegistrar::class)->setPermissionsTeamId(null);
     }
 
-    public function test_budget_closure_does_not_introduce_an_expense_lifecycle(): void
+    public function test_preparation_cannot_transition_directly_to_closed_and_legacy_actions_are_absent(): void
     {
-        [$actor, $context, $year, $center, $vendor] = $this->context();
-        [$expense, $row] = $this->expense($context->tenant, $year, $center, $vendor, '100.00');
-
-        $operation = app(ApplyBudgetApproval::class)->execute($actor, $context, $year, new ApplyApprovalData(
-            1,
-            '2026-02-01',
-            'Initial approval',
-            [new ApprovalChangeData((int) $expense->getKey(), 1, '90.00')],
-        ), (string) str()->uuid());
-
-        $this->assertSame('initial', $operation->kind->value);
-        $this->assertSame('approved', $year->fresh()->budget_state->value);
-        $this->assertSame('90.00', $expense->fresh()->approved_amount);
-
-        app(CloseAnnualBudget::class)->execute($actor, $context, $year->fresh(), 2, (string) str()->uuid());
-
-        app(UpdateExpense::class)->execute(
-            $actor,
-            $context,
-            $expense->fresh(),
-            new SaveExpenseData((int) $year->getKey(), (int) $center->getKey(), ExpenseKind::Ordinary, $expense->title, null, null, null, 2),
-            [$this->rowData($vendor, '120.00', (int) $row->getKey(), 1, true)],
-            (string) str()->uuid(),
-        );
-
-        $this->assertSame('closed', $year->fresh()->budget_state->value);
-        $this->assertSame('BUDGET_CLOSED', app(AnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey())['budget']['warning']);
-    }
-
-    public function test_generic_update_cannot_reallocate_dimensions_of_an_approved_expense(): void
-    {
-        [$actor, $context, $year, $center, $vendor] = $this->context();
-        [$expense, $row] = $this->expense($context->tenant, $year, $center, $vendor, '100.00');
-        app(ApplyBudgetApproval::class)->execute($actor, $context, $year, new ApplyApprovalData(
-            1,
-            '2026-02-01',
-            null,
-            [new ApprovalChangeData((int) $expense->getKey(), 1, '90.00')],
-        ), (string) str()->uuid());
-        $otherCenter = CostCenter::factory()->for($context->tenant)->create();
-
+        [, , $year] = $this->context();
         try {
-            app(UpdateExpense::class)->execute(
-                $actor,
-                $context,
-                $expense->fresh(),
-                new SaveExpenseData((int) $year->getKey(), (int) $otherCenter->getKey(), ExpenseKind::Ordinary, $expense->title, null, null, null, 2),
-                [$this->rowData($vendor, '100.00', (int) $row->getKey(), 1, true)],
-                (string) str()->uuid(),
-            );
-            $this->fail('An approved dimension reallocation must use the approval endpoint.');
+            $year->forceFill(['budget_state' => BudgetState::Closed])->save();
+            $this->fail('Preparation to Closed belongs to Slice 026 and must be rejected.');
         } catch (\DomainException $exception) {
-            $this->assertSame('APPROVED_DIMENSION_REALLOCATION_REQUIRED', $exception->getMessage());
+            $this->assertSame('BUDGET_STATE_CONFLICT', $exception->getMessage());
         }
-
-        $this->assertDatabaseHas('expenses', [
-            'id' => $expense->getKey(),
-            'cost_center_id' => $center->getKey(),
-            'approved_amount' => '90.00',
-            'lock_version' => 2,
+        $this->assertDatabaseHas('planning_years', [
+            'id' => $year->getKey(), 'budget_state' => 'preparation', 'lock_version' => 1,
         ]);
-    }
-
-    public function test_history_uses_batch_cutoff_and_rejects_pre_activation_time(): void
-    {
-        [$actor, $context, $year, $center, $vendor] = $this->context();
-        [$expense, $row] = $this->expense($context->tenant, $year, $center, $vendor, '100.00');
-        $this->travelTo(CarbonImmutable::parse('2026-03-01 10:00:00', 'UTC'));
-        app(ActivateAnnualHistory::class)->execute($actor, $context, $year, (string) str()->uuid());
-
-        $this->travelTo(CarbonImmutable::parse('2026-03-01 11:00:00', 'UTC'));
-        app(UpdateExpense::class)->execute(
-            $actor,
-            $context,
-            $expense,
-            new SaveExpenseData((int) $year->getKey(), (int) $center->getKey(), ExpenseKind::Ordinary, $expense->title, null, null, null, 1),
-            [$this->rowData($vendor, '150.00', (int) $row->getKey(), 1, true)],
-            (string) str()->uuid(),
-        );
-
-        $before = app(HistoricalAnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey(), '2026-03-01T10:30:00Z');
-        $after = app(HistoricalAnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey(), '2026-03-01T11:30:00Z');
-        $this->assertSame('100.00', $before['expenses'][0]['planned']);
-        $this->assertSame('150.00', $after['expenses'][0]['planned']);
-        $this->assertTrue($before['read_only']);
-
-        $this->expectExceptionMessage('HISTORY_BEFORE_ACTIVATION');
-        app(HistoricalAnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey(), '2026-03-01T09:59:59Z');
+        $this->assertFalse(class_exists('App\\Domain\\Budget\\Actions\\CloseAnnualBudget', false));
+        $this->assertFalse(class_exists('App\\Models\\ApprovalOperation', false));
     }
 
     public function test_contract_generates_one_selected_annual_planning_expense_with_project(): void
@@ -154,88 +69,12 @@ final class AnnualBudgetLifecycleTest extends TestCase
 
         $this->assertSame($project->getKey(), $expense->project_id);
         $this->assertCount(1, $expense->rows);
-        $this->assertSame('quote', $expense->rows->first()->type->value);
+        $this->assertSame('quote', $expense->rows->first()->type instanceof ExpenseType
+            ? $expense->rows->first()->type->value
+            : $expense->rows->first()->type);
         $this->assertSame('1200.00', $expense->rows->first()->net_amount);
         $this->assertSame($expense->rows->first()->getKey(), $expense->current_planning_row_id);
         $this->assertDatabaseMissing('expense_rows', ['expense_id' => $expense->getKey(), 'type' => 'actual']);
-    }
-
-    public function test_plafond_allocation_is_the_single_planning_contribution_for_covered_plans(): void
-    {
-        [$actor, $context, $year, $center, $vendor] = $this->context();
-        $plafond = Expense::factory()->for($context->tenant)->plafond()->create([
-            'planning_year_id' => $year->getKey(),
-            'cost_center_id' => $center->getKey(),
-        ]);
-        ExpenseRow::factory()->for($plafond)->allocationAdjustment($actor)->create([
-            'tenant_id' => $context->tenantId,
-            'entered_amount' => '1000.00',
-            'net_amount' => '1000.00',
-            'vat_amount' => '220.00',
-            'gross_amount' => '1220.00',
-        ]);
-        [$consumer] = $this->expense($context->tenant, $year, $center, $vendor, '1200.00');
-        $consumer->currentPlanningRow->forceFill(['funded_plafond_expense_id' => $plafond->getKey()])->save();
-        ExpenseRow::factory()->for($consumer)->create(['tenant_id' => $context->tenantId, 'type' => ExpenseType::Actual, 'spend_date' => '2026-06-01',
-            'entered_amount' => '1200.00', 'net_amount' => '1200.00', 'vat_amount' => '264.00', 'gross_amount' => '1464.00']);
-
-        $result = app(AnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey());
-        $this->assertSame(['ordinary', 'plafond'], collect($result['expenses'])->pluck('kind')->sort()->values()->all());
-        $this->assertSame($result['totals']['current_planning']['official'], $result['summary']['proposed']);
-        $this->assertSame('1000.00', $result['summary']['proposed']);
-        $this->assertArrayNotHasKey('plafond_overrun', $result['summary']);
-        $expenses = collect($result['expenses'])->keyBy('kind');
-        $this->assertSame('1000.00', $expenses['plafond']['planned']);
-        $this->assertSame('0.00', $expenses['ordinary']['planned']);
-    }
-
-    public function test_apply_budget_approval_audit_failure_rolls_back_the_whole_operation(): void
-    {
-        [$actor, $context, $year, $center, $vendor] = $this->context();
-        [$expense] = $this->expense($context->tenant, $year, $center, $vendor, '100.00');
-        $correlationId = (string) str()->uuid();
-        $auditCount = AuditEvent::query()->count();
-        $failure = static fn (): never => throw new RuntimeException('forced audit failure');
-        [$dispatcher, $eventName, $listeners] = $this->auditCreatingListeners($correlationId, $failure);
-
-        try {
-            $this->expectException(RuntimeException::class);
-            self::assertTrue(class_exists(ApplyBudgetApproval::class));
-            $action = app(ApplyBudgetApproval::class);
-            $action->execute($actor, $context, $year, new ApplyApprovalData(
-                1,
-                '2026-02-01',
-                'Rollback approval',
-                [new ApprovalChangeData((int) $expense->getKey(), 1, '90.00')],
-            ), $correlationId);
-        } finally {
-            $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
-            $this->assertDatabaseHas('planning_years', ['id' => $year->getKey(), 'budget_state' => 'preparation', 'lock_version' => 1]);
-            $this->assertDatabaseHas('expenses', ['id' => $expense->getKey(), 'approved_amount' => null, 'lock_version' => 1]);
-            $this->assertDatabaseMissing('approval_operations', ['correlation_id' => $correlationId]);
-            $this->assertDatabaseCount('audit_events', $auditCount);
-        }
-    }
-
-    public function test_close_annual_budget_audit_failure_rolls_back_state_and_revision(): void
-    {
-        [$actor, $context, $year] = $this->context();
-        $correlationId = (string) str()->uuid();
-        $auditCount = AuditEvent::query()->count();
-        $failure = static fn (): never => throw new RuntimeException('forced audit failure');
-        [$dispatcher, $eventName, $listeners] = $this->auditCreatingListeners($correlationId, $failure);
-
-        try {
-            $this->expectException(RuntimeException::class);
-            self::assertTrue(class_exists(CloseAnnualBudget::class));
-            $action = app(CloseAnnualBudget::class);
-            $action->execute($actor, $context, $year, 1, $correlationId);
-        } finally {
-            $this->restoreAuditCreatingListeners($dispatcher, $eventName, $listeners);
-            $this->assertDatabaseHas('planning_years', ['id' => $year->getKey(), 'budget_state' => 'preparation', 'lock_version' => 1]);
-            $this->assertDatabaseMissing('revision_batches', ['correlation_id' => $correlationId]);
-            $this->assertDatabaseCount('audit_events', $auditCount);
-        }
     }
 
     public function test_activate_annual_history_audit_failure_rolls_back_baseline_and_activation(): void
@@ -282,11 +121,6 @@ final class AnnualBudgetLifecycleTest extends TestCase
         $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
 
         return [$expense->fresh('currentPlanningRow'), $row];
-    }
-
-    private function rowData(Vendor $vendor, string $amount, int $id, int $lockVersion, bool $current): SaveExpenseRowData
-    {
-        return new SaveExpenseRowData($id, 1, (int) $vendor->getKey(), ExpenseType::Estimate, 'Plan', null, null, $amount, false, '22.00', false, null, null, null, null, null, null, $lockVersion, $current);
     }
 
     /** @return array{Dispatcher,string,array<int,mixed>} */

@@ -31,6 +31,9 @@ final class ApiErrorResponse
     private const DOMAIN_ERRORS = [
         'STALE_VERSION' => [409, 'The resource changed. Refresh and try again.'],
         'BUDGET_STATE_CONFLICT' => [409, 'The economic basis is permanently locked.'],
+        'BUDGET_PROPOSAL_EMPTY' => [409, 'La proposta di Budget non contiene componenti economici.'],
+        'BUDGET_COMPOSITION_STALE' => [409, 'La composizione del Budget è cambiata. Riesamina la proposta.'],
+        'BUDGET_APPROVAL_ANNULMENT_BLOCKED' => [409, 'L\'annullamento è bloccato da eventi operativi.'],
         'ECONOMIC_RECONCILIATION_FAILED' => [500, 'The economic projection could not be reconciled.'],
         'REFERENCED_RECORD_DELETE_DENIED' => [409, 'The resource cannot be deleted while referenced.'],
         'PROJECT_HAS_LINKED_EXPENSES' => [409, 'The project cannot be deleted while current expenses are linked.'],
@@ -106,6 +109,21 @@ final class ApiErrorResponse
         }
 
         if ($exception instanceof DomainException) {
+            if ($exception->getMessage() === 'BUDGET_APPROVAL_ANNULMENT_BLOCKED') {
+                return [
+                    409,
+                    'BUDGET_APPROVAL_ANNULMENT_BLOCKED',
+                    'L\'annullamento è bloccato da eventi operativi.',
+                    [],
+                    ['blockers' => [
+                        'actuals' => [],
+                        'extra_budget' => [],
+                        'rectifications' => [],
+                        'closures' => [],
+                    ]],
+                ];
+            }
+
             return self::domain($exception->getMessage(), 409, 'DOMAIN_CONFLICT', 'The requested change conflicts with current data.');
         }
 
