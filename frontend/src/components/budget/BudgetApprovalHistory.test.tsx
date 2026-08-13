@@ -1,5 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import { getBudgetApprovalDetail, getBudgetApprovalHistory, type BudgetApprovalDetail, type BudgetApprovalSummary } from "../../api/budget";
 import type { PaginatedData } from "../../api/client";
@@ -39,10 +39,11 @@ const storedDetail: BudgetApprovalDetail = {
 };
 
 describe("BudgetApprovalHistory", () => {
+  beforeEach(() => vi.resetAllMocks());
   it("shows active and annulled stored decisions read-only, then opens the immutable detail", async () => {
     vi.mocked(getBudgetApprovalHistory).mockResolvedValue(historyPage);
     vi.mocked(getBudgetApprovalDetail).mockResolvedValue(storedDetail);
-    render(<MemoryRouter><BudgetApprovalHistory planningYearId={25} /></MemoryRouter>);
+    render(<MemoryRouter><BudgetApprovalHistory planningYearId={25} requestScope="tenant-a" /></MemoryRouter>);
 
     expect(await screen.findByText("Cronologia delle approvazioni")).toBeInTheDocument();
     expect(screen.getByText("Annullata")).toBeInTheDocument();
@@ -64,20 +65,40 @@ describe("BudgetApprovalHistory", () => {
     vi.mocked(getBudgetApprovalHistory)
       .mockResolvedValueOnce(historyPage)
       .mockResolvedValueOnce({ ...historyPage, links: { ...historyPage.links, prev: "?page=1", next: null }, meta: { ...historyPage.meta, current_page: 2 } });
-    render(<MemoryRouter><BudgetApprovalHistory planningYearId={25} /></MemoryRouter>);
+    render(<MemoryRouter><BudgetApprovalHistory planningYearId={25} requestScope="tenant-a" /></MemoryRouter>);
 
     await waitFor(() => expect(getBudgetApprovalHistory).toHaveBeenCalledWith(25, { page: 1, per_page: 25 }));
     fireEvent.click(screen.getByRole("button", { name: "Successiva" }));
     await waitFor(() => expect(getBudgetApprovalHistory).toHaveBeenLastCalledWith(25, { page: 2, per_page: 25 }));
   });
 
-  it("discards a late history response after the PlanningYear changes", async () => {
+  it("returns to the displayed page after a failed next-page request and retries without skipping", async () => {
+    const pageTwo = { ...historyPage, links: { ...historyPage.links, prev: "?page=1", next: null }, meta: { ...historyPage.meta, current_page: 2 } };
+    vi.mocked(getBudgetApprovalHistory)
+      .mockResolvedValueOnce(historyPage)
+      .mockRejectedValueOnce(new Error("network"))
+      .mockResolvedValueOnce(historyPage)
+      .mockResolvedValueOnce(pageTwo);
+    render(<MemoryRouter><BudgetApprovalHistory planningYearId={25} requestScope="tenant-a" /></MemoryRouter>);
+
+    await screen.findByText("Pagina 1 di 2", { exact: false });
+    fireEvent.click(screen.getByRole("button", { name: "Successiva" }));
+    expect(await screen.findByRole("button", { name: "Riprova" })).toBeInTheDocument();
+    expect(screen.getByText("Pagina 1 di 2", { exact: false })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Riprova" }));
+    await waitFor(() => expect(getBudgetApprovalHistory).toHaveBeenLastCalledWith(25, { page: 2, per_page: 25 }));
+    expect(await screen.findByText("Pagina 2 di 2", { exact: false })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Precedente" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Successiva" })).toBeDisabled();
+  });
+
+  it("discards a late Tenant-A response after Tenant B selects the same PlanningYear", async () => {
     let resolveFirst: (value: typeof historyPage) => void = () => undefined;
     const first = new Promise<typeof historyPage>((resolve) => { resolveFirst = resolve; });
-    const yearB = { ...historyPage, data: [{ ...historyPage.data[1], planning_year_id: 26, approved_by: { id: 6, name: "Giulia Verdi" } }] };
+    const yearB = { ...historyPage, data: [{ ...historyPage.data[1], approved_by: { id: 6, name: "Giulia Verdi" } }] };
     vi.mocked(getBudgetApprovalHistory).mockReturnValueOnce(first).mockResolvedValueOnce(yearB);
-    const rendered = render(<MemoryRouter><BudgetApprovalHistory planningYearId={25} /></MemoryRouter>);
-    rendered.rerender(<MemoryRouter><BudgetApprovalHistory planningYearId={26} /></MemoryRouter>);
+    const rendered = render(<MemoryRouter><BudgetApprovalHistory planningYearId={25} requestScope="tenant-a" /></MemoryRouter>);
+    rendered.rerender(<MemoryRouter><BudgetApprovalHistory planningYearId={25} requestScope="tenant-b" /></MemoryRouter>);
 
     expect(await screen.findByText("Giulia Verdi")).toBeInTheDocument();
     resolveFirst(historyPage);
@@ -100,5 +121,30 @@ describe("BudgetApprovalHistory", () => {
     fireEvent.change(screen.getByLabelText("Filtra componenti registrati"), { target: { value: "Gruppo grande" } });
     expect(screen.getByLabelText("Totale selezione")).toHaveTextContent("99.999.999.999.999.999,98 €");
     expect(screen.queryAllByRole("link").map((link) => link.getAttribute("href"))).not.toContain("https://other-tenant.invalid/expenses/82");
+    fireEvent.change(screen.getByLabelText("Filtra componenti registrati"), { target: { value: "Zero separato" } });
+    expect(screen.getByLabelText("Totale selezione")).toHaveTextContent("Netto selezione0,00 €");
+    expect(screen.getByLabelText("Totale selezione")).toHaveTextContent("Ufficiale selezione0,00 €");
+    fireEvent.change(screen.getByLabelText("Filtra componenti registrati"), { target: { value: "nessuna corrispondenza" } });
+    expect(screen.getByLabelText("Totale selezione")).toHaveTextContent("Netto selezione0,00 €");
+    expect(screen.getByLabelText("Totale selezione")).toHaveTextContent("Ufficiale selezione0,00 €");
+  });
+
+  it("keeps only the latest detail selection when two stored snapshots resolve out of order", async () => {
+    let resolveFirst: (value: BudgetApprovalDetail) => void = () => undefined;
+    let resolveSecond: (value: BudgetApprovalDetail) => void = () => undefined;
+    vi.mocked(getBudgetApprovalHistory).mockResolvedValue(historyPage);
+    vi.mocked(getBudgetApprovalDetail)
+      .mockReturnValueOnce(new Promise((resolve) => { resolveFirst = resolve; }))
+      .mockReturnValueOnce(new Promise((resolve) => { resolveSecond = resolve; }));
+    render(<MemoryRouter><BudgetApprovalHistory planningYearId={25} requestScope="tenant-a" /></MemoryRouter>);
+
+    await screen.findAllByRole("button", { name: "Apri fotografia" });
+    const [first, second] = screen.getAllByRole("button", { name: "Apri fotografia" });
+    fireEvent.click(first);
+    fireEvent.click(second);
+    resolveSecond({ ...storedDetail, id: 90, approved_by: { id: 4, name: "Anna Bianchi" } });
+    expect(await screen.findByRole("dialog", { name: "Fotografia approvazione 90" })).toBeInTheDocument();
+    resolveFirst(storedDetail);
+    await waitFor(() => expect(screen.queryByRole("dialog", { name: "Fotografia approvazione 91" })).not.toBeInTheDocument());
   });
 });

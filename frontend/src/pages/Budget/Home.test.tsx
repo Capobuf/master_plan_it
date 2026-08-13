@@ -113,7 +113,7 @@ describe("BudgetHome workspace responses", () => {
     const approved: AnnualBudget = {
       ...overview(7),
       planning_year: { ...overview(7).planning_year, state: "approved", lock_version: 8 },
-      approved_snapshot: { id: 91, status: "active", effective_date: "2026-08-13", recorded_at: "2026-08-13T10:30:00Z", total: { net: "120.00", vat: "26.40", gross: "146.40", official: "120.00" } },
+      approved_snapshot: { id: 91, status: "active", planning_year: { id: 7, year_label: 2026 }, currency: "EUR", basis: "net", effective_date: "2026-08-13", recorded_at: "2026-08-13T10:30:00Z", total: { net: "120.00", vat: "26.40", gross: "146.40", official: "120.00" } },
       actions: { ...overview(7).actions, can_approve: false },
     };
     vi.mocked(getBudget).mockResolvedValueOnce(preparation).mockResolvedValueOnce(approved);

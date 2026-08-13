@@ -24,7 +24,7 @@ export default function BudgetView({ dataset, preview, onRefresh = noRefresh }: 
     { label: "Budget proposto", value: dataset.proposal.total.official },
     { label: "Valutazioni informative", value: dataset.informative_evaluations.official },
     { label: "Effettivi correnti", value: dataset.actuals.official },
-    { label: "Previsto approvato", value: approvedTotal },
+    { label: "Previsto approvato", value: approvedTotal, currency: dataset.approved_snapshot?.currency },
   ];
 
   return <div className="space-y-6">
@@ -32,12 +32,12 @@ export default function BudgetView({ dataset, preview, onRefresh = noRefresh }: 
       <div><p className="text-sm text-gray-500 dark:text-gray-400">Anno economico {dataset.planning_year.year_label}</p><p className="mt-1 font-medium text-gray-800 dark:text-white/90">Stato del Budget: {stateLabel[dataset.planning_year.state]}</p><p className="mt-1 text-sm text-gray-600 dark:text-gray-300">Base economica: <strong>{dataset.basis === "net" ? "Netto" : "Lordo"}</strong></p></div>
       <Badge color={dataset.planning_year.state === "preparation" ? "warning" : dataset.planning_year.state === "approved" ? "success" : "light"}>{stateLabel[dataset.planning_year.state]}</Badge>
     </div>
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map((metric) => <article key={metric.label} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"><p className="text-sm text-gray-500 dark:text-gray-400">{metric.label}</p><p className="mt-2 text-2xl font-bold text-gray-800 dark:text-white/90">{metric.value === null ? "—" : formatMoney(metric.value, dataset.currency)}</p></article>)}</div>
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map((metric) => <article key={metric.label} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"><p className="text-sm text-gray-500 dark:text-gray-400">{metric.label}</p><p className="mt-2 text-2xl font-bold text-gray-800 dark:text-white/90">{metric.value === null ? "—" : formatMoney(metric.value, metric.currency ?? dataset.currency)}</p></article>)}</div>
     <ComponentCard title="Vista di impatto del Budget Proposto" desc="La composizione è calcolata dal dataset economico autorevole: non sono disponibili selezioni o importi manuali.">
       {dataset.actions.can_view_approval_preview ? <BudgetProposalImpact preview={preview} /> : <p className="text-sm text-gray-500 dark:text-gray-400">La vista di impatto non è disponibile con il contesto corrente.</p>}
       {canApprove ? <div className="mt-5 flex justify-end"><Button type="button" onClick={() => setApprovalOpen(true)}>Approva Budget proposto</Button></div> : null}
     </ComponentCard>
-    <BudgetApprovalHistory planningYearId={dataset.planning_year.id} />
+    <BudgetApprovalHistory planningYearId={dataset.planning_year.id} requestScope={dataset.surface_fingerprint} />
     <BudgetApprovalModal isOpen={approvalOpen} preview={preview} onClose={() => setApprovalOpen(false)} onApproved={onRefresh} onReReview={onRefresh} />
   </div>;
 }

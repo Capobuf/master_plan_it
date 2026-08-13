@@ -106,6 +106,9 @@ export interface BudgetApprovalPreview extends BudgetProposal {
 export interface ActiveApprovalSummary {
   id: number;
   status: "active";
+  planning_year: Pick<PlanningYearBudget, "id" | "year_label">;
+  currency: string;
+  basis: BudgetBasis;
   effective_date: string;
   recorded_at: string;
   total: EconomicMeasure;
@@ -162,22 +165,102 @@ function hasApprovalStatus(value: unknown): value is BudgetApprovalStatus {
   return value === "active" || value === "annulled";
 }
 
-function assertApprovalHistory(value: unknown): asserts value is PaginatedData<BudgetApprovalSummary> {
+const canonicalMoney = /^(?:0|[1-9]\d*|-[1-9]\d*)\.\d{2}$/;
+const calendarDate = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
+const timestamp = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|[+-]\d{2}:\d{2})$/;
+const isPositiveId = (value: unknown): value is number => typeof value === "number" && Number.isSafeInteger(value) && value > 0;
+const isText = (value: unknown): value is string => typeof value === "string";
+const isBasis = (value: unknown): value is BudgetBasis => value === "net" || value === "gross";
+
+function isCalendarDate(value: unknown): value is string {
+  if (!isText(value) || !calendarDate.test(value)) return false;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  return date.getUTCFullYear() === year && date.getUTCMonth() === month - 1 && date.getUTCDate() === day;
+}
+
+function isTimestamp(value: unknown): value is string {
+  return isText(value) && timestamp.test(value) && isCalendarDate(value.slice(0, 10)) && Number.isFinite(Date.parse(value));
+}
+
+function isDrillDown(value: unknown): value is BudgetDrillDown {
+  if (!isRecord(value) || typeof value.authorized !== "boolean" || !(value.href === null || isText(value.href))) return false;
+  return value.href === null || /^\/api\/v1\/(expenses|plafonds)\/[1-9]\d*$/.test(value.href);
+}
+
+function isActor(value: unknown): value is BudgetApprovalActor {
+  return isRecord(value) && isPositiveId(value.id) && isText(value.name) && value.name.length > 0;
+}
+
+function isMeasure(value: unknown): value is EconomicMeasure {
+  return isRecord(value) && ["net", "vat", "gross", "official"].every((key) => isText(value[key]) && canonicalMoney.test(value[key]));
+}
+
+function isReference(value: unknown, field: "name" | "title"): boolean {
+  return isRecord(value) && isPositiveId(value.id) && isText(value[field]) && value[field].length > 0;
+}
+
+function isContributor(value: unknown): value is ApprovalContributor {
+  if (!isRecord(value) || !isText(value.source_identity) || value.source_identity.length === 0
+    || (value.kind !== "ordinary_current_planning" && value.kind !== "plafond_allocation")
+    || !isReference(value.expense, "title") || !isMeasure(value.amount) || !isPositiveId(value.source_lock_version) || !isDrillDown(value.drill_down)) return false;
+  const row = value.row;
+  if (!(row === null || (isRecord(row) && isPositiveId(row.id) && (row.type === "estimate" || row.type === "quote") && isText(row.description) && row.description.length > 0))) return false;
+  if (!(value.plafond === null || isReference(value.plafond, "title"))) return false;
+  const dimensions = value.dimensions;
+  return isRecord(dimensions) && isReference(dimensions.cost_center, "name")
+    && (dimensions.vendor === null || isReference(dimensions.vendor, "name"))
+    && (dimensions.project === null || isReference(dimensions.project, "title"))
+    && (dimensions.contract === null || isReference(dimensions.contract, "title"));
+}
+
+function sumMeasure(contributors: ApprovalContributor[], key: keyof EconomicMeasure): string {
+  const cents = contributors.reduce((total, contributor) => {
+    const raw = contributor.amount[key];
+    const negative = raw.startsWith("-");
+    const [integer, fraction] = (negative ? raw.slice(1) : raw).split(".");
+    const value = BigInt(`${integer}${fraction}`);
+    return total + (negative ? -value : value);
+  }, 0n);
+  const negative = cents < 0n;
+  const digits = (negative ? -cents : cents).toString().padStart(3, "0");
+  return `${negative ? "-" : ""}${digits.slice(0, -2)}.${digits.slice(-2)}`;
+}
+
+function isSummary(value: unknown, planningYearId: number): value is BudgetApprovalSummary {
+  if (!isRecord(value) || !isPositiveId(value.id) || !hasApprovalStatus(value.status) || value.planning_year_id !== planningYearId
+    || !isText(value.currency) || !/^[A-Z]{3}$/.test(value.currency) || !isBasis(value.basis) || !isMeasure(value.total)
+    || !isCalendarDate(value.effective_date) || !isTimestamp(value.recorded_at)
+    || !isActor(value.approved_by) || !(value.note === null || isText(value.note))) return false;
+  const annulled = value.status === "annulled";
+  return annulled
+    ? isTimestamp(value.annulled_at) && isActor(value.annulled_by) && (value.annulment_note === null || isText(value.annulment_note))
+    : (value.annulled_at === undefined || value.annulled_at === null) && (value.annulled_by === undefined || value.annulled_by === null) && (value.annulment_note === undefined || value.annulment_note === null);
+}
+
+function assertApprovalHistory(value: unknown, planningYearId: number, requestedPage?: number): asserts value is PaginatedData<BudgetApprovalSummary> {
   const meta = isRecord(value) ? value.meta : null;
   if (!isRecord(value) || !Array.isArray(value.data) || !isRecord(meta)
-    || !["current_page", "last_page", "per_page", "total"].every((key) => typeof meta[key] === "number")
-    || !value.data.every((item) => isRecord(item) && typeof item.id === "number" && hasApprovalStatus(item.status))) {
+    || !["current_page", "last_page", "per_page"].every((key) => isPositiveId(meta[key])) || !(typeof meta.total === "number" && Number.isSafeInteger(meta.total) && meta.total >= 0)
+    || (meta.current_page as number) > (meta.last_page as number) || (requestedPage !== undefined && meta.current_page !== requestedPage)
+    || meta.total < value.data.length || !value.data.every((item) => isSummary(item, planningYearId))) {
     throw new Error("La cronologia approvazioni ricevuta non rispetta il contratto previsto.");
   }
 }
 
-function assertApprovalDetail(value: unknown): asserts value is BudgetApprovalDetail {
-  if (!isRecord(value) || typeof value.id !== "number" || !hasApprovalStatus(value.status)
-    || !Array.isArray(value.contributors) || !isRecord(value.composition)
-    || typeof value.composition.fingerprint !== "string" || typeof value.composition.schema_version !== "string"
-    || typeof value.composition.contributor_count !== "number" || !(value.annulment === null || isRecord(value.annulment))) {
+function assertApprovalDetail(value: unknown, planningYearId: number, approvalId: number): asserts value is BudgetApprovalDetail {
+  if (!isRecord(value) || value.id !== approvalId || !hasApprovalStatus(value.status) || !isRecord(value.planning_year) || value.planning_year.id !== planningYearId || !isPositiveId(value.planning_year.id) || !isPositiveId(value.planning_year.year_label)
+    || !isText(value.currency) || !/^[A-Z]{3}$/.test(value.currency) || !isBasis(value.basis) || !isMeasure(value.total) || value.total.official !== value.total[value.basis]
+    || !isCalendarDate(value.effective_date) || !isTimestamp(value.recorded_at) || !isActor(value.approved_by) || !(value.note === null || isText(value.note))
+    || !Array.isArray(value.contributors) || !value.contributors.every(isContributor) || !isRecord(value.composition)
+    || !isText(value.composition.fingerprint) || value.composition.fingerprint.length === 0 || !isText(value.composition.schema_version) || value.composition.schema_version.length === 0
+    || value.composition.contributor_count !== value.contributors.length || !Number.isSafeInteger(value.composition.contributor_count) || value.composition.contributor_count < 0
+    || ["net", "vat", "gross", "official"].some((key) => sumMeasure(value.contributors as ApprovalContributor[], key as keyof EconomicMeasure) !== (value.total as EconomicMeasure)[key as keyof EconomicMeasure])) {
     throw new Error("La fotografia approvazione ricevuta non rispetta il contratto previsto.");
   }
+  const annulment = value.annulment;
+  if (!(annulment === null || (isRecord(annulment) && isTimestamp(annulment.annulled_at) && isActor(annulment.annulled_by) && (annulment.note === null || isText(annulment.note))))
+    || (value.status === "active" && annulment !== null) || (value.status === "annulled" && annulment === null)) throw new Error("La fotografia approvazione ricevuta non rispetta il contratto previsto.");
 }
 
 export interface ApproveBudgetProposalInput {
@@ -245,7 +328,7 @@ export async function getBudgetApprovalHistory(
     `/api/v1/budget/${planningYearId}/approvals`,
     { params },
   );
-  assertApprovalHistory(response.data);
+  assertApprovalHistory(response.data, planningYearId, params.page);
   return response.data;
 }
 
@@ -257,7 +340,7 @@ export async function getBudgetApprovalDetail(
   const response = await apiClient.get<DataEnvelope<BudgetApprovalDetail>>(
     `/api/v1/budget/${planningYearId}/approvals/${approvalId}`,
   );
-  assertApprovalDetail(response.data.data);
+  assertApprovalDetail(response.data.data, planningYearId, approvalId);
   return response.data.data;
 }
 

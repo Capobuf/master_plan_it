@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { ApiError } from "../../api/client";
 import { getBudgetApprovalDetail, getBudgetApprovalHistory, type BudgetApprovalDetail as BudgetApprovalDetailModel, type BudgetApprovalSummary } from "../../api/budget";
 import { formatDate, formatDateTime, formatMoney } from "../../presentation/formatters";
 import ComponentCard from "../common/ComponentCard";
@@ -25,51 +26,76 @@ function ApprovalRow({ approval, onOpen }: { approval: BudgetApprovalSummary; on
   </TableRow>;
 }
 
-export default function BudgetApprovalHistory({ planningYearId }: { planningYearId: number }) {
-  return <BudgetApprovalHistoryContent key={planningYearId} planningYearId={planningYearId} />;
+function errorReference(error: unknown): string | null {
+  return error instanceof ApiError && error.correlationId ? error.correlationId : null;
+}
+
+export default function BudgetApprovalHistory({ planningYearId, requestScope }: { planningYearId: number; requestScope: string }) {
+  return <BudgetApprovalHistoryContent key={`${planningYearId}:${requestScope}`} planningYearId={planningYearId} />;
 }
 
 function BudgetApprovalHistoryContent({ planningYearId }: { planningYearId: number }) {
   const [page, setPage] = useState(1);
   const [history, setHistory] = useState<Awaited<ReturnType<typeof getBudgetApprovalHistory>> | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const [error, setError] = useState<{ reference: string | null; retryPage: number } | null>(null);
   const [detail, setDetail] = useState<BudgetApprovalDetailModel | null>(null);
-  const [detailError, setDetailError] = useState(false);
-  const [detailLoading, setDetailLoading] = useState(false);
+  const [detailError, setDetailError] = useState<{ reference: string | null } | null>(null);
+  const [detailLoadingId, setDetailLoadingId] = useState<number | null>(null);
+  const [retryNonce, setRetryNonce] = useState(0);
+  const detailRequestRef = useRef(0);
+  const failedPageRef = useRef<number | null>(null);
+  const displayedPageRef = useRef(1);
 
   useEffect(() => {
     let current = true;
     setLoading(true);
-    setError(false);
+    setDetail(null);
+    detailRequestRef.current += 1;
     void getBudgetApprovalHistory(planningYearId, { page, per_page: PAGE_SIZE })
-      .then((next) => { if (current) setHistory(next); })
-      .catch(() => { if (current) setError(true); })
+      .then((next) => {
+        if (!current) return;
+        setHistory(next);
+        displayedPageRef.current = next.meta.current_page;
+        if (failedPageRef.current === page) {
+          failedPageRef.current = null;
+          setError(null);
+        }
+      })
+      .catch((cause: unknown) => {
+        if (!current) return;
+        failedPageRef.current = page;
+        setError({ reference: errorReference(cause), retryPage: page });
+        setPage(displayedPageRef.current);
+      })
       .finally(() => { if (current) setLoading(false); });
     return () => { current = false; };
-  }, [page, planningYearId]);
+  }, [page, planningYearId, retryNonce]);
 
   const openDetail = async (approvalId: number) => {
-    setDetailError(false);
-    setDetailLoading(true);
+    const requestId = detailRequestRef.current + 1;
+    detailRequestRef.current = requestId;
+    setDetailError(null);
+    setDetailLoadingId(approvalId);
     try {
-      setDetail(await getBudgetApprovalDetail(planningYearId, approvalId));
-    } catch {
-      setDetailError(true);
+      const response = await getBudgetApprovalDetail(planningYearId, approvalId);
+      if (detailRequestRef.current === requestId) setDetail(response);
+    } catch (cause: unknown) {
+      if (detailRequestRef.current === requestId) setDetailError({ reference: errorReference(cause) });
     } finally {
-      setDetailLoading(false);
+      if (detailRequestRef.current === requestId) setDetailLoadingId(null);
     }
   };
   const canPrevious = Boolean(history && history.meta.current_page > 1) && !loading;
   const canNext = Boolean(history && history.meta.current_page < history.meta.last_page) && !loading;
 
   return <ComponentCard title="Cronologia delle approvazioni" desc="Decisioni e fotografie registrate dal server, disponibili in sola lettura.">
-    {error ? <Alert variant="error" title="Cronologia non disponibile" message="Non è stato possibile aggiornare la cronologia delle approvazioni." /> : null}
-    {detailError ? <Alert variant="error" title="Fotografia non disponibile" message="Non è stato possibile aprire la fotografia richiesta." /> : null}
+    {error ? <div className="space-y-3"><Alert variant="error" title="Cronologia non disponibile" message={`Non è stato possibile aggiornare la cronologia delle approvazioni.${error.reference ? ` Riferimento: ${error.reference}.` : ""}`} /><Button type="button" variant="outline" size="sm" onClick={() => { if (page === error.retryPage) setRetryNonce((value) => value + 1); else setPage(error.retryPage); }}>Riprova</Button></div> : null}
+    {detailError ? <Alert variant="error" title="Fotografia non disponibile" message={`Non è stato possibile aprire la fotografia richiesta.${detailError.reference ? ` Riferimento: ${detailError.reference}.` : ""}`} /> : null}
     {loading && history === null ? <p className="text-sm text-gray-500 dark:text-gray-400" role="status">Caricamento cronologia…</p> : null}
     {!loading && !error && history?.data.length === 0 ? <p className="text-sm text-gray-500 dark:text-gray-400">Non sono presenti approvazioni registrate.</p> : null}
     {history && history.data.length > 0 ? <><div className="max-w-full overflow-x-auto"><Table><TableHeader><TableRow>{["Stato", "Efficacia", "Registrata da", "Previsto", "Annullamento", ""].map((heading) => <TableCell key={heading} isHeader>{heading}</TableCell>)}</TableRow></TableHeader><TableBody>{history.data.map((approval) => <ApprovalRow key={approval.id} approval={approval} onOpen={(id) => { void openDetail(id); }} />)}</TableBody></Table></div><div className="flex items-center justify-between gap-3"><p className="text-sm text-gray-500 dark:text-gray-400">Pagina {history.meta.current_page} di {history.meta.last_page} · {history.meta.total} registrazioni</p><div className="flex gap-2"><Button type="button" variant="outline" size="sm" disabled={!canPrevious} onClick={() => setPage((current) => current - 1)}>Precedente</Button><Button type="button" variant="outline" size="sm" disabled={!canNext} onClick={() => setPage((current) => current + 1)}>Successiva</Button></div></div></> : null}
-    {detailLoading ? <p className="text-sm text-gray-500 dark:text-gray-400" role="status">Apertura fotografia…</p> : null}
+    {detailLoadingId !== null ? <p className="text-sm text-gray-500 dark:text-gray-400" role="status">Apertura fotografia…</p> : null}
     {detail ? <BudgetApprovalDetailDialog approval={detail} onClose={() => setDetail(null)} /> : null}
   </ComponentCard>;
 }

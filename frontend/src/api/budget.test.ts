@@ -15,6 +15,23 @@ vi.mock("./client", async (importOriginal) => ({
   apiClient: { get: vi.fn(), post: vi.fn() },
 }));
 
+const measure = { net: "10.00", vat: "2.00", gross: "12.00", official: "10.00" };
+const contributor = {
+  source_identity: "expense-row:501", kind: "ordinary_current_planning", expense: { id: 81, title: "Licenze" },
+  row: { id: 501, type: "quote", description: "Preventivo" }, plafond: null,
+  dimensions: { cost_center: { id: 9, name: "IT" }, vendor: null, project: null, contract: null }, amount: measure,
+  source_lock_version: 4, drill_down: { authorized: true, href: "/api/v1/expenses/81" },
+};
+const validSummary = {
+  id: 91, status: "active", planning_year_id: 25, currency: "EUR", basis: "net", total: measure,
+  effective_date: "2026-08-13", recorded_at: "2026-08-13T10:30:00Z", approved_by: { id: 5, name: "Mario Rossi" }, note: null,
+};
+const validDetail = {
+  id: 91, status: "active", planning_year: { id: 25, year_label: 2026 }, currency: "EUR", basis: "net", total: measure,
+  effective_date: "2026-08-13", recorded_at: "2026-08-13T10:30:00Z", approved_by: { id: 5, name: "Mario Rossi" }, note: null,
+  composition: { schema_version: "budget-proposal-composition/v1", fingerprint: `sha256:${"a".repeat(64)}`, contributor_count: 1 }, contributors: [contributor], annulment: null,
+};
+
 describe("budget proposal adapters", () => {
   it("requests the strict proposal overview with the selected PlanningYear", async () => {
     const data = { planning_year: { id: 25 } };
@@ -34,7 +51,7 @@ describe("budget proposal adapters", () => {
 
   it("reads the paginated immutable approval history without inventing filter parameters", async () => {
     const page = {
-      data: [{ id: 91, status: "active", planning_year_id: 25 }],
+      data: [validSummary],
       links: { first: "?page=1", last: "?page=1", prev: null, next: null },
       meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 },
     };
@@ -45,13 +62,7 @@ describe("budget proposal adapters", () => {
   });
 
   it("reads one stored approval snapshot from its authorized detail endpoint", async () => {
-    const approval = {
-      id: 91,
-      status: "annulled",
-      contributors: [],
-      composition: { schema_version: "budget-proposal-composition/v1", fingerprint: `sha256:${"a".repeat(64)}`, contributor_count: 0 },
-      annulment: null,
-    };
+    const approval = validDetail;
     vi.mocked(apiClient.get).mockResolvedValue({ data: { data: approval } });
 
     await expect(getBudgetApprovalDetail(25, 91)).resolves.toEqual(approval);
@@ -64,6 +75,27 @@ describe("budget proposal adapters", () => {
     });
 
     await expect(getBudgetApprovalHistory(25)).rejects.toThrow(/non rispetta il contratto/i);
+  });
+
+  it("fails closed for cross-year, unsafe meta and corrupt immutable detail data", async () => {
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: { data: [{ ...validSummary, planning_year_id: 26 }], links: {}, meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 } },
+    });
+    await expect(getBudgetApprovalHistory(25, { page: 1 })).rejects.toThrow(/non rispetta il contratto/i);
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({
+      data: { data: [validSummary], links: {}, meta: { current_page: Number.NaN, last_page: 1, per_page: 25, total: 1 } },
+    });
+    await expect(getBudgetApprovalHistory(25, { page: 1 })).rejects.toThrow(/non rispetta il contratto/i);
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: { ...validDetail, id: 92, total: { ...measure, net: "10.001" } } } });
+    await expect(getBudgetApprovalDetail(25, 91)).rejects.toThrow(/non rispetta il contratto/i);
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: { ...validDetail, total: { ...measure, net: "-0.00" } } } });
+    await expect(getBudgetApprovalDetail(25, 91)).rejects.toThrow(/non rispetta il contratto/i);
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: { ...validDetail, total: { ...measure, official: "12.00" } } } });
+    await expect(getBudgetApprovalDetail(25, 91)).rejects.toThrow(/non rispetta il contratto/i);
   });
 
   it("posts only effective date, optional note and reviewed composition evidence", async () => {
