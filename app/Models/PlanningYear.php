@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Query\Builder as QueryBuilder;
+use Illuminate\Support\Collection;
 use Overtrue\LaravelVersionable\Versionable;
 use Overtrue\LaravelVersionable\VersionStrategy;
 
@@ -53,6 +54,19 @@ class PlanningYear extends Model
     protected function performDeleteOnModel(): void
     {
         throw new \LogicException('Planning years cannot be permanently deleted.');
+    }
+
+    /** @param Builder<static> $query */
+    protected function performInsert(Builder $query): bool
+    {
+        $state = $this->getAttribute('budget_state');
+        if ($state === null) {
+            $this->setAttribute('budget_state', BudgetState::Preparation);
+        } elseif ($state !== BudgetState::Preparation) {
+            throw new \DomainException('BUDGET_STATE_CONFLICT');
+        }
+
+        return parent::performInsert($query);
     }
 
     /** @param Builder<static> $query */
@@ -165,8 +179,61 @@ final class PlanningYearBuilder extends Builder
     /** @var list<string> */
     private const FORWARDED_STATE_WRITE_METHODS = [
         'decrement', 'decrementeach', 'increment', 'incrementeach', 'incrementorcreate',
-        'update', 'updatefrom', 'updateorcreate', 'updateorinsert', 'upsert',
+        'insertusing', 'insertorignoreusing', 'update', 'updatefrom', 'updateorcreate',
+        'updateorinsert', 'upsert',
     ];
+
+    /** @param array<int|string, mixed> $values */
+    public function insert(array $values): bool
+    {
+        $this->assertInitialStateRowsArePreparation($values);
+
+        return $this->toBase()->insert($values);
+    }
+
+    /** @param array<int|string, mixed> $values */
+    public function insertOrIgnore(array $values): int
+    {
+        $this->assertInitialStateRowsArePreparation($values);
+
+        return $this->toBase()->insertOrIgnore($values);
+    }
+
+    /** @param array<string, mixed> $values */
+    public function insertGetId(array $values, ?string $sequence = null): int
+    {
+        $this->assertInitialStateRowsArePreparation($values);
+
+        return $this->toBase()->insertGetId($values, $sequence);
+    }
+
+    /**
+     * @param  array<int|string, mixed>  $values
+     * @param  non-empty-array<non-empty-string>  $returning
+     * @param  non-empty-array<non-empty-string>|non-empty-string|null  $uniqueBy
+     * @return Collection<int, object>
+     */
+    public function insertOrIgnoreReturning(
+        array $values,
+        array $returning = ['*'],
+        array|string|null $uniqueBy = null,
+    ): Collection {
+        $this->assertInitialStateRowsArePreparation($values);
+
+        return $this->toBase()->insertOrIgnoreReturning($values, $returning, $uniqueBy);
+    }
+
+    /** @param array<int, string> $columns */
+    public function insertUsing(array $columns, mixed $query): never
+    {
+        throw new \DomainException('BUDGET_STATE_CONFLICT');
+    }
+
+    /** @param array<int, string> $columns */
+    public function insertOrIgnoreUsing(array $columns, mixed $query): never
+    {
+        throw new \DomainException('BUDGET_STATE_CONFLICT');
+    }
 
     /** @param array<string, mixed> $values */
     public function update(array $values): int
@@ -354,6 +421,31 @@ final class PlanningYearBuilder extends Builder
 
         if (! is_string($column) || preg_match('/\bbudget_state\b/i', $column) === 1) {
             throw new \DomainException('BUDGET_STATE_CONFLICT');
+        }
+    }
+
+    /** @param array<int|string, mixed> $values */
+    private function assertInitialStateRowsArePreparation(array $values): void
+    {
+        $rows = is_array(array_first($values)) ? $values : [$values];
+
+        foreach ($rows as $row) {
+            if (! is_array($row)) {
+                throw new \DomainException('BUDGET_STATE_CONFLICT');
+            }
+
+            foreach ($row as $column => $value) {
+                if (! is_string($column) || preg_match('/\bbudget_state\b/i', $column) !== 1) {
+                    continue;
+                }
+
+                $state = $value instanceof BudgetState
+                    ? $value
+                    : (is_string($value) ? BudgetState::tryFrom($value) : null);
+                if ($state !== BudgetState::Preparation) {
+                    throw new \DomainException('BUDGET_STATE_CONFLICT');
+                }
+            }
         }
     }
 

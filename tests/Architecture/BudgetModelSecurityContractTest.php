@@ -141,4 +141,39 @@ final class BudgetModelSecurityContractTest extends TestCase
         $this->assertContains('approveBudget', $yearMethods);
         $this->assertContains('annulApproval', $yearMethods);
     }
+
+    public function test_planning_year_creation_and_raw_inserts_allow_only_preparation(): void
+    {
+        $query = $this->createMock(QueryBuilder::class);
+        $query->expects($this->exactly(2))
+            ->method('insert')
+            ->willReturn(true);
+        $builder = new PlanningYearBuilder($query);
+        $builder->setModel(new PlanningYear);
+
+        $this->assertTrue($builder->insert(['tenant_id' => 1, 'year_label' => 2030]));
+        $this->assertTrue($builder->insert([
+            ['tenant_id' => 1, 'year_label' => 2031, 'budget_state' => BudgetState::Preparation],
+        ]));
+
+        foreach ([
+            'raw approved insert' => fn () => $builder->insert(['budget_state' => BudgetState::Approved]),
+            'raw closed insert-or-ignore' => fn () => $builder->insertOrIgnore(['budget_state' => 'closed']),
+            'raw approved insert-get-id' => fn () => $builder->insertGetId(['budget_state' => 'approved']),
+            'query-sourced insert' => fn () => $builder->insertUsing(['budget_state'], 'select "preparation"'),
+            'query-sourced ignored insert' => fn () => $builder->insertOrIgnoreUsing(['budget_state'], 'select "preparation"'),
+        ] as $name => $mutation) {
+            try {
+                $mutation();
+                $this->fail("{$name} must be rejected.");
+            } catch (\DomainException $exception) {
+                $this->assertSame('BUDGET_STATE_CONFLICT', $exception->getMessage());
+            }
+        }
+
+        $source = file_get_contents(dirname(__DIR__, 2).'/app/Models/PlanningYear.php');
+        $this->assertIsString($source);
+        $this->assertStringContainsString('protected function performInsert', $source);
+        $this->assertStringContainsString('$state !== BudgetState::Preparation', $source);
+    }
 }

@@ -77,6 +77,93 @@ final class AnnualBudgetLifecycleTest extends TestCase
         $this->assertFalse(class_exists('App\\Models\\ApprovalOperation', false));
     }
 
+    public function test_planning_year_creation_and_raw_inserts_start_only_in_preparation(): void
+    {
+        $tenant = Tenant::factory()->create();
+
+        foreach ([BudgetState::Approved, BudgetState::Closed] as $state) {
+            try {
+                PlanningYear::factory()->for($tenant)->create([
+                    'year_label' => $state === BudgetState::Approved ? 2091 : 2092,
+                    'budget_state' => $state,
+                ]);
+                $this->fail("Initial {$state->value} state must be rejected.");
+            } catch (\DomainException $exception) {
+                $this->assertSame('BUDGET_STATE_CONFLICT', $exception->getMessage());
+            }
+        }
+
+        foreach ([
+            fn () => (new PlanningYear)->forceFill([
+                'tenant_id' => $tenant->getKey(), 'year_label' => 2086, 'active' => true,
+                'budget_state' => BudgetState::Closed, 'lock_version' => 1,
+            ])->save(),
+            fn () => PlanningYear::query()->firstOrCreate([
+                'tenant_id' => $tenant->getKey(), 'year_label' => 2087,
+            ], [
+                'active' => true, 'budget_state' => BudgetState::Approved, 'lock_version' => 1,
+            ]),
+        ] as $creationBypass) {
+            try {
+                $creationBypass();
+                $this->fail('All model creation paths must enforce Preparation.');
+            } catch (\DomainException $exception) {
+                $this->assertSame('BUDGET_STATE_CONFLICT', $exception->getMessage());
+            }
+        }
+
+        $valid = PlanningYear::factory()->for($tenant)->create([
+            'year_label' => 2093,
+            'budget_state' => BudgetState::Preparation,
+        ]);
+        $this->assertSame(BudgetState::Preparation, $valid->budget_state);
+
+        $this->assertTrue(PlanningYear::query()->insert([
+            'tenant_id' => $tenant->getKey(), 'year_label' => 2094, 'active' => true, 'lock_version' => 1,
+        ]));
+        $this->assertSame(1, PlanningYear::query()->insertOrIgnore([
+            'tenant_id' => $tenant->getKey(), 'year_label' => 2088, 'active' => true, 'lock_version' => 1,
+        ]));
+        $this->assertIsInt(PlanningYear::query()->insertGetId([
+            'tenant_id' => $tenant->getKey(), 'year_label' => 2089, 'active' => true,
+            'budget_state' => BudgetState::Preparation, 'lock_version' => 1,
+        ]));
+        $this->assertTrue(PlanningYear::query()->insert([
+            'tenant_id' => $tenant->getKey(), 'year_label' => 2095, 'active' => true,
+            'budget_state' => BudgetState::Preparation, 'lock_version' => 1,
+        ]));
+
+        foreach ([
+            fn () => PlanningYear::query()->insert([
+                'tenant_id' => $tenant->getKey(), 'year_label' => 2096, 'budget_state' => 'approved',
+            ]),
+            fn () => PlanningYear::query()->insertOrIgnore([
+                'tenant_id' => $tenant->getKey(), 'year_label' => 2097, 'budget_state' => 'closed',
+            ]),
+            fn () => PlanningYear::query()->insertGetId([
+                'tenant_id' => $tenant->getKey(), 'year_label' => 2098, 'budget_state' => 'approved',
+            ]),
+            fn () => PlanningYear::query()->insertUsing(
+                ['tenant_id', 'year_label', 'budget_state'],
+                Tenant::query()->selectRaw('id, 2099, ?', ['preparation'])->limit(1),
+            ),
+        ] as $mutation) {
+            try {
+                $mutation();
+                $this->fail('Raw insert variants must not create an illegal or unprovable initial state.');
+            } catch (\DomainException $exception) {
+                $this->assertSame('BUDGET_STATE_CONFLICT', $exception->getMessage());
+            }
+        }
+
+        $this->assertSame(5, PlanningYear::query()->where('tenant_id', $tenant->getKey())->count());
+        $this->assertSame(
+            [BudgetState::Preparation],
+            PlanningYear::query()->where('tenant_id', $tenant->getKey())
+                ->distinct()->pluck('budget_state')->all(),
+        );
+    }
+
     public function test_contract_generates_one_selected_annual_planning_expense_with_project(): void
     {
         [$actor, $context, $year, $center, $vendor] = $this->context();
