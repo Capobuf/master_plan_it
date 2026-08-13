@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\V1\BudgetApprovalController;
 use App\Http\Controllers\Api\V1\CurrentBudgetController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\EconomicReportController;
@@ -15,6 +16,10 @@ Route::middleware(RejectBearerTokens::class)
         Route::get('/budget', CurrentBudgetController::class)
             ->middleware('application-ability:budget.view')
             ->name('api.v1.budget');
+        Route::get('/budget/{planningYear}/approval-preview', [BudgetApprovalController::class, 'preview'])
+            ->middleware('application-ability:budget.view')
+            ->whereNumber('planningYear')
+            ->name('api.v1.budget.approval-preview');
         Route::get('/reports', EconomicReportController::class)
             ->middleware('application-ability:report.view')
             ->name('api.v1.reports');
