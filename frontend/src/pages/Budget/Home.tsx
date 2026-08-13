@@ -43,6 +43,21 @@ export default function BudgetHome() {
     return () => { active = false; };
   }, [canView, contextLoading, planningYearLoading, selectedPlanningYearId, tenantId]);
 
+  async function refreshBudget(): Promise<void> {
+    if (tenantId === null || selectedPlanningYearId === null || !canView) return;
+    const [data, preview] = await Promise.all([
+      getBudget({ planning_year_id: selectedPlanningYearId }),
+      getBudgetApprovalPreview(selectedPlanningYearId),
+    ]);
+    if (!hasCoherentProposal(data, preview)) {
+      throw new ApiError({
+        message: "La proposta è cambiata durante l’aggiornamento. Riprova per visualizzare una composizione coerente.",
+        code: "BUDGET_COMPOSITION_STALE",
+      });
+    }
+    setState({ tenantId, planningYearId: selectedPlanningYearId, data, preview, error: null });
+  }
+
   const current = state?.tenantId === tenantId && state.planningYearId === selectedPlanningYearId ? state : null;
   let content: React.ReactNode;
   if (contextLoading || planningYearLoading) content = <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant e dell'anno di pianificazione in corso." />;
@@ -50,7 +65,7 @@ export default function BudgetHome() {
   else if (!canView) content = <Alert variant="warning" title="Budget non disponibile" message="Non disponi dell'autorizzazione necessaria per visualizzare questa pagina." />;
   else if (current === null) content = <Alert variant="info" title="Caricamento del Budget" message="Recupero dei dati per l'anno selezionato." />;
   else if (current.error) content = <Alert variant="error" title="Caricamento non riuscito" message={current.error.correlationId ? `${current.error.message} Riferimento tecnico: ${current.error.correlationId}` : current.error.message} />;
-  else if (current.data && current.preview) content = <BudgetView key={`${current.data.planning_year.lock_version}:${current.preview.composition.fingerprint}`} dataset={current.data} preview={current.preview} />;
+  else if (current.data && current.preview) content = <BudgetView key={`${current.data.planning_year.lock_version}:${current.preview.composition.fingerprint}`} dataset={current.data} preview={current.preview} onRefresh={refreshBudget} />;
   else content = <Alert variant="info" title="Nessun dato Budget" message="Non sono disponibili dati per la selezione corrente." />;
 
   return <><PageMeta title="Budget | Master Plan IT" description="Budget annuale e ciclo di approvazione" /><PageBreadcrumb pageTitle="Budget" />{content}</>;

@@ -36,6 +36,7 @@ export const budgetProposalFixture: BudgetApprovalPreview = {
   planning_year: { id: 25, year_label: 2026, state: "preparation", lock_version: 7 },
   currency: "EUR",
   basis: "net",
+  effective_date_max: "2026-08-13",
   surface_fingerprint: `sha256:${"c".repeat(64)}`,
   composition,
   total: net("3620.00", "796.40", "4416.40"),

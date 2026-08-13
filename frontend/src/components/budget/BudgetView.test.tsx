@@ -19,4 +19,23 @@ describe("BudgetView", () => {
     expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     expect(screen.queryByLabelText(/nuovo approvato/i)).not.toBeInTheDocument();
   });
+
+  it("keeps the immutable approved snapshot distinct from live proposal, evaluations, and actuals", () => {
+    render(<BudgetView
+      dataset={{
+        ...annualBudgetFixture,
+        planning_year: { ...annualBudgetFixture.planning_year, state: "approved" },
+        approved_snapshot: { id: 91, status: "active", effective_date: "2026-08-13", recorded_at: "2026-08-13T10:30:00Z", total: { net: "120.00", vat: "26.40", gross: "146.40", official: "120.00" } },
+        actions: { ...annualBudgetFixture.actions, can_approve: false },
+      }}
+      preview={{ ...budgetProposalFixture, can_approve: false }}
+    />);
+
+    expect(screen.getByText("Stato del Budget: Approvato")).toBeInTheDocument();
+    expect(screen.getByText("Previsto approvato").parentElement).toHaveTextContent("120,00 €");
+    expect(screen.getByText("Budget proposto").parentElement).toHaveTextContent("3.620,00 €");
+    expect(screen.getByText("Valutazioni informative").parentElement).toHaveTextContent("100,00 €");
+    expect(screen.getByText("Effettivi correnti").parentElement).toHaveTextContent("0,00 €");
+    expect(screen.queryByRole("button", { name: "Approva Budget proposto" })).not.toBeInTheDocument();
+  });
 });
