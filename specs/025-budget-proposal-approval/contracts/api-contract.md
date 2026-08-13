@@ -292,6 +292,7 @@ must echo, all contributors and exclusions, and is never paginated or presentati
     "planning_year": { "id": 25, "year_label": 2025, "state": "preparation", "lock_version": 7 },
     "currency": "EUR",
     "basis": "net",
+    "effective_date_max": "2026-08-13",
     "surface_fingerprint": "sha256:4fd1e733d7f6f02874ee34f8a9361432d216e66190bf12624369371657ce4a3d",
     "composition": {
       "schema_version": "budget-proposal-composition/v1",
@@ -313,6 +314,8 @@ exactly to `total`. `exclusions` contains `ExclusionItem` items. `empty_composit
 `contributors=[]`, `contributor_count=0`, `can_approve=false` and a zero total. The converse is
 not true: a nonempty list may total zero and remains approvable. `can_approve` additionally reflects
 the command ability and `preparation` state, but cannot promise final success.
+`effective_date_max` is the server-calculated current calendar date in the persisted Tenant timezone;
+it is a UI bound only and the final command always revalidates it under the Tenant lock.
 
 ### POST `/api/v1/budget/{planningYear}/approve`
 
@@ -503,6 +506,12 @@ abilities, (5) Tenant-scoped route/read resolution (`404`), (6) request shape an
 then (7) under
 the mutation locks, state/version/composition/blocker business checks. This order is normative for
 non-disclosure; a foreign route ID is never replaced by a body-validation clue.
+
+For Approval, strict field/type/calendar syntax is part of step 6. Under the Tenant→PlanningYear
+locks, the server then checks the Tenant-local nonfuture date, lifecycle state, Budget version,
+schema/projection versions, rebuilt fingerprint and finally empty contributor count, in that order.
+Thus a future date wins over a simultaneous state conflict, a stale Budget version wins over a bad
+fingerprint, and an empty proposal is reported only when the supplied composition evidence is current.
 
 | Code | HTTP | When returned |
 |---|---:|---|
