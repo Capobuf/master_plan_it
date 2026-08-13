@@ -70,6 +70,8 @@ final readonly class AnnualEconomicReportQuery
                     'year' => $evidence->yearLabel,
                     'state' => $evidence->state,
                     'lock_version' => $evidence->lockVersion,
+                    'warning' => $evidence->warning,
+                    'history_activated_at' => $evidence->historyActivatedAt?->toISOString(),
                 ],
                 'currency' => $projection->currency,
                 'basis' => $projection->basis,
@@ -117,6 +119,10 @@ final readonly class AnnualEconomicReportQuery
             yearLabel: (int) $year->year_label,
             state: $state,
             lockVersion: (int) $year->lock_version,
+            warning: $state === 'closed' ? 'BUDGET_CLOSED' : null,
+            historyActivatedAt: $year->history_activated_at === null
+                ? null
+                : CarbonImmutable::parse((string) $year->history_activated_at, 'UTC'),
             labels: $this->labels($context, $planningYearId),
             cutoff: null,
         );

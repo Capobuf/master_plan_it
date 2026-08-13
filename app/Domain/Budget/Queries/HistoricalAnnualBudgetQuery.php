@@ -57,17 +57,13 @@ final readonly class HistoricalAnnualBudgetQuery
             if (! $tenant instanceof Tenant || ! $year instanceof PlanningYear) {
                 throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYearId]);
             }
-            $activatedAt = $year->history_activated_at;
-            if (! $activatedAt instanceof CarbonInterface || $cutoff->lessThan($activatedAt)) {
-                throw new DomainException('HISTORY_BEFORE_ACTIVATION');
-            }
-
             $latest = collect($this->latestItems($authorizedContext->tenantId, $cutoff, $planningYearId));
             $yearSnapshot = $latest->first(fn (array $item): bool => $item['type'] === $this->morphClass(PlanningYear::class)
                 && $item['id'] === $planningYearId && $item['mutation'] !== 'delete');
             if (! is_array($yearSnapshot)) {
                 throw new DomainException('HISTORY_BEFORE_ACTIVATION');
             }
+            $this->assertHistoryActivated($yearSnapshot, $cutoff);
 
             $expenseSnapshots = $latest->where('type', $this->morphClass(Expense::class))->keyBy('id');
             $rowSnapshots = $latest->where('type', $this->morphClass(ExpenseRow::class));
@@ -143,15 +139,13 @@ final readonly class HistoricalAnnualBudgetQuery
         if (! $tenant instanceof Tenant || ! $year instanceof PlanningYear) {
             throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYearId]);
         }
-        if (! $year->history_activated_at instanceof CarbonInterface || $cutoff->lessThan($year->history_activated_at)) {
-            throw new DomainException('HISTORY_BEFORE_ACTIVATION');
-        }
         $latest = collect($this->latestItems($context->tenantId, $cutoff, $planningYearId));
         $yearSnapshot = $latest->first(fn (array $item): bool => $item['type'] === $this->morphClass(PlanningYear::class)
             && $item['id'] === $planningYearId && $item['mutation'] !== 'delete');
         if (! is_array($yearSnapshot)) {
             throw new DomainException('HISTORY_BEFORE_ACTIVATION');
         }
+        $this->assertHistoryActivated($yearSnapshot, $cutoff);
         $expenseSnapshots = $latest->where('type', $this->morphClass(Expense::class))->keyBy('id');
         $rowSnapshots = $latest->where('type', $this->morphClass(ExpenseRow::class));
         $references = $this->referenceSnapshots($context->tenantId, $cutoff, $expenseSnapshots, $rowSnapshots);
@@ -180,6 +174,12 @@ final readonly class HistoricalAnnualBudgetQuery
             yearLabel: (int) ($yearSnapshot['contents']['year_label'] ?? 0),
             state: (string) ($yearSnapshot['contents']['budget_state'] ?? 'preparation'),
             lockVersion: (int) ($yearSnapshot['contents']['lock_version'] ?? 1),
+            warning: ($yearSnapshot['contents']['budget_state'] ?? 'preparation') === 'closed'
+                ? 'BUDGET_CLOSED'
+                : null,
+            historyActivatedAt: isset($yearSnapshot['contents']['history_activated_at'])
+                ? CarbonImmutable::parse((string) $yearSnapshot['contents']['history_activated_at'], 'UTC')
+                : null,
             labels: $labels,
             cutoff: $cutoff,
         );
@@ -196,6 +196,23 @@ final readonly class HistoricalAnnualBudgetQuery
         }
 
         return $parsed->utc();
+    }
+
+    /** @param HistoricalSnapshot $yearSnapshot */
+    private function assertHistoryActivated(array $yearSnapshot, CarbonImmutable $cutoff): void
+    {
+        $value = $yearSnapshot['contents']['history_activated_at'] ?? null;
+        if ($value === null) {
+            throw new DomainException('HISTORY_BEFORE_ACTIVATION');
+        }
+        try {
+            $activatedAt = CarbonImmutable::parse((string) $value, 'UTC');
+        } catch (\Throwable) {
+            throw new DomainException('HISTORY_BEFORE_ACTIVATION');
+        }
+        if ($cutoff->lessThan($activatedAt)) {
+            throw new DomainException('HISTORY_BEFORE_ACTIVATION');
+        }
     }
 
     /** @return list<array{type:string,id:int,mutation:string,contents:array<string,mixed>}> */

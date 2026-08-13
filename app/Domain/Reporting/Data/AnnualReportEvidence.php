@@ -16,6 +16,8 @@ final readonly class AnnualReportEvidence
         public int $yearLabel,
         public string $state,
         public int $lockVersion,
+        public ?string $warning,
+        public ?CarbonImmutable $historyActivatedAt,
         public array $labels,
         public ?CarbonImmutable $cutoff,
     ) {}

@@ -64,8 +64,6 @@ class ExpenseVersioningIntegrationTest extends TestCase
             'notes',
             'project_id',
             'contract_id',
-            'approved_amount',
-            'approved_basis',
             'current_planning_row_id',
             'moved_from_expense_id',
             'credit_for_expense_id',

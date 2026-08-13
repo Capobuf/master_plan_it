@@ -2,6 +2,7 @@
 
 namespace Tests\Accounting\Integration;
 
+use App\Domain\Budget\Enums\BudgetState;
 use App\Domain\Budget\Queries\AnnualBudgetQuery;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
@@ -68,6 +69,8 @@ final class AnnualBudgetDatasetTest extends TestCase
         ExpenseRow::query()->whereKey($consumer->current_planning_row_id)->update([
             'funded_plafond_expense_id' => $plafond->getKey(),
         ]);
+        $year->approveBudget();
+        $this->assertSame(BudgetState::Approved, $year->fresh()->budget_state);
         $approval = BudgetApproval::factory()->headerOnly()->for($tenant)->for($year, 'planningYear')->create([
             'budget_basis' => 'net', 'total_net_amount' => '230.00', 'total_vat_amount' => '50.60',
             'total_gross_amount' => '280.60', 'total_official_amount' => '230.00', 'contributor_count' => 2,

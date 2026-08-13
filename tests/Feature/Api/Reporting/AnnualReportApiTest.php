@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Api\Reporting;
 
+use App\Domain\Budget\Enums\BudgetState;
 use App\Models\BudgetApproval;
 use App\Models\BudgetApprovalItem;
 use App\Models\CostCenter;
@@ -41,6 +42,8 @@ final class AnnualReportApiTest extends TestCase
             'gross_amount' => '122.00',
         ]);
         $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
+        $year->approveBudget();
+        $this->assertSame(BudgetState::Approved, $year->fresh()->budget_state);
         $approval = BudgetApproval::factory()->headerOnly()->for($tenant)->for($year, 'planningYear')->create([
             'budget_basis' => 'net', 'total_net_amount' => '80.00', 'total_vat_amount' => '17.60',
             'total_gross_amount' => '97.60', 'total_official_amount' => '80.00', 'contributor_count' => 1,
