@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Domain\Budget\Enums\ApprovalContributorKind;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Models\Builders\ImmutableModelBuilder;
 use Database\Factories\BudgetApprovalItemFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -52,35 +53,21 @@ class BudgetApprovalItem extends Model
         throw new LogicException('Budget approval items are immutable.');
     }
 
-    /** @param QueryBuilder $query */
-    public function newEloquentBuilder($query): BudgetApprovalItemBuilder
+    /**
+     * @param  QueryBuilder  $query
+     * @return ImmutableModelBuilder<static>
+     */
+    public function newEloquentBuilder($query): ImmutableModelBuilder
     {
-        return new BudgetApprovalItemBuilder($query);
+        /** @var ImmutableModelBuilder<static> $builder */
+        $builder = new ImmutableModelBuilder($query);
+
+        return $builder;
     }
 
     /** @return BelongsTo<BudgetApproval, $this> */
     public function approval(): BelongsTo
     {
         return $this->belongsTo(BudgetApproval::class, 'budget_approval_id');
-    }
-}
-
-/** @extends Builder<BudgetApprovalItem> */
-final class BudgetApprovalItemBuilder extends Builder
-{
-    /** @param array<string, mixed> $values */
-    public function update(array $values): never
-    {
-        throw new LogicException('Budget approval items are immutable.');
-    }
-
-    public function delete(): never
-    {
-        throw new LogicException('Budget approval items are immutable.');
-    }
-
-    public function forceDelete(): never
-    {
-        throw new LogicException('Budget approval items are immutable.');
     }
 }

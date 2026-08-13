@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Domain\Budget\Enums\BudgetApprovalStatus;
+use App\Models\Builders\ImmutableModelBuilder;
 use Carbon\CarbonImmutable;
 use Database\Factories\BudgetApprovalFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -96,10 +97,16 @@ class BudgetApproval extends Model
         return $this;
     }
 
-    /** @param QueryBuilder $query */
-    public function newEloquentBuilder($query): BudgetApprovalBuilder
+    /**
+     * @param  QueryBuilder  $query
+     * @return ImmutableModelBuilder<static>
+     */
+    public function newEloquentBuilder($query): ImmutableModelBuilder
     {
-        return new BudgetApprovalBuilder($query);
+        /** @var ImmutableModelBuilder<static> $builder */
+        $builder = new ImmutableModelBuilder($query);
+
+        return $builder;
     }
 
     /** @return BelongsTo<Tenant, $this> */
@@ -142,25 +149,5 @@ class BudgetApproval extends Model
     public function items(): HasMany
     {
         return $this->hasMany(BudgetApprovalItem::class);
-    }
-}
-
-/** @extends Builder<BudgetApproval> */
-final class BudgetApprovalBuilder extends Builder
-{
-    /** @param array<string, mixed> $values */
-    public function update(array $values): never
-    {
-        throw new LogicException('Budget approvals cannot be updated generically.');
-    }
-
-    public function delete(): never
-    {
-        throw new LogicException('Budget approvals cannot be deleted.');
-    }
-
-    public function forceDelete(): never
-    {
-        throw new LogicException('Budget approvals cannot be deleted.');
     }
 }

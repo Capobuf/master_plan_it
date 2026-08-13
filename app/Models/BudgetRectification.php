@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Builders\ImmutableModelBuilder;
 use Database\Factories\BudgetRectificationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -38,10 +39,16 @@ class BudgetRectification extends Model
         throw new LogicException('Budget rectifications are append-only.');
     }
 
-    /** @param QueryBuilder $query */
-    public function newEloquentBuilder($query): BudgetRectificationBuilder
+    /**
+     * @param  QueryBuilder  $query
+     * @return ImmutableModelBuilder<static>
+     */
+    public function newEloquentBuilder($query): ImmutableModelBuilder
     {
-        return new BudgetRectificationBuilder($query);
+        /** @var ImmutableModelBuilder<static> $builder */
+        $builder = new ImmutableModelBuilder($query);
+
+        return $builder;
     }
 
     /** @return BelongsTo<BudgetApproval, $this> */
@@ -66,25 +73,5 @@ class BudgetRectification extends Model
     public function revisionBatch(): BelongsTo
     {
         return $this->belongsTo(RevisionBatch::class);
-    }
-}
-
-/** @extends Builder<BudgetRectification> */
-final class BudgetRectificationBuilder extends Builder
-{
-    /** @param array<string, mixed> $values */
-    public function update(array $values): never
-    {
-        throw new LogicException('Budget rectifications are append-only.');
-    }
-
-    public function delete(): never
-    {
-        throw new LogicException('Budget rectifications are append-only.');
-    }
-
-    public function forceDelete(): never
-    {
-        throw new LogicException('Budget rectifications are append-only.');
     }
 }

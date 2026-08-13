@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Builders\ImmutableModelBuilder;
 use Database\Factories\BudgetClosureFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
@@ -37,10 +38,16 @@ class BudgetClosure extends Model
         throw new LogicException('Budget closures are append-only.');
     }
 
-    /** @param QueryBuilder $query */
-    public function newEloquentBuilder($query): BudgetClosureBuilder
+    /**
+     * @param  QueryBuilder  $query
+     * @return ImmutableModelBuilder<static>
+     */
+    public function newEloquentBuilder($query): ImmutableModelBuilder
     {
-        return new BudgetClosureBuilder($query);
+        /** @var ImmutableModelBuilder<static> $builder */
+        $builder = new ImmutableModelBuilder($query);
+
+        return $builder;
     }
 
     /** @return BelongsTo<BudgetApproval, $this> */
@@ -65,25 +72,5 @@ class BudgetClosure extends Model
     public function revisionBatch(): BelongsTo
     {
         return $this->belongsTo(RevisionBatch::class);
-    }
-}
-
-/** @extends Builder<BudgetClosure> */
-final class BudgetClosureBuilder extends Builder
-{
-    /** @param array<string, mixed> $values */
-    public function update(array $values): never
-    {
-        throw new LogicException('Budget closures are append-only.');
-    }
-
-    public function delete(): never
-    {
-        throw new LogicException('Budget closures are append-only.');
-    }
-
-    public function forceDelete(): never
-    {
-        throw new LogicException('Budget closures are append-only.');
     }
 }

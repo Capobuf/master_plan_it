@@ -3,7 +3,9 @@
 namespace App\Models;
 
 use App\Domain\Budget\Enums\BudgetState;
+use Closure;
 use Database\Factories\PlanningYearFactory;
+use Illuminate\Contracts\Database\Query\Expression;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -160,14 +162,134 @@ class PlanningYear extends Model
  */
 final class PlanningYearBuilder extends Builder
 {
+    /** @var list<string> */
+    private const FORWARDED_STATE_WRITE_METHODS = [
+        'decrement', 'decrementeach', 'increment', 'incrementeach', 'incrementorcreate',
+        'update', 'updatefrom', 'updateorcreate', 'updateorinsert', 'upsert',
+    ];
+
     /** @param array<string, mixed> $values */
     public function update(array $values): int
     {
-        if (array_key_exists('budget_state', $values)) {
-            throw new \DomainException('BUDGET_STATE_CONFLICT');
-        }
+        $this->assertPayloadDoesNotContainBudgetState($values);
 
         return parent::update($values);
+    }
+
+    /**
+     * @param  array<int|string, array<string, mixed>|mixed>  $values
+     * @param  array<int|string, string>|string  $uniqueBy
+     * @param  array<int|string, string>|null  $update
+     */
+    public function upsert(array $values, $uniqueBy, $update = null): int
+    {
+        $this->assertPayloadDoesNotContainBudgetState($values);
+        if (is_array($update)) {
+            $this->assertColumnsDoNotContainBudgetState($update);
+        }
+
+        return parent::upsert($values, $uniqueBy, $update);
+    }
+
+    public function increment($column, $amount = 1, array $extra = []): int
+    {
+        $this->assertColumnIsNotBudgetState($column);
+        $this->assertPayloadDoesNotContainBudgetState($extra);
+
+        return parent::increment($column, $amount, $extra);
+    }
+
+    public function decrement($column, $amount = 1, array $extra = []): int
+    {
+        $this->assertColumnIsNotBudgetState($column);
+        $this->assertPayloadDoesNotContainBudgetState($extra);
+
+        return parent::decrement($column, $amount, $extra);
+    }
+
+    /** @param array<string, int|float|numeric-string> $columns */
+    public function incrementEach(array $columns, array $extra = []): int
+    {
+        $this->assertColumnsDoNotContainBudgetState($columns);
+        $this->assertPayloadDoesNotContainBudgetState($extra);
+
+        return parent::incrementEach($columns, $extra);
+    }
+
+    /** @param array<string, int|float|numeric-string> $columns */
+    public function decrementEach(array $columns, array $extra = []): int
+    {
+        $this->assertColumnsDoNotContainBudgetState($columns);
+        $this->assertPayloadDoesNotContainBudgetState($extra);
+
+        return parent::decrementEach($columns, $extra);
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string, mixed>|callable(bool): array<string, mixed>  $values
+     */
+    public function updateOrInsert(array $attributes, array|callable $values = []): bool
+    {
+        $this->assertPayloadDoesNotContainBudgetState($attributes);
+
+        if (is_callable($values)) {
+            $values = function (bool $exists) use ($values): array {
+                $resolved = $values($exists);
+                if (! is_array($resolved)) {
+                    throw new \InvalidArgumentException('Update-or-insert values must resolve to an array.');
+                }
+                $this->assertPayloadDoesNotContainBudgetState($resolved);
+
+                return $resolved;
+            };
+        } else {
+            $this->assertPayloadDoesNotContainBudgetState($values);
+        }
+
+        return $this->toBase()->updateOrInsert($attributes, $values);
+    }
+
+    /** @param array<string, mixed> $attributes */
+    public function updateOrCreate(array $attributes, Closure|array $values = []): PlanningYear
+    {
+        $this->assertPayloadDoesNotContainBudgetState($attributes);
+
+        if ($values instanceof Closure) {
+            $resolved = $values();
+            $this->assertPayloadDoesNotContainBudgetState($resolved);
+            $values = $resolved;
+        } else {
+            $this->assertPayloadDoesNotContainBudgetState($values);
+        }
+
+        return parent::updateOrCreate($attributes, $values);
+    }
+
+    /**
+     * @param  array<string, mixed>  $attributes
+     * @param  array<string, mixed>  $extra
+     */
+    public function incrementOrCreate(
+        array $attributes,
+        string $column = 'count',
+        $default = 1,
+        $step = 1,
+        array $extra = [],
+    ): PlanningYear {
+        $this->assertPayloadDoesNotContainBudgetState($attributes);
+        $this->assertColumnIsNotBudgetState($column);
+        $this->assertPayloadDoesNotContainBudgetState($extra);
+
+        return parent::incrementOrCreate($attributes, $column, $default, $step, $extra);
+    }
+
+    /** @param array<string, mixed> $values */
+    public function updateFrom(array $values): int
+    {
+        $this->assertPayloadDoesNotContainBudgetState($values);
+
+        return $this->toBase()->updateFrom($values);
     }
 
     public function delete(): never
@@ -178,6 +300,61 @@ final class PlanningYearBuilder extends Builder
     public function forceDelete(): never
     {
         $this->denyDeletion();
+    }
+
+    public function truncate(): never
+    {
+        $this->denyDeletion();
+    }
+
+    /**
+     * @param  string  $method
+     * @param  array<int, mixed>  $parameters
+     */
+    public function __call($method, $parameters): mixed
+    {
+        if (in_array(strtolower($method), self::FORWARDED_STATE_WRITE_METHODS, true)) {
+            throw new \DomainException('BUDGET_STATE_CONFLICT');
+        }
+
+        return parent::__call($method, $parameters);
+    }
+
+    /** @param array<int|string, mixed> $payload */
+    private function assertPayloadDoesNotContainBudgetState(array $payload): void
+    {
+        foreach ($payload as $column => $value) {
+            if (is_string($column)) {
+                $this->assertColumnIsNotBudgetState($column);
+            }
+            if (is_array($value)) {
+                $this->assertPayloadDoesNotContainBudgetState($value);
+            }
+        }
+    }
+
+    /** @param array<int|string, mixed> $columns */
+    private function assertColumnsDoNotContainBudgetState(array $columns): void
+    {
+        foreach ($columns as $column => $value) {
+            if (is_string($column)) {
+                $this->assertColumnIsNotBudgetState($column);
+            }
+            if (is_string($value)) {
+                $this->assertColumnIsNotBudgetState($value);
+            }
+        }
+    }
+
+    private function assertColumnIsNotBudgetState(mixed $column): void
+    {
+        if ($column instanceof Expression) {
+            $column = $column->getValue($this->getQuery()->getGrammar());
+        }
+
+        if (! is_string($column) || preg_match('/\bbudget_state\b/i', $column) === 1) {
+            throw new \DomainException('BUDGET_STATE_CONFLICT');
+        }
     }
 
     private function denyDeletion(): never

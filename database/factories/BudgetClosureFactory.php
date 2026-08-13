@@ -17,7 +17,7 @@ class BudgetClosureFactory extends Factory
     public function definition(): array
     {
         return [
-            'budget_approval_id' => BudgetApproval::factory(),
+            'budget_approval_id' => BudgetApproval::factory()->completeAggregate(),
             'tenant_id' => fn (array $attributes): int => $this->approval($attributes)->tenant_id,
             'planning_year_id' => fn (array $attributes): int => $this->approval($attributes)->planning_year_id,
             'actor_user_id' => fn (array $attributes): int => $this->approval($attributes)->approved_by_user_id,

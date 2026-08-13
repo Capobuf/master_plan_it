@@ -73,19 +73,19 @@ final class AnnualBudgetSchemaTest extends TestCase
     {
         $tenantA = Tenant::factory()->create();
         $yearA = PlanningYear::factory()->for($tenantA)->create();
-        BudgetApproval::factory()->for($tenantA)->for($yearA, 'planningYear')->create();
+        BudgetApproval::factory()->headerOnly()->for($tenantA)->for($yearA, 'planningYear')->create();
 
         try {
-            BudgetApproval::factory()->for($tenantA)->for($yearA, 'planningYear')->create();
+            BudgetApproval::factory()->headerOnly()->for($tenantA)->for($yearA, 'planningYear')->create();
             $this->fail('A second active approval in the same Tenant/Year must be rejected.');
         } catch (QueryException) {
             $this->assertDatabaseCount('budget_approvals', 1);
         }
 
-        BudgetApproval::factory()->for($tenantA)->for($yearA, 'planningYear')->annulled()->count(2)->create();
+        BudgetApproval::factory()->headerOnly()->for($tenantA)->for($yearA, 'planningYear')->annulled()->count(2)->create();
         $tenantB = Tenant::factory()->create();
         $yearB = PlanningYear::factory()->for($tenantB)->create(['year_label' => $yearA->year_label]);
-        BudgetApproval::factory()->for($tenantB)->for($yearB, 'planningYear')->create();
+        BudgetApproval::factory()->headerOnly()->for($tenantB)->for($yearB, 'planningYear')->create();
 
         $this->assertSame(3, BudgetApproval::query()->where('tenant_id', $tenantA->getKey())->count());
         $this->assertSame(1, BudgetApproval::query()->where('tenant_id', $tenantB->getKey())->count());
@@ -93,7 +93,7 @@ final class AnnualBudgetSchemaTest extends TestCase
 
     public function test_status_amount_count_fingerprint_and_item_kind_constraints_are_database_enforced(): void
     {
-        $approval = BudgetApproval::factory()->create();
+        $approval = BudgetApproval::factory()->headerOnly()->create();
         $approval->refresh();
         $this->assertSame(BudgetApprovalStatus::Active, $approval->status);
         $this->assertSame($approval->planning_year_id, $approval->active_planning_year_id);
@@ -106,7 +106,7 @@ final class AnnualBudgetSchemaTest extends TestCase
         ];
         foreach ($invalidHeaders as $attributes) {
             try {
-                BudgetApproval::factory()->for($approval->tenant)->for($approval->planningYear, 'planningYear')
+                BudgetApproval::factory()->headerOnly()->for($approval->tenant)->for($approval->planningYear, 'planningYear')
                     ->annulled()->create($attributes);
                 $this->fail('Invalid approval headers must be rejected by MySQL.');
             } catch (QueryException) {
@@ -115,7 +115,7 @@ final class AnnualBudgetSchemaTest extends TestCase
         }
 
         try {
-            BudgetApproval::factory()->for($approval->tenant)->for($approval->planningYear, 'planningYear')
+            BudgetApproval::factory()->headerOnly()->for($approval->tenant)->for($approval->planningYear, 'planningYear')
                 ->create(['status' => 'annulled']);
             $this->fail('An annulled header without terminal metadata must be rejected by MySQL.');
         } catch (QueryException) {
@@ -149,7 +149,7 @@ final class AnnualBudgetSchemaTest extends TestCase
 
     public function test_snapshot_source_ids_are_historical_copies_while_parent_scope_is_composite(): void
     {
-        $approval = BudgetApproval::factory()->create();
+        $approval = BudgetApproval::factory()->headerOnly()->create();
         $item = BudgetApprovalItem::factory()->for($approval, 'approval')->create([
             'expense_id' => 900000001,
             'expense_row_id' => 900000002,
@@ -176,7 +176,7 @@ final class AnnualBudgetSchemaTest extends TestCase
 
     public function test_rectification_and_closure_seams_are_narrow_append_only_identities_with_nonunique_correlations(): void
     {
-        $approval = BudgetApproval::factory()->create();
+        $approval = BudgetApproval::factory()->headerOnly()->create();
         $correlationId = (string) str()->uuid();
 
         BudgetRectification::factory()->for($approval, 'approval')->count(2)->create(['correlation_id' => $correlationId]);
