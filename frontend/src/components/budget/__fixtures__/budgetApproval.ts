@@ -36,6 +36,7 @@ export const budgetProposalFixture: BudgetApprovalPreview = {
   planning_year: { id: 25, year_label: 2026, state: "preparation", lock_version: 7 },
   currency: "EUR",
   basis: "net",
+  surface_fingerprint: `sha256:${"c".repeat(64)}`,
   composition,
   total: net("3620.00", "796.40", "4416.40"),
   contributors: [
@@ -99,6 +100,7 @@ export const annualBudgetFixture: AnnualBudget = {
   planning_year: budgetProposalFixture.planning_year,
   currency: budgetProposalFixture.currency,
   basis: budgetProposalFixture.basis,
+  surface_fingerprint: budgetProposalFixture.surface_fingerprint,
   economic_base: { basis: "net", locked_at: null },
   proposal: { composition: budgetProposalFixture.composition, total: budgetProposalFixture.total },
   approved_snapshot: null,

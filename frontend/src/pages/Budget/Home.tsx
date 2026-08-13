@@ -8,6 +8,18 @@ import Alert from "../../components/ui/alert/Alert";
 import { useApplicationContext } from "../../context/ApplicationContext";
 import { usePlanningYear } from "../../context/PlanningYearContext";
 
+function hasCoherentProposal(overview: AnnualBudget, preview: BudgetApprovalPreview): boolean {
+  const overviewComposition = overview.proposal.composition;
+  const previewComposition = preview.composition;
+  return typeof overview.surface_fingerprint === "string"
+    && overview.surface_fingerprint.length > 0
+    && typeof preview.surface_fingerprint === "string"
+    && preview.surface_fingerprint.length > 0
+    && overview.surface_fingerprint === preview.surface_fingerprint
+    && overviewComposition.fingerprint === previewComposition.fingerprint
+    && overviewComposition.versions.budget_lock_version === previewComposition.versions.budget_lock_version;
+}
+
 export default function BudgetHome() {
   const { data: applicationContext, loading: contextLoading, hasAbility } = useApplicationContext();
   const { selectedPlanningYearId, loading: planningYearLoading } = usePlanningYear();
@@ -21,9 +33,7 @@ export default function BudgetHome() {
     void Promise.all([getBudget({ planning_year_id: selectedPlanningYearId }), getBudgetApprovalPreview(selectedPlanningYearId)])
       .then(([data, preview]) => {
         if (!active) return;
-        const overviewComposition = data.proposal.composition;
-        const previewComposition = preview.composition;
-        if (overviewComposition.fingerprint !== previewComposition.fingerprint || overviewComposition.versions.budget_lock_version !== previewComposition.versions.budget_lock_version) {
+        if (!hasCoherentProposal(data, preview)) {
           setState({ tenantId, planningYearId: selectedPlanningYearId, data: null, preview: null, error: new ApiError({ message: "La proposta è cambiata durante l’aggiornamento. Riprova per visualizzare una composizione coerente.", code: "BUDGET_COMPOSITION_STALE" }) });
           return;
         }
