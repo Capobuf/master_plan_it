@@ -20,6 +20,9 @@
   linearization point; a second projection implementation/source or a separate approval lock is
   not permitted. Approval may invoke the same projection twice for identity discovery and the
   final authoritative rebuild after its contributing locks.
+- The neutral `TenantMutationLock` owns that first-row primitive. Tenant-scoped identity mutations
+  also acquire its shared lock before User/Role roots, preventing their Tenant-FK Audit writes from
+  cycling with Approval's exclusive Tenant lock and actor FKs.
 - The existing tenancy middleware, `TenantOwnedRecordQuery`, policies, API error envelope,
   optimistic `lock_version`, revision batches, audit recorder, Tenant timezone, and exact decimal
   conventions remain the current contract. Slice 022 records the target annual lifecycle and

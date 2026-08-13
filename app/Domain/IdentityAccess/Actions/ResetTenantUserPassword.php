@@ -5,6 +5,7 @@ namespace App\Domain\IdentityAccess\Actions;
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Services\TenantMutationLock;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
@@ -32,6 +33,7 @@ final class ResetTenantUserPassword
         $persistedTarget = $this->sameTenantTarget($target, (int) $tenant->getKey());
 
         return DB::transaction(function () use ($correlationId, $persistedActor, $persistedTarget, $secret, $tenant): User {
+            app(TenantMutationLock::class)->shared((int) $tenant->getKey());
             $persistedTarget->forceFill(['password' => Hash::make($secret)])->save();
 
             $this->invalidateUserSessions->execute($persistedTarget);

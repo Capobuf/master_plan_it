@@ -44,7 +44,12 @@ final class BudgetApprovalController extends Controller
             throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYear]);
         }
 
-        $payload = Validator::make($request->all(), [
+        if ($request->query() !== []) {
+            abort(422);
+        }
+
+        $body = $request->json()->all();
+        $payload = Validator::make($body, [
             'effective_date' => ['required', 'string', 'date_format:Y-m-d'],
             'note' => ['nullable', 'string'],
             'composition' => ['required', 'array:schema_version,fingerprint,versions'],
@@ -55,7 +60,7 @@ final class BudgetApprovalController extends Controller
             'composition.versions.projection_version' => ['required', 'string'],
         ])->validate();
 
-        if (array_diff(array_keys($request->all()), ['effective_date', 'note', 'composition']) !== []) {
+        if (array_diff(array_keys($body), ['effective_date', 'note', 'composition']) !== []) {
             abort(422);
         }
 

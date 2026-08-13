@@ -460,6 +460,11 @@ interamente prima o dopo l'Annullamento; la query eseguita dopo il guard annuale
 uno stato misto, e un writer non può invertire il lock Tenant richiesto dagli insert di
 Revision/Audit.
 
+Lo stesso primitivo Tenant-first è obbligatorio per le mutazioni Identity Tenant-scoped: esse
+acquisiscono `Tenant S` prima di bloccare o modificare User/Role e prima delle FK di Audit. In questo
+modo l'Approvazione `Tenant X -> User FK S` non può formare un ciclo con una disattivazione,
+rinomina, assegnazione ruoli o reset password concorrente dell'Approvatore.
+
 La chiave univoca dell'active slot resta la difesa database contro writer concorrenti o difettosi;
 `lock_version`, fingerprint e guard annuale sono controlli complementari.
 

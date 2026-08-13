@@ -5,6 +5,7 @@ namespace App\Domain\IdentityAccess\Actions;
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Services\TenantMutationLock;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
@@ -44,6 +45,7 @@ final class CreateTenantUser
             [$validatedName, $validatedEmail, $validatedPassword] = $this->validatedIdentity($name, $email, $password);
 
             return DB::transaction(function () use ($correlationId, $persistedActor, $roles, $tenant, $validatedEmail, $validatedName, $validatedPassword): User {
+                app(TenantMutationLock::class)->shared((int) $tenant->getKey());
                 $tenantRoles = $this->lockedTenantRoles($roles, (int) $tenant->getKey());
                 $roleIds = array_map(static fn (Role $role): int => (int) $role->getKey(), $tenantRoles);
                 sort($roleIds);

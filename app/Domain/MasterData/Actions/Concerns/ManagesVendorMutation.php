@@ -7,6 +7,7 @@ use App\Domain\Revisions\Actions\LinkVersionToRevisionBatch;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Domain\Tenancy\Enums\TenantState;
+use App\Domain\Tenancy\Services\TenantMutationLock;
 use App\Models\RevisionBatch;
 use App\Models\Tenant;
 use App\Models\User;
@@ -93,10 +94,7 @@ trait ManagesVendorMutation
     /** Tenant S must precede copied-dimension root locks and Tenant-FK evidence writes. */
     private function lockTenantShared(Tenant $tenant): void
     {
-        $locked = Tenant::query()->whereKey($tenant->getKey())->sharedLock()->first();
-        if (! $locked instanceof Tenant) {
-            throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
-        }
+        app(TenantMutationLock::class)->shared((int) $tenant->getKey());
     }
 
     /** @param Collection<int, Vendor> $vendors */

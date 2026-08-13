@@ -2,8 +2,8 @@
 
 namespace App\Domain\Budget\Services;
 
+use App\Domain\Tenancy\Services\TenantMutationLock;
 use App\Models\PlanningYear;
-use App\Models\Tenant;
 use DomainException;
 use Illuminate\Support\Collection;
 
@@ -18,20 +18,17 @@ use Illuminate\Support\Collection;
  */
 final class AnnualEconomicMutationGuard
 {
+    public function __construct(private readonly TenantMutationLock $tenantLock) {}
+
     /**
      * @param  list<int>  $planningYearIds
      * @return Collection<int, PlanningYear>
      */
     public function acquire(int $tenantId, array $planningYearIds, bool $lockTenant = false): Collection
     {
-        $tenantQuery = Tenant::query()->whereKey($tenantId);
-        $tenant = $lockTenant
-            ? $tenantQuery->lockForUpdate()->first()
-            : $tenantQuery->sharedLock()->first();
-
-        if (! $tenant instanceof Tenant) {
-            throw new DomainException('TENANT_CONTEXT_REQUIRED');
-        }
+        $lockTenant
+            ? $this->tenantLock->exclusive($tenantId)
+            : $this->tenantLock->shared($tenantId);
 
         $ids = collect($planningYearIds)
             ->map(static fn (int $id): int => $id)

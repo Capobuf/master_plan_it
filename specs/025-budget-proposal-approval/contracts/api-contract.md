@@ -338,7 +338,8 @@ the command ability and `preparation` state, but cannot promise final success.
 current day in the Tenant timezone. It may be outside the PlanningYear. `note` is optional
 `string|null`; its outer whitespace is normalized and a resulting empty value becomes `null`.
 There is deliberately no `items`, contributor list, amount, base, approver, `recorded_at`, or
-idempotency field.
+idempotency field. The command is read exclusively from the JSON body; every query parameter,
+including a query key with an otherwise allowed command name, is rejected with `VALIDATION_FAILED`.
 
 Under the shared annual guard, the server reloads/reauthorizes the actor and locked Tenant,
 validates the Tenant-local date, then verifies `preparation`, absence of an active Approval,

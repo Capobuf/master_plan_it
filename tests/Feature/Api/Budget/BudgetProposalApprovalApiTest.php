@@ -13,10 +13,13 @@ use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\RevisionBatch;
+use App\Models\RevisionBatchItem;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\Version;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\DataProvider;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
@@ -315,6 +318,14 @@ final class BudgetProposalApprovalApiTest extends TestCase
             ->assertJsonPath('data.economic_base.basis', 'net');
         $this->assertNotNull($response->json('data.economic_base.locked_at'));
         $this->assertSame(['approval', 'budget', 'economic_base'], array_keys($response->json('data')));
+        $this->assertSame([
+            'id', 'status', 'planning_year_id', 'currency', 'basis', 'total', 'effective_date',
+            'recorded_at', 'approved_by', 'note',
+        ], array_keys($response->json('data.approval')));
+        $this->assertSame(['net', 'vat', 'gross', 'official'], array_keys($response->json('data.approval.total')));
+        $this->assertSame(['id', 'name'], array_keys($response->json('data.approval.approved_by')));
+        $this->assertSame(['planning_year_id', 'state', 'lock_version'], array_keys($response->json('data.budget')));
+        $this->assertSame(['basis', 'locked_at'], array_keys($response->json('data.economic_base')));
         $this->assertDatabaseCount('budget_approvals', 1);
         $this->assertDatabaseCount('budget_approval_items', 1);
         $this->assertSame(1, AuditEvent::query()->where('tenant_id', $tenant->getKey())->where('event_type', 'budget.approved')->count());
@@ -334,6 +345,21 @@ final class BudgetProposalApprovalApiTest extends TestCase
             )->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
             $this->assertSame($before, $this->effects($year->fresh(), $year->tenant()->firstOrFail()));
         }
+
+        foreach ([
+            ['composition' => [...$this->approvePayload($preview)['composition'], 'extra' => true]],
+            ['composition' => [
+                ...$this->approvePayload($preview)['composition'],
+                'versions' => [...$this->approvePayload($preview)['composition']['versions'], 'extra' => true],
+            ]],
+        ] as $nestedOverride) {
+            $before = $this->effects($year->fresh(), $year->tenant()->firstOrFail());
+            $this->withHeaders($this->csrfHeaders())->postJson(
+                '/api/v1/budget/'.$year->getKey().'/approve',
+                $this->approvePayload($preview, $nestedOverride),
+            )->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
+            $this->assertSame($before, $this->effects($year->fresh(), $year->tenant()->firstOrFail()));
+        }
     }
 
     public function test_future_date_stale_version_and_changed_fingerprint_have_exact_errors_and_zero_effects(): void
@@ -341,24 +367,26 @@ final class BudgetProposalApprovalApiTest extends TestCase
         CarbonImmutable::setTestNow('2026-08-13 10:30:00 UTC');
         [, $user, $year, $preview] = $this->approvableFixture('Pacific/Kiritimati');
         $this->actingAs($user, 'web');
+        $before = $this->effects($year, $year->tenant()->firstOrFail());
 
         $this->withHeaders($this->csrfHeaders())->postJson(
             '/api/v1/budget/'.$year->getKey().'/approve',
             $this->approvePayload($preview, ['effective_date' => '2026-08-15']),
         )->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
+        $this->assertSame($before, $this->effects($year->fresh(), $year->tenant()->firstOrFail()));
 
         $stale = $this->approvePayload($preview);
         $stale['composition']['versions']['budget_lock_version'] = 999;
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/budget/'.$year->getKey().'/approve', $stale)
             ->assertConflict()->assertJsonPath('error.code', 'STALE_VERSION');
+        $this->assertSame($before, $this->effects($year->fresh(), $year->tenant()->firstOrFail()));
 
         $changed = $this->approvePayload($preview);
         $changed['composition']['fingerprint'] = 'sha256:'.str_repeat('0', 64);
         $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/budget/'.$year->getKey().'/approve', $changed)
             ->assertConflict()->assertJsonPath('error.code', 'BUDGET_COMPOSITION_STALE');
 
-        $this->assertSame('preparation', $year->fresh()->budget_state->value);
-        $this->assertDatabaseCount('budget_approvals', 0);
+        $this->assertSame($before, $this->effects($year->fresh(), $year->tenant()->firstOrFail()));
     }
 
     public function test_reused_correlation_is_diagnostic_and_second_request_revalidates_state_instead_of_replaying(): void
@@ -384,10 +412,55 @@ final class BudgetProposalApprovalApiTest extends TestCase
         $foreignYear = PlanningYear::factory()->for($foreign)->create();
         $this->actingAs($user, 'web');
 
-        $this->withHeaders($this->csrfHeaders())->postJson(
+        $foreignResponse = $this->withHeaders($this->csrfHeaders())->postJson(
             '/api/v1/budget/'.$foreignYear->getKey().'/approve',
             ['items' => [['approved_amount' => '999999.00']]],
         )->assertNotFound()->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
+        $missingResponse = $this->withHeaders($this->csrfHeaders())->postJson(
+            '/api/v1/budget/999999999/approve',
+            ['items' => [['approved_amount' => '999999.00']]],
+        )->assertNotFound()->assertJsonPath('error.code', 'RESOURCE_NOT_FOUND');
+        $this->assertSame($foreignResponse->json('error.code'), $missingResponse->json('error.code'));
+        $this->assertSame($foreignResponse->json('error.fields'), $missingResponse->json('error.fields'));
+        $this->assertSame(0, BudgetApproval::query()->count());
+    }
+
+    public function test_missing_expense_update_ability_precedes_invalid_body_and_has_no_effects(): void
+    {
+        [$tenant, $user, $year] = $this->approvableFixture();
+        $registrar = app(PermissionRegistrar::class);
+        $registrar->setPermissionsTeamId((int) $tenant->getKey());
+        $role = $user->roles()->where('roles.tenant_id', $tenant->getKey())->firstOrFail();
+        $role->syncPermissions(['budget.view']);
+        $registrar->forgetCachedPermissions();
+        $user->unsetRelation('roles')->unsetRelation('permissions');
+        $this->actingAs($user, 'web');
+        $before = $this->effects($year, $tenant);
+
+        $this->withHeaders($this->csrfHeaders())->postJson(
+            '/api/v1/budget/'.$year->getKey().'/approve',
+            ['items' => [['approved_amount' => '999999.00']]],
+        )->assertForbidden()->assertJsonPath('error.code', 'PERMISSION_DENIED');
+
+        $this->assertSame($before, $this->effects($year->fresh(), $tenant->fresh()));
+    }
+
+    public function test_approve_rejects_every_query_parameter_and_never_treats_query_as_command_body(): void
+    {
+        [$tenant, $user, $year, $preview] = $this->approvableFixture();
+        $this->actingAs($user, 'web');
+        $before = $this->effects($year, $tenant);
+
+        foreach ([
+            ['/api/v1/budget/'.$year->getKey().'/approve?effective_date=2026-08-13', []],
+            ['/api/v1/budget/'.$year->getKey().'/approve?effective_date=2026-08-13', $this->approvePayload($preview)],
+            ['/api/v1/budget/'.$year->getKey().'/approve?composition[versions][budget_lock_version]=1', $this->approvePayload($preview)],
+        ] as [$uri, $body]) {
+            $this->withHeaders($this->csrfHeaders())->postJson($uri, $body)
+                ->assertUnprocessable()
+                ->assertJsonPath('error.code', 'VALIDATION_FAILED');
+            $this->assertSame($before, $this->effects($year->fresh(), $tenant->fresh()));
+        }
     }
 
     /** @return array{Tenant, User, PlanningYear, BudgetApprovalPreview} */
@@ -436,7 +509,13 @@ final class BudgetProposalApprovalApiTest extends TestCase
             'history_activated_at' => $year->history_activated_at?->toISOString(),
             'base_lock' => $tenant->economic_basis_locked_at?->toISOString(),
             'approvals' => BudgetApproval::query()->count(),
+            'items' => DB::table('budget_approval_items')->count(),
             'revisions' => RevisionBatch::query()->count(),
+            'revision_items' => RevisionBatchItem::query()->count(),
+            'year_versions' => Version::query()
+                ->where('versionable_type', $year->getMorphClass())
+                ->where('versionable_id', $year->getKey())
+                ->count(),
             'audits' => AuditEvent::query()->count(),
         ];
     }

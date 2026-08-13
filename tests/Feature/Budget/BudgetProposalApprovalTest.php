@@ -10,6 +10,7 @@ use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\AuditEvent;
+use App\Models\BudgetApproval;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
@@ -22,6 +23,7 @@ use App\Models\Version;
 use Carbon\CarbonImmutable;
 use DomainException;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
@@ -87,8 +89,24 @@ final class BudgetProposalApprovalTest extends TestCase
         $this->assertSame($newYearVersion->getKey(), $revisionItem->version_id);
         $this->assertSame('approved', $revisionItem->snapshot_contents['budget_state']);
         $this->assertSame(2, (int) $revisionItem->snapshot_contents['lock_version']);
-        $this->assertSame(1, AuditEvent::query()->where('correlation_id', $correlationId)->where('event_type', 'revision.batch.begin')->count());
-        $this->assertSame(1, AuditEvent::query()->where('correlation_id', $correlationId)->where('event_type', 'budget.approved')->count());
+        $infrastructureAudit = AuditEvent::query()->where('correlation_id', $correlationId)->where('event_type', 'revision.batch.begin')->sole();
+        $businessAudit = AuditEvent::query()->where('correlation_id', $correlationId)->where('event_type', 'budget.approved')->sole();
+        $this->assertSame($context->tenantId, (int) $infrastructureAudit->tenant_id);
+        $this->assertSame($actor->getKey(), $infrastructureAudit->actor_user_id);
+        $this->assertSame($batch->getMorphClass(), $infrastructureAudit->subject_type);
+        $this->assertSame($batch->getKey(), $infrastructureAudit->subject_id);
+        $this->assertSame(['operation' => 'update'], $infrastructureAudit->properties);
+        $this->assertSame($context->tenantId, (int) $businessAudit->tenant_id);
+        $this->assertSame($actor->getKey(), $businessAudit->actor_user_id);
+        $this->assertSame($approval->getMorphClass(), $businessAudit->subject_type);
+        $this->assertSame($approval->getKey(), $businessAudit->subject_id);
+        $this->assertEqualsCanonicalizing([
+            'approval_id' => $approval->getKey(),
+            'planning_year_id' => $year->getKey(),
+            'contributor_count' => 1,
+            'basis' => 'net',
+            'composition_fingerprint' => $approval->composition_fingerprint,
+        ], $businessAudit->properties);
     }
 
     public function test_empty_composition_is_rejected_without_any_success_effect(): void
@@ -256,6 +274,30 @@ final class BudgetProposalApprovalTest extends TestCase
             ApproveBudgetProposalData::fromEvidence('2026-08-14', null, $preview->proposal->composition),
             (string) str()->uuid(),
         );
+    }
+
+    public function test_approved_and_closed_budget_states_reject_approval_without_success_effects(): void
+    {
+        foreach (['approved', 'closed'] as $state) {
+            [$actor, $context, $year] = $this->fixture('10.00', '2.20', '12.20');
+            $preview = app(BudgetApprovalPreviewQuery::class)->execute($actor, $context, (int) $year->getKey());
+            DB::table('planning_years')->where('id', $year->getKey())->update(['budget_state' => $state]);
+
+            try {
+                app(ApproveBudgetProposal::class)->execute(
+                    $actor,
+                    $context,
+                    $year,
+                    ApproveBudgetProposalData::fromEvidence('2026-08-13', null, $preview->proposal->composition),
+                    (string) str()->uuid(),
+                );
+                $this->fail("{$state} Budget was approved again.");
+            } catch (DomainException $exception) {
+                $this->assertSame('BUDGET_STATE_CONFLICT', $exception->getMessage());
+            }
+
+            $this->assertSame(0, BudgetApproval::query()->where('planning_year_id', $year->getKey())->count());
+        }
     }
 
     public function test_approved_overview_uses_only_the_active_immutable_snapshot_for_planned_total(): void

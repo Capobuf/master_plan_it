@@ -47,6 +47,14 @@ final class BudgetProposalApprovalRollbackTest extends TestCase
             'entered_amount' => '100.00', 'net_amount' => '100.00', 'vat_amount' => '22.00', 'gross_amount' => '122.00',
         ]);
         $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
+        $secondExpense = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(),
+        ]);
+        $secondRow = ExpenseRow::factory()->for($secondExpense)->create([
+            'tenant_id' => $tenant->getKey(), 'type' => ExpenseType::Quote,
+            'entered_amount' => '50.00', 'net_amount' => '50.00', 'vat_amount' => '11.00', 'gross_amount' => '61.00',
+        ]);
+        $secondExpense->forceFill(['current_planning_row_id' => $secondRow->getKey()])->saveQuietly();
         $preview = app(BudgetApprovalPreviewQuery::class)->execute($actor, $context, (int) $year->getKey());
         $correlationId = (string) str()->uuid();
         $before = $this->effects($tenant, $year);
@@ -87,6 +95,48 @@ final class BudgetProposalApprovalRollbackTest extends TestCase
         yield 'business Audit' => [AuditEvent::class, 'business-audit'];
     }
 
+    public function test_late_audit_failure_preserves_a_preexisting_irreversible_base_lock(): void
+    {
+        $lockedAt = now()->subYear()->utc()->startOfSecond();
+        $tenant = Tenant::factory()->create(['economic_basis_locked_at' => $lockedAt]);
+        $actor = $this->tenantUser($tenant);
+        $context = new TenantContext($tenant, $actor);
+        $year = PlanningYear::factory()->for($tenant)->create();
+        $center = CostCenter::factory()->for($tenant)->create();
+        $expense = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(),
+        ]);
+        $row = ExpenseRow::factory()->for($expense)->create([
+            'tenant_id' => $tenant->getKey(), 'type' => ExpenseType::Quote,
+            'entered_amount' => '100.00', 'net_amount' => '100.00', 'vat_amount' => '22.00', 'gross_amount' => '122.00',
+        ]);
+        $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
+        $preview = app(BudgetApprovalPreviewQuery::class)->execute($actor, $context, (int) $year->getKey());
+        $yearVersionCount = $year->versions()->count();
+        $failure = static fn (): never => throw new RuntimeException('forced business-audit failure');
+        [$dispatcher, $event, $listeners] = $this->injectFailure(AuditEvent::class, 'business-audit', $failure);
+
+        try {
+            app(ApproveBudgetProposal::class)->execute(
+                $actor,
+                $context,
+                $year,
+                ApproveBudgetProposalData::fromEvidence('2026-08-13', null, $preview->proposal->composition),
+                (string) str()->uuid(),
+            );
+            $this->fail('Late Audit failure did not abort approval.');
+        } catch (RuntimeException $exception) {
+            $this->assertSame('forced business-audit failure', $exception->getMessage());
+        } finally {
+            $this->restoreListeners($dispatcher, $event, $listeners);
+        }
+
+        $this->assertSame($lockedAt->toISOString(), $tenant->fresh()->economic_basis_locked_at?->toISOString());
+        $this->assertSame('preparation', $year->fresh()->budget_state->value);
+        $this->assertSame($yearVersionCount, $year->versions()->count());
+        $this->assertDatabaseCount('budget_approvals', 0);
+    }
+
     /** @return array<string, int|string|null> */
     private function effects(Tenant $tenant, PlanningYear $year): array
     {
@@ -111,11 +161,13 @@ final class BudgetProposalApprovalRollbackTest extends TestCase
         $verb = in_array($checkpoint, ['state', 'base-lock'], true) ? 'updated' : 'creating';
         $event = 'eloquent.'.$verb.': '.$modelClass;
         $listeners = $dispatcher->getRawListeners()[$event] ?? [];
-        $dispatcher->listen($event, static function (object $model) use ($checkpoint, $failure): void {
+        $seenSnapshotItems = 0;
+        $dispatcher->listen($event, static function (object $model) use ($checkpoint, $failure, &$seenSnapshotItems): void {
             $matches = match ($checkpoint) {
                 'state' => $model instanceof PlanningYear && $model->budget_state->value === 'approved',
                 'base-lock' => $model instanceof Tenant && $model->economic_basis_locked_at !== null,
                 'business-audit' => $model instanceof AuditEvent && $model->event_type === 'budget.approved',
+                'item' => $model instanceof BudgetApprovalItem && ++$seenSnapshotItems === 2,
                 default => true,
             };
             if ($matches) {

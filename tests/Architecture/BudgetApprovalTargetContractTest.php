@@ -2,6 +2,8 @@
 
 namespace Tests\Architecture;
 
+use App\Domain\Tenancy\Services\TenantMutationLock;
+use Illuminate\Auth\Access\AuthorizationException;
 use InvalidArgumentException;
 use PHPUnit\Framework\Attributes\Group;
 use Tests\Support\BudgetApprovalFixture;
@@ -80,11 +82,13 @@ final class BudgetApprovalTargetContractTest extends TestCase
         $vendors = file_get_contents(app_path('Domain/MasterData/Actions/Concerns/ManagesVendorMutation.php'));
         $createVendor = file_get_contents(app_path('Domain/MasterData/Actions/CreateVendor.php'));
         $annualHistory = file_get_contents(app_path('Domain/Revisions/Actions/ActivateAnnualHistory.php'));
+        $tenantMutationLock = file_get_contents(app_path('Domain/Tenancy/Services/TenantMutationLock.php'));
 
-        foreach ([$guard, $costCenters, $vendors, $createVendor, $annualHistory] as $source) {
+        foreach ([$guard, $costCenters, $vendors, $createVendor, $annualHistory, $tenantMutationLock] as $source) {
             self::assertIsString($source);
         }
-        $this->assertStringContainsString('sharedLock()', $guard);
+        $this->assertStringContainsString('TenantMutationLock', $guard);
+        $this->assertStringContainsString('sharedLock()', $tenantMutationLock);
         $this->assertStringContainsString('$this->lockTenantShared($tenant);', $costCenters);
         $this->assertStringContainsString('$this->lockTenantShared($tenant);', $vendors);
         $this->assertStringContainsString('$this->lockTenantShared($tenant);', $createVendor);
@@ -92,6 +96,32 @@ final class BudgetApprovalTargetContractTest extends TestCase
         $this->assertStringNotContainsString('lockForUpdate()', $annualHistory);
         $this->assertStringContainsString('AnnualEconomicMutationGuard', file_get_contents(app_path('Domain/Projects/Actions/Concerns/ManagesProjects.php')));
         $this->assertStringContainsString('AnnualEconomicMutationGuard', file_get_contents(app_path('Domain/Contracts/Actions/Concerns/ManagesContracts.php')));
+    }
+
+    public function test_every_tenant_scoped_identity_writer_enters_the_tenant_lock_order_before_user_or_role_roots(): void
+    {
+        foreach ([
+            'AssignTenantRoles',
+            'ChangeOwnPassword',
+            'CreateTenantRole',
+            'CreateTenantUser',
+            'DeactivateTenantUser',
+            'DeleteTenantRole',
+            'ResetTenantUserPassword',
+            'UpdateTenantRole',
+            'UpdateTenantUser',
+        ] as $action) {
+            $source = file_get_contents(app_path("Domain/IdentityAccess/Actions/{$action}.php"));
+            self::assertIsString($source);
+            $this->assertStringContainsString('TenantMutationLock::class', $source, $action);
+        }
+    }
+
+    public function test_tenant_mutation_lock_preserves_context_authorization_failure_semantics(): void
+    {
+        $this->expectException(AuthorizationException::class);
+        $this->expectExceptionMessage('TENANT_CONTEXT_REQUIRED');
+        app(TenantMutationLock::class)->shared(PHP_INT_MAX);
     }
 
     #[Group('deferred-budget-actions')]

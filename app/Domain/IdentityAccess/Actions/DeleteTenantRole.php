@@ -5,6 +5,7 @@ namespace App\Domain\IdentityAccess\Actions;
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Services\TenantMutationLock;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
@@ -35,6 +36,7 @@ final class DeleteTenantRole
             $this->permissionRegistrar->setPermissionsTeamId((int) $tenant->getKey());
 
             DB::transaction(function () use ($correlationId, $persistedActor, $target, $tenant): void {
+                app(TenantMutationLock::class)->shared((int) $tenant->getKey());
                 $this->lockAffectedUsers($target, (int) $tenant->getKey());
                 $role = $this->lockedTenantRole($target, (int) $tenant->getKey());
                 $this->ensureAffectedUsersRetainARole($role, (int) $tenant->getKey());

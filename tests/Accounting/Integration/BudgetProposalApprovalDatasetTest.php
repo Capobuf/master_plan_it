@@ -39,6 +39,7 @@ final class BudgetProposalApprovalDatasetTest extends TestCase
             );
             $this->assertContains('covered_by_plafond', array_map(static fn ($item): string => $item->reason, $preview->proposal->exclusions));
             $this->assertContains('alternative_planning', array_map(static fn ($item): string => $item->reason, $preview->proposal->exclusions));
+            $this->assertContains('actual_not_proposed', array_map(static fn ($item): string => $item->reason, $preview->proposal->exclusions));
             $this->assertNotContains('soft_deleted', array_map(static fn ($item): string => $item->reason, $preview->proposal->exclusions));
         }
     }
@@ -70,6 +71,11 @@ final class BudgetProposalApprovalDatasetTest extends TestCase
             'vat_amount' => '26.40', 'gross_amount' => '146.40',
         ]);
         $ordinary->forceFill(['current_planning_row_id' => $quote->getKey()])->saveQuietly();
+        ExpenseRow::factory()->for($ordinary)->create([
+            'tenant_id' => $tenant->getKey(), 'position' => 4, 'type' => ExpenseType::Actual,
+            'description' => 'Effettivo escluso', 'entered_amount' => '80.00', 'net_amount' => '80.00',
+            'vat_amount' => '17.60', 'gross_amount' => '97.60', 'spend_date' => '2026-03-01',
+        ]);
 
         $plafond = Expense::factory()->for($tenant)->plafond()->create([
             'planning_year_id' => $year->getKey(), 'cost_center_id' => $plafondCenter->getKey(), 'title' => 'Plafond annuale',
