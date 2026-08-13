@@ -102,6 +102,9 @@ export default function ReportsView({
     ...(filters.vendor ? { vendor_id: Number.parseInt(filters.vendor, 10) } : {}),
     ...(filters.view === "historical" && filters.asOf ? { as_of: filters.asOf } : {}),
   }), [filters]);
+  const reportScope = useMemo(() => tenantId === null || planningYearId === null
+    ? null
+    : JSON.stringify({ tenantId, planningYearId, ...reportQuery }), [planningYearId, reportQuery, tenantId]);
 
   useEffect(() => {
     setCostCenters([]);
@@ -129,41 +132,32 @@ export default function ReportsView({
   }, [canLoadCostCenters, canLoadProjects, canLoadVendors, tenantId]);
 
   useEffect(() => {
-    if (tenantId === null || planningYearId === null || !canView) {
+    if (tenantId === null || planningYearId === null || !canView || reportScope === null) {
       setReportState(null);
       return;
     }
-    const scope = `${tenantId}:${planningYearId}`;
+    const scope = reportScope;
     if (filters.view === "historical" && !filters.asOf) {
-      setReportState((current) => current?.scope === scope ? { ...current, error: null, loading: false } : current);
+      setExpandedGroups(new Set());
+      setReportState({ scope, response: null, error: null, loading: false });
       return;
     }
     let active = true;
-    setReportState((current) => ({
-      scope,
-      response: current?.scope === scope ? current.response : null,
-      error: null,
-      loading: true,
-    }));
+    setExpandedGroups(new Set());
+    setReportState({ scope, response: null, error: null, loading: true });
     void getReports({ ...reportQuery, planning_year_id: planningYearId })
       .then((response) => { if (active) setReportState({ scope, response, error: null, loading: false }); })
       .catch((error) => {
         if (active) {
-          setReportState((current) => ({
-            scope,
-            response: current?.scope === scope ? current.response : null,
-            error: ApiError.from(error),
-            loading: false,
-          }));
+          setReportState({ scope, response: null, error: ApiError.from(error), loading: false });
         }
       });
     return () => { active = false; };
-  }, [canView, filters.asOf, filters.view, planningYearId, reportQuery, tenantId]);
+  }, [canView, filters.asOf, filters.view, planningYearId, reportQuery, reportScope, tenantId]);
 
-  const currentScope = tenantId !== null && planningYearId !== null ? `${tenantId}:${planningYearId}` : null;
-  const response = reportState?.scope === currentScope ? reportState.response : null;
-  const error = reportState?.scope === currentScope ? reportState.error : null;
-  const loading = Boolean(reportState?.scope === currentScope && reportState.loading);
+  const response = reportState?.scope === reportScope ? reportState.response : null;
+  const error = reportState?.scope === reportScope ? reportState.error : null;
+  const loading = Boolean(reportState?.scope === reportScope && reportState.loading);
   const currency = response?.currency ?? "EUR";
   const dimension = groupings.find((item) => item.value === response?.filters.group_by)?.label ?? "Centro di Costo";
   const topGroups = response?.data ?? [];

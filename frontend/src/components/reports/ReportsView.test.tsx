@@ -144,6 +144,7 @@ describe("ReportsView", () => {
 
     expect(screen.getByLabelText("Cutoff")).toBeInTheDocument();
     expect(getReports).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: /Migrazione ERP/ })).not.toBeInTheDocument();
 
     fireEvent.change(screen.getByLabelText("Cutoff"), { target: { value: "2026-08-10T12:30" } });
 
@@ -166,6 +167,38 @@ describe("ReportsView", () => {
       group_by: "cost_center",
     }));
     expect(getReports).toHaveBeenCalledTimes(3);
+  });
+
+  it("never shows a prior report while a changed filter loads or fails", async () => {
+    let rejectProject: (reason?: unknown) => void = () => undefined;
+    vi.mocked(getReports)
+      .mockResolvedValueOnce(response)
+      .mockReturnValueOnce(new Promise((_, reject) => { rejectProject = reject; }));
+    render(<MemoryRouter><ReportsView tenantId={1} planningYearId={1} canView canLoadCostCenters canLoadProjects canLoadVendors /></MemoryRouter>);
+
+    expect(await screen.findByRole("button", { name: /Migrazione ERP/ })).toBeInTheDocument();
+    fireEvent.change(screen.getByLabelText("Progetto"), { target: { value: "20" } });
+    expect(screen.queryByRole("button", { name: /Migrazione ERP/ })).not.toBeInTheDocument();
+    rejectProject(new Error("network"));
+    expect(await screen.findByText("Caricamento del Report non riuscito")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /Migrazione ERP/ })).not.toBeInTheDocument();
+  });
+
+  it("ignores a late response from the prior full query scope", async () => {
+    let resolveCurrent: (value: ReportsResponse) => void = () => undefined;
+    let resolveHistorical: (value: ReportsResponse) => void = () => undefined;
+    vi.mocked(getReports)
+      .mockReturnValueOnce(new Promise((resolve) => { resolveCurrent = resolve; }))
+      .mockReturnValueOnce(new Promise((resolve) => { resolveHistorical = resolve; }));
+    render(<MemoryRouter><ReportsView tenantId={1} planningYearId={1} canView canLoadCostCenters canLoadProjects canLoadVendors /></MemoryRouter>);
+
+    fireEvent.change(screen.getByLabelText("Vista"), { target: { value: "historical" } });
+    fireEvent.change(screen.getByLabelText("Cutoff"), { target: { value: "2026-08-10T12:30" } });
+    await waitFor(() => expect(getReports).toHaveBeenCalledTimes(2));
+    resolveHistorical({ ...response, mode: "historical", read_only: true, requested_as_of: "2026-08-10T12:30", cutoff_utc: "2026-08-10T12:30:00Z" });
+    expect(await screen.findByText("Report storico in sola lettura")).toBeInTheDocument();
+    resolveCurrent(response);
+    await waitFor(() => expect(screen.getByText("Report storico in sola lettura")).toBeInTheDocument());
   });
 
   it("expands a group into authoritative expense lines with an accessible drill-down", async () => {
