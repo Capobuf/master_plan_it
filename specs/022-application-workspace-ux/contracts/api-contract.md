@@ -233,10 +233,23 @@ GET  /api/v1/budget/{planningYear}/approvals
 
 `approve` non riceve un elenco parziale di Importi da sovrascrivere. Riceve Data, eventuale Nota,
 Lock Version e Correlation ID; il server ricostruisce e fotografa l'intero Budget Proposto mostrato
-dalla preview. Per impedire approvazioni su dati cambiati, preview e conferma condividono un token o
-hash di composizione verificato server-side. La conferma acquisisce prima il guard annuale
+dalla preview. Il server include automaticamente tutti i contributori correnti della proiezione
+autorevole e motiva inclusioni ed esclusioni; non accetta né persiste selezioni manuali per
+elemento, che appartengono alla Slice 029. Per impedire approvazioni su dati cambiati, preview e
+conferma condividono un token o hash di composizione verificato server-side. La conferma acquisisce prima il guard annuale
 condiviso e ricostruisce il dataset sotto lock, così una mutazione di Riga concorrente è ordinata
 prima o dopo la fotografia e non può produrre uno snapshot misto.
+
+Il Correlation ID resta diagnostico secondo le Regole Comuni: `approve` non dichiara replay
+idempotente. Un retry è una nuova richiesta che rivalida stato, Lock Version e composizione e non
+può essere deduplicato tramite un vincolo unique sulla correlation.
+
+La Data di efficacia è una data di calendario uguale o precedente al giorno corrente calcolato
+server-side nel fuso del Tenant; può cadere fuori dall'Anno Economico senza cambiarne
+l'attribuzione. Una data futura è rifiutata. `recorded_at` è assegnato dal server e resta distinto.
+
+Una proposta priva di componenti economici contribuenti non è approvabile. Il totale `0.00` resta
+invece approvabile quando la composizione non è vuota, inclusi componenti a zero o compensati.
 
 Nel bridge 023 la prima Approvazione corrente locka prima Tenant e poi PlanningYear e valorizza
 `economic_basis_locked_at` nella stessa transazione; la Slice 025 sostituisce il bridge senza
@@ -257,12 +270,17 @@ Spese o operazioni nei quattro gruppi canonici:
 }
 ```
 
-Effettivi e Extra Budget continuano a bloccare se la Spesa/Riga è nel Cestino; una Chiusura
-continua a bloccare dopo una Riapertura. Non esiste un gruppo generico aggiuntivo. `annul` richiede
+Ogni Effettivo blocca per esistenza, incluso quello di importo `0.00`; Effettivi e Extra Budget
+continuano a bloccare se la Spesa/Riga è nel Cestino. Una Chiusura continua a bloccare dopo una
+Riapertura. Non esiste un gruppo generico aggiuntivo. `annul` richiede
 sempre `note` e `lock_version`, rivalida i quattro gruppi nella stessa transazione e non considera
 la preview un'autorizzazione. Con blocchi restituisce `BUDGET_APPROVAL_ANNULMENT_BLOCKED`; con lock
 stale restituisce `STALE_VERSION`. Ogni errore lascia invariati Budget, Approvazione, Revisioni e
 Audit.
+
+Le appartenenze non sono esclusive: una Riga che è insieme Effettivo ed Extra Budget compare una
+volta in `actuals` e una volta in `extra_budget`, con la stessa identità di origine. Non viene
+deduplicata tra gruppi né duplicata all'interno dello stesso gruppo.
 
 Quando consentito, `annul` marca l'Approvazione `annulled` senza eliminarla, conserva Data,
 Approvatore, contenuto e Nota, riporta il Budget in Preparazione e crea una nuova Revisione e un

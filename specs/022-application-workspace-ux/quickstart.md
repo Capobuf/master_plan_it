@@ -92,33 +92,44 @@ Per ogni Slice economica verificare contemporaneamente:
 ## Scenario 3 — Approvazione, Extra e Chiusura
 
 1. Preparare il Budget Proposto con più Spese, Contratti e Progetti.
-2. Aprire la Vista di Impatto e approvare l'intera composizione con una sola Data e Approvatore.
-3. Modificare una Valutazione: il Previsto deve restare immutato.
-4. Inserire una Spesa Extra Budget con Nota e un Effettivo; il Previsto non cambia.
-5. Inserire un'omissione come Rettifica e verificare che entri nel valore rappresentato del Budget
+2. Aprire la Vista di Impatto, verificare inclusioni ed esclusioni determinate automaticamente dal
+   server e approvare l'intera composizione con una sola Data e Approvatore, senza selezionare o
+   modificare importi per elemento.
+3. Su un Anno separato tentare l'Approvazione senza componenti contribuenti e verificare il rifiuto
+   senza effetti; aggiungere componenti a zero o compensati fino a `0.00` e verificare che la
+   composizione non vuota sia approvabile.
+4. Verificare che una Data di efficacia esterna all'Anno ma non successiva a oggi nel fuso Tenant
+   sia accettata senza cambiare attribuzione annuale; verificare che domani nel fuso Tenant sia
+   rifiutato senza effetti e senza perdere gli altri input.
+5. Modificare una Valutazione: il Previsto deve restare immutato.
+6. Inserire una Spesa Extra Budget con Nota e un Effettivo; il Previsto non cambia.
+7. Inserire un'omissione come Rettifica e verificare che entri nel valore rappresentato del Budget
    Approvato senza diventare Extra Budget.
-6. Aprire Chiusura, lasciare almeno una segnalazione irrisolta e chiudere comunque.
-7. Inserire una Nota di Credito tardiva nell'Anno Chiuso: deve produrre una Rettifica con Nota senza
+8. Aprire Chiusura, lasciare almeno una segnalazione irrisolta e chiudere comunque.
+9. Inserire una Nota di Credito tardiva nell'Anno Chiuso: deve produrre una Rettifica con Nota senza
    creare un `Budget Finale Rettificato`.
-8. Verificare che la Riapertura sia bloccata dopo la prima Rettifica successiva.
-9. Su un secondo Budget Chiuso senza Rettifiche successive, eseguire la Riapertura con Nota e
+10. Verificare che la Riapertura sia bloccata dopo la prima Rettifica successiva.
+11. Su un secondo Budget Chiuso senza Rettifiche successive, eseguire la Riapertura con Nota e
    verificare snapshot precedente non corrente, nuova Revisione e ritorno ad Approvato.
-10. Su un Budget Approvato privo di Effettivi, Extra Budget, Rettifiche e Chiusure, aprire la preview
+12. Su un Budget Approvato privo di Effettivi, Extra Budget, Rettifiche e Chiusure, aprire la preview
     e verificare `can_annul: true` con i quattro gruppi vuoti; annullare l'Approvazione con Nota e
     Lock Version e verificare ritorno in Preparazione, stato Annullata, conservazione di Data,
     Approvatore, contenuto e Nota, nuova Revisione/Audit e Base Economica ancora bloccata.
-11. Preparare quattro Budget separati con, rispettivamente, un Effettivo, un Extra Budget, una
-    Rettifica e una Chiusura; per Effettivo ed Extra collocare poi Spesa/Riga nel Cestino e per la
-    Chiusura eseguire anche la Riapertura. Verificare che ogni preview restituisca il gruppo canonico
-    e un link alla relativa Spesa/operazione, senza offrire la conferma come eseguibile.
-12. Avviare simultaneamente l'Annullamento e una mutazione che crea uno dei quattro blocchi sullo
+13. Preparare Budget separati con Effettivi positivi, negativi e `0.00` e altri tre Budget con,
+    rispettivamente, un Extra Budget, una Rettifica e una Chiusura; per Effettivo ed Extra
+    collocare poi Spesa/Riga nel Cestino e per la Chiusura eseguire anche la Riapertura. Verificare
+    che ogni preview restituisca il gruppo canonico e un link alla relativa Spesa/operazione, senza
+    offrire la conferma come eseguibile.
+14. Creare una Riga contemporaneamente Effettivo ed Extra Budget e verificare che la stessa
+    identità compaia una volta in `actuals` e una volta in `extra_budget`, senza duplicati interni.
+15. Avviare simultaneamente l'Annullamento e una mutazione che crea uno dei quattro blocchi sullo
     stesso Tenant/Anno: il guard annuale deve serializzare i commit; l'Annullamento riesce soltanto
     se è linearizzato prima, altrimenti restituisce `BUDGET_APPROVAL_ANNULMENT_BLOCKED`, senza
     transizioni, Revisioni o Audit parziali.
-13. Verificare che Valutazioni informative, modifiche descrittive prive di effetto economico,
+16. Verificare che Valutazioni informative, modifiche descrittive prive di effetto economico,
     Allegati, sola consultazione/reportistica, snapshot read-only e mutazioni indipendenti di altri
     anni non blocchino l'Annullamento.
-14. Eseguire in concorrenza Approva/Riga economica e Chiudi/Riga economica sullo stesso Tenant/Anno:
+17. Eseguire in concorrenza Approva/Riga economica e Chiudi/Riga economica sullo stesso Tenant/Anno:
     ogni esito deve essere linearizzabile, lo snapshot deve coincidere interamente con il dataset
     prima o dopo la mutazione e non deve mai contenere una composizione mista.
 

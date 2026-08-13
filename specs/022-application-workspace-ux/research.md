@@ -69,10 +69,13 @@ e non cancella Effettivi già generati.
 **Decisione**: esiste un solo Budget annuale. Approvato e Finale sono valori correnti composti dallo
 snapshot applicabile più le Rettifiche. Riapertura e Annullamento richiedono Nota e conservano la
 storia. L'Annullamento dell'Approvazione attiva è consentito solo prima del ciclo operativo: nello
-stesso Tenant/Anno lo bloccano esattamente Effettivi anche nel Cestino, Extra Budget anche eliminati
+stesso Tenant/Anno lo bloccano esattamente Effettivi di qualunque importo, incluso `0.00`, anche nel
+Cestino, Extra Budget anche eliminati
 logicamente, Rettifiche e Chiusure già eseguite anche dopo Riapertura. Preview e conferma non
 introducono una categoria residuale; la conferma rivalida i blocchi atomicamente e non sblocca la
 Base Economica.
+Una Riga contemporaneamente Effettivo ed Extra Budget appartiene a entrambi i gruppi canonici,
+una volta per gruppo e con la stessa identità.
 
 ### D05 — Plafond singolo e copertura integrale
 

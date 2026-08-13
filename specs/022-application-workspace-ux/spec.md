@@ -55,6 +55,21 @@ Il risultato atteso è un Workspace Annuale ampio, leggibile e prevedibile, nel 
   Tenant/Anno: Effettivi anche nel Cestino, Extra Budget anche eliminati logicamente, Rettifiche e
   qualunque Chiusura già eseguita anche dopo Riapertura. Non esiste una categoria residuale; la
   preview le raggruppa e la conferma rivalida tutto atomicamente con optimistic locking.
+- Q: Chi determina inclusioni ed esclusioni del Budget Proposto? → A: Il server include
+  automaticamente tutti i contributori economici correnti secondo la proiezione autorevole e la
+  Vista di Impatto spiega inclusioni ed esclusioni senza selezione manuale. Le decisioni
+  persistenti per elemento appartengono alla Composizione Annuale della Slice 029.
+- Q: Si può approvare un Budget Proposto senza componenti economici? → A: No. La composizione vuota
+  viene rifiutata; una composizione non vuota con componenti a zero o compensati fino a totale zero
+  resta approvabile.
+- Q: Un Effettivo di importo zero blocca l'Annullamento dell'Approvazione? → A: Sì. Ogni Effettivo
+  blocca per la sua esistenza come evento operativo, incluso quello di importo `0.00`.
+- Q: Quali date sono ammesse come Data di efficacia dell'Approvazione? → A: Qualunque data uguale o
+  precedente a oggi nel fuso del Tenant, anche fuori dall'Anno Economico; mai una data futura.
+  `recorded_at` resta il momento server distinto.
+- Q: Dove compare una Riga contemporaneamente Effettivo ed Extra Budget nella preview
+  dell'Annullamento? → A: In entrambi i gruppi `actuals` ed `extra_budget`, una volta per gruppo e
+  con la stessa identità di origine.
 - Q: È confermato che il prodotto sia Greenfield e privo di dati reali da preservare? → A: Sì,
   confermato esplicitamente dal proprietario il 2026-08-12. Schema e dati demo/test possono essere
   ricostruiti; questa conferma non introduce una politica automatica di purge delle Spese nel
@@ -198,9 +213,10 @@ L'utente accede con chiarezza alla Panoramica del Budget, prepara la Chiusura, c
    Tenant/Anno, **When** viene annullata con Nota e Lock Version corrente, **Then** il Budget torna
    in Preparazione, l'Approvazione è marcata Annullata, Data, Approvatore, contenuto e Nota restano
    storici, sono creati Revisione e Audit e la Base Economica resta bloccata.
-8. **Given** un'Approvazione con almeno un Effettivo o Extra Budget poi collocato nel Cestino, una
-   Rettifica oppure una Chiusura già eseguita anche dopo Riapertura, **When** si apre la preview o si
-   tenta l'Annullamento, **Then** i blocchi sono raggruppati nelle quattro categorie canoniche e la
+8. **Given** un'Approvazione con almeno un Effettivo di qualunque importo, incluso `0.00`, o Extra
+   Budget poi collocato nel Cestino, una Rettifica oppure una Chiusura già eseguita anche dopo
+   Riapertura, **When** si apre la preview o si tenta l'Annullamento, **Then** i blocchi sono
+   raggruppati nelle quattro categorie canoniche e la
    conferma fallisce atomicamente senza affidarsi alla sola preview.
 
 ---
@@ -369,9 +385,9 @@ L'Amministratore di Piattaforma crea e gestisce i Tenant; l'amministratore del s
   Revisione e conservare gli snapshot precedenti; la Riapertura MUST essere bloccata dopo una
   Rettifica successiva alla Chiusura.
 - **FR-055A**: L'Annullamento MUST essere consentito solo sull'Approvazione attiva e MUST essere
-  bloccato, nello stesso Tenant/Anno, dalla presenza di Effettivi anche nel Cestino, Extra Budget
-  anche eliminati logicamente, Rettifiche o qualunque Chiusura già eseguita; nessun'altra categoria
-  generica di evento bloccante MUST essere introdotta.
+  bloccato, nello stesso Tenant/Anno, dalla presenza per esistenza di Effettivi positivi, negativi
+  o `0.00` anche nel Cestino, Extra Budget anche eliminati logicamente, Rettifiche o qualunque
+  Chiusura già eseguita; nessun'altra categoria generica di evento bloccante MUST essere introdotta.
 - **FR-055B**: La preview dell'Annullamento MUST raggruppare collegamenti ai blocchi in `actuals`,
   `extra_budget`, `rectifications` e `closures`; la mutazione MUST rivalidare i quattro gruppi nella
   stessa transazione, usare optimistic locking e fallire senza side effect parziali.

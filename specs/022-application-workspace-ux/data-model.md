@@ -68,6 +68,11 @@ Rappresenta il contenitore annuale del Budget per un Tenant.
 
 `Budget in Lavorazione` e `Budget Proposto` sono viste della fase `Preparazione`, non due ulteriori
 Stati persistenti. `Budget Proposto` è la composizione presentabile calcolata nel momento corrente.
+Il server include automaticamente tutti i contributori correnti della proiezione autorevole e
+spiega le esclusioni; la Slice 025 non persiste selezioni manuali per elemento. Riproposte,
+esclusioni e override persistenti appartengono alla Composizione Annuale della Slice 029.
+Una composizione senza contributori non può essere Approvata; una composizione non vuota resta
+approvabile anche quando i componenti valgono o si compensano fino al totale zero.
 
 La riga `PlanningYear` è il guard di serializzazione stabile del dataset economico
 `Tenant + Anno`. Ogni mutazione che può cambiare una Spesa/Riga corrente o creare Effettivi, Extra
@@ -255,11 +260,11 @@ Aggregato immutabile composto da intestazione e Voci di Snapshot.
 
 | Campo logico | Regola |
 |---|---|
-| Tenant, Anno, Data, Approvatore | Obbligatori |
+| Tenant, Anno, Data, Approvatore | Obbligatori; la Data di efficacia può cadere fuori dall'Anno ma non dopo oggi nel fuso Tenant; `recorded_at` è server-owned |
 | Base Economica | Copiata dal Tenant e immutabile |
 | Totali | Netto, IVA, Lordo e Totale nella Base ufficiale |
 | Stato | Attiva o Annullata, con autore/data/Nota dell'annullamento |
-| Correlation ID | Unico per idempotenza |
+| Correlation ID | Diagnostico e indicizzato, non univoco né idempotente; ogni retry rivalida stato, versione e composizione |
 
 Ogni Voce conserva almeno Spesa/Riga di origine, Natura, Centro di Costo, Progetto, Contratto,
 Importi e classificazioni necessari a ricostruire il Previsto senza leggere dati mutabili.
@@ -272,10 +277,14 @@ Tenant/Anno e comprende quattro insiemi, senza una tabella o un tipo evento resi
 
 | Gruppo | Presenza bloccante |
 |---|---|
-| Effettivi | Ogni Riga Effettivo positiva/negativa, manuale/contrattuale, inclusa la Riga o Spesa nel Cestino |
+| Effettivi | Ogni Riga Effettivo positiva, negativa o `0.00`, manuale/contrattuale, inclusa la Riga o Spesa nel Cestino; blocca per esistenza |
 | Extra Budget | Ogni Spesa o Riga Extra Budget, inclusa quella eliminata logicamente |
 | Rettifiche | Ogni Rettifica dopo Approvazione o dopo Chiusura |
 | Chiusure | Ogni evento/snapshot di Chiusura già eseguito, anche se non più corrente dopo Riapertura |
+
+Le appartenenze ai gruppi non sono mutuamente esclusive: una Riga contemporaneamente Effettivo ed
+Extra Budget compare una volta in `actuals` e una volta in `extra_budget`, con la stessa identità
+di origine e senza una categoria primaria implicita.
 
 Un Annullamento consentito marca l'Approvazione `Annullata` con autore, data e Nota, riporta il
 Budget in Preparazione e crea Revisione e Audit. Non elimina snapshot o contenuto, non riusa la

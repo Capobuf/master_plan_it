@@ -90,7 +90,11 @@ Preparazione → Approvato → Chiuso
 
 Approvazione, Chiusura e Rettifiche non creano Budget alternativi. `Budget in Lavorazione` e
 `Budget Proposto` sono viste della Preparazione; `Budget Finale` è il medesimo Budget annuale nello
-stato Chiuso.
+stato Chiuso. Nel Budget Proposto il server include automaticamente tutti i contributori economici
+correnti secondo il Motore autorevole e spiega inclusioni ed esclusioni senza selezione manuale;
+le decisioni persistenti per elemento appartengono alla Composizione Annuale. Una proposta senza
+componenti contribuenti non può essere Approvata; una composizione non vuota resta approvabile con
+totale zero.
 
 `INFERRED` come conseguenza tecnica dell'atomicità approvata: ogni mutazione che può cambiare il
 dataset economico di un Tenant/Anno acquisisce lo stesso guard di serializzazione stabile
@@ -111,6 +115,10 @@ Budget Approvato = Approvazione iniziale + Rettifiche successive all'Approvazion
 
 Una voce dimenticata entra tramite Rettifica. L'Approvazione iniziale resta ricostruibile tramite
 operazione, item e snapshot tecnico, ma non è un secondo contenitore di prodotto.
+
+La Data di efficacia dell'Approvazione è una data di calendario uguale o precedente a oggi nel
+fuso del Tenant; può cadere fuori dall'Anno Economico senza cambiarne l'attribuzione. Una data
+futura non è ammessa e `recorded_at` resta il momento server distinto.
 
 ### Budget Finale
 
@@ -154,11 +162,16 @@ attiva e finché il Budget approvato non è entrato nel ciclo operativo. La Nota
 obbligatoria. Nello stesso Tenant e Anno Economico, ciascuna delle condizioni seguenti blocca
 l'operazione:
 
-1. esiste almeno un Effettivo positivo o negativo, manuale o generato da Contratto, anche quando la
-   relativa Spesa o Riga è nel Cestino;
+1. esiste almeno un Effettivo positivo, negativo o `0.00`, manuale o generato da Contratto, anche
+   quando la relativa Spesa o Riga è nel Cestino; il blocco dipende dall'esistenza dell'evento
+   operativo e non dal suo valore;
 2. esiste almeno una Spesa o Riga Extra Budget, anche quando è stata eliminata logicamente;
 3. esiste almeno una Rettifica successiva all'Approvazione o alla Chiusura;
 4. è già stata eseguita almeno una Chiusura, anche se il Budget è stato poi riaperto.
+
+Le appartenenze non sono mutuamente esclusive: una Riga contemporaneamente Effettivo ed Extra
+Budget compare una volta in ciascuno dei gruppi `actuals` ed `extra_budget`, con la stessa identità
+di origine e senza una precedenza implicita.
 
 Non esiste una quinta categoria generica di eventi dipendenti. Spostamenti o riproposte,
 Continuazioni di Progetto, variazioni di Plafond, esclusioni annuali, cessazioni e
