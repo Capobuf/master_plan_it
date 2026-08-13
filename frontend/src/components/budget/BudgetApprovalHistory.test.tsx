@@ -1,8 +1,9 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router";
 import { getBudgetApprovalDetail, getBudgetApprovalHistory, type BudgetApprovalDetail, type BudgetApprovalSummary } from "../../api/budget";
 import type { PaginatedData } from "../../api/client";
+import { ApiError } from "../../api/client";
 import BudgetApprovalHistory from "./BudgetApprovalHistory";
 import BudgetApprovalDetailDialog from "./BudgetApprovalDetail";
 import { annulledApprovalFixture, budgetProposalFixture } from "./__fixtures__/budgetApproval";
@@ -16,7 +17,7 @@ vi.mock("../../api/budget", async (importOriginal) => ({
 const historyPage: PaginatedData<BudgetApprovalSummary> = {
   data: [
     { ...annulledApprovalFixture, planning_year_id: 25, currency: "EUR", basis: "net" },
-    { id: 90, status: "active" as const, planning_year_id: 25, currency: "EUR", basis: "net" as const, effective_date: "2026-08-12", recorded_at: "2026-08-12T10:30:00Z", approved_by: { id: 4, name: "Anna Bianchi" }, note: null, total: budgetProposalFixture.total },
+    { id: 90, status: "active" as const, planning_year_id: 25, currency: "EUR", basis: "net" as const, effective_date: "2026-08-12", recorded_at: "2026-08-12T10:30:00Z", approved_by: { id: 4, name: "Anna Bianchi" }, note: null, annulled_at: null, annulled_by: null, annulment_note: null, total: budgetProposalFixture.total },
   ],
   links: { first: "?page=1", last: "?page=2", prev: null, next: "?page=2" },
   meta: { current_page: 1, last_page: 2, per_page: 25, total: 27 },
@@ -54,6 +55,7 @@ describe("BudgetApprovalHistory", () => {
     fireEvent.click(screen.getAllByRole("button", { name: "Apri fotografia" })[0]);
     expect(await screen.findByRole("dialog", { name: "Fotografia approvazione 91" })).toBeInTheDocument();
     expect(screen.getByText("Componenti registrati")).toBeInTheDocument();
+    expect(screen.getByText("Anno di pianificazione").parentElement).toHaveTextContent("2026");
     expect(screen.getByRole("link", { name: /Licenze annuali/i })).toHaveAttribute("href", "/spese/81?planning_year_id=25");
     fireEvent.change(screen.getByLabelText("Filtra componenti registrati"), { target: { value: "Licenze" } });
     expect(screen.getByLabelText("Totale selezione")).toHaveTextContent("120,00 €");
@@ -146,5 +148,20 @@ describe("BudgetApprovalHistory", () => {
     expect(await screen.findByRole("dialog", { name: "Fotografia approvazione 90" })).toBeInTheDocument();
     resolveFirst(storedDetail);
     await waitFor(() => expect(screen.queryByRole("dialog", { name: "Fotografia approvazione 91" })).not.toBeInTheDocument());
+  });
+
+  it("shows only a localized history/detail error plus correlation ID, never a server message", async () => {
+    vi.mocked(getBudgetApprovalHistory).mockRejectedValueOnce(new ApiError({ message: "Tenant A confidential", correlationId: "history-correlation" }));
+    render(<MemoryRouter><BudgetApprovalHistory planningYearId={25} requestScope="tenant-a" /></MemoryRouter>);
+    expect(await screen.findByRole("alert")).toHaveTextContent("Riferimento: history-correlation");
+    expect(screen.queryByText("Tenant A confidential")).not.toBeInTheDocument();
+
+    vi.mocked(getBudgetApprovalHistory).mockResolvedValue(historyPage);
+    vi.mocked(getBudgetApprovalDetail).mockRejectedValue(new ApiError({ message: "Detail confidential", correlationId: "detail-correlation" }));
+    const second = render(<MemoryRouter><BudgetApprovalHistory planningYearId={25} requestScope="tenant-b" /></MemoryRouter>);
+    await within(second.container).findAllByRole("button", { name: "Apri fotografia" });
+    fireEvent.click(within(second.container).getAllByRole("button", { name: "Apri fotografia" })[0]);
+    expect(await within(second.container).findByRole("alert")).toHaveTextContent("Riferimento: detail-correlation");
+    expect(within(second.container).queryByText("Detail confidential")).not.toBeInTheDocument();
   });
 });

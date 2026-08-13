@@ -24,7 +24,7 @@ const contributor = {
 };
 const validSummary = {
   id: 91, status: "active", planning_year_id: 25, currency: "EUR", basis: "net", total: measure,
-  effective_date: "2026-08-13", recorded_at: "2026-08-13T10:30:00Z", approved_by: { id: 5, name: "Mario Rossi" }, note: null,
+  effective_date: "2026-08-13", recorded_at: "2026-08-13T10:30:00Z", approved_by: { id: 5, name: "Mario Rossi" }, note: null, annulled_at: null, annulled_by: null, annulment_note: null,
 };
 const validDetail = {
   id: 91, status: "active", planning_year: { id: 25, year_label: 2026 }, currency: "EUR", basis: "net", total: measure,
@@ -95,6 +95,15 @@ describe("budget proposal adapters", () => {
     await expect(getBudgetApprovalDetail(25, 91)).rejects.toThrow(/non rispetta il contratto/i);
 
     vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: { ...validDetail, total: { ...measure, official: "12.00" } } } });
+    await expect(getBudgetApprovalDetail(25, 91)).rejects.toThrow(/non rispetta il contratto/i);
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: { ...validDetail, total: { ...measure, vat: "1.99" } } } });
+    await expect(getBudgetApprovalDetail(25, 91)).rejects.toThrow(/non rispetta il contratto/i);
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: { ...validDetail, contributors: [{ ...contributor, row: null }] } } });
+    await expect(getBudgetApprovalDetail(25, 91)).rejects.toThrow(/non rispetta il contratto/i);
+
+    vi.mocked(apiClient.get).mockResolvedValueOnce({ data: { data: { ...validDetail, status: "annulled", annulment: { annulled_at: "2026-08-13T11:00:00Z", annulled_by: { id: 5, name: "Mario Rossi" }, note: "" } } } });
     await expect(getBudgetApprovalDetail(25, 91)).rejects.toThrow(/non rispetta il contratto/i);
   });
 

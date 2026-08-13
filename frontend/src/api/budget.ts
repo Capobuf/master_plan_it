@@ -196,17 +196,30 @@ function isMeasure(value: unknown): value is EconomicMeasure {
   return isRecord(value) && ["net", "vat", "gross", "official"].every((key) => isText(value[key]) && canonicalMoney.test(value[key]));
 }
 
+function cents(value: string): bigint {
+  const negative = value.startsWith("-");
+  const [integer, fraction] = (negative ? value.slice(1) : value).split(".");
+  const amount = BigInt(`${integer}${fraction}`);
+  return negative ? -amount : amount;
+}
+
+function hasEconomicRelations(value: unknown, basis: BudgetBasis): value is EconomicMeasure {
+  return isMeasure(value) && cents(value.net) + cents(value.vat) === cents(value.gross) && value.official === value[basis];
+}
+
 function isReference(value: unknown, field: "name" | "title"): boolean {
   return isRecord(value) && isPositiveId(value.id) && isText(value[field]) && value[field].length > 0;
 }
 
-function isContributor(value: unknown): value is ApprovalContributor {
+function isContributor(value: unknown, basis: BudgetBasis): value is ApprovalContributor {
   if (!isRecord(value) || !isText(value.source_identity) || value.source_identity.length === 0
     || (value.kind !== "ordinary_current_planning" && value.kind !== "plafond_allocation")
-    || !isReference(value.expense, "title") || !isMeasure(value.amount) || !isPositiveId(value.source_lock_version) || !isDrillDown(value.drill_down)) return false;
+    || !isReference(value.expense, "title") || !hasEconomicRelations(value.amount, basis) || !isPositiveId(value.source_lock_version) || !isDrillDown(value.drill_down)) return false;
   const row = value.row;
   if (!(row === null || (isRecord(row) && isPositiveId(row.id) && (row.type === "estimate" || row.type === "quote") && isText(row.description) && row.description.length > 0))) return false;
   if (!(value.plafond === null || isReference(value.plafond, "title"))) return false;
+  if ((value.kind === "ordinary_current_planning" && (row === null || value.plafond !== null))
+    || (value.kind === "plafond_allocation" && (row !== null || value.plafond === null))) return false;
   const dimensions = value.dimensions;
   return isRecord(dimensions) && isReference(dimensions.cost_center, "name")
     && (dimensions.vendor === null || isReference(dimensions.vendor, "name"))
@@ -229,13 +242,13 @@ function sumMeasure(contributors: ApprovalContributor[], key: keyof EconomicMeas
 
 function isSummary(value: unknown, planningYearId: number): value is BudgetApprovalSummary {
   if (!isRecord(value) || !isPositiveId(value.id) || !hasApprovalStatus(value.status) || value.planning_year_id !== planningYearId
-    || !isText(value.currency) || !/^[A-Z]{3}$/.test(value.currency) || !isBasis(value.basis) || !isMeasure(value.total)
+    || !isText(value.currency) || !/^[A-Z]{3}$/.test(value.currency) || !isBasis(value.basis) || !hasEconomicRelations(value.total, value.basis)
     || !isCalendarDate(value.effective_date) || !isTimestamp(value.recorded_at)
     || !isActor(value.approved_by) || !(value.note === null || isText(value.note))) return false;
   const annulled = value.status === "annulled";
   return annulled
-    ? isTimestamp(value.annulled_at) && isActor(value.annulled_by) && (value.annulment_note === null || isText(value.annulment_note))
-    : (value.annulled_at === undefined || value.annulled_at === null) && (value.annulled_by === undefined || value.annulled_by === null) && (value.annulment_note === undefined || value.annulment_note === null);
+    ? isTimestamp(value.annulled_at) && isActor(value.annulled_by) && isText(value.annulment_note) && value.annulment_note.trim().length > 0
+    : value.annulled_at === null && value.annulled_by === null && value.annulment_note === null;
 }
 
 function assertApprovalHistory(value: unknown, planningYearId: number, requestedPage?: number): asserts value is PaginatedData<BudgetApprovalSummary> {
@@ -250,16 +263,16 @@ function assertApprovalHistory(value: unknown, planningYearId: number, requested
 
 function assertApprovalDetail(value: unknown, planningYearId: number, approvalId: number): asserts value is BudgetApprovalDetail {
   if (!isRecord(value) || value.id !== approvalId || !hasApprovalStatus(value.status) || !isRecord(value.planning_year) || value.planning_year.id !== planningYearId || !isPositiveId(value.planning_year.id) || !isPositiveId(value.planning_year.year_label)
-    || !isText(value.currency) || !/^[A-Z]{3}$/.test(value.currency) || !isBasis(value.basis) || !isMeasure(value.total) || value.total.official !== value.total[value.basis]
+    || !isText(value.currency) || !/^[A-Z]{3}$/.test(value.currency) || !isBasis(value.basis) || !hasEconomicRelations(value.total, value.basis)
     || !isCalendarDate(value.effective_date) || !isTimestamp(value.recorded_at) || !isActor(value.approved_by) || !(value.note === null || isText(value.note))
-    || !Array.isArray(value.contributors) || !value.contributors.every(isContributor) || !isRecord(value.composition)
+    || !Array.isArray(value.contributors) || !value.contributors.every((contributor) => isContributor(contributor, value.basis as BudgetBasis)) || !isRecord(value.composition)
     || !isText(value.composition.fingerprint) || value.composition.fingerprint.length === 0 || !isText(value.composition.schema_version) || value.composition.schema_version.length === 0
     || value.composition.contributor_count !== value.contributors.length || !Number.isSafeInteger(value.composition.contributor_count) || value.composition.contributor_count < 0
     || ["net", "vat", "gross", "official"].some((key) => sumMeasure(value.contributors as ApprovalContributor[], key as keyof EconomicMeasure) !== (value.total as EconomicMeasure)[key as keyof EconomicMeasure])) {
     throw new Error("La fotografia approvazione ricevuta non rispetta il contratto previsto.");
   }
   const annulment = value.annulment;
-  if (!(annulment === null || (isRecord(annulment) && isTimestamp(annulment.annulled_at) && isActor(annulment.annulled_by) && (annulment.note === null || isText(annulment.note))))
+  if (!(annulment === null || (isRecord(annulment) && isTimestamp(annulment.annulled_at) && isActor(annulment.annulled_by) && isText(annulment.note) && annulment.note.trim().length > 0))
     || (value.status === "active" && annulment !== null) || (value.status === "annulled" && annulment === null)) throw new Error("La fotografia approvazione ricevuta non rispetta il contratto previsto.");
 }
 

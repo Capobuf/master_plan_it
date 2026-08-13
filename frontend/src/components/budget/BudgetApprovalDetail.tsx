@@ -108,6 +108,7 @@ export default function BudgetApprovalDetail({ approval, onClose }: { approval: 
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">Decisione registrata e componenti storiche in sola lettura.</p>
       </div>
       <dl className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2 lg:grid-cols-4">
+        <div><dt className="text-gray-500 dark:text-gray-400">Anno di pianificazione</dt><dd className="font-medium">{approval.planning_year.year_label}</dd></div>
         <div><dt className="text-gray-500 dark:text-gray-400">Data efficacia</dt><dd className="font-medium">{formatDate(approval.effective_date)}</dd></div>
         <div><dt className="text-gray-500 dark:text-gray-400">Registrata</dt><dd className="font-medium">{formatDateTime(approval.recorded_at)}</dd></div>
         <div><dt className="text-gray-500 dark:text-gray-400">Approvata da</dt><dd className="font-medium">{approval.approved_by.name}</dd></div>
