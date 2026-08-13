@@ -11,6 +11,7 @@ use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Tenant;
 use App\Models\Vendor;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
@@ -42,8 +43,11 @@ final class AnnualReportApiTest extends TestCase
             'gross_amount' => '122.00',
         ]);
         $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
+        $basisLockedAt = CarbonImmutable::parse('2026-01-15 09:30:00', 'UTC');
+        $tenant->forceFill(['economic_basis_locked_at' => $basisLockedAt])->save();
         $year->approveBudget();
         $this->assertSame(BudgetState::Approved, $year->fresh()->budget_state);
+        $this->assertSame($basisLockedAt->toISOString(), $tenant->fresh()->economic_basis_locked_at?->toISOString());
         $approval = BudgetApproval::factory()->headerOnly()->for($tenant)->for($year, 'planningYear')->create([
             'budget_basis' => 'net', 'total_net_amount' => '80.00', 'total_vat_amount' => '17.60',
             'total_gross_amount' => '97.60', 'total_official_amount' => '80.00', 'contributor_count' => 1,
