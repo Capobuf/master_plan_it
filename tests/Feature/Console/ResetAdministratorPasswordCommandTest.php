@@ -41,9 +41,10 @@ class ResetAdministratorPasswordCommandTest extends TestCase
 
     /**
      * The persistent test database may retain protected Administrator rows from
-     * interrupted previous runs. The command resets the first protected
-     * Administrator, so this test removes any residual row to keep the target
-     * deterministic.
+     * interrupted previous runs or the canonical demo seed. The command resets
+     * the first protected Administrator, so this test removes only residual
+     * role assignments to keep the target deterministic without deleting users
+     * referenced by immutable economic evidence.
      */
     private function removeResidualProtectedAdministrators(): void
     {
@@ -64,7 +65,6 @@ class ResetAdministratorPasswordCommandTest extends TestCase
 
         foreach ($modelIds as $modelId) {
             DB::table('model_has_roles')->where('role_id', $role->id)->where('model_id', $modelId)->delete();
-            DB::table('users')->where('id', $modelId)->delete();
         }
     }
 

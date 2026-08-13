@@ -84,8 +84,7 @@ class PlatformSchemaTest extends TestCase
 
     public function test_platform_setting_is_one_bounded_global_row(): void
     {
-        $setting = PlatformSetting::query()->create([
-            'id' => 1,
+        $setting = PlatformSetting::query()->firstOrCreate(['id' => 1], [
             'audit_retention_months' => 24,
             'lock_version' => 1,
         ]);

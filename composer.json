@@ -60,7 +60,7 @@
         ],
         "test:accounting": "@php artisan test --testsuite=Accounting",
         "test:economic-coverage": [
-            "@php -d xdebug.mode=coverage vendor/bin/phpunit -c phpunit.economic-coverage.xml",
+            "XDEBUG_MODE=coverage php -d xdebug.mode=coverage -d memory_limit=-1 vendor/bin/phpunit -c phpunit.economic-coverage.xml",
             "@php tests/Support/assert-economic-coverage.php build/economic-coverage/cobertura.xml"
         ],
         "test:application": "@php artisan test --testsuite=Application",

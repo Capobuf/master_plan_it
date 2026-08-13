@@ -32,6 +32,8 @@ class AttachmentUploadRollbackTest extends TestCase
         [$tenant, $actor, $context] = $this->attachmentContext();
         $expense = $this->supportedAttachmentParents($tenant)['expense'];
         $correlationId = (string) str()->uuid();
+        $mediaCount = Media::query()->count();
+        $auditCount = AuditEvent::query()->count();
         $dispatcher = AuditEvent::getEventDispatcher();
         $this->assertInstanceOf(Dispatcher::class, $dispatcher);
         $eventName = 'eloquent.creating: '.AuditEvent::class;
@@ -52,9 +54,10 @@ class AttachmentUploadRollbackTest extends TestCase
             foreach ($listeners as $listener) {
                 $dispatcher->listen($eventName, $listener);
             }
-            $this->assertDatabaseCount('media', 0);
+            $this->assertDatabaseCount('media', $mediaCount);
             $this->assertDatabaseMissing('media', ['tenant_id' => $tenant->getKey()]);
-            $this->assertDatabaseCount('audit_events', 0);
+            $this->assertDatabaseCount('audit_events', $auditCount);
+            $this->assertDatabaseMissing('audit_events', ['correlation_id' => $correlationId]);
             $this->assertSame([], Storage::disk('attachments')->allFiles());
         }
     }
