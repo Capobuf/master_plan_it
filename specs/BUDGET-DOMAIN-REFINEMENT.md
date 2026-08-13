@@ -1,14 +1,14 @@
 # Raffinamento del Dominio Budget
 
-**Stato**: `VERIFIED CURRENT — Slice 023`; `PROPOSED TARGET — Slice 024–034`; decisioni di prodotto necessarie alla Slice 024 risolte
+**Stato**: `VERIFIED CURRENT — Slice 023–024`; `PROPOSED TARGET — Slice 025–034`
 **Data di consolidamento**: 2026-08-12
 **Baseline verificata**: `laravel-replatform@b226a6a292e663aabf1167709aef8603c7b0ee94`
-**Corrente verificato**: `agent/022-integration@0d6c347289d886359923e582d6805f0accf489b8` per la Slice 023
+**Corrente verificato**: `agent/024-single-plafond-coverage@eb143b3` per le Slice 023–024
 
 ## Autorità e classificazione
 
 Questo documento è la fonte di prodotto del target economico fino alla consegna delle rispettive
-Slice Verticali. La Slice 023 è `VERIFIED CURRENT`; le regole delle Slice successive restano
+Slice Verticali. Le Slice 023–024 sono `VERIFIED CURRENT`; le regole delle Slice successive restano
 `PROPOSED TARGET` e non sono descritte come già disponibili.
 
 - `VERIFIED CURRENT`: comportamento verificato nel codice della baseline.
@@ -406,14 +406,15 @@ ripristinabili e i Report storici a cutoff continuino a essere ricostruibili.
 - `specs/018-dashboard-ux` e `specs/019-reporting-analytics`: baseline UI implementata; copy
   `Actual`, overrun e KPI di stato Spesa restano descrizione del corrente ma sono `DEPRECATED` per
   le future Slice.
-- `specs/020-expense-workspace-ux`: baseline workspace implementata; singolo collegamento Plafond e
-  regole correnti restano `VERIFIED CURRENT` fino alla Slice, ma non definiscono il target.
+- `specs/020-expense-workspace-ux`: baseline workspace implementata; le precedenti semantiche di
+  Sforamento sono sostituite dalla Slice 024. Collegamento singolo e copertura integrale descritti
+  sopra sono ora `VERIFIED CURRENT`.
 - `specs/021-tenant-general-settings`: impostazioni Tenant e Base ufficiale sono `VERIFIED CURRENT`;
   il futuro limite Revisioni configurabile è `PROPOSED TARGET`.
 
 ## Questioni aperte
 
-La Slice 023 è stata consegnata e verificata. Per la Slice 024 non restano `OPEN QUESTION`: il
-Product Owner ha confermato il 2026-08-12 l'esclusione reciproca Extra Budget/Copertura Plafond e
-ha ammesso Centri di Costo differenti tra Riga coperta e Plafond. I nomi SQL, la forma interna
-degli snapshot e altri dettagli reversibili restano decisioni tecniche delle rispettive Slice.
+Le Slice 023 e 024 sono state consegnate e verificate. L'esclusione reciproca Extra
+Budget/Copertura Plafond e la copertura tra Centri di Costo differenti sono comportamento corrente.
+La Slice 025 è sbloccata; i nomi SQL, la forma interna degli snapshot e altri dettagli reversibili
+restano decisioni tecniche delle rispettive Slice.

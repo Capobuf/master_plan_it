@@ -220,3 +220,22 @@ Slice 024 is ready for integration only when:
 - all four surfaces reconcile at the cent and no stale overrun vocabulary remains;
 - security/tenancy, test-design and surface-parity reviews have zero open CRITICAL/HIGH findings;
 - full backend and frontend gates above are green with captured current evidence.
+
+### Execution record — 2026-08-13
+
+- Protected Greenfield reset with canonical seed and `composer test:prepare`: exit 0 on strict
+  MySQL 8.4.
+- Backend: Accounting 61 tests / 457 assertions; Application 541 / 5,876; economic coverage 43 /
+  231 with manifest gate at 100%; Architecture 241 / 5,743; Pint 494 files; PHPStan zero errors;
+  dependency audit zero advisories.
+- Frontend: Vitest 52 files / 134 tests; dark-token gate, ESLint with zero errors, TypeScript and
+  Vite production build all exit 0. The two Fast Refresh warnings are pre-existing and non-blocking.
+- Real browser/server: desktop and 390×844 dark mode; canonical `3500/4200/2500/1000` measures;
+  cross-Cost-Center covered rows; Report/Budget reconciliation and approval prefill; reduction
+  preview `-1200.00` with `200.00` shortage, all four recovery choices, blocking-row links, retained
+  input and dirty guard; unauthenticated route denial; no preview mutation.
+- Real-MySQL automated acceptance covers uniqueness, 20-way capacity collisions, preview races,
+  A↔B lock ordering, Base change, lifecycle/delete/restore, missing/foreign equivalence, exact
+  permissions, rollback and Revision/Audit cardinality for the non-visual branches of all nine
+  scenarios.
+- Independent final read-only review reports zero open CRITICAL/HIGH findings.

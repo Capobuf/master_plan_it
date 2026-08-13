@@ -1,6 +1,6 @@
 # Stato funzionale
 
-Stato del runtime verificato al completamento della Slice 023 il 2026-08-12.
+Stato del runtime verificato al completamento della Slice 024 il 2026-08-13.
 
 Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cronologia.
 
@@ -16,6 +16,7 @@ Questo file è l'unico riepilogo manuale di stato. Non deve contenere task o cro
 | Fornitori | CRUD/lifecycle/history/restore | Implementato |
 | Centri di costo | CRUD/tree/lifecycle/history/restore | Implementato |
 | Spese | Estimate/Quote coexistenti con una Pianificazione Corrente, Actual firmati e datati anche fuori anno, input diretto/calcolato, preview, bulk atomico e history/compare/restore aggregate; nessun lifecycle Expense | Shell superiore senza sidebar permanente; Registro, Documento/editor e `Dettagli | Allegati | Storico` con dirty guard Tenant/Anno |
+| Plafond | Uno live per Tenant/Anno/Centro, allocazioni additive firmate, copertura integrale cross-Centro, consumo solo dagli Actual, capienza concorrente bloccante, preview e API dedicate | Registro, Documento e Report Plafond; quattro misure canoniche, impatto insufficiente con input preservati e nessuno Sforamento |
 | Contratti | CRUD/term/history/compare/restore aggregate | `Dettagli | Allegati | Storico` implementato |
 | Generazione contratti | Una Quote annuale, Project, sync protetto e differenza attesa | Implementato |
 | Progetti | CRUD/Deferred/history/compare/restore/delete terminale | `Dettagli | Allegati | Storico` implementato |
@@ -43,14 +44,15 @@ le route e i Resource testati. Non va dichiarato aggiornato un OpenAPI globale i
 | 4 | Export CSV/XLSX e stampa | `specs/014-exports-and-print` |
 | 5 | Migrazione legacy e portabilità Tenant | `specs/015-migration-and-portability` |
 | 6 | Backup/restore, scheduler generale, release e deployment | `specs/016-backup-and-operations` |
-| — | Proseguimento del programma economico/UX dopo la fondazione 023: Plafond, Budget/Rettifiche, Progetti, Contratti, Trash/Retention e superfici finali | `specs/022-application-workspace-ux` (`PROPOSED TARGET`, parzialmente consegnato) |
+| — | Proseguimento del programma economico/UX dopo le fondazioni 023–024: Budget/Rettifiche, Progetti, Contratti, Trash/Retention e superfici finali | `specs/022-application-workspace-ux` (`PROPOSED TARGET`, parzialmente consegnato) |
 
 L'ordine è una dipendenza tecnica iniziale, non una promessa di priorità prodotto. Il Product Owner
 può cambiare l'ordine purché le dipendenze della slice scelta siano soddisfatte.
 
-Il programma 022 non è una mega-feature da implementare e non possiede `tasks.md`. La Slice 023 ha
-consegnato schema greenfield, Spesa autorevole, proiezione economica condivisa e shell annuale. Le
-Slice successive devono specificare separatamente Plafond, Budget/Rettifiche, Progetti, Contratti,
+Il programma 022 non è una mega-feature da implementare e non possiede `tasks.md`. Le Slice 023 e
+024 hanno consegnato schema greenfield, Spesa autorevole, proiezione economica condivisa, shell
+annuale, Plafond singolo e copertura integrale. Le Slice successive devono specificare
+separatamente Budget/Rettifiche, Progetti, Contratti,
 Storico/Retention e infine le superfici UX condivise. Fino alla consegna di ciascuna Slice, la
 tabella **Disponibile alla baseline** e il codice corrente restano autorità sul comportamento
 implementato.

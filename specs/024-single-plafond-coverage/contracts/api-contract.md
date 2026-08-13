@@ -1,6 +1,6 @@
 # API Contract: Slice 024 — Single Plafond Coverage
 
-**Version**: `PROPOSED TARGET` for `/api/v1`
+**Version**: `VERIFIED CURRENT` for `/api/v1`
 **Date**: 2026-08-12
 **Baseline**: Slice 023 contract `VERIFIED CURRENT` at `0d6c347`
 **Compatibility**: atomic Greenfield cutover; no multi-Plafond, partial-coverage or overrun payload
