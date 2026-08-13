@@ -32,6 +32,8 @@ class PlanningYear extends Model
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
 
+    private bool $budgetStateTransition = false;
+
     /**
      * @return array<string, string>
      */
@@ -49,6 +51,36 @@ class PlanningYear extends Model
     protected function performDeleteOnModel(): void
     {
         throw new \LogicException('Planning years cannot be permanently deleted.');
+    }
+
+    /** @param Builder<static> $query */
+    protected function performUpdate(Builder $query): bool
+    {
+        if ($this->isDirty('budget_state') && ! $this->budgetStateTransition) {
+            throw new \DomainException('BUDGET_STATE_CONFLICT');
+        }
+
+        return parent::performUpdate($query);
+    }
+
+    public function approveBudget(): self
+    {
+        return $this->transitionBudgetState(BudgetState::Preparation, BudgetState::Approved);
+    }
+
+    public function annulApproval(): self
+    {
+        return $this->transitionBudgetState(BudgetState::Approved, BudgetState::Preparation);
+    }
+
+    public function closeBudget(): self
+    {
+        return $this->transitionBudgetState(BudgetState::Approved, BudgetState::Closed);
+    }
+
+    public function reopenBudget(): self
+    {
+        return $this->transitionBudgetState(BudgetState::Closed, BudgetState::Approved);
     }
 
     /**
@@ -73,10 +105,42 @@ class PlanningYear extends Model
         return $this->hasMany(Expense::class);
     }
 
-    /** @return HasMany<ApprovalOperation, $this> */
-    public function approvalOperations(): HasMany
+    /** @return HasMany<BudgetApproval, $this> */
+    public function budgetApprovals(): HasMany
     {
-        return $this->hasMany(ApprovalOperation::class);
+        return $this->hasMany(BudgetApproval::class);
+    }
+
+    /** @return HasMany<BudgetRectification, $this> */
+    public function budgetRectifications(): HasMany
+    {
+        return $this->hasMany(BudgetRectification::class);
+    }
+
+    /** @return HasMany<BudgetClosure, $this> */
+    public function budgetClosures(): HasMany
+    {
+        return $this->hasMany(BudgetClosure::class);
+    }
+
+    private function transitionBudgetState(BudgetState $from, BudgetState $to): self
+    {
+        if ($this->budget_state !== $from) {
+            throw new \DomainException('BUDGET_STATE_CONFLICT');
+        }
+
+        $this->forceFill([
+            'budget_state' => $to,
+            'lock_version' => ((int) $this->lock_version) + 1,
+        ]);
+        $this->budgetStateTransition = true;
+        try {
+            $this->save();
+        } finally {
+            $this->budgetStateTransition = false;
+        }
+
+        return $this;
     }
 }
 

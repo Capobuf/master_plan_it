@@ -31,9 +31,9 @@ checkpoint.
 **Purpose**: Establish reusable deterministic fixtures and a red cutover contract without changing
 production behavior.
 
-- [ ] T001 Create the canonical Net/Gross, empty, all-zero, offsetting, Plafond and Tenant-timezone fixture builder in `tests/Support/BudgetApprovalFixture.php`
-- [ ] T002 [P] Create typed React proposal/approval/history/blocker fixtures with raw and redacted overlap cases in `frontend/src/components/budget/__fixtures__/budgetApproval.ts`
-- [ ] T003 [P] Add a red architecture cutover contract forbidding the legacy partial-approval route/types/columns and requiring the target aggregate/actions in `tests/Architecture/BudgetApprovalTargetContractTest.php`
+- [X] T001 Create the canonical Net/Gross, empty, all-zero, offsetting, Plafond and Tenant-timezone fixture builder in `tests/Support/BudgetApprovalFixture.php`
+- [X] T002 [P] Create typed React proposal/approval/history/blocker fixtures with raw and redacted overlap cases in `frontend/src/components/budget/__fixtures__/budgetApproval.ts`
+- [X] T003 [P] Add a red architecture cutover contract forbidding the legacy partial-approval route/types/columns and requiring the target aggregate/actions in `tests/Architecture/BudgetApprovalTargetContractTest.php`
 
 **Checkpoint**: Shared fixtures compile independently; the target architecture contract is red only
 for artifacts deliberately not implemented yet.
@@ -49,21 +49,21 @@ all user-story work.
 
 ### Foundational tests
 
-- [ ] T004 [P] Add real-MySQL schema tests for immutable approval tables, active-year uniqueness, terminal status matrix, exact measures, source-independent snapshot IDs, nonunique correlations and two lifecycle seams in `tests/Feature/Budget/AnnualBudgetSchemaTest.php`
-- [ ] T005 [P] Add model immutability tests rejecting generic update/delete/restore/reactivation of approval items and protected header fields in `tests/Feature/Budget/BudgetApprovalModelImmutabilityTest.php`
-- [ ] T006 [P] Add stable error-envelope tests for `BUDGET_PROPOSAL_EMPTY`, `BUDGET_COMPOSITION_STALE` and `BUDGET_APPROVAL_ANNULMENT_BLOCKED` in `tests/Feature/Api/Budget/BudgetApprovalErrorContractTest.php`
+- [X] T004 [P] Add real-MySQL schema tests for immutable approval tables, active-year uniqueness, terminal status matrix, exact measures, source-independent snapshot IDs, nonunique correlations and two lifecycle seams in `tests/Feature/Budget/AnnualBudgetSchemaTest.php`
+- [X] T005 [P] Add model immutability tests rejecting generic update/delete/restore/reactivation of approval items and protected header fields in `tests/Feature/Budget/BudgetApprovalModelImmutabilityTest.php`
+- [X] T006 [P] Add stable error-envelope tests for `BUDGET_PROPOSAL_EMPTY`, `BUDGET_COMPOSITION_STALE` and `BUDGET_APPROVAL_ANNULMENT_BLOCKED` in `tests/Feature/Api/Budget/BudgetApprovalErrorContractTest.php`
 
 ### Foundational implementation
 
-- [ ] T007 Replace the partial bridge schema with `budget_approvals`, `budget_approval_items`, `budget_rectifications` and `budget_closures`, remove mutable Expense approval columns, add blocker indexes and drop unique correlation in `database/migrations/2026_08_09_100001_add_annual_budget_lifecycle.php`
-- [ ] T008 [P] Add `BudgetApprovalStatus` and contributor-kind enums and remove `ApprovalKind`/partial-change DTOs in `app/Domain/Budget/Enums/BudgetApprovalStatus.php`, `app/Domain/Budget/Enums/ApprovalContributorKind.php`, `app/Domain/Budget/Enums/ApprovalKind.php`, `app/Domain/Budget/Data/ApplyApprovalData.php` and `app/Domain/Budget/Data/ApprovalChangeData.php`
-- [ ] T009 Implement immutable casts, relationships and guarded lifecycle methods in `app/Models/BudgetApproval.php`, `app/Models/BudgetApprovalItem.php`, `app/Models/BudgetRectification.php`, `app/Models/BudgetClosure.php` and `app/Models/PlanningYear.php`, then remove `app/Models/ApprovalOperation.php` and `app/Models/ApprovalItem.php`
-- [ ] T010 [P] Implement valid Greenfield factories for active/annulled Approval headers, snapshot contributors, Rectification identities and Closure identities in `database/factories/BudgetApprovalFactory.php`, `database/factories/BudgetApprovalItemFactory.php`, `database/factories/BudgetRectificationFactory.php` and `database/factories/BudgetClosureFactory.php`
-- [ ] T011 Remove `approved_amount`/`approved_basis` fillable fields, casts, fixtures and any mutable approval relation from `app/Models/Expense.php`, `database/factories/ExpenseFactory.php` and `database/seeders/DemoDataSeeder.php`
-- [ ] T012 Add stable domain-code mappings, HTTP status, safe details and Italian messages to `app/Support/Api/ApiErrorResponse.php` without changing the inherited envelope or correlation behavior
-- [ ] T013 Enforce the existing `budget.view` read and combined `budget.view` + `expense.update` mutation checks without adding abilities in `app/Policies/ExpensePolicy.php` and `app/Http/Middleware/AuthorizeApplicationAbility.php`
-- [ ] T014 Remove the invalid legacy Close route/controller exposure and server Action until Slice 026 in `routes/api/v1/reporting.php`, `app/Http/Controllers/Api/V1/BudgetLifecycleController.php` and `app/Domain/Budget/Actions/CloseAnnualBudget.php`
-- [ ] T015 Update baseline lifecycle/schema tests to reject Preparation→Closed and the legacy close/approval bridge in `tests/Feature/Api/Budget/BudgetLifecycleApiTest.php`, `tests/Feature/Api/Budget/BudgetApprovalApiTest.php` and `tests/Feature/Budget/AnnualBudgetLifecycleTest.php`
+- [X] T007 Replace the partial bridge schema with `budget_approvals`, `budget_approval_items`, `budget_rectifications` and `budget_closures`, remove mutable Expense approval columns, add blocker indexes and drop unique correlation in `database/migrations/2026_08_09_100001_add_annual_budget_lifecycle.php`
+- [X] T008 [P] Add `BudgetApprovalStatus` and contributor-kind enums and remove `ApprovalKind`/partial-change DTOs in `app/Domain/Budget/Enums/BudgetApprovalStatus.php`, `app/Domain/Budget/Enums/ApprovalContributorKind.php`, `app/Domain/Budget/Enums/ApprovalKind.php`, `app/Domain/Budget/Data/ApplyApprovalData.php` and `app/Domain/Budget/Data/ApprovalChangeData.php`
+- [X] T009 Implement immutable casts, relationships and guarded lifecycle methods in `app/Models/BudgetApproval.php`, `app/Models/BudgetApprovalItem.php`, `app/Models/BudgetRectification.php`, `app/Models/BudgetClosure.php` and `app/Models/PlanningYear.php`, then remove `app/Models/ApprovalOperation.php` and `app/Models/ApprovalItem.php`
+- [X] T010 [P] Implement valid Greenfield factories for active/annulled Approval headers, snapshot contributors, Rectification identities and Closure identities in `database/factories/BudgetApprovalFactory.php`, `database/factories/BudgetApprovalItemFactory.php`, `database/factories/BudgetRectificationFactory.php` and `database/factories/BudgetClosureFactory.php`
+- [X] T011 Remove `approved_amount`/`approved_basis` fillable fields, casts, fixtures and any mutable approval relation from `app/Models/Expense.php`, `database/factories/ExpenseFactory.php` and `database/seeders/DemoDataSeeder.php`
+- [X] T012 Add stable domain-code mappings, HTTP status, safe details and Italian messages to `app/Support/Api/ApiErrorResponse.php` without changing the inherited envelope or correlation behavior
+- [X] T013 Enforce the existing `budget.view` read and combined `budget.view` + `expense.update` mutation checks without adding abilities in `app/Policies/ExpensePolicy.php` and `app/Http/Middleware/AuthorizeApplicationAbility.php`
+- [X] T014 Remove the invalid legacy Close route/controller exposure and server Action until Slice 026 in `routes/api/v1/reporting.php`, `app/Http/Controllers/Api/V1/BudgetLifecycleController.php` and `app/Domain/Budget/Actions/CloseAnnualBudget.php`
+- [X] T015 Update baseline lifecycle/schema tests to reject Preparation→Closed and the legacy close/approval bridge in `tests/Feature/Api/Budget/BudgetLifecycleApiTest.php`, `tests/Feature/Api/Budget/BudgetApprovalApiTest.php` and `tests/Feature/Budget/AnnualBudgetLifecycleTest.php`
 
 **Checkpoint**: Protected Greenfield reset builds only the target schema; legacy persistence and
 Closure entry points are absent; schema/error/immutability tests pass.

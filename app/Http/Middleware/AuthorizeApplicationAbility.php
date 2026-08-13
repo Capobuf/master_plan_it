@@ -20,12 +20,18 @@ final class AuthorizeApplicationAbility
         private readonly PermissionRegistrar $permissionRegistrar,
     ) {}
 
-    public function handle(Request $request, Closure $next, string $ability): Response
+    public function handle(Request $request, Closure $next, string ...$abilities): Response
     {
         $actor = $request->user();
 
-        if (! $actor instanceof User || ! $this->allows($request, $actor, $ability)) {
+        if (! $actor instanceof User || $abilities === []) {
             throw new AuthorizationException('PERMISSION_DENIED');
+        }
+
+        foreach ($abilities as $ability) {
+            if (! $this->allows($request, $actor, $ability)) {
+                throw new AuthorizationException('PERMISSION_DENIED');
+            }
         }
 
         return $next($request);

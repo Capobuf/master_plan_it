@@ -45,7 +45,9 @@ final class ExpensePolicy
 
     public function manageBudget(User $user): Response
     {
-        return $this->authorizeCollection($user, 'expense.update');
+        $view = $this->authorizeCollection($user, 'budget.view');
+
+        return $view->denied() ? $view : $this->authorizeCollection($user, 'expense.update');
     }
 
     public function delete(User $user, Expense $expense): Response

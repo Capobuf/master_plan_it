@@ -45,8 +45,6 @@ class Expense extends Model implements HasMedia
         'notes',
         'project_id',
         'contract_id',
-        'approved_amount',
-        'approved_basis',
         'current_planning_row_id',
         'moved_from_expense_id',
         'credit_for_expense_id',
@@ -61,7 +59,6 @@ class Expense extends Model implements HasMedia
     {
         return [
             'kind' => ExpenseKind::class,
-            'approved_amount' => 'decimal:2',
             'lock_version' => 'integer',
             'active_plafond_cost_center_id' => 'integer',
         ];
@@ -137,12 +134,6 @@ class Expense extends Model implements HasMedia
     public function creditFor(): BelongsTo
     {
         return $this->belongsTo(self::class, 'credit_for_expense_id');
-    }
-
-    /** @return HasMany<ApprovalItem, $this> */
-    public function approvalItems(): HasMany
-    {
-        return $this->hasMany(ApprovalItem::class);
     }
 
     public function registerMediaCollections(): void
