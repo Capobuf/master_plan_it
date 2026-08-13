@@ -63,6 +63,13 @@ describe("BudgetApprovalModal", () => {
   });
 
   it("keeps an empty composition non-executable while allowing a nonempty zero-total composition", () => {
+    const zeroMeasure = { net: "0.00", vat: "0.00", gross: "0.00", official: "0.00" };
+    const zeroContributorPreview = {
+      ...budgetProposalFixture,
+      effective_date_max: effectiveDateMax,
+      total: zeroMeasure,
+      contributors: budgetProposalFixture.contributors.map((contributor) => ({ ...contributor, amount: zeroMeasure })),
+    };
     const { rerender } = render(<MemoryRouter><BudgetApprovalModal
       isOpen
       preview={{ ...budgetProposalFixture, effective_date_max: effectiveDateMax, empty_composition: true, can_approve: false, composition: { ...budgetProposalFixture.composition, contributor_count: 0 }, contributors: [] }}
@@ -74,12 +81,14 @@ describe("BudgetApprovalModal", () => {
 
     rerender(<MemoryRouter><BudgetApprovalModal
       isOpen
-      preview={{ ...budgetProposalFixture, effective_date_max: effectiveDateMax, total: { net: "0.00", vat: "0.00", gross: "0.00", official: "0.00" } }}
+      preview={zeroContributorPreview}
       onClose={vi.fn()}
       onApproved={vi.fn()}
       onReReview={vi.fn()}
     /></MemoryRouter>);
     fireEvent.change(screen.getByLabelText("Data di efficacia"), { target: { value: effectiveDateMax } });
+    expect(screen.getByText(/Totale ufficiale:/)).toHaveTextContent("0,00 € (0.00 Netto, 0.00 IVA, 0.00 Lordo).");
+    expect(screen.getByText("2 contributori nella composizione proposta")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Conferma approvazione" })).toBeEnabled();
   });
 
@@ -111,6 +120,31 @@ describe("BudgetApprovalModal", () => {
     expect(budgetApi.approveBudgetProposal).toHaveBeenCalledOnce();
     expect(screen.getByLabelText("Data di efficacia")).toHaveValue(effectiveDateMax);
     expect(screen.getByLabelText("Nota (facoltativa)")).toHaveValue("Conserva la nota");
+  });
+
+  it("keeps the draft and presents refreshed evidence when the parent replaces stale composition evidence", () => {
+    const { rerender } = render(<MemoryRouter><BudgetApprovalModal
+      isOpen
+      preview={{ ...budgetProposalFixture, effective_date_max: effectiveDateMax }}
+      onClose={vi.fn()}
+      onApproved={vi.fn()}
+      onReReview={vi.fn()}
+    /></MemoryRouter>);
+    fireEvent.change(screen.getByLabelText("Data di efficacia"), { target: { value: effectiveDateMax } });
+    fireEvent.change(screen.getByLabelText("Nota (facoltativa)"), { target: { value: "Mantieni il draft" } });
+
+    const refreshed = { ...budgetProposalFixture, effective_date_max: effectiveDateMax, composition: { ...budgetProposalFixture.composition, fingerprint: `sha256:${"e".repeat(64)}` } };
+    rerender(<MemoryRouter><BudgetApprovalModal
+      isOpen
+      preview={refreshed}
+      onClose={vi.fn()}
+      onApproved={vi.fn()}
+      onReReview={vi.fn()}
+    /></MemoryRouter>);
+
+    expect(screen.getByText(refreshed.composition.fingerprint)).toBeInTheDocument();
+    expect(screen.getByLabelText("Data di efficacia")).toHaveValue(effectiveDateMax);
+    expect(screen.getByLabelText("Nota (facoltativa)")).toHaveValue("Mantieni il draft");
   });
 
   it("retains date and note after an unexpected server error", async () => {
