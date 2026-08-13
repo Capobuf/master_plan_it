@@ -332,16 +332,17 @@ La preview costruisce un documento canonico `budget-proposal-composition/v1` dir
 `AnnualEconomicProjection` completa, prima di filtri, ordinamenti o paginazione UI. Il documento
 contiene:
 
-- `composition_schema_version`, `projection_version`, `tenant_id`, `planning_year_id`,
-  `currency_code` e `budget_basis`;
+- `schema_version`, `tenant_id`, `planning_year_id`, `currency` e `basis`;
 - l'array dei contributori ordinato bytewise per `source_identity`;
 - per ogni contributore: `source_identity`, `component_kind`, `source_lock_version`, quattro misure
   e tutte le dimensioni/riferimenti congelati esposti da `ApprovalContributor`.
 
-Le chiavi oggetto sono in ordine lessicale, gli array mantengono l'ordine dichiarato, le stringhe
-sono normalizzate Unicode NFC, gli importi sono stringhe canoniche a due decimali e i null sono
-espliciti. Esclusioni, link autorizzativi, filtri e metadati di presentazione non entrano nel
-fingerprint. I totali e `contributor_count` sono derivati dallo stesso array e vengono riconciliati
+`projection_version` resta una versione opaca della proiezione restituita e riconfermata dal client,
+ma non viene duplicata come input del digest. Le chiavi oggetto sono in ordine lessicale, gli array
+mantengono l'ordine dichiarato, le stringhe sono normalizzate Unicode NFC, gli importi sono stringhe
+canoniche a due decimali e i null sono espliciti. Esclusioni, link autorizzativi, filtri e metadati di
+presentazione non entrano nel fingerprint. I totali e `contributor_count` sono derivati dallo stesso
+array e vengono riconciliati
 prima della persistenza, ma non duplicati come input del digest.
 
 Il valore esposto e persistito è

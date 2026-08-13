@@ -212,9 +212,11 @@ Covered planning, alternatives, Actuals, deleted sources and technical history r
 exclusions. An empty contributor list—not a zero total—is the rejection criterion. Totals and count
 are derived and reconciled from the contributor array.
 
-Canonical UTF-8 JSON contains schema/projection versions, Tenant/Year, currency/basis and the
-bytewise source-identity-sorted frozen contributor fields. Keys are lexical, strings NFC, decimals
-fixed at two places and null explicit. The stored/exposed value is `sha256:<64 lowercase hex>`.
+Canonical UTF-8 JSON contains the composition schema version, Tenant/Year, currency/basis and the
+bytewise source-identity-sorted frozen contributor fields. The opaque projection version is echoed
+and validated separately, but is not duplicated in the digest. Keys are lexical, strings NFC,
+decimals fixed at two places and null explicit. The stored/exposed value is
+`sha256:<64 lowercase hex>`.
 Exclusions, display filters and permission-dependent links do not enter the digest. Confirmation
 rebuilds under lock and never trusts an earlier preview as authority.
 
