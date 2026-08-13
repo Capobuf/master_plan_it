@@ -68,6 +68,8 @@ final class BudgetApprovalModelImmutabilityTest extends TestCase
     public function test_append_only_rectification_and_closure_facts_reject_inherited_writes(): void
     {
         foreach ([BudgetRectification::factory()->create(), BudgetClosure::factory()->create()] as $fact) {
+            $originalCorrelationId = $fact->correlation_id;
+
             foreach ([
                 'builder update' => fn () => $fact->newQuery()->whereKey($fact->getKey())->update(['correlation_id' => (string) str()->uuid()]),
                 'builder increment' => fn () => $fact->newQuery()->whereKey($fact->getKey())->increment('id'),
@@ -78,6 +80,11 @@ final class BudgetApprovalModelImmutabilityTest extends TestCase
             ] as $name => $mutation) {
                 $this->assertLogicException($mutation, $fact::class.' '.$name);
             }
+
+            $this->assertDatabaseHas($fact->getTable(), [
+                'id' => $fact->getKey(),
+                'correlation_id' => $originalCorrelationId,
+            ]);
         }
     }
 
@@ -129,11 +136,14 @@ final class BudgetApprovalModelImmutabilityTest extends TestCase
 
     private function assertLogicException(callable $mutation, string $name): void
     {
+        $rejected = false;
+
         try {
             $mutation();
-            $this->fail("{$name} must be rejected.");
         } catch (LogicException) {
-            return;
+            $rejected = true;
         }
+
+        $this->assertTrue($rejected, "{$name} must be rejected.");
     }
 }
