@@ -48,7 +48,7 @@ export const budgetProposalFixture: BudgetApprovalPreview = {
       dimensions: { cost_center: { id: 9, name: "Infrastruttura" }, vendor: { id: 14, name: "Fornitore Demo" }, project: { id: 18, title: "Programma cloud" }, contract: { id: 44, title: "Contratto cloud" } },
       amount: net("120.00", "26.40", "146.40"),
       source_lock_version: 4,
-      drill_down: { href: "/spese/81", authorized: true },
+      drill_down: { href: "/api/v1/expenses/81", authorized: true },
     },
     {
       source_identity: "plafond-allocation:82",
@@ -59,7 +59,7 @@ export const budgetProposalFixture: BudgetApprovalPreview = {
       dimensions: { cost_center: { id: 9, name: "Infrastruttura" }, vendor: null, project: null, contract: null },
       amount: net("3500.00", "770.00", "4270.00"),
       source_lock_version: 5,
-      drill_down: { href: "/plafonds/82", authorized: true },
+      drill_down: { href: "/api/v1/plafonds/82", authorized: true },
     },
   ],
   exclusions: [
@@ -70,7 +70,7 @@ export const budgetProposalFixture: BudgetApprovalPreview = {
       row: { id: 500, type: "estimate", description: "Stima iniziale" },
       amount: net("100.00", "22.00", "122.00"),
       detail: "Una sola pianificazione corrente per Spesa contribuisce alla proposta.",
-      drill_down: { href: "/spese/81", authorized: true },
+      drill_down: { href: "/api/v1/expenses/81", authorized: true },
     },
     {
       source_identity: "expense-row:502",
@@ -79,7 +79,7 @@ export const budgetProposalFixture: BudgetApprovalPreview = {
       row: { id: 502, type: "quote", description: "Copertura prevista" },
       amount: net("4200.00", "924.00", "5124.00"),
       detail: "La pianificazione è coperta dall’allocazione del Plafond.",
-      drill_down: { href: "/spese/83", authorized: true },
+      drill_down: { href: "/api/v1/expenses/83", authorized: true },
     },
   ],
   can_approve: true,

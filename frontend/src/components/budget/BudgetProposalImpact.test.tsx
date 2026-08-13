@@ -21,10 +21,29 @@ describe("BudgetProposalImpact", () => {
     expect(screen.queryByLabelText(/importo|approvato/i)).not.toBeInTheDocument();
   });
 
-  it("does not make a navigable link for unauthorized or absent contract hrefs", () => {
-    const preview = { ...budgetProposalFixture, contributors: [{ ...budgetProposalFixture.contributors[0], drill_down: { authorized: false, href: null } }] };
+  it("does not make a navigable link for either unauthorized or absent contract hrefs", () => {
+    const preview = {
+      ...budgetProposalFixture,
+      contributors: [
+        { ...budgetProposalFixture.contributors[0], drill_down: { authorized: false, href: "/api/v1/expenses/81" } },
+        { ...budgetProposalFixture.contributors[1], drill_down: { authorized: true, href: null } },
+      ],
+    };
     render(<MemoryRouter><BudgetProposalImpact preview={preview} /></MemoryRouter>);
-    expect(screen.queryByRole("link", { name: /Preventivo scelto/ })).not.toBeInTheDocument();
-    expect(screen.getByText(/dettaglio non autorizzato/)).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: /Preventivo scelto|Infrastruttura condivisa/ })).not.toBeInTheDocument();
+    expect(screen.getAllByText(/dettaglio non autorizzato/)).toHaveLength(2);
+  });
+
+  it("rejects malformed and foreign evidence paths instead of constructing a client route", () => {
+    const preview = {
+      ...budgetProposalFixture,
+      contributors: [
+        { ...budgetProposalFixture.contributors[0], drill_down: { authorized: true, href: "/api/v1/expenses/81?include=rows" } },
+        { ...budgetProposalFixture.contributors[1], drill_down: { authorized: true, href: "/api/v1/tenants/82" } },
+      ],
+    };
+    render(<MemoryRouter><BudgetProposalImpact preview={preview} /></MemoryRouter>);
+    expect(screen.queryByRole("link", { name: /Preventivo scelto|Infrastruttura condivisa/ })).not.toBeInTheDocument();
+    expect(screen.getAllByText(/dettaglio non autorizzato/)).toHaveLength(2);
   });
 });
