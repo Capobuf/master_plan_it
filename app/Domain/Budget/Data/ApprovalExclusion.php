@@ -9,8 +9,8 @@ final readonly class ApprovalExclusion
     public function __construct(
         public string $sourceIdentity,
         public string $reason,
-        public int $expenseId,
-        public string $expenseTitle,
+        public ?int $expenseId,
+        public ?string $expenseTitle,
         public ?int $rowId,
         public ?string $rowType,
         public ?string $rowDescription,
@@ -26,7 +26,7 @@ final readonly class ApprovalExclusion
         return [
             'source_identity' => $this->sourceIdentity,
             'reason' => $this->reason,
-            'expense' => ['id' => $this->expenseId, 'title' => $this->expenseTitle],
+            'expense' => $this->expenseId === null ? null : ['id' => $this->expenseId, 'title' => $this->expenseTitle],
             'row' => $this->rowId === null ? null : [
                 'id' => $this->rowId,
                 'type' => $this->rowType,

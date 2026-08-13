@@ -2,6 +2,7 @@
 
 namespace Tests\Accounting\Unit;
 
+use App\Domain\Budget\Data\BudgetSourceAccess;
 use App\Domain\Budget\Services\BudgetProposalComposer;
 use App\Domain\Economics\Data\EconomicDataset;
 use App\Domain\Economics\Data\EconomicLine;
@@ -28,7 +29,7 @@ final class BudgetProposalComposerTest extends TestCase
                 ],
             )),
             7,
-            true,
+            $this->fullAccess(),
             $this->metadata(),
         );
 
@@ -59,7 +60,7 @@ final class BudgetProposalComposerTest extends TestCase
                 $lines,
             )),
             7,
-            true,
+            $this->fullAccess(),
             $this->metadata(),
         );
 
@@ -175,5 +176,10 @@ final class BudgetProposalComposerTest extends TestCase
         ];
 
         return ['expenses' => $expenses, 'rows' => $rows];
+    }
+
+    private function fullAccess(): BudgetSourceAccess
+    {
+        return new BudgetSourceAccess(true, true, true, true, true, true, true);
     }
 }

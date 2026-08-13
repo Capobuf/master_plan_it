@@ -2,19 +2,29 @@
 
 namespace App\Domain\Reporting\Queries;
 
-use App\Domain\Budget\Queries\AnnualBudgetQuery;
 use App\Domain\Budget\Queries\HistoricalAnnualBudgetQuery;
 use App\Domain\Economics\Data\AnnualEconomicProjection;
+use App\Domain\Economics\Data\EconomicMeasure;
+use App\Domain\Economics\Data\ProjectedEconomicLine;
+use App\Domain\Economics\Services\EconomicEngine;
+use App\Domain\Plafonds\Data\PlafondProjectionSerializer;
 use App\Domain\Reporting\Data\EconomicReportFilterData;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Models\PlanningYear;
 use App\Models\User;
+use App\Support\Authorization\TenantAbilityAuthorizer;
+use Carbon\CarbonImmutable;
 use DomainException;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Facades\DB;
 
 final readonly class AnnualEconomicReportQuery
 {
     public function __construct(
-        private AnnualBudgetQuery $budgetQuery,
+        private EconomicDatasetQuery $datasetQuery,
+        private EconomicEngine $engine,
         private HistoricalAnnualBudgetQuery $historicalBudgetQuery,
+        private TenantAbilityAuthorizer $authorizer,
     ) {}
 
     /** @return array<string, mixed> */
@@ -23,46 +33,42 @@ final readonly class AnnualEconomicReportQuery
         if (! in_array($filter->groupBy, ['cost_center', 'project', 'contract', 'vendor', 'expense'], true)) {
             throw new DomainException('INVALID_REPORT_GROUPING');
         }
-
-        $budget = $filter->asOf === null
-            ? $this->budgetQuery->execute($actor, $context, $filter->planningYearId)
-            : $this->historicalBudgetQuery->execute($actor, $context, $filter->planningYearId, $filter->asOf);
-        /** @var list<array<string, mixed>> $expenses */
-        $expenses = array_values(array_filter(
-            $budget['expenses'],
-            static fn (array $expense): bool => ($filter->costCenterId === null || $expense['cost_center_id'] === $filter->costCenterId)
-                && ($filter->projectId === null || $expense['project_id'] === $filter->projectId)
-                && ($filter->contractId === null || $expense['contract_id'] === $filter->contractId)
-                && ($filter->vendorId === null || $expense['vendor_id'] === $filter->vendorId),
-        ));
-
-        $groups = $this->groups($expenses, $filter->groupBy, (string) $budget['currency'], (string) $budget['basis']);
-        usort($groups, static function (array $left, array $right): int {
-            $label = strcasecmp((string) $left['label'], (string) $right['label']);
-
-            return $label !== 0 ? $label : strcmp((string) $left['key'], (string) $right['key']);
-        });
-        $totals = $this->sumProjectionTotals($groups, (string) $budget['basis']);
+        [$persistedActor, $persistedTenant] = $this->authorizer->authorize($actor, $context, 'report.view');
+        $authorizedContext = new TenantContext($persistedTenant, $persistedActor);
+        $year = PlanningYear::query()->where('tenant_id', $authorizedContext->tenantId)->find($filter->planningYearId);
+        if (! $year instanceof PlanningYear) {
+            throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$filter->planningYearId]);
+        }
+        $projection = $filter->asOf === null
+            ? $this->engine->project($this->datasetQuery->execute($persistedActor, $authorizedContext, $filter->planningYearId))
+            : $this->historicalBudgetQuery->projectionForReport($persistedActor, $authorizedContext, $filter->planningYearId, $filter->asOf);
+        $labels = $this->labels($authorizedContext, $filter->planningYearId);
+        $approvalItems = $this->approvalItems($authorizedContext, $filter);
+        $groups = $this->groups($projection, $filter, $labels, $approvalItems);
+        usort($groups, static fn (array $left, array $right): int => strcasecmp((string) $left['label'], (string) $right['label']) ?: strcmp((string) $left['key'], (string) $right['key']));
+        $totals = $this->sumProjectionTotals($groups, $projection->basis);
         $approved = array_reduce($groups, static fn (string $sum, array $group): string => bcadd($sum, (string) $group['approved'], 2), '0.00');
         $unapproved = array_reduce($groups, static fn (int $sum, array $group): int => $sum + (int) $group['unapproved_actual_expenses'], 0);
         $total = count($groups);
         $lastPage = max(1, (int) ceil($total / $filter->perPage));
         $page = min(max($filter->page, 1), $lastPage);
+        $state = $year->budget_state instanceof \BackedEnum ? $year->budget_state->value : (string) $year->budget_state;
+        $cutoff = $filter->asOf === null ? null : $this->cutoff($filter->asOf, $authorizedContext->timezone);
 
         return [
             'data' => array_slice($groups, ($page - 1) * $filter->perPage, $filter->perPage),
             'meta' => ['current_page' => $page, 'last_page' => $lastPage, 'per_page' => $filter->perPage, 'total' => $total],
-            'mode' => $budget['mode'],
-            'requested_as_of' => $budget['requested_as_of'],
-            'cutoff_utc' => $budget['cutoff_utc'],
-            'read_only' => $budget['read_only'],
-            'budget' => $budget['budget'],
-            'currency' => $budget['currency'],
-            'basis' => $budget['basis'],
+            'mode' => $filter->asOf === null ? 'current' : 'historical',
+            'requested_as_of' => $filter->asOf,
+            'cutoff_utc' => $cutoff?->toISOString(),
+            'read_only' => $filter->asOf !== null,
+            'budget' => ['planning_year_id' => (int) $year->getKey(), 'year' => (int) $year->year_label, 'state' => $state, 'lock_version' => (int) $year->lock_version],
+            'currency' => $projection->currency,
+            'basis' => $projection->basis,
             'totals' => $totals,
             'summary' => [
-                'currency' => $budget['currency'],
-                'official_basis' => $budget['basis'],
+                'currency' => $projection->currency,
+                'official_basis' => $projection->basis,
                 'proposed' => $totals['current_planning']['official'],
                 'approved_current' => $approved,
                 'actual' => $totals['actual']['official'],
@@ -71,122 +77,168 @@ final readonly class AnnualEconomicReportQuery
                 'utilization_percentage' => $this->utilization($totals['actual']['official'], $approved),
                 'unapproved_actual_expenses' => $unapproved,
             ],
-            'plafonds' => array_values(array_filter(
-                $budget['plafonds'] ?? [],
-                static fn (array $plafond): bool => $filter->costCenterId === null
-                    || (int) ($plafond['cost_center']['id'] ?? 0) === $filter->costCenterId,
-            )),
+            'plafonds' => array_values(array_map(static fn ($plafond): array => [
+                'id' => $plafond->plafondExpenseId,
+                'planning_year_id' => $plafond->planningYearId,
+                'title' => $plafond->title,
+                'cost_center' => ['id' => $plafond->costCenterId, 'name' => $plafond->costCenterName],
+                'currency' => $plafond->currency,
+                'basis' => $plafond->basis,
+                'measures' => PlafondProjectionSerializer::measures($plafond),
+            ], array_filter($projection->plafonds, static fn ($plafond): bool => $filter->costCenterId === null || $plafond->costCenterId === $filter->costCenterId))),
             'filters' => [
-                'planning_year_id' => $filter->planningYearId,
-                'cost_center_id' => $filter->costCenterId,
-                'project_id' => $filter->projectId,
-                'contract_id' => $filter->contractId,
-                'vendor_id' => $filter->vendorId,
-                'group_by' => $filter->groupBy,
-                'as_of' => $filter->asOf,
+                'planning_year_id' => $filter->planningYearId, 'cost_center_id' => $filter->costCenterId,
+                'project_id' => $filter->projectId, 'contract_id' => $filter->contractId,
+                'vendor_id' => $filter->vendorId, 'group_by' => $filter->groupBy, 'as_of' => $filter->asOf,
             ],
         ];
     }
 
     /**
-     * This query consumes the serialized view of AnnualEconomicProjection produced by
-     * the Budget query. It never reloads or recalculates ExpenseRow money.
-     *
-     * @param  list<array<string, mixed>>  $expenses
+     * @param  array<string, array<int, string>>  $labels
+     * @param  list<array<string, mixed>>  $approvalItems
      * @return list<array<string, mixed>>
      */
-    private function groups(array $expenses, string $groupBy, string $currency, string $basis): array
+    private function groups(AnnualEconomicProjection $projection, EconomicReportFilterData $filter, array $labels, array $approvalItems): array
     {
-        /** @var array<string, array<string, mixed>> $groups */
         $groups = [];
-        foreach ($expenses as $expense) {
-            [$key, $label] = $this->groupIdentity($expense, $groupBy);
-            $groups[$key] ??= [
-                'key' => $key,
-                'label' => $label,
-                'group_by' => $groupBy,
-                'expense_id' => $groupBy === 'expense' ? $expense['id'] : null,
-                'cost_center_id' => $groupBy === 'cost_center' ? $expense['cost_center_id'] : null,
-                'project_id' => $groupBy === 'project' ? $expense['project_id'] : null,
-                'contract_id' => $groupBy === 'contract' ? $expense['contract_id'] : null,
-                'vendor_id' => $groupBy === 'vendor' ? $expense['vendor_id'] : null,
-                'currency' => $currency,
-                'basis' => $basis,
-                'totals' => $this->zeroProjectionTotals(),
-                'approved' => '0.00',
-                'unapproved_actual_expenses' => 0,
-                'plafond_expenses' => 0,
-                'lines' => [],
-            ];
-            $groups[$key]['totals'] = $this->addProjectionTotals(
-                $groups[$key]['totals'],
-                $this->contributiveExpenseTotals($expense, $basis),
-                $basis,
-            );
-            $groups[$key]['approved'] = bcadd($groups[$key]['approved'], (string) ($expense['approved'] ?? '0.00'), 2);
-            if (($expense['approved'] ?? null) === null && ($expense['has_actual'] ?? false)) {
-                $groups[$key]['unapproved_actual_expenses']++;
+        $actualExpenses = [];
+        foreach ($projection->lines as $line) {
+            if (! $this->included($line, $filter)) {
+                continue;
             }
-            if ($expense['kind'] === 'plafond') {
-                $groups[$key]['plafond_expenses']++;
+            [$key, $label] = $this->groupIdentity($line, $filter->groupBy, $labels);
+            $groups[$key] ??= $this->group($key, $label, $filter->groupBy, $line, $projection);
+            if ($line->contributesToCurrentPlanning) {
+                $groups[$key]['totals']['current_planning'] = $this->addMeasure($groups[$key]['totals']['current_planning'], $line->amount, $projection->basis);
             }
-            $groups[$key]['lines'] = [...$groups[$key]['lines'], ...($expense['lines'] ?? [])];
+            if ($line->type === 'actual') {
+                $groups[$key]['totals']['actual'] = $this->addMeasure($groups[$key]['totals']['actual'], $line->amount, $projection->basis);
+                $actualExpenses[$key][$line->expenseId] = true;
+            }
+            $groups[$key]['lines'][] = $this->line($line);
         }
-
-        return array_values(array_map(function (array $group): array {
+        $approvedExpenses = [];
+        foreach ($approvalItems as $item) {
+            [$key] = $this->approvalIdentity($item, $filter->groupBy);
+            if (! isset($groups[$key])) {
+                continue;
+            }
+            $groups[$key]['approved'] = bcadd($groups[$key]['approved'], (string) $item['official_amount'], 2);
+            $approvedExpenses[$key][(int) $item['expense_id']] = true;
+        }
+        foreach ($groups as $key => &$group) {
             $group['proposed'] = $group['totals']['current_planning']['official'];
             $group['actual'] = $group['totals']['actual']['official'];
+            $group['unapproved_actual_expenses'] = count(array_diff_key($actualExpenses[$key] ?? [], $approvedExpenses[$key] ?? []));
             $group['residual'] = bcsub($group['approved'], $group['actual'], 2);
             $group['variance'] = bcsub($group['actual'], $group['approved'], 2);
             $group['utilization_percentage'] = $this->utilization($group['actual'], $group['approved']);
-
-            return $group;
-        }, $groups));
-    }
-
-    /**
-     * Expense totals intentionally retain a covered planning row for its own detail.
-     * Annual reports must instead aggregate only lines that contribute to the annual
-     * planning total, otherwise the Plafond allocation and its coverage are counted twice.
-     *
-     * @param  array<string, mixed>  $expense
-     * @return array<string, array<string, string>>
-     */
-    private function contributiveExpenseTotals(array $expense, string $basis): array
-    {
-        $totals = $this->zeroProjectionTotals();
-        foreach ($expense['lines'] ?? [] as $line) {
-            if (! ($line['contributes_to_current_planning'] ?? false)) {
-                continue;
-            }
-            foreach (['net', 'vat', 'gross'] as $component) {
-                $totals['current_planning'][$component] = bcadd(
-                    $totals['current_planning'][$component],
-                    (string) $line['amount'][$component],
-                    2,
-                );
-            }
         }
-        $totals['current_planning']['official'] = $totals['current_planning'][$basis];
-        $totals['actual'] = $expense['totals']['actual'];
+        unset($group);
 
-        return $totals;
+        return array_values($groups);
+    }
+
+    private function included(ProjectedEconomicLine $line, EconomicReportFilterData $filter): bool
+    {
+        return ($filter->costCenterId === null || $line->costCenterId === $filter->costCenterId)
+            && ($filter->projectId === null || $line->projectId === $filter->projectId)
+            && ($filter->contractId === null || $line->contractId === $filter->contractId)
+            && ($filter->vendorId === null || $line->vendorId === $filter->vendorId);
     }
 
     /**
-     * @param  array<string, mixed>  $expense
-     * @return array{0: string, 1: string}
+     * @param  array<string, array<int, string>>  $labels
+     * @return array{string, string}
      */
-    private function groupIdentity(array $expense, string $groupBy): array
+    private function groupIdentity(ProjectedEconomicLine $line, string $groupBy, array $labels): array
     {
         return match ($groupBy) {
-            'cost_center' => ['cost-center:'.$expense['cost_center_id'], (string) $expense['cost_center_name']],
-            'project' => [$expense['project_id'] === null ? 'project:none' : 'project:'.$expense['project_id'], $expense['project_title'] ?? 'Senza progetto'],
-            'contract' => [$expense['contract_id'] === null ? 'contract:none' : 'contract:'.$expense['contract_id'], $expense['contract_title'] ?? 'Senza contratto'],
-            'vendor' => [$expense['vendor_id'] === null ? 'vendor:none' : 'vendor:'.$expense['vendor_id'], $expense['vendor_name'] ?? 'Senza fornitore'],
-            'expense' => ['expense:'.$expense['id'], (string) $expense['title']],
+            'cost_center' => ['cost-center:'.$line->costCenterId, $line->costCenterName ?? '—'],
+            'project' => [$line->projectId === null ? 'project:none' : 'project:'.$line->projectId, $line->projectId === null ? 'Senza progetto' : ($labels['project'][$line->projectId] ?? '—')],
+            'contract' => [$line->contractId === null ? 'contract:none' : 'contract:'.$line->contractId, $line->contractId === null ? 'Senza contratto' : ($labels['contract'][$line->contractId] ?? '—')],
+            'vendor' => [$line->vendorId === null ? 'vendor:none' : 'vendor:'.$line->vendorId, $line->vendorName ?? 'Senza fornitore'],
+            'expense' => ['expense:'.$line->expenseId, $line->expenseTitle],
             default => throw new DomainException('INVALID_REPORT_GROUPING'),
         };
+    }
+
+    /** @return array<string, mixed> */
+    private function group(string $key, string $label, string $groupBy, ProjectedEconomicLine $line, AnnualEconomicProjection $projection): array
+    {
+        return [
+            'key' => $key, 'label' => $label, 'group_by' => $groupBy,
+            'expense_id' => $groupBy === 'expense' ? $line->expenseId : null,
+            'cost_center_id' => $groupBy === 'cost_center' ? $line->costCenterId : null,
+            'project_id' => $groupBy === 'project' ? $line->projectId : null,
+            'contract_id' => $groupBy === 'contract' ? $line->contractId : null,
+            'vendor_id' => $groupBy === 'vendor' ? $line->vendorId : null,
+            'currency' => $projection->currency, 'basis' => $projection->basis,
+            'totals' => $this->zeroProjectionTotals(), 'approved' => '0.00',
+            'unapproved_actual_expenses' => 0, 'plafond_expenses' => $line->expenseKind === 'plafond' ? 1 : 0,
+            'lines' => [],
+        ];
+    }
+
+    /** @return array<string, mixed> */
+    private function line(ProjectedEconomicLine $line): array
+    {
+        return [
+            'expense_id' => $line->expenseId, 'row_id' => $line->rowId, 'type' => $line->type,
+            'contributes_to_current_planning' => $line->contributesToCurrentPlanning,
+            'amount' => $this->measure($line->amount),
+        ];
+    }
+
+    /** @return array<string, array<int, string>> */
+    private function labels(TenantContext $context, int $planningYearId): array
+    {
+        $records = DB::table('expenses')
+            ->leftJoin('projects', fn ($join) => $join->on('projects.id', '=', 'expenses.project_id')
+                ->on('projects.tenant_id', '=', 'expenses.tenant_id'))
+            ->leftJoin('contracts', fn ($join) => $join->on('contracts.id', '=', 'expenses.contract_id')
+                ->on('contracts.tenant_id', '=', 'expenses.tenant_id'))
+            ->where('expenses.tenant_id', $context->tenantId)->where('expenses.planning_year_id', $planningYearId)
+            ->get(['expenses.project_id', 'projects.title as project_title', 'expenses.contract_id', 'contracts.title as contract_title']);
+
+        return [
+            'project' => $records->whereNotNull('project_id')->mapWithKeys(static fn (object $row): array => [(int) $row->project_id => (string) $row->project_title])->all(),
+            'contract' => $records->whereNotNull('contract_id')->mapWithKeys(static fn (object $row): array => [(int) $row->contract_id => (string) $row->contract_title])->all(),
+        ];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function approvalItems(TenantContext $context, EconomicReportFilterData $filter): array
+    {
+        $cutoff = $filter->asOf === null ? CarbonImmutable::now('UTC') : $this->cutoff($filter->asOf, $context->timezone);
+        $approval = DB::table('budget_approvals')->where('tenant_id', $context->tenantId)
+            ->where('planning_year_id', $filter->planningYearId)->where('recorded_at', '<=', $cutoff)
+            ->where(fn ($query) => $query->whereNull('annulled_at')->orWhere('annulled_at', '>', $cutoff))
+            ->orderByDesc('recorded_at')->orderByDesc('id')->value('id');
+        if ($approval === null) {
+            return [];
+        }
+
+        return DB::table('budget_approval_items')->where('tenant_id', $context->tenantId)->where('budget_approval_id', $approval)
+            ->get(['expense_id', 'cost_center_id', 'project_id', 'contract_id', 'vendor_id', 'official_amount'])
+            ->map(static fn (object $row): array => (array) $row)->all();
+    }
+
+    /**
+     * @param  array<string, mixed>  $item
+     * @return array{string}
+     */
+    private function approvalIdentity(array $item, string $groupBy): array
+    {
+        return [match ($groupBy) {
+            'cost_center' => 'cost-center:'.$item['cost_center_id'],
+            'project' => $item['project_id'] === null ? 'project:none' : 'project:'.$item['project_id'],
+            'contract' => $item['contract_id'] === null ? 'contract:none' : 'contract:'.$item['contract_id'],
+            'vendor' => $item['vendor_id'] === null ? 'vendor:none' : 'vendor:'.$item['vendor_id'],
+            'expense' => 'expense:'.$item['expense_id'],
+            default => throw new DomainException('INVALID_REPORT_GROUPING'),
+        }];
     }
 
     /**
@@ -195,11 +247,10 @@ final readonly class AnnualEconomicReportQuery
      */
     private function sumProjectionTotals(array $groups, string $basis): array
     {
-        return array_reduce(
-            $groups,
-            fn (array $sum, array $group): array => $this->addProjectionTotals($sum, $group['totals'], $basis),
-            $this->zeroProjectionTotals(),
-        );
+        return array_reduce($groups, fn (array $sum, array $group): array => [
+            'current_planning' => $this->addArrays($sum['current_planning'], $group['totals']['current_planning'], $basis),
+            'actual' => $this->addArrays($sum['actual'], $group['totals']['actual'], $basis),
+        ], $this->zeroProjectionTotals());
     }
 
     /** @return array<string, array<string, string>> */
@@ -211,26 +262,48 @@ final readonly class AnnualEconomicReportQuery
     }
 
     /**
-     * @param  array<string, array<string, string>>  $left
-     * @param  array<string, array<string, string>>  $right
-     * @return array<string, array<string, string>>
+     * @param  array<string, string>  $left
+     * @return array<string, string>
      */
-    private function addProjectionTotals(array $left, array $right, string $basis): array
+    private function addMeasure(array $left, EconomicMeasure $right, string $basis): array
     {
-        foreach (['current_planning', 'actual'] as $bucket) {
-            foreach (['net', 'vat', 'gross'] as $component) {
-                $left[$bucket][$component] = bcadd($left[$bucket][$component], $right[$bucket][$component], 2);
-            }
-            $left[$bucket]['official'] = $left[$bucket][$basis];
+        return $this->addArrays($left, $this->measure($right), $basis);
+    }
+
+    /**
+     * @param  array<string, string>  $left
+     * @param  array<string, string>  $right
+     * @return array<string, string>
+     */
+    private function addArrays(array $left, array $right, string $basis): array
+    {
+        foreach (['net', 'vat', 'gross'] as $component) {
+            $left[$component] = bcadd($left[$component], $right[$component], 2);
         }
+        $left['official'] = $left[$basis];
 
         return $left;
     }
 
+    /** @return array{net:string,vat:string,gross:string,official:string} */
+    private function measure(EconomicMeasure $measure): array
+    {
+        return ['net' => $measure->net, 'vat' => $measure->vat, 'gross' => $measure->gross, 'official' => $measure->official];
+    }
+
     private function utilization(string $actual, string $approved): ?string
     {
-        return bccomp($approved, '0', 2) === 1
-            ? bcdiv(bcmul($actual, '100', 4), $approved, 2)
-            : null;
+        return bccomp($approved, '0', 2) === 1 ? bcdiv(bcmul($actual, '100', 4), $approved, 2) : null;
+    }
+
+    private function cutoff(string $value, string $timezone): CarbonImmutable
+    {
+        try {
+            return (preg_match('/^\d{4}-\d{2}-\d{2}$/D', $value) === 1
+                ? CarbonImmutable::createFromFormat('!Y-m-d', $value, $timezone)->endOfDay()
+                : CarbonImmutable::parse($value, $timezone))->utc();
+        } catch (\Throwable) {
+            throw new DomainException('INVALID_HISTORY_CUTOFF');
+        }
     }
 }

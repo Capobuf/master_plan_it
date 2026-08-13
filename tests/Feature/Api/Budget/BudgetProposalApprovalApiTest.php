@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Api\Budget;
 
+use App\Domain\Budget\Queries\BudgetApprovalPreviewQuery;
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\AuditEvent;
 use App\Models\BudgetApproval;
 use App\Models\CostCenter;
@@ -12,6 +14,7 @@ use App\Models\PlanningYear;
 use App\Models\RevisionBatch;
 use App\Models\Tenant;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
@@ -63,7 +66,51 @@ final class BudgetProposalApprovalApiTest extends TestCase
             ->assertJsonMissingPath('data.items')
             ->assertJsonMissingPath('data.approved_amount')
             ->assertJsonMissingPath('data.approved_basis');
+        $this->assertSame(
+            ['planning_year', 'currency', 'basis', 'composition', 'total', 'contributors', 'exclusions', 'can_approve', 'empty_composition'],
+            array_keys($response->json('data')),
+        );
+        $this->assertSame(
+            ['source_identity', 'kind', 'expense', 'row', 'plafond', 'dimensions', 'amount', 'source_lock_version', 'drill_down'],
+            array_keys($response->json('data.contributors.0')),
+        );
+        $this->assertSame(
+            ['source_identity', 'reason', 'expense', 'row', 'amount', 'detail', 'drill_down'],
+            array_keys($response->json('data.exclusions.0')),
+        );
         $this->assertSame($before, $this->effects($year->fresh(), $tenant->fresh()));
+    }
+
+    #[DataProvider('budgetBasisProvider')]
+    public function test_net_and_gross_overview_and_preview_keep_the_same_full_composition(string $basis, string $official): void
+    {
+        $tenant = Tenant::factory()->create(['budget_basis' => $basis]);
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create();
+        $center = CostCenter::factory()->for($tenant)->create();
+        $expense = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(),
+        ]);
+        $row = ExpenseRow::factory()->for($expense)->create([
+            'tenant_id' => $tenant->getKey(), 'type' => ExpenseType::Quote,
+            'net_amount' => '100.00', 'vat_amount' => '22.00', 'gross_amount' => '122.00',
+        ]);
+        $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
+        $this->actingAs($user, 'web');
+
+        $overview = $this->getJson('/api/v1/budget?planning_year_id='.$year->getKey())->assertOk();
+        $preview = $this->getJson('/api/v1/budget/'.$year->getKey().'/approval-preview')->assertOk();
+
+        $this->assertSame($official, $overview->json('data.proposal.total.official'));
+        $this->assertSame($overview->json('data.proposal'), collect($preview->json('data'))->only(['composition', 'total'])->all());
+        $this->assertCount(1, $preview->json('data.contributors'));
+    }
+
+    /** @return iterable<string, array{string, string}> */
+    public static function budgetBasisProvider(): iterable
+    {
+        yield 'net' => ['net', '100.00'];
+        yield 'gross' => ['gross', '122.00'];
     }
 
     public function test_empty_preview_is_successful_but_not_approvable_and_unknown_query_fields_fail(): void
@@ -145,6 +192,82 @@ final class BudgetProposalApprovalApiTest extends TestCase
             ->assertJsonPath('data.can_approve', false)
             ->assertJsonPath('data.contributors.0.drill_down.authorized', false)
             ->assertJsonPath('data.contributors.0.drill_down.href', null);
+    }
+
+    public function test_source_navigation_matches_each_real_detail_boundary_and_redacts_deleted_sources(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create();
+        $center = CostCenter::factory()->for($tenant)->create();
+        $ordinary = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(), 'title' => 'Ordinary source',
+        ]);
+        $row = ExpenseRow::factory()->for($ordinary)->create([
+            'tenant_id' => $tenant->getKey(), 'type' => ExpenseType::Quote,
+        ]);
+        $ordinary->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
+        $deleted = ExpenseRow::factory()->for($ordinary)->create([
+            'tenant_id' => $tenant->getKey(), 'type' => ExpenseType::Estimate, 'description' => 'Secret tombstone',
+        ]);
+        $deleted->delete();
+        $deletedRoot = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(), 'title' => 'Deleted root',
+        ]);
+        ExpenseRow::factory()->for($deletedRoot)->create([
+            'tenant_id' => $tenant->getKey(), 'type' => ExpenseType::Estimate, 'description' => 'Deleted root row',
+        ]);
+        $deletedRoot->delete();
+        $plafond = Expense::factory()->for($tenant)->plafond()->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(), 'title' => 'Plafond source',
+        ]);
+        ExpenseRow::factory()->for($plafond)->allocationAdjustment($user)->create([
+            'tenant_id' => $tenant->getKey(), 'entered_amount' => '50.00', 'net_amount' => '50.00',
+            'vat_amount' => '11.00', 'gross_amount' => '61.00',
+        ]);
+        $registrar = app(PermissionRegistrar::class);
+        $registrar->setPermissionsTeamId((int) $tenant->getKey());
+        $role = $user->roles()->firstOrFail();
+        $role->revokePermissionTo('vendor.view');
+        $registrar->forgetCachedPermissions();
+        $user->unsetRelation('roles')->unsetRelation('permissions');
+        $this->actingAs($user, 'web');
+
+        $response = $this->getJson('/api/v1/budget/'.$year->getKey().'/approval-preview')->assertOk();
+        $contributors = collect($response->json('data.contributors'))->keyBy('kind');
+        $this->assertFalse($contributors['ordinary_current_planning']['drill_down']['authorized']);
+        $this->assertNull($contributors['ordinary_current_planning']['drill_down']['href']);
+        $this->assertTrue($contributors['plafond_allocation']['drill_down']['authorized']);
+        $this->assertSame('/api/v1/plafonds/'.$plafond->getKey(), $contributors['plafond_allocation']['drill_down']['href']);
+        $softDeleted = collect($response->json('data.exclusions'))->where('reason', 'soft_deleted');
+        $this->assertCount(2, $softDeleted);
+        foreach ($softDeleted as $item) {
+            $this->assertNull($item['expense']);
+            $this->assertNull($item['row']);
+            $this->assertFalse($item['drill_down']['authorized']);
+            $this->assertNull($item['drill_down']['href']);
+        }
+    }
+
+    public function test_platform_administrator_gets_per_source_navigation(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $administrator = $this->administrator();
+        $year = PlanningYear::factory()->for($tenant)->create();
+        $center = CostCenter::factory()->for($tenant)->create();
+        $expense = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(),
+        ]);
+        $row = ExpenseRow::factory()->for($expense)->create(['tenant_id' => $tenant->getKey(), 'type' => ExpenseType::Quote]);
+        $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
+        $preview = app(BudgetApprovalPreviewQuery::class)->execute(
+            $administrator,
+            new TenantContext($tenant, $administrator),
+            (int) $year->getKey(),
+        );
+
+        $this->assertTrue($preview->proposal->contributors[0]->drillDownAuthorized);
+        $this->assertSame('/api/v1/expenses/'.$expense->getKey(), $preview->proposal->contributors[0]->drillDownHref);
     }
 
     public function test_foreign_and_missing_preview_years_are_equivalent_non_disclosing_not_found_results(): void

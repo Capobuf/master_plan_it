@@ -23,9 +23,9 @@ final class BudgetProposalSurfaceQueryCountTest extends TestCase
 {
     use DatabaseTransactions;
 
-    private const PREVIEW_QUERY_BUDGET = 26;
+    private const PREVIEW_QUERY_BUDGET = 19;
 
-    private const OVERVIEW_QUERY_BUDGET = 27;
+    private const OVERVIEW_QUERY_BUDGET = 20;
 
     public function test_query_counts_are_fixed_as_contributors_exclusions_and_dimensions_grow(): void
     {

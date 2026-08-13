@@ -104,11 +104,11 @@ class Tenant extends Model
     }
 
     /**
-     * @return HasMany<ApprovalOperation, $this>
+     * @return HasMany<BudgetApproval, $this>
      */
-    public function approvalOperations(): HasMany
+    public function budgetApprovals(): HasMany
     {
-        return $this->hasMany(ApprovalOperation::class);
+        return $this->hasMany(BudgetApproval::class);
     }
 
     /**
