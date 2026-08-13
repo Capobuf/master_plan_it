@@ -1,111 +1,130 @@
 import { apiClient, type DataEnvelope } from "./client";
-import type { PlafondMeasures, ProjectionTotals } from "./projection";
+import type { EconomicMeasure } from "./projection";
 
-export interface AnnualBudgetExpense {
+export type BudgetBasis = "net" | "gross";
+export type BudgetState = "preparation" | "approved" | "closed";
+
+export interface PlanningYearBudget {
+  id: number;
+  year_label: number;
+  state: BudgetState;
+  lock_version: number;
+}
+
+export interface BudgetCompositionEvidence {
+  schema_version: string;
+  fingerprint: string;
+  versions: {
+    budget_lock_version: number;
+    projection_version: string;
+  };
+  contributor_count: number;
+}
+
+export interface BudgetDrillDown {
+  authorized: boolean;
+  href: string | null;
+}
+
+export interface BudgetReference {
   id: number;
   title: string;
-  kind: "ordinary" | "plafond";
-  cost_center_id: number;
-  cost_center_name: string;
-  project_id: number | null;
-  project_title: string | null;
-  contract_id: number | null;
-  contract_title: string | null;
-  vendor_id: number | null;
-  vendor_name: string | null;
-  current_planning_row_id: number | null;
-  funded_plafond_expense_id: number | null;
-  currency: string;
-  basis: "net" | "gross";
-  totals: ProjectionTotals;
-  plafond_measures?: PlafondMeasures;
-  planned?: string | null;
-  approved?: string | null;
-  approved_basis?: "net" | "gross" | null;
-  actual?: string;
-  residual?: string | null;
-  variance?: string | null;
-  has_actual?: boolean;
-  lock_version?: number;
-  rows?: Array<Record<string, unknown>>;
 }
 
-export interface AnnualBudgetSummary {
-  /** Approval fields remain migration-only until Slice 025. */
-  initial_approved: string;
-  approved_variations: string;
-  approved_current: string;
-  proposed?: string;
-  actual?: string;
-  residual?: string;
-  variance?: string;
-  utilization_percentage?: string | null;
-  currency?: string;
-  official_basis?: "net" | "gross";
-  unapproved_actual_expenses?: number;
+export interface BudgetNamedReference {
+  id: number;
+  name: string;
 }
 
-export interface AnnualBudget {
-  mode: "current" | "historical";
-  requested_as_of: string | null;
-  cutoff_utc: string | null;
-  read_only: boolean;
-  currency?: string;
-  basis?: "net" | "gross";
-  totals?: ProjectionTotals;
-  budget: {
-    planning_year_id: number;
-    year: number;
-    state: "preparation" | "approved" | "closed";
-    lock_version: number;
-    warning: "BUDGET_CLOSED" | null;
-    history_activated_at: string | null;
-  };
-  summary: AnnualBudgetSummary;
-  plafonds?: Array<{
+export interface ApprovalContributor {
+  source_identity: string;
+  kind: "ordinary_current_planning" | "plafond_allocation";
+  expense: BudgetReference;
+  row: {
     id: number;
-    planning_year_id: number;
-    title: string;
-    cost_center: { id: number; name: string };
-    currency: string;
-    basis: "net" | "gross";
-    measures: PlafondMeasures;
-  }>;
-  expenses: AnnualBudgetExpense[];
-  historical_context?: {
-    approval_operations: Array<Record<string, unknown>>;
-    cost_centers: Array<Record<string, unknown>>;
-    projects: Array<Record<string, unknown>>;
-    contracts: Array<Record<string, unknown>>;
-    contract_terms: Array<Record<string, unknown>>;
-    vendors: Array<Record<string, unknown>>;
+    type: "estimate" | "quote";
+    description: string;
+  } | null;
+  plafond: BudgetReference | null;
+  dimensions: {
+    cost_center: BudgetNamedReference;
+    vendor: BudgetNamedReference | null;
+    project: BudgetReference | null;
+    contract: BudgetReference | null;
+  };
+  amount: EconomicMeasure;
+  source_lock_version: number;
+  drill_down: BudgetDrillDown;
+}
+
+export interface ApprovalExclusion {
+  source_identity: string;
+  reason: "alternative_planning" | "actual_not_proposed" | "soft_deleted" | "covered_by_plafond" | "non_current_planning";
+  expense: BudgetReference;
+  row: {
+    id: number;
+    type: "estimate" | "quote" | "actual";
+    description: string;
+  };
+  amount: EconomicMeasure;
+  detail: string;
+  drill_down: BudgetDrillDown;
+}
+
+export interface BudgetProposal {
+  composition: BudgetCompositionEvidence;
+  total: EconomicMeasure;
+}
+
+export interface BudgetApprovalPreview extends BudgetProposal {
+  planning_year: PlanningYearBudget;
+  currency: string;
+  basis: BudgetBasis;
+  contributors: ApprovalContributor[];
+  exclusions: ApprovalExclusion[];
+  can_approve: boolean;
+  empty_composition: boolean;
+}
+
+export interface ActiveApprovalSummary {
+  id: number;
+  status: "active";
+  effective_date: string;
+  recorded_at: string;
+  total: EconomicMeasure;
+}
+
+/** The current overview is server-authored; no client-side approval totals are derived. */
+export interface AnnualBudget {
+  planning_year: PlanningYearBudget;
+  currency: string;
+  basis: BudgetBasis;
+  economic_base: {
+    basis: BudgetBasis;
+    locked_at: string | null;
+  };
+  proposal: BudgetProposal;
+  approved_snapshot: ActiveApprovalSummary | null;
+  informative_evaluations: EconomicMeasure;
+  actuals: EconomicMeasure;
+  actions: {
+    can_view_approval_preview: boolean;
+    can_approve: boolean;
+    can_annul_active_approval: boolean;
   };
 }
 
 export interface BudgetQuery {
-  planning_year_id?: number;
-  cost_center_id?: number;
+  planning_year_id: number;
   as_of?: string;
 }
 
-export interface ApprovalDecisionInput {
-  budget_lock_version: number;
-  effective_date: string;
-  reason?: string;
-  items: Array<{ expense_id: number; expense_lock_version: number; approved_amount: string }>;
-}
-
-export async function getBudget(params: BudgetQuery = {}): Promise<AnnualBudget> {
+export async function getBudget(params: BudgetQuery): Promise<AnnualBudget> {
   const response = await apiClient.get<DataEnvelope<AnnualBudget>>("/api/v1/budget", { params });
   return response.data.data;
 }
 
-export async function applyBudgetApproval(planningYearId: number, input: ApprovalDecisionInput): Promise<AnnualBudget> {
-  const response = await apiClient.post<DataEnvelope<AnnualBudget>>(`/api/v1/budget/${planningYearId}/approval-decisions`, input);
-  return response.data.data;
-}
-
-export async function closeBudget(planningYearId: number, lockVersion: number): Promise<AnnualBudget> {
-  const response = await apiClient.post<DataEnvelope<AnnualBudget>>(`/api/v1/budget/${planningYearId}/close`, { lock_version: lockVersion });
+export async function getBudgetApprovalPreview(planningYearId: number): Promise<BudgetApprovalPreview> {
+  const response = await apiClient.get<DataEnvelope<BudgetApprovalPreview>>(`/api/v1/budget/${planningYearId}/approval-preview`);
   return response.data.data;
 }

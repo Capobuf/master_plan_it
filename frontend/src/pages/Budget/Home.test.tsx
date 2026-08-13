@@ -20,7 +20,7 @@ vi.mock("../../context/PlanningYearContext", () => ({
 vi.mock("../../api/budget", () => ({ getBudget: vi.fn() }));
 vi.mock("../../components/budget/BudgetView", () => ({
   default: ({ dataset }: { dataset: AnnualBudget }) => (
-    <p>Budget anno {dataset.budget.planning_year_id}</p>
+    <p>Budget anno {dataset.planning_year.id}</p>
   ),
 }));
 vi.mock("../../components/common/PageBreadCrumb", () => ({ default: () => null }));
@@ -36,7 +36,7 @@ describe("BudgetHome workspace responses", () => {
     let resolve2026!: (value: AnnualBudget) => void;
     vi.mocked(getBudget).mockImplementation((query) => query?.planning_year_id === 7
       ? new Promise((resolve) => { resolve2026 = resolve; })
-      : Promise.resolve({ budget: { planning_year_id: 8 } } as AnnualBudget));
+      : Promise.resolve({ planning_year: { id: 8 } } as AnnualBudget));
 
     const view = render(<BudgetHome />);
     await waitFor(() => expect(getBudget).toHaveBeenCalledWith({ planning_year_id: 7 }));
@@ -45,7 +45,7 @@ describe("BudgetHome workspace responses", () => {
     view.rerender(<BudgetHome />);
     expect(await screen.findByText("Budget anno 8")).toBeInTheDocument();
 
-    resolve2026({ budget: { planning_year_id: 7 } } as AnnualBudget);
+    resolve2026({ planning_year: { id: 7 } } as AnnualBudget);
     await waitFor(() => expect(screen.queryByText("Budget anno 7")).not.toBeInTheDocument());
     expect(screen.getByText("Budget anno 8")).toBeInTheDocument();
   });
