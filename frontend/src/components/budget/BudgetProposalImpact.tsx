@@ -24,12 +24,19 @@ function withPlanningYearContext(href: string, planningYearId: number): string {
   return `${path}?${params.toString()}${hash ? `#${hash}` : ""}`;
 }
 
+function evidenceHrefToSpaHref(href: string): string | null {
+  const match = /^\/api\/v1\/(expenses|plafonds)\/([1-9]\d*)$/.exec(href);
+  if (match === null) return null;
+  return match[1] === "expenses" ? `/spese/${match[2]}` : `/plafonds/${match[2]}`;
+}
+
 function SourceLink({ item, planningYearId }: { item: ApprovalContributor | ApprovalExclusion; planningYearId: number }) {
   const label = item.row ? `${item.expense.title} · ${item.row.description}` : item.expense.title;
-  if (!item.drill_down.authorized || item.drill_down.href === null) {
+  const spaHref = item.drill_down.href === null ? null : evidenceHrefToSpaHref(item.drill_down.href);
+  if (!item.drill_down.authorized || spaHref === null) {
     return <span>{label} <span className="text-xs text-gray-500 dark:text-gray-400">(dettaglio non autorizzato)</span></span>;
   }
-  return <Link className="font-medium text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400" to={withPlanningYearContext(item.drill_down.href, planningYearId)}>{label}</Link>;
+  return <Link className="font-medium text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400" to={withPlanningYearContext(spaHref, planningYearId)}>{label}</Link>;
 }
 
 function Measures({ total, currency }: Pick<BudgetApprovalPreview, "total" | "currency">) {
