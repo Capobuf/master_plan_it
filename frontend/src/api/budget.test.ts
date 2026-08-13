@@ -1,8 +1,12 @@
 import { describe, expect, it, vi } from "vitest";
+import { AxiosError, type AxiosResponse } from "axios";
 import { apiClient } from "./client";
 import { approveBudgetProposal, getBudget, getBudgetApprovalPreview, type ApproveBudgetProposalInput } from "./budget";
 
-vi.mock("./client", () => ({ apiClient: { get: vi.fn(), post: vi.fn() } }));
+vi.mock("./client", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./client")>()),
+  apiClient: { get: vi.fn(), post: vi.fn() },
+}));
 
 describe("budget proposal adapters", () => {
   it("requests the strict proposal overview with the selected PlanningYear", async () => {
@@ -41,5 +45,27 @@ describe("budget proposal adapters", () => {
     expect(body).not.toHaveProperty("items");
     expect(body).not.toHaveProperty("approved_amount");
     expect(body).not.toHaveProperty("amount");
+  });
+
+  it("converts a real 422 response envelope so the approval modal can read the effective-date field message", async () => {
+    const response = {
+      status: 422,
+      statusText: "Unprocessable Content",
+      headers: { "x-correlation-id": "tenant-date-reference" },
+      config: { headers: {} },
+      data: { error: { code: "VALIDATION_FAILED", message: "Validation failed.", fields: { effective_date: ["La data di efficacia non può essere successiva a oggi nel fuso del Tenant."] } } },
+    } as unknown as AxiosResponse;
+    vi.mocked(apiClient.post).mockRejectedValue(new AxiosError("Request failed", "ERR_BAD_REQUEST", undefined, undefined, response));
+
+    await expect(approveBudgetProposal(25, {
+      effective_date: "2026-08-14",
+      note: null,
+      composition: { schema_version: "budget-proposal-composition/v1", fingerprint: `sha256:${"a".repeat(64)}`, versions: { budget_lock_version: 7, projection_version: "annual-economic-projection/v1" } },
+    })).rejects.toMatchObject({
+      code: "VALIDATION_FAILED",
+      status: 422,
+      correlationId: "tenant-date-reference",
+      fields: { effective_date: ["La data di efficacia non può essere successiva a oggi nel fuso del Tenant."] },
+    });
   });
 });

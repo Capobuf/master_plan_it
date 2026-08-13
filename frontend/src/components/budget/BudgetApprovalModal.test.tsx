@@ -93,7 +93,7 @@ describe("BudgetApprovalModal", () => {
   });
 
   it("retains correctable input after a future-date error and exposes its cause in text", async () => {
-    vi.mocked(budgetApi.approveBudgetProposal).mockRejectedValue(new ApiError({ message: "La data di efficacia non può superare oggi nel fuso del Tenant.", status: 422, code: "VALIDATION_FAILED", correlationId: "future-date-reference" }));
+    vi.mocked(budgetApi.approveBudgetProposal).mockRejectedValue(new ApiError({ message: "I dati inseriti non sono validi.", status: 422, code: "VALIDATION_FAILED", fields: { effective_date: ["La data di efficacia non può superare oggi nel fuso del Tenant."] }, correlationId: "future-date-reference" }));
     renderModal();
 
     fireEvent.change(screen.getByLabelText("Data di efficacia"), { target: { value: "2026-08-14" } });
@@ -101,8 +101,38 @@ describe("BudgetApprovalModal", () => {
     fireEvent.click(screen.getByRole("button", { name: "Conferma approvazione" }));
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/data di efficacia.*fuso del Tenant.*future-date-reference/i);
+    expect(screen.getByLabelText("Data di efficacia")).toHaveAttribute("aria-invalid", "true");
     expect(screen.getByLabelText("Data di efficacia")).toHaveValue("2026-08-14");
     expect(screen.getByLabelText("Nota (facoltativa)")).toHaveValue("Mantieni questa nota");
+  });
+
+  it("announces the committed approval truthfully and only retries the view refresh when that refresh fails", async () => {
+    vi.mocked(budgetApi.approveBudgetProposal).mockResolvedValue({
+      approval: { id: 91, status: "active", planning_year_id: 25, currency: "EUR", basis: "net", total: budgetProposalFixture.total, effective_date: effectiveDateMax, recorded_at: "2026-08-13T10:30:00Z", approved_by: { id: 5, name: "Mario Rossi" }, note: null },
+      budget: { planning_year_id: 25, state: "approved", lock_version: 8 },
+      economic_base: { basis: "net", locked_at: "2026-08-13T10:30:00Z" },
+    });
+    const refreshFailure = new ApiError({ message: "La vista non è stata aggiornata.", status: 500, correlationId: "refresh-reference" });
+    const onApproved = vi.fn().mockRejectedValue(refreshFailure);
+    const onClose = vi.fn();
+    render(<MemoryRouter><BudgetApprovalModal isOpen preview={{ ...budgetProposalFixture, effective_date_max: effectiveDateMax }} onClose={onClose} onApproved={onApproved} onReReview={vi.fn()} /></MemoryRouter>);
+
+    fireEvent.change(screen.getByLabelText("Data di efficacia"), { target: { value: effectiveDateMax } });
+    fireEvent.click(screen.getByRole("button", { name: "Conferma approvazione" }));
+
+    expect(await screen.findByRole("status")).toHaveTextContent(/Approvazione registrata; aggiornamento vista non riuscito.*refresh-reference/i);
+    expect(screen.getByRole("button", { name: "Approvazione registrata" })).toBeDisabled();
+    expect(onClose).not.toHaveBeenCalled();
+    expect(budgetApi.approveBudgetProposal).toHaveBeenCalledOnce();
+
+    fireEvent.click(screen.getByRole("button", { name: "Riprova aggiornamento vista" }));
+    await waitFor(() => expect(onApproved).toHaveBeenCalledTimes(2));
+    expect(budgetApi.approveBudgetProposal).toHaveBeenCalledOnce();
+  });
+
+  it("labels the dialog with its visible title", () => {
+    renderModal();
+    expect(screen.getByRole("dialog")).toHaveAttribute("aria-labelledby", "budget-approval-modal-title");
   });
 
   it("requires an explicit accessible refresh and re-review after stale evidence, without silently retrying", async () => {

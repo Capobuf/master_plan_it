@@ -1,4 +1,4 @@
-import { apiClient, type DataEnvelope } from "./client";
+import { ApiError, apiClient, type DataEnvelope } from "./client";
 import type { EconomicMeasure } from "./projection";
 
 export type BudgetBasis = "net" | "gross";
@@ -183,9 +183,13 @@ export async function approveBudgetProposal(
   planningYearId: number,
   input: ApproveBudgetProposalInput,
 ): Promise<ApproveBudgetProposalResponse> {
-  const response = await apiClient.post<DataEnvelope<ApproveBudgetProposalResponse>>(
-    `/api/v1/budget/${planningYearId}/approve`,
-    input,
-  );
-  return response.data.data;
+  try {
+    const response = await apiClient.post<DataEnvelope<ApproveBudgetProposalResponse>>(
+      `/api/v1/budget/${planningYearId}/approve`,
+      input,
+    );
+    return response.data.data;
+  } catch (cause: unknown) {
+    throw ApiError.from(cause);
+  }
 }
