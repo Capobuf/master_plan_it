@@ -10,10 +10,13 @@ use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Project;
+use App\Models\RevisionBatch;
 use App\Models\Tenant;
 use App\Models\Vendor;
+use App\Models\Version;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
+use Illuminate\Support\Facades\DB;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
@@ -134,29 +137,80 @@ final class ReportingApiHttpTest extends TestCase
             ->forceFill(['net_amount' => '200.00', 'gross_amount' => '200.00'])->saveQuietly();
         $expense->forceFill(['title' => 'Current expense'])->saveQuietly();
         $project->forceFill(['title' => 'Current project'])->saveQuietly();
-        $year->approveBudget();
-        $year->forceFill(['lock_version' => 42])->saveQuietly();
+        DB::table('planning_years')->where('id', $year->getKey())->update([
+            'budget_state' => 'closed',
+            'lock_version' => 42,
+            'history_activated_at' => '2026-03-01 11:00:00',
+        ]);
         $this->actingAs($user, 'web');
 
         $base = '/api/v1/reports?planning_year_id='.$year->getKey();
         $cutoff = '&as_of=2026-03-01T10:30:00Z';
-        $this->getJson($base.'&group_by=project')->assertOk()
+        $current = $this->getJson($base.'&group_by=project')->assertOk()
             ->assertJsonPath('mode', 'current')
-            ->assertJsonPath('budget.state', 'approved')
+            ->assertJsonPath('budget.state', 'closed')
             ->assertJsonPath('budget.lock_version', 42)
+            ->assertJsonPath('budget.warning', 'BUDGET_CLOSED')
+            ->assertJsonPath('budget.history_activated_at', '2026-03-01T11:00:00.000000Z')
             ->assertJsonPath('data.0.label', 'Current project');
+        $this->assertSame(
+            ['planning_year_id', 'year', 'state', 'lock_version', 'warning', 'history_activated_at'],
+            array_keys($current->json('budget')),
+        );
         $this->getJson($base)->assertOk()
             ->assertJsonPath('mode', 'current')
             ->assertJsonPath('summary.proposed', '200.00');
-        $this->getJson($base.'&group_by=project'.$cutoff)->assertOk()
+        $historical = $this->getJson($base.'&group_by=project'.$cutoff)->assertOk()
             ->assertJsonPath('mode', 'historical')
             ->assertJsonPath('read_only', true)
             ->assertJsonPath('budget.state', 'preparation')
             ->assertJsonPath('budget.lock_version', $originalYearVersion)
+            ->assertJsonPath('budget.warning', null)
+            ->assertJsonPath('budget.history_activated_at', '2026-03-01T10:00:00.000000Z')
             ->assertJsonPath('data.0.label', 'Historical project')
             ->assertJsonPath('summary.proposed', '100.00');
+        $this->assertSame(
+            ['planning_year_id', 'year', 'state', 'lock_version', 'warning', 'history_activated_at'],
+            array_keys($historical->json('budget')),
+        );
         $this->getJson($base.'&group_by=expense'.$cutoff)->assertOk()
             ->assertJsonPath('data.0.label', $historicalExpenseTitle);
+    }
+
+    public function test_first_report_activates_history_after_normal_expense_revisions_and_retry_is_idempotent(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $center = CostCenter::factory()->for($tenant)->create();
+        $vendor = Vendor::factory()->for($tenant)->create();
+        $this->travelTo(CarbonImmutable::parse('2026-03-01 09:00:00', 'UTC'));
+        $this->actingAs($user, 'web');
+        $this->withHeaders($this->csrfHeaders())->postJson('/api/v1/expenses', [
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(),
+            'kind' => 'ordinary', 'title' => 'Before activation', 'notes' => null,
+            'project_id' => null, 'contract_id' => null,
+            'rows' => [[
+                'position' => 1, 'vendor_id' => $vendor->getKey(), 'type' => 'quote',
+                'is_current_planning' => true, 'description' => 'Quoted', 'notes' => null,
+                'entered_amount' => '100.00', 'amount_includes_vat' => false, 'vat_rate' => '22.00',
+                'spend_date' => null, 'external_reference' => null,
+            ]],
+        ])->assertCreated();
+        $this->assertNull($year->fresh()->history_activated_at);
+        $this->assertGreaterThan(0, RevisionBatch::query()->where('root_subject_type', (new Expense)->getMorphClass())->count());
+
+        $this->travelTo(CarbonImmutable::parse('2026-03-01 10:00:00', 'UTC'));
+        $path = '/api/v1/reports?planning_year_id='.$year->getKey();
+        $this->getJson($path)->assertOk()
+            ->assertJsonPath('budget.history_activated_at', '2026-03-01T10:00:00.000000Z');
+        $effects = [RevisionBatch::query()->count(), Version::query()->count(), (int) $year->fresh()->lock_version];
+
+        $this->getJson($path)->assertOk();
+        $this->assertSame($effects, [RevisionBatch::query()->count(), Version::query()->count(), (int) $year->fresh()->lock_version]);
+        $this->getJson($path.'&as_of=2026-03-01T10:30:00Z')->assertOk()
+            ->assertJsonPath('mode', 'historical')
+            ->assertJsonPath('budget.history_activated_at', '2026-03-01T10:00:00.000000Z');
     }
 
     public function test_reporting_auth_ability_and_tenant_boundaries_fail_closed(): void

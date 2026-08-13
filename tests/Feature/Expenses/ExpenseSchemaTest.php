@@ -8,6 +8,7 @@ use App\Domain\Expenses\Data\SaveExpenseRowData;
 use App\Domain\Expenses\Enums\ExpenseKind;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Expenses\Services\ExpenseAggregateValidator;
+use App\Models\BudgetApproval;
 use App\Models\Contract;
 use App\Models\CostCenter;
 use App\Models\Expense;
@@ -34,18 +35,24 @@ final class ExpenseSchemaTest extends TestCase
         ]));
         $this->assertTrue(Schema::hasColumn('contracts', 'project_id'));
         $this->assertTrue(Schema::hasColumns('expenses', [
-            'approved_amount', 'approved_basis', 'current_planning_row_id', 'moved_from_expense_id',
-            'credit_for_expense_id',
+            'current_planning_row_id', 'moved_from_expense_id', 'credit_for_expense_id',
         ]));
+        $this->assertFalse(Schema::hasColumns('expenses', ['approved_amount', 'approved_basis']));
         $this->assertFalse(Schema::hasColumns('expenses', ['state', 'closure_outcome', 'closed_at', 'closed_by_user_id']));
-        $this->assertTrue(Schema::hasColumns('approval_operations', [
-            'tenant_id', 'planning_year_id', 'kind', 'effective_date', 'recorded_at',
-            'actor_user_id', 'budget_basis', 'revision_batch_id', 'correlation_id',
+        $this->assertFalse(Schema::hasTable('approval_operations'));
+        $this->assertFalse(Schema::hasTable('approval_items'));
+        $this->assertTrue(Schema::hasColumns('budget_approvals', [
+            'tenant_id', 'planning_year_id', 'status', 'effective_date', 'recorded_at',
+            'approved_by_user_id', 'approved_by_name', 'currency_code', 'budget_basis',
+            'total_net_amount', 'total_vat_amount', 'total_gross_amount', 'total_official_amount',
+            'contributor_count', 'composition_schema_version', 'projection_version',
+            'composition_fingerprint', 'approval_revision_batch_id', 'correlation_id',
         ]));
-        $this->assertTrue(Schema::hasColumns('approval_items', [
-            'approval_operation_id', 'tenant_id', 'planning_year_id', 'expense_id',
-            'previous_amount', 'new_amount', 'delta_amount', 'cost_center_id',
-            'project_id', 'contract_id', 'expense_kind', 'budget_basis',
+        $this->assertTrue(Schema::hasColumns('budget_approval_items', [
+            'budget_approval_id', 'tenant_id', 'planning_year_id', 'source_identity',
+            'source_lock_version', 'component_kind', 'expense_id', 'expense_row_id',
+            'cost_center_id', 'project_id', 'contract_id', 'expense_kind', 'budget_basis',
+            'net_amount', 'vat_amount', 'gross_amount', 'official_amount',
         ]));
         $this->assertTrue(Schema::hasColumns('revision_batch_items', [
             'tenant_id', 'planning_year_id', 'mutation',
@@ -62,15 +69,15 @@ final class ExpenseSchemaTest extends TestCase
         );
     }
 
-    public function test_money_columns_remain_exact_decimals_and_approved_amount_is_nullable(): void
+    public function test_money_columns_remain_exact_decimals_in_rows_and_immutable_approval_snapshots(): void
     {
         $columns = DB::table('information_schema.columns')
             ->selectRaw('TABLE_NAME AS table_name, COLUMN_NAME AS column_name, DATA_TYPE AS data_type, IS_NULLABLE AS is_nullable, NUMERIC_SCALE AS numeric_scale')
             ->where('table_schema', DB::getDatabaseName())
-            ->whereIn('table_name', ['expense_rows', 'expenses', 'approval_items'])
+            ->whereIn('table_name', ['expense_rows', 'budget_approvals', 'budget_approval_items'])
             ->whereIn('column_name', [
                 'quantity', 'unit_price', 'entered_amount', 'vat_rate', 'net_amount', 'vat_amount', 'gross_amount',
-                'approved_amount', 'previous_amount', 'new_amount', 'delta_amount',
+                'total_net_amount', 'total_vat_amount', 'total_gross_amount', 'total_official_amount', 'official_amount',
             ])
             ->get()
             ->keyBy(fn (object $column): string => $column->table_name.'.'.$column->column_name);
@@ -81,12 +88,13 @@ final class ExpenseSchemaTest extends TestCase
             $this->assertSame('decimal', $column->data_type);
             $this->assertSame(2, (int) $column->numeric_scale);
         }
-        $this->assertSame('YES', $columns->get('expenses.approved_amount')->is_nullable);
-        $this->assertSame(2, (int) $columns->get('expenses.approved_amount')->numeric_scale);
-        $this->assertSame('YES', $columns->get('approval_items.previous_amount')->is_nullable);
-        foreach (['new_amount', 'delta_amount'] as $name) {
-            $this->assertSame('NO', $columns->get('approval_items.'.$name)->is_nullable);
-            $this->assertSame(2, (int) $columns->get('approval_items.'.$name)->numeric_scale);
+        foreach (['total_net_amount', 'total_vat_amount', 'total_gross_amount', 'total_official_amount'] as $name) {
+            $this->assertSame('NO', $columns->get('budget_approvals.'.$name)->is_nullable);
+            $this->assertSame(2, (int) $columns->get('budget_approvals.'.$name)->numeric_scale);
+        }
+        foreach (['net_amount', 'vat_amount', 'gross_amount', 'official_amount'] as $name) {
+            $this->assertSame('NO', $columns->get('budget_approval_items.'.$name)->is_nullable);
+            $this->assertSame(2, (int) $columns->get('budget_approval_items.'.$name)->numeric_scale);
         }
     }
 
@@ -200,18 +208,19 @@ final class ExpenseSchemaTest extends TestCase
         $year = PlanningYear::factory()->for($tenant)->create(['budget_state' => BudgetState::Closed]);
         $expense = Expense::factory()->for($tenant)->create([
             'planning_year_id' => $year->getKey(),
-            'approved_amount' => '0.00',
         ]);
         $row = ExpenseRow::factory()->for($expense)->create(['tenant_id' => $tenant->getKey(), 'net_amount' => '100.00']);
         $expense->current_planning_row_id = $row->getKey();
         $expense->save();
 
         $fresh = $expense->fresh();
+        $approval = BudgetApproval::factory()->completeAggregate()->for($tenant)->for($year, 'planningYear')->create();
         $this->assertSame(BudgetState::Closed, $year->fresh()->budget_state);
-        $this->assertSame('0.00', $fresh->approved_amount);
         $this->assertSame('100.00', $row->fresh()->net_amount);
         $this->assertTrue($fresh->currentPlanningRow()->is($row));
         $this->assertTrue($fresh->planningYear()->is($year));
+        $this->assertTrue($year->budgetApprovals()->firstOrFail()->is($approval));
+        $this->assertCount(1, $approval->items);
     }
 
     /** @return array{Tenant, PlanningYear, CostCenter, Vendor} */

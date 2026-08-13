@@ -11,7 +11,7 @@ use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Project;
-use App\Models\RevisionBatchItem;
+use App\Models\RevisionBatch;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Version;
@@ -24,6 +24,8 @@ use Illuminate\Support\Facades\DB;
 
 final class ActivateAnnualHistory
 {
+    private const BASELINE_REASON = 'Annual history activation baseline';
+
     public function __construct(private readonly TenantAbilityAuthorizer $authorizer) {}
 
     public function execute(User $actor, TenantContext $context, PlanningYear $target, string $correlationId): PlanningYear
@@ -36,12 +38,26 @@ final class ActivateAnnualHistory
             if (! $year instanceof PlanningYear) {
                 throw new DomainException('TENANT_RELATION_MISMATCH');
             }
-            if (RevisionBatchItem::query()->where('tenant_id', $authorizedContext->tenantId)->where('planning_year_id', $year->getKey())->exists()) {
+            if ($year->history_activated_at !== null && RevisionBatch::query()
+                ->where('tenant_id', $authorizedContext->tenantId)
+                ->where('root_subject_type', $year->getMorphClass())
+                ->where('root_subject_id', $year->getKey())
+                ->where('operation', RevisionOperation::Update)
+                ->where('reason', self::BASELINE_REASON)
+                ->whereHas('items', fn ($items) => $items
+                    ->where('planning_year_id', $year->getKey())
+                    ->where('versionable_type', $year->getMorphClass())
+                    ->where('versionable_id', $year->getKey()))
+                ->exists()) {
                 return $year;
             }
 
-            $activatedAt = CarbonImmutable::now('UTC');
-            $year->forceFill(['history_activated_at' => $activatedAt, 'lock_version' => $year->lock_version + 1])->save();
+            $activatedAt = $year->history_activated_at === null
+                ? CarbonImmutable::now('UTC')
+                : CarbonImmutable::parse((string) $year->history_activated_at, 'UTC');
+            if ($year->history_activated_at === null) {
+                $year->forceFill(['history_activated_at' => $activatedAt, 'lock_version' => $year->lock_version + 1])->save();
+            }
             $expenses = Expense::query()->where('tenant_id', $authorizedContext->tenantId)
                 ->where('planning_year_id', $year->getKey())->withTrashed()->with(['rows' => fn ($query) => $query->withTrashed()])->get();
             /** @var Collection<int, Model> $models */
@@ -62,7 +78,7 @@ final class ActivateAnnualHistory
             $models->push(...ContractTerm::query()->where('tenant_id', $authorizedContext->tenantId)->whereIn('contract_id', $contractIds)->withTrashed()->get());
             $models->push(...Vendor::query()->where('tenant_id', $authorizedContext->tenantId)->whereIn('id', $vendorIds)->withTrashed()->get());
 
-            $batch = app(BeginRevisionBatch::class)->execute($persistedActor, $authorizedContext, RevisionOperation::Update, 'Annual history activation baseline', $correlationId, $year, null);
+            $batch = app(BeginRevisionBatch::class)->execute($persistedActor, $authorizedContext, RevisionOperation::Update, self::BASELINE_REASON, $correlationId, $year, null);
             $sequence = 1;
             foreach ($models->unique(fn (Model $model): string => $model->getMorphClass().'#'.$model->getKey()) as $model) {
                 /** @var PlanningYear|Expense|ExpenseRow|CostCenter|Project|Contract|ContractTerm|Vendor $model */
