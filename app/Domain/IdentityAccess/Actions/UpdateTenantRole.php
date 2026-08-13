@@ -5,6 +5,7 @@ namespace App\Domain\IdentityAccess\Actions;
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Services\TenantMutationLock;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\PermissionCatalogue;
@@ -43,6 +44,7 @@ final class UpdateTenantRole
             $this->permissionRegistrar->setPermissionsTeamId((int) $tenant->getKey());
 
             return DB::transaction(function () use ($abilities, $correlationId, $name, $persistedActor, $target, $tenant): Role {
+                app(TenantMutationLock::class)->shared((int) $tenant->getKey());
                 $role = $this->lockedTenantRole($target, (int) $tenant->getKey());
                 $validatedName = $this->validatedName($name, (int) $tenant->getKey(), $role);
                 $permissions = $this->validatedPermissions($abilities);

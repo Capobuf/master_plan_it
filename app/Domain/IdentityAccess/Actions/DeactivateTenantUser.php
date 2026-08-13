@@ -5,6 +5,7 @@ namespace App\Domain\IdentityAccess\Actions;
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Services\TenantMutationLock;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
@@ -41,6 +42,7 @@ final class DeactivateTenantUser
             $reassignmentNeededIds = $this->normalizedAssignmentIds($openAssignmentIds);
 
             return DB::transaction(function () use ($correlationId, $persistedActor, $reassignmentNeededIds, $target, $tenant): array {
+                app(TenantMutationLock::class)->shared((int) $tenant->getKey());
                 $user = $this->lockedTenantUser($target, (int) $tenant->getKey());
                 $user->forceFill([
                     'is_active' => false,

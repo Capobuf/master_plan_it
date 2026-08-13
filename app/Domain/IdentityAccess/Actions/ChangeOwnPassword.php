@@ -5,6 +5,7 @@ namespace App\Domain\IdentityAccess\Actions;
 use App\Domain\Audit\AuditRecorder;
 use App\Domain\Audit\Data\AuditProperties;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Services\TenantMutationLock;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Support\Authorization\PlatformAdministrator;
@@ -35,6 +36,9 @@ final class ChangeOwnPassword
         }
 
         return DB::transaction(function () use ($correlationId, $persistedActor, $newPassword, $tenant): User {
+            if ($tenant instanceof Tenant) {
+                app(TenantMutationLock::class)->shared((int) $tenant->getKey());
+            }
             $persistedActor->forceFill(['password' => Hash::make($newPassword)])->save();
 
             $this->invalidateUserSessions->execute($persistedActor);

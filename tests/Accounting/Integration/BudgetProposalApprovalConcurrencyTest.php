@@ -7,6 +7,7 @@ use App\Domain\Budget\Data\ApproveBudgetProposalData;
 use App\Domain\Budget\Queries\BudgetApprovalPreviewQuery;
 use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Domain\IdentityAccess\Actions\DeactivateTenantUser;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\BudgetApproval;
 use App\Models\CostCenter;
@@ -16,6 +17,7 @@ use App\Models\PlanningYear;
 use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
+use Illuminate\Auth\Access\AuthorizationException;
 use Illuminate\Support\Facades\DB;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
 use Tests\TestCase;
@@ -33,6 +35,7 @@ final class BudgetProposalApprovalConcurrencyTest extends TestCase
         $context = new TenantContext($tenant, $actor);
         $preview = app(BudgetApprovalPreviewQuery::class)->execute($actor, $context, (int) $year->getKey());
         $data = ApproveBudgetProposalData::fromEvidence('2026-08-13', null, $preview->proposal->composition);
+        $yearVersionCount = $year->versions()->count();
         $prefix = sys_get_temp_dir().'/budget-approval-double-'.str()->uuid();
         $barrier = $prefix.'-go';
         $children = [];
@@ -59,6 +62,11 @@ final class BudgetProposalApprovalConcurrencyTest extends TestCase
             $approval = BudgetApproval::query()->where('tenant_id', $tenant->getKey())->firstOrFail();
             $this->assertSame(1, $approval->items()->count());
             $this->assertSame('approved', $year->fresh()->budget_state->value);
+            $this->assertSame($yearVersionCount + 1, $year->versions()->count());
+            $this->assertSame(1, DB::table('revision_batches')->where('tenant_id', $tenant->getKey())->count());
+            $this->assertSame(1, DB::table('revision_batch_items')->where('tenant_id', $tenant->getKey())->count());
+            $this->assertSame(1, DB::table('audit_events')->where('tenant_id', $tenant->getKey())->where('event_type', 'revision.batch.begin')->count());
+            $this->assertSame(1, DB::table('audit_events')->where('tenant_id', $tenant->getKey())->where('event_type', 'budget.approved')->count());
         } finally {
             $this->cleanupChildrenAndFiles($children, $prefix);
             DB::reconnect();
@@ -69,37 +77,74 @@ final class BudgetProposalApprovalConcurrencyTest extends TestCase
     public function test_twenty_preview_to_confirm_same_total_collisions_are_detected_by_fingerprint(): void
     {
         [$tenant, $actor] = $this->fixtureTenant();
+        $allChildren = [];
 
         try {
             foreach (range(1, 20) as $collision) {
                 [, , $year, , $row] = $this->fixture($tenant, $actor, 2050 + $collision);
                 $context = new TenantContext($tenant->fresh(), $actor->fresh());
                 $preview = app(BudgetApprovalPreviewQuery::class)->execute($actor->fresh(), $context, (int) $year->getKey());
+                $yearVersionCount = $year->versions()->count();
+                $data = ApproveBudgetProposalData::fromEvidence('2026-08-13', null, $preview->proposal->composition);
+                $prefix = sys_get_temp_dir().'/budget-approval-same-total-'.$collision.'-'.str()->uuid();
+                $release = $prefix.'-release';
+                $children = [];
+                DB::disconnect();
 
-                DB::transaction(function () use ($collision, $row, $tenant, $year): void {
-                    app(AnnualEconomicMutationGuard::class)->acquire((int) $tenant->getKey(), [(int) $year->getKey()]);
-                    $locked = ExpenseRow::query()->whereKey($row->getKey())->lockForUpdate()->firstOrFail();
-                    $locked->forceFill([
-                        'description' => 'Same total collision '.$collision,
-                        'lock_version' => ((int) $locked->lock_version) + 1,
-                    ])->saveQuietly();
-                });
-
-                try {
-                    app(ApproveBudgetProposal::class)->execute(
-                        $actor->fresh(),
-                        new TenantContext($tenant->fresh(), $actor->fresh()),
-                        $year,
-                        ApproveBudgetProposalData::fromEvidence('2026-08-13', null, $preview->proposal->composition),
-                        (string) str()->uuid(),
+                $writerPid = pcntl_fork();
+                $this->assertNotSame(-1, $writerPid);
+                if ($writerPid === 0) {
+                    $this->annualWriterHoldingRoot(
+                        $prefix,
+                        $release,
+                        (int) $tenant->getKey(),
+                        (int) $actor->getKey(),
+                        (int) $year->getKey(),
+                        (int) $row->getKey(),
                     );
-                    $this->fail('Collision '.$collision.' approved stale same-total evidence.');
-                } catch (\DomainException $exception) {
-                    $this->assertSame('BUDGET_COMPOSITION_STALE', $exception->getMessage());
                 }
+                $children[] = $writerPid;
+                $allChildren[] = $writerPid;
+                $this->waitForFile($prefix.'-writer-locked');
+
+                $approvalPid = pcntl_fork();
+                $this->assertNotSame(-1, $approvalPid);
+                if ($approvalPid === 0) {
+                    $this->contendApproval(
+                        $prefix,
+                        $prefix.'-approval-go',
+                        2,
+                        (int) $tenant->getKey(),
+                        (int) $actor->getKey(),
+                        (int) $year->getKey(),
+                        $data,
+                    );
+                }
+                $children[] = $approvalPid;
+                $allChildren[] = $approvalPid;
+                $this->waitForFile($prefix.'-ready-2');
+                touch($prefix.'-approval-go');
+                usleep(50_000);
+                $this->assertFileDoesNotExist($prefix.'-result-2');
+                touch($release);
+                $this->waitForChildren($children);
+                DB::reconnect();
+
+                $this->assertSame('writer-success', trim((string) file_get_contents($prefix.'-writer-result')));
+                $this->assertSame('BUDGET_COMPOSITION_STALE', trim((string) file_get_contents($prefix.'-result-2')));
+                $this->assertSame('preparation', $year->fresh()->budget_state->value);
+                $this->assertSame($yearVersionCount, $year->versions()->count());
+                $this->cleanupChildrenAndFiles($children, $prefix);
             }
             $this->assertSame(0, BudgetApproval::query()->where('tenant_id', $tenant->getKey())->count());
+            $this->assertSame(0, DB::table('budget_approval_items')->where('tenant_id', $tenant->getKey())->count());
+            $this->assertSame(0, DB::table('revision_batch_items')->where('tenant_id', $tenant->getKey())->count());
+            $this->assertSame(0, DB::table('audit_events')->where('tenant_id', $tenant->getKey())->where('event_type', 'revision.batch.begin')->count());
+            $this->assertSame(0, DB::table('audit_events')->where('tenant_id', $tenant->getKey())->where('event_type', 'budget.approved')->count());
+            $this->assertNull($tenant->fresh()->economic_basis_locked_at);
         } finally {
+            $this->cleanupChildrenAndFiles($allChildren, sys_get_temp_dir().'/budget-approval-same-total-');
+            DB::reconnect();
             $this->cleanupTenant((int) $tenant->getKey(), (int) $actor->getKey());
         }
     }
@@ -135,11 +180,89 @@ final class BudgetProposalApprovalConcurrencyTest extends TestCase
 
             $this->assertSame(['success', 'success'], $this->results($prefix));
             $this->assertSame(2, BudgetApproval::query()->where('tenant_id', $tenant->getKey())->where('status', 'active')->count());
-            $this->assertNotNull($tenant->fresh()->economic_basis_locked_at);
+            $approvals = BudgetApproval::query()->where('tenant_id', $tenant->getKey())->orderBy('recorded_at')->orderBy('id')->get();
+            $this->assertSame($approvals->firstOrFail()->recorded_at->toISOString(), $tenant->fresh()->economic_basis_locked_at?->toISOString());
+            $this->assertSame(2, $approvals->sum(fn (BudgetApproval $approval): int => $approval->items()->count()));
+            $this->assertSame(2, DB::table('revision_batches')->where('tenant_id', $tenant->getKey())->count());
+            $this->assertSame(2, DB::table('revision_batch_items')->where('tenant_id', $tenant->getKey())->count());
+            $this->assertSame(2, DB::table('audit_events')->where('tenant_id', $tenant->getKey())->where('event_type', 'budget.approved')->count());
             $this->assertSame('approved', $firstYear->fresh()->budget_state->value);
             $this->assertSame('approved', $secondYear->fresh()->budget_state->value);
         } finally {
             $this->cleanupChildrenAndFiles($children, $prefix);
+            DB::reconnect();
+            $this->cleanupTenant((int) $tenant->getKey(), (int) $actor->getKey());
+        }
+    }
+
+    public function test_twenty_approval_first_races_commit_complete_snapshot_before_guarded_writer(): void
+    {
+        [$tenant, $actor] = $this->fixtureTenant();
+        $allChildren = [];
+
+        try {
+            foreach (range(1, 20) as $race) {
+                [, , $year, , $row] = $this->fixture($tenant, $actor, 2100 + $race);
+                $preview = app(BudgetApprovalPreviewQuery::class)->execute(
+                    $actor->fresh(),
+                    new TenantContext($tenant->fresh(), $actor->fresh()),
+                    (int) $year->getKey(),
+                );
+                $data = ApproveBudgetProposalData::fromEvidence('2026-08-13', null, $preview->proposal->composition);
+                $prefix = sys_get_temp_dir().'/budget-approval-first-'.$race.'-'.str()->uuid();
+                $releaseApproval = $prefix.'-release-approval';
+                $releaseWriter = $prefix.'-release-writer';
+                $children = [];
+                DB::disconnect();
+
+                $approvalPid = pcntl_fork();
+                $this->assertNotSame(-1, $approvalPid);
+                if ($approvalPid === 0) {
+                    $this->approveAndHoldAtHeader(
+                        $prefix,
+                        $releaseApproval,
+                        (int) $tenant->getKey(),
+                        (int) $actor->getKey(),
+                        (int) $year->getKey(),
+                        $data,
+                    );
+                }
+                $children[] = $approvalPid;
+                $allChildren[] = $approvalPid;
+                $this->waitForFile($prefix.'-approval-locked');
+
+                $writerPid = pcntl_fork();
+                $this->assertNotSame(-1, $writerPid);
+                if ($writerPid === 0) {
+                    $this->annualWriterHoldingRoot(
+                        $prefix,
+                        $releaseWriter,
+                        (int) $tenant->getKey(),
+                        (int) $actor->getKey(),
+                        (int) $year->getKey(),
+                        (int) $row->getKey(),
+                    );
+                }
+                $children[] = $writerPid;
+                $allChildren[] = $writerPid;
+                usleep(50_000);
+                $this->assertFileDoesNotExist($prefix.'-writer-locked');
+                touch($releaseApproval);
+                $this->waitForFile($prefix.'-writer-locked');
+                touch($releaseWriter);
+                $this->waitForChildren($children);
+                DB::reconnect();
+
+                $this->assertSame('success', trim((string) file_get_contents($prefix.'-approval-result')));
+                $this->assertSame('writer-success', trim((string) file_get_contents($prefix.'-writer-result')));
+                $approval = BudgetApproval::query()->where('planning_year_id', $year->getKey())->sole();
+                $this->assertSame(1, $approval->items()->sole()->source_lock_version);
+                $this->assertSame(2, $row->fresh()->lock_version);
+                $this->assertSame('approved', $year->fresh()->budget_state->value);
+                $this->cleanupChildrenAndFiles($children, $prefix);
+            }
+        } finally {
+            $this->cleanupChildrenAndFiles($allChildren, sys_get_temp_dir().'/budget-approval-first-');
             DB::reconnect();
             $this->cleanupTenant((int) $tenant->getKey(), (int) $actor->getKey());
         }
@@ -290,6 +413,79 @@ final class BudgetProposalApprovalConcurrencyTest extends TestCase
         }
     }
 
+    public function test_identity_writer_finishes_user_and_tenant_evidence_before_waiting_approval_reauthorizes_actor(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $approver = $this->tenantUser($tenant);
+        $administrator = $this->administrator();
+        [, , $year] = $this->fixture($tenant, $approver);
+        $preview = app(BudgetApprovalPreviewQuery::class)->execute(
+            $approver,
+            new TenantContext($tenant, $approver),
+            (int) $year->getKey(),
+        );
+        $data = ApproveBudgetProposalData::fromEvidence('2026-08-13', null, $preview->proposal->composition);
+        $prefix = sys_get_temp_dir().'/budget-approval-identity-order-'.str()->uuid();
+        $release = $prefix.'-release';
+        $children = [];
+
+        try {
+            DB::disconnect();
+            $identityPid = pcntl_fork();
+            $this->assertNotSame(-1, $identityPid);
+            if ($identityPid === 0) {
+                $this->deactivateApproverAndHold(
+                    $prefix,
+                    $release,
+                    (int) $tenant->getKey(),
+                    (int) $administrator->getKey(),
+                    (int) $approver->getKey(),
+                );
+            }
+            $children[] = $identityPid;
+            $this->waitForFile($prefix.'-identity-locked');
+
+            $approvalPid = pcntl_fork();
+            $this->assertNotSame(-1, $approvalPid);
+            if ($approvalPid === 0) {
+                $this->contendApproval(
+                    $prefix,
+                    $prefix.'-approval-go',
+                    2,
+                    (int) $tenant->getKey(),
+                    (int) $approver->getKey(),
+                    (int) $year->getKey(),
+                    $data,
+                );
+            }
+            $children[] = $approvalPid;
+            $this->waitForFile($prefix.'-ready-2');
+            touch($prefix.'-approval-go');
+            usleep(250_000);
+            $this->assertFileDoesNotExist($prefix.'-result-2', 'Approval bypassed the identity writer Tenant S lock.');
+            touch($release);
+            $this->waitForChildren($children);
+            DB::reconnect();
+
+            $this->assertSame('identity-success', trim((string) file_get_contents($prefix.'-identity-result')));
+            $this->assertSame('PERMISSION_DENIED', trim((string) file_get_contents($prefix.'-result-2')));
+            $this->assertFalse((bool) $approver->fresh()->is_active);
+            $this->assertSame('preparation', $year->fresh()->budget_state->value);
+            $this->assertSame(0, BudgetApproval::query()->where('tenant_id', $tenant->getKey())->count());
+            $this->assertDatabaseHas('audit_events', [
+                'tenant_id' => $tenant->getKey(),
+                'event_type' => 'tenant.user.deactivated',
+                'subject_id' => $approver->getKey(),
+            ]);
+        } finally {
+            @touch($release);
+            $this->cleanupChildrenAndFiles($children, $prefix);
+            DB::reconnect();
+            $this->cleanupTenant((int) $tenant->getKey(), (int) $approver->getKey());
+            DB::table('users')->where('id', $administrator->getKey())->delete();
+        }
+    }
+
     /** @return array{Tenant, User} */
     private function fixtureTenant(): array
     {
@@ -342,6 +538,8 @@ final class BudgetProposalApprovalConcurrencyTest extends TestCase
             );
             $result = 'success';
         } catch (\DomainException $exception) {
+            $result = $exception->getMessage();
+        } catch (AuthorizationException $exception) {
             $result = $exception->getMessage();
         } catch (Throwable $exception) {
             $result = 'error:'.$exception::class;
@@ -465,6 +663,45 @@ final class BudgetProposalApprovalConcurrencyTest extends TestCase
         exit(0);
     }
 
+    private function deactivateApproverAndHold(
+        string $prefix,
+        string $release,
+        int $tenantId,
+        int $administratorId,
+        int $approverId,
+    ): never {
+        DB::purge();
+        $dispatcher = User::getEventDispatcher();
+        $dispatcher?->listen('eloquent.updated: '.User::class, static function (User $user) use ($approverId, $prefix, $release): void {
+            if ((int) $user->getKey() !== $approverId || $user->is_active) {
+                return;
+            }
+            touch($prefix.'-identity-locked');
+            $deadline = microtime(true) + 20;
+            while (! is_file($release) && microtime(true) < $deadline) {
+                usleep(5_000);
+            }
+        });
+        $result = 'identity-error';
+        try {
+            $tenant = Tenant::query()->findOrFail($tenantId);
+            $administrator = User::query()->findOrFail($administratorId);
+            $approver = User::query()->findOrFail($approverId);
+            app(DeactivateTenantUser::class)->execute(
+                $administrator,
+                new TenantContext($tenant, $administrator),
+                $approver,
+                [],
+                'identity-'.$approverId,
+            );
+            $result = 'identity-success';
+        } catch (Throwable $exception) {
+            $result = 'identity-error:'.$exception::class.':'.$exception->getMessage();
+        }
+        file_put_contents($prefix.'-identity-result', $result);
+        exit($result === 'identity-success' ? 0 : 1);
+    }
+
     private function waitForFile(string $file): void
     {
         $deadline = microtime(true) + 20;
@@ -522,6 +759,11 @@ final class BudgetProposalApprovalConcurrencyTest extends TestCase
         DB::table('vendors')->where('tenant_id', $tenantId)->delete();
         DB::table('cost_centers')->where('tenant_id', $tenantId)->delete();
         DB::table('planning_years')->where('tenant_id', $tenantId)->delete();
+        $tenantRoleIds = DB::table('roles')->where('tenant_id', $tenantId)->pluck('id')->all();
+        DB::table('model_has_roles')->whereIn('role_id', $tenantRoleIds)->delete();
+        DB::table('role_has_permissions')->whereIn('role_id', $tenantRoleIds)->delete();
+        DB::table('roles')->whereIn('id', $tenantRoleIds)->delete();
+        DB::table('users')->where('tenant_id', $tenantId)->delete();
         DB::table('tenants')->where('id', $tenantId)->delete();
         DB::table('users')->where('id', $actorId)->delete();
     }
