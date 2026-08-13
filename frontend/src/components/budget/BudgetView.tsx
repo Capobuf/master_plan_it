@@ -3,6 +3,9 @@ import { formatMoney } from "../../presentation/formatters";
 import ComponentCard from "../common/ComponentCard";
 import Badge from "../ui/badge/Badge";
 import BudgetProposalImpact from "./BudgetProposalImpact";
+import Button from "../ui/button/Button";
+import BudgetApprovalModal from "./BudgetApprovalModal";
+import { useState } from "react";
 
 const stateLabel: Record<AnnualBudget["planning_year"]["state"], string> = {
   preparation: "Preparazione",
@@ -10,8 +13,12 @@ const stateLabel: Record<AnnualBudget["planning_year"]["state"], string> = {
   closed: "Chiuso",
 };
 
-export default function BudgetView({ dataset, preview }: { dataset: AnnualBudget; preview: BudgetApprovalPreview }) {
+async function noRefresh(): Promise<void> {}
+
+export default function BudgetView({ dataset, preview, onRefresh = noRefresh }: { dataset: AnnualBudget; preview: BudgetApprovalPreview; onRefresh?: () => Promise<void> | void }) {
+  const [approvalOpen, setApprovalOpen] = useState(false);
   const approvedTotal = dataset.approved_snapshot?.total.official ?? null;
+  const canApprove = dataset.actions.can_approve && preview.can_approve && !preview.empty_composition;
   const metrics = [
     { label: "Budget proposto", value: dataset.proposal.total.official },
     { label: "Valutazioni informative", value: dataset.informative_evaluations.official },
@@ -27,6 +34,8 @@ export default function BudgetView({ dataset, preview }: { dataset: AnnualBudget
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map((metric) => <article key={metric.label} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"><p className="text-sm text-gray-500 dark:text-gray-400">{metric.label}</p><p className="mt-2 text-2xl font-bold text-gray-800 dark:text-white/90">{metric.value === null ? "—" : formatMoney(metric.value, dataset.currency)}</p></article>)}</div>
     <ComponentCard title="Vista di impatto del Budget Proposto" desc="La composizione è calcolata dal dataset economico autorevole: non sono disponibili selezioni o importi manuali.">
       {dataset.actions.can_view_approval_preview ? <BudgetProposalImpact preview={preview} /> : <p className="text-sm text-gray-500 dark:text-gray-400">La vista di impatto non è disponibile con il contesto corrente.</p>}
+      {canApprove ? <div className="mt-5 flex justify-end"><Button type="button" onClick={() => setApprovalOpen(true)}>Approva Budget proposto</Button></div> : null}
     </ComponentCard>
+    <BudgetApprovalModal isOpen={approvalOpen} preview={preview} onClose={() => setApprovalOpen(false)} onApproved={onRefresh} onReReview={onRefresh} />
   </div>;
 }

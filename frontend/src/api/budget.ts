@@ -93,6 +93,8 @@ export interface BudgetApprovalPreview extends BudgetProposal {
   planning_year: PlanningYearBudget;
   currency: string;
   basis: BudgetBasis;
+  /** Server-calculated current calendar day in the Tenant timezone. Never derive this from browser time. */
+  effective_date_max: string;
   /** Server-authored digest of the complete evidence shared with the overview. */
   surface_fingerprint: string;
   contributors: ApprovalContributor[];
@@ -107,6 +109,36 @@ export interface ActiveApprovalSummary {
   effective_date: string;
   recorded_at: string;
   total: EconomicMeasure;
+}
+
+export interface BudgetApprovalSummary extends ActiveApprovalSummary {
+  planning_year_id: number;
+  currency: string;
+  basis: BudgetBasis;
+  approved_by: {
+    id: number;
+    name: string;
+  };
+  note: string | null;
+}
+
+export interface ApproveBudgetProposalInput {
+  effective_date: string;
+  note: string | null;
+  composition: Pick<BudgetCompositionEvidence, "schema_version" | "fingerprint" | "versions">;
+}
+
+export interface ApproveBudgetProposalResponse {
+  approval: BudgetApprovalSummary;
+  budget: {
+    planning_year_id: number;
+    state: "approved";
+    lock_version: number;
+  };
+  economic_base: {
+    basis: BudgetBasis;
+    locked_at: string | null;
+  };
 }
 
 /** The current overview is server-authored; no client-side approval totals are derived. */
@@ -143,5 +175,17 @@ export async function getBudget(params: BudgetQuery): Promise<AnnualBudget> {
 
 export async function getBudgetApprovalPreview(planningYearId: number): Promise<BudgetApprovalPreview> {
   const response = await apiClient.get<DataEnvelope<BudgetApprovalPreview>>(`/api/v1/budget/${planningYearId}/approval-preview`);
+  return response.data.data;
+}
+
+/** The server rebuilds the automatic proposal; callers can send no item, amount, base, or actor fallback. */
+export async function approveBudgetProposal(
+  planningYearId: number,
+  input: ApproveBudgetProposalInput,
+): Promise<ApproveBudgetProposalResponse> {
+  const response = await apiClient.post<DataEnvelope<ApproveBudgetProposalResponse>>(
+    `/api/v1/budget/${planningYearId}/approve`,
+    input,
+  );
   return response.data.data;
 }
