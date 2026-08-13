@@ -3,6 +3,21 @@ import type { EconomicMeasure } from "../../../api/projection";
 
 export type FixtureMeasure = Readonly<EconomicMeasure>;
 
+/** Foundation fixtures retained for the approval, history and annulment slices. */
+export type FixtureContributor = Readonly<{
+  source_identity: string;
+  kind: "ordinary_current_planning" | "plafond_allocation";
+  amount: FixtureMeasure;
+}>;
+
+export type FixtureBlocker = Readonly<{
+  source_identity: string;
+  category: "actuals" | "extra_budget" | "rectifications" | "closures";
+  redacted: boolean;
+  amount: FixtureMeasure | null;
+  drill_down: Readonly<{ authorized: boolean; href: string | null }>;
+}>;
+
 const net = (value: string, vat: string, gross: string): FixtureMeasure => ({
   net: value,
   vat,
@@ -82,3 +97,60 @@ export const annualBudgetFixture: AnnualBudget = {
   actuals: net("0.00", "0.00", "0.00"),
   actions: { can_view_approval_preview: true, can_approve: true, can_annul_active_approval: false },
 };
+
+export const activeApprovalFixture = {
+  id: 91,
+  status: "active",
+  effective_date: "2026-08-13",
+  recorded_at: "2026-08-13T10:30:00Z",
+  approved_by: { id: 5, name: "Mario Rossi" },
+  note: "Approvazione iniziale",
+  total: budgetProposalFixture.total,
+} as const;
+
+export const annulledApprovalFixture = {
+  ...activeApprovalFixture,
+  status: "annulled",
+  annulled_at: "2026-08-13T11:00:00Z",
+  annulled_by: { id: 5, name: "Mario Rossi" },
+  annulment_note: "Correzione della proposta",
+} as const;
+
+const rawOverlap: FixtureBlocker = {
+  source_identity: "expense-row:502",
+  category: "actuals",
+  redacted: false,
+  amount: net("0.00", "0.00", "0.00"),
+  drill_down: { authorized: true, href: "/api/v1/budget/25/approvals/91/blockers/expense-row:502" },
+};
+
+const redactedOverlap: FixtureBlocker = {
+  source_identity: "blocked-source:V_VXvYJHFyd4kJX8QvM_RQ",
+  category: "actuals",
+  redacted: true,
+  amount: null,
+  drill_down: { authorized: false, href: null },
+};
+
+/** A single source deliberately remains in both canonical non-exclusive blocker groups. */
+export const blockerOverlapFixtures = {
+  raw: {
+    actuals: [rawOverlap],
+    extra_budget: [{ ...rawOverlap, category: "extra_budget" }],
+    rectifications: [],
+    closures: [],
+  },
+  redacted: {
+    actuals: [redactedOverlap],
+    extra_budget: [{ ...redactedOverlap, category: "extra_budget" }],
+    rectifications: [],
+    closures: [],
+  },
+} as const;
+
+// Approval fixtures intentionally contain no caller-selected items or editable approved amounts.
+export type ApprovalConfirmationFixture = Readonly<{
+  effective_date: string;
+  note: string | null;
+  composition: typeof budgetProposalFixture.composition;
+}>;
