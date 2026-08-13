@@ -20,7 +20,7 @@ class BudgetApprovalItemFactory extends Factory
         $rowId = fake()->unique()->numberBetween(1000, 999999999);
 
         return [
-            'budget_approval_id' => BudgetApproval::factory(),
+            'budget_approval_id' => BudgetApproval::factory()->headerOnly(),
             'tenant_id' => fn (array $attributes): int => $this->approval($attributes)->tenant_id,
             'planning_year_id' => fn (array $attributes): int => $this->approval($attributes)->planning_year_id,
             'budget_basis' => fn (array $attributes): string => $this->approval($attributes)->budget_basis,

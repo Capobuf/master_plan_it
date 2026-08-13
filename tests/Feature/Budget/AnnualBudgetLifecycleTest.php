@@ -57,6 +57,19 @@ final class AnnualBudgetLifecycleTest extends TestCase
         } catch (\DomainException $exception) {
             $this->assertSame('BUDGET_STATE_CONFLICT', $exception->getMessage());
         }
+        foreach ([
+            fn () => PlanningYear::query()->whereKey($year->getKey())->increment('lock_version', 1, ['budget_state' => 'closed']),
+            fn () => PlanningYear::query()->upsert([['id' => $year->getKey(), 'budget_state' => 'closed']], ['id']),
+            fn () => PlanningYear::query()->updateOrInsert(['id' => $year->getKey()], ['budget_state' => 'closed']),
+            fn () => PlanningYear::query()->updateOrCreate(['id' => $year->getKey()], ['budget_state' => 'closed']),
+        ] as $bypass) {
+            try {
+                $bypass();
+                $this->fail('Inherited builder writes must not carry budget_state.');
+            } catch (\DomainException $exception) {
+                $this->assertSame('BUDGET_STATE_CONFLICT', $exception->getMessage());
+            }
+        }
         $this->assertSame(1, PlanningYear::query()->whereKey($year->getKey())->update(['year_label' => 2027]));
         $this->assertFalse(method_exists($year, 'closeBudget'));
         $this->assertFalse(method_exists($year, 'reopenBudget'));

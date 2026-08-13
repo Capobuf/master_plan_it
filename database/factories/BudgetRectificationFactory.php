@@ -17,7 +17,7 @@ class BudgetRectificationFactory extends Factory
     public function definition(): array
     {
         return [
-            'budget_approval_id' => BudgetApproval::factory(),
+            'budget_approval_id' => BudgetApproval::factory()->completeAggregate(),
             'tenant_id' => fn (array $attributes): int => $this->approval($attributes)->tenant_id,
             'planning_year_id' => fn (array $attributes): int => $this->approval($attributes)->planning_year_id,
             'origin_phase' => 'after_approval',

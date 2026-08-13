@@ -4,6 +4,7 @@ namespace Database\Factories;
 
 use App\Domain\Budget\Enums\BudgetApprovalStatus;
 use App\Models\BudgetApproval;
+use App\Models\BudgetApprovalItem;
 use App\Models\PlanningYear;
 use App\Models\RevisionBatch;
 use App\Models\Tenant;
@@ -71,6 +72,28 @@ class BudgetApprovalFactory extends Factory
                     (int) $approval->approved_by_user_id,
                 ),
                 'annulment_correlation_id' => (string) str()->uuid(),
+            ]);
+        });
+    }
+
+    /** A raw approval header for constraint and lifecycle tests that intentionally need no snapshot rows. */
+    public function headerOnly(): static
+    {
+        return $this->state([]);
+    }
+
+    /** A semantically complete one-contributor approval aggregate. */
+    public function completeAggregate(): static
+    {
+        return $this->afterCreating(function (BudgetApproval $approval): void {
+            BudgetApprovalItem::factory()->for($approval, 'approval')->create([
+                'tenant_id' => $approval->tenant_id,
+                'planning_year_id' => $approval->planning_year_id,
+                'budget_basis' => $approval->budget_basis,
+                'net_amount' => $approval->total_net_amount,
+                'vat_amount' => $approval->total_vat_amount,
+                'gross_amount' => $approval->total_gross_amount,
+                'official_amount' => $approval->total_official_amount,
             ]);
         });
     }
