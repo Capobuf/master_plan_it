@@ -3,6 +3,7 @@ import {
   type ApprovalContributor,
   type ApprovalExclusion,
   type BudgetApprovalPreview,
+  type SoftDeletedApprovalExclusion,
 } from "../../api/budget";
 import { formatMoney } from "../../presentation/formatters";
 import Badge from "../ui/badge/Badge";
@@ -31,12 +32,19 @@ function evidenceHrefToSpaHref(href: string): string | null {
 }
 
 function SourceLink({ item, planningYearId }: { item: ApprovalContributor | ApprovalExclusion; planningYearId: number }) {
+  if ("reason" in item && item.expense === null) {
+    return <span>Elemento eliminato <span className="text-xs text-gray-500 dark:text-gray-400">(dettagli non disponibili)</span></span>;
+  }
   const label = item.row ? `${item.expense.title} · ${item.row.description}` : item.expense.title;
   const spaHref = item.drill_down.href === null ? null : evidenceHrefToSpaHref(item.drill_down.href);
   if (!item.drill_down.authorized || spaHref === null) {
     return <span>{label} <span className="text-xs text-gray-500 dark:text-gray-400">(dettaglio non autorizzato)</span></span>;
   }
   return <Link className="font-medium text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400" to={withPlanningYearContext(spaHref, planningYearId)}>{label}</Link>;
+}
+
+function isRedactedExclusion(exclusion: ApprovalExclusion): exclusion is SoftDeletedApprovalExclusion {
+  return exclusion.expense === null;
 }
 
 function Measures({ total, currency }: Pick<BudgetApprovalPreview, "total" | "currency">) {
@@ -91,7 +99,7 @@ function ImpactContent({ preview }: { preview: BudgetApprovalPreview }) {
 
     <div>
       <h4 className="mb-2 text-sm font-semibold text-gray-800 dark:text-white/90">Componenti esclusi</h4>
-      {preview.exclusions.length === 0 ? <p className="text-sm text-gray-500 dark:text-gray-400">Non ci sono esclusioni da spiegare.</p> : <div className="max-w-full overflow-x-auto"><Table><TableHeader><TableRow>{["Componente", "Motivo dell’esclusione", "Dettaglio", "Importi non conteggiati"].map((heading) => <TableCell key={heading} isHeader className="whitespace-nowrap">{heading}</TableCell>)}</TableRow></TableHeader><TableBody>{preview.exclusions.map((exclusion) => <TableRow key={exclusion.source_identity}><TableCell><SourceLink item={exclusion} planningYearId={preview.planning_year.id} /></TableCell>{/* The server reason is canonical; this label does not affect composition. */}<TableCell>{exclusionReason[exclusion.reason]}</TableCell><TableCell>{exclusion.detail}</TableCell><TableCell><FullMeasures total={exclusion.amount} currency={preview.currency} /></TableCell></TableRow>)}</TableBody></Table></div>}
+      {preview.exclusions.length === 0 ? <p className="text-sm text-gray-500 dark:text-gray-400">Non ci sono esclusioni da spiegare.</p> : <div className="max-w-full overflow-x-auto"><Table><TableHeader><TableRow>{["Componente", "Motivo dell’esclusione", "Dettaglio", "Importi non conteggiati"].map((heading) => <TableCell key={heading} isHeader className="whitespace-nowrap">{heading}</TableCell>)}</TableRow></TableHeader><TableBody>{preview.exclusions.map((exclusion) => { const redacted = isRedactedExclusion(exclusion); return <TableRow key={exclusion.source_identity}><TableCell><SourceLink item={exclusion} planningYearId={preview.planning_year.id} /></TableCell>{/* The server reason is canonical; this label does not affect composition. */}<TableCell>{exclusionReason[exclusion.reason]}</TableCell><TableCell>{redacted ? "—" : exclusion.detail}</TableCell><TableCell>{redacted ? "—" : <FullMeasures total={exclusion.amount} currency={preview.currency} />}</TableCell></TableRow>; })}</TableBody></Table></div>}
     </div>
   </div>;
 }

@@ -1,10 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter, Route, Routes } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { createMemoryRouter, MemoryRouter, Route, RouterProvider, Routes } from "react-router";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getExpense, getExpenseHistory, type ExpenseDetail as ExpenseDetailData } from "../../api/expenses";
 import ExpenseDetail from "./ExpenseDetail";
 
-const selectPlanningYear = vi.fn();
+const selectPlanningYear = vi.hoisted(() => vi.fn());
 
 vi.mock("../../api/attachments", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/attachments")>();
@@ -18,9 +18,24 @@ vi.mock("../../context/ApplicationContext", () => ({
     hasAbility: () => true,
   }),
 }));
-vi.mock("../../context/PlanningYearContext", () => ({
-  usePlanningYear: () => ({ selectedPlanningYearId: 7, loading: false, activePlanningYears: [{ id: 7 }, { id: 25 }], selectPlanningYear }),
-}));
+vi.mock("../../context/PlanningYearContext", async () => {
+  const { useState } = await import("react");
+  return {
+    usePlanningYear: () => {
+      const [selectedPlanningYearId, setSelectedPlanningYearId] = useState(7);
+      return {
+        selectedPlanningYearId,
+        loading: false,
+        activePlanningYears: [{ id: 7 }, { id: 25 }],
+        selectPlanningYear: (id: number, authorizeFollowingNavigation?: boolean) => {
+          selectPlanningYear(id, authorizeFollowingNavigation);
+          setSelectedPlanningYearId(id);
+          return true;
+        },
+      };
+    },
+  };
+});
 vi.mock("../../api/expenses", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/expenses")>();
   return { ...actual, getExpense: vi.fn(), getExpenseHistory: vi.fn() };
@@ -42,10 +57,34 @@ const detail = {
 } as unknown as ExpenseDetailData;
 
 describe("ExpenseDetail", () => {
+  beforeEach(() => {
+    selectPlanningYear.mockReset();
+  });
+
   it("applies a valid planning_year_id from a shared expense link", async () => {
     vi.mocked(getExpense).mockResolvedValue(detail);
     render(<MemoryRouter initialEntries={["/expenses/42?planning_year_id=25"]}><Routes><Route path="/expenses/:expenseId" element={<ExpenseDetail />} /></Routes></MemoryRouter>);
     await waitFor(() => expect(selectPlanningYear).toHaveBeenCalledWith(25, true));
+  });
+
+  it("cancels an old-year request when a shared link applies a newer Planning Year", async () => {
+    let resolveOld!: (value: ExpenseDetailData) => void;
+    const requestedDetail = { ...detail, title: "Licenze anno condiviso", planning_year_id: 25 };
+    vi.mocked(getExpense).mockImplementation((_id, yearId) => yearId === 7
+      ? new Promise((resolve) => { resolveOld = resolve; })
+      : Promise.resolve(requestedDetail));
+    const router = createMemoryRouter([{ path: "/expenses/:expenseId", element: <ExpenseDetail /> }], { initialEntries: ["/expenses/42"] });
+    render(<RouterProvider router={router} />);
+    await waitFor(() => expect(getExpense).toHaveBeenCalledWith(42, 7));
+
+    await act(async () => { await router.navigate("/expenses/42?planning_year_id=25"); });
+    await waitFor(() => expect(selectPlanningYear).toHaveBeenCalledWith(25, true));
+    await waitFor(() => expect(getExpense).toHaveBeenCalledWith(42, 25));
+    expect(await screen.findByText("Licenze anno condiviso")).toBeInTheDocument();
+
+    await act(async () => resolveOld(detail));
+    expect(screen.getByText("Licenze anno condiviso")).toBeInTheDocument();
+    expect(screen.queryByText("Licenze operative")).not.toBeInTheDocument();
   });
 
   it("loads only the global year and exposes accessible actions and relation labels", async () => {

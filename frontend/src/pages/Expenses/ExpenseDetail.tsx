@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { ApiError } from "../../api/client";
 import {
@@ -32,7 +32,8 @@ interface DetailState { tenantId: number; yearId: number; detail: ExpenseDetailD
 
 export default function ExpenseDetail() {
   const { data: applicationContext, loading: contextLoading, hasAbility } = useApplicationContext();
-  const { selectedPlanningYearId, loading: yearLoading } = usePlanningYear();
+  const planningYear = usePlanningYear();
+  const { selectedPlanningYearId, loading: yearLoading } = planningYear;
   const { expenseId: expenseIdParam } = useParams<{ expenseId: string }>();
   const navigate = useNavigate();
   const [detailState, setDetailState] = useState<DetailState | null>(null);
@@ -45,18 +46,28 @@ export default function ExpenseDetail() {
   const tenantId = applicationContext?.tenant?.id ?? null;
   const expenseId = expenseIdParam && /^\d+$/.test(expenseIdParam) ? Number(expenseIdParam) : null;
   const canView = hasAbility("expense.view");
-  useQueryPlanningYear();
+  const { isApplyingQueryPlanningYear } = useQueryPlanningYear(planningYear);
+  const detailRequestGeneration = useRef(0);
   const detail = detailState?.tenantId === tenantId && detailState.yearId === selectedPlanningYearId ? detailState.detail : null;
 
   const loadDetail = useCallback(async () => {
-    if (tenantId === null || expenseId === null || selectedPlanningYearId === null || !canView) return;
+    const generation = ++detailRequestGeneration.current;
+    if (tenantId === null || expenseId === null || selectedPlanningYearId === null || !canView || isApplyingQueryPlanningYear) return;
     setLoading(true);
-    try { setDetailState({ tenantId, yearId: selectedPlanningYearId, detail: await getExpense(expenseId, selectedPlanningYearId), error: null }); }
-    catch (error: unknown) { setDetailState({ tenantId, yearId: selectedPlanningYearId, detail: null, error: ApiError.from(error) }); }
-    finally { setLoading(false); }
-  }, [canView, expenseId, selectedPlanningYearId, tenantId]);
+    try {
+      const detail = await getExpense(expenseId, selectedPlanningYearId);
+      if (generation === detailRequestGeneration.current) setDetailState({ tenantId, yearId: selectedPlanningYearId, detail, error: null });
+    } catch (error: unknown) {
+      if (generation === detailRequestGeneration.current) setDetailState({ tenantId, yearId: selectedPlanningYearId, detail: null, error: ApiError.from(error) });
+    } finally {
+      if (generation === detailRequestGeneration.current) setLoading(false);
+    }
+  }, [canView, expenseId, isApplyingQueryPlanningYear, selectedPlanningYearId, tenantId]);
 
-  useEffect(() => { if (!contextLoading && !yearLoading) void loadDetail(); }, [contextLoading, loadDetail, yearLoading]);
+  useEffect(() => {
+    if (!contextLoading && !yearLoading) void loadDetail();
+    return () => { detailRequestGeneration.current += 1; };
+  }, [contextLoading, loadDetail, yearLoading]);
   useEffect(() => { setActiveTab("details"); setHistory([]); setHistoryError(null); }, [expenseId, selectedPlanningYearId, tenantId]);
 
   const loadHistory = useCallback(async () => {
@@ -73,7 +84,7 @@ export default function ExpenseDetail() {
   };
 
   let body;
-  if (contextLoading || yearLoading) body = <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant e del Planning Year in corso." />;
+  if (contextLoading || yearLoading || isApplyingQueryPlanningYear) body = <Alert variant="info" title="Caricamento del contesto" message="Verifica del Tenant e del Planning Year in corso." />;
   else if (tenantId === null) body = <Alert variant="warning" title="Tenant richiesto" message="Seleziona un Tenant dall'intestazione." />;
   else if (!canView) body = <Alert variant="warning" title="Dettaglio non disponibile" message="Non disponi dell'autorizzazione necessaria." />;
   else if (selectedPlanningYearId === null) body = <Alert variant="warning" title="Anno richiesto" message="Seleziona il Planning Year della Spesa." />;
