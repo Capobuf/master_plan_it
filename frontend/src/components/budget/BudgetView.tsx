@@ -5,6 +5,7 @@ import Badge from "../ui/badge/Badge";
 import BudgetProposalImpact from "./BudgetProposalImpact";
 import Button from "../ui/button/Button";
 import BudgetApprovalModal from "./BudgetApprovalModal";
+import BudgetApprovalHistory from "./BudgetApprovalHistory";
 import { useState } from "react";
 
 const stateLabel: Record<AnnualBudget["planning_year"]["state"], string> = {
@@ -36,6 +37,7 @@ export default function BudgetView({ dataset, preview, onRefresh = noRefresh }: 
       {dataset.actions.can_view_approval_preview ? <BudgetProposalImpact preview={preview} /> : <p className="text-sm text-gray-500 dark:text-gray-400">La vista di impatto non è disponibile con il contesto corrente.</p>}
       {canApprove ? <div className="mt-5 flex justify-end"><Button type="button" onClick={() => setApprovalOpen(true)}>Approva Budget proposto</Button></div> : null}
     </ComponentCard>
+    <BudgetApprovalHistory planningYearId={dataset.planning_year.id} />
     <BudgetApprovalModal isOpen={approvalOpen} preview={preview} onClose={() => setApprovalOpen(false)} onApproved={onRefresh} onReReview={onRefresh} />
   </div>;
 }

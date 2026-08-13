@@ -1,7 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 import { AxiosError, type AxiosResponse } from "axios";
 import { apiClient } from "./client";
-import { approveBudgetProposal, getBudget, getBudgetApprovalPreview, type ApproveBudgetProposalInput } from "./budget";
+import {
+  approveBudgetProposal,
+  getBudget,
+  getBudgetApprovalDetail,
+  getBudgetApprovalHistory,
+  getBudgetApprovalPreview,
+  type ApproveBudgetProposalInput,
+} from "./budget";
 
 vi.mock("./client", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./client")>()),
@@ -23,6 +30,40 @@ describe("budget proposal adapters", () => {
 
     await expect(getBudgetApprovalPreview(25)).resolves.toEqual(data);
     expect(apiClient.get).toHaveBeenCalledWith("/api/v1/budget/25/approval-preview");
+  });
+
+  it("reads the paginated immutable approval history without inventing filter parameters", async () => {
+    const page = {
+      data: [{ id: 91, status: "active", planning_year_id: 25 }],
+      links: { first: "?page=1", last: "?page=1", prev: null, next: null },
+      meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 },
+    };
+    vi.mocked(apiClient.get).mockResolvedValue({ data: page });
+
+    await expect(getBudgetApprovalHistory(25, { page: 1, per_page: 25 })).resolves.toEqual(page);
+    expect(apiClient.get).toHaveBeenCalledWith("/api/v1/budget/25/approvals", { params: { page: 1, per_page: 25 } });
+  });
+
+  it("reads one stored approval snapshot from its authorized detail endpoint", async () => {
+    const approval = {
+      id: 91,
+      status: "annulled",
+      contributors: [],
+      composition: { schema_version: "budget-proposal-composition/v1", fingerprint: `sha256:${"a".repeat(64)}`, contributor_count: 0 },
+      annulment: null,
+    };
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { data: approval } });
+
+    await expect(getBudgetApprovalDetail(25, 91)).resolves.toEqual(approval);
+    expect(apiClient.get).toHaveBeenCalledWith("/api/v1/budget/25/approvals/91");
+  });
+
+  it("fails closed when a history response contains a legacy status", async () => {
+    vi.mocked(apiClient.get).mockResolvedValue({
+      data: { data: [{ id: 91, status: "draft" }], meta: { current_page: 1, last_page: 1, per_page: 25, total: 1 } },
+    });
+
+    await expect(getBudgetApprovalHistory(25)).rejects.toThrow(/non rispetta il contratto/i);
   });
 
   it("posts only effective date, optional note and reviewed composition evidence", async () => {

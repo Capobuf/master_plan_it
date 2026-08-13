@@ -1,4 +1,4 @@
-import { ApiError, apiClient, type DataEnvelope } from "./client";
+import { ApiError, apiClient, type DataEnvelope, type PaginatedData, type PaginationParams } from "./client";
 import type { EconomicMeasure } from "./projection";
 
 export type BudgetBasis = "net" | "gross";
@@ -111,15 +111,73 @@ export interface ActiveApprovalSummary {
   total: EconomicMeasure;
 }
 
-export interface BudgetApprovalSummary extends ActiveApprovalSummary {
+export type BudgetApprovalStatus = "active" | "annulled";
+
+export interface BudgetApprovalActor {
+  id: number;
+  name: string;
+}
+
+export interface BudgetApprovalSummary {
+  id: number;
+  status: BudgetApprovalStatus;
   planning_year_id: number;
   currency: string;
   basis: BudgetBasis;
-  approved_by: {
-    id: number;
-    name: string;
-  };
+  total: EconomicMeasure;
+  effective_date: string;
+  recorded_at: string;
+  approved_by: BudgetApprovalActor;
   note: string | null;
+  annulled_at?: string | null;
+  annulled_by?: BudgetApprovalActor | null;
+  annulment_note?: string | null;
+}
+
+export interface BudgetApprovalDetail {
+  id: number;
+  status: BudgetApprovalStatus;
+  planning_year: Pick<PlanningYearBudget, "id" | "year_label">;
+  currency: string;
+  basis: BudgetBasis;
+  total: EconomicMeasure;
+  effective_date: string;
+  recorded_at: string;
+  approved_by: BudgetApprovalActor;
+  note: string | null;
+  composition: Pick<BudgetCompositionEvidence, "schema_version" | "fingerprint" | "contributor_count">;
+  contributors: ApprovalContributor[];
+  annulment: {
+    annulled_at: string;
+    annulled_by: BudgetApprovalActor;
+    note: string | null;
+  } | null;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function hasApprovalStatus(value: unknown): value is BudgetApprovalStatus {
+  return value === "active" || value === "annulled";
+}
+
+function assertApprovalHistory(value: unknown): asserts value is PaginatedData<BudgetApprovalSummary> {
+  const meta = isRecord(value) ? value.meta : null;
+  if (!isRecord(value) || !Array.isArray(value.data) || !isRecord(meta)
+    || !["current_page", "last_page", "per_page", "total"].every((key) => typeof meta[key] === "number")
+    || !value.data.every((item) => isRecord(item) && typeof item.id === "number" && hasApprovalStatus(item.status))) {
+    throw new Error("La cronologia approvazioni ricevuta non rispetta il contratto previsto.");
+  }
+}
+
+function assertApprovalDetail(value: unknown): asserts value is BudgetApprovalDetail {
+  if (!isRecord(value) || typeof value.id !== "number" || !hasApprovalStatus(value.status)
+    || !Array.isArray(value.contributors) || !isRecord(value.composition)
+    || typeof value.composition.fingerprint !== "string" || typeof value.composition.schema_version !== "string"
+    || typeof value.composition.contributor_count !== "number" || !(value.annulment === null || isRecord(value.annulment))) {
+    throw new Error("La fotografia approvazione ricevuta non rispetta il contratto previsto.");
+  }
 }
 
 export interface ApproveBudgetProposalInput {
@@ -175,6 +233,31 @@ export async function getBudget(params: BudgetQuery): Promise<AnnualBudget> {
 
 export async function getBudgetApprovalPreview(planningYearId: number): Promise<BudgetApprovalPreview> {
   const response = await apiClient.get<DataEnvelope<BudgetApprovalPreview>>(`/api/v1/budget/${planningYearId}/approval-preview`);
+  return response.data.data;
+}
+
+/** Historical decisions are immutable records; the only accepted collection parameters are server pagination. */
+export async function getBudgetApprovalHistory(
+  planningYearId: number,
+  params: PaginationParams = {},
+): Promise<PaginatedData<BudgetApprovalSummary>> {
+  const response = await apiClient.get<PaginatedData<BudgetApprovalSummary>>(
+    `/api/v1/budget/${planningYearId}/approvals`,
+    { params },
+  );
+  assertApprovalHistory(response.data);
+  return response.data;
+}
+
+/** Detail remains a stored approval snapshot and deliberately accepts no client filter or mutation input. */
+export async function getBudgetApprovalDetail(
+  planningYearId: number,
+  approvalId: number,
+): Promise<BudgetApprovalDetail> {
+  const response = await apiClient.get<DataEnvelope<BudgetApprovalDetail>>(
+    `/api/v1/budget/${planningYearId}/approvals/${approvalId}`,
+  );
+  assertApprovalDetail(response.data.data);
   return response.data.data;
 }
 
