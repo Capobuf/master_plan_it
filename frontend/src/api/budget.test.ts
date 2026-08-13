@@ -1,9 +1,23 @@
-import { describe, expect, it } from "vitest";
-import type { ProjectionTotals } from "./projection";
+import { describe, expect, it, vi } from "vitest";
+import { apiClient } from "./client";
+import { getBudget, getBudgetApprovalPreview } from "./budget";
 
-describe("budget projection adapter", () => {
-  it("uses the shared two-measure totals shape", () => {
-    const totals: ProjectionTotals = { current_planning: { net: "10.00", vat: "2.20", gross: "12.20", official: "10.00" }, actual: { net: "5.00", vat: "1.10", gross: "6.10", official: "5.00" } };
-    expect(Object.keys(totals)).toEqual(["current_planning", "actual"]);
+vi.mock("./client", () => ({ apiClient: { get: vi.fn() } }));
+
+describe("budget proposal adapters", () => {
+  it("requests the strict proposal overview with the selected PlanningYear", async () => {
+    const data = { planning_year: { id: 25 } };
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { data } });
+
+    await expect(getBudget({ planning_year_id: 25 })).resolves.toEqual(data);
+    expect(apiClient.get).toHaveBeenCalledWith("/api/v1/budget", { params: { planning_year_id: 25 } });
+  });
+
+  it("reads the complete server-built impact from the replacement endpoint", async () => {
+    const data = { planning_year: { id: 25 }, contributors: [], exclusions: [] };
+    vi.mocked(apiClient.get).mockResolvedValue({ data: { data } });
+
+    await expect(getBudgetApprovalPreview(25)).resolves.toEqual(data);
+    expect(apiClient.get).toHaveBeenCalledWith("/api/v1/budget/25/approval-preview");
   });
 });

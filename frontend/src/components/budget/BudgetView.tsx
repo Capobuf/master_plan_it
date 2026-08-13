@@ -1,71 +1,32 @@
-import { useState } from "react";
-import { Link } from "react-router";
-import { closeBudget, type AnnualBudget } from "../../api/budget";
-import { ApiError } from "../../api/client";
-import { routes } from "../../navigation/routes";
-import PlafondMeasures from "../plafonds/PlafondMeasures";
-import { formatDate, formatMoney } from "../../presentation/formatters";
+import type { AnnualBudget } from "../../api/budget";
+import { formatMoney } from "../../presentation/formatters";
 import ComponentCard from "../common/ComponentCard";
-import BudgetApprovalModal from "./BudgetApprovalModal";
-import DatePicker from "../form/date-picker";
-import Alert from "../ui/alert/Alert";
 import Badge from "../ui/badge/Badge";
-import Button from "../ui/button/Button";
-import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
+import BudgetProposalImpact from "./BudgetProposalImpact";
 
-function dateInTimezone(value: string | null, timezone: string): string | undefined {
-  if (!value) return undefined;
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return undefined;
-  const parts = new Intl.DateTimeFormat("en", { timeZone: timezone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(date);
-  const part = (type: Intl.DateTimeFormatPartTypes) => parts.find((item) => item.type === type)?.value;
-  const year = part("year"); const month = part("month"); const day = part("day");
-  return year && month && day ? `${year}-${month}-${day}` : undefined;
-}
+const stateLabel: Record<AnnualBudget["planning_year"]["state"], string> = {
+  preparation: "Preparazione",
+  approved: "Approvato",
+  closed: "Chiuso",
+};
 
-export default function BudgetView({ dataset, asOf, tenantTimezone, canApprove, canClose, onAsOfChange, onChange }: { dataset: AnnualBudget; asOf: string; tenantTimezone: string; canApprove: boolean; canClose: boolean; onAsOfChange: (value: string) => void; onChange: (value: AnnualBudget) => void }) {
-  const [approvalOpen, setApprovalOpen] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<ApiError | null>(null);
-  const { summary, budget, totals, currency = summary.currency ?? "EUR" } = dataset;
-  const projectionTotals = totals!;
-  const historyAvailableFrom = dateInTimezone(budget.history_activated_at, tenantTimezone);
-
-  async function close() {
-    setBusy(true);
-    setError(null);
-    try {
-      onChange(await closeBudget(budget.planning_year_id, budget.lock_version));
-    } catch (cause: unknown) {
-      setError(ApiError.from(cause));
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  const metrics: Array<{ label: string; value: string | null; percentage?: boolean }> = [
-    { label: "Pianificazione corrente", value: projectionTotals.current_planning!.official ?? "0.00" },
-    { label: "Approvazione iniziale", value: summary.initial_approved },
-    { label: "Variazioni", value: summary.approved_variations },
-    { label: "Approvato corrente", value: summary.approved_current },
-    { label: "Effettivi", value: projectionTotals.actual!.official ?? "0.00" },
+export default function BudgetView({ dataset }: { dataset: AnnualBudget }) {
+  const approvedTotal = dataset.approved_snapshot?.total.official ?? null;
+  const metrics = [
+    { label: "Budget proposto", value: dataset.proposal.total.official },
+    { label: "Valutazioni informative", value: dataset.informative_evaluations.official },
+    { label: "Effettivi correnti", value: dataset.actuals.official },
+    { label: "Previsto approvato", value: approvedTotal },
   ];
 
   return <div className="space-y-6">
-    <div className="flex flex-wrap items-end justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
-      <div className="w-full sm:w-80"><DatePicker id="budget-as-of" label="Vista temporale" placeholder="Seleziona una data" defaultDate={asOf || undefined} minDate={historyAvailableFrom} maxDate="today" staticPosition={false} onChange={(_, value) => onAsOfChange(value)} disabled={!historyAvailableFrom} hint={historyAvailableFrom ? `Storico disponibile dal ${formatDate(historyAvailableFrom)}. Le date precedenti e future sono disattivate.` : "Storico non ancora disponibile."} /></div>
-      <div className="flex items-center gap-2"><Badge color={budget.state === "closed" ? "light" : budget.state === "approved" ? "success" : "warning"}>{budget.state}</Badge>{asOf ? <Button variant="outline" size="sm" onClick={() => onAsOfChange("")}>Torna al corrente</Button> : null}</div>
+    <div className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]">
+      <div><p className="text-sm text-gray-500 dark:text-gray-400">Anno economico {dataset.planning_year.year_label}</p><p className="mt-1 font-medium text-gray-800 dark:text-white/90">Stato del Budget: {stateLabel[dataset.planning_year.state]}</p></div>
+      <Badge color={dataset.planning_year.state === "preparation" ? "warning" : dataset.planning_year.state === "approved" ? "success" : "light"}>{stateLabel[dataset.planning_year.state]}</Badge>
     </div>
-    {dataset.read_only ? <Alert variant="info" title="Vista storica in sola lettura" message={`Valori ricostruiti al cutoff ${dataset.cutoff_utc ?? dataset.requested_as_of ?? "richiesto"}.`} /> : null}
-    {budget.warning ? <Alert variant="warning" title="Budget chiuso" message="Le operazioni economiche restano consentite e sono tracciate; verifica il warning prima di procedere." /> : null}
-    {error ? <Alert variant="error" title="Operazione non riuscita" message={error.message} /> : null}
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map((metric) => <article key={metric.label} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"><p className="text-sm text-gray-500 dark:text-gray-400">{metric.label}</p><p className="mt-2 text-2xl font-bold text-gray-800 dark:text-white/90">{metric.percentage ? (metric.value === null ? "—" : `${metric.value}%`) : formatMoney(metric.value ?? "0.00", summary.currency)}</p></article>)}</div>
-    <ComponentCard title="Dettaglio spese annuali">
-      <div className="max-w-full overflow-x-auto"><Table><TableHeader className="border-y border-gray-100 dark:border-gray-800"><TableRow>{["Spesa", "Tipo", "Centro di costo", "Pianificazione corrente", "Effettivi"].map((heading) => <TableCell key={heading} isHeader className="whitespace-nowrap py-3 text-start text-theme-xs font-medium text-gray-500 dark:text-gray-400">{heading}</TableCell>)}</TableRow></TableHeader><TableBody className="divide-y divide-gray-100 dark:divide-gray-800">{dataset.expenses.map((expense) => <TableRow key={expense.id}><TableCell className="py-3 text-sm font-medium"><Link to={expense.kind === "plafond" ? routes.plafond(expense.id) : routes.spesa(expense.id)} className="text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400">{expense.title}</Link></TableCell><TableCell className="py-3"><Badge color={expense.kind === "plafond" ? "info" : "light"}>{expense.kind === "plafond" ? "Plafond" : "Spesa"}</Badge></TableCell><TableCell className="py-3 text-sm text-gray-600 dark:text-gray-300">{expense.cost_center_name}</TableCell><TableCell className="py-3 text-sm">{formatMoney(expense.totals!.current_planning!.official ?? "0.00", currency)}</TableCell><TableCell className="py-3 text-sm">{formatMoney(expense.totals!.actual!.official ?? "0.00", currency)}</TableCell></TableRow>)}</TableBody></Table></div>
-      {dataset.expenses.filter((expense) => expense.kind === "plafond" && expense.plafond_measures).map((expense) => <ComponentCard key={`plafond-${expense.id}`} title={`Plafond · ${expense.title}`} compact><PlafondMeasures measures={expense.plafond_measures!} currency={expense.currency} /></ComponentCard>)}
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">{metrics.map((metric) => <article key={metric.label} className="rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-white/[0.03]"><p className="text-sm text-gray-500 dark:text-gray-400">{metric.label}</p><p className="mt-2 text-2xl font-bold text-gray-800 dark:text-white/90">{metric.value === null ? "—" : formatMoney(metric.value, dataset.currency)}</p></article>)}</div>
+    <ComponentCard title="Vista di impatto del Budget Proposto" desc="La composizione è calcolata dal dataset economico autorevole: non sono disponibili selezioni o importi manuali.">
+      {dataset.actions.can_view_approval_preview ? <BudgetProposalImpact planningYearId={dataset.planning_year.id} /> : <p className="text-sm text-gray-500 dark:text-gray-400">La vista di impatto non è disponibile con il contesto corrente.</p>}
     </ComponentCard>
-    {!dataset.read_only && (canApprove || canClose) ? <ComponentCard title="Azioni Budget"><div className="flex flex-wrap gap-2">{canApprove && dataset.expenses.length > 0 ? <Button onClick={() => setApprovalOpen(true)} disabled={busy}>{budget.state === "preparation" ? "Registra prima approvazione" : "Registra variazione"}</Button> : null}{canClose && budget.state !== "closed" ? <Button variant="outline" onClick={() => void close()} disabled={busy}>{busy ? "Chiusura…" : "Chiudi Budget"}</Button> : null}</div></ComponentCard> : null}
-    <ComponentCard title="Controlli annuali"><div className="flex flex-wrap gap-6 text-sm"><span>Effettivi senza approvato: <strong>{summary.unapproved_actual_expenses ?? 0}</strong></span></div></ComponentCard>
-    <BudgetApprovalModal dataset={dataset} isOpen={approvalOpen} onClose={() => setApprovalOpen(false)} onApplied={onChange} />
   </div>;
 }
