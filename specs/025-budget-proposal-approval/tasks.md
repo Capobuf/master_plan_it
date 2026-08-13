@@ -83,7 +83,7 @@ the rest, ignore presentation filters and reconcile Net/Gross to the cent.
 
 - [ ] T016 [P] [US1] Add table-driven contributor/exclusion/empty/zero/Plafond composer tests in `tests/Accounting/Unit/BudgetProposalComposerTest.php`
 - [ ] T017 [P] [US1] Add deterministic canonical JSON/fingerprint tests for ordering, NFC strings, nulls, fixed decimals, source versions and same-total dimension changes in `tests/Accounting/Unit/BudgetProposalFingerprintTest.php`
-- [ ] T018 [P] [US1] Add Net/Gross full-dataset, presentation-filter reconciliation, fixed-query-count and four-consumer red tests in `tests/Accounting/Integration/BudgetProposalApprovalDatasetTest.php`, `tests/Accounting/Integration/BudgetProposalSurfaceQueryCountTest.php` and `tests/Accounting/Integration/BudgetApprovalSurfaceReconciliationTest.php`
+- [ ] T018 [P] [US1] Add Net/Gross full-dataset and presentation-filter reconciliation across composer, Preparation overview and approval preview, with an explicit numeric fixed-query budget that remains constant as contributors/exclusions/dimensions grow, in `tests/Accounting/Integration/BudgetProposalApprovalDatasetTest.php`, `tests/Accounting/Integration/BudgetProposalSurfaceQueryCountTest.php` and `tests/Accounting/Integration/BudgetApprovalSurfaceReconciliationTest.php`
 - [ ] T019 [P] [US1] Add overview/approval-preview HTTP contract tests for complete DTOs, empty composition, unknown fields, authorized links, legacy field absence and zero Approval/Revision/Audit/state/version/Base effects in `tests/Feature/Api/Budget/BudgetProposalApprovalApiTest.php`
 - [ ] T020 [P] [US1] Add React impact/overview tests for totals, inclusion/exclusion reasons, Plafond counted once, context-preserving links and no selection controls in `frontend/src/components/budget/BudgetProposalImpact.test.tsx` and `frontend/src/components/budget/BudgetView.test.tsx`
 
@@ -98,7 +98,7 @@ the rest, ignore presentation filters and reconcile Net/Gross to the cent.
 - [ ] T027 [US1] Add `GET /budget/{planningYear}/approval-preview`, preserve `GET /budget?planning_year_id=&as_of=`, and reject unsupported preview query fields in `app/Http/Controllers/Api/V1/BudgetApprovalController.php` and `routes/api/v1/reporting.php`
 - [ ] T028 [P] [US1] Replace legacy frontend Budget DTOs with strict proposal/composition/contributor/exclusion types and adapters in `frontend/src/api/budget.ts` and `frontend/src/api/budget.test.ts`
 - [ ] T029 [US1] Implement complete Impact presentation and update the Preparation overview with existing TailAdmin primitives in `frontend/src/components/budget/BudgetProposalImpact.tsx` and `frontend/src/components/budget/BudgetView.tsx`
-- [ ] T030 [US1] Make the prewritten T018 fixed-query-count and four-consumer reconciliation gates green by batching proposal/dimension loading and removing filtered recomputation in `app/Domain/Budget/Queries/BudgetApprovalPreviewQuery.php`, `app/Domain/Budget/Queries/AnnualBudgetQuery.php` and their Resources
+- [ ] T030 [US1] Make the prewritten T018 composer/Preparation-overview/approval-preview fixed-query-count and reconciliation gates green by batching proposal/dimension loading and removing filtered recomputation in `app/Domain/Budget/Queries/BudgetApprovalPreviewQuery.php`, `app/Domain/Budget/Queries/AnnualBudgetQuery.php` and their Resources; snapshot/history/drill-down remain the explicit T044/T054 gate after US3 creates them
 
 **Checkpoint**: User Story 1 is independently usable and testable; no Approval write is required to
 understand the proposal.
