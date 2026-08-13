@@ -11,6 +11,7 @@ use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\AuditEvent;
 use App\Models\BudgetApproval;
+use App\Models\BudgetApprovalItem;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
@@ -187,6 +188,92 @@ final class BudgetProposalApprovalTest extends TestCase
 
             $this->assertSame('0.00', $approval->total_official_amount);
             $this->assertSame(count($amounts), $approval->items()->count());
+        }
+    }
+
+    public function test_approval_persists_only_selected_ordinary_and_one_aggregate_plafond_contributor(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $actor = $this->tenantUser($tenant);
+        $context = new TenantContext($tenant, $actor);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $ordinaryCenter = CostCenter::factory()->for($tenant)->create(['name' => 'Operations']);
+        $plafondCenter = CostCenter::factory()->for($tenant)->create(['name' => 'Plafond']);
+
+        $ordinary = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $ordinaryCenter->getKey(),
+        ]);
+        $alternative = ExpenseRow::factory()->for($ordinary)->create([
+            'tenant_id' => $tenant->getKey(), 'position' => 1, 'type' => ExpenseType::Estimate,
+            'entered_amount' => '100.00', 'net_amount' => '100.00', 'vat_amount' => '22.00', 'gross_amount' => '122.00',
+        ]);
+        $selected = ExpenseRow::factory()->for($ordinary)->create([
+            'tenant_id' => $tenant->getKey(), 'position' => 2, 'type' => ExpenseType::Quote,
+            'entered_amount' => '120.00', 'net_amount' => '120.00', 'vat_amount' => '26.40', 'gross_amount' => '146.40',
+        ]);
+        $actual = ExpenseRow::factory()->for($ordinary)->create([
+            'tenant_id' => $tenant->getKey(), 'position' => 3, 'type' => ExpenseType::Actual,
+            'entered_amount' => '80.00', 'net_amount' => '80.00', 'vat_amount' => '17.60',
+            'gross_amount' => '97.60', 'spend_date' => '2026-03-01',
+        ]);
+        $ordinary->forceFill(['current_planning_row_id' => $selected->getKey()])->saveQuietly();
+
+        $plafond = Expense::factory()->for($tenant)->plafond()->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $plafondCenter->getKey(),
+        ]);
+        $firstAdjustment = ExpenseRow::factory()->for($plafond)->allocationAdjustment($actor)->create([
+            'tenant_id' => $tenant->getKey(), 'position' => 1, 'entered_amount' => '3000.00',
+            'net_amount' => '3000.00', 'vat_amount' => '660.00', 'gross_amount' => '3660.00',
+        ]);
+        $secondAdjustment = ExpenseRow::factory()->for($plafond)->allocationAdjustment($actor)->create([
+            'tenant_id' => $tenant->getKey(), 'position' => 2, 'entered_amount' => '500.00',
+            'net_amount' => '500.00', 'vat_amount' => '110.00', 'gross_amount' => '610.00',
+        ]);
+
+        $covered = Expense::factory()->for($tenant)->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $ordinaryCenter->getKey(),
+        ]);
+        $coveredQuote = ExpenseRow::factory()->for($covered)->create([
+            'tenant_id' => $tenant->getKey(), 'type' => ExpenseType::Quote,
+            'funded_plafond_expense_id' => $plafond->getKey(), 'entered_amount' => '4200.00',
+            'net_amount' => '4200.00', 'vat_amount' => '924.00', 'gross_amount' => '5124.00',
+        ]);
+        $covered->forceFill(['current_planning_row_id' => $coveredQuote->getKey()])->saveQuietly();
+
+        $preview = app(BudgetApprovalPreviewQuery::class)->execute($actor, $context, (int) $year->getKey());
+        $approval = app(ApproveBudgetProposal::class)->execute(
+            $actor,
+            $context,
+            $year,
+            ApproveBudgetProposalData::fromEvidence('2026-08-13', null, $preview->proposal->composition),
+            (string) str()->uuid(),
+        );
+        $items = $approval->items()->orderBy('source_identity')->get();
+
+        $this->assertSame(2, $approval->contributor_count);
+        $this->assertSame(['3620.00', '796.40', '4416.40', '3620.00'], [
+            $approval->total_net_amount,
+            $approval->total_vat_amount,
+            $approval->total_gross_amount,
+            $approval->total_official_amount,
+        ]);
+        $this->assertSame([
+            'expense-row:'.$selected->getKey(),
+            'plafond-allocation:'.$plafond->getKey(),
+        ], $items->pluck('source_identity')->all());
+        $this->assertSame(1, $items->where('source_identity', 'plafond-allocation:'.$plafond->getKey())->count());
+        $this->assertNull($items->firstWhere('source_identity', 'plafond-allocation:'.$plafond->getKey())?->expense_row_id);
+        foreach ([$alternative, $actual, $coveredQuote, $firstAdjustment, $secondAdjustment] as $excluded) {
+            $this->assertFalse($items->contains('expense_row_id', $excluded->getKey()));
+        }
+        foreach (['net', 'vat', 'gross', 'official'] as $measure) {
+            $itemColumn = $measure.'_amount';
+            $headerColumn = 'total_'.$measure.'_amount';
+            $sum = $items->reduce(
+                static fn (string $total, BudgetApprovalItem $item): string => bcadd($total, (string) $item->{$itemColumn}, 2),
+                '0.00',
+            );
+            $this->assertSame($approval->{$headerColumn}, $sum, $measure);
         }
     }
 
