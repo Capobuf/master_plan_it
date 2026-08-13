@@ -22,8 +22,9 @@ target: il codice corrente resta autorevole fino alla consegna delle relative Sl
 | 019 | Reporting analytics | Implementata nella baseline corrente; copy e regole sostituite da 022 deprecate come target |
 | 020 | Expense workspace UX | Implementata e verificata; in attesa di review Product Owner |
 | 021 | Workspace Impostazioni e IVA predefinita del Tenant | Implementata e verificata; in attesa di review Product Owner |
-| 022 | Application workspace UX e programma di riallineamento economico | `PROPOSED TARGET`; design di programma, non implementato; nessun `tasks.md` |
+| 022 | Application workspace UX e programma di riallineamento economico | Programma parzialmente implementato: Slice 023–024 verificate; nessun `tasks.md` globale |
 | 023 | Workspace annuale e Spesa autorevole | Implementata e verificata; fondazione del programma 022 |
+| 024 | Plafond singolo e copertura integrale | Implementata e verificata; Slice 025 sbloccata |
 
 ## Regola
 
@@ -35,6 +36,6 @@ Una directory resta qui solo finché rappresenta lavoro ancora aperto. A feature
 - `docs/STATUS.md` viene aggiornato;
 - gli artefatti della feature vengono rimossi.
 
-Le directory 009, 010, 011, 017, 018, 019, 020, 021 e 023 costituiscono baseline corrente o eccezioni
+Le directory 009, 010, 011, 017, 018, 019, 020, 021, 023 e 024 costituiscono baseline corrente o eccezioni
 temporanee. Il programma 022 non le riscrive retroattivamente: una futura Slice trasferisce nel
 codice soltanto il proprio delta approvato e aggiorna lo stato dopo verifica.

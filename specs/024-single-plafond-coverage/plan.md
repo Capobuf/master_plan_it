@@ -2,6 +2,8 @@
 
 **Branch**: `agent/024-single-plafond-coverage` | **Date**: 2026-08-12 | **Spec**: [spec.md](spec.md)
 
+**Delivery Status**: `VERIFIED CURRENT` on 2026-08-13; all 68 tasks and required gates complete.
+
 **Input**: Feature specification from `specs/024-single-plafond-coverage/spec.md`
 
 ## Summary

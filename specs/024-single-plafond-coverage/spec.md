@@ -4,14 +4,18 @@
 
 **Created**: 2026-08-12
 
-**Status**: `PROPOSED TARGET`
+**Status**: `VERIFIED CURRENT`
 
 **Input**: Consentire all'utente di gestire un solo Plafond corrente per Tenant, Anno Economico e Centro di Costo, variarne l'Allocazione con Righe additive, coprire integralmente singole Righe di Spesa e comprendere Allocazione, Copertura Prevista, Consumato, Disponibile e impatti prima di ogni mutazione bloccante.
 
 ## Contesto, Autorità e Delta
 
-- La Slice 023, integrata in `0d6c347289d886359923e582d6805f0accf489b8`, è `VERIFIED CURRENT` per Base Economica, contesto Tenant/Anno, Spesa ed ExpenseRow autorevoli, importi Netto/IVA/Lordo, pianificazione corrente, Effettivi, concorrenza ottimistica, Revisioni, Audit e proiezione economica condivisa.
-- Questa Slice è il solo delta `PROPOSED TARGET` per Plafond singolo, Righe additive dell'Allocazione, copertura integrale, capienza bloccante e viste Plafond coerenti. Non rispecifica l'intero Workspace Spese.
+- La Slice 023, integrata in `0d6c347289d886359923e582d6805f0accf489b8`, resta la baseline
+  verificata per Base Economica, contesto Tenant/Anno, Spesa ed ExpenseRow autorevoli, importi
+  Netto/IVA/Lordo, pianificazione corrente, Effettivi, Revisioni, Audit e proiezione condivisa.
+- Questa Slice è il delta `VERIFIED CURRENT` per Plafond singolo, Righe additive dell'Allocazione,
+  copertura integrale, capienza bloccante e viste Plafond coerenti. Non rispecifica l'intero
+  Workspace Spese.
 - Sono `DEPRECATED` come target più Plafond correnti per lo stesso Tenant/Anno/Centro di Costo, priorità o ordinamento tra Plafond, Quote multiple, `coverage_allocations`, copertura parziale, consumo sequenziale, Sforamento e **Completa Copertura** come azione separata.
 - Spesa e relative Righe restano l'unica sorgente monetaria. Il Plafond è una Spesa di Natura `Plafond`, non un costo Effettivo; ogni variazione dell'Allocazione è una Riga della stessa Spesa con semantica dedicata `Variazione Allocazione`.
 - Il server resta l'unico proprietario delle regole economiche. Le superfici utente presentano importi e conseguenze ricevuti dalla proiezione autorevole senza mantenere un secondo calcolo.

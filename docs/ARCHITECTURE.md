@@ -3,7 +3,7 @@
 Stato: `VERIFIED CURRENT` per il runtime implementato; i vincoli di progetto elencati derivano
 dalle decisioni approvate e dal codice corrente.
 
-Baseline funzionale: Slice 023 verificata nel worktree corrente.
+Baseline funzionale: Slice 024 verificata nel worktree corrente.
 
 ## Runtime
 
@@ -80,10 +80,29 @@ Gli errori devono essere osservabili e diagnosticabili.
 - `EconomicDatasetQuery` carica il dataset annuale una volta e `EconomicEngine` produce una
   `AnnualEconomicProjection` immutabile. Documento, Registro, Budget, Report e Dashboard ne
   consumano slice e aggregazioni senza introdurre formule concorrenti.
+- La stessa proiezione produce `PlafondEconomicProjection` e `PlafondImpact`: Allocazione deriva
+  dalle Righe `allocation_adjustment`, Copertura Prevista dalle pianificazioni coperte, Consumato
+  soltanto dagli Actual coperti e Disponibile dalla loro differenza. Le query di Plafond applicano
+  i filtri di presentazione dopo aver costruito il dataset annuale completo.
 - Le somme usano soltanto stringhe decimali e BCMath; il frontend non ricalcola denaro autorevole.
 - Le mutazioni economiche acquisiscono `AnnualEconomicMutationGuard`: opzionalmente Tenant per
   primo, poi tutti i PlanningYear per ID crescente e infine aggregate/righe. Scritture sullo stesso
   anno sono serializzate; anni distinti restano indipendenti se non è richiesto il lock Tenant.
+
+## Boundary Plafond
+
+- `routes/api/v1/plafonds.php` è l'unica superficie di creazione, lista, dettaglio, preview,
+  variazione e report del Plafond. Il controller Expense rifiuta `kind=plafond` e
+  `allocation_adjustment` dai payload generici.
+- Lo slot live MySQL garantisce una sola root per Tenant/Anno/Centro; le Actions e
+  `AnnualEconomicMutationGuard` rendono lineari unicità, capienza, cambio Base e spostamenti tra
+  Plafond sotto concorrenza.
+- Letture e mutazioni autorizzano abilities e relazioni prima dei lookup business. Un attore con
+  sola scrittura può ottenere le misure necessarie ma non titoli, descrizioni o righe bloccanti di
+  Spese che non può leggere; ID mancanti e foreign restano indistinguibili nel contratto pubblico.
+- `PLAFOND_INSUFFICIENT` trasporta importi decimali e impatto tipizzato. Preview e failure non
+  producono evidenza di successo; ogni mutazione riuscita produce una revisione aggregata e il
+  relativo audit business nella stessa transazione.
 
 ## Approvazioni e storia annuale
 

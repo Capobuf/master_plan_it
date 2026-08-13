@@ -1,7 +1,7 @@
 # Data Model: Plafond Singolo e Copertura Integrale
 
 **Date**: 2026-08-12
-**Status**: Phase 1 design
+**Status**: `VERIFIED CURRENT`
 
 ## Scope
 

@@ -1,6 +1,6 @@
 # Regole di dominio implementate
 
-Stato: `VERIFIED CURRENT` dopo l'implementazione della Slice 023.
+Stato: `VERIFIED CURRENT` dopo l'implementazione della Slice 024.
 
 Questo documento descrive soltanto regole che devono restare dopo la rimozione degli Spec Kit
 storici. Le funzionalità non implementate sono descritte esclusivamente negli Spec Kit attivi.
@@ -102,6 +102,31 @@ storici. Le funzionalità non implementate sono descritte esclusivamente negli S
 - History, compare e restore sono disponibili soltanto sul record corrente e secondo ability.
 - La cancellazione è terminale, richiede assenza di Expense correnti collegate, non effettua detach
   o cascade e non può essere annullata da revision restore.
+
+## Plafond
+
+- Il Plafond è una Spesa gestionale dedicata, creata soltanto dalle route `/api/v1/plafonds`; le
+  route generiche delle Spese accettano esclusivamente Spese `Ordinary`.
+- Esiste al massimo un Plafond corrente per Tenant, Anno Economico e Centro di Costo. Il vincolo
+  usa uno slot live generato, quindi una root soft-deleted non occupa lo slot.
+- L'Allocazione è la somma firmata di Righe `allocation_adjustment` non nulle. Ogni variazione
+  conserva data, autore server-side e componenti Net/IVA/Gross; il Plafond non è mai un Effettivo.
+- Ogni Riga ordinaria può essere coperta integralmente da zero o un Plafond dello stesso Tenant e
+  Anno. Il Centro di Costo della Riga può differire; copertura Plafond ed Extra Budget sono
+  mutuamente esclusivi. Non esistono percentuali, quote multiple o coperture parziali.
+- Il Motore Economico espone separatamente `Allocazione`, `Copertura Prevista`, `Consumato` e
+  `Disponibile`. `Disponibile = Allocazione - Consumato`; soltanto gli Actual coperti, incluso il
+  loro segno, alimentano Consumato. Estimate e Quote coperte possono superare il Disponibile e
+  restano informative.
+- Un Actual coperto o una riduzione dell'Allocazione che porterebbe Consumato oltre Allocazione è
+  rifiutato atomicamente con `PLAFOND_INSUFFICIENT`. Preview e conferma non riservano capienza; la
+  conferma rivalida sotto la guardia Tenant/Anno e non lascia righe, revisioni o audit parziali.
+- Le mutazioni di Plafond e copertura sono ammesse soltanto con Budget in Preparazione. Un Plafond
+  referenziato non è eliminabile; il restore di una revisione su root live rivalida unicità, anno,
+  XOR e capienza. Il restore di una root Plafond eliminata appartiene al futuro Cestino.
+- Documento, Registro, Budget e Report Plafond consumano la proiezione annuale completa prima dei
+  filtri e riconciliano al centesimo anche con righe coperte di Centri differenti. Allocazione entra
+  una volta nella pianificazione annuale; la pianificazione coperta non viene sommata di nuovo.
 
 ## Revisioni operative
 
