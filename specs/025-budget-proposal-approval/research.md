@@ -13,10 +13,13 @@
   Tenant/Year projection. They exclude soft-deleted expenses and rows from the *current*
   projection and already mark the one-time annual contributors through
   `ProjectedEconomicLine::contributesToCurrentPlanning`.
-- `AnnualEconomicMutationGuard` locks the Tenant first when requested and then Tenant-scoped
-  `PlanningYear` rows in sorted ID order. Expense mutations already acquire this guard. It is the
-  shared linearization point; a second economic projection or a separate approval lock is not
-  permitted.
+- `AnnualEconomicMutationGuard` always locks the Tenant first (shared for ordinary writers,
+  exclusive for Approval/Base mutation) and then Tenant-scoped `PlanningYear` rows in sorted ID
+  order. Expense, Project and Contract mutations already acquire this guard; copied-dimension
+  writers join the same Tenant-first order before locking their roots. It is the shared
+  linearization point; a second projection implementation/source or a separate approval lock is
+  not permitted. Approval may invoke the same projection twice for identity discovery and the
+  final authoritative rebuild after its contributing locks.
 - The existing tenancy middleware, `TenantOwnedRecordQuery`, policies, API error envelope,
   optimistic `lock_version`, revision batches, audit recorder, Tenant timezone, and exact decimal
   conventions remain the current contract. Slice 022 records the target annual lifecycle and
@@ -230,10 +233,11 @@ Tenant exception, and endpoint ability first. Then resolve the PlanningYear thro
 the same envelope. For approval-specific paths, resolve the approval only through the already
 Tenant-scoped Year and require it to be active; missing, foreign, annulled, or non-active targets
 do not yield a favorable preview. Inside each mutation, acquire `AnnualEconomicMutationGuard` and
-re-query the same Tenant/Year and target state before checking version, fingerprint, date, or
-blockers. Validate semantic input only after the protected target is established; the mutation
-checks state/version before creating any evidence, then applies the fingerprint or blocker check
-under the lock.
+re-query the same Tenant/Year and target state. Approval checks the Tenant-local future-date bound
+first, then state/active slot, Budget version, exact schema/projection versions, the authoritative
+rebuilt fingerprint, and only then empty composition. Annulment retains its own
+state/version/blocker precedence. No mutation creates evidence before all applicable checks
+succeed.
 
 **Rationale**: This makes authorization fail before protected reads, makes missing and foreign
 resources observationally equivalent, and avoids accepting a target that changed between routing
@@ -272,13 +276,13 @@ into replay semantics and could bypass required revalidation.
 
 ### 11. Approval and annulment transaction boundary
 
-**Decision**: Both Actions use one database transaction. Approval obtains the shared annual guard
-(with Tenant lock for the first-basis-lock path), validates the protected actor/Year and current
-state/version, checks the Tenant-local date and fingerprint, rejects empty composition, inserts the
-single active header and all immutable items, transitions the Year, sets
-`economic_basis_locked_at` only if null, and writes exactly one revision batch and one
-operation-specific business Audit. The shared revision helper also writes its normal
-`revision.batch.begin` infrastructure Audit.
+**Decision**: Both Actions use one database transaction. Approval obtains the annual guard with an
+exclusive Tenant lock, reloads/reauthorizes the actor and locked Tenant, checks the Tenant-local
+date before state/version, discovers and locks all contributing roots and copied dimensions, then
+rebuilds and checks the fingerprint before rejecting an empty composition. It begins exactly one
+revision batch (and its `revision.batch.begin` infrastructure Audit), inserts the single active
+header and all immutable items, transitions the Year, links its new Version, sets
+`economic_basis_locked_at` only if null, and writes one operation-specific business Audit.
 Annulment locks the same Year and active approval, validates trimmed non-empty note and the expected
 PlanningYear/Budget version,
 rebuilds the four groups under lock, then marks that header annulled, transitions to Preparation,

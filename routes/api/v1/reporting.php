@@ -20,6 +20,10 @@ Route::middleware(RejectBearerTokens::class)
             ->middleware('application-ability:budget.view')
             ->whereNumber('planningYear')
             ->name('api.v1.budget.approval-preview');
+        Route::post('/budget/{planningYear}/approve', [BudgetApprovalController::class, 'approve'])
+            ->middleware(['application-ability:budget.view', 'application-ability:expense.update'])
+            ->whereNumber('planningYear')
+            ->name('api.v1.budget.approve');
         Route::get('/reports', EconomicReportController::class)
             ->middleware('application-ability:report.view')
             ->name('api.v1.reports');

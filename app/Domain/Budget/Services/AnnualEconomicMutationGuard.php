@@ -10,9 +10,11 @@ use Illuminate\Support\Collection;
 /**
  * Serializes every mutation that can change one or more annual economic datasets.
  *
- * Callers must already be inside a database transaction. When Tenant state is part
- * of the same mutation, request the Tenant lock first so every writer shares one
- * deterministic lock order.
+ * Callers must already be inside a database transaction. Every mutation acquires
+ * the Tenant first: shared for ordinary annual writes, exclusive only when Tenant
+ * state/Base is part of the mutation. It then locks Years in ascending ID order.
+ * This Tenant -> Years -> roots order prevents approval/Base writers from forming
+ * an InnoDB cycle with writers whose Revision/Audit inserts reference the Tenant.
  */
 final class AnnualEconomicMutationGuard
 {
@@ -22,15 +24,13 @@ final class AnnualEconomicMutationGuard
      */
     public function acquire(int $tenantId, array $planningYearIds, bool $lockTenant = false): Collection
     {
-        if ($lockTenant) {
-            $tenant = Tenant::query()
-                ->whereKey($tenantId)
-                ->lockForUpdate()
-                ->first();
+        $tenantQuery = Tenant::query()->whereKey($tenantId);
+        $tenant = $lockTenant
+            ? $tenantQuery->lockForUpdate()->first()
+            : $tenantQuery->sharedLock()->first();
 
-            if (! $tenant instanceof Tenant) {
-                throw new DomainException('TENANT_CONTEXT_REQUIRED');
-            }
+        if (! $tenant instanceof Tenant) {
+            throw new DomainException('TENANT_CONTEXT_REQUIRED');
         }
 
         $ids = collect($planningYearIds)

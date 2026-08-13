@@ -81,11 +81,22 @@ trait ManagesVendorMutation
     /** @return Collection<int, Vendor> */
     private function lockTenantVendors(Tenant $tenant): Collection
     {
+        $this->lockTenantShared($tenant);
+
         return Vendor::query()
             ->where('tenant_id', $tenant->getKey())
             ->lockForUpdate()
             ->get()
             ->keyBy(fn (Vendor $vendor): int => (int) $vendor->getKey());
+    }
+
+    /** Tenant S must precede copied-dimension root locks and Tenant-FK evidence writes. */
+    private function lockTenantShared(Tenant $tenant): void
+    {
+        $locked = Tenant::query()->whereKey($tenant->getKey())->sharedLock()->first();
+        if (! $locked instanceof Tenant) {
+            throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
+        }
     }
 
     /** @param Collection<int, Vendor> $vendors */

@@ -263,14 +263,18 @@ snapshot fields and owns every business writer and operation UI.
    `expense.update` before economic reads; resolve Year inside the selected Tenant.
 2. Start one database transaction and acquire Tenant `FOR UPDATE`, then the selected PlanningYear
    through `AnnualEconomicMutationGuard`.
-3. Reload persisted actor/Tenant/Year; require `preparation` and the expected Budget version.
-4. Validate `effective_date <= today` in the locked Tenant timezone; `recorded_at` is server UTC.
-5. Rebuild the full projection/composition, reject count zero, reconcile measures, compare versions
-   and fingerprint; do not accept items or amounts from the client.
-6. Insert one active header and all immutable items, transition Year to `approved`, increment its
-   version once and set `economic_basis_locked_at` only when null.
-7. Create one Revision batch plus its inherited `revision.batch.begin` infrastructure Audit, and
-   one operation-specific `budget.approved` business Audit; commit once.
+3. Reload/reauthorize the persisted actor and locked Tenant/Year; validate
+   `effective_date <= today` in the locked Tenant timezone, then require `preparation`, zero active
+   Approval and the expected Budget version.
+4. Compare exact schema/projection versions, discover the contributing source/dimension identities,
+   and lock those rows in deterministic class then PK order.
+5. Rebuild the full projection/composition from the locked rows, reconcile measures, compare the
+   fingerprint and only then reject count zero; do not accept items or amounts from the client.
+6. Begin one Revision batch and its inherited `revision.batch.begin` infrastructure Audit, then
+   insert one active header and all immutable items.
+7. Transition Year to `approved`, increment its version once, link that new Version to the batch,
+   set `economic_basis_locked_at` only when null, write one operation-specific `budget.approved`
+   business Audit and commit once.
 
 Any error rolls back header/items, Year, first Base lock, Revision links and both evidence events.
 Two approvals are ordered by the Year guard and backed by active-slot uniqueness.

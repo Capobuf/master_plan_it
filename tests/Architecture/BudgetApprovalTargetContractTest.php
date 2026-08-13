@@ -73,6 +73,27 @@ final class BudgetApprovalTargetContractTest extends TestCase
         }
     }
 
+    public function test_copied_dimension_and_annual_writers_enter_the_tenant_lock_order_before_roots(): void
+    {
+        $guard = file_get_contents(app_path('Domain/Budget/Services/AnnualEconomicMutationGuard.php'));
+        $costCenters = file_get_contents(app_path('Domain/MasterData/Actions/Concerns/ManagesCostCenterMutation.php'));
+        $vendors = file_get_contents(app_path('Domain/MasterData/Actions/Concerns/ManagesVendorMutation.php'));
+        $createVendor = file_get_contents(app_path('Domain/MasterData/Actions/CreateVendor.php'));
+        $annualHistory = file_get_contents(app_path('Domain/Revisions/Actions/ActivateAnnualHistory.php'));
+
+        foreach ([$guard, $costCenters, $vendors, $createVendor, $annualHistory] as $source) {
+            self::assertIsString($source);
+        }
+        $this->assertStringContainsString('sharedLock()', $guard);
+        $this->assertStringContainsString('$this->lockTenantShared($tenant);', $costCenters);
+        $this->assertStringContainsString('$this->lockTenantShared($tenant);', $vendors);
+        $this->assertStringContainsString('$this->lockTenantShared($tenant);', $createVendor);
+        $this->assertStringContainsString('AnnualEconomicMutationGuard', $annualHistory);
+        $this->assertStringNotContainsString('lockForUpdate()', $annualHistory);
+        $this->assertStringContainsString('AnnualEconomicMutationGuard', file_get_contents(app_path('Domain/Projects/Actions/Concerns/ManagesProjects.php')));
+        $this->assertStringContainsString('AnnualEconomicMutationGuard', file_get_contents(app_path('Domain/Contracts/Actions/Concerns/ManagesContracts.php')));
+    }
+
     #[Group('deferred-budget-actions')]
     public function test_deferred_target_actions_are_visible_as_deliberate_red_contracts(): void
     {

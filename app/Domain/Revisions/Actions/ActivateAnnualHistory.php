@@ -2,6 +2,7 @@
 
 namespace App\Domain\Revisions\Actions;
 
+use App\Domain\Budget\Services\AnnualEconomicMutationGuard;
 use App\Domain\Revisions\Data\RevisionOperation;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\Contract;
@@ -26,7 +27,10 @@ final class ActivateAnnualHistory
 {
     private const BASELINE_REASON = 'Annual history activation baseline';
 
-    public function __construct(private readonly TenantAbilityAuthorizer $authorizer) {}
+    public function __construct(
+        private readonly TenantAbilityAuthorizer $authorizer,
+        private readonly AnnualEconomicMutationGuard $guard,
+    ) {}
 
     public function execute(User $actor, TenantContext $context, PlanningYear $target, string $correlationId): PlanningYear
     {
@@ -34,7 +38,9 @@ final class ActivateAnnualHistory
         $authorizedContext = new TenantContext($persistedTenant, $persistedActor);
 
         return DB::transaction(function () use ($authorizedContext, $correlationId, $persistedActor, $target): PlanningYear {
-            $year = PlanningYear::query()->where('tenant_id', $authorizedContext->tenantId)->lockForUpdate()->find($target->getKey());
+            $year = $this->guard
+                ->acquire($authorizedContext->tenantId, [(int) $target->getKey()])
+                ->get((int) $target->getKey());
             if (! $year instanceof PlanningYear) {
                 throw new DomainException('TENANT_RELATION_MISMATCH');
             }

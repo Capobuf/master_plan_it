@@ -81,11 +81,22 @@ trait ManagesCostCenterMutation
     /** @return Collection<int, CostCenter> */
     private function lockTenantCostCenters(Tenant $tenant): Collection
     {
+        $this->lockTenantShared($tenant);
+
         return CostCenter::query()
             ->where('tenant_id', $tenant->getKey())
             ->lockForUpdate()
             ->get()
             ->keyBy(fn (CostCenter $costCenter): int => (int) $costCenter->getKey());
+    }
+
+    /** Tenant S must precede copied-dimension root locks and Tenant-FK evidence writes. */
+    private function lockTenantShared(Tenant $tenant): void
+    {
+        $locked = Tenant::query()->whereKey($tenant->getKey())->sharedLock()->first();
+        if (! $locked instanceof Tenant) {
+            throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
+        }
     }
 
     /** @param Collection<int, CostCenter> $costCenters */

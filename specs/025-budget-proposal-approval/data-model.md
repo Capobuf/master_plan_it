@@ -432,26 +432,33 @@ restore può modificarli.
 
 Tutte le Action economiche condividono questo ordine, senza inversioni:
 
-1. `tenants.id` `FOR UPDATE` soltanto quando l'operazione legge o modifica Base/blocco Base;
+1. `tenants.id`: shared lock per writer ordinari e di dimensioni copiate; `FOR UPDATE` per
+   Approvazione o altra operazione che legge/modifica Base o stato Tenant;
 2. `planning_years` `FOR UPDATE`, sempre in ordine crescente di `id` per operazioni multi-Anno;
-3. header `budget_approvals` attivo quando deve essere modificato, poi Spese e Righe necessarie in
-   ordine crescente di PK;
+3. header `budget_approvals` attivo quando deve essere modificato, poi radici contributive e
+   dimensioni copiate in ordine deterministico di classe/tabella e PK;
 4. insert di fotografia/seam, Revisione e Audit.
 
-L'Approvazione usa sempre `Tenant -> PlanningYear`: dopo i lock verifica attore e versione,
-richiede `preparation`, ricostruisce il dataset completo con il Motore condiviso, confronta il
-fingerprint, inserisce header e tutte le voci, porta l'Anno ad `approved`, applica il primo blocco
-Base, crea Revisione e Audit e committa una sola volta.
+L'Approvazione usa sempre `Tenant X -> PlanningYear X`: ricarica/ri-autorizza l'attore senza
+bloccarne la riga, verifica prima la data Tenant-locale, quindi stato/slot attivo, versione e versioni
+schema/proiezione. Una prima composizione scopre soltanto le identità; l'Action blocca tutte le
+radici/dimensioni e ricostruisce poi il dataset autorevole. Solo dopo confronta il fingerprint e
+rifiuta l'eventuale composizione vuota. Infine apre il RevisionBatch e il relativo Audit
+infrastrutturale, inserisce header e tutte le voci, porta l'Anno ad `approved`, collega la nuova
+Version dell'Anno, applica il primo blocco Base, crea l'Audit business e committa una sola volta.
 
 L'Annullamento usa `PlanningYear -> BudgetApproval`: dopo i lock verifica versione, stato annuale e
 fotografia attiva, rivalida i quattro gruppi correnti includendo Soft Delete, quindi valorizza i
 metadati terminali, porta l'Anno a `preparation`, crea Revisione e Audit e committa una sola volta.
 La preview non acquisisce lock e non riserva nulla.
 
-Ogni writer di Effettivi, Extra Budget, Rettifiche e Chiusure deve acquisire il medesimo
-`PlanningYear` prima dell'insert/update/delete logico. Pertanto un blocker concorrente è ordinato
+Ogni writer di Effettivi, Extra Budget, Rettifiche e Chiusure acquisisce prima il Tenant shared e
+poi il medesimo `PlanningYear` prima dell'insert/update/delete logico. Anche ogni percorso di
+creazione/modifica/disattivazione/riattivazione/eliminazione/ripristino delle dimensioni copiate
+segue `Tenant S -> root`. Pertanto un blocker concorrente è ordinato
 interamente prima o dopo l'Annullamento; la query eseguita dopo il guard annuale non può osservare
-uno stato misto. Un writer che necessita anche del Tenant usa sempre `Tenant -> PlanningYear`.
+uno stato misto, e un writer non può invertire il lock Tenant richiesto dagli insert di
+Revision/Audit.
 
 La chiave univoca dell'active slot resta la difesa database contro writer concorrenti o difettosi;
 `lock_version`, fingerprint e guard annuale sono controlli complementari.

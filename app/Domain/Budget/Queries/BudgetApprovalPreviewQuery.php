@@ -4,6 +4,7 @@ namespace App\Domain\Budget\Queries;
 
 use App\Domain\Budget\Data\BudgetApprovalPreview;
 use App\Domain\Budget\Enums\BudgetState;
+use App\Domain\Budget\Services\ApprovalEffectiveDateValidator;
 use App\Domain\Budget\Services\BudgetProposalComposer;
 use App\Domain\Budget\Services\BudgetSourceAccessResolver;
 use App\Domain\Budget\Services\CoherentBudgetRead;
@@ -27,6 +28,7 @@ final readonly class BudgetApprovalPreviewQuery
         private TenantAbilityAuthorizer $authorizer,
         private CoherentBudgetRead $coherentRead,
         private BudgetSourceAccessResolver $sourceAccessResolver,
+        private ApprovalEffectiveDateValidator $effectiveDateValidator,
     ) {}
 
     public function execute(User $actor, TenantContext $context, int $planningYearId): BudgetApprovalPreview
@@ -39,7 +41,11 @@ final readonly class BudgetApprovalPreviewQuery
         return $this->coherentRead->execute(function () use ($persistedActor, $authorizedContext, $planningYearId, $sourceAccess, $canManage): BudgetApprovalPreview {
             $year = TenantOwnedRecordQuery::forTenant($authorizedContext, PlanningYear::class)
                 ->join('tenants', 'tenants.id', '=', 'planning_years.tenant_id')
-                ->select(['planning_years.*', 'tenants.economic_basis_locked_at as surface_base_locked_at'])
+                ->select([
+                    'planning_years.*',
+                    'tenants.economic_basis_locked_at as surface_base_locked_at',
+                    'tenants.timezone as surface_timezone',
+                ])
                 ->find($planningYearId);
             if (! $year instanceof PlanningYear) {
                 throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYearId]);
@@ -65,6 +71,7 @@ final readonly class BudgetApprovalPreviewQuery
                 yearLabel: (int) $year->year_label,
                 state: $state,
                 lockVersion: (int) $year->lock_version,
+                effectiveDateMax: $this->effectiveDateValidator->today((string) $year->getAttribute('surface_timezone')),
                 surfaceFingerprint: $proposal->surfaceFingerprint,
                 proposal: $proposal,
                 canApprove: $canManage && $state === BudgetState::Preparation->value && ! $proposal->isEmpty(),

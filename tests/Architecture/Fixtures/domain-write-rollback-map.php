@@ -2,8 +2,18 @@
 
 return [
     'schema' => 3,
-    'expectedDomainWriteCount' => 62,
+    'expectedDomainWriteCount' => 63,
     'writes' => [
+        'app/Domain/Budget/Actions/ApproveBudgetProposal.php' => [
+            'actionClass' => 'App\\Domain\\Budget\\Actions\\ApproveBudgetProposal',
+            'actionReference' => 'ApproveBudgetProposal::class',
+            'actionInvocation' => ['mode' => 'assigned-container', 'variable' => '$action', 'method' => 'execute'],
+            'testFile' => 'tests/Feature/Budget/BudgetProposalApprovalRollbackTest.php',
+            'testMethod' => 'test_every_approval_failure_checkpoint_rolls_back_header_items_state_base_revision_and_audits',
+            'failureTrigger' => 'throw new ',
+            'failureExpectation' => 'expectException(',
+            'rollbackAssertions' => ['assertDatabaseMissing(', 'assertDatabaseCount('],
+        ],
         'app/Domain/Plafonds/Actions/CreatePlafond.php' => [
             'actionClass' => 'App\\Domain\\Plafonds\\Actions\\CreatePlafond',
             'actionReference' => 'CreatePlafond::class',
