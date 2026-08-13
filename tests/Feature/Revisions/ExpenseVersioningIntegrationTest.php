@@ -96,6 +96,7 @@ class ExpenseVersioningIntegrationTest extends TestCase
             'confirmation_state',
             'confirmed_by_user_id',
             'confirmed_at',
+            'created_by_user_id',
             'is_system_managed',
             'manual_override_at',
             'contract_term_id',

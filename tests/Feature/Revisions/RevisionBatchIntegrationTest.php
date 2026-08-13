@@ -230,6 +230,7 @@ class RevisionBatchIntegrationTest extends TestCase
         [$actor, $context] = $this->actorContext();
         $vendor = Vendor::factory()->for($context->tenant)->create(['name' => 'Root supplier']);
         $correlationId = (string) Str::uuid();
+        $batchCount = RevisionBatch::query()->count();
 
         AuditEvent::creating(function (AuditEvent $event) use ($correlationId): void {
             if ($event->correlation_id !== $correlationId) {
@@ -252,7 +253,8 @@ class RevisionBatchIntegrationTest extends TestCase
                 null,
             );
         } finally {
-            $this->assertDatabaseCount('revision_batches', 0);
+            $this->assertDatabaseCount('revision_batches', $batchCount);
+            $this->assertDatabaseMissing('revision_batches', ['correlation_id' => $correlationId]);
             $this->assertDatabaseMissing('audit_events', ['correlation_id' => $correlationId]);
         }
     }
@@ -574,6 +576,7 @@ class RevisionBatchIntegrationTest extends TestCase
             null,
         );
         $batchId = $batch->getKey();
+        $itemCount = RevisionBatchItem::query()->count();
 
         $dispatcher = DB::connection()->getEventDispatcher();
         $eventName = QueryExecuted::class;
@@ -592,7 +595,8 @@ class RevisionBatchIntegrationTest extends TestCase
         } finally {
             $dispatcher->forget($eventName);
             $this->assertDatabaseHas('revision_batches', ['id' => $batchId]);
-            $this->assertDatabaseCount('revision_batch_items', 0);
+            $this->assertDatabaseCount('revision_batch_items', $itemCount);
+            $this->assertDatabaseMissing('revision_batch_items', ['revision_batch_id' => $batchId]);
         }
     }
 

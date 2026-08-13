@@ -46,7 +46,12 @@ final class OperationalRevisionRetentionTest extends TestCase
             OperationalRevisionQuery::LIMIT,
             RevisionBatchItem::query()->whereNotNull('version_id')->where('operational_root_id', $vendor->getKey())->count(),
         );
-        $this->assertSame('Versione 1', RevisionBatchItem::query()->oldest('id')->firstOrFail()->snapshot_contents['name']);
+        $this->assertSame('Versione 1', RevisionBatchItem::query()
+            ->where('operational_root_type', $vendor->getMorphClass())
+            ->where('operational_root_id', $vendor->getKey())
+            ->oldest('id')
+            ->firstOrFail()
+            ->snapshot_contents['name']);
         $this->assertNotNull(Version::withTrashed()->findOrFail($versions->first()->getKey())->deleted_at);
 
         (new Version)->pruneAll();
@@ -130,6 +135,7 @@ final class OperationalRevisionRetentionTest extends TestCase
             $this->item($tenant, $vendor, $batch, $version, "Rollback {$position}");
             $oldestVersion ??= $version;
         }
+        $itemCount = RevisionBatchItem::query()->count();
         $listener = function (QueryExecuted $query): void {
             if (str_contains(strtolower($query->sql), 'update `versions` set `deleted_at`')) {
                 throw new RuntimeException('forced retention marker failure');
@@ -145,7 +151,11 @@ final class OperationalRevisionRetentionTest extends TestCase
         } finally {
             $this->assertDatabaseHas('revision_batch_items', ['version_id' => $oldestVersion?->getKey()]);
             $this->assertDatabaseHas('versions', ['id' => $oldestVersion?->getKey(), 'deleted_at' => null]);
-            $this->assertDatabaseCount('revision_batch_items', 11);
+            $this->assertDatabaseCount('revision_batch_items', $itemCount);
+            $this->assertSame(11, RevisionBatchItem::query()
+                ->where('operational_root_type', $vendor->getMorphClass())
+                ->where('operational_root_id', $vendor->getKey())
+                ->count());
         }
     }
 
