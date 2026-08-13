@@ -116,22 +116,22 @@ and roll back every side effect at each injected failure boundary.
 
 ### Tests for User Story 2
 
-- [ ] T031 [P] [US2] Add Action tests for complete contributor snapshot, empty/all-zero/offsetting proposal, Tenant-local date boundaries and immutable copied actor/dimensions in `tests/Feature/Budget/BudgetProposalApprovalTest.php`
-- [ ] T032 [P] [US2] Extend approve HTTP tests for exact request allowlist, no `items`/amounts, `201` DTO, state errors, reused correlation and Tenant-local future rejection in `tests/Feature/Api/Budget/BudgetProposalApprovalApiTest.php`
-- [ ] T033 [P] [US2] Add failure-injection tests at header/item, state, first Base lock, Revision link and business Audit boundaries in `tests/Feature/Budget/BudgetProposalApprovalRollbackTest.php`
-- [ ] T034 [P] [US2] Add two-connection real-MySQL tests with 20 controlled preview-to-confirm contributor collisions (including same-total change), double confirmation, first approvals across two Tenant Years, and a concurrent annual writer proving preview neither locks nor reserves in `tests/Accounting/Integration/BudgetProposalApprovalConcurrencyTest.php`
-- [ ] T035 [P] [US2] Replace modal tests with full-impact confirmation, Tenant-timezone max date, optional note and retained input on future/stale error in `frontend/src/components/budget/BudgetApprovalModal.test.tsx`
+- [X] T031 [P] [US2] Add Action tests for complete contributor snapshot, empty/all-zero/offsetting proposal, Tenant-local date boundaries and immutable copied actor/dimensions in `tests/Feature/Budget/BudgetProposalApprovalTest.php`
+- [X] T032 [P] [US2] Extend approve HTTP tests for exact request allowlist, no `items`/amounts, `201` DTO, state errors, reused correlation and Tenant-local future rejection in `tests/Feature/Api/Budget/BudgetProposalApprovalApiTest.php`
+- [X] T033 [P] [US2] Add failure-injection tests at header/item, state, first Base lock, Revision link and business Audit boundaries in `tests/Feature/Budget/BudgetProposalApprovalRollbackTest.php`
+- [X] T034 [P] [US2] Add two-connection real-MySQL tests with 20 controlled preview-to-confirm contributor collisions (including same-total change), double confirmation, first approvals across two Tenant Years, and a concurrent annual writer proving preview neither locks nor reserves in `tests/Accounting/Integration/BudgetProposalApprovalConcurrencyTest.php`
+- [X] T035 [P] [US2] Replace modal tests with full-impact confirmation, Tenant-timezone max date, optional note and retained input on future/stale error in `frontend/src/components/budget/BudgetApprovalModal.test.tsx`
 
 ### Implementation for User Story 2
 
-- [ ] T036 [P] [US2] Add strict approve command DTO and Tenant-local date validator in `app/Domain/Budget/Data/ApproveBudgetProposalData.php` and `app/Domain/Budget/Services/ApprovalEffectiveDateValidator.php`
-- [ ] T037 [US2] Implement Tenant→PlanningYear guarded rebuild, version/fingerprint checks, empty detection, immutable header/items, first Base lock and atomic evidence in `app/Domain/Budget/Actions/ApproveBudgetProposal.php`
-- [ ] T038 [US2] Implement exact approve validation/response and `POST /budget/{planningYear}/approve` in `app/Http/Controllers/Api/V1/BudgetApprovalController.php`, `app/Http/Resources/Api/V1/BudgetApprovalSummaryResource.php` and `routes/api/v1/reporting.php`
-- [ ] T039 [US2] Update Approved overview to source planned totals solely from the active immutable snapshot while preserving current evaluations/Actuals in `app/Domain/Budget/Queries/AnnualBudgetQuery.php` and `app/Http/Resources/Api/V1/AnnualBudgetResource.php`
-- [ ] T040 [P] [US2] Implement strict approve API call and error preservation without legacy payload fallbacks in `frontend/src/api/budget.ts` and `frontend/src/api/budget.test.ts`
-- [ ] T041 [US2] Replace the selected-item editor with effective-date/note/composition confirmation and accessible stale re-review behavior in `frontend/src/components/budget/BudgetApprovalModal.tsx`
-- [ ] T042 [US2] Remove residual partial-approval DTO/controller/query assumptions after the legacy Action's Foundation removal from `app/Http/Controllers/Api/V1/BudgetLifecycleController.php`, `app/Domain/Budget/Queries/AnnualBudgetQuery.php` and `routes/api/v1/reporting.php`
-- [ ] T043 [US2] Register `ApproveBudgetProposal` and its failure checkpoints in `tests/Architecture/Fixtures/domain-write-rollback-map.php` and make `tests/Architecture/WriteRollbackCoverageTest.php` green
+- [X] T036 [P] [US2] Add strict approve command DTO and Tenant-local date validator in `app/Domain/Budget/Data/ApproveBudgetProposalData.php` and `app/Domain/Budget/Services/ApprovalEffectiveDateValidator.php`
+- [X] T037 [US2] Implement Tenant→PlanningYear guarded rebuild, version/fingerprint checks, empty detection, immutable header/items, first Base lock and atomic evidence in `app/Domain/Budget/Actions/ApproveBudgetProposal.php`
+- [X] T038 [US2] Implement exact approve validation/response and `POST /budget/{planningYear}/approve` in `app/Http/Controllers/Api/V1/BudgetApprovalController.php`, `app/Http/Resources/Api/V1/BudgetApprovalSummaryResource.php` and `routes/api/v1/reporting.php`
+- [X] T039 [US2] Update Approved overview to source planned totals solely from the active immutable snapshot while preserving current evaluations/Actuals in `app/Domain/Budget/Queries/AnnualBudgetQuery.php` and `app/Http/Resources/Api/V1/AnnualBudgetResource.php`
+- [X] T040 [P] [US2] Implement strict approve API call and error preservation without legacy payload fallbacks in `frontend/src/api/budget.ts` and `frontend/src/api/budget.test.ts`
+- [X] T041 [US2] Replace the selected-item editor with effective-date/note/composition confirmation and accessible stale re-review behavior in `frontend/src/components/budget/BudgetApprovalModal.tsx`
+- [X] T042 [US2] Remove residual partial-approval DTO/controller/query assumptions after the legacy Action's Foundation removal from `app/Http/Controllers/Api/V1/BudgetLifecycleController.php`, `app/Domain/Budget/Queries/AnnualBudgetQuery.php` and `routes/api/v1/reporting.php`
+- [X] T043 [US2] Register `ApproveBudgetProposal` and its failure checkpoints in `tests/Architecture/Fixtures/domain-write-rollback-map.php` and make `tests/Architecture/WriteRollbackCoverageTest.php` green
 
 **Checkpoint**: User Stories 1 and 2 work end to end; exactly one complete decision can become
 active and every failure is side-effect free.
