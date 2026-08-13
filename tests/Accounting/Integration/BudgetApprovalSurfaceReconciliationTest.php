@@ -39,12 +39,17 @@ final class BudgetApprovalSurfaceReconciliationTest extends TestCase
             'tenant_id' => $tenant->getKey(), 'type' => ExpenseType::Quote,
             'net_amount' => '120.00', 'vat_amount' => '26.40', 'gross_amount' => '146.40',
         ]);
+        $actual = ExpenseRow::factory()->for($expense)->create([
+            'tenant_id' => $tenant->getKey(), 'type' => ExpenseType::Actual,
+            'spend_date' => '2026-05-01', 'net_amount' => '20.00', 'vat_amount' => '4.40', 'gross_amount' => '24.40',
+        ]);
         $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
 
         $overview = app(AnnualBudgetQuery::class)->execute($actor, $context, (int) $year->getKey());
         $preview = app(BudgetApprovalPreviewQuery::class)->execute($actor, $context, (int) $year->getKey());
 
         $this->assertSame($overview['proposal']['composition']['fingerprint'], $preview->proposal->composition->fingerprint);
+        $this->assertSame($overview['surface_fingerprint'], $preview->surfaceFingerprint);
         $this->assertSame($overview['proposal']['total'], [
             'net' => $preview->proposal->total->net,
             'vat' => $preview->proposal->total->vat,
@@ -53,11 +58,20 @@ final class BudgetApprovalSurfaceReconciliationTest extends TestCase
         ]);
         $this->assertSame('146.40', $overview['proposal']['total']['official']);
         $this->assertSame([
-            'planning_year', 'currency', 'basis', 'economic_base', 'proposal', 'approved_snapshot',
+            'planning_year', 'currency', 'basis', 'surface_fingerprint', 'economic_base', 'proposal', 'approved_snapshot',
             'informative_evaluations', 'actuals', 'actions',
         ], array_keys($overview));
         foreach (['summary', 'expenses', 'mode', 'budget', 'totals', 'plafonds'] as $legacyKey) {
             $this->assertArrayNotHasKey($legacyKey, $overview);
         }
+
+        $compositionFingerprint = $preview->proposal->composition->fingerprint;
+        $surfaceFingerprint = $preview->surfaceFingerprint;
+        $actual->forceFill(['net_amount' => '21.00', 'vat_amount' => '4.62', 'gross_amount' => '25.62'])->saveQuietly();
+        $changed = app(BudgetApprovalPreviewQuery::class)->execute($actor, $context, (int) $year->getKey());
+
+        $this->assertSame($compositionFingerprint, $changed->proposal->composition->fingerprint);
+        $this->assertSame($year->lock_version, $changed->lockVersion);
+        $this->assertNotSame($surfaceFingerprint, $changed->surfaceFingerprint);
     }
 }

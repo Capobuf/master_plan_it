@@ -48,7 +48,7 @@ final class BudgetProposalComposerTest extends TestCase
         $this->assertSame('alternative_planning', $reasons['expense-row:101']);
         $this->assertSame('covered_by_plafond', $reasons['expense-row:301']);
         $this->assertSame('actual_not_proposed', $reasons['expense-row:103']);
-        $this->assertSame('soft_deleted', $reasons['expense-row:999']);
+        $this->assertArrayNotHasKey('expense-row:999', $reasons);
     }
 
     #[DataProvider('zeroCompositionProvider')]

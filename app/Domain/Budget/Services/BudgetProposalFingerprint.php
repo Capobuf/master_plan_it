@@ -48,7 +48,6 @@ final class BudgetProposalFingerprint
             'contributors' => array_map(fn (ApprovalContributor $item): array => $this->contributorData($item), $contributors),
             'currency' => $currency,
             'planning_year_id' => $planningYearId,
-            'projection_version' => BudgetCompositionEvidence::PROJECTION_VERSION,
             'schema_version' => BudgetCompositionEvidence::SCHEMA_VERSION,
             'tenant_id' => $tenantId,
         ];

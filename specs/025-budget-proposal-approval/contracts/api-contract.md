@@ -169,6 +169,16 @@ Soft-deleted source rows are described only where their detail is readable; they
 from the current proposal. A presentation filter may hide an item in the UI but cannot change this
 complete server-built composition or the response fingerprint.
 
+### Current surface fingerprint
+
+`surface_fingerprint` is a server-generated `sha256:` digest over the complete coherent evidence
+shown by the current overview/preview pair: PlanningYear state/version, currency and economic base,
+every projected line (including Actual and noncontributors), source identity/version/deletion facts,
+amounts and frozen dimensions/labels. It is canonical and stable across identical reads. Unlike
+`composition.fingerprint`, it changes when explanatory or Actual evidence changes. It is only a
+client-side coherence token: it is not approval authority, an idempotency key or an authorization
+grant, and clients never echo it in a command.
+
 ### BlockerItem and redaction
 
 `blockers` has **exactly** the four arrays `actuals`, `extra_budget`, `rectifications` and
@@ -243,6 +253,7 @@ It keeps current evaluations and actuals distinct.
     "planning_year": { "id": 25, "year_label": 2025, "state": "preparation", "lock_version": 7 },
     "currency": "EUR",
     "basis": "net",
+    "surface_fingerprint": "sha256:4fd1e733d7f6f02874ee34f8a9361432d216e66190bf12624369371657ce4a3d",
     "economic_base": { "basis": "net", "locked_at": null },
     "proposal": {
       "composition": {
@@ -281,6 +292,7 @@ must echo, all contributors and exclusions, and is never paginated or presentati
     "planning_year": { "id": 25, "year_label": 2025, "state": "preparation", "lock_version": 7 },
     "currency": "EUR",
     "basis": "net",
+    "surface_fingerprint": "sha256:4fd1e733d7f6f02874ee34f8a9361432d216e66190bf12624369371657ce4a3d",
     "composition": {
       "schema_version": "budget-proposal-composition/v1",
       "fingerprint": "sha256:7f1f85fb4ba4c5e7a9b374e6636c5a5d82dcbaf981b1b28812a28ed4f674ac02",

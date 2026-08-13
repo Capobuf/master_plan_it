@@ -39,7 +39,7 @@ final class BudgetProposalApprovalDatasetTest extends TestCase
             );
             $this->assertContains('covered_by_plafond', array_map(static fn ($item): string => $item->reason, $preview->proposal->exclusions));
             $this->assertContains('alternative_planning', array_map(static fn ($item): string => $item->reason, $preview->proposal->exclusions));
-            $this->assertContains('soft_deleted', array_map(static fn ($item): string => $item->reason, $preview->proposal->exclusions));
+            $this->assertNotContains('soft_deleted', array_map(static fn ($item): string => $item->reason, $preview->proposal->exclusions));
         }
     }
 

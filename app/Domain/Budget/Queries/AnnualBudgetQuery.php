@@ -48,13 +48,20 @@ final readonly class AnnualBudgetQuery
 
             /** @var AnnualEconomicProjection $projection */
             $projection = $this->engine->project($this->datasetQuery->execute($persistedActor, $authorizedContext, $planningYearId));
-            $proposal = $this->composer->compose($projection, (int) $year->lock_version, $sourceAccess);
             $state = $year->budget_state instanceof BudgetState
                 ? $year->budget_state->value
                 : (string) $year->budget_state;
+            $lockedAt = $tenant->economic_basis_locked_at;
+            $lockedAtString = $lockedAt instanceof CarbonInterface ? $lockedAt->toISOString() : null;
+            $proposal = $this->composer->compose(
+                $projection,
+                (int) $year->lock_version,
+                $sourceAccess,
+                budgetState: $state,
+                economicBaseLockedAt: $lockedAtString,
+            );
             $proposalArray = $proposal->toArray();
             unset($proposalArray['contributors'], $proposalArray['exclusions']);
-            $lockedAt = $tenant->economic_basis_locked_at;
 
             return [
                 'planning_year' => [
@@ -65,9 +72,10 @@ final readonly class AnnualBudgetQuery
                 ],
                 'currency' => $projection->currency,
                 'basis' => $projection->basis,
+                'surface_fingerprint' => $proposal->surfaceFingerprint,
                 'economic_base' => [
                     'basis' => $projection->basis,
-                    'locked_at' => $lockedAt instanceof CarbonInterface ? $lockedAt->toISOString() : null,
+                    'locked_at' => $lockedAtString,
                 ],
                 'proposal' => $proposalArray,
                 'approved_snapshot' => null,

@@ -6,12 +6,15 @@ use App\Domain\Budget\Queries\AnnualBudgetQuery;
 use App\Domain\Budget\Queries\BudgetApprovalPreviewQuery;
 use App\Domain\Expenses\Enums\ExpenseType;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Models\Contract;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
+use App\Models\Project;
 use App\Models\Tenant;
 use App\Models\User;
+use App\Models\Vendor;
 use App\Support\Authorization\PlatformAdministrator;
 use Database\Seeders\PermissionCatalogueSeeder;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
@@ -58,19 +61,37 @@ final class BudgetProposalSurfaceQueryCountTest extends TestCase
         }
         $context = new TenantContext($tenant, $actor);
         $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026 + $count]);
-        $center = CostCenter::factory()->for($tenant)->create();
         for ($index = 1; $index <= $count; $index++) {
+            $center = CostCenter::factory()->for($tenant)->create();
+            $vendor = Vendor::factory()->for($tenant)->create();
+            $project = Project::factory()->for($tenant)->create(['cost_center_id' => $center->getKey()]);
+            $contract = Contract::query()->create([
+                'tenant_id' => $tenant->getKey(), 'vendor_id' => $vendor->getKey(),
+                'cost_center_id' => $center->getKey(), 'project_id' => $project->getKey(),
+                'title' => 'Contract '.$year->getKey().'-'.$index, 'active' => true, 'lock_version' => 1,
+            ]);
             $expense = Expense::factory()->for($tenant)->create([
                 'planning_year_id' => $year->getKey(), 'cost_center_id' => $center->getKey(),
+                'project_id' => $project->getKey(), 'contract_id' => $contract->getKey(),
             ]);
             ExpenseRow::factory()->for($expense)->create([
                 'tenant_id' => $tenant->getKey(), 'position' => 1, 'type' => ExpenseType::Estimate,
+                'vendor_id' => $vendor->getKey(),
             ]);
             $current = ExpenseRow::factory()->for($expense)->create([
                 'tenant_id' => $tenant->getKey(), 'position' => 2, 'type' => ExpenseType::Quote,
+                'vendor_id' => $vendor->getKey(),
             ]);
             $expense->forceFill(['current_planning_row_id' => $current->getKey()])->saveQuietly();
         }
+        $plafondCenter = CostCenter::factory()->for($tenant)->create();
+        $plafond = Expense::factory()->for($tenant)->plafond()->create([
+            'planning_year_id' => $year->getKey(), 'cost_center_id' => $plafondCenter->getKey(),
+        ]);
+        ExpenseRow::factory()->for($plafond)->allocationAdjustment($actor)->create([
+            'tenant_id' => $tenant->getKey(), 'net_amount' => '500.00',
+            'vat_amount' => '110.00', 'gross_amount' => '610.00',
+        ]);
 
         return [$actor, $context, $year];
     }

@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Api\Reporting;
 
+use App\Models\BudgetApproval;
+use App\Models\BudgetApprovalItem;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
@@ -27,8 +29,6 @@ final class AnnualReportApiTest extends TestCase
         $expense = Expense::factory()->for($tenant)->create([
             'planning_year_id' => $year->getKey(),
             'cost_center_id' => $center->getKey(),
-            'approved_amount' => '80.00',
-            'approved_basis' => 'net',
         ]);
         $row = ExpenseRow::factory()->for($expense)->create([
             'tenant_id' => $tenant->getKey(),
@@ -41,6 +41,18 @@ final class AnnualReportApiTest extends TestCase
             'gross_amount' => '122.00',
         ]);
         $expense->forceFill(['current_planning_row_id' => $row->getKey()])->saveQuietly();
+        $approval = BudgetApproval::factory()->headerOnly()->for($tenant)->for($year, 'planningYear')->create([
+            'budget_basis' => 'net', 'total_net_amount' => '80.00', 'total_vat_amount' => '17.60',
+            'total_gross_amount' => '97.60', 'total_official_amount' => '80.00', 'contributor_count' => 1,
+        ]);
+        BudgetApprovalItem::factory()->for($approval, 'approval')->create([
+            'tenant_id' => $tenant->getKey(), 'planning_year_id' => $year->getKey(), 'budget_basis' => 'net',
+            'source_identity' => 'expense-row:'.$row->getKey(), 'expense_id' => $expense->getKey(),
+            'expense_row_id' => $row->getKey(), 'expense_title' => $expense->title,
+            'cost_center_id' => $center->getKey(), 'cost_center_name' => $center->name,
+            'vendor_id' => $vendor->getKey(), 'vendor_name' => $vendor->name,
+            'net_amount' => '80.00', 'vat_amount' => '17.60', 'gross_amount' => '97.60', 'official_amount' => '80.00',
+        ]);
         $this->actingAs($user, 'web');
 
         foreach (['cost_center', 'project', 'contract', 'vendor', 'expense'] as $groupBy) {

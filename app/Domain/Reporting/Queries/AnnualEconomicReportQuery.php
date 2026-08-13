@@ -3,11 +3,13 @@
 namespace App\Domain\Reporting\Queries;
 
 use App\Domain\Budget\Queries\HistoricalAnnualBudgetQuery;
+use App\Domain\Budget\Services\CoherentBudgetRead;
 use App\Domain\Economics\Data\AnnualEconomicProjection;
 use App\Domain\Economics\Data\EconomicMeasure;
 use App\Domain\Economics\Data\ProjectedEconomicLine;
 use App\Domain\Economics\Services\EconomicEngine;
 use App\Domain\Plafonds\Data\PlafondProjectionSerializer;
+use App\Domain\Reporting\Data\AnnualReportEvidence;
 use App\Domain\Reporting\Data\EconomicReportFilterData;
 use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\PlanningYear;
@@ -25,6 +27,7 @@ final readonly class AnnualEconomicReportQuery
         private EconomicEngine $engine,
         private HistoricalAnnualBudgetQuery $historicalBudgetQuery,
         private TenantAbilityAuthorizer $authorizer,
+        private CoherentBudgetRead $coherentRead,
     ) {}
 
     /** @return array<string, mixed> */
@@ -35,63 +38,88 @@ final readonly class AnnualEconomicReportQuery
         }
         [$persistedActor, $persistedTenant] = $this->authorizer->authorize($actor, $context, 'report.view');
         $authorizedContext = new TenantContext($persistedTenant, $persistedActor);
-        $year = PlanningYear::query()->where('tenant_id', $authorizedContext->tenantId)->find($filter->planningYearId);
-        if (! $year instanceof PlanningYear) {
-            throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$filter->planningYearId]);
-        }
-        $projection = $filter->asOf === null
-            ? $this->engine->project($this->datasetQuery->execute($persistedActor, $authorizedContext, $filter->planningYearId))
-            : $this->historicalBudgetQuery->projectionForReport($persistedActor, $authorizedContext, $filter->planningYearId, $filter->asOf);
-        $labels = $this->labels($authorizedContext, $filter->planningYearId);
-        $approvalItems = $this->approvalItems($authorizedContext, $filter);
-        $groups = $this->groups($projection, $filter, $labels, $approvalItems);
-        usort($groups, static fn (array $left, array $right): int => strcasecmp((string) $left['label'], (string) $right['label']) ?: strcmp((string) $left['key'], (string) $right['key']));
-        $totals = $this->sumProjectionTotals($groups, $projection->basis);
-        $approved = array_reduce($groups, static fn (string $sum, array $group): string => bcadd($sum, (string) $group['approved'], 2), '0.00');
-        $unapproved = array_reduce($groups, static fn (int $sum, array $group): int => $sum + (int) $group['unapproved_actual_expenses'], 0);
-        $total = count($groups);
-        $lastPage = max(1, (int) ceil($total / $filter->perPage));
-        $page = min(max($filter->page, 1), $lastPage);
-        $state = $year->budget_state instanceof \BackedEnum ? $year->budget_state->value : (string) $year->budget_state;
-        $cutoff = $filter->asOf === null ? null : $this->cutoff($filter->asOf, $authorizedContext->timezone);
 
-        return [
-            'data' => array_slice($groups, ($page - 1) * $filter->perPage, $filter->perPage),
-            'meta' => ['current_page' => $page, 'last_page' => $lastPage, 'per_page' => $filter->perPage, 'total' => $total],
-            'mode' => $filter->asOf === null ? 'current' : 'historical',
-            'requested_as_of' => $filter->asOf,
-            'cutoff_utc' => $cutoff?->toISOString(),
-            'read_only' => $filter->asOf !== null,
-            'budget' => ['planning_year_id' => (int) $year->getKey(), 'year' => (int) $year->year_label, 'state' => $state, 'lock_version' => (int) $year->lock_version],
-            'currency' => $projection->currency,
-            'basis' => $projection->basis,
-            'totals' => $totals,
-            'summary' => [
+        return $this->coherentRead->execute(function () use ($authorizedContext, $filter, $persistedActor): array {
+            $evidence = $filter->asOf === null
+                ? $this->currentEvidence($persistedActor, $authorizedContext, $filter->planningYearId)
+                : $this->historicalBudgetQuery->reportEvidenceForAuthorizedContext(
+                    $authorizedContext,
+                    $filter->planningYearId,
+                    $filter->asOf,
+                );
+            $projection = $evidence->projection;
+            $approvalItems = $this->approvalItems($authorizedContext, $filter);
+            $groups = $this->groups($projection, $filter, $evidence->labels, $approvalItems);
+            usort($groups, static fn (array $left, array $right): int => strcasecmp((string) $left['label'], (string) $right['label']) ?: strcmp((string) $left['key'], (string) $right['key']));
+            $totals = $this->sumProjectionTotals($groups, $projection->basis);
+            $approved = array_reduce($groups, static fn (string $sum, array $group): string => bcadd($sum, (string) $group['approved'], 2), '0.00');
+            $unapproved = array_reduce($groups, static fn (int $sum, array $group): int => $sum + (int) $group['unapproved_actual_expenses'], 0);
+            $total = count($groups);
+            $lastPage = max(1, (int) ceil($total / $filter->perPage));
+            $page = min(max($filter->page, 1), $lastPage);
+
+            return [
+                'data' => array_slice($groups, ($page - 1) * $filter->perPage, $filter->perPage),
+                'meta' => ['current_page' => $page, 'last_page' => $lastPage, 'per_page' => $filter->perPage, 'total' => $total],
+                'mode' => $filter->asOf === null ? 'current' : 'historical',
+                'requested_as_of' => $filter->asOf,
+                'cutoff_utc' => $evidence->cutoff?->toISOString(),
+                'read_only' => $filter->asOf !== null,
+                'budget' => [
+                    'planning_year_id' => $evidence->planningYearId,
+                    'year' => $evidence->yearLabel,
+                    'state' => $evidence->state,
+                    'lock_version' => $evidence->lockVersion,
+                ],
                 'currency' => $projection->currency,
-                'official_basis' => $projection->basis,
-                'proposed' => $totals['current_planning']['official'],
-                'approved_current' => $approved,
-                'actual' => $totals['actual']['official'],
-                'residual' => bcsub($approved, $totals['actual']['official'], 2),
-                'variance' => bcsub($totals['actual']['official'], $approved, 2),
-                'utilization_percentage' => $this->utilization($totals['actual']['official'], $approved),
-                'unapproved_actual_expenses' => $unapproved,
-            ],
-            'plafonds' => array_values(array_map(static fn ($plafond): array => [
-                'id' => $plafond->plafondExpenseId,
-                'planning_year_id' => $plafond->planningYearId,
-                'title' => $plafond->title,
-                'cost_center' => ['id' => $plafond->costCenterId, 'name' => $plafond->costCenterName],
-                'currency' => $plafond->currency,
-                'basis' => $plafond->basis,
-                'measures' => PlafondProjectionSerializer::measures($plafond),
-            ], array_filter($projection->plafonds, static fn ($plafond): bool => $filter->costCenterId === null || $plafond->costCenterId === $filter->costCenterId))),
-            'filters' => [
-                'planning_year_id' => $filter->planningYearId, 'cost_center_id' => $filter->costCenterId,
-                'project_id' => $filter->projectId, 'contract_id' => $filter->contractId,
-                'vendor_id' => $filter->vendorId, 'group_by' => $filter->groupBy, 'as_of' => $filter->asOf,
-            ],
-        ];
+                'basis' => $projection->basis,
+                'totals' => $totals,
+                'summary' => [
+                    'currency' => $projection->currency,
+                    'official_basis' => $projection->basis,
+                    'proposed' => $totals['current_planning']['official'],
+                    'approved_current' => $approved,
+                    'actual' => $totals['actual']['official'],
+                    'residual' => bcsub($approved, $totals['actual']['official'], 2),
+                    'variance' => bcsub($totals['actual']['official'], $approved, 2),
+                    'utilization_percentage' => $this->utilization($totals['actual']['official'], $approved),
+                    'unapproved_actual_expenses' => $unapproved,
+                ],
+                'plafonds' => array_values(array_map(static fn ($plafond): array => [
+                    'id' => $plafond->plafondExpenseId,
+                    'planning_year_id' => $plafond->planningYearId,
+                    'title' => $plafond->title,
+                    'cost_center' => ['id' => $plafond->costCenterId, 'name' => $plafond->costCenterName],
+                    'currency' => $plafond->currency,
+                    'basis' => $plafond->basis,
+                    'measures' => PlafondProjectionSerializer::measures($plafond),
+                ], array_filter($projection->plafonds, static fn ($plafond): bool => $filter->costCenterId === null || $plafond->costCenterId === $filter->costCenterId))),
+                'filters' => [
+                    'planning_year_id' => $filter->planningYearId, 'cost_center_id' => $filter->costCenterId,
+                    'project_id' => $filter->projectId, 'contract_id' => $filter->contractId,
+                    'vendor_id' => $filter->vendorId, 'group_by' => $filter->groupBy, 'as_of' => $filter->asOf,
+                ],
+            ];
+        });
+    }
+
+    private function currentEvidence(User $actor, TenantContext $context, int $planningYearId): AnnualReportEvidence
+    {
+        $year = PlanningYear::query()->where('tenant_id', $context->tenantId)->find($planningYearId);
+        if (! $year instanceof PlanningYear) {
+            throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYearId]);
+        }
+        $state = $year->budget_state instanceof \BackedEnum ? $year->budget_state->value : (string) $year->budget_state;
+
+        return new AnnualReportEvidence(
+            projection: $this->engine->project($this->datasetQuery->execute($actor, $context, $planningYearId)),
+            planningYearId: (int) $year->getKey(),
+            yearLabel: (int) $year->year_label,
+            state: $state,
+            lockVersion: (int) $year->lock_version,
+            labels: $this->labels($context, $planningYearId),
+            cutoff: null,
+        );
     }
 
     /**

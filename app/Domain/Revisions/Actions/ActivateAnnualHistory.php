@@ -15,6 +15,7 @@ use App\Models\RevisionBatchItem;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Models\Version;
+use App\Support\Authorization\TenantAbilityAuthorizer;
 use Carbon\CarbonImmutable;
 use DomainException;
 use Illuminate\Database\Eloquent\Model;
@@ -23,20 +24,25 @@ use Illuminate\Support\Facades\DB;
 
 final class ActivateAnnualHistory
 {
+    public function __construct(private readonly TenantAbilityAuthorizer $authorizer) {}
+
     public function execute(User $actor, TenantContext $context, PlanningYear $target, string $correlationId): PlanningYear
     {
-        return DB::transaction(function () use ($actor, $context, $correlationId, $target): PlanningYear {
-            $year = PlanningYear::query()->where('tenant_id', $context->tenantId)->lockForUpdate()->find($target->getKey());
+        [$persistedActor, $persistedTenant] = $this->authorizer->authorize($actor, $context, 'report.view');
+        $authorizedContext = new TenantContext($persistedTenant, $persistedActor);
+
+        return DB::transaction(function () use ($authorizedContext, $correlationId, $persistedActor, $target): PlanningYear {
+            $year = PlanningYear::query()->where('tenant_id', $authorizedContext->tenantId)->lockForUpdate()->find($target->getKey());
             if (! $year instanceof PlanningYear) {
                 throw new DomainException('TENANT_RELATION_MISMATCH');
             }
-            if (RevisionBatchItem::query()->where('tenant_id', $context->tenantId)->where('planning_year_id', $year->getKey())->exists()) {
+            if (RevisionBatchItem::query()->where('tenant_id', $authorizedContext->tenantId)->where('planning_year_id', $year->getKey())->exists()) {
                 return $year;
             }
 
             $activatedAt = CarbonImmutable::now('UTC');
             $year->forceFill(['history_activated_at' => $activatedAt, 'lock_version' => $year->lock_version + 1])->save();
-            $expenses = Expense::query()->where('tenant_id', $context->tenantId)
+            $expenses = Expense::query()->where('tenant_id', $authorizedContext->tenantId)
                 ->where('planning_year_id', $year->getKey())->withTrashed()->with(['rows' => fn ($query) => $query->withTrashed()])->get();
             /** @var Collection<int, Model> $models */
             $models = collect();
@@ -50,13 +56,13 @@ final class ActivateAnnualHistory
             $projectIds = $expenses->pluck('project_id')->filter()->unique();
             $contractIds = $expenses->pluck('contract_id')->filter()->unique();
             $vendorIds = $expenses->flatMap(fn (Expense $expense) => $expense->rows->pluck('vendor_id'))->filter()->unique();
-            $models->push(...CostCenter::query()->where('tenant_id', $context->tenantId)->whereIn('id', $costCenterIds)->withTrashed()->get());
-            $models->push(...Project::query()->where('tenant_id', $context->tenantId)->whereIn('id', $projectIds)->withTrashed()->get());
-            $models->push(...Contract::query()->where('tenant_id', $context->tenantId)->whereIn('id', $contractIds)->withTrashed()->get());
-            $models->push(...ContractTerm::query()->where('tenant_id', $context->tenantId)->whereIn('contract_id', $contractIds)->withTrashed()->get());
-            $models->push(...Vendor::query()->where('tenant_id', $context->tenantId)->whereIn('id', $vendorIds)->withTrashed()->get());
+            $models->push(...CostCenter::query()->where('tenant_id', $authorizedContext->tenantId)->whereIn('id', $costCenterIds)->withTrashed()->get());
+            $models->push(...Project::query()->where('tenant_id', $authorizedContext->tenantId)->whereIn('id', $projectIds)->withTrashed()->get());
+            $models->push(...Contract::query()->where('tenant_id', $authorizedContext->tenantId)->whereIn('id', $contractIds)->withTrashed()->get());
+            $models->push(...ContractTerm::query()->where('tenant_id', $authorizedContext->tenantId)->whereIn('contract_id', $contractIds)->withTrashed()->get());
+            $models->push(...Vendor::query()->where('tenant_id', $authorizedContext->tenantId)->whereIn('id', $vendorIds)->withTrashed()->get());
 
-            $batch = app(BeginRevisionBatch::class)->execute($actor, $context, RevisionOperation::Update, 'Annual history activation baseline', $correlationId, $year, null);
+            $batch = app(BeginRevisionBatch::class)->execute($persistedActor, $authorizedContext, RevisionOperation::Update, 'Annual history activation baseline', $correlationId, $year, null);
             $sequence = 1;
             foreach ($models->unique(fn (Model $model): string => $model->getMorphClass().'#'.$model->getKey()) as $model) {
                 /** @var PlanningYear|Expense|ExpenseRow|CostCenter|Project|Contract|ContractTerm|Vendor $model */

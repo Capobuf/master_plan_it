@@ -30,7 +30,7 @@ class PlanningYear extends Model
     use HasFactory, Versionable;
 
     /** @var list<string> */
-    protected array $versionable = ['tenant_id', 'year_label', 'active', 'budget_state', 'history_activated_at'];
+    protected array $versionable = ['tenant_id', 'year_label', 'active', 'budget_state', 'history_activated_at', 'lock_version'];
 
     protected VersionStrategy $versionStrategy = VersionStrategy::SNAPSHOT;
 
