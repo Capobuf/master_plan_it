@@ -4,6 +4,7 @@ namespace App\Domain\Budget\Services;
 
 use App\Domain\Budget\Data\ApprovalContributor;
 use App\Domain\Budget\Data\BudgetCompositionEvidence;
+use DomainException;
 use JsonException;
 use Normalizer;
 
@@ -43,12 +44,12 @@ final class BudgetProposalFingerprint
             $right->sourceIdentity,
         ));
         $payload = [
-            'budget_basis' => $basis,
-            'composition_schema_version' => BudgetCompositionEvidence::SCHEMA_VERSION,
-            'contributors' => array_map(static fn (ApprovalContributor $item): array => $item->canonicalData(), $contributors),
-            'currency_code' => $currency,
+            'basis' => $basis,
+            'contributors' => array_map(fn (ApprovalContributor $item): array => $this->contributorData($item), $contributors),
+            'currency' => $currency,
             'planning_year_id' => $planningYearId,
             'projection_version' => BudgetCompositionEvidence::PROJECTION_VERSION,
+            'schema_version' => BudgetCompositionEvidence::SCHEMA_VERSION,
             'tenant_id' => $tenantId,
         ];
 
@@ -75,5 +76,31 @@ final class BudgetProposalFingerprint
         }
 
         return $value;
+    }
+
+    /** @return array<string, mixed> */
+    private function contributorData(ApprovalContributor $contributor): array
+    {
+        $data = $contributor->canonicalData();
+        /** @var array<string, string> $amount */
+        $amount = $data['amount'];
+        foreach (['net', 'vat', 'gross', 'official'] as $component) {
+            $amount[$component] = $this->money($amount[$component]);
+        }
+        $data['amount'] = $amount;
+
+        return $data;
+    }
+
+    private function money(string $value): string
+    {
+        if (preg_match('/^-?\d+(?:\.(\d{1,2}))?$/D', $value) !== 1
+            || (str_starts_with($value, '-') && bccomp($value, '0', 2) === 0)) {
+            throw new DomainException('INVALID_CANONICAL_MONEY');
+        }
+
+        $canonical = bcadd($value, '0', 2);
+
+        return $canonical === '-0.00' ? '0.00' : $canonical;
     }
 }

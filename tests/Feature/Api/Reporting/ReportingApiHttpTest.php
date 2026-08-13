@@ -3,6 +3,8 @@
 namespace Tests\Feature\Api\Reporting;
 
 use App\Domain\Expenses\Enums\ExpenseType;
+use App\Domain\Revisions\Actions\ActivateAnnualHistory;
+use App\Domain\Tenancy\Data\TenantContext;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
@@ -10,6 +12,7 @@ use App\Models\PlanningYear;
 use App\Models\Project;
 use App\Models\Tenant;
 use App\Models\Vendor;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Testing\DatabaseTransactions;
 use Spatie\Permission\PermissionRegistrar;
 use Tests\Feature\Api\Concerns\InteractsWithApiFoundation;
@@ -113,6 +116,28 @@ final class ReportingApiHttpTest extends TestCase
             ->assertJsonPath('filters.vendor_id', $vendorB->getKey());
         $this->getJson($base.'&state=closed')
             ->assertUnprocessable()->assertJsonPath('error.code', 'VALIDATION_FAILED');
+    }
+
+    public function test_report_current_and_as_of_use_independent_internal_projection_models(): void
+    {
+        $tenant = Tenant::factory()->create();
+        $user = $this->tenantUser($tenant);
+        $year = PlanningYear::factory()->for($tenant)->create(['year_label' => 2026]);
+        $expense = $this->expenseWithProjection($tenant, $year, planned: '100.00', actual: '0.00');
+        $this->travelTo(CarbonImmutable::parse('2026-03-01 10:00:00', 'UTC'));
+        app(ActivateAnnualHistory::class)->execute($user, new TenantContext($tenant, $user), $year, (string) str()->uuid());
+        $expense->rows()->where('type', ExpenseType::Quote)->firstOrFail()
+            ->forceFill(['net_amount' => '200.00', 'gross_amount' => '200.00'])->saveQuietly();
+        $this->actingAs($user, 'web');
+
+        $base = '/api/v1/reports?planning_year_id='.$year->getKey().'&group_by=expense';
+        $this->getJson($base)->assertOk()
+            ->assertJsonPath('mode', 'current')
+            ->assertJsonPath('summary.proposed', '200.00');
+        $this->getJson($base.'&as_of=2026-03-01T10:30:00Z')->assertOk()
+            ->assertJsonPath('mode', 'historical')
+            ->assertJsonPath('read_only', true)
+            ->assertJsonPath('summary.proposed', '100.00');
     }
 
     public function test_reporting_auth_ability_and_tenant_boundaries_fail_closed(): void

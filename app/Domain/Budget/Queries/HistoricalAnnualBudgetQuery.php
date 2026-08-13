@@ -2,211 +2,156 @@
 
 namespace App\Domain\Budget\Queries;
 
+use App\Domain\Budget\Data\ApprovalExclusion;
+use App\Domain\Budget\Services\BudgetProposalComposer;
+use App\Domain\Budget\Services\BudgetSourceAccessResolver;
+use App\Domain\Budget\Services\CoherentBudgetRead;
 use App\Domain\Economics\Data\AnnualEconomicProjection;
 use App\Domain\Economics\Data\EconomicDataset;
 use App\Domain\Economics\Data\EconomicLine;
 use App\Domain\Economics\Data\EconomicMeasure;
 use App\Domain\Economics\Data\EconomicScope;
-use App\Domain\Economics\Data\ExpenseEconomicProjection;
-use App\Domain\Economics\Data\PlafondEconomicProjection;
-use App\Domain\Economics\Data\ProjectedEconomicLine;
 use App\Domain\Economics\Services\EconomicEngine;
 use App\Domain\Tenancy\Data\TenantContext;
+use App\Domain\Tenancy\Enums\BudgetBasis;
 use App\Domain\Tenancy\Queries\TenantOwnedRecordQuery;
 use App\Models\Contract;
-use App\Models\ContractTerm;
 use App\Models\CostCenter;
 use App\Models\Expense;
 use App\Models\ExpenseRow;
 use App\Models\PlanningYear;
 use App\Models\Project;
+use App\Models\Tenant;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Support\Authorization\TenantAbilityAuthorizer;
 use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use DomainException;
-use Illuminate\Auth\Access\AuthorizationException;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 
-final class HistoricalAnnualBudgetQuery
+/** @phpstan-type HistoricalSnapshot array{type: string, id: int, mutation: string, contents: array<string, mixed>} */
+final readonly class HistoricalAnnualBudgetQuery
 {
-    /** @var array<string, list<array<string, mixed>>> */
-    private array $referenceSnapshotCache = [];
+    public function __construct(
+        private EconomicEngine $engine,
+        private BudgetProposalComposer $composer,
+        private TenantAbilityAuthorizer $authorizer,
+        private CoherentBudgetRead $coherentRead,
+        private BudgetSourceAccessResolver $sourceAccessResolver,
+    ) {}
 
     /** @return array<string, mixed> */
     public function execute(User $actor, TenantContext $context, int $planningYearId, string $asOf, ?int $costCenterId = null): array
     {
-        $this->referenceSnapshotCache = [];
-        $actorQuery = $actor->tenant_id === null
-            ? $actor->newQuery()
-            : TenantOwnedRecordQuery::forTenant($context, User::class);
-        $persistedActor = $actorQuery->whereKey($actor->getRawOriginal($actor->getKeyName()))->where('is_active', true)->first();
-        if (! $persistedActor instanceof User || ($persistedActor->tenant_id !== null && (int) $persistedActor->tenant_id !== $context->tenantId)) {
-            throw new AuthorizationException('TENANT_CONTEXT_REQUIRED');
-        }
-        $year = TenantOwnedRecordQuery::forTenant($context, PlanningYear::class)->find($planningYearId);
-        if (! $year instanceof PlanningYear) {
-            throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYearId]);
-        }
-        $cutoff = $this->cutoff($asOf, $context->timezone);
-        $activatedAt = $year->history_activated_at;
-        if (! $activatedAt instanceof CarbonInterface || $cutoff->lessThan($activatedAt)) {
-            throw new DomainException('HISTORY_BEFORE_ACTIVATION');
-        }
+        [$persistedActor, $persistedTenant] = $this->authorizer->authorize($actor, $context, 'budget.view');
+        $authorizedContext = new TenantContext($persistedTenant, $persistedActor);
+        $cutoff = $this->cutoff($asOf, $persistedTenant->timezone);
+        $sourceAccess = $this->sourceAccessResolver->resolve($persistedActor, $authorizedContext);
 
-        $latest = $this->latestItems($context->tenantId, $cutoff, $planningYearId);
-        $expenseType = $this->morphClass(Expense::class);
-        $rowType = $this->morphClass(ExpenseRow::class);
-        $yearType = $this->morphClass(PlanningYear::class);
-        $yearSnapshot = collect($latest)->first(fn (array $item): bool => $item['type'] === $yearType && $item['id'] === $planningYearId && $item['mutation'] !== 'delete');
-        if (! is_array($yearSnapshot)) {
-            throw new DomainException('HISTORY_BEFORE_ACTIVATION');
-        }
+        return $this->coherentRead->execute(function () use ($authorizedContext, $planningYearId, $cutoff, $sourceAccess): array {
+            $tenant = Tenant::query()->find($authorizedContext->tenantId);
+            $year = TenantOwnedRecordQuery::forTenant($authorizedContext, PlanningYear::class)->find($planningYearId);
+            if (! $tenant instanceof Tenant || ! $year instanceof PlanningYear) {
+                throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYearId]);
+            }
+            $activatedAt = $year->history_activated_at;
+            if (! $activatedAt instanceof CarbonInterface || $cutoff->lessThan($activatedAt)) {
+                throw new DomainException('HISTORY_BEFORE_ACTIVATION');
+            }
 
-        $annualExpenseSnapshots = collect($latest)
-            ->filter(fn (array $item): bool => $item['type'] === $expenseType && $item['mutation'] !== 'delete')
-            ->values();
-        $annualExpenseSnapshotsById = $annualExpenseSnapshots->keyBy('id');
-        $expenseIds = $annualExpenseSnapshots->pluck('id')->all();
-        $rowSnapshots = collect($latest)->filter(fn (array $item): bool => $item['type'] === $rowType && $item['mutation'] !== 'delete')
-            ->filter(fn (array $item): bool => in_array((int) ($item['contents']['expense_id'] ?? 0), $expenseIds, true))->values();
-        $labels = $this->labels($context->tenantId, $cutoff, $annualExpenseSnapshots->all(), $rowSnapshots->all());
-        $basis = $context->budgetBasis->value;
-        $economicLines = [];
-        foreach ($annualExpenseSnapshots as $snapshot) {
-            $contents = $snapshot['contents'];
-            foreach ($rowSnapshots->filter(fn (array $row): bool => (int) ($row['contents']['expense_id'] ?? 0) === $snapshot['id']) as $row) {
-                $rowContents = $row['contents'];
-                $vendorId = isset($rowContents['vendor_id']) ? (int) $rowContents['vendor_id'] : null;
-                $fundedPlafondId = isset($rowContents['funded_plafond_expense_id']) ? (int) $rowContents['funded_plafond_expense_id'] : null;
-                $fundedSnapshot = $fundedPlafondId === null ? null : $annualExpenseSnapshotsById->get($fundedPlafondId);
-                $fundedCostCenterId = is_array($fundedSnapshot) ? (int) ($fundedSnapshot['contents']['cost_center_id'] ?? 0) : null;
-                $economicLines[] = new EconomicLine(
-                    $snapshot['id'],
-                    $row['id'],
-                    (string) ($contents['kind'] ?? 'ordinary'),
-                    (string) ($rowContents['type'] ?? 'estimate'),
-                    isset($rowContents['confirmation_state']) ? (string) $rowContents['confirmation_state'] : null,
-                    (int) ($contents['cost_center_id'] ?? 0),
-                    $labels['cost_center'][(int) ($contents['cost_center_id'] ?? 0)] ?? '—',
-                    $this->decimal($rowContents['net_amount'] ?? '0'),
-                    $this->decimal($rowContents['vat_amount'] ?? '0'),
-                    $this->decimal($rowContents['gross_amount'] ?? '0'),
-                    isset($rowContents['funded_plafond_expense_id']) ? (int) $rowContents['funded_plafond_expense_id'] : null,
-                    isset($rowContents['spend_date']) ? (string) $rowContents['spend_date'] : null,
-                    isset($rowContents['period_start']) ? (string) $rowContents['period_start'] : null,
-                    isset($rowContents['period_end']) ? (string) $rowContents['period_end'] : null,
-                    isset($rowContents['distribution']) ? (string) $rowContents['distribution'] : null,
-                    (bool) ($rowContents['is_extra'] ?? false),
-                    isset($contents['project_id']) ? (int) $contents['project_id'] : null,
-                    null,
-                    $labels['project'][(int) ($contents['project_id'] ?? 0)] ?? null,
-                    (int) ($contents['current_planning_row_id'] ?? 0) === $row['id'],
-                    (string) ($rowContents['description'] ?? ''),
-                    isset($rowContents['notes']) ? (string) $rowContents['notes'] : null,
-                    $vendorId,
-                    $vendorId === null ? null : ($labels['vendor'][$vendorId] ?? null),
-                    isset($contents['contract_id']) ? (int) $contents['contract_id'] : null,
-                    (string) ($contents['title'] ?? ''),
-                    isset($rowContents['created_by_user_id']) ? (int) $rowContents['created_by_user_id'] : null,
-                    null,
-                    is_array($fundedSnapshot) ? (string) ($fundedSnapshot['contents']['title'] ?? '') : null,
-                    $fundedCostCenterId,
-                    $fundedCostCenterId === null ? null : ($labels['cost_center'][$fundedCostCenterId] ?? '—'),
-                );
+            $latest = collect($this->latestItems($authorizedContext->tenantId, $cutoff, $planningYearId));
+            $yearSnapshot = $latest->first(fn (array $item): bool => $item['type'] === $this->morphClass(PlanningYear::class)
+                && $item['id'] === $planningYearId && $item['mutation'] !== 'delete');
+            if (! is_array($yearSnapshot)) {
+                throw new DomainException('HISTORY_BEFORE_ACTIVATION');
             }
-        }
-        $projection = app(EconomicEngine::class)->project(new EconomicDataset(
-            new EconomicScope($context->tenantId, $planningYearId, (int) ($yearSnapshot['contents']['year_label'] ?? $year->year_label), $context->currencyCode, $context->budgetBasis),
-            $economicLines,
-        ));
-        $expenseSnapshots = $annualExpenseSnapshots
-            ->filter(fn (array $item): bool => $costCenterId === null || (int) ($item['contents']['cost_center_id'] ?? 0) === $costCenterId)
-            ->values();
-        $selectedExpenseIds = $expenseSnapshots->pluck('id')->all();
-        $selectedRowSnapshots = $rowSnapshots
-            ->filter(fn (array $item): bool => in_array((int) ($item['contents']['expense_id'] ?? 0), $selectedExpenseIds, true))
-            ->values();
-        $rows = [];
-        foreach ($expenseSnapshots as $snapshot) {
-            $contents = $snapshot['contents'];
-            $expenseRows = $rowSnapshots->filter(fn (array $row): bool => (int) ($row['contents']['expense_id'] ?? 0) === $snapshot['id']);
-            $selectedId = isset($contents['current_planning_row_id']) ? (int) $contents['current_planning_row_id'] : null;
-            $selected = $expenseRows->first(fn (array $row): bool => $row['id'] === $selectedId);
-            $expenseProjection = $projection->expenses[$snapshot['id']] ?? null;
-            if (! $expenseProjection instanceof ExpenseEconomicProjection) {
-                throw new DomainException('ECONOMIC_RECONCILIATION_FAILED');
-            }
-            $currentPlanning = $expenseProjection->currentPlanning;
-            $actualMeasure = $expenseProjection->actual;
-            $planned = ($contents['kind'] ?? 'ordinary') === 'plafond' || $selectedId !== null
-                ? $this->contributivePlanning($expenseProjection->lines, $projection->basis)->official
-                : null;
-            $actual = $actualMeasure->official;
-            $approved = array_key_exists('approved_amount', $contents) && $contents['approved_amount'] !== null ? $this->decimal($contents['approved_amount']) : null;
-            $rows[] = [
-                'id' => $snapshot['id'], 'lock_version' => (int) ($contents['lock_version'] ?? 1), 'title' => (string) ($contents['title'] ?? ''),
-                'kind' => (string) ($contents['kind'] ?? 'ordinary'), 'cost_center_id' => (int) ($contents['cost_center_id'] ?? 0),
-                'cost_center_name' => $labels['cost_center'][(int) ($contents['cost_center_id'] ?? 0)] ?? '—',
-                'project_id' => isset($contents['project_id']) ? (int) $contents['project_id'] : null,
-                'project_title' => $labels['project'][(int) ($contents['project_id'] ?? 0)] ?? null,
-                'contract_id' => isset($contents['contract_id']) ? (int) $contents['contract_id'] : null,
-                'contract_title' => $labels['contract'][(int) ($contents['contract_id'] ?? 0)] ?? null,
-                'vendor_id' => is_array($selected) && isset($selected['contents']['vendor_id']) ? (int) $selected['contents']['vendor_id'] : null,
-                'vendor_name' => is_array($selected) ? ($labels['vendor'][(int) ($selected['contents']['vendor_id'] ?? 0)] ?? null) : null,
-                'current_planning_row_id' => $selectedId,
-                'funded_plafond_expense_id' => is_array($selected) && isset($selected['contents']['funded_plafond_expense_id']) ? (int) $selected['contents']['funded_plafond_expense_id'] : null,
+
+            $expenseSnapshots = $latest->where('type', $this->morphClass(Expense::class))->keyBy('id');
+            $rowSnapshots = $latest->where('type', $this->morphClass(ExpenseRow::class));
+            $references = $this->references($latest);
+            [$dataset, $metadata] = $this->datasetAndMetadata(
+                $authorizedContext->tenantId,
+                $planningYearId,
+                $yearSnapshot,
+                $expenseSnapshots,
+                $rowSnapshots,
+                $references,
+                $tenant,
+            );
+            $projection = $this->engine->project($dataset);
+            $proposal = $this->composer->compose(
+                $projection,
+                (int) ($yearSnapshot['contents']['lock_version'] ?? 1),
+                $sourceAccess,
+                $metadata,
+            );
+            $proposalArray = $proposal->toArray();
+            unset($proposalArray['contributors'], $proposalArray['exclusions']);
+            $state = (string) ($yearSnapshot['contents']['budget_state'] ?? 'preparation');
+            $lockedAt = $tenant->economic_basis_locked_at;
+
+            return [
+                'planning_year' => [
+                    'id' => $planningYearId,
+                    'year_label' => (int) ($yearSnapshot['contents']['year_label'] ?? $year->year_label),
+                    'state' => $state,
+                    'lock_version' => (int) ($yearSnapshot['contents']['lock_version'] ?? 1),
+                ],
                 'currency' => $projection->currency,
                 'basis' => $projection->basis,
-                'totals' => ['current_planning' => $this->measure($currentPlanning), 'actual' => $this->measure($actualMeasure)],
-                'plafond_measures' => isset($projection->plafonds[$snapshot['id']])
-                    ? $this->plafondMeasures($projection->plafonds[$snapshot['id']])
-                    : null,
-                'planned' => $planned, 'approved' => $approved, 'approved_basis' => $contents['approved_basis'] ?? null, 'actual' => $actual,
-                'residual' => $approved === null ? null : bcsub($approved, $actual, 2), 'variance' => $approved === null ? null : bcsub($actual, $approved, 2),
-                'has_actual' => $expenseRows->contains(fn (array $row): bool => ($row['contents']['type'] ?? null) === 'actual'),
-                'lines' => array_map(fn (ProjectedEconomicLine $line): array => $this->line($line), $expenseProjection->lines),
-                'rows' => $expenseRows->map(fn (array $row): array => ['id' => $row['id'], ...$row['contents']])->values()->all(),
+                'economic_base' => [
+                    'basis' => $projection->basis,
+                    'locked_at' => $lockedAt instanceof CarbonInterface ? $lockedAt->toISOString() : null,
+                ],
+                'proposal' => $proposalArray,
+                'approved_snapshot' => $this->approvedSnapshot($authorizedContext->tenantId, $planningYearId, $cutoff),
+                'informative_evaluations' => $this->measure($this->informativeEvaluations($proposal->exclusions, $projection->basis)),
+                'actuals' => $this->measure($projection->actual),
+                'actions' => [
+                    'can_view_approval_preview' => false,
+                    'can_approve' => false,
+                    'can_annul_active_approval' => false,
+                ],
             ];
-        }
+        });
+    }
 
-        [$selectedPlanning, $selectedActual] = $this->selectedTotals($rows, $projection);
-        $summary = $this->summary($rows, $selectedPlanning, $selectedActual, $context->tenantId, $planningYearId, $cutoff);
-        $historicalContext = $this->historicalContext(
-            $context->tenantId,
-            $planningYearId,
-            $cutoff,
-            $expenseSnapshots->all(),
-            $selectedRowSnapshots->all(),
-        );
-        $yearContents = $yearSnapshot['contents'];
-        $state = (string) ($yearContents['budget_state'] ?? 'preparation');
+    public function projectionForReport(User $actor, TenantContext $context, int $planningYearId, string $asOf): AnnualEconomicProjection
+    {
+        [$persistedActor, $persistedTenant] = $this->authorizer->authorize($actor, $context, 'report.view');
+        $authorizedContext = new TenantContext($persistedTenant, $persistedActor);
+        $cutoff = $this->cutoff($asOf, $persistedTenant->timezone);
 
-        return [
-            'mode' => 'historical', 'requested_as_of' => $asOf, 'cutoff_utc' => $cutoff->toISOString(), 'read_only' => true,
-            'budget' => ['planning_year_id' => $planningYearId, 'year' => (int) ($yearContents['year_label'] ?? $year->year_label), 'state' => $state,
-                'lock_version' => (int) ($yearContents['lock_version'] ?? 1), 'warning' => $state === 'closed' ? 'BUDGET_CLOSED' : null,
-                'history_activated_at' => $activatedAt->toISOString()],
-            'currency' => $projection->currency,
-            'basis' => $projection->basis,
-            'totals' => ['current_planning' => $this->measure($selectedPlanning), 'actual' => $this->measure($selectedActual)],
-            'summary' => ['currency' => $context->currencyCode, 'official_basis' => $basis, ...$summary], 'expenses' => $rows,
-            'plafonds' => array_values(array_map(fn ($plafond): array => [
-                'id' => $plafond->plafondExpenseId,
-                'planning_year_id' => $plafond->planningYearId,
-                'title' => $plafond->title,
-                'cost_center' => ['id' => $plafond->costCenterId, 'name' => $plafond->costCenterName],
-                'currency' => $plafond->currency,
-                'basis' => $plafond->basis,
-                'measures' => $this->plafondMeasures($plafond),
-            ], array_filter(
-                $projection->plafonds,
-                static fn ($plafond): bool => $costCenterId === null || $plafond->costCenterId === $costCenterId,
-            ))),
-            'historical_context' => $historicalContext,
-        ];
+        return $this->coherentRead->execute(function () use ($authorizedContext, $planningYearId, $cutoff): AnnualEconomicProjection {
+            $tenant = Tenant::query()->find($authorizedContext->tenantId);
+            $year = TenantOwnedRecordQuery::forTenant($authorizedContext, PlanningYear::class)->find($planningYearId);
+            if (! $tenant instanceof Tenant || ! $year instanceof PlanningYear) {
+                throw (new ModelNotFoundException)->setModel(PlanningYear::class, [$planningYearId]);
+            }
+            if (! $year->history_activated_at instanceof CarbonInterface || $cutoff->lessThan($year->history_activated_at)) {
+                throw new DomainException('HISTORY_BEFORE_ACTIVATION');
+            }
+            $latest = collect($this->latestItems($authorizedContext->tenantId, $cutoff, $planningYearId));
+            $yearSnapshot = $latest->first(fn (array $item): bool => $item['type'] === $this->morphClass(PlanningYear::class)
+                && $item['id'] === $planningYearId && $item['mutation'] !== 'delete');
+            if (! is_array($yearSnapshot)) {
+                throw new DomainException('HISTORY_BEFORE_ACTIVATION');
+            }
+            [$dataset] = $this->datasetAndMetadata(
+                $authorizedContext->tenantId,
+                $planningYearId,
+                $yearSnapshot,
+                $latest->where('type', $this->morphClass(Expense::class))->keyBy('id'),
+                $latest->where('type', $this->morphClass(ExpenseRow::class)),
+                $this->references($latest),
+                $tenant,
+            );
+
+            return $this->engine->project($dataset);
+        });
     }
 
     private function cutoff(string $value, string $timezone): CarbonImmutable
@@ -225,269 +170,245 @@ final class HistoricalAnnualBudgetQuery
     /** @return list<array{type:string,id:int,mutation:string,contents:array<string,mixed>}> */
     private function latestItems(int $tenantId, CarbonImmutable $cutoff, int $planningYearId): array
     {
-        $ranked = DB::table('revision_batch_items as items')->join('revision_batches as batches', 'batches.id', '=', 'items.revision_batch_id')
+        $ranked = DB::table('revision_batch_items as items')
+            ->join('revision_batches as batches', 'batches.id', '=', 'items.revision_batch_id')
             ->where('items.tenant_id', $tenantId)
-            ->where('items.planning_year_id', $planningYearId)->where('batches.occurred_at', '<=', $cutoff)
+            ->where('items.planning_year_id', $planningYearId)
+            ->where('batches.occurred_at', '<=', $cutoff)
             ->select(['items.versionable_type', 'items.versionable_id', 'items.mutation', 'items.snapshot_contents as contents'])
             ->selectRaw('ROW_NUMBER() OVER (PARTITION BY items.versionable_type, items.versionable_id ORDER BY batches.occurred_at DESC, batches.id DESC, items.sequence DESC) AS revision_rank');
 
-        return DB::query()->fromSub($ranked, 'ranked')->where('revision_rank', 1)->get()->map(function (object $row): array {
-            $contents = is_string($row->contents) ? json_decode($row->contents, true, 512, JSON_THROW_ON_ERROR) : (array) $row->contents;
+        return DB::query()->fromSub($ranked, 'ranked')->where('revision_rank', 1)->get()
+            ->map(static function (object $row): array {
+                $contents = is_string($row->contents)
+                    ? json_decode($row->contents, true, 512, JSON_THROW_ON_ERROR)
+                    : (array) $row->contents;
 
-            return ['type' => (string) $row->versionable_type, 'id' => (int) $row->versionable_id, 'mutation' => (string) $row->mutation, 'contents' => $contents];
-        })->all();
+                return [
+                    'type' => (string) $row->versionable_type,
+                    'id' => (int) $row->versionable_id,
+                    'mutation' => (string) $row->mutation,
+                    'contents' => $contents,
+                ];
+            })->all();
     }
 
     /**
-     * @param  list<array<string, mixed>>  $expenses
-     * @param  list<array<string, mixed>>  $rows
-     * @return array{cost_center: array<int, string>, project: array<int, string>, contract: array<int, string>, vendor: array<int, string>}
+     * @param  Collection<array-key, HistoricalSnapshot>  $latest
+     * @return array<class-string, array<int, HistoricalSnapshot>>
      */
-    private function labels(int $tenantId, CarbonImmutable $cutoff, array $expenses, array $rows): array
+    private function references(Collection $latest): array
     {
-        $targets = [
-            'cost_center' => [$this->morphClass(CostCenter::class), collect($expenses)->pluck('contents.cost_center_id')->filter()->unique()->all(), 'name'],
-            'project' => [$this->morphClass(Project::class), collect($expenses)->pluck('contents.project_id')->filter()->unique()->all(), 'title'],
-            'contract' => [$this->morphClass(Contract::class), collect($expenses)->pluck('contents.contract_id')->filter()->unique()->all(), 'title'],
-            'vendor' => [$this->morphClass(Vendor::class), collect($rows)->pluck('contents.vendor_id')->filter()->unique()->all(), 'name'],
-        ];
-        $result = ['cost_center' => [], 'project' => [], 'contract' => [], 'vendor' => []];
-        foreach ($targets as $key => [$type, $ids, $field]) {
-            /** @var class-string<Model> $model */
-            $model = match ($type) {
-                $this->morphClass(CostCenter::class) => CostCenter::class,
-                $this->morphClass(Project::class) => Project::class,
-                $this->morphClass(Contract::class) => Contract::class,
-                default => Vendor::class,
-            };
-            foreach ($this->referenceSnapshots($tenantId, $cutoff, $model, $ids) as $snapshot) {
-                $result[$key][(int) $snapshot['id']] = (string) ($snapshot[$field] ?? '—');
-            }
+        $result = [];
+        foreach ([CostCenter::class, Vendor::class, Project::class, Contract::class] as $model) {
+            $result[$model] = $latest->where('type', $this->morphClass($model))->mapWithKeys(
+                static fn (array $item): array => [$item['id'] => $item],
+            )->all();
         }
 
         return $result;
     }
 
     /**
-     * @param  list<array<string, mixed>>  $expenses
-     * @param  list<array<string, mixed>>  $rows
-     * @return array<string, list<array<string, mixed>>>
+     * @param  array<string, mixed>  $yearSnapshot
+     * @param  Collection<array-key, HistoricalSnapshot>  $expenseSnapshots
+     * @param  Collection<array-key, HistoricalSnapshot>  $rowSnapshots
+     * @param  array<class-string, array<int, HistoricalSnapshot>>  $references
+     * @return array{EconomicDataset, array{expenses: array<int, array<string, mixed>>, rows: array<int, array<string, mixed>>}}
      */
-    private function historicalContext(int $tenantId, int $planningYearId, CarbonImmutable $cutoff, array $expenses, array $rows): array
+    private function datasetAndMetadata(
+        int $tenantId,
+        int $planningYearId,
+        array $yearSnapshot,
+        Collection $expenseSnapshots,
+        Collection $rowSnapshots,
+        array $references,
+        Tenant $tenant,
+    ): array {
+        $expenses = [];
+        foreach ($expenseSnapshots as $id => $snapshot) {
+            $contents = $snapshot['contents'];
+            $costCenterId = (int) ($contents['cost_center_id'] ?? 0);
+            $projectId = isset($contents['project_id']) ? (int) $contents['project_id'] : null;
+            $contractId = isset($contents['contract_id']) ? (int) $contents['contract_id'] : null;
+            $costCenter = $references[CostCenter::class][$costCenterId] ?? null;
+            $project = $projectId === null ? null : ($references[Project::class][$projectId] ?? null);
+            $contract = $contractId === null ? null : ($references[Contract::class][$contractId] ?? null);
+            $expenses[(int) $id] = [
+                'id' => (int) $id,
+                'title' => (string) ($contents['title'] ?? ''),
+                'kind' => (string) ($contents['kind'] ?? 'ordinary'),
+                'lock_version' => (int) ($contents['lock_version'] ?? 1),
+                'cost_center_id' => $costCenterId,
+                'cost_center_exists' => $costCenter !== null,
+                'cost_center_name' => (string) ($costCenter['contents']['name'] ?? '—'),
+                'cost_center_deleted_at' => $this->deletedAt($costCenter),
+                'project_id' => $projectId,
+                'project_exists' => $projectId === null || $project !== null,
+                'project_title' => $projectId === null ? null : (string) ($project['contents']['title'] ?? '—'),
+                'project_deleted_at' => $this->deletedAt($project),
+                'contract_id' => $contractId,
+                'contract_exists' => $contractId === null || $contract !== null,
+                'contract_title' => $contractId === null ? null : (string) ($contract['contents']['title'] ?? '—'),
+                'contract_deleted_at' => $this->deletedAt($contract),
+                'deleted_at' => $this->deletedAt($snapshot),
+                'current_planning_row_id' => isset($contents['current_planning_row_id']) ? (int) $contents['current_planning_row_id'] : null,
+            ];
+        }
+
+        $rows = [];
+        $lines = [];
+        foreach ($rowSnapshots as $snapshot) {
+            $contents = $snapshot['contents'];
+            $expenseId = (int) ($contents['expense_id'] ?? 0);
+            $expense = $expenses[$expenseId] ?? null;
+            if (! is_array($expense)) {
+                continue;
+            }
+            $vendorId = isset($contents['vendor_id']) ? (int) $contents['vendor_id'] : null;
+            $vendor = $vendorId === null ? null : ($references[Vendor::class][$vendorId] ?? null);
+            $row = [
+                'id' => (int) $snapshot['id'],
+                'expense_id' => $expenseId,
+                'lock_version' => (int) ($contents['lock_version'] ?? 1),
+                'type' => (string) ($contents['type'] ?? 'estimate'),
+                'description' => (string) ($contents['description'] ?? ''),
+                'vendor_id' => $vendorId,
+                'vendor_exists' => $vendorId === null || $vendor !== null,
+                'vendor_name' => $vendorId === null ? null : (string) ($vendor['contents']['name'] ?? '—'),
+                'vendor_deleted_at' => $this->deletedAt($vendor),
+                'net_amount' => $this->decimal($contents['net_amount'] ?? '0'),
+                'vat_amount' => $this->decimal($contents['vat_amount'] ?? '0'),
+                'gross_amount' => $this->decimal($contents['gross_amount'] ?? '0'),
+                'deleted_at' => $this->deletedAt($snapshot),
+                'expense_deleted_at' => $expense['deleted_at'],
+            ];
+            $rows[$snapshot['id']] = $row;
+            if ($row['deleted_at'] !== null || $expense['deleted_at'] !== null) {
+                continue;
+            }
+            $fundedPlafondId = isset($contents['funded_plafond_expense_id']) ? (int) $contents['funded_plafond_expense_id'] : null;
+            $fundedExpense = $fundedPlafondId === null ? null : ($expenses[$fundedPlafondId] ?? null);
+            $lines[] = new EconomicLine(
+                $expenseId,
+                (int) $snapshot['id'],
+                (string) $expense['kind'],
+                (string) $row['type'],
+                isset($contents['confirmation_state']) ? (string) $contents['confirmation_state'] : null,
+                (int) $expense['cost_center_id'],
+                (string) $expense['cost_center_name'],
+                (string) $row['net_amount'],
+                (string) $row['vat_amount'],
+                (string) $row['gross_amount'],
+                $fundedPlafondId,
+                isset($contents['spend_date']) ? (string) $contents['spend_date'] : null,
+                isset($contents['period_start']) ? (string) $contents['period_start'] : null,
+                isset($contents['period_end']) ? (string) $contents['period_end'] : null,
+                isset($contents['distribution']) ? (string) $contents['distribution'] : null,
+                (bool) ($contents['is_extra'] ?? false),
+                $expense['project_id'],
+                null,
+                $expense['project_title'],
+                $expense['current_planning_row_id'] === (int) $snapshot['id'],
+                (string) $row['description'],
+                isset($contents['notes']) ? (string) $contents['notes'] : null,
+                $vendorId,
+                $row['vendor_name'],
+                $expense['contract_id'],
+                (string) $expense['title'],
+                isset($contents['created_by_user_id']) ? (int) $contents['created_by_user_id'] : null,
+                null,
+                $fundedExpense['title'] ?? null,
+                $fundedExpense['cost_center_id'] ?? null,
+                $fundedExpense['cost_center_name'] ?? null,
+            );
+        }
+
+        $basis = $tenant->budget_basis instanceof BudgetBasis
+            ? $tenant->budget_basis
+            : BudgetBasis::from((string) $tenant->budget_basis);
+        $dataset = new EconomicDataset(
+            new EconomicScope(
+                $tenantId,
+                $planningYearId,
+                (int) ($yearSnapshot['contents']['year_label'] ?? 0),
+                (string) $tenant->currency_code,
+                $basis,
+            ),
+            $lines,
+        );
+
+        return [$dataset, ['expenses' => $expenses, 'rows' => $rows]];
+    }
+
+    /** @param array<string, mixed>|null $snapshot */
+    private function deletedAt(?array $snapshot): ?string
     {
-        $costCenterIds = collect($expenses)->pluck('contents.cost_center_id')->filter()->unique()->values()->all();
-        $projectIds = collect($expenses)->pluck('contents.project_id')->filter()->unique()->values()->all();
-        $contractIds = collect($expenses)->pluck('contents.contract_id')->filter()->unique()->values()->all();
-        $vendorIds = collect($rows)->pluck('contents.vendor_id')->filter()->unique()->values()->all();
+        if ($snapshot === null) {
+            return null;
+        }
 
-        $projects = $this->referenceSnapshots($tenantId, $cutoff, Project::class, $projectIds);
-        $contracts = $this->referenceSnapshots($tenantId, $cutoff, Contract::class, $contractIds);
-        $costCenterIds = collect($costCenterIds)
-            ->concat(collect($projects)->pluck('cost_center_id'))
-            ->concat(collect($contracts)->pluck('cost_center_id'))
-            ->filter()->unique()->values()->all();
-        $vendorIds = collect($vendorIds)->concat(collect($contracts)->pluck('vendor_id'))->filter()->unique()->values()->all();
+        return $snapshot['mutation'] === 'delete'
+            ? (string) ($snapshot['contents']['deleted_at'] ?? 'deleted')
+            : ($snapshot['contents']['deleted_at'] ?? null);
+    }
 
-        $termIds = DB::table('revision_batch_items as items')
-            ->join('revision_batches as batches', 'batches.id', '=', 'items.revision_batch_id')
-            ->where('items.tenant_id', $tenantId)
-            ->where('items.versionable_type', $this->morphClass(ContractTerm::class))
-            ->where('batches.occurred_at', '<=', $cutoff)
-            ->whereIn('items.operational_root_id', $contractIds)
-            ->distinct()
-            ->pluck('items.versionable_id')
-            ->map(static fn ($id): int => (int) $id)
-            ->all();
-        $terms = collect($this->referenceSnapshots($tenantId, $cutoff, ContractTerm::class, $termIds))
-            ->values()->all();
+    /** @return array<string, mixed>|null */
+    private function approvedSnapshot(int $tenantId, int $planningYearId, CarbonImmutable $cutoff): ?array
+    {
+        $approval = DB::table('budget_approvals')
+            ->where('tenant_id', $tenantId)
+            ->where('planning_year_id', $planningYearId)
+            ->where('recorded_at', '<=', $cutoff)
+            ->where(fn ($query) => $query->whereNull('annulled_at')->orWhere('annulled_at', '>', $cutoff))
+            ->orderByDesc('recorded_at')
+            ->orderByDesc('id')
+            ->first();
+        if ($approval === null) {
+            return null;
+        }
 
         return [
-            'approval_operations' => $this->approvalSnapshots($tenantId, $planningYearId, $cutoff),
-            'cost_centers' => $this->referenceSnapshots($tenantId, $cutoff, CostCenter::class, $costCenterIds),
-            'projects' => $projects,
-            'contracts' => $contracts,
-            'contract_terms' => $terms,
-            'vendors' => $this->referenceSnapshots($tenantId, $cutoff, Vendor::class, $vendorIds),
+            'id' => (int) $approval->id,
+            'status' => 'active',
+            'effective_date' => (string) $approval->effective_date,
+            'recorded_at' => CarbonImmutable::parse((string) $approval->recorded_at, 'UTC')->toISOString(),
+            'total' => [
+                'net' => (string) $approval->total_net_amount,
+                'vat' => (string) $approval->total_vat_amount,
+                'gross' => (string) $approval->total_gross_amount,
+                'official' => (string) $approval->total_official_amount,
+            ],
         ];
     }
 
-    /**
-     * @param  class-string<Model>  $model
-     * @param  list<int>  $ids
-     * @return list<array<string, mixed>>
-     */
-    private function referenceSnapshots(int $tenantId, CarbonImmutable $cutoff, string $model, array $ids): array
+    /** @param list<ApprovalExclusion> $exclusions */
+    private function informativeEvaluations(array $exclusions, string $basis): EconomicMeasure
     {
-        if ($ids === []) {
-            return [];
-        }
-
-        sort($ids);
-        $cacheKey = $tenantId.'|'.$cutoff->toISOString().'|'.$model.'|'.implode(',', $ids);
-        if (array_key_exists($cacheKey, $this->referenceSnapshotCache)) {
-            return $this->referenceSnapshotCache[$cacheKey];
-        }
-
-        $ranked = DB::table('revision_batch_items as items')->join('revision_batches as batches', 'batches.id', '=', 'items.revision_batch_id')
-            ->where('items.tenant_id', $tenantId)
-            ->where('items.versionable_type', $this->morphClass($model))->whereIn('items.versionable_id', $ids)
-            ->where('batches.occurred_at', '<=', $cutoff)
-            ->select(['items.versionable_id', 'items.mutation', 'items.operational_root_id', 'items.snapshot_contents as contents'])
-            ->selectRaw('ROW_NUMBER() OVER (PARTITION BY items.versionable_id ORDER BY batches.occurred_at DESC, batches.id DESC, items.sequence DESC) AS revision_rank');
-
-        return $this->referenceSnapshotCache[$cacheKey] = DB::query()->fromSub($ranked, 'ranked')->where('revision_rank', 1)->where('mutation', 'upsert')->get()
-            ->map(function (object $row) use ($model): array {
-                $contents = json_decode((string) $row->contents, true, 512, JSON_THROW_ON_ERROR);
-                if ($model === ContractTerm::class && ! array_key_exists('contract_id', $contents)) {
-                    $contents['contract_id'] = (int) $row->operational_root_id;
-                }
-
-                return ['id' => (int) $row->versionable_id, ...$contents];
-            })->values()->all();
-    }
-
-    /** @return list<array<string, mixed>> */
-    private function approvalSnapshots(int $tenantId, int $planningYearId, CarbonImmutable $cutoff): array
-    {
-        $operations = DB::table('approval_operations')->where('tenant_id', $tenantId)
-            ->where('planning_year_id', $planningYearId)->where('recorded_at', '<=', $cutoff)
-            ->orderBy('recorded_at')->orderBy('id')->get();
-        if ($operations->isEmpty()) {
-            return [];
-        }
-        $items = DB::table('approval_items')->whereIn('approval_operation_id', $operations->pluck('id'))
-            ->orderBy('id')->get()->groupBy('approval_operation_id');
-
-        return $operations->map(static fn (object $operation): array => [
-            'id' => (int) $operation->id,
-            'kind' => (string) $operation->kind,
-            'effective_date' => (string) $operation->effective_date,
-            'recorded_at' => (string) $operation->recorded_at,
-            'actor_user_id' => (int) $operation->actor_user_id,
-            'reason' => $operation->reason === null ? null : (string) $operation->reason,
-            'budget_basis' => (string) $operation->budget_basis,
-            'correlation_id' => (string) $operation->correlation_id,
-            'items' => $items->get($operation->id, collect())->map(static fn (object $item): array => [
-                'id' => (int) $item->id,
-                'expense_id' => (int) $item->expense_id,
-                'previous_amount' => $item->previous_amount === null ? null : (string) $item->previous_amount,
-                'new_amount' => (string) $item->new_amount,
-                'delta_amount' => (string) $item->delta_amount,
-                'cost_center_id' => (int) $item->cost_center_id,
-                'project_id' => $item->project_id === null ? null : (int) $item->project_id,
-                'contract_id' => $item->contract_id === null ? null : (int) $item->contract_id,
-                'expense_kind' => (string) $item->expense_kind,
-                'budget_basis' => (string) $item->budget_basis,
-            ])->values()->all(),
-        ])->values()->all();
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $rows
-     * @return array<string, mixed>
-     */
-    private function summary(array $rows, EconomicMeasure $planning, EconomicMeasure $actualMeasure, int $tenantId, int $planningYearId, CarbonImmutable $cutoff): array
-    {
-        $approved = '0.00';
-        $unapproved = 0;
-        foreach ($rows as $row) {
-            if ($row['approved'] !== null) {
-                $approved = bcadd($approved, $row['approved'], 2);
-            }
-            if ($row['approved'] === null && $row['has_actual']) {
-                $unapproved++;
-            }
-        }
-        $operations = DB::table('approval_operations')->where('tenant_id', $tenantId)->where('planning_year_id', $planningYearId)->where('recorded_at', '<=', $cutoff);
-        $firstId = (clone $operations)->orderBy('recorded_at')->orderBy('id')->value('id');
-        $initial = $firstId === null ? '0.00' : $this->decimal(DB::table('approval_items')->where('approval_operation_id', $firstId)->sum('new_amount'));
-        $variations = $this->decimal(DB::table('approval_items')->join('approval_operations', 'approval_operations.id', '=', 'approval_items.approval_operation_id')
-            ->where('approval_operations.tenant_id', $tenantId)->where('approval_operations.planning_year_id', $planningYearId)
-            ->where('approval_operations.recorded_at', '<=', $cutoff)->where('approval_operations.kind', 'variation')->sum('approval_items.delta_amount'));
-
-        $actual = $actualMeasure->official;
-
-        return ['proposed' => $planning->official, 'initial_approved' => $initial, 'approved_variations' => $variations, 'approved_current' => $approved,
-            'actual' => $actual, 'residual' => bcsub($approved, $actual, 2), 'variance' => bcsub($actual, $approved, 2),
-            'utilization_percentage' => bccomp($approved, '0', 2) === 1 ? bcdiv(bcmul($actual, '100', 4), $approved, 2) : null,
-            'unapproved_actual_expenses' => $unapproved];
-    }
-
-    /**
-     * @param  list<array<string, mixed>>  $rows
-     * @return array{EconomicMeasure, EconomicMeasure}
-     */
-    private function selectedTotals(array $rows, AnnualEconomicProjection $projection): array
-    {
-        $planning = EconomicMeasure::zero($projection->basis);
-        $actual = EconomicMeasure::zero($projection->basis);
-        foreach ($rows as $row) {
-            $expense = $projection->expenses[(int) $row['id']];
-            foreach ($expense->lines as $line) {
-                if ($line->contributesToCurrentPlanning) {
-                    $planning = $planning->plus($line->amount, $projection->basis);
-                }
-            }
-            $actual = $actual->plus($expense->actual, $projection->basis);
-        }
-
-        return [$planning, $actual];
-    }
-
-    /** @return array<string, array{net: string, vat: string, gross: string, official: string}> */
-    private function plafondMeasures(PlafondEconomicProjection $plafond): array
-    {
-        return [
-            'allocation' => $this->measure($plafond->allocation),
-            'coverage_planned' => $this->measure($plafond->coveragePlanned),
-            'consumed' => $this->measure($plafond->consumed),
-            'available' => $this->measure($plafond->available),
-        ];
-    }
-
-    /** @param list<ProjectedEconomicLine> $lines */
-    private function contributivePlanning(array $lines, string $basis): EconomicMeasure
-    {
-        $planning = EconomicMeasure::zero($basis);
-        foreach ($lines as $line) {
-            if ($line->contributesToCurrentPlanning) {
-                $planning = $planning->plus($line->amount, $basis);
+        $measure = EconomicMeasure::zero($basis);
+        foreach ($exclusions as $exclusion) {
+            if (in_array($exclusion->reason, ['alternative_planning', 'covered_by_plafond', 'non_current_planning'], true)) {
+                $measure = $measure->plus($exclusion->amount, $basis);
             }
         }
 
-        return $planning;
+        return $measure;
     }
 
-    /** @return array{net:string,vat:string,gross:string,official:string} */
+    /** @return array{net: string, vat: string, gross: string, official: string} */
     private function measure(EconomicMeasure $measure): array
     {
         return ['net' => $measure->net, 'vat' => $measure->vat, 'gross' => $measure->gross, 'official' => $measure->official];
     }
 
-    /** @return array<string, mixed> */
-    private function line(ProjectedEconomicLine $line): array
-    {
-        return [
-            'expense_id' => $line->expenseId, 'row_id' => $line->rowId, 'planning_year_id' => $line->planningYearId,
-            'economic_year_label' => $line->economicYearLabel, 'type' => $line->type,
-            'is_current_planning' => $line->isCurrentPlanning, 'contributes_to_current_planning' => $line->contributesToCurrentPlanning,
-            'description' => $line->description, 'notes' => $line->notes, 'spend_date' => $line->spendDate,
-            'cost_center_id' => $line->costCenterId, 'vendor_id' => $line->vendorId, 'vendor_name' => $line->vendorName,
-            'project_id' => $line->projectId, 'contract_id' => $line->contractId, 'amount' => $this->measure($line->amount),
-        ];
-    }
-
     private function decimal(mixed $value): string
     {
-        $value = (string) ($value ?? '0');
-        [$whole, $fraction] = array_pad(explode('.', $value, 2), 2, '');
-
-        return ($whole === '-0' ? '0' : $whole).'.'.substr(str_pad($fraction, 2, '0'), 0, 2);
+        return bcadd((string) $value, '0', 2);
     }
 
-    /** @param class-string<Model> $model */
-    private function morphClass(string $model): string
+    /** @param class-string $class */
+    private function morphClass(string $class): string
     {
-        return app($model)->getMorphClass();
+        return (new $class)->getMorphClass();
     }
 }

@@ -6,6 +6,7 @@ use App\Domain\Budget\Data\ApprovalContributor;
 use App\Domain\Budget\Data\ApprovalExclusion;
 use App\Domain\Budget\Data\BudgetCompositionEvidence;
 use App\Domain\Budget\Data\BudgetProposal;
+use App\Domain\Budget\Data\BudgetSourceAccess;
 use App\Domain\Budget\Enums\ApprovalContributorKind;
 use App\Domain\Economics\Data\AnnualEconomicProjection;
 use App\Domain\Economics\Data\EconomicMeasure;
@@ -23,11 +24,11 @@ final readonly class BudgetProposalComposer
     public function compose(
         AnnualEconomicProjection $projection,
         int $budgetLockVersion,
-        bool $drillDownAuthorized,
+        BudgetSourceAccess $sourceAccess,
         ?array $sourceMetadata = null,
     ): BudgetProposal {
         $metadata = $sourceMetadata ?? $this->loadSourceMetadata($projection);
-        $contributors = $this->contributors($projection, $metadata, $drillDownAuthorized);
+        $contributors = $this->contributors($projection, $metadata, $sourceAccess);
         usort($contributors, static fn (ApprovalContributor $left, ApprovalContributor $right): int => strcmp(
             $left->sourceIdentity,
             $right->sourceIdentity,
@@ -38,7 +39,7 @@ final readonly class BudgetProposalComposer
         }
         $this->assertMeasureEquals($projection->currentPlanning, $total);
 
-        $exclusions = $this->exclusions($projection, $metadata, $drillDownAuthorized);
+        $exclusions = $this->exclusions($projection, $metadata, $sourceAccess);
         usort($exclusions, static fn (ApprovalExclusion $left, ApprovalExclusion $right): int => strcmp(
             $left->sourceIdentity,
             $right->sourceIdentity,
@@ -72,7 +73,7 @@ final readonly class BudgetProposalComposer
      * @param  array{expenses: array<int, array<string, mixed>>, rows: array<int, array<string, mixed>>}  $metadata
      * @return list<ApprovalContributor>
      */
-    private function contributors(AnnualEconomicProjection $projection, array $metadata, bool $authorized): array
+    private function contributors(AnnualEconomicProjection $projection, array $metadata, BudgetSourceAccess $sourceAccess): array
     {
         $contributors = [];
         $identities = [];
@@ -95,7 +96,7 @@ final readonly class BudgetProposalComposer
                 ApprovalContributorKind::OrdinaryCurrentPlanning,
                 $line->amount,
                 (int) $row['lock_version'],
-                $authorized,
+                $this->ordinaryNavigationAuthorized($expense, $row, $sourceAccess),
             );
             $this->assertUniqueIdentity($identities, $contributor->sourceIdentity);
             $contributors[] = $contributor;
@@ -125,8 +126,10 @@ final readonly class BudgetProposalComposer
                 contractId: $this->nullableInt($expense['contract_id']),
                 contractTitle: $this->nullableString($expense['contract_title']),
                 amount: $plafond->allocation,
-                drillDownAuthorized: $authorized,
-                drillDownHref: $authorized ? '/api/v1/expenses/'.$plafond->plafondExpenseId : null,
+                drillDownAuthorized: $this->plafondNavigationAuthorized($expense, $sourceAccess),
+                drillDownHref: $this->plafondNavigationAuthorized($expense, $sourceAccess)
+                    ? '/api/v1/plafonds/'.$plafond->plafondExpenseId
+                    : null,
             );
             $this->assertUniqueIdentity($identities, $contributor->sourceIdentity);
             $contributors[] = $contributor;
@@ -139,7 +142,7 @@ final readonly class BudgetProposalComposer
      * @param  array{expenses: array<int, array<string, mixed>>, rows: array<int, array<string, mixed>>}  $metadata
      * @return list<ApprovalExclusion>
      */
-    private function exclusions(AnnualEconomicProjection $projection, array $metadata, bool $authorized): array
+    private function exclusions(AnnualEconomicProjection $projection, array $metadata, BudgetSourceAccess $sourceAccess): array
     {
         $exclusions = [];
         $projectedRowIds = [];
@@ -159,7 +162,14 @@ final readonly class BudgetProposalComposer
             if (! is_array($expense) || ! is_array($row)) {
                 throw new DomainException('ECONOMIC_RECONCILIATION_FAILED');
             }
-            $exclusions[] = $this->exclusion($line, $expense, $row, $reason, $line->amount, $authorized);
+            $exclusions[] = $this->exclusion(
+                $line,
+                $expense,
+                $row,
+                $reason,
+                $line->amount,
+                $this->ordinaryNavigationAuthorized($expense, $row, $sourceAccess),
+            );
         }
 
         foreach ($metadata['rows'] as $row) {
@@ -180,15 +190,15 @@ final readonly class BudgetProposalComposer
             $exclusions[] = new ApprovalExclusion(
                 sourceIdentity: 'expense-row:'.$row['id'],
                 reason: 'soft_deleted',
-                expenseId: (int) $expense['id'],
-                expenseTitle: (string) $expense['title'],
-                rowId: (int) $row['id'],
-                rowType: (string) $row['type'],
-                rowDescription: (string) $row['description'],
+                expenseId: null,
+                expenseTitle: null,
+                rowId: null,
+                rowType: null,
+                rowDescription: null,
                 amount: $measure,
                 detail: $this->detail('soft_deleted'),
-                drillDownAuthorized: $authorized,
-                drillDownHref: $authorized ? '/api/v1/expenses/'.$expense['id'] : null,
+                drillDownAuthorized: false,
+                drillDownHref: null,
             );
         }
 
@@ -290,10 +300,14 @@ final readonly class BudgetProposalComposer
             ->get([
                 'expenses.id as expense_id', 'expenses.title as expense_title', 'expenses.kind as expense_kind',
                 'expenses.lock_version as expense_lock_version', 'expenses.cost_center_id',
-                'cost_centers.name as cost_center_name', 'expenses.project_id', 'projects.title as project_title',
-                'expenses.contract_id', 'contracts.title as contract_title', 'expenses.deleted_at as expense_deleted_at',
+                'cost_centers.id as cost_center_record_id', 'cost_centers.name as cost_center_name',
+                'expenses.project_id', 'projects.id as project_record_id', 'projects.title as project_title',
+                'expenses.contract_id', 'contracts.id as contract_record_id', 'contracts.title as contract_title',
+                'expenses.deleted_at as expense_deleted_at',
+                'cost_centers.deleted_at as cost_center_deleted_at', 'vendors.deleted_at as vendor_deleted_at',
+                'projects.deleted_at as project_deleted_at', 'contracts.deleted_at as contract_deleted_at',
                 'expense_rows.id as row_id', 'expense_rows.lock_version as row_lock_version', 'expense_rows.type',
-                'expense_rows.description', 'expense_rows.vendor_id', 'vendors.name as vendor_name',
+                'expense_rows.description', 'expense_rows.vendor_id', 'vendors.id as vendor_record_id', 'vendors.name as vendor_name',
                 'expense_rows.net_amount', 'expense_rows.vat_amount', 'expense_rows.gross_amount',
                 'expense_rows.deleted_at',
             ]);
@@ -307,12 +321,18 @@ final readonly class BudgetProposalComposer
                 'kind' => (string) $record->expense_kind,
                 'lock_version' => (int) $record->expense_lock_version,
                 'cost_center_id' => (int) $record->cost_center_id,
+                'cost_center_exists' => $record->cost_center_record_id !== null,
                 'cost_center_name' => (string) $record->cost_center_name,
                 'project_id' => $record->project_id,
+                'project_exists' => $record->project_record_id !== null,
                 'project_title' => $record->project_title,
                 'contract_id' => $record->contract_id,
+                'contract_exists' => $record->contract_record_id !== null,
                 'contract_title' => $record->contract_title,
                 'deleted_at' => $record->expense_deleted_at,
+                'cost_center_deleted_at' => $record->cost_center_deleted_at,
+                'project_deleted_at' => $record->project_deleted_at,
+                'contract_deleted_at' => $record->contract_deleted_at,
             ];
             $rows[(int) $record->row_id] = [
                 'id' => (int) $record->row_id,
@@ -321,12 +341,14 @@ final readonly class BudgetProposalComposer
                 'type' => (string) $record->type,
                 'description' => (string) $record->description,
                 'vendor_id' => $record->vendor_id,
+                'vendor_exists' => $record->vendor_id === null || $record->vendor_record_id !== null,
                 'vendor_name' => $record->vendor_name,
                 'net_amount' => (string) $record->net_amount,
                 'vat_amount' => (string) $record->vat_amount,
                 'gross_amount' => (string) $record->gross_amount,
                 'deleted_at' => $record->deleted_at,
                 'expense_deleted_at' => $record->expense_deleted_at,
+                'vendor_deleted_at' => $record->vendor_deleted_at,
             ];
         }
 
@@ -340,6 +362,35 @@ final readonly class BudgetProposalComposer
                 throw new DomainException('ECONOMIC_RECONCILIATION_FAILED');
             }
         }
+    }
+
+    /** @param array<string, mixed> $expense */
+    private function plafondNavigationAuthorized(array $expense, BudgetSourceAccess $access): bool
+    {
+        return $access->expense
+            && $access->planningYear
+            && $access->costCenter
+            && ($expense['cost_center_exists'] ?? false)
+            && ($expense['deleted_at'] ?? null) === null
+            && ($expense['cost_center_deleted_at'] ?? null) === null;
+    }
+
+    /**
+     * @param  array<string, mixed>  $expense
+     * @param  array<string, mixed>  $row
+     */
+    private function ordinaryNavigationAuthorized(array $expense, array $row, BudgetSourceAccess $access): bool
+    {
+        return $this->plafondNavigationAuthorized($expense, $access)
+            && $access->vendor
+            && ($row['vendor_exists'] ?? false)
+            && (($expense['project_id'] ?? null) === null || ($access->project && ($expense['project_exists'] ?? false)))
+            && (($expense['contract_id'] ?? null) === null || ($access->contract && ($expense['contract_exists'] ?? false)))
+            && ($row['deleted_at'] ?? null) === null
+            && ($row['expense_deleted_at'] ?? null) === null
+            && ($row['vendor_deleted_at'] ?? null) === null
+            && ($expense['project_deleted_at'] ?? null) === null
+            && ($expense['contract_deleted_at'] ?? null) === null;
     }
 
     /** @param array<string, true> $identities */
