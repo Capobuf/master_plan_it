@@ -56,11 +56,32 @@ class PlanningYear extends Model
     /** @param Builder<static> $query */
     protected function performUpdate(Builder $query): bool
     {
-        if ($this->isDirty('budget_state') && ! $this->budgetStateTransition) {
+        $changesBudgetState = $this->isDirty('budget_state');
+
+        if ($changesBudgetState && ! $this->budgetStateTransition) {
             throw new \DomainException('BUDGET_STATE_CONFLICT');
         }
 
-        return parent::performUpdate($query);
+        if (! $changesBudgetState) {
+            return parent::performUpdate($query);
+        }
+
+        if ($this->fireModelEvent('updating') === false) {
+            return false;
+        }
+
+        if ($this->usesTimestamps()) {
+            $this->updateTimestamps();
+        }
+
+        $dirty = $this->getDirtyForUpdate();
+        if ($dirty !== []) {
+            $this->setKeysForSaveQuery($query)->toBase()->update($dirty);
+            $this->syncChanges();
+            $this->fireModelEvent('updated', false);
+        }
+
+        return true;
     }
 
     public function approveBudget(): self
@@ -71,16 +92,6 @@ class PlanningYear extends Model
     public function annulApproval(): self
     {
         return $this->transitionBudgetState(BudgetState::Approved, BudgetState::Preparation);
-    }
-
-    public function closeBudget(): self
-    {
-        return $this->transitionBudgetState(BudgetState::Approved, BudgetState::Closed);
-    }
-
-    public function reopenBudget(): self
-    {
-        return $this->transitionBudgetState(BudgetState::Closed, BudgetState::Approved);
     }
 
     /**
@@ -149,6 +160,16 @@ class PlanningYear extends Model
  */
 final class PlanningYearBuilder extends Builder
 {
+    /** @param array<string, mixed> $values */
+    public function update(array $values): int
+    {
+        if (array_key_exists('budget_state', $values)) {
+            throw new \DomainException('BUDGET_STATE_CONFLICT');
+        }
+
+        return parent::update($values);
+    }
+
     public function delete(): never
     {
         $this->denyDeletion();

@@ -26,8 +26,6 @@ class BudgetApproval extends Model
     /** @use HasFactory<BudgetApprovalFactory> */
     use HasFactory;
 
-    private bool $terminalTransition = false;
-
     /** @return array<string, string> */
     protected function casts(): array
     {
@@ -47,15 +45,7 @@ class BudgetApproval extends Model
     /** @param Builder<static> $query */
     protected function performUpdate(Builder $query): bool
     {
-        if (! $this->terminalTransition || $this->immutableApprovalFieldsAreDirty()) {
-            throw new LogicException('Budget approvals are immutable outside the terminal transition.');
-        }
-
-        if ($query instanceof BudgetApprovalBuilder) {
-            $query->allowTerminalTransition();
-        }
-
-        return parent::performUpdate($query);
+        throw new LogicException('Budget approvals cannot be updated generically.');
     }
 
     protected function performDeleteOnModel(): void
@@ -79,7 +69,7 @@ class BudgetApproval extends Model
             throw new \InvalidArgumentException('Annulment note must not be blank.');
         }
 
-        $this->forceFill([
+        $terminalAttributes = [
             'status' => BudgetApprovalStatus::Annulled,
             'annulled_at' => $annulledAt,
             'annulled_by_user_id' => $actor->getKey(),
@@ -87,14 +77,21 @@ class BudgetApproval extends Model
             'annulment_note' => $normalizedNote,
             'annulment_revision_batch_id' => $revisionBatch->getKey(),
             'annulment_correlation_id' => $correlationId,
-        ]);
+            'updated_at' => $this->freshTimestampString(),
+        ];
 
-        $this->terminalTransition = true;
-        try {
-            $this->save();
-        } finally {
-            $this->terminalTransition = false;
+        $affected = $this->newModelQuery()
+            ->whereKey($this->getKey())
+            ->where('status', BudgetApprovalStatus::Active->value)
+            ->toBase()
+            ->update($terminalAttributes);
+
+        if ($affected !== 1) {
+            throw new \DomainException('BUDGET_STATE_CONFLICT');
         }
+
+        $this->forceFill($terminalAttributes);
+        $this->syncOriginalAttributes(array_keys($terminalAttributes));
 
         return $this;
     }
@@ -146,37 +143,15 @@ class BudgetApproval extends Model
     {
         return $this->hasMany(BudgetApprovalItem::class);
     }
-
-    private function immutableApprovalFieldsAreDirty(): bool
-    {
-        return $this->isDirty([
-            'tenant_id', 'planning_year_id', 'effective_date', 'recorded_at',
-            'approved_by_user_id', 'approved_by_name', 'approval_note', 'currency_code', 'budget_basis',
-            'total_net_amount', 'total_vat_amount', 'total_gross_amount', 'total_official_amount',
-            'contributor_count', 'composition_schema_version', 'projection_version',
-            'composition_fingerprint', 'approval_revision_batch_id', 'correlation_id',
-        ]);
-    }
 }
 
 /** @extends Builder<BudgetApproval> */
 final class BudgetApprovalBuilder extends Builder
 {
-    private bool $terminalTransition = false;
-
-    public function allowTerminalTransition(): void
-    {
-        $this->terminalTransition = true;
-    }
-
     /** @param array<string, mixed> $values */
-    public function update(array $values): int
+    public function update(array $values): never
     {
-        if (! $this->terminalTransition) {
-            throw new LogicException('Budget approvals cannot be updated generically.');
-        }
-
-        return parent::update($values);
+        throw new LogicException('Budget approvals cannot be updated generically.');
     }
 
     public function delete(): never
