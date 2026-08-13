@@ -57,19 +57,32 @@ export interface ApprovalContributor {
   drill_down: BudgetDrillDown;
 }
 
-export interface ApprovalExclusion {
+interface ApprovalExclusionBase {
   source_identity: string;
-  reason: "alternative_planning" | "actual_not_proposed" | "soft_deleted" | "covered_by_plafond" | "non_current_planning";
+  amount: EconomicMeasure;
+  drill_down: BudgetDrillDown;
+}
+
+export interface IdentifiedApprovalExclusion extends ApprovalExclusionBase {
+  reason: "alternative_planning" | "actual_not_proposed" | "covered_by_plafond" | "non_current_planning";
   expense: BudgetReference;
   row: {
     id: number;
     type: "estimate" | "quote" | "actual";
     description: string;
   };
-  amount: EconomicMeasure;
   detail: string;
-  drill_down: BudgetDrillDown;
 }
+
+/** Soft-deleted sources are intentionally explained without reviving identifying source data. */
+export interface SoftDeletedApprovalExclusion extends ApprovalExclusionBase {
+  reason: "soft_deleted";
+  expense: null;
+  row: null;
+  detail: null;
+}
+
+export type ApprovalExclusion = IdentifiedApprovalExclusion | SoftDeletedApprovalExclusion;
 
 export interface BudgetProposal {
   composition: BudgetCompositionEvidence;

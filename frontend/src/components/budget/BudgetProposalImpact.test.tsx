@@ -11,6 +11,10 @@ describe("BudgetProposalImpact", () => {
     expect(screen.getAllByText(/3\.620,00\s€/)).toHaveLength(2);
     expect(screen.getByText("Pianificazione alternativa")).toBeInTheDocument();
     expect(screen.getByText("Coperto dal Plafond")).toBeInTheDocument();
+    expect(screen.getAllByText("Elemento eliminato")).toHaveLength(2);
+    expect(screen.getByText("(dettagli non disponibili)")).toBeInTheDocument();
+    expect(screen.queryByText(/999,99\s€/)).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Elemento eliminato" })).not.toBeInTheDocument();
     expect(screen.getByText("Allocazione Plafond (conteggiata una volta)")).toBeInTheDocument();
     expect(screen.getAllByText(/4\.200,00\s€/)).toHaveLength(2);
     for (const label of ["Netto", "IVA", "Lordo", "Valore ufficiale"]) expect(screen.getAllByText(label).length).toBeGreaterThan(0);

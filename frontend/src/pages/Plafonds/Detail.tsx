@@ -13,10 +13,10 @@ import { useQueryPlanningYear } from "../../hooks/useQueryPlanningYear";
 
 export default function PlafondPage() {
   const { plafondId } = useParams<{ plafondId: string }>(); const id = plafondId && /^\d+$/.test(plafondId) ? Number(plafondId) : null;
-  const { hasAbility } = useApplicationContext(); const { selectedPlanningYearId } = usePlanningYear(); const [detail, setDetail] = useState<PlafondDetailData | null>(null); const [error, setError] = useState<ApiError | null>(null);
-  useQueryPlanningYear();
+  const { hasAbility } = useApplicationContext(); const planningYear = usePlanningYear(); const { selectedPlanningYearId } = planningYear; const [detail, setDetail] = useState<PlafondDetailData | null>(null); const [error, setError] = useState<ApiError | null>(null);
+  const { isApplyingQueryPlanningYear } = useQueryPlanningYear(planningYear);
   useEffect(() => {
-    if (id === null || selectedPlanningYearId === null || !hasAbility("expense.view")) return;
+    if (id === null || selectedPlanningYearId === null || !hasAbility("expense.view") || isApplyingQueryPlanningYear) return;
     let active = true;
     setDetail(null); setError(null);
     void getPlafond(id, selectedPlanningYearId)
@@ -24,9 +24,10 @@ export default function PlafondPage() {
       .catch((cause: unknown) => { if (active) setError(ApiError.from(cause)); });
 
     return () => { active = false; };
-  }, [hasAbility, id, selectedPlanningYearId]);
+  }, [hasAbility, id, isApplyingQueryPlanningYear, selectedPlanningYearId]);
   let body: React.ReactNode;
-  if (!hasAbility("expense.view")) body = <Alert variant="warning" title="Dettaglio non disponibile" message="Non disponi dell’autorizzazione necessaria." />;
+  if (isApplyingQueryPlanningYear) body = <Alert variant="info" title="Caricamento del contesto" message="Applicazione dell’anno condiviso in corso." />;
+  else if (!hasAbility("expense.view")) body = <Alert variant="warning" title="Dettaglio non disponibile" message="Non disponi dell’autorizzazione necessaria." />;
   else if (id === null) body = <Alert variant="error" title="Identificativo non valido" message="L’identificativo del Plafond non è valido." />;
   else if (selectedPlanningYearId === null) body = <Alert variant="warning" title="Anno richiesto" message="Seleziona un Planning Year dall’intestazione." />;
   else if (error) body = <Alert variant="error" title="Plafond non disponibile" message={error.message} />;
