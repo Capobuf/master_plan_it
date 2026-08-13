@@ -4,6 +4,8 @@ import { describe, expect, it, vi } from "vitest";
 import { getExpense, getExpenseHistory, type ExpenseDetail as ExpenseDetailData } from "../../api/expenses";
 import ExpenseDetail from "./ExpenseDetail";
 
+const selectPlanningYear = vi.fn();
+
 vi.mock("../../api/attachments", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/attachments")>();
   return { ...actual, listAttachments: vi.fn().mockResolvedValue({ data: [], meta: { used_bytes: "0", quota_bytes: "2147483648" }, abilities: { upload: true, download: true, delete: true } }) };
@@ -17,7 +19,7 @@ vi.mock("../../context/ApplicationContext", () => ({
   }),
 }));
 vi.mock("../../context/PlanningYearContext", () => ({
-  usePlanningYear: () => ({ selectedPlanningYearId: 7, loading: false, selectPlanningYear: vi.fn() }),
+  usePlanningYear: () => ({ selectedPlanningYearId: 7, loading: false, activePlanningYears: [{ id: 7 }, { id: 25 }], selectPlanningYear }),
 }));
 vi.mock("../../api/expenses", async (importOriginal) => {
   const actual = await importOriginal<typeof import("../../api/expenses")>();
@@ -40,6 +42,12 @@ const detail = {
 } as unknown as ExpenseDetailData;
 
 describe("ExpenseDetail", () => {
+  it("applies a valid planning_year_id from a shared expense link", async () => {
+    vi.mocked(getExpense).mockResolvedValue(detail);
+    render(<MemoryRouter initialEntries={["/expenses/42?planning_year_id=25"]}><Routes><Route path="/expenses/:expenseId" element={<ExpenseDetail />} /></Routes></MemoryRouter>);
+    await waitFor(() => expect(selectPlanningYear).toHaveBeenCalledWith(25, true));
+  });
+
   it("loads only the global year and exposes accessible actions and relation labels", async () => {
     vi.mocked(getExpense).mockResolvedValue(detail);
     render(<MemoryRouter initialEntries={["/expenses/42"]}><Routes><Route path="/expenses/:expenseId" element={<ExpenseDetail />} /></Routes></MemoryRouter>);

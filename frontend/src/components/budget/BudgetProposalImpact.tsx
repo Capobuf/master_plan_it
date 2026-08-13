@@ -1,15 +1,10 @@
-import { useEffect, useState } from "react";
 import { Link } from "react-router";
 import {
-  getBudgetApprovalPreview,
   type ApprovalContributor,
   type ApprovalExclusion,
   type BudgetApprovalPreview,
 } from "../../api/budget";
-import { ApiError } from "../../api/client";
-import { routes } from "../../navigation/routes";
 import { formatMoney } from "../../presentation/formatters";
-import Alert from "../ui/alert/Alert";
 import Badge from "../ui/badge/Badge";
 import { Table, TableBody, TableCell, TableHeader, TableRow } from "../ui/table";
 
@@ -21,11 +16,12 @@ const exclusionReason: Record<ApprovalExclusion["reason"], string> = {
   non_current_planning: "Pianificazione non corrente",
 };
 
-function contextRoute(item: ApprovalContributor | ApprovalExclusion, planningYearId: number): string {
-  const route = "kind" in item && item.kind === "plafond_allocation"
-    ? routes.plafond(item.expense.id)
-    : routes.spesa(item.expense.id);
-  return `${route}?planning_year_id=${planningYearId}`;
+function withPlanningYearContext(href: string, planningYearId: number): string {
+  const [pathAndQuery, hash = ""] = href.split("#", 2);
+  const [path, query = ""] = pathAndQuery.split("?", 2);
+  const params = new URLSearchParams(query);
+  params.set("planning_year_id", String(planningYearId));
+  return `${path}?${params.toString()}${hash ? `#${hash}` : ""}`;
 }
 
 function SourceLink({ item, planningYearId }: { item: ApprovalContributor | ApprovalExclusion; planningYearId: number }) {
@@ -33,7 +29,7 @@ function SourceLink({ item, planningYearId }: { item: ApprovalContributor | Appr
   if (!item.drill_down.authorized || item.drill_down.href === null) {
     return <span>{label} <span className="text-xs text-gray-500 dark:text-gray-400">(dettaglio non autorizzato)</span></span>;
   }
-  return <Link className="font-medium text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400" to={contextRoute(item, planningYearId)}>{label}</Link>;
+  return <Link className="font-medium text-gray-800 hover:text-brand-500 dark:text-white/90 dark:hover:text-brand-400" to={withPlanningYearContext(item.drill_down.href, planningYearId)}>{label}</Link>;
 }
 
 function Measures({ total, currency }: Pick<BudgetApprovalPreview, "total" | "currency">) {
@@ -43,6 +39,25 @@ function Measures({ total, currency }: Pick<BudgetApprovalPreview, "total" | "cu
     <div><dt className="text-gray-500 dark:text-gray-400">Lordo</dt><dd className="font-semibold">{formatMoney(total.gross, currency)}</dd></div>
     <div><dt className="text-gray-500 dark:text-gray-400">Totale ufficiale</dt><dd className="font-semibold">{formatMoney(total.official, currency)}</dd></div>
   </dl>;
+}
+
+function FullMeasures({ total, currency }: Pick<BudgetApprovalPreview, "total" | "currency">) {
+  return <dl className="grid min-w-48 grid-cols-2 gap-x-3 gap-y-1 text-xs">
+    <div><dt className="text-gray-500 dark:text-gray-400">Netto</dt><dd>{formatMoney(total.net, currency)}</dd></div>
+    <div><dt className="text-gray-500 dark:text-gray-400">IVA</dt><dd>{formatMoney(total.vat, currency)}</dd></div>
+    <div><dt className="text-gray-500 dark:text-gray-400">Lordo</dt><dd>{formatMoney(total.gross, currency)}</dd></div>
+    <div><dt className="text-gray-500 dark:text-gray-400">Valore ufficiale</dt><dd className="font-medium">{formatMoney(total.official, currency)}</dd></div>
+  </dl>;
+}
+
+function FrozenDimensions({ contributor }: { contributor: ApprovalContributor }) {
+  const dimensions = [
+    `Centro di costo: ${contributor.dimensions.cost_center.name}`,
+    contributor.dimensions.vendor ? `Fornitore: ${contributor.dimensions.vendor.name}` : null,
+    contributor.dimensions.project ? `Progetto: ${contributor.dimensions.project.title}` : null,
+    contributor.dimensions.contract ? `Contratto: ${contributor.dimensions.contract.title}` : null,
+  ].filter((value): value is string => value !== null);
+  return <ul className="space-y-1 text-xs text-gray-600 dark:text-gray-300">{dimensions.map((dimension) => <li key={dimension}>{dimension}</li>)}</ul>;
 }
 
 function ImpactContent({ preview }: { preview: BudgetApprovalPreview }) {
@@ -64,31 +79,16 @@ function ImpactContent({ preview }: { preview: BudgetApprovalPreview }) {
 
     <div>
       <h4 className="mb-2 text-sm font-semibold text-gray-800 dark:text-white/90">Componenti inclusi</h4>
-      {preview.contributors.length === 0 ? <p className="text-sm text-gray-500 dark:text-gray-400">Nessun componente contribuisce al totale proposto.</p> : <div className="max-w-full overflow-x-auto"><Table><TableHeader><TableRow>{["Componente", "Motivo", "Centro di costo", "Importo ufficiale"].map((heading) => <TableCell key={heading} isHeader className="whitespace-nowrap">{heading}</TableCell>)}</TableRow></TableHeader><TableBody>{preview.contributors.map((contributor) => <TableRow key={contributor.source_identity}><TableCell><SourceLink item={contributor} planningYearId={preview.planning_year.id} /></TableCell><TableCell>{contributor.kind === "plafond_allocation" ? "Allocazione Plafond (conteggiata una volta)" : "Pianificazione corrente"}</TableCell><TableCell>{contributor.dimensions.cost_center.name}</TableCell><TableCell className="whitespace-nowrap font-medium">{formatMoney(contributor.amount.official, preview.currency)}</TableCell></TableRow>)}</TableBody></Table></div>}
+      {preview.contributors.length === 0 ? <p className="text-sm text-gray-500 dark:text-gray-400">Nessun componente contribuisce al totale proposto.</p> : <div className="max-w-full overflow-x-auto"><Table><TableHeader><TableRow>{["Componente", "Motivo", "Dimensioni congelate", "Importi"].map((heading) => <TableCell key={heading} isHeader className="whitespace-nowrap">{heading}</TableCell>)}</TableRow></TableHeader><TableBody>{preview.contributors.map((contributor) => <TableRow key={contributor.source_identity}><TableCell><SourceLink item={contributor} planningYearId={preview.planning_year.id} /></TableCell>{/* Component kind is server-authored and never a user selection. */}<TableCell>{contributor.kind === "plafond_allocation" ? "Allocazione Plafond (conteggiata una volta)" : "Pianificazione corrente"}</TableCell><TableCell><FrozenDimensions contributor={contributor} /></TableCell><TableCell><FullMeasures total={contributor.amount} currency={preview.currency} /></TableCell></TableRow>)}</TableBody></Table></div>}
     </div>
 
     <div>
       <h4 className="mb-2 text-sm font-semibold text-gray-800 dark:text-white/90">Componenti esclusi</h4>
-      {preview.exclusions.length === 0 ? <p className="text-sm text-gray-500 dark:text-gray-400">Non ci sono esclusioni da spiegare.</p> : <div className="max-w-full overflow-x-auto"><Table><TableHeader><TableRow>{["Componente", "Motivo dell’esclusione", "Dettaglio", "Importo non conteggiato"].map((heading) => <TableCell key={heading} isHeader className="whitespace-nowrap">{heading}</TableCell>)}</TableRow></TableHeader><TableBody>{preview.exclusions.map((exclusion) => <TableRow key={exclusion.source_identity}><TableCell><SourceLink item={exclusion} planningYearId={preview.planning_year.id} /></TableCell>{/* The server reason is canonical; this label does not affect composition. */}<TableCell>{exclusionReason[exclusion.reason]}</TableCell><TableCell>{exclusion.detail}</TableCell><TableCell className="whitespace-nowrap">{formatMoney(exclusion.amount.official, preview.currency)}</TableCell></TableRow>)}</TableBody></Table></div>}
+      {preview.exclusions.length === 0 ? <p className="text-sm text-gray-500 dark:text-gray-400">Non ci sono esclusioni da spiegare.</p> : <div className="max-w-full overflow-x-auto"><Table><TableHeader><TableRow>{["Componente", "Motivo dell’esclusione", "Dettaglio", "Importi non conteggiati"].map((heading) => <TableCell key={heading} isHeader className="whitespace-nowrap">{heading}</TableCell>)}</TableRow></TableHeader><TableBody>{preview.exclusions.map((exclusion) => <TableRow key={exclusion.source_identity}><TableCell><SourceLink item={exclusion} planningYearId={preview.planning_year.id} /></TableCell>{/* The server reason is canonical; this label does not affect composition. */}<TableCell>{exclusionReason[exclusion.reason]}</TableCell><TableCell>{exclusion.detail}</TableCell><TableCell><FullMeasures total={exclusion.amount} currency={preview.currency} /></TableCell></TableRow>)}</TableBody></Table></div>}
     </div>
   </div>;
 }
 
-export default function BudgetProposalImpact({ planningYearId }: { planningYearId: number }) {
-  const [preview, setPreview] = useState<BudgetApprovalPreview | null>(null);
-  const [error, setError] = useState<ApiError | null>(null);
-
-  useEffect(() => {
-    let active = true;
-    setPreview(null);
-    setError(null);
-    void getBudgetApprovalPreview(planningYearId)
-      .then((data) => { if (active) setPreview(data); })
-      .catch((cause: unknown) => { if (active) setError(ApiError.from(cause)); });
-    return () => { active = false; };
-  }, [planningYearId]);
-
-  if (error) return <Alert variant="error" title="Vista di impatto non disponibile" message={error.correlationId ? `${error.message} Riferimento tecnico: ${error.correlationId}` : error.message} />;
-  if (preview === null) return <p className="text-sm text-gray-500 dark:text-gray-400" role="status">Caricamento della proposta completa…</p>;
+export default function BudgetProposalImpact({ preview }: { preview: BudgetApprovalPreview }) {
   return <ImpactContent preview={preview} />;
 }

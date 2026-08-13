@@ -1,15 +1,16 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
-import { annualBudgetFixture } from "./__fixtures__/budgetApproval";
+import { annualBudgetFixture, budgetProposalFixture } from "./__fixtures__/budgetApproval";
 import BudgetView from "./BudgetView";
 
 vi.mock("./BudgetProposalImpact", () => ({ default: () => <p>Impatto caricato</p> }));
 
 describe("BudgetView", () => {
   it("shows the server-authored Preparation overview without legacy approval controls", () => {
-    render(<BudgetView dataset={annualBudgetFixture} />);
+    render(<BudgetView dataset={annualBudgetFixture} preview={budgetProposalFixture} />);
 
     expect(screen.getByText("Stato del Budget: Preparazione")).toBeInTheDocument();
+    expect(screen.getByText("Base economica:")).toHaveTextContent("Netto");
     expect(screen.getByText("Budget proposto")).toBeInTheDocument();
     expect(screen.getByText("Valutazioni informative")).toBeInTheDocument();
     expect(screen.getByText("Effettivi correnti")).toBeInTheDocument();

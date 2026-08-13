@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { getBudget, type AnnualBudget } from "../../api/budget";
+import { getBudget, getBudgetApprovalPreview, type AnnualBudget, type BudgetApprovalPreview } from "../../api/budget";
 import { ApiError } from "../../api/client";
 import BudgetView from "../../components/budget/BudgetView";
 import PageBreadcrumb from "../../components/common/PageBreadCrumb";
@@ -11,16 +11,25 @@ import { usePlanningYear } from "../../context/PlanningYearContext";
 export default function BudgetHome() {
   const { data: applicationContext, loading: contextLoading, hasAbility } = useApplicationContext();
   const { selectedPlanningYearId, loading: planningYearLoading } = usePlanningYear();
-  const [state, setState] = useState<{ tenantId: number; planningYearId: number; data: AnnualBudget | null; error: ApiError | null } | null>(null);
+  const [state, setState] = useState<{ tenantId: number; planningYearId: number; data: AnnualBudget | null; preview: BudgetApprovalPreview | null; error: ApiError | null } | null>(null);
   const tenantId = applicationContext?.tenant?.id ?? null;
   const canView = hasAbility("budget.view");
 
   useEffect(() => {
     if (contextLoading || planningYearLoading || tenantId === null || selectedPlanningYearId === null || !canView) return;
     let active = true;
-    void getBudget({ planning_year_id: selectedPlanningYearId })
-      .then((data) => { if (active) setState({ tenantId, planningYearId: selectedPlanningYearId, data, error: null }); })
-      .catch((error: unknown) => { if (active) setState({ tenantId, planningYearId: selectedPlanningYearId, data: null, error: ApiError.from(error) }); });
+    void Promise.all([getBudget({ planning_year_id: selectedPlanningYearId }), getBudgetApprovalPreview(selectedPlanningYearId)])
+      .then(([data, preview]) => {
+        if (!active) return;
+        const overviewComposition = data.proposal.composition;
+        const previewComposition = preview.composition;
+        if (overviewComposition.fingerprint !== previewComposition.fingerprint || overviewComposition.versions.budget_lock_version !== previewComposition.versions.budget_lock_version) {
+          setState({ tenantId, planningYearId: selectedPlanningYearId, data: null, preview: null, error: new ApiError({ message: "La proposta è cambiata durante l’aggiornamento. Riprova per visualizzare una composizione coerente.", code: "BUDGET_COMPOSITION_STALE" }) });
+          return;
+        }
+        setState({ tenantId, planningYearId: selectedPlanningYearId, data, preview, error: null });
+      })
+      .catch((error: unknown) => { if (active) setState({ tenantId, planningYearId: selectedPlanningYearId, data: null, preview: null, error: ApiError.from(error) }); });
     return () => { active = false; };
   }, [canView, contextLoading, planningYearLoading, selectedPlanningYearId, tenantId]);
 
@@ -31,7 +40,7 @@ export default function BudgetHome() {
   else if (!canView) content = <Alert variant="warning" title="Budget non disponibile" message="Non disponi dell'autorizzazione necessaria per visualizzare questa pagina." />;
   else if (current === null) content = <Alert variant="info" title="Caricamento del Budget" message="Recupero dei dati per l'anno selezionato." />;
   else if (current.error) content = <Alert variant="error" title="Caricamento non riuscito" message={current.error.correlationId ? `${current.error.message} Riferimento tecnico: ${current.error.correlationId}` : current.error.message} />;
-  else if (current.data) content = <BudgetView key={current.data.planning_year.lock_version} dataset={current.data} />;
+  else if (current.data && current.preview) content = <BudgetView key={`${current.data.planning_year.lock_version}:${current.preview.composition.fingerprint}`} dataset={current.data} preview={current.preview} />;
   else content = <Alert variant="info" title="Nessun dato Budget" message="Non sono disponibili dati per la selezione corrente." />;
 
   return <><PageMeta title="Budget | Master Plan IT" description="Budget annuale e ciclo di approvazione" /><PageBreadcrumb pageTitle="Budget" />{content}</>;
